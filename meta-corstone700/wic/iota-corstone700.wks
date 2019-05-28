@@ -1,0 +1,13 @@
+# Partition for corstone700
+part --source rawcopy --sourceparams="file=spitoc.bin" --no-table --align 1 --fixed-size 1k
+
+part --source rawcopy --sourceparams="file=se_ramfw.bin" --no-table --align 1 --fixed-size 32k
+
+# Rawcopy of the FIP binary
+part --source rawcopy --sourceparams="file=corstone700.fip" --no-table --align 1 --fixed-size 991k
+
+# Rawcopy of the rootfs
+part --source rawcopy --sourceparams="file=iota-tiny-image-corstone700.cpio.gz" --no-table --fixed-size 4
+
+# Rawcopy of the kernel binary
+part --source rawcopy --sourceparams="file=xipImage" --no-table --fixed-size 3
