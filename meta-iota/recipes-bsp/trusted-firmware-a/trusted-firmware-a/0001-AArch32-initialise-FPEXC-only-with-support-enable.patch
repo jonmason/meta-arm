@@ -1,0 +1,35 @@
+From 47aef59becef4abc86323ec0877104c9ffa331b8 Mon Sep 17 00:00:00 2001
+From: Rui Miguel Silva <rui.silva@linaro.org>
+Date: Fri, 3 Aug 2018 15:48:13 +0100
+Subject: [PATCH] AArch32: initialise FPEXC only with support enable
+
+Try to initialise FPEXC only when support with VFP is enable
+
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+---
+ include/common/aarch32/el3_common_macros.S | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/include/common/aarch32/el3_common_macros.S b/include/common/aarch32/el3_common_macros.S
+index 5db88544..5b4c669b 100644
+--- a/include/common/aarch32/el3_common_macros.S
++++ b/include/common/aarch32/el3_common_macros.S
+@@ -85,6 +85,7 @@
+ 	stcopr	r0, CPACR
+ 	isb
+ 
++#if SUPPORT_VFP
+ 	/* ---------------------------------------------------------------------
+ 	 * Initialise FPEXC, setting all fields rather than relying on hw. Some
+ 	 * fields are architecturally UNKNOWN on reset and are set to zero
+@@ -97,6 +98,7 @@
+ 	ldr	r0, =(FPEXC_RESET_VAL | FPEXC_EN_BIT)
+ 	vmsr	FPEXC, r0
+ 	isb
++#endif
+ 
+ #if (ARM_ARCH_MAJOR > 7)
+ 	/* ---------------------------------------------------------------------
+-- 
+2.19.1
+

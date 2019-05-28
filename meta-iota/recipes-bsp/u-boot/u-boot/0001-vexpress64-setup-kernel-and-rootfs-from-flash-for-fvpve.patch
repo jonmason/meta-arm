@@ -1,0 +1,50 @@
+From 4f25bd32ee6307e2e3ac828426c1ef3adbc44292 Mon Sep 17 00:00:00 2001
+From: Usama Arif <usama.arif@arm.com>
+Date: Thu, 10 Jan 2019 10:27:04 +0000
+Subject: [PATCH] vexpress64: setup kernel and rootfs from flash for
+ fvp versatile express model
+
+Set and copy the kernel and rootfs from flash to memory before running the bootm
+command.
+
+Signed-off-by: Usama Arif <usama.arif@arm.com>
+---
+ include/configs/vexpress_aemv8a.h | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/include/configs/vexpress_aemv8a.h b/include/configs/vexpress_aemv8a.h
+index 4de9914..805f8c0 100644
+--- a/include/configs/vexpress_aemv8a.h
++++ b/include/configs/vexpress_aemv8a.h
+@@ -225,6 +225,7 @@
+
+ #elif defined(CONFIG_TARGET_VEXPRESS64_BASE_FVP) || \
+ 	defined(CONFIG_TARGET_VEXPRESS64_BASE_FVP_AARCH32)
++
+ #define CONFIG_EXTRA_ENV_SETTINGS	\
+ 				"kernel_name=Image\0"		\
+ 				"kernel_addr=0x80080000\0"	\
+@@ -239,9 +240,9 @@
+ 				"0x1c090000 debug user_debug=31 "\
+ 				"systemd.log_target=null "\
+ 				"androidboot.hardware=fvpbase "\
+-				"root=/dev/vda2 rw "\
+-				"rootwait "\
+-				"loglevel=9"
++				"loglevel=9 " \
++				"root=/dev/ram0 rw rootwait"
++
+
+ #define CONFIG_BOOTCOMMAND	"if smhload ${fdt_name} ${fdt_addr}; then "\
+ 				"  if smhload ${initrd_name} ${initrd_addr} "\
+@@ -261,6 +262,8 @@
+ 				"fi; " \
+ 				"echo semihosting load failed, try booting "\
+ 				"with contents of DRAM; " \
++				"cp.b 0x0C100000 $kernel_addr 0x900000; " \
++				"cp.b 0x0CD00000 $initrd_addr 0x500000; " \
+ 				BOOT_TYPE " $kernel_addr $initrd_addr $fdt_addr"
+ #endif
+
+--
+2.7.4
