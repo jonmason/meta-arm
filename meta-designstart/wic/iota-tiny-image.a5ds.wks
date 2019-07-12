@@ -1,0 +1,10 @@
+# Partition for a5ds
+  
+# Rawcopy of the FIP binary
+part --source rawcopy --sourceparams="file=a5ds.fip" --no-table --align 1 --fixed-size 1
+
+# Rawcopy of the kernel binary
+part --source rawcopy --sourceparams="file=zImage" --no-table --fixed-size 12
+
+# Rawcopy of the rootfs
+part --source rawcopy --sourceparams="file=${IMGDEPLOYDIR}/iota-tiny-image-a5ds.initramfs.cpio.gz" --no-table

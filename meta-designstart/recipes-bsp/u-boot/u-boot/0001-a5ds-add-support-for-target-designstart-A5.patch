@@ -1,0 +1,204 @@
+From e634679d854b1603452d0f71a2fa9936e026fb35 Mon Sep 17 00:00:00 2001
+From: Rui Miguel Silva <rui.silva@linaro.org>
+Date: Wed, 14 Aug 2019 09:49:08 +0100
+Subject: [PATCH 3/3] a5ds: add support for target designstart A5
+
+Give support, based on vexpress for now, to designstart platform with
+Cortex-A5 chip. Create config and setup boot commands and tweak memory
+map related with this platform.
+
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+
+%% original patch: 0001-a5ds-add-support-for-target-designstart-A5.patch
+---
+ arch/arm/Kconfig                       |  5 +++
+ board/armltd/vexpress64/Kconfig        |  2 +-
+ configs/vexpress_aemv8a_a5ds_defconfig | 37 ++++++++++++++++++++++
+ include/configs/vexpress_aemv8a.h      | 43 ++++++++++++++++++++++----
+ 4 files changed, 80 insertions(+), 7 deletions(-)
+ create mode 100644 configs/vexpress_aemv8a_a5ds_defconfig
+
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+index 0a6ee962d5..e26b3fc37d 100644
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -738,6 +738,11 @@ config TEGRA
+ 	bool "NVIDIA Tegra"
+ 	imply FAT_WRITE
+ 
++config TARGET_DESIGNSTART_A5
++	bool "Support designstart A5"
++	select CPU_V7
++	select SEMIHOSTING
++
+ config TARGET_VEXPRESS64_AEMV8A
+ 	bool "Support vexpress_aemv8a"
+ 	select ARM64
+diff --git a/board/armltd/vexpress64/Kconfig b/board/armltd/vexpress64/Kconfig
+index f6930aee47..3a6c972d0a 100644
+--- a/board/armltd/vexpress64/Kconfig
++++ b/board/armltd/vexpress64/Kconfig
+@@ -1,4 +1,4 @@
+-if TARGET_VEXPRESS64_BASE_FVP || TARGET_VEXPRESS64_BASE_FVP_AARCH32 || TARGET_VEXPRESS64_JUNO || TARGET_VEXPRESS64_JUNO_AARCH32
++if TARGET_VEXPRESS64_BASE_FVP || TARGET_VEXPRESS64_BASE_FVP_AARCH32 || TARGET_VEXPRESS64_JUNO || TARGET_VEXPRESS64_JUNO_AARCH32 || TARGET_DESIGNSTART_A5
+ 
+ config SYS_BOARD
+ 	default "vexpress64"
+diff --git a/configs/vexpress_aemv8a_a5ds_defconfig b/configs/vexpress_aemv8a_a5ds_defconfig
+new file mode 100644
+index 0000000000..00b80824d8
+--- /dev/null
++++ b/configs/vexpress_aemv8a_a5ds_defconfig
+@@ -0,0 +1,37 @@
++CONFIG_ARM=y
++CONFIG_TARGET_DESIGNSTART_A5=y
++CONFIG_SYS_MALLOC_F_LEN=0x2000
++CONFIG_IDENT_STRING=" designstart a5ds aarch32"
++CONFIG_BOOTDELAY=1
++# CONFIG_DISPLAY_CPUINFO is not set
++# CONFIG_DISPLAY_BOARDINFO is not set
++CONFIG_HUSH_PARSER=y
++CONFIG_SYS_PROMPT="a5ds32# "
++CONFIG_CMD_BOOTZ=y
++# CONFIG_CMD_CONSOLE is not set
++# CONFIG_CMD_IMLS is not set
++# CONFIG_CMD_XIMG is not set
++# CONFIG_CMD_EDITENV is not set
++# CONFIG_CMD_ENV_EXISTS is not set
++CONFIG_CMD_MEMTEST=y
++CONFIG_MTD_NOR_FLASH=y
++# CONFIG_CMD_LOADS is not set
++CONFIG_CMD_ARMFLASH=y
++# CONFIG_CMD_FPGA is not set
++# CONFIG_CMD_ITEST is not set
++# CONFIG_CMD_SETEXPR is not set
++CONFIG_CMD_DHCP=y
++# CONFIG_CMD_NFS is not set
++CONFIG_CMD_MII=y
++CONFIG_CMD_PING=y
++CONFIG_CMD_CACHE=y
++# CONFIG_CMD_MISC is not set
++CONFIG_SYS_MMIO_TIMER=y
++CONFIG_CMD_FAT=y
++CONFIG_DM=y
++CONFIG_DM_SERIAL=y
++CONFIG_OF_LIBFDT=y
++CONFIG_DEBUG_UART=y
++CONFIG_DEBUG_UART_PL011=y
++CONFIG_DEBUG_UART_BASE=0x1A510000
++CONFIG_DEBUG_UART_CLOCK=24000000
+diff --git a/include/configs/vexpress_aemv8a.h b/include/configs/vexpress_aemv8a.h
+index 4de9914128..1bc478ca2a 100644
+--- a/include/configs/vexpress_aemv8a.h
++++ b/include/configs/vexpress_aemv8a.h
+@@ -23,13 +23,19 @@
+ #define HIGH_ADDR			"0xffffffff"
+ #define BOOT_TYPE			"bootz"
+ #define CONFIG_SYS_HZ_CLOCK		24000000
++#ifdef CONFIG_TARGET_DESIGNSTART_A5
++#define CONFIG_SYS_MMIO_TIMER
++#else
+ #define CONFIG_SYS_ARCH_TIMER
++#endif
+ #define CONFIG_SKIP_LOWLEVEL_INIT
+ #endif
+ 
++
+ /* Link Definitions */
+ #if defined(CONFIG_TARGET_VEXPRESS64_BASE_FVP) || \
+-	defined(CONFIG_TARGET_VEXPRESS64_BASE_FVP_AARCH32)
++	defined(CONFIG_TARGET_VEXPRESS64_BASE_FVP_AARCH32) ||	\
++	defined(CONFIG_TARGET_DESIGNSTART_A5)
+ /* ATF loads u-boot here for BASE_FVP model */
+ #define CONFIG_SYS_TEXT_BASE		0x88000000
+ #define CONFIG_SYS_INIT_SP_ADDR         (CONFIG_SYS_SDRAM_BASE + 0x03f00000)
+@@ -66,6 +72,9 @@
+ 	defined(CONFIG_TARGET_VEXPRESS64_JUNO_AARCH32)
+ #define V2M_UART0			0x7ff80000
+ #define V2M_UART1			0x7ff70000
++#elif defined(CONFIG_TARGET_DESIGNSTART_A5)
++#define V2M_UART0			0x001a200000
++#define V2M_UART1			0x001a210000
+ #else /* Not Juno */
+ #define V2M_UART0			(V2M_PA_CS3 + V2M_PERIPH_OFFSET(9))
+ #define V2M_UART1			(V2M_PA_CS3 + V2M_PERIPH_OFFSET(10))
+@@ -121,7 +130,7 @@
+ #define CONFIG_SMC911X			1
+ #define CONFIG_SMC911X_32_BIT		1
+ #define CONFIG_SMC911X_BASE		(0x018000000)
+-#else
++#elif !defined(CONFIG_TARGET_DESIGNSTART_A5)
+ /* The Vexpress64 simulators use SMSC91C111 */
+ #define CONFIG_SMC91111			1
+ #define CONFIG_SMC91111_BASE		(0x01A000000)
+@@ -222,19 +231,26 @@
+ 				"setenv bootargs ${bootargs} ${bootargs_sky2}; "\
+ 				BOOT_TYPE " ${kernel_addr} ${initrd_param} ${fdt_addr}"
+ 
+-
+-#elif defined(CONFIG_TARGET_VEXPRESS64_BASE_FVP) || \
+-	defined(CONFIG_TARGET_VEXPRESS64_BASE_FVP_AARCH32)
++#elif defined(CONFIG_TARGET_VEXPRESS64_BASE_FVP) ||		\
++	defined(CONFIG_TARGET_VEXPRESS64_BASE_FVP_AARCH32) ||	\
++	defined(CONFIG_TARGET_DESIGNSTART_A5)
+ #define CONFIG_EXTRA_ENV_SETTINGS	\
+ 				"kernel_name=Image\0"		\
+ 				"kernel_addr=0x80080000\0"	\
+ 				"initrd_name=ramdisk.img\0"	\
+ 				"initrd_addr=0x84000000\0"	\
+ 				"fdt_name=devtree.dtb\0"	\
+-				"fdt_addr=0x82000000\0"		\
++				"fdt_addr=0x83000000\0"		\
+ 				"fdt_high=" HIGH_ADDR "\0"	\
+ 				"initrd_high=" HIGH_ADDR "\0"
+ 
++#if defined(CONFIG_TARGET_DESIGNSTART_A5)
++#define CONFIG_BOOTARGS		"console=ttyAMA0 earlycon=pl011,"\
++				"0x1a200000 "\
++				"systemd.log_target=null "\
++				"root=/dev/ram0 rw rootwait"\
++				"loglevel=9"
++#else
+ #define CONFIG_BOOTARGS		"console=ttyAMA0 earlycon=pl011,"\
+ 				"0x1c090000 debug user_debug=31 "\
+ 				"systemd.log_target=null "\
+@@ -242,7 +258,14 @@
+ 				"root=/dev/vda2 rw "\
+ 				"rootwait "\
+ 				"loglevel=9"
++#endif
+ 
++#if defined(CONFIG_TARGET_DESIGNSTART_A5)
++#define CONFIG_BOOTCOMMAND	"echo copy to RAM...; " \
++				"cp.b 0x08100000 $kernel_addr 0xB00000; " \
++				"cp.b 0x08D00000 $initrd_addr 0x500000; " \
++				BOOT_TYPE " $kernel_addr $initrd_addr $fdt_addr"
++#else
+ #define CONFIG_BOOTCOMMAND	"if smhload ${fdt_name} ${fdt_addr}; then "\
+ 				"  if smhload ${initrd_name} ${initrd_addr} "\
+ 				"  initrd_end; then " \
+@@ -263,6 +286,7 @@
+ 				"with contents of DRAM; " \
+ 				BOOT_TYPE " $kernel_addr $initrd_addr $fdt_addr"
+ #endif
++#endif
+ 
+ /* Monitor Command Prompt */
+ #define CONFIG_SYS_CBSIZE		512	/* Console I/O Buffer Size */
+@@ -282,6 +306,13 @@
+ /* in the Juno firmware. */
+ #define CONFIG_ENV_ADDR			0x0BFC0000
+ #define CONFIG_ENV_SECT_SIZE		0x00010000
++#elif defined(CONFIG_TARGET_DESIGNSTART_A5)
++#define CONFIG_SYS_FLASH_BASE		0x08000000
++/* 256 x 256KiB sectors */
++#define CONFIG_SYS_MAX_FLASH_SECT	256
++/* Store environment at top of flash */
++#define CONFIG_ENV_ADDR			0x0A7C0000
++#define CONFIG_ENV_SECT_SIZE		0x00040000
+ #else
+ #define CONFIG_SYS_FLASH_BASE		0x0C000000
+ /* 256 x 256KiB sectors */
+-- 
+2.17.1
+
