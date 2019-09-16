@@ -36,7 +36,7 @@ TF-A_DEBUG ?= "1"
 TF-A_AARCH32_SP ?= "sp_min"
 TF-A_BL33 ?= ""
 
-TF-A_TARGET_IMAGES ?= "fip all"
+TF-A_TARGET_IMAGES ?= "all fip"
 TF-A_EXTRA_OPTIONS ?= ""
 
 do_compile() {
