@@ -7,7 +7,7 @@ part --source rawcopy --sourceparams="file=se_ramfw.bin" --no-table --align 1 --
 part --source rawcopy --sourceparams="file=corstone700.fip" --no-table --align 1 --fixed-size 991k
 
 # Rawcopy of the rootfs
-part --source rawcopy --sourceparams="file=${IMGDEPLOYDIR}/iota-tiny-image-corstone700.cpio.gz" --no-table --fixed-size 4
+part --source rawcopy --sourceparams="file=${IMGDEPLOYDIR}/iota-tiny-image-corstone700.cpio.gz" --no-table --fixed-size 2
 
 # Rawcopy of the kernel binary
 part --source rawcopy --sourceparams="file=xipImage" --no-table --fixed-size 3
