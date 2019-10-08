@@ -2,6 +2,9 @@ Introduction
 ------------
 This repository contains Arm layers for OpenEmbedded
 
+meta-arm:
+	This layer provides support for general recipes for the Arm architecture
+
 meta-arm-bsp:
 	This layer provides support for Arm reference platforms
 
@@ -10,9 +13,6 @@ meta-arm-iota:
 
 meta-arm-integration:
 	This layer provides support for OpenEmbedded and Yocto patches that have yet to be accepted upstream
-
-meta-arm:
-	This layer provides support for general recipes for the Arm architecture
 
 
 Contributing
