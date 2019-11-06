@@ -13,7 +13,7 @@ TF-A_DEPENDS ?= ""
 DEPENDS += " dtc-native coreutils-native"
 DEPENDS += " ${TF-A_DEPENDS} "
 
-LIC_FILES_CHKSUM = "file://license.rst;md5=90153916317c204fade8b8df15739cde"
+LIC_FILES_CHKSUM = "file://license.rst;md5=1dd070c98a281d18d9eefd938729b031"
 
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
