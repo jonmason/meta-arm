@@ -1,0 +1,163 @@
+From 7849818353f3787473fcede68a7b81640ecacef0 Mon Sep 17 00:00:00 2001
+From: Vishnu Banavath <vishnu.banavath@arm.com>
+Date: Wed, 20 Nov 2019 15:12:09 +0000
+Subject: [PATCH] a5ds: dts: make DTS changes to run on FPGA as well
+
+* Delete cpu@2 and cpu@3 devicetree nodes(as FPAG supports only 2 cores)
+* Correct the platform frequency to run the stack on FPGA
+* When Using bigger kernel images (>8.4MB compressed zImage) and at
+decompress and final location init stage of kernel start makes it
+override dtb at this address, to avoid this move the dtb a little
+higher in address related.
+
+Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
+---
+ fdts/a5ds.dts                                 | 30 ++++++++-----------
+ .../arm/board/a5ds/fdts/a5ds_tb_fw_config.dts |  2 +-
+ plat/arm/board/a5ds/include/platform_def.h    | 12 ++++----
+ 3 files changed, 19 insertions(+), 25 deletions(-)
+
+diff --git a/fdts/a5ds.dts b/fdts/a5ds.dts
+index 91212e8a..c9295fd9 100644
+--- a/fdts/a5ds.dts
++++ b/fdts/a5ds.dts
+@@ -12,7 +12,6 @@
+ 	interrupt-parent = <&gic>;
+ 	#address-cells = <1>;
+ 	#size-cells = <1>;
+-
+ 	psci {
+ 		compatible = "arm,psci-1.0", "arm,psci-0.2", "arm,psci";
+ 		method = "smc";
+@@ -34,18 +33,6 @@
+ 			enable-method = "psci";
+ 			reg = <1>;
+ 		};
+-		cpu@2 {
+-			device_type = "cpu";
+-			compatible = "arm,cortex-a5";
+-			enable-method = "psci";
+-			reg = <2>;
+-		};
+-		cpu@3 {
+-			device_type = "cpu";
+-			compatible = "arm,cortex-a5";
+-			enable-method = "psci";
+-			reg = <3>;
+-		};
+ 	};
+ 
+ 	memory@80000000 {
+@@ -53,10 +40,17 @@
+ 		reg = <0x80000000 0x7F000000>;
+ 	};
+ 
+-	refclk100mhz: refclk100mhz {
++	refclk7500khz: refclk7500khz {
++		compatible = "fixed-clock";
++		#clock-cells = <0>;
++		clock-frequency = <7500000>;
++		clock-output-names = "apb_pclk";
++	};
++
++	refclk24mhz: refclk24mhz {
+ 		compatible = "fixed-clock";
+ 		#clock-cells = <0>;
+-		clock-frequency = <100000000>;
++		clock-frequency = <24000000>;
+ 		clock-output-names = "apb_pclk";
+ 	};
+ 
+@@ -71,7 +65,7 @@
+ 	rtc@1a220000 {
+ 		compatible = "arm,pl031", "arm,primecell";
+ 		reg = <0x1a220000 0x1000>;
+-		clocks = <&refclk100mhz>;
++		clocks = <&refclk24mhz>;
+ 		interrupts = <0 6 0xf04>;
+ 		clock-names = "apb_pclk";
+ 	};
+@@ -91,7 +85,7 @@
+ 		reg = <0x1a200000 0x1000>;
+ 		interrupt-parent = <&gic>;
+ 		interrupts = <0 8 0xf04>;
+-		clocks = <&refclk100mhz>;
++		clocks = <&refclk7500khz>;
+ 		clock-names = "apb_pclk";
+ 	};
+ 
+@@ -100,7 +94,7 @@
+ 		reg = <0x1a210000 0x1000>;
+ 		interrupt-parent = <&gic>;
+ 		interrupts = <0 9 0xf04>;
+-		clocks = <&refclk100mhz>;
++		clocks = <&refclk7500khz>;
+ 		clock-names = "apb_pclk";
+ 	};
+ 
+diff --git a/plat/arm/board/a5ds/fdts/a5ds_tb_fw_config.dts b/plat/arm/board/a5ds/fdts/a5ds_tb_fw_config.dts
+index 9ab2d965..c616ff77 100644
+--- a/plat/arm/board/a5ds/fdts/a5ds_tb_fw_config.dts
++++ b/plat/arm/board/a5ds/fdts/a5ds_tb_fw_config.dts
+@@ -10,7 +10,7 @@
+ 	/* Platform Config */
+ 	plat_arm_bl2 {
+ 		compatible = "arm,tb_fw";
+-		hw_config_addr = <0x0 0x82000000>;
++		hw_config_addr = <0x0 0x83000000>;
+ 		hw_config_max_size = <0x01000000>;
+ 		/* Disable authentication for development */
+ 		disable_auth = <0x0>;
+diff --git a/plat/arm/board/a5ds/include/platform_def.h b/plat/arm/board/a5ds/include/platform_def.h
+index e9e4b9ae..aed86949 100644
+--- a/plat/arm/board/a5ds/include/platform_def.h
++++ b/plat/arm/board/a5ds/include/platform_def.h
+@@ -47,7 +47,7 @@
+ #define A5_PERIPHERALS_BASE 0x1c000000
+ #define A5_PERIPHERALS_SIZE  0x10000
+ 
+-#define ARM_CACHE_WRITEBACK_SHIFT	6
++#define ARM_CACHE_WRITEBACK_SHIFT	5
+ 
+ #define ARM_IRQ_SEC_PHY_TIMER		29
+ 
+@@ -101,7 +101,7 @@
+ 
+ #define A5DS_PRIMARY_CPU	0x0
+ 
+-#define FLASH1_BASE			UL(0x8000000)
++#define FLASH1_BASE			UL(0x80000000)
+ #define FLASH1_SIZE			UL(0x2800000)
+ 
+ #define MAP_FLASH1_RW		MAP_REGION_FLAT(FLASH1_BASE,\
+@@ -162,7 +162,7 @@
+ 					 ARM_BL_REGIONS)
+ 
+ /* Memory mapped Generic timer interfaces  */
+-#define A5DS_TIMER_BASE_FREQUENCY		UL(24000000)
++#define A5DS_TIMER_BASE_FREQUENCY		UL(7500000)
+ 
+ #define ARM_CONSOLE_BAUDRATE		115200
+ 
+@@ -310,15 +310,15 @@
+  * PL011 related constants
+  */
+ #define PLAT_ARM_BOOT_UART_BASE		0x1A200000
+-#define PLAT_ARM_BOOT_UART_CLK_IN_HZ	24000000
++#define PLAT_ARM_BOOT_UART_CLK_IN_HZ	7500000
+ 
+ #define PLAT_ARM_RUN_UART_BASE		0x1A210000
+-#define PLAT_ARM_RUN_UART_CLK_IN_HZ	24000000
++#define PLAT_ARM_RUN_UART_CLK_IN_HZ	7500000
+ 
+ #define PLAT_ARM_CRASH_UART_BASE	PLAT_ARM_RUN_UART_BASE
+ #define PLAT_ARM_CRASH_UART_CLK_IN_HZ	PLAT_ARM_RUN_UART_CLK_IN_HZ
+ 
+-#define A5DS_TIMER_BASE_FREQUENCY	UL(24000000)
++#define A5DS_TIMER_BASE_FREQUENCY	UL(7500000)
+ 
+ /* System timer related constants */
+ #define PLAT_ARM_NSTIMER_FRAME_ID		1
+-- 
+2.17.1
+

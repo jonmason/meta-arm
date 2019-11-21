@@ -1,0 +1,187 @@
+From 9705e83c7eb77aa8d257546f3cebcf3ca924d001 Mon Sep 17 00:00:00 2001
+From: Rui Miguel Silva <rui.silva@linaro.org>
+Date: Wed, 14 Aug 2019 09:20:42 +0100
+Subject: armv7: rename sp804 timer to mmio timer
+
+Rename the wrongly init named mmio timer and fix the use of it on a
+Cortex-A5 system that does not have arch_timer.
+
+Signed-off-by: Usama Arif <usama.arif@arm.com>
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+
+%% original patch: 0001-armv7-rename-sp804-timer-to-mmio-timer.patch
+
+%% original patch: 0001-armv7-rename-sp804-timer-to-mmio-timer.patch
+---
+ arch/arm/cpu/armv7/Makefile      |  6 +--
+ arch/arm/cpu/armv7/mmio_timer.c  | 65 ++++++++++++++++++++++++++++++++
+ arch/arm/cpu/armv7/sp804_timer.c | 54 --------------------------
+ scripts/config_whitelist.txt     |  1 +
+ 4 files changed, 67 insertions(+), 59 deletions(-)
+ create mode 100755 arch/arm/cpu/armv7/mmio_timer.c
+ delete mode 100644 arch/arm/cpu/armv7/sp804_timer.c
+
+diff --git a/arch/arm/cpu/armv7/Makefile b/arch/arm/cpu/armv7/Makefile
+index 288d14732e..97727a0dbb 100644
+--- a/arch/arm/cpu/armv7/Makefile
++++ b/arch/arm/cpu/armv7/Makefile
+@@ -23,12 +23,8 @@ obj-$(CONFIG_ARMV7_PSCI)	+= psci.o psci-common.o
+ obj-$(CONFIG_IPROC) += iproc-common/
+ obj-$(CONFIG_KONA) += kona-common/
+ 
+-SUPPORT_ARCH_TIMER    ?= yes
+-ifeq ($(SUPPORT_ARCH_TIMER),no)
+-obj-y += sp804_timer.o
+-else
+ obj-$(CONFIG_SYS_ARCH_TIMER) += arch_timer.o
+-endif
++obj-$(CONFIG_SYS_MMIO_TIMER) += mmio_timer.o
+ 
+ ifneq (,$(filter s5pc1xx exynos,$(SOC)))
+ obj-y += s5p-common/
+diff --git a/arch/arm/cpu/armv7/mmio_timer.c b/arch/arm/cpu/armv7/mmio_timer.c
+new file mode 100755
+index 0000000000..e38dc660c5
+--- /dev/null
++++ b/arch/arm/cpu/armv7/mmio_timer.c
+@@ -0,0 +1,65 @@
++/*
++ * Copyright (c) 2019, Arm Limited. All rights reserved.
++ *
++ * SPDX-License-Identifier:     GPL-2.0+
++ */
++
++#include <common.h>
++#include <asm/io.h>
++#include <div64.h>
++#include <bootstage.h>
++
++DECLARE_GLOBAL_DATA_PTR;
++
++#define CNTCTLBASE  UL(0x1a020000)
++#define CNTREADBASE UL(0x1a030000)
++#define CNTEN       UL(0x1)
++#define CNTFCREQ    UL(0x100)
++
++static inline uint32_t mmio_read32(uintptr_t addr)
++{
++	return *(volatile uint32_t*)addr;
++}
++
++static inline void mmio_write32(uintptr_t addr, uint32_t data)
++{
++	*(volatile uint32_t*)addr = data;
++}
++
++int timer_init(void)
++{
++	gd->arch.timer_rate_hz = COUNTER_FREQUENCY/CONFIG_SYS_HZ;
++	mmio_write32(CNTCTLBASE + 0x20, COUNTER_FREQUENCY);
++	// Enable counter and enter the number of entries in freq mode table
++	mmio_write32(CNTCTLBASE, CNTFCREQ|CNTEN);
++	return 0;
++}
++
++unsigned long long get_ticks(void)
++{
++	return ((mmio_read32(CNTREADBASE + 0x4) << 32) |
++		mmio_read32(CNTREADBASE));
++}
++
++ulong get_timer(ulong base)
++{
++	return lldiv(get_ticks(), gd->arch.timer_rate_hz) - base;
++}
++
++void __udelay(unsigned long usec)
++{
++	unsigned long endtick;
++
++	endtick = lldiv((unsigned long long)usec * gd->arch.timer_rate_hz,
++			1000UL);
++
++	endtick += get_ticks();
++
++	while (get_ticks() < endtick)
++		;
++}
++
++ulong get_tbclk(void)
++{
++	return gd->arch.timer_rate_hz;
++}
+diff --git a/arch/arm/cpu/armv7/sp804_timer.c b/arch/arm/cpu/armv7/sp804_timer.c
+deleted file mode 100644
+index 9c1ecf3fa0..0000000000
+--- a/arch/arm/cpu/armv7/sp804_timer.c
++++ /dev/null
+@@ -1,54 +0,0 @@
+-/*
+- * Copyright (c) 2019, Arm Limited. All rights reserved.
+- *
+- * SPDX-License-Identifier:     GPL-2.0+
+- */
+-
+-#include <common.h>
+-#include <asm/io.h>
+-#include <div64.h>
+-#include <bootstage.h>
+-
+-DECLARE_GLOBAL_DATA_PTR;
+-
+-#define SP804_TIMER0_BASE  UL(0x1C110000)
+-#define SP804_TIMER1_VALUE_OFFSET UL(0x004)
+-
+-int timer_init(void)
+-{
+-	gd->arch.timer_rate_hz = CONFIG_SYS_HZ_CLOCK / CONFIG_SYS_HZ;
+-	return 0;
+-}
+-
+-static inline uint32_t mmio_read_32(uintptr_t addr)
+-{
+-	return *(volatile uint32_t*)addr;
+-}
+-
+-unsigned long long get_ticks(void)
+-{
+-	return UINT_MAX - mmio_read_32(SP804_TIMER0_BASE + SP804_TIMER1_VALUE_OFFSET);
+-}
+-
+-ulong get_timer(ulong base)
+-{
+-	return lldiv(get_ticks(), gd->arch.timer_rate_hz) - base;
+-}
+-
+-void __udelay(unsigned long usec)
+-{
+-	unsigned long endtime;
+-
+-	endtime = lldiv((unsigned long long)usec * gd->arch.timer_rate_hz,
+-			1000UL);
+-
+-	endtime += get_ticks();
+-
+-	while (get_ticks() < endtime)
+-		;
+-}
+-
+-ulong get_tbclk(void)
+-{
+-	return gd->arch.timer_rate_hz;
+-}
+diff --git a/scripts/config_whitelist.txt b/scripts/config_whitelist.txt
+index 95f27b6ead..e82e53cea3 100644
+--- a/scripts/config_whitelist.txt
++++ b/scripts/config_whitelist.txt
+@@ -3923,6 +3923,7 @@ CONFIG_SYS_MMC_U_BOOT_DST
+ CONFIG_SYS_MMC_U_BOOT_OFFS
+ CONFIG_SYS_MMC_U_BOOT_SIZE
+ CONFIG_SYS_MMC_U_BOOT_START
++CONFIG_SYS_MMIO_TIMER
+ CONFIG_SYS_MONITOR_
+ CONFIG_SYS_MONITOR_BASE
+ CONFIG_SYS_MONITOR_BASE_EARLY
+-- 
+2.17.1
+

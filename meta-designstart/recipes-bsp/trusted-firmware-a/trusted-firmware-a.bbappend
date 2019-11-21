@@ -6,6 +6,6 @@
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
 SRC_URI += "\
-            file://0001-plat-arm-a5ds-move-dtb-to-a-new-address.patch \
+            file://0001-plat-arm-a5ds-dts-uart-clock.patch \
 	    "
-SRCREV = "ed01e0c407a1794faf8ff8173183a50419bbd2ae"
+SRCREV = "af1ac83e0fa4e77aad13e1e8e47b6fcafeb17dbc"
