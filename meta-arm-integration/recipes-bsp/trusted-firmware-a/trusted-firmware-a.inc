@@ -14,11 +14,28 @@ TFA_PLATFORM ?= "invalid"
 
 # Build for debug (set TFA_DEBUG to 1 to activate)
 TFA_DEBUG ?= "0"
-TFA_BUILD_DIR ?= "${@bb.utils.contains('TFA_DEBUG', '1', 'build/${TFA_PLATFORM}/debug', 'build/${TFA_PLATFORM}/release', d)}"
+
+# Sub-directory in which to build.
+# This must be coherent with BUILD_PLAT make parameter so that deploy can find
+# the produced binaries
+TFA_BUILD_DIR ?= "build-${TFA_PLATFORM}"
+# set BUILD_PLAT depending on configured BUILD_DIR
+EXTRA_OEMAKE += "BUILD_PLAT=${TFA_BUILD_DIR}"
 
 # mbed TLS support (set TFA_MBEDTLS to 1 to activate)
 TFA_MBEDTLS ?= "0"
+# sub-directory in which mbedtls will be downloaded
 TFA_MBEDTLS_DIR ?= "mbedtls"
+# This should be set to MBEDTLS download URL if MBEDTLS is needed
+SRC_URI_MBEDTLS ??= ""
+# This should be set to MBEDTLS LIC FILES checksum
+LIC_FILES_CHKSUM_MBEDTLS ??= ""
+# add MBEDTLS to our sources if activated
+SRC_URI += "${@bb.utils.contains('TFA_MBEDTLS', '1', '${SRC_URI_MBEDTLS}', '', d)}"
+# add mbed TLS chksum
+LIC_FILES_CHKSUM += "${@bb.utils.contains('TFA_MBEDTLS', '1', '${LIC_FILES_CHKSUM_MBEDTLS}', '', d)}"
+# add mbed TLS to version
+SRCREV_FORMAT_append = "${@bb.utils.contains('TFA_MBEDTLS', '1', '_mbedtls', '', d)}"
 
 # U-boot support (set TFA_UBOOT to 1 to activate)
 # When U-Boot support is activated BL33 is activated with u-boot.bin file
@@ -52,18 +69,18 @@ do_install[noexec] = "1"
 DEPENDS_append = " dtc-native openssl-native"
 
 # Add platform parameter
-EXTRA_OEMAKE_append = " PLAT=${TFA_PLATFORM}"
+EXTRA_OEMAKE += "PLAT=${TFA_PLATFORM}"
 
 # Handle TFA_DEBUG parameter
-EXTRA_OEMAKE_append = " ${@bb.utils.contains('TFA_DEBUG', '1', ' DEBUG=${TFA_DEBUG}', '', d)}"
+EXTRA_OEMAKE += "${@bb.utils.contains('TFA_DEBUG', '1', ' DEBUG=${TFA_DEBUG}', '', d)}"
 
 # Handle MBEDTLS
-EXTRA_OEMAKE_append = " ${@bb.utils.contains('TFA_MBEDTLS', '1', ' MBEDTLS_DIR=${TFA_MBEDTLS_DIR}', '', d)}"
+EXTRA_OEMAKE += "${@bb.utils.contains('TFA_MBEDTLS', '1', ' MBEDTLS_DIR=${TFA_MBEDTLS_DIR}', '', d)}"
 
 # Uboot support
 DEPENDS += " ${@bb.utils.contains('TFA_UBOOT', '1', 'u-boot', '', d)}"
 do_compile[depends] += " ${@bb.utils.contains('TFA_UBOOT', '1', 'u-boot:do_deploy', '', d)}"
-EXTRA_OEMAKE_append = " ${@bb.utils.contains('TFA_UBOOT', '1', ' BL33=${DEPLOY_DIR_IMAGE}/u-boot.bin', '',d)}"
+EXTRA_OEMAKE += "${@bb.utils.contains('TFA_UBOOT', '1', ' BL33=${DEPLOY_DIR_IMAGE}/u-boot.bin', '',d)}"
 
 do_clean() {
     if [ -f ${S}/Makefile ]; then
