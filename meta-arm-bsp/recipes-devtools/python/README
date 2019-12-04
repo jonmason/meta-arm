@@ -1,0 +1,4 @@
+This is added for Gem5 compilation with Zeus as it has been removed from
+OpenEmbedded (and Gem5 needs scons to be compiled).
+
+This should be removed once Gem5 supports properly python3.
