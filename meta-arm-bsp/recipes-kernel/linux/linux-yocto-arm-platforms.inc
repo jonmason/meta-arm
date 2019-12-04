@@ -16,3 +16,14 @@ SRC_URI_append = " file://arm-platforms-kmeta;type=kmeta;name=arm-platforms-kmet
 COMPATIBLE_MACHINE_foundation-armv8 = "foundation-armv8"
 KMACHINE_foundation-armv8 = "fvp"
 
+#
+# FVP BASE KMACHINE
+#
+COMPATIBLE_MACHINE_fvp-base = "fvp-base"
+KMACHINE_fvp-base = "fvp"
+SRC_URI_append_fvp-base = " file://dts/arm;subdir=add-files"
+
+do_patch_append_fvp-base() {
+    tar -C ${WORKDIR}/add-files/dts -cf - arm | \
+        tar -C arch/arm64/boot/dts -xf -
+}
