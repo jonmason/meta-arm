@@ -27,3 +27,9 @@ do_patch_append_fvp-base() {
     tar -C ${WORKDIR}/add-files/dts -cf - arm | \
         tar -C arch/arm64/boot/dts -xf -
 }
+
+#
+# Juno KMACHINE
+#
+COMPATIBLE_MACHINE_juno = "juno"
+KMACHINE_juno = "juno"

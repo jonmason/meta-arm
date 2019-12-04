@@ -21,3 +21,8 @@ SRC_URI_append_foundation-armv8 = " file://fvp/defconfig"
 COMPATIBLE_MACHINE_fvp-base = "fvp-base"
 
 SRC_URI_append_fvp-base = " file://fvp/defconfig"
+
+# Juno support
+COMPATIBLE_MACHINE_juno = "juno"
+
+SRC_URI_append_juno = " file://juno/defconfig"
