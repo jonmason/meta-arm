@@ -39,8 +39,3 @@ UBOOT_MACHINE = "vexpress_aemv8a_dram_defconfig"
 
 # Xen configuration
 XEN_CONFIG_EARLY_PRINTK = "fastmodel"
-
-# parameters for xen dtb generation in meta-auto
-XEN_DOM0_BOOTARGS_append = " root=/dev/vda2"
-XEN_XEN_BOOTARGS_append = " console=dtuart dtuart=serial0 bootscrub=0"
-

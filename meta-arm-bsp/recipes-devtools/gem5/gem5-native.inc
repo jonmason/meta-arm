@@ -24,9 +24,8 @@ inherit native pythonnative
 # google protobuf
 # pkgconfig
 # hdf5
-DEPENDS_append = " python-native python-scons-native python-six-native \
-                   protobuf-native hdf5-native pkgconfig-native boost-native \
-                   libpng-native"
+DEPENDS += "python-native python-scons-native python-six-native \
+    protobuf-native hdf5-native pkgconfig-native boost-native libpng-native"
 
 do_configure[noexec] = "1"
 

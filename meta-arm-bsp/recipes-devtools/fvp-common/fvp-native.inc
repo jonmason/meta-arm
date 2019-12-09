@@ -20,7 +20,7 @@ do_install() {
     install -d ${D}${bindir}
 }
 FILES_${PN} = "${datadir}/fvp/* ${bindir}/*"
-INSANE_SKIP_${PN}_append = "already-stripped"
+INSANE_SKIP_${PN} += "already-stripped"
 
 # This is required so that our binaries are in the sysroot. We need this
 # to have both fvp required libraries and fvp in the same sysroot.

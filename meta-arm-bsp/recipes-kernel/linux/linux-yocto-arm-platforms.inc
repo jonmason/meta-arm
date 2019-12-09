@@ -8,7 +8,7 @@
 FILESEXTRAPATHS_prepend := "${THISDIR}:${THISDIR}/files:"
 
 # Arm platforms kmeta
-SRC_URI_append = " file://arm-platforms-kmeta;type=kmeta;name=arm-platforms-kmeta;destsuffix=arm-platforms-kmeta"
+SRC_URI += "file://arm-platforms-kmeta;type=kmeta;name=arm-platforms-kmeta;destsuffix=arm-platforms-kmeta"
 
 #
 # FVP FOUNDATION KMACHINE

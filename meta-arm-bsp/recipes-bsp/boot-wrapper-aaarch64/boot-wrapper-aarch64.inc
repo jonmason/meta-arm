@@ -35,30 +35,30 @@ BOOT_WRAPPER_AARCH64_XEN_CMDLINE ??= "noreboot dom0_mem=256M"
 BOOT_WRAPPER_AARCH64_IMAGE ?= "${@bb.utils.contains('DISTRO_FEATURES', 'xen', \
         'xen-system.axf', 'linux-system.axf', d)}"
 
-DEPENDS += " virtual/kernel dtc-native"
+DEPENDS += "virtual/kernel dtc-native"
 
-EXTRA_OECONF_append = " --with-kernel-dir=${WORKDIR}/kernel"
-EXTRA_OECONF_append = " --with-dtb=${WORKDIR}/kernel/dummy.dtb"
-EXTRA_OECONF_append = " --with-cmdline=\"\""
-EXTRA_OECONF_append = " --enable-psci --enable-gicv3"
-EXTRA_OECONF_append = " ${@bb.utils.contains('DISTRO_FEATURES', 'xen', \
+EXTRA_OECONF += "--with-kernel-dir=${WORKDIR}/kernel"
+EXTRA_OECONF += "--with-dtb=${WORKDIR}/kernel/dummy.dtb"
+EXTRA_OECONF += "--with-cmdline=\"\""
+EXTRA_OECONF += "--enable-psci --enable-gicv3"
+EXTRA_OECONF += " ${@bb.utils.contains('DISTRO_FEATURES', 'xen', \
         '--with-xen=${WORKDIR}/kernel/arch/arm64/boot/Image', '', d)}"
-EXTRA_OECONF_append = " ${@bb.utils.contains('DISTRO_FEATURES', 'xen', \
+EXTRA_OECONF += "${@bb.utils.contains('DISTRO_FEATURES', 'xen', \
         '--with-xen-cmdline=\"\"', '', d)}"
 
 # unset LDFLAGS solves this error when compiling kernel modules:
 # aarch64-poky-linux-ld: unrecognized option '-Wl,-O1'
-EXTRA_OEMAKE_append = " 'LDFLAGS= --gc-sections '"
+EXTRA_OEMAKE += "'LDFLAGS= --gc-sections '"
 
 # Strip prefix if any
 REAL_DTB = "${@os.path.basename(d.getVar('BOOT_WRAPPER_AARCH64_DEVICETREE'))}"
 
-EXTRA_OEMAKE_append = " 'KERNEL_DTB=${DEPLOY_DIR_IMAGE}/${REAL_DTB}'"
-EXTRA_OEMAKE_append = " 'KERNEL_IMAGE=${DEPLOY_DIR_IMAGE}/${BOOT_WRAPPER_AARCH64_KERNEL}'"
-EXTRA_OEMAKE_append = " 'CMDLINE=${BOOT_WRAPPER_AARCH64_CMDLINE}'"
-EXTRA_OEMAKE_append = " ${@bb.utils.contains('DISTRO_FEATURES', 'xen', \
+EXTRA_OEMAKE += "'KERNEL_DTB=${DEPLOY_DIR_IMAGE}/${REAL_DTB}'"
+EXTRA_OEMAKE += "'KERNEL_IMAGE=${DEPLOY_DIR_IMAGE}/${BOOT_WRAPPER_AARCH64_KERNEL}'"
+EXTRA_OEMAKE += "'CMDLINE=${BOOT_WRAPPER_AARCH64_CMDLINE}'"
+EXTRA_OEMAKE += "${@bb.utils.contains('DISTRO_FEATURES', 'xen', \
         'XEN_IMAGE=${DEPLOY_DIR_IMAGE}/${BOOT_WRAPPER_AARCH64_XEN}', '', d)}"
-EXTRA_OEMAKE_append = " ${@bb.utils.contains('DISTRO_FEATURES', 'xen', \
+EXTRA_OEMAKE += "${@bb.utils.contains('DISTRO_FEATURES', 'xen', \
         'XEN_CMDLINE=\"${BOOT_WRAPPER_AARCH64_XEN_CMDLINE}\"', '', d)}"
 
 
@@ -77,10 +77,10 @@ do_compile[noexec] = "1"
 do_install[noexec] = "1"
 
 # We need the kernel to create an image
-do_deploy[depends] += " virtual/kernel:do_deploy"
+do_deploy[depends] += "virtual/kernel:do_deploy"
 
 # We need xen if it is activated
-do_deploy[depends] += " ${@bb.utils.contains('DISTRO_FEATURES', 'xen', 'xen:do_deploy', '', d)}"
+do_deploy[depends] += "${@bb.utils.contains('DISTRO_FEATURES', 'xen', 'xen:do_deploy', '', d)}"
 
 do_deploy() {
     if [ ! -f ${DEPLOY_DIR_IMAGE}/${REAL_DTB} ]; then

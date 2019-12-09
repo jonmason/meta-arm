@@ -41,8 +41,8 @@ DISK_IMG_PARTITION4_CONTENT ??= ""
 DISK_IMG_SECTOR_SIZE ??= "512"
 
 # We need mkfs.ext and parted tools to create our image (dd is always there)
-do_image_disk_img[depends] += " e2fsprogs-native:do_populate_sysroot \
-                         parted-native:do_populate_sysroot"
+do_image_disk_img[depends] += "e2fsprogs-native:do_populate_sysroot \
+    parted-native:do_populate_sysroot"
 
 DISK_IMG_FILE = "${IMGDEPLOYDIR}/${IMAGE_NAME}${IMAGE_NAME_SUFFIX}.disk.img"
 

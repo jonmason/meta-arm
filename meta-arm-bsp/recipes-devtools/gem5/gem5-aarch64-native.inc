@@ -4,7 +4,7 @@
 GEM5_BUILD_CONFIGS ?= "build/ARM/gem5.opt build/ARM/gem5.fast \
     build/ARM/gem5.debug"
 
-SRC_URI += " file://start-gem5.sh"
+SRC_URI += "file://start-gem5.sh"
 
 inherit deploy
 
