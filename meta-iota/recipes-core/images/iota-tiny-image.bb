@@ -12,7 +12,10 @@ LICENSE = "MIT"
 
 IMAGE_LINGUAS = " "
 IMAGE_FEATURES += "debug-tweaks"
-IMAGE_FSTYPES += " wic"
+
+IMAGE_CLASSES += "cramfs-xip"
+IMAGE_FSTYPES += " cramfs-xip wic"
+
 DEPENDS += "u-boot-mkimage-native"
 
 inherit core-image
