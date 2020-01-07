@@ -13,11 +13,6 @@ meta-arm-bsp:
 meta-arm-iota:
 	This layer provides support for Arm's IOTA Linux Distribution
 
-meta-arm-integration:
-	This layer provides support for OpenEmbedded and Yocto patches that have
-	yet to be accepted upstream
-
-
 Contributing
 ------------
 Currently, we only accept patches from the meta-arm mailing list.  For general
