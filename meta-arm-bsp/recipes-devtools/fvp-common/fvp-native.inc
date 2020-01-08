@@ -7,7 +7,7 @@
 
 SUMMARY = "Arm Fixed Virtual Platform"
 HOMEPAGE = "https://developer.arm.com/tools-and-software/simulation-models/fixed-virtual-platforms"
-LICENSE = "Proprietary & GPL & Apache"
+LICENSE = "Proprietary & GPLv2 & Apache-2"
 
 
 inherit native deploy
