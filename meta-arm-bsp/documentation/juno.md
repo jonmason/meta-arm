@@ -6,6 +6,10 @@
 In the local.conf file, MACHINE should be set as follow:
 MACHINE ?= "juno"
 
+Juno is using a USB hard drive for root filesystem by default. The distribution
+used must have ```usbhost``` and ```usbgadget``` in DISTRO_FEATURES (this is
+the case in poky distribution).
+
 ### Build:
 ```bash$ bitbake core-image-minimal```
 
