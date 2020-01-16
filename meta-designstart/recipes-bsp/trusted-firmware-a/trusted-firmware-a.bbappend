@@ -5,7 +5,4 @@
 
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
-SRC_URI += "\
-            file://0001-plat-arm-a5ds-dts-uart-clock.patch \
-	    "
-SRCREV = "af1ac83e0fa4e77aad13e1e8e47b6fcafeb17dbc"
+SRCREV = "5d3ee0764b03567bf3501edf47d67d72daff0cb3"
