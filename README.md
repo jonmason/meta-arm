@@ -13,6 +13,9 @@ meta-arm-bsp:
 meta-arm-iota:
 	This layer provides support for Arm's IOTA Linux Distribution
 
+meta-arm-toolchain:
+	This layer provides support for Arm's GNU-A toolset releases
+
 Contributing
 ------------
 Currently, we only accept patches from the meta-arm mailing list.  For general
