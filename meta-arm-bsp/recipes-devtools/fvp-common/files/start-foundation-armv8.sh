@@ -40,10 +40,10 @@ DISK_FILE=""
 FOUNDATION_PLAT_EXE="Foundation_Platform"
 
 # Foundation Platform arguments
+# 4 cores
+# gicv3 emulation (required for hardware virtualisation)
 FOUNDATION_PLAT_ARGS=" \
     --cores=4 \
-    --secure-memory \
-    --use-real-time \
     --gicv3"
 
 # Foundation Platform user arguments

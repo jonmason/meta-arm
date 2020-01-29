@@ -38,13 +38,11 @@ DISK_FILE=""
 FVPEXEC="FVP_Base_RevC-2xAEMv8A"
 
 # FVP arguments
+# enable virtio network
+# disable cache modelling to improve performances
 FVPARGS=" \
     -C bp.virtio_net.enabled=1 \
-    -C pctl.startup=0.0.0.0 \
-    -C bp.secure_memory=1 \
-    -C bp.tzc_400.diagnostics=1 \
-    -C cluster0.NUM_CORES=4 \
-    -C cluster1.NUM_CORES=4"
+    -C cache_state_modelled=0"
 
 # FVP user arguments
 EXTRA_ARGS=""
