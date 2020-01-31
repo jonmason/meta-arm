@@ -11,8 +11,7 @@ inherit python3native
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
 SRC_URI = "gitsm://${USER}@git.linaro.org/landing-teams/working/arm/external-system.git;protocol=https;branch=master"
-SRCREV = "CORSTONE-700-2019.09.23"
-
+SRCREV="211f64282cde60e87eb030500cb8ebbd03eba328"
 S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
 
