@@ -5,7 +5,7 @@ set -u
 set -e
 
 # Get parameters from bitbake configuration
-source <(bitbake -e foundation-armv8-native | grep \
+source <(MACHINE=foundation-armv8 bitbake -e foundation-armv8-native | grep \
     -e "^STAGING_.*_NATIVE=" \
     -e "^DEPLOY_DIR.*=")
 

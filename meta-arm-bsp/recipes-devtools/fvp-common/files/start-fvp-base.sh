@@ -5,7 +5,7 @@ set -u
 set -e
 
 # Get parameters from bitbake configuration
-source <(bitbake -e fvp-base-native | grep \
+source <(MACHINE=fvp-base bitbake -e fvp-base-native | grep \
     -e "^STAGING_.*_NATIVE=" \
     -e "^DEPLOY_DIR.*=")
 
