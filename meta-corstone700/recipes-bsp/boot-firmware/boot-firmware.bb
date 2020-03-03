@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 #
-# Copyright (c) 2019 Arm Limited
+# Copyright (c) 2019-2020 Arm Limited
 #
 
 SUMMARY = "Boot Processor firmware"
@@ -15,7 +15,7 @@ inherit python3native
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
 SRC_URI = "gitsm://${USER}@git.linaro.org/landing-teams/working/arm/boot-firmware.git;protocol=https;branch=master"
-SRCREV="2569f6de92e6039717200f196ec0a6b77a38556d"
+SRCREV = "CORSTONE-700-2020.02.10"
 S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
 

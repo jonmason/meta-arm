@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: MIT
+#
+# Copyright (c) 2019-2020 Arm Limited
+#
+
 SUMMARY = "External system Cortex-M3 Firmware"
 DESCRIPTION = "External system Firmware"
 HOMEPAGE = "https://gerrit.oss.arm.com/#/admin/projects/EP/src/ExternalSystem"
@@ -11,7 +16,7 @@ inherit python3native
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
 SRC_URI = "gitsm://${USER}@git.linaro.org/landing-teams/working/arm/external-system.git;protocol=https;branch=master"
-SRCREV="211f64282cde60e87eb030500cb8ebbd03eba328"
+SRCREV = "CORSTONE-700-2020.02.10"
 S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
 

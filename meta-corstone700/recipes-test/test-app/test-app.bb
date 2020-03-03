@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: MIT
+#
+# Copyright (c) 2019-2020 Arm Limited
+#
+
 SUMMARY = "CORSTONE700 Host Test App"
 DESCRIPTION = "CORSTONE700 Host Test App"
 DEPENDS += " coreutils-native "
@@ -7,7 +12,7 @@ LIC_FILES_CHKSUM = "file://license.md;md5=e44b2531cd6ffe9dece394dbe988d9a0"
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
 SRC_URI = "git://${USER}@git.linaro.org/landing-teams/working/arm/test-apps.git;protocol=https;branch=master"
-SRCREV = "CORSTONE-700-2019.09.23"
+SRCREV = "CORSTONE-700-2020.02.10"
 
 S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
