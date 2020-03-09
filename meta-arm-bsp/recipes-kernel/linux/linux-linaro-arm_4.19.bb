@@ -11,6 +11,7 @@ SRCREV_meta ?= "ad6f8b357720ca8167a090713b7746230cf4b314"
 
 SRC_URI = "git://git.linaro.org/landing-teams/working/arm/kernel-release.git;name=machine;branch=${KBRANCH}; \
            git://git.yoctoproject.org/yocto-kernel-cache;type=kmeta;name=meta;branch=yocto-4.19;destsuffix=${KMETA} \
+           file://0001-menuconfig-mconf-cfg-Allow-specification-of-ncurses-location.patch \
           "
 
 LIC_FILES_CHKSUM = "file://COPYING;md5=bbea815ee2795b2f4230826c0c6b8814"
