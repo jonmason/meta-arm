@@ -1,0 +1,31 @@
+From d3cadbc6f1060020960dc05af0465db919bbbe2b Mon Sep 17 00:00:00 2001
+From: Rui Miguel Silva <rui.silva@linaro.org>
+Date: Fri, 30 Aug 2019 13:38:44 +0100
+Subject: [PATCH] plat/arm: a5ds: move dtb to a new address
+
+When Using bigger kernel images (>8.4MB compressed zImage) and at
+decompress and final location init stage of kernel start makes it
+override dtb at this address, to avoid this move the dtb a little
+higher in address related.
+
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+---
+ plat/arm/board/a5ds/fdts/a5ds_tb_fw_config.dts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/plat/arm/board/a5ds/fdts/a5ds_tb_fw_config.dts b/plat/arm/board/a5ds/fdts/a5ds_tb_fw_config.dts
+index 9ab2d9656600..c616ff772237 100644
+--- a/plat/arm/board/a5ds/fdts/a5ds_tb_fw_config.dts
++++ b/plat/arm/board/a5ds/fdts/a5ds_tb_fw_config.dts
+@@ -10,7 +10,7 @@
+       /* Platform Config */
+       plat_arm_bl2 {
+               compatible = "arm,tb_fw";
+-              hw_config_addr = <0x0 0x82000000>;
++              hw_config_addr = <0x0 0x83000000>;
+               hw_config_max_size = <0x01000000>;
+               /* Disable authentication for development */
+               disable_auth = <0x0>;
+--
+2.22.1
+
