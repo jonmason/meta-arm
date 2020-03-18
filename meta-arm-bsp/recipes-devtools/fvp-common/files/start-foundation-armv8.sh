@@ -41,9 +41,11 @@ FOUNDATION_PLAT_EXE="Foundation_Platform"
 
 # Foundation Platform arguments
 # 4 cores
+# Disable Scalable Vector Extension (SVE)
 # gicv3 emulation (required for hardware virtualisation)
 FOUNDATION_PLAT_ARGS=" \
     --cores=4 \
+    --no-sve \
     --gicv3"
 
 # Foundation Platform user arguments
