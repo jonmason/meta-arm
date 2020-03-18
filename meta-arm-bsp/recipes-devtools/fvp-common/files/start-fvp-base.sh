@@ -12,7 +12,7 @@ source <(MACHINE=fvp-base bitbake -e fvp-base-native | grep \
 
 # Bitbake image to run
 IMAGE_NAME="$(cd $DEPLOY_DIR_IMAGE; ls *-fvp-base.manifest | \
-    sed -e "s/-fvp-base\.manifest//")"
+    sed -e "s/-fvp-base\.manifest//" | head -1)"
 
 # BL1 and FIP files
 BL1_FILE="bl1-fvp.bin"
@@ -202,6 +202,16 @@ if [ -n "$KERNEL_FILE" ]; then
         --data cluster0.cpu0=$DEPLOY_DIR_IMAGE/$KERNEL_FILE@$KERNEL_ADDR"
 fi
 
+# Add xen if present
+if [ -n "$XEN_FILE" -a -f $DEPLOY_DIR_IMAGE/$XEN_FILE ]; then
+    FVPARGS="$FVPARGS \
+        --data cluster0.cpu0=$DEPLOY_DIR_IMAGE/$XEN_FILE@$XEN_ADDR"
+   #switch dtb if there
+   if [ -f $DEPLOY_DIR_IMAGE/$(basename ${DTB_FILE} .dtb)-xen.dtb ]; then
+      DTB_FILE=$(basename ${DTB_FILE} .dtb)-xen.dtb
+   fi
+fi
+
 # Add DTB
 if [ -n "$DTB_FILE" ]; then
     if [ ! -f $DEPLOY_DIR_IMAGE/$DTB_FILE ]; then
@@ -210,12 +220,6 @@ if [ -n "$DTB_FILE" ]; then
     fi
     FVPARGS="$FVPARGS \
         --data cluster0.cpu0=$DEPLOY_DIR_IMAGE/$DTB_FILE@$DTB_ADDR"
-fi
-
-# Add xen if present
-if [ -n "$XEN_FILE" -a -f $DEPLOY_DIR_IMAGE/$XEN_FILE ]; then
-    FVPARGS="$FVPARGS \
-        --data cluster0.cpu0=$DEPLOY_DIR_IMAGE/$XEN_FILE@$XEN_ADDR"
 fi
 
 # Add disk if present
