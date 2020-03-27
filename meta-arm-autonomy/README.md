@@ -7,6 +7,9 @@ This layer provides an hypervisor based solution (currently based on Xen) for
 autonomous system. It contains recipes and classes to build host and guests
 systems.
 
+To start using this layer, please check the
+[Quick Start Guide](documentation/arm-autonomy-quickstart.md).
+
 Dependencies
 ------------
 This layer depends on several other Yocto layers:
