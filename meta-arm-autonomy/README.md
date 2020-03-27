@@ -40,6 +40,7 @@ Each recipe introducing such variables has a chapter "Bitbake parameters" in
 its documentation.
 
 Those documentation files should be checked for variables:
+- [xen-devicetree](documentation/xen-devicetree.md)
 
 BSPs
 ----
@@ -62,6 +63,9 @@ This layer is adding the following images:
 Recipes and classes
 -------------------
 This layer is adding the following recipes and classes:
+
+* [xen-devicetree](documentation/xen-devicetree.md): this is a recipe to modify
+  a device tree blob to add information required to boot xen and a Dom0 linux.
 
 Contributing
 ------------

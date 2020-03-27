@@ -18,6 +18,9 @@ IMAGE_INSTALL += " \
     qemu \
     "
 
+# Build xen-devicetree to produce a xen ready devicetree
+EXTRA_IMAGEDEPENDS += "xen-devicetree"
+
 python __anonymous() {
     if bb.utils.contains('DISTRO_FEATURES', 'arm-autonomy-host', False, True, d):
         raise bb.parse.SkipRecipe("DISTRO_FEATURES does not contain 'arm-autonomy-host'")

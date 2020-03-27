@@ -1,0 +1,17 @@
+/ {
+    chosen {
+        xen,dom0-bootargs = "###XEN_DOM0_BOOTARGS###";
+        xen,xen-bootargs = "###XEN_XEN_BOOTARGS###";
+
+        modules {
+            #size-cells = <0x00000001>;
+            #address-cells = <0x00000001>;
+
+            module@0 {
+                reg = <###XEN_DOM0_ADDR### ###XEN_DOM0_SIZE###>;
+                compatible = "multiboot,module";
+            };
+        };
+    };
+};
+
