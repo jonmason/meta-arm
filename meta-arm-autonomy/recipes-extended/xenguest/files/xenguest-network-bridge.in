@@ -1,0 +1,44 @@
+#!/bin/sh
+#
+# Xenguest Network Bridge init
+# This script creates a network bridge and add host interfaces to it
+# It will then be used by xen guests to connect to the external nework
+#
+
+INTFS="###BRIDGE_MEMBERS###"
+BR_INTF="###BRIDGE_NAME###"
+
+case "$1" in
+  start)
+        echo "Starting $BR_INTF"
+        brctl addbr $BR_INTF
+        for intf in $INTFS; do
+            echo "Adding $intf to $BR_INTF"
+            brctl addif $BR_INTF $intf
+        done
+        ;;
+  status)
+        true
+        ;;
+  stop)
+        echo "Stopping $BR_INTF"
+        ifdown $BR_INTF
+        brctl delbr $BR_INTF
+        ;;
+  reload)
+        echo >&2 'Reload not available; use force-reload'; exit 1
+        ;;
+  force-reload|restart)
+        echo "Restarting host-bridge"
+        $0 stop
+        $0 start
+        ;;
+  *)
+        # do not advertise unreasonable commands that there is no reason
+        # to use with this device
+        echo $"Usage: $0 {start|stop|status|restart|force-reload}"
+        exit 1
+esac
+
+exit $?
+

@@ -42,6 +42,7 @@ its documentation.
 Those documentation files should be checked for variables:
 - [xen-devicetree](documentation/xen-devicetree.md)
 - [xenguest-manager](documentation/xenguest-manager.md)
+- [xenguest-network-bridge](documentation/xenguest-network-bridge.md)
 
 BSPs
 ----
@@ -73,6 +74,10 @@ This layer is adding the following recipes and classes:
 
 * [xenguest-manager](documentation/xenguest-manager.md): this is a tool to
   create/remove/start/stop xen guest generated using xenguest-mkimage.
+
+* [xenguest-network-bridge](documentation/xenguest-network-bridge.md): this
+  recipe add tools and init scripts to create a bridge connected to the
+  external network on the host and allow guests to be connected to it.
 
 Contributing
 ------------

@@ -61,6 +61,11 @@ XENGUEST_IMAGE_DISK_SIZE ??= "${@ '4' if not d.getVar('INITRAMFS_IMAGE') else '0
 # and containing the root filesystem produced by Yocto
 XENGUEST_IMAGE_DISK_PARTITIONS ??= "1:${XENGUEST_IMAGE_DISK_SIZE}:ext4:rootfs.tar.gz"
 
+# XENGUEST_IMAGE_NETWORK_BRIDGE can be set to 1 to have a network interface
+# on the guest connected to host bridged network. This will provide the guest
+# with a network interface connected directly to the external network
+XENGUEST_IMAGE_NETWORK_BRIDGE ??= "1"
+
 # Sub-directory in wich the guest is created. This is create in deploy as a
 # subdirectory and must be coherent between all components using this class so
 # it must only be modified from local.conf if needed
@@ -143,6 +148,12 @@ xenguest_image_create() {
         call_xenguest_mkimage update --set-param=GUEST_AUTOBOOT=1
     else
         call_xenguest_mkimage update --set-param=GUEST_AUTOBOOT=0
+    fi
+
+    if [ "${XENGUEST_IMAGE_NETWORK_BRIDGE}" = "1" ]; then
+        call_xenguest_mkimage update --set-param=NETWORK_BRIDGE=1
+    else
+        call_xenguest_mkimage update --set-param=NETWORK_BRIDGE=0
     fi
 }
 

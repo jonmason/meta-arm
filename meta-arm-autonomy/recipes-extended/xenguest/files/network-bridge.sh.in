@@ -1,0 +1,15 @@
+#!/bin/sh
+# This script is setting up a virtual network interface connected to the
+# xenguest-network-bridge if NETWORK_BRIDGE is set to 1 in the guest params
+
+guestname="${1}"
+
+BRIDGE_NAME="###BRIDGE_NAME###"
+
+# get guest parameters
+. ./params.cfg
+
+if [ "${NETWORK_BRIDGE:-}" = "1" ]; then
+    echo "vif = ['${BRIDGE_NAME}']" >> ${guestname}.cfg
+fi
+

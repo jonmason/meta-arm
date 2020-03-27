@@ -1,0 +1,3 @@
+# Xenguest Network Bridge interface configuration
+auto ###BRIDGE_NAME###
+iface ###BRIDGE_NAME### inet dhcp

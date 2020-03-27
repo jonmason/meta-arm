@@ -17,6 +17,7 @@ IMAGE_INSTALL += " \
     xen-base \
     qemu \
     xenguest-manager \
+    xenguest-network-bridge \
     "
 
 # Build xen-devicetree to produce a xen ready devicetree
