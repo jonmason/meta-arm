@@ -23,6 +23,12 @@ This layer is adding the following Yocto DISTRO_FEATURES:
   - add 'xen' and 'ipv4' to DISTRO_FEATURES.
   - add xen backend drivers to linux kernel configuration.
 
+* arm-autonomy-guest: this feature activates functionalities to run as guest
+  of an autonomy system. It is doing the following:
+  - add 'ipv4' to DISTRO_FEATURES.
+  - add xen frontend drivers to linux kernel configuration.
+  - add console on hvc0 during init.
+
 Bitbake variables
 -----------------
 Some recipes and classes in this layer are introducing variables which can be

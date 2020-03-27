@@ -1,0 +1,4 @@
+define KFEATURE_DESCRIPTION "Enable XEN Guest Frontend Drivers"
+
+kconf non-hardware xen-guest.cfg
+
