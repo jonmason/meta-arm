@@ -40,6 +40,11 @@ Images
 ------
 This layer is adding the following images:
 
+* arm-autonomy-host-image-minimal: this image includes all elements required
+  to create a minimal arm-autonomy-host system. This includes xen and tools to
+  manage xen guests. This image depends on 'arm-autonomy-host' distribution
+  feature.
+
 Recipes and classes
 -------------------
 This layer is adding the following recipes and classes:
