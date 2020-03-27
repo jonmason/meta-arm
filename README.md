@@ -16,6 +16,9 @@ meta-arm-iota:
 meta-arm-toolchain:
 	This layer provides support for Arm's GNU-A toolset releases
 
+meta-arm-autonomy:
+    This layer provides a reference stack for autonomous systems.
+
 Contributing
 ------------
 Currently, we only accept patches from the meta-arm mailing list.  For general
