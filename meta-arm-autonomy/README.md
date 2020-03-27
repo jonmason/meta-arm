@@ -18,6 +18,11 @@ Distribution Features
 ---------------------
 This layer is adding the following Yocto DISTRO_FEATURES:
 
+* arm-autonomy-host: this feature activates functionalities required to build
+  an autonomy host system. It is doing the following:
+  - add 'xen' and 'ipv4' to DISTRO_FEATURES.
+  - add xen backend drivers to linux kernel configuration.
+
 Bitbake variables
 -----------------
 Some recipes and classes in this layer are introducing variables which can be
