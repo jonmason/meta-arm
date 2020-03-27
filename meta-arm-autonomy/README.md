@@ -42,6 +42,11 @@ BSPs
 ----
 This layer is adding the following machines:
 
+* arm64-autonomy-guest: this machines creates a minimal BSP suitable to be used
+  as an autonomy guest. It is in fact only activating ARM64 architecture and
+  SMP in the linux kernel and is enabling the DISTRO_FEATURE
+  arm-autonomy-guest.
+
 Images
 ------
 This layer is adding the following images:

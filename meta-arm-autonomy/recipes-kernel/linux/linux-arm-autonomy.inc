@@ -14,3 +14,8 @@ KERNEL_FEATURES += "${@bb.utils.contains('DISTRO_FEATURES', \
 # Add xen guest drivers to kernel if arm-autonomy-guest is activated
 KERNEL_FEATURES += "${@bb.utils.contains('DISTRO_FEATURES', \
         'arm-autonomy-guest', 'features/arm-autonomy/xen-guest.scc', '', d)}"
+
+# Add support for arm64-autonomy-guest machine
+COMPATIBLE_MACHINE_arm64-autonomy-guest = "arm64-autonomy-guest"
+KMACHINE_arm64-autonomy-guest = "arm64-autonomy-guest"
+
