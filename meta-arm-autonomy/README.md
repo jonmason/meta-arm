@@ -67,6 +67,9 @@ This layer is adding the following recipes and classes:
 * [xen-devicetree](documentation/xen-devicetree.md): this is a recipe to modify
   a device tree blob to add information required to boot xen and a Dom0 linux.
 
+* [xenguest-mkimage](documentation/xenguest-mkimage.md): this is a tool to
+  create and modify images to be used as Xen guests.
+
 Contributing
 ------------
 This project has not put in place a process for contributions currently. If you
