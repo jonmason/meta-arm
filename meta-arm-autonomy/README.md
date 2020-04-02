@@ -41,6 +41,7 @@ its documentation.
 
 Those documentation files should be checked for variables:
 - [xen-devicetree](documentation/xen-devicetree.md)
+- [xenguest-manager](documentation/xenguest-manager.md)
 
 BSPs
 ----
@@ -69,6 +70,9 @@ This layer is adding the following recipes and classes:
 
 * [xenguest-mkimage](documentation/xenguest-mkimage.md): this is a tool to
   create and modify images to be used as Xen guests.
+
+* [xenguest-manager](documentation/xenguest-manager.md): this is a tool to
+  create/remove/start/stop xen guest generated using xenguest-mkimage.
 
 Contributing
 ------------

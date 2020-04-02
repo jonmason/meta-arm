@@ -1,0 +1,640 @@
+#!/bin/bash
+# This script manages xenguest
+#
+set -u
+this="$0"
+
+XENGUEST_CONF_BASE="/etc/xenguest"
+LOGFILE="/var/log/xenguest"
+
+if [ ! -f ${XENGUEST_CONF_BASE}/xenguest-manager.conf ]; then
+    echo "Cannot find xenguest manager configuration"
+    exit 1
+fi
+
+# Following variables must be set in configuration:
+# XENGUEST_VOLUME_DEVICE: device to use for lvm
+# XENGUEST_VOLUME_NAME: lvm volume name to create on device
+source ${XENGUEST_CONF_BASE}/xenguest-manager.conf
+
+PREF="xenguest:"
+
+if [ -z "${XENGUEST_VOLUME_DEVICE:-}" -o \
+    ! -b ${XENGUEST_VOLUME_DEVICE:-} ]; then
+    echo "${PREF} Invalid volume device in configuration: ${XENGUEST_VOLUME_DEVICE:-}"
+    exit 1
+fi
+
+if [ -z "${XENGUEST_VOLUME_NAME:-}" ]; then
+    echo "${PREF} No volume name in configuration, using vg-xen..."
+    XENGUEST_VOLUME_NAME="vg-xen"
+fi
+
+function usage() {
+    cat <<EOF
+Usage $this ACTION [OPTIONS]
+
+with ACTION being one of:
+ help
+   Display this help
+
+ create GUESTFILE [GUESTNAME]
+   Create a guest using xenguest image GUESTFILE and name it GUESTNAME.
+   This will extract and configure the guest and will also create the guest
+   disk if guest has one configured.
+   GUESTNAME is set to the basename of GUESTFILE if unspecified.
+   GUESTNAME guest must not exist
+
+ remove GUESTNAME
+   Remove GUESTNAME and destroy its disk (if it has one)
+
+ start GUESTNAME
+   Start guest GUESTNAME
+
+ stop|shutdown GUESTNAME
+   Stop guest GUESTNAME (send stop signal and let it shutdown normally)
+
+ kill|destroy GUESTNAME
+   Kill guest GUESTNAME (stop directly the guest without signaling it)
+
+ list
+   List configured guests
+
+ status
+   List guests and their current status (running or stopped)
+EOF
+}
+
+function xenguest_volume_init()
+{
+    pvs ${XENGUEST_VOLUME_DEVICE} > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "${PREF} Initialize lvm on ${XENGUEST_VOLUME_DEVICE}"
+        echo "pvcreate -f ${XENGUEST_VOLUME_DEVICE}" >> ${LOGFILE} 2>&1
+        pvcreate -f ${XENGUEST_VOLUME_DEVICE} >> ${LOGFILE} 2>&1
+        if [ $? -ne 0 ]; then
+            echo "${PREF} Error"
+            exit 1
+        fi
+    fi
+    vgs ${XENGUEST_VOLUME_NAME} > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "${PREF} Create ${XENGUEST_VOLUME_NAME} volume"
+        echo "vgcreate ${XENGUEST_VOLUME_NAME} ${XENGUEST_VOLUME_DEVICE}" \
+            >> ${LOGFILE} 2>&1
+        vgcreate ${XENGUEST_VOLUME_NAME} ${XENGUEST_VOLUME_DEVICE} \
+            >> ${LOGFILE} 2>&1
+        if [ $? -ne 0 ]; then
+            echo "${PREF} Error"
+            exit 1
+        fi
+    fi
+}
+
+# Detach a disk we attached to xen
+function xenguest_detach_disk()
+{
+    echo "xl block-detach 0 \$\(xl block-list 0 | " \
+        "grep \"domain/0\" | awk '{print \$1}'\)" \
+            >> ${LOGFILE} 2>&1
+    xl block-detach 0 $(xl block-list 0 | \
+        grep "domain/0" | awk '{print $1}') \
+        >> ${LOGFILE} 2>&1
+    if [ $? -ne 0 ]; then
+        echo "${PREF} Error detaching partition ${part}"
+        exit 1
+    fi
+}
+
+function xenguest_disk_init()
+{
+    guestname="$1"
+    guestfile="$2"
+    devname="/dev/${XENGUEST_VOLUME_NAME}/${guestname}"
+
+    source ${XENGUEST_CONF_BASE}/guests/${guestname}/disk.cfg
+
+    if [ ${DISK_SIZE:-0} -eq 0 ]; then
+        echo "${PREF} No disk for ${guestname}"
+        return
+    fi
+
+    echo "${PREF} Create ${guestname} disk"
+
+    # Init our volume
+    xenguest_volume_init
+
+    echo "${PREF} Create hard drive for ${guestname}"
+
+
+    # Remove volume if it already exist
+    echo "lvs ${XENGUEST_VOLUME_NAME}/${guestname}"  >> ${LOGFILE} 2>&1
+    lvs ${XENGUEST_VOLUME_NAME}/${guestname} >> ${LOGFILE} 2>&1
+    if [ $? -eq 0 ]; then
+        echo "lvremove -y ${devname}" >> ${LOGFILE} 2>&1
+        lvremove -y ${devname} >> ${LOGFILE} 2>&1
+        if [ $? -ne 0 ]; then
+            echo "${PREF} Error removing volume ${guestname}"
+            exit 1
+        fi
+    fi
+
+    # Create volume
+    echo "lvcreate -y -L ${DISK_SIZE}G -n ${guestname} ${XENGUEST_VOLUME_NAME}" \
+        >> ${LOGFILE} 2>&1
+    lvcreate -y -L ${DISK_SIZE}G -n ${guestname} ${XENGUEST_VOLUME_NAME} \
+        >> ${LOGFILE} 2>&1
+    if [ $? -ne 0 ]; then
+        echo "${PREF} Error creating volume ${guestname}"
+        exit 1
+    fi
+
+    # Add partition table
+    echo "parted -s ${devname} mklabel msdos" >> ${LOGFILE} 2>&1
+    parted -s ${devname} mklabel msdos >> ${LOGFILE} 2>&1
+    if [ $? -ne 0 ]; then
+        echo "${PREF} Error creating partition table on ${guestname}"
+        exit 1
+    fi
+
+    # Setup disk name in xen configuration
+    echo "xenguest-mkimage update ${XENGUEST_CONF_BASE}/guests/${guestname}" \
+        "--xen-disk=${devname}" >> ${LOGFILE} 2>&1
+    xenguest-mkimage update ${XENGUEST_CONF_BASE}/guests/${guestname} \
+        --xen-disk=${devname} >> ${LOGFILE} 2>&1
+    if [ $? -ne 0 ]; then
+        echo "${PREF} Error setting disk in xen configuration"
+        exit 1
+    fi
+
+    # Create partitions
+    partstart="0"
+
+    # For each partition X the disk.cfg file should set a variable DISK_PARTX
+    # with a : separated list defining the partition:
+    # DISK_PART3="4:ext4:disk.tgz" means that partition 3 should be 4G formated
+    # with ext4 and initialized with the content of disk.tgz
+    for part in $(seq 1 4); do
+        eval partdesc="\${DISK_PART${part}:-0}"
+        size=$(echo ${partdesc} | sed -e "s/\(.*\):.*:.*/\1/")
+        fstype=$(echo ${partdesc} | sed -e "s/.*:\(.*\):.*/\1/")
+        content=$(echo ${partdesc} | sed -e "s/.*:.*:\(.*\)/\1/")
+
+        if [ "${size}" -ne 0 ]; then
+            # Size is expressed in GB, pass it in MB
+            size=$(expr ${size} \* 1024)
+            partend=$(expr ${partstart} + ${size})
+
+            # Let first MB of disk free for partition table
+            if [ ${partstart} -eq 0 ]; then
+                partstart="1"
+            fi
+
+            # Create partition
+            echo "parted -s ${devname} unit MB mkpart primary ${partstart}" \
+                "${partend}" >> ${LOGFILE} 2>&1
+            parted -s ${devname} unit MB mkpart primary ${partstart} \
+                ${partend} >> ${LOGFILE} 2>&1
+            if [ $? -ne 0 ]; then
+                echo "${PREF} Error adding partition ${part}"
+                exit 1
+            fi
+
+            # Set next partition start to current partition end
+            partstart="${partend}"
+
+            # Sync to see the created partition
+            echo "sync" >> ${LOGFILE} 2>&1
+            sync >> ${LOGFILE} 2>&1
+
+            # Prepare format command
+            if [ -n "${fstype}" ]; then
+                case ${fstype} in
+                    vfat|ext2|ext3|ext4)
+                        formatcmd="mkfs.${fstype} -F"
+                        ;;
+                    swap)
+                        formatcmd="mkswap"
+                        ;;
+                    *)
+                        echo "${PREF} partition ${part} of ${guestname}" \
+                            "fstype is invalid: ${fstype}"
+                        exit 1
+                        ;;
+                esac
+            else
+                formatcmd=""
+            fi
+
+            # Attach disk to xen
+            echo "xl block-attach 0 phy:${devname} xvda w" >> ${LOGFILE} 2>&1
+            xl block-attach 0 phy:${devname} xvda w >> ${LOGFILE} 2>&1
+            if [ $? -ne 0 ]; then
+                echo "${PREF} Error attaching partition ${part}"
+                exit 1
+            fi
+
+            # Sometimes it takes time to see the device
+            if [ ! -b /dev/xvda${part} ]; then
+                sleep 1
+            fi
+            if [ ! -b /dev/xvda${part} ]; then
+                echo "${PREF} Partition ${part} creation error"
+                xenguest_detach_disk
+                exit 1
+            fi
+
+            if [ -n "${formatcmd}" ]; then
+                echo "${formatcmd} /dev/xvda${part}" >> ${LOGFILE} 2>&1
+                ${formatcmd} /dev/xvda${part}
+                if [ $? -ne 0 ]; then
+                    echo "${PREF} Cannot create partition ${part} FS"
+                    xenguest_detach_disk
+                    exit 1
+                fi
+            fi
+
+            case ${content} in
+                *.img)
+                    # dd into partition
+                    echo "xenguest-mkimage extract-disk-file ${guestfile} " \
+                        "${content} | dd of=/dev/xvda${part} " >> ${LOGFILE} 2>&1
+                    xenguest-mkimage extract-disk-file ${guestfile} ${content} \
+                        | dd of=/dev/xvda${part} >> ${LOGFILE} 2>&1
+                    if [ $? -ne 0 ]; then
+                        echo "${PREF} Cannot populate partition ${part}"
+                        xenguest_detach_disk
+                        exit 1
+                    fi
+                    ;;
+                *.tar*)
+                    tararg=""
+                    case ${content} in
+                        *.tar.gz)
+                            tararg="z"
+                            ;;
+                        *.tar.bz2)
+                            tararg="j"
+                            ;;
+                        *.tar.xz)
+                            tararg="J"
+                            ;;
+                        *.tar)
+                            tararg=""
+                            ;;
+                        *)
+                            # invalid/unknown tar type
+                            echo "${PREF} Invalid file format in disk ${content}"
+                            xenguest_detach_disk
+                            exit 1
+                            ;;
+                    esac
+
+                    # must mount the partition and extract
+                    mntdir=$(mktemp -d)
+                    echo "mount /dev/xvda${part} ${mntdir}" >> ${LOGFILE} 2>&1
+                    mount /dev/xvda${part} ${mntdir} >> ${LOGFILE} 2>&1
+                    if [ $? -ne 0 ]; then
+                        echo "${PREF} Cannot mount partition ${part}"
+                        xenguest_detach_disk
+                        rm -rf ${mntdir}
+                        exit 1
+                    fi
+
+                    # tar and unmount
+                    echo "xenguest-mkimage extract-disk-file ${guestfile}" \
+                        "${content} | tar -C ${mntdir} -x${tararg}f - " \
+                            >> ${LOGFILE} 2>&1
+                    xenguest-mkimage extract-disk-file ${guestfile} ${content} \
+                        | tar -C ${mntdir} -x${tararg}f - >> ${LOGFILE} 2>&1
+                    if [ $? -ne 0 ]; then
+                        echo "${PREF} Cannot populate partition ${part}"
+                        umount ${mntdir}
+                        rm -rf ${mntdir}
+                        xenguest_detach_disk
+                        exit 1
+                    fi
+                    echo "umount ${mntdir}" >> ${LOGFILE} 2>&1
+                    umount ${mntdir} >> ${LOGFILE} 2>&1
+                    if [ $? -ne 0 ]; then
+                        echo "${PREF} Error unmounting ${part}"
+                        xenguest_detach_disk
+                        rm -rf ${mntdir}
+                        exit 1
+                    fi
+                    rm -rf ${mntdir}
+                    ;;
+                *)
+                    #invalid content type
+                    ;;
+            esac
+
+            # Detach disk
+            xenguest_detach_disk
+        fi
+    done
+
+}
+
+function xenguest_guest_create()
+{
+    guestfile="$1"
+    guestname="$2"
+
+    # extract xenguest tar
+    # put xen config in etc ?
+    # if disk config file:
+    #  disk init
+    #  add partititions
+
+    echo "${PREF} Create ${guestname} using ${guestfile}"
+    rm -rf ${XENGUEST_CONF_BASE}/guests/${guestname}
+    mkdir -p ${XENGUEST_CONF_BASE}/guests/${guestname}
+
+    echo "xenguest-mkimage extract-config ${guestfile}" \
+        "${XENGUEST_CONF_BASE}/guests/${guestname}" >> ${LOGFILE} 2>&1
+    xenguest-mkimage extract-config ${guestfile} \
+        ${XENGUEST_CONF_BASE}/guests/${guestname} >> ${LOGFILE} 2>&1
+    if [ $? -ne 0 ]; then
+        echo "${PREF} Error extracting guest image"
+        exit 1
+    fi
+
+    # Set guest name inside config
+    echo "xenguest-mkimage update ${XENGUEST_CONF_BASE}/guests/${guestname}" \
+        "--xen-name=${guestname}" >> ${LOGFILE} 2>&1
+    xenguest-mkimage update ${XENGUEST_CONF_BASE}/guests/${guestname} \
+        --xen-name=${guestname} >> ${LOGFILE} 2>&1
+    if [ $? -ne 0 ]; then
+        echo "${PREF} Error setting guest name"
+        exit 1
+    fi
+
+    xenguest_disk_init ${guestname} ${guestfile}
+}
+
+function xenguest_guest_remove()
+{
+    guestname="$1"
+    devname="/dev/${XENGUEST_VOLUME_NAME}/${guestname}"
+
+    # check if guest had a volume
+    echo "lvs ${XENGUEST_VOLUME_NAME}/${guestname}"  >> ${LOGFILE} 2>&1
+    lvs ${XENGUEST_VOLUME_NAME}/${guestname} >> ${LOGFILE} 2>&1
+    if [ $? -eq 0 ]; then
+        # Remove guest volume
+        echo "lvremove -y ${devname}" >> ${LOGFILE} 2>&1
+        lvremove -y ${devname} >> ${LOGFILE} 2>&1
+        if [ $? -ne 0 ]; then
+            echo "${PREF} Error removing volume ${guestname}"
+            exit 1
+        fi
+    fi
+
+    # remove guest files
+    rm -rf ${XENGUEST_CONF_BASE}/guests/${guestname}
+}
+
+function xenguest_guest_start()
+{
+    guestname="${1}"
+    guestdir=${XENGUEST_CONF_BASE}/guests/${guestname}
+
+    # Get guest configuration
+    source ${guestdir}/params.cfg
+
+    pushd ${guestdir} > /dev/null 2>&1
+
+    # create config by merging all configurations together
+    cat guest.cfg $(find guest.d -type f 2> /dev/null) > ${guestname}.cfg
+
+    # Build init script lists (ignore non existing dirs errors,
+    # sort alphabetically and run global scripts first)
+    init_pre="$(find ${XENGUEST_CONF_BASE}/init.pre -type f 2> /dev/null | \
+            sort) $(find ${guestdir}/init.pre -type f 2> /dev/null | sort)"
+    init_d="$(find ${XENGUEST_CONF_BASE}/init.d -type f 2> /dev/null | \
+            sort) $(find ${guestdir}/init.d -type f 2> /dev/null | sort)"
+    init_post="$(find ${XENGUEST_CONF_BASE}/init.post -type f 2> /dev/null | \
+            sort) $(find ${guestdir}/init.post -type f 2> /dev/null | sort)"
+
+    # call pre init scripts
+    for f in ${init_pre}; do
+        echo "$f ${guestname}" >> ${LOGFILE} 2>&1
+        $f ${guestname} >> ${LOGFILE} 2>&1
+        if [ $? -ne 0 ]; then
+            rm -f ${guestname}.cfg
+            popd > /dev/null 2>&1
+            echo "${PREF} Error during pre init script of ${guestname}"
+            exit 1
+        fi
+    done
+
+    # Create non started guest
+    echo "xl create -p ${guestname}.cfg" >> ${LOGFILE} 2>&1
+    xl create -p ${guestname}.cfg >> ${LOGFILE} 2>&1
+    if [ $? -ne 0 ]; then
+        rm -f ${guestname}.cfg
+        popd > /dev/null 2>&1
+        echo "${PREF} Error starting ${guestname}"
+        exit 1
+    fi
+
+    # call init scripts
+    for f in ${init_d}; do
+        echo "$f ${guestname}" >> ${LOGFILE} 2>&1
+        $f ${guestname} >> ${LOGFILE} 2>&1
+        if [ $? -ne 0 ]; then
+            rm -f ${guestname}.cfg
+            echo "xl destroy ${guestname}" >> ${LOGFILE} 2>&1
+            xl destroy ${guestname} >> ${LOGFILE} 2>&1
+            popd > /dev/null 2>&1
+            echo "${PREF} Error during init script of ${guestname}"
+            exit 1
+        fi
+    done
+
+    # Start guest
+    echo "xl unpause ${guestname}" >> ${LOGFILE} 2>&1
+    xl unpause ${guestname} >> ${LOGFILE} 2>&1
+    if [ $? -ne 0 ]; then
+        rm -f ${guestname}.cfg
+        popd > /dev/null 2>&1
+        echo "${PREF} Error starting ${guestname}"
+        exit 1
+    fi
+
+    # call post init scripts
+    for f in ${init_post}; do
+        echo "$f ${guestname}" >> ${LOGFILE} 2>&1
+        $f ${guestname} >> ${LOGFILE} 2>&1
+        if [ $? -ne 0 ]; then
+            rm -f ${guestname}.cfg
+            echo "xl destroy ${guestname}" >> ${LOGFILE} 2>&1
+            xl destroy ${guestname} >> ${LOGFILE} 2>&1
+            popd > /dev/null 2>&1
+            echo "${PREF} Error during post init script of ${guestname}"
+            exit 1
+        fi
+    done
+
+    rm -f ${guestname}.cfg
+    popd > /dev/null 2>&1
+}
+
+function xenguest_guest_stop()
+{
+    guestname="${1}"
+    echo "xl shutdown ${guestname}" >> ${LOGFILE} 2>&1
+    xl shutdown ${guestname} >> ${LOGFILE} 2>&1
+    if [ $? -ne 0 ]; then
+        echo "${PREF} Error stopping ${guestname}"
+        exit 1
+    fi
+}
+
+function check_guest_arg()
+{
+    cmd="${1}"
+    guestname="${2:-}"
+    if [ -z "${guestname:-}" ]; then
+        echo "${PREF} Usage ${this} ${cmd} GUESTNAME"
+        exit 1
+    fi
+}
+
+function check_guest_exist()
+{
+    guestname="${1}"
+    if [ ! -f ${XENGUEST_CONF_BASE}/guests/${guestname}/guest.cfg -o \
+        ! -f ${XENGUEST_CONF_BASE}/guests/${guestname}/params.cfg ]; then
+        echo "${PREF} Invalid guest name: ${guestname}"
+        exit 1
+    fi
+}
+
+function check_guest_running()
+{
+    guestname="${1}"
+    running=$(xl list | awk 'NR > 1 {print $1}' | grep "${guestname}" || echo)
+    if [ ! "${running}" = "${guestname}" ]; then
+        echo "${PREF} Guest ${guestname} is not running"
+        exit 1
+    fi
+}
+
+function check_guest_not_running()
+{
+    guestname="${1}"
+    running=$(xl list | awk 'NR > 1 {print $1}' | grep "${guestname}" || echo)
+    if [ "${running}" = "${guestname}" ]; then
+        echo "${PREF} Guest ${guestname} is running"
+        exit 1
+    fi
+}
+
+cmd="${1:-help}"
+arg1="${2:-}"
+arg2="${3:-}"
+
+case ${cmd} in
+    help|--help|-h|-?)
+        usage
+        exit 0
+        ;;
+    create)
+        guestfile="${arg1}"
+        guestname="${arg2}"
+        if [ -z "${guestfile}" -o ! -f "${guestfile}" ]; then
+            echo "${PREF} Usage ${this} create XENGUEST_FILE [NAME]"
+            exit 1
+        fi
+        if [ -z "${guestname}" ]; then
+            guestname=$(basename ${guestfile} .xenguest)
+        fi
+
+        if [ -f ${XENGUEST_CONF_BASE}/guests/${guestname}/guest.cfg ]; then
+            # Guest already exist
+            echo "${PREF} A guest ${guestname} already exist"
+            exit 1
+        fi
+
+        xenguest_guest_create ${guestfile} ${guestname}
+        ;;
+    remove)
+        guestname="${arg1:-}"
+        check_guest_arg ${cmd} ${guestname}
+        check_guest_exist ${guestname}
+        # We need to stop the guest first
+        running=$(xl list | awk 'NR > 1 {print $1}' | grep "${guestname}" \
+            || echo)
+        if [ "${running}" = "${guestname}" ]; then
+            echo "xl destroy ${guestname}" >> ${LOGFILE} 2>&1
+            xl destroy ${guestname} >> ${LOGFILE} 2>&1
+            if [ $? -ne 0 ]; then
+                echo "${PREF} Error killing ${guestname}"
+                exit 1
+            fi
+        fi
+        xenguest_guest_remove ${guestname}
+        ;;
+    start)
+        guestname="${arg1:-}"
+        check_guest_arg ${cmd} ${guestname}
+        check_guest_exist ${guestname}
+        check_guest_not_running ${guestname}
+        xenguest_guest_start ${guestname}
+        ;;
+    stop|shutdown)
+        guestname="${arg1:-}"
+        check_guest_arg ${cmd} ${guestname}
+        check_guest_exist ${guestname}
+        check_guest_running ${guestname}
+        xenguest_guest_stop ${guestname}
+        ;;
+    kill|destroy)
+        guestname="${arg1:-}"
+        check_guest_arg ${cmd} ${guestname}
+        check_guest_exist ${guestname}
+        check_guest_running ${guestname}
+        echo "xl destroy ${guestname}" >> ${LOGFILE} 2>&1
+        xl destroy ${guestname} >> ${LOGFILE} 2>&1
+        if [ $? -ne 0 ]; then
+            echo "${PREF} Error killing ${guestname}"
+            exit 1
+        fi
+        ;;
+    list)
+        if [ -d ${XENGUEST_CONF_BASE}/guests ]; then
+            for f in $(find ${XENGUEST_CONF_BASE}/guests -mindepth 1 \
+                -maxdepth 1 -type d -exec basename {} \;); do
+                if [ -f ${XENGUEST_CONF_BASE}/guests/$f/guest.cfg ]; then
+                    echo "$f"
+                fi
+            done
+        fi
+        ;;
+    status)
+        guestname="${arg1}"
+        if [ -n "${guestname}" ]; then
+            check_guest_exist ${guestname}
+            if xl list | awk 'NR > 1 {print $1}' | grep "${guestname}" > \
+                /dev/null 2>&1; then
+                echo "${guestname}: Running"
+            else
+                echo "${guestname}: Stopped"
+            fi
+        else
+            guestlist=$($this list)
+            if [ -n "${guestlist}" ]; then
+                for f in ${guestlist}; do
+                    $this status $f
+                done
+            fi
+        fi
+        ;;
+    *)
+        echo "${PREF} Invalid argument ${cmd}"
+        exit 1
+        ;;
+esac
+

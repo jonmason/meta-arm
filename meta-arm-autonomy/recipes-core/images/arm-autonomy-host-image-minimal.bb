@@ -16,6 +16,7 @@ IMAGE_INSTALL += " \
     kernel-modules \
     xen-base \
     qemu \
+    xenguest-manager \
     "
 
 # Build xen-devicetree to produce a xen ready devicetree

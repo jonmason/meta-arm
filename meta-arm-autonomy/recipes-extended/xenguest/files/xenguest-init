@@ -1,0 +1,85 @@
+#!/bin/bash
+#
+# xenguest Init Script to start and stop xenguests during boot
+#
+
+XENGUEST_CONF_BASE="/etc/xenguest"
+
+if [ ! -f ${XENGUEST_CONF_BASE}/xenguest-manager.conf ]; then
+    echo "No xenguest manager configuration !!"
+    exit 1
+fi
+
+source ${XENGUEST_CONF_BASE}/xenguest-manager.conf
+
+# Create guest list
+guestlist=$(/usr/bin/xenguest-manager list)
+
+# Unconfigured guests
+
+case "$1" in
+  start)
+        echo "Starting xenguest"
+
+        # Create unconfigured guests
+        if [ -d ${XENGUEST_GUEST_DIR} ]; then
+            for f in $(find ${XENGUEST_GUEST_DIR} -name "*.xenguest" \
+                -exec basename {} .xenguest \;); do
+                if [ ! -f ${XENGUEST_CONF_BASE}/guests/${f}/guest.cfg ]; then
+                    # Check if this guest should be auto booted
+                    autoboot=$(/usr/bin/xenguest-mkimage dump-paramsconfig \
+                        ${XENGUEST_GUEST_DIR}/${f}.xenguest | \
+                        grep GUEST_AUTOBOOT | sed -e "s,.*=,," | tr -d '"')
+                    if [ "$autoboot" = "0" ]; then
+                        echo "Do not create $f, autoboot disabled"
+                    else
+                        /usr/bin/xenguest-manager create \
+                            ${XENGUEST_GUEST_DIR}/${f}.xenguest
+                        # Update guestlist
+                        if [ $? -eq 0 ]; then
+                            guestlist="${guestlist} ${f}"
+                        fi
+                    fi
+                fi
+            done
+        fi
+        if [ -n "${guestlist}" ]; then
+            for f in ${guestlist}; do
+                GUEST_AUTOBOOT="1"
+                if [ -f ${XENGUEST_CONF_BASE}/guests/${f}/params.cfg ]; then
+                    source ${XENGUEST_CONF_BASE}/guests/${f}/params.cfg
+                fi
+                if [ "${GUEST_AUTOBOOT}" = "1" ]; then
+                    /usr/bin/xenguest-manager start ${f}
+                fi
+            done
+        else
+            echo "No guest configured"
+        fi
+        ;;
+  status)
+        true
+        ;;
+  stop)
+        echo "Stopping xenguest"
+        for f in ${guestlist}; do
+            /usr/bin/xenguest-manager stop ${f}
+        done
+        ;;
+  reload)
+        echo >&2 'Reload not available; use force-reload'; exit 1
+        ;;
+  force-reload|restart)
+        echo "Restarting xenguest"
+        $0 stop
+        $0 start
+        ;;
+  *)
+        # do not advertise unreasonable commands that there is no reason
+        # to use with this device
+        echo $"Usage: $0 {start|stop|status|restart|force-reload}"
+        exit 1
+esac
+
+exit $?
+
