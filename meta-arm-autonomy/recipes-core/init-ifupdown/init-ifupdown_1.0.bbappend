@@ -6,7 +6,7 @@
 do_install_append() {
     # Add scan of interfaces.d to interfaces file
     cp -f ${WORKDIR}/interfaces ${WORKDIR}/interfaces.subdir
-    echo "source-directory ${sysconfdir}/network/interfaces.d/"
+    echo "source-directory ${sysconfdir}/network/interfaces.d/" \
         >> ${WORKDIR}/interfaces.subdir
 
     # Create interfaces.d script in case nobody is adding a script
