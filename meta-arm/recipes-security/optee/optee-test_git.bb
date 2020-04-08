@@ -1,21 +1,20 @@
 SUMMARY = "OP-TEE sanity testsuite"
-HOMEPAGE = "https://github.com/OP-TEE/optee_test"
+DESCRIPTION = "Open Portable Trusted Execution Environment - Test suite"
+HOMEPAGE = "https://www.op-tee.org/"
 
 LICENSE = "BSD & GPLv2"
 LIC_FILES_CHKSUM = "file://${S}/LICENSE.md;md5=daa2bcccc666345ab8940aab1315a4fa"
 
 inherit python3native
 
-DEPENDS = "optee-client optee-os python3-pycrypto-native"
+DEPENDS = "optee-client optee-os python3-pycryptodomex-native"
 
-PV = "3.7.0+git${SRCPV}"
+PV = "3.8.0+git${SRCPV}"
 
-SRC_URI = "git://github.com/OP-TEE/optee_test.git \
-          file://0001-use-python3-instead-of-python.patch \
-          "
+SRCREV = "30481e381cb4285706e7516853495a7699c93b2c"
+SRC_URI = "git://github.com/OP-TEE/optee_test.git"
+
 S = "${WORKDIR}/git"
-
-SRCREV = "227d6f4c40eaa6f84fe049b9e48c7b27ad7fab08"
 
 OPTEE_CLIENT_EXPORT = "${STAGING_DIR_HOST}${prefix}"
 TEEC_EXPORT         = "${STAGING_DIR_HOST}${prefix}"
