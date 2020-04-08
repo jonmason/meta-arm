@@ -1,18 +1,21 @@
-SUMMARY = "OPTEE Client"
-HOMEPAGE = "https://github.com/OP-TEE/optee_client"
+SUMMARY = "OP-TEE Client API"
+DESCRIPTION = "Open Portable Trusted Execution Environment - Normal World Client side of the TEE"
+HOMEPAGE = "https://www.op-tee.org/"
 
 LICENSE = "BSD"
 LIC_FILES_CHKSUM = "file://${S}/LICENSE;md5=69663ab153298557a59c67a60a743e5b"
 
-PV = "3.7.0+git${SRCPV}"
+PV = "3.8.0+git${SRCPV}"
 
 inherit python3native systemd
 
-SRC_URI = "git://github.com/OP-TEE/optee_client.git \
-           file://tee-supplicant.service"
-S = "${WORKDIR}/git"
+SRCREV = "be4fa2e36f717f03ca46e574aa66f697a897d090"
+SRC_URI = " \
+    git://github.com/OP-TEE/optee_client.git \
+    file://tee-supplicant.service \
+"
 
-SRCREV = "bc0ec8ce1e4dc5ae23f4737ef659338b7cd408fe"
+S = "${WORKDIR}/git"
 
 SYSTEMD_SERVICE_${PN} = "tee-supplicant.service"
 
@@ -25,7 +28,8 @@ do_install() {
     ln -sf libteec.so.1.0 ${D}${libdir}/libteec.so
     ln -sf libteec.so.1.0 ${D}${libdir}/libteec.so.1
 
-    cp -a ${S}/out/export/usr/include ${D}/usr/
+    install -d ${D}${includedir}
+    install -p -m0644 ${S}/out/export/usr/include/*.h ${D}${includedir}
 
     sed -i -e s:/etc:${sysconfdir}:g \
            -e s:/usr/bin:${bindir}:g \
