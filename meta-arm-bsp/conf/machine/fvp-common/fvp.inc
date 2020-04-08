@@ -41,6 +41,3 @@ EXTRA_IMAGEDEPENDS += "virtual/trusted-firmware-a u-boot"
 
 # FVP u-boot configuration
 UBOOT_MACHINE = "vexpress_aemv8a_dram_defconfig"
-
-# Xen configuration
-XEN_CONFIG_EARLY_PRINTK = "fastmodel"

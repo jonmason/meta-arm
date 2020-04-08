@@ -15,7 +15,7 @@ SRC_URI[junofip.sha256sum] = "b8a3909bb3bc4350a8771b863193a3e33b358e2a727624a77c
 
 # Add our how images.txt
 
-FILESEXTRAPATHS_prepend_juno := "${THISDIR}/files/${@bb.utils.contains('DISTRO_FEATURES', 'xen', 'juno-xen', 'juno', d)}:"
+FILESEXTRAPATHS_prepend := "${THISDIR}/files/juno:"
 
 SRC_URI_append_juno = " \
 	file://images-r0.txt \
@@ -31,7 +31,6 @@ EXTRA_OEMAKE_append_juno = " SCP_BL2=${WORKDIR}/juno-oe-uboot/SOFTWARE/scp_bl2.b
 JUNO_EXTRA_DEPS ?= ""
 JUNO_EXTRA_DEPS_juno = ""
 JUNO_EXTRA_DEPS_juno += "virtual/kernel:do_deploy"
-JUNO_EXTRA_DEPS_juno += "${@bb.utils.contains('DISTRO_FEATURES', 'xen', 'xen:do_deploy', '', d)}"
 
 do_deploy[depends] += "${JUNO_EXTRA_DEPS}"
 
@@ -54,12 +53,6 @@ do_deploy_append() {
 	cp -aL --remove-destination \
 		${DEPLOY_DIR_IMAGE}/Image \
 		${WORKDIR}/juno-oe-uboot/SOFTWARE/Image
-
-	if [ "${@bb.utils.contains('DISTRO_FEATURES', 'xen', 'yes', 'no', d)}" = "yes" ]; then
-		cp -a \
-			${DEPLOY_DIR_IMAGE}/xen-${COMPATIBLE_MACHINE}.efi \
-			${WORKDIR}/juno-oe-uboot/SOFTWARE/xen
-	fi
 
     # u-boot environment file
     cp -a ${WORKDIR}/uEnv.txt \
