@@ -7,6 +7,8 @@ LIC_FILES_CHKSUM = "file://${S}/LICENSE;md5=69663ab153298557a59c67a60a743e5b"
 
 PV = "3.8.0+git${SRCPV}"
 
+require optee.inc
+
 inherit python3native systemd
 
 SRCREV = "be4fa2e36f717f03ca46e574aa66f697a897d090"

@@ -6,6 +6,7 @@ LICENSE = "BSD & GPLv2"
 LIC_FILES_CHKSUM = "file://${S}/LICENSE.md;md5=daa2bcccc666345ab8940aab1315a4fa"
 
 inherit python3native
+require optee.inc
 
 DEPENDS = "optee-client optee-os python3-pycryptodomex-native"
 

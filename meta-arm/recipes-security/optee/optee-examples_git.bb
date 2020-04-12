@@ -11,6 +11,8 @@ DEPENDS = "optee-client optee-os python3-pycryptodomex-native"
 
 inherit python3native
 
+require optee.inc
+
 SRC_URI = "git://github.com/linaro-swg/optee_examples.git"
 SRCREV = "559b2141c16bf0f57ccd72f60e4deb84fc2a05b0"
 
