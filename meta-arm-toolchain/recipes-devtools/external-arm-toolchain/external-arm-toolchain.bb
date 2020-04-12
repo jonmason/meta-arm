@@ -1,8 +1,6 @@
 require recipes-core/glibc/glibc-package.inc
 
 INHIBIT_DEFAULT_DEPS = "1"
-INHIBIT_PACKAGE_STRIP = "1"
-INHIBIT_PACKAGE_DEBUG_SPLIT = "1"
 
 # License applies to this recipe code, not the toolchain itself
 LICENSE = "MIT"
