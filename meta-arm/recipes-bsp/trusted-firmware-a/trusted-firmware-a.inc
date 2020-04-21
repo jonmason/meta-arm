@@ -82,11 +82,6 @@ DEPENDS += " ${@bb.utils.contains('TFA_UBOOT', '1', 'u-boot', '', d)}"
 do_compile[depends] += " ${@bb.utils.contains('TFA_UBOOT', '1', 'u-boot:do_deploy', '', d)}"
 EXTRA_OEMAKE += "${@bb.utils.contains('TFA_UBOOT', '1', ' BL33=${DEPLOY_DIR_IMAGE}/u-boot.bin', '',d)}"
 
-do_clean() {
-    if [ -f ${S}/Makefile ]; then
-        oe_runmake -C ${S} distclean
-    fi
-}
 
 do_compile() {
     oe_runmake ${TFA_BUILD_TARGET}
