@@ -19,17 +19,6 @@ source ${XENGUEST_CONF_BASE}/xenguest-manager.conf
 
 PREF="xenguest:"
 
-if [ -z "${XENGUEST_VOLUME_DEVICE:-}" -o \
-    ! -b ${XENGUEST_VOLUME_DEVICE:-} ]; then
-    echo "${PREF} Invalid volume device in configuration: ${XENGUEST_VOLUME_DEVICE:-}"
-    exit 1
-fi
-
-if [ -z "${XENGUEST_VOLUME_NAME:-}" ]; then
-    echo "${PREF} No volume name in configuration, using vg-xen..."
-    XENGUEST_VOLUME_NAME="vg-xen"
-fi
-
 function usage() {
     cat <<EOF
 Usage $this ACTION [OPTIONS]
@@ -67,6 +56,17 @@ EOF
 
 function xenguest_volume_init()
 {
+    if [ -z "${XENGUEST_VOLUME_DEVICE:-}" -o \
+        ! -b ${XENGUEST_VOLUME_DEVICE:-} ]; then
+        echo "${PREF} Invalid volume device in configuration: ${XENGUEST_VOLUME_DEVICE:-}"
+        exit 1
+    fi
+
+    if [ -z "${XENGUEST_VOLUME_NAME:-}" ]; then
+        echo "${PREF} No volume name in configuration, using vg-xen..."
+        XENGUEST_VOLUME_NAME="vg-xen"
+    fi
+
     pvs ${XENGUEST_VOLUME_DEVICE} > /dev/null 2>&1
     if [ $? -ne 0 ]; then
         echo "${PREF} Initialize lvm on ${XENGUEST_VOLUME_DEVICE}"
