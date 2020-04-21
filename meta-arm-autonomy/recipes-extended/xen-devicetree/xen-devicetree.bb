@@ -29,7 +29,14 @@ inherit nopackages deploy
 
 DEPENDS += "dtc-native"
 
-do_compile() {
+do_configure[noexec] = "1"
+do_compile[noexec] = "1"
+do_install[noexec] = "1"
+
+do_deploy() {
+    if [ ! -f ${WORKDIR}/xen.dtsi.in ]; then
+        die "xen.dtsi.in does not exist"
+    fi
     cat ${WORKDIR}/xen.dtsi.in \
         | sed -e "s,###XEN_DOM0_BOOTARGS###,${XEN_DEVICETREE_DOM0_BOOTARGS}," \
         | sed -e "s,###XEN_XEN_BOOTARGS###,${XEN_DEVICETREE_XEN_BOOTARGS}," \
@@ -47,22 +54,19 @@ do_compile() {
 
         # Add external includes
         for inc in ${XEN_DEVICETREE_DTSI_MERGE}; do
+            if [ ! -f ${WORKDIR}/${inc} ]; then
+                die "Wrong file in XEN_DEVICETREE_DTSI_MERGE: ${WORKDIR}/${inc} does not exist"
+            fi
             echo "/include/ \"$inc\"" >> ${WORKDIR}/dom0-linux.dts
         done
 
         rdtbnoextn=`basename $dtbf ".dtb"`
         dtc -I dts -O dtb \
             -o ${WORKDIR}/${rdtbnoextn}-xen.dtb ${WORKDIR}/dom0-linux.dts
-    done
-}
-do_compile[depends] += "${XEN_DEVICETREE_DEPEND}"
-
-do_deploy() {
-    # install generated dtbs
-    for dtbf in ${XEN_DEVICETREE_DTBS}; do
-        rdtbnoextn=`basename $dtbf ".dtb"`
         install -m 644 ${rdtbnoextn}-xen.dtb ${DEPLOYDIR}/.
     done
 }
+do_deploy[depends] += "${XEN_DEVICETREE_DEPEND}"
 
-addtask deploy before do_build after do_compile
+addtask deploy after do_install
+
