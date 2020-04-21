@@ -24,7 +24,7 @@ NOR2ENTRY: 00000000              ;Image Entry Point
 
 NOR3UPDATE: AUTO                 ;Image Update:NONE/AUTO/FORCE
 NOR3ADDRESS: 0x02700000          ;Image Flash Address
-NOR3FILE: \SOFTWARE\juno.dtb     ;Image File Name
+NOR3FILE: \SOFTWARE\juno-r1-xen.dtb  ;Image File Name
 NOR3NAME: board.dtb              ;Specify target filename to preserve file extension
 NOR3LOAD: 00000000               ;Image Load Address
 NOR3ENTRY: 00000000              ;Image Entry Point
