@@ -5,7 +5,7 @@ PROVIDES = "virtual/trusted-firmware-a"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
-inherit deploy
+inherit deploy nopackages
 
 COMPATIBLE_MACHINE ?= "invalid"
 
@@ -42,12 +42,12 @@ SRCREV_FORMAT_append = "${@bb.utils.contains('TFA_MBEDTLS', '1', '_mbedtls', '',
 TFA_UBOOT ?= "0"
 
 # What to build
-# By default we only build bl1, do_deploy will install
+# By default we only build bl1, do_deploy will copy
 # everything listed in this variable (by default bl1.bin)
 TFA_BUILD_TARGET ?= "bl1"
 
 # What to install
-# do_deploy will install everything listed in this
+# do_install and do_deploy will install everything listed in this
 # variable. It is set by default to TFA_BUILD_TARGET
 TFA_INSTALL_TARGET ?= "${TFA_BUILD_TARGET}"
 
@@ -60,9 +60,8 @@ LDFLAGS[unexport] = "1"
 AS[unexport] = "1"
 LD[unexport] = "1"
 
-# No configure or install
+# No configure
 do_configure[noexec] = "1"
-do_install[noexec] = "1"
 
 # We need dtc for dtbs compilation
 # We need openssl for fiptool
@@ -87,27 +86,27 @@ do_compile() {
     oe_runmake ${TFA_BUILD_TARGET}
 }
 
-do_deploy() {
-    install -d -m 755 ${DEPLOYDIR}
+do_install() {
+    install -d -m 755 ${D}/firmware
     for atfbin in ${TFA_INSTALL_TARGET}; do
         if [ "$atfbin" = "all" ]; then
             # Target all is not handled by default
-            bberror "all as TFA_INSTALL_TARGET is not handled by do_deploy"
+            bberror "all as TFA_INSTALL_TARGET is not handled by do_install"
             bberror "Please specify valid targets in TFA_INSTALL_TARGET or"
-            bberror "rewrite or turn off do_deploy"
+            bberror "rewrite or turn off do_install"
             exit 1
         elif [ -f ${S}/${TFA_BUILD_DIR}/$atfbin.bin ]; then
             echo "Install $atfbin.bin"
             install -m 0644 ${S}/${TFA_BUILD_DIR}/$atfbin.bin \
-                ${DEPLOYDIR}/$atfbin-${TFA_PLATFORM}.bin
+                ${D}/firmware/$atfbin-${TFA_PLATFORM}.bin
         elif [ -f ${S}/${TFA_BUILD_DIR}/$atfbin.elf ]; then
             echo "Install $atfbin.elf"
             install -m 0644 ${S}/${TFA_BUILD_DIR}/$atfbin.elf \
-                ${DEPLOYDIR}/$atfbin-${TFA_PLATFORM}.elf
+                ${D}/firmware/$atfbin-${TFA_PLATFORM}.elf
         elif [ -f ${S}/${TFA_BUILD_DIR}/$atfbin ]; then
             echo "Install $atfbin"
             install -m 0644 ${S}/${TFA_BUILD_DIR}/$atfbin \
-                ${DEPLOYDIR}/$atfbin-${TFA_PLATFORM}
+                ${D}/firmware/$atfbin-${TFA_PLATFORM}
         elif [ "$atfbin" = "dtbs" ]; then
             echo "dtbs install, skipped"
         elif [ -f ${S}/tools/$atfbin/$atfbin ]; then
@@ -118,4 +117,10 @@ do_deploy() {
         fi
     done
 }
-addtask deploy before do_build after do_compile
+
+SYSROOT_DIRS += "/firmware"
+
+do_deploy() {
+    cp -rf ${D}/firmware/* ${DEPLOYDIR}/
+}
+addtask deploy after do_install

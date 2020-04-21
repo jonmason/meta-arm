@@ -12,9 +12,9 @@ TFA_MBEDTLS = "1"
 TFA_UBOOT = "1"
 TFA_BUILD_TARGET = "bl1 bl2 bl31 dtbs fiptool"
 
-do_deploy[depends] += "virtual/kernel:do_deploy"
+do_install[depends] += "virtual/kernel:do_deploy"
 
-do_deploy_append() {
+do_install_append() {
     ./tools/fiptool/fiptool create \
         --tb-fw ${S}/${TFA_BUILD_DIR}/bl2.bin \
         --soc-fw ${S}/${TFA_BUILD_DIR}/bl31.bin \
@@ -26,6 +26,5 @@ do_deploy_append() {
 
     ./tools/fiptool/fiptool info fip.bin
 
-    install -m 0644 ${S}/fip.bin ${DEPLOYDIR}/fip-fvp.bin
+    install -m 0644 ${S}/fip.bin ${D}/firmware/fip-fvp.bin
 }
-
