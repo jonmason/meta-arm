@@ -23,8 +23,10 @@ SRC_URI_append_juno = " \
 	file://images-r2.txt \
 	file://uEnv.txt \
 	"
+# Juno needs the System Control Processor Firmware
+DEPENDS += "virtual/scp-firmware"
 
-EXTRA_OEMAKE_append_juno = " SCP_BL2=${WORKDIR}/juno-oe-uboot/SOFTWARE/scp_bl2.bin"
+EXTRA_OEMAKE_append = " SCP_BL2=${RECIPE_SYSROOT}/firmware/scp_bl2.bin"
 
 # Build dependencies only for Juno and add them
 # doing it with do_deploy_juno[depends] does not work
