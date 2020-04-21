@@ -16,20 +16,17 @@ the case in poky distribution).
 ### Update Juno SD card:
 
 The SD card content is generated during the build here:
-tmp/deploy/images/juno/juno-oe-uboot.tar.gz
+tmp/deploy/images/juno/firmware-image-juno.tar.gz
 
 Its content must be written on the Juno firmware SD card.
 To do this:
-- extract the content of the tar file:
-```bash$ tar -xzf tmp/deploy/images/juno/juno-oe-uboot.tar.gz```
-
 - insert the sdcard of the Juno in an SD card reader and mount it:
 ```bash$ sudo mount /dev/sdx1 /mnt```
 (replace sdx by the device of the SD card)
 
 - erase its content and put the new one:
 ```bash$ sudo rm -rf /mnt/*```
-```bash$ sudo cp -rf juno-oe-uboot/* /mnt/.```
+```bash$ sudo tar --no-same-owner -xzf tmp/deploy/images/juno/firmware-image-juno.tar.gz -C /mnt/```
 ```bash$ sudo umount /mnt```
 
 - reinsert the SD card in the Juno board
