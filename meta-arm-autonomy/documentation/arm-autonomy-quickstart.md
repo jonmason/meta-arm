@@ -45,11 +45,22 @@ Here are the main steps to create an arm-autonomy project:
   oe-init-build-env my-project
   ```
 
-2. edit the file `conf/bblayers.conf` and add `meta-arm/meta-arm-autonomy`
-  layer to the list of layers of your project. Also add any other layers you
+2. Add `meta-arm/meta-arm-autonomy` layer to the list of layers of your
+  project in the `conf/bblayers.conf`. Also add any other layers you
   might need (for example `meta-arm/meta-arm-bsp` and `meta-arm/meta-arm` to
-  use Arm boards like Juno or FVP emulator).
+  use Arm boards like Juno or FVP emulator). You can achieve this by using
+  the `bitbake-layers add-layer layerdir [layerdir ...]` command.
   For example:
+  ```
+  export LAYERDIR_BASE="/home/user/arm-autonomy/"
+  bitbake-layers add-layer $LAYERDIR_BASE/meta-poky $LAYERDIR_BASE/meta-yocto-bsp \
+   $LAYERDIR_BASE/meta-openembedded/meta-oe $LAYERDIR_BASE/meta-openembedded/meta-python \
+   $LAYERDIR_BASE/meta-openembedded/meta-filesystems $LAYERDIR_BASE/meta-openembedded/meta-networking \
+   $LAYERDIR_BASE/meta-virtualization $LAYERDIR_BASE/meta-arm/meta-arm-autonomy \
+   $LAYERDIR_BASE/meta-arm/meta-arm $LAYERDIR_BASE/meta-arm/meta-arm-bsp
+  ```
+
+  Example of a `conf/bblayers.conf`:
   ```
   BBLAYERS ?= " \
     /home/user/arm-autonomy/poky/meta \
@@ -59,10 +70,10 @@ Here are the main steps to create an arm-autonomy project:
     /home/user/arm-autonomy/meta-openembedded/meta-python \
     /home/user/arm-autonomy/meta-openembedded/meta-filesystems \
     /home/user/arm-autonomy/meta-openembedded/meta-networking \
-    /home/user/arm-autonomy/meta-arm/meta-arm \
-    /home/user/arm-autonomy/meta-arm/meta-arm-bsp \
     /home/user/arm-autonomy/meta-virtualization \
     /home/user/arm-autonomy/meta-arm/meta-arm-autonomy \
+    /home/user/arm-autonomy/meta-arm/meta-arm \
+    /home/user/arm-autonomy/meta-arm/meta-arm-bsp \
     "
   ```
 
