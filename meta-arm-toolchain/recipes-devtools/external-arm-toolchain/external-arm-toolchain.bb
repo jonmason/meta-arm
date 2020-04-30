@@ -113,6 +113,8 @@ do_install() {
 	rm -rf ${D}${bindir}/gdbserver
 	sed -i -e 's#/arm/tools/gnu/bash/4.2/rhe6-x86_64##' ${D}${bindir}/tzselect
 	sed -i -e 's#/arm/tools/gnu/bash/4.2/rhe6-x86_64##' ${D}${bindir}/ldd
+	sed -i -e 's#/bin/bash#/bin/sh#' ${D}${bindir}/tzselect
+	sed -i -e 's#/bin/bash#/bin/sh#' ${D}${bindir}/ldd
 
 	cp ${CP_ARGS} ${EXTERNAL_TOOLCHAIN}/lib/gcc/${EAT_TARGET_SYS}/${EAT_VER_GCC}/crt*.o ${D}${libdir}/${EAT_TARGET_SYS}/${EAT_VER_GCC}/
 
@@ -419,9 +421,6 @@ FILES_libsegfault = "${base_libdir}/libSegFault*"
 
 FILES_catchsegv = "${bindir}/catchsegv"
 RDEPENDS_catchsegv = "libsegfault"
-
-RDEPENDS_ldd = "bash"
-RDEPENDS_tzcode = "bash"
 
 # From libgfortran.inc:
 
