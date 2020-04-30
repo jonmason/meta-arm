@@ -44,8 +44,6 @@ PREFERRED_PROVIDER_glibc-thread-db = "external-arm-toolchain"
 PREFERRED_PROVIDER_glibc-mtrace = "external-arm-toolchain"
 PREFERRED_PROVIDER_libc-mtrace = "external-arm-toolchain"
 PREFERRED_PROVIDER_virtual/linux-libc-headers = "external-arm-toolchain"
-TARGET_CPPFLAGS_prepend = " -isystem${EXTERNAL_TOOLCHAIN}/${EAT_TARGET_SYS}/include "
-TARGET_LDFLAGS_prepend = " -L${EXTERNAL_TOOLCHAIN}/${EAT_TARGET_SYS}/lib -Wl,-rpath-link,${EXTERNAL_TOOLCHAIN}/${EAT_TARGET_SYS}/lib "
 
 TOOLCHAIN_OPTIONS = " --sysroot=${STAGING_DIR_HOST}"
 
