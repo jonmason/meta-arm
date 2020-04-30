@@ -234,10 +234,17 @@ function xenguest_disk_init()
                 exit 1
             fi
 
-            # Sometimes it takes time to see the device
-            if [ ! -b /dev/xvda${part} ]; then
-                sleep 1
-            fi
+
+            # Loop for 20s to wait until /dev/xvdaX appears
+            i=0
+            while [ ! -b /dev/xvda${part} ]; do
+                ((i++))
+                if [[ "$i" == '40' ]]; then
+                    break;
+                fi
+                sleep 0.5
+            done
+
             if [ ! -b /dev/xvda${part} ]; then
                 echo "${PREF} Partition ${part} creation error"
                 xenguest_detach_disk
