@@ -29,6 +29,8 @@ inherit deploy nopackages
 do_configure[noexec] = "1"
 do_compile[noexec] = "1"
 
+# The ${D} is used as a temporary directory and we don't generate any
+# packages for this recipe.
 do_install() {
     cp -a ${WORKDIR}/${UNPACK_DIR} ${D}
     cp -f ${RECIPE_SYSROOT}/firmware/bl1-juno.bin \
@@ -36,13 +38,6 @@ do_install() {
 
     cp -f ${RECIPE_SYSROOT}/firmware/fip-juno.bin \
         ${D}/${UNPACK_DIR}/SOFTWARE/fip.bin
-
-    for f in ${KERNEL_DEVICETREE}; do
-        install -m 755 -c ${DEPLOY_DIR_IMAGE}/$(basename $f) \
-            ${D}/${UNPACK_DIR}/SOFTWARE/.
-    done
-
-    cp -L -f ${DEPLOY_DIR_IMAGE}/Image ${D}/${UNPACK_DIR}/SOFTWARE/
 
     # u-boot environment file
     cp -f ${WORKDIR}/uEnv.txt ${D}/${UNPACK_DIR}/SOFTWARE/
@@ -52,13 +47,29 @@ do_install() {
     cp -f ${WORKDIR}/images-r1.txt ${D}/${UNPACK_DIR}/SITE1/HBI0262C/images.txt
     cp -f ${WORKDIR}/images-r2.txt ${D}/${UNPACK_DIR}/SITE1/HBI0262D/images.txt
 }
-do_install[depends] += "virtual/kernel:do_deploy"
 
 do_deploy() {
+    # To avoid dependency loop between firmware-image-juno:do_install
+    # and virtual/kernel:do_deploy when INITRAMFS_IMAGE_BUNDLE = "1",
+    # we need to handle the kernel binaries copying in the do_deploy
+    # task.
+    for f in ${KERNEL_DEVICETREE}; do
+        install -m 755 -c ${DEPLOY_DIR_IMAGE}/$(basename $f) \
+            ${D}/${UNPACK_DIR}/SOFTWARE/.
+    done
+
+    if [ "${INITRAMFS_IMAGE_BUNDLE}" -eq 1 ]; then
+        cp -L -f ${DEPLOY_DIR_IMAGE}/Image-initramfs-juno.bin \
+            ${D}/${UNPACK_DIR}/SOFTWARE/Image
+    else
+        cp -L -f ${DEPLOY_DIR_IMAGE}/Image ${D}/${UNPACK_DIR}/SOFTWARE/
+    fi
+
     # Compress the files
     tar -C ${D}/${UNPACK_DIR} -zcvf ${WORKDIR}/${PN}.tar.gz ./
 
     # Deploy the compressed archive to the deploy folder
     install -D -p -m0644 ${WORKDIR}/${PN}.tar.gz ${DEPLOYDIR}/${PN}.tar.gz
 }
+do_deploy[depends] += "virtual/kernel:do_deploy"
 addtask deploy after do_install
