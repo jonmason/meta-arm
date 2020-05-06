@@ -224,6 +224,9 @@ do_install() {
 	rmdir ${D}${sbindir} || true
 	rmdir ${D}${base_sbindir} || true
 	rmdir ${D}${libexecdir} || true
+
+	# Remove unused /usr/share/info/dir
+	rm -f ${D}${infodir}/dir
 }
 
 # External toolchain doesn't provide multilib support so make corresponding
