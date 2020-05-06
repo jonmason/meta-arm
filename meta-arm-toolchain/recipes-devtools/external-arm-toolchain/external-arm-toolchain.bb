@@ -223,6 +223,7 @@ do_install() {
 	rmdir ${D}${bindir} || true
 	rmdir ${D}${sbindir} || true
 	rmdir ${D}${base_sbindir} || true
+	rmdir ${D}${libexecdir} || true
 }
 
 # External toolchain doesn't provide multilib support so make corresponding
