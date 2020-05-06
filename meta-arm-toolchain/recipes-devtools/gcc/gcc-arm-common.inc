@@ -15,3 +15,13 @@ do_install_prepend_class-target () {
 		install ${STAGING_LIBDIR}/gcc/${EAT_TARGET_SYS}/${EAT_VER_GCC}/include/unwind.h ${STAGING_LIBDIR_NATIVE}/${TARGET_SYS}/gcc/${TARGET_SYS}/${BINV}/include/
 	fi
 }
+
+# When TCMODE="external-arm" and TARGET_SYS is different from EAT_TARGET_SYS,
+# gcc installs additional aliases as ${TARGET_SYS}-${EAT_TARGET_SYS}-gcc, etc.
+# Since those are not packaged and not too useful, let's remove them to avoid
+# QA issues
+do_install_append () {
+	for f in g++ gcc gcc-ar gcc-ranlib gcc-nm; do
+		rm -f ${D}${bindir}/${TARGET_SYS}-${EAT_TARGET_SYS}-$f
+	done
+}
