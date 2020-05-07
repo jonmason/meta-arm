@@ -39,7 +39,7 @@ IMAGE_INSTALL += " \
     packagegroup-core-boot \
     packagegroup-core-ssh-openssh \
     kernel-modules \
-    qemu \
+    qemu-xen \
     xenguest-manager \
     xenguest-network-bridge \
     "
