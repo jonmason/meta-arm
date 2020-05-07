@@ -33,12 +33,12 @@ ARM_AUTONOMY_HOST_IMAGE_EXTERN_GUESTS ??= ""
 
 # Includes minimal set required to start and manage guest. The xen specific
 # modules are not explicitly included as they are built as part of the kernel
-# image for performance reasons. Includes all kernel modules anyway as it makes
-# life easier and does not cost that much in size.
+# image for performance reasons. It doesn't include all kernel modules to
+# reduce the image size. If the kernel-modules packages are needed they can
+# be appended to IMAGE_INSTALL in a bbappend.
 IMAGE_INSTALL += " \
     packagegroup-core-boot \
     packagegroup-core-ssh-openssh \
-    kernel-modules \
     qemu-xen \
     xenguest-manager \
     xenguest-network-bridge \
