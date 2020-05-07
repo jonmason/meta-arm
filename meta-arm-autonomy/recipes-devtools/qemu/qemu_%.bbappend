@@ -4,7 +4,9 @@ OVERRIDES_append = "${@bb.utils.contains('DISTRO_FEATURES', 'xen', ':xen', '', d
 
 # For Xen we only need the i386 binaries
 QEMU_TARGETS_xen = "i386"
-PACKAGECONFIG_append_xen = " virtfs"
+
+PACKAGECONFIG[noaudio] = "--audio-drv-list='',,"
+PACKAGECONFIG_append_xen = " virtfs noaudio"
 PACKAGECONFIG_remove_xen = "sdl"
 
 # Reduce the qemu package size by splitting it into
