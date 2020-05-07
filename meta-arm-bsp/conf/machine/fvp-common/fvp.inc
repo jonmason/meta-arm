@@ -35,9 +35,9 @@ DISK_IMG_PARTITION3_CONTENT = ""
 SERIAL_CONSOLES = "115200;ttyAMA0"
 
 PREFERRED_PROVIDER_virtual/kernel ?= "linux-yocto"
-PREFERRED_VERSION_linux-yocto ?= "4.19%"
+PREFERRED_VERSION_linux-yocto ?= "5.4%"
 
 EXTRA_IMAGEDEPENDS += "virtual/trusted-firmware-a u-boot"
 
 # FVP u-boot configuration
-UBOOT_MACHINE = "vexpress_aemv8a_dram_defconfig"
+UBOOT_MACHINE = "vexpress_aemv8a_semi_defconfig"
