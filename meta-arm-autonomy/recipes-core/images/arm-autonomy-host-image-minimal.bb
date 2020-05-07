@@ -112,7 +112,8 @@ python add_extern_guests () {
             # Add file extension if not there
             if not dstname.endswith('.xenguest'):
                 dstname += '.xenguest'
-            bb.utils.copyfile(path, guestdir + '/' + dstname)
+            if not bb.utils.copyfile(path, guestdir + '/' + dstname):
+                bb.fatal("Fail to copy Guest file " + path)
 }
 
 IMAGE_PREPROCESS_COMMAND += "add_extern_guests; "
