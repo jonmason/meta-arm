@@ -31,3 +31,7 @@ SRC_URI_append_fvp-base = " file://fvp/defconfig"
 COMPATIBLE_MACHINE_juno = "juno"
 
 SRC_URI_append_juno = " file://juno/defconfig"
+
+# Gem5 support
+# Fix problem with number of interrupts on gem5
+SRC_URI_append_gem5-arm64 = " file://${XEN_REL}/0001-xen-arm-Cap-the-number-of-interrupt-lines-for-dom0.patch"

@@ -39,11 +39,13 @@ IMAGE_INSTALL += " \
     packagegroup-core-boot \
     packagegroup-core-ssh-openssh \
     kernel-modules \
-    xen-base \
     qemu \
     xenguest-manager \
     xenguest-network-bridge \
     "
+
+# Build xen binary
+EXTRA_IMAGEDEPENDS += "xen"
 
 # Build xen-devicetree to produce a xen ready devicetree
 EXTRA_IMAGEDEPENDS += "xen-devicetree"
