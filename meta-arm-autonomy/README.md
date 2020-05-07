@@ -25,6 +25,7 @@ This layer is adding the following Yocto DISTRO_FEATURES:
   an autonomy host system. It is doing the following:
   - add 'xen' and 'ipv4' to DISTRO_FEATURES.
   - add xen backend drivers to linux kernel configuration.
+  - To reduce the root filesystem image size the kernel image is not installed.
 
 * arm-autonomy-guest: this feature activates functionalities to run as guest
   of an autonomy system. It is doing the following:
