@@ -7,8 +7,7 @@ inherit deploy
 
 PROVIDES = "virtual/gem5-bootloader"
 
-COMPATIBLE_MACHINE ?= ""
-COMPATIBLE_MACHINE_gem5_arm64 = "gem5-arm64"
+COMPATIBLE_MACHINE = "gem5-arm64"
 
 # no configure step
 do_configure[noexec] = "1"

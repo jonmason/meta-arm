@@ -11,30 +11,29 @@ GEM5_BUILD_CONFIGS ?= "build/X86/gem5.opt"
 
 # Scons build arguments
 GEM5_SCONS_ARGS ?= "-j ${BB_NUMBER_THREADS} CC=${BUILD_CC} CXX=${BUILD_CXX} \
-    AS=${BUILD_AS} AR=${BUILD_AR} ${GEM5_BUILD_CONFIGS}"
+    AS=${BUILD_AS} AR=${BUILD_AR} ${GEM5_BUILD_CONFIGS} \
+    PYTHON_CONFIG=python3-config"
 
 # Default profile to run
 GEM5_RUN_PROFILE ?= "configs/example/fs.py"
 
-# We are building a native package and we need to use python
-inherit native pythonnative
+# We are building a native package and we need to use scons
+inherit native scons
 
 # the build is using several tools:
-# python: scons and six
+# python3: scons and six
 # google protobuf
 # pkgconfig
 # hdf5
-DEPENDS += "python-native python-scons-native python-six-native \
-    protobuf-native hdf5-native pkgconfig-native boost-native libpng-native"
+DEPENDS += "python3-six-native protobuf-native hdf5-native pkgconfig-native \
+    boost-native libpng-native"
 
-do_configure[noexec] = "1"
+EXTRA_OESCONS = "${GEM5_SCONS_ARGS}"
 
-do_compile() {
+do_compile_prepend() {
     # We need to use the proper native libraries when executing
     # compiled applications
     export LD_LIBRARY_PATH="${STAGING_LIBDIR_NATIVE}"
-
-    scons ${GEM5_SCONS_ARGS}
 }
 
 do_install() {
@@ -58,5 +57,5 @@ EOF
 
 FILES_${PN} = "${datadir}/gem5/* ${bindir}/*"
 INSANE_SKIP_${PN} += "already-stripped"
-RDEPENDS_${PN} += "python-native hdf5-native protobuf-native libpng-native"
+RDEPENDS_${PN} += "python3-native hdf5-native protobuf-native libpng-native"
 

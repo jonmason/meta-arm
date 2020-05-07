@@ -3,13 +3,15 @@
 LIC_FILES_CHKSUM = "file://COPYING;md5=2d9514d69d8abf88b6e9125e759bf0ab \
                     file://LICENSE;md5=a585e2893cee63d16a1d8bc16c6297ec"
 
-SRC_URI = "git://gem5.googlesource.com/public/gem5;protocol=https"
+# The recipe is currently using a version in the development branch of gem5
+# until version 20 with python3 support is released
+SRC_URI = "git://gem5.googlesource.com/public/gem5;protocol=https;branch=develop"
 
 PV = "git${SRCPV}"
 
 S = "${WORKDIR}/git"
 
-SRCREV = "bcf041f257623e5c9e77d35b7531bae59edc0423"
+SRCREV = "3eab6ea51e4c2b97e7a68835dddacb989d7559c4"
 
 BPN = "gem5-aarch64-native"
 
