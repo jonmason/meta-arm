@@ -7,3 +7,5 @@ DISTRO_FEATURES_append = " ipv4"
 IMAGE_CLASSES += "image_types_xenguest"
 IMAGE_FSTYPES += "xenguest"
 
+# xenguest kernel extension to handle initramfs
+KERNEL_CLASSES += "kernel-xenguest"

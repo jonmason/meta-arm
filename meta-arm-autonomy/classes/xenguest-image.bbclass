@@ -36,11 +36,8 @@ XENGUEST_IMAGE_EXTRA_CMD ??= ""
 # Kernel binary
 # This value is used by the xenguest image type but is declared here to have
 # all variables in the same place
-# Default value is:
-# - Image if INITRAMFS_IMAGE is not set
-# - Image-initramfs-${MACHINE}.bin if INITRAMFS_IMAGE is set
 # If this value is empty no kernel will be added to the image
-XENGUEST_IMAGE_KERNEL ??= "${@ 'Image' if not d.getVar('INITRAMFS_IMAGE') else 'Image-initramfs-${MACHINE}.bin'}"
+XENGUEST_IMAGE_KERNEL ??= "Image"
 
 # Size of the disk to create (if 0 no disk will be created and rootfs will not
 # be included in the xenguest image)

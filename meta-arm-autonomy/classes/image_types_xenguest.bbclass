@@ -1,7 +1,7 @@
 # Create a xenguest image with kernel and filesystem produced by Yocto
 # This will create a .xenguest file that the xenguest-manager can use.
 
-inherit xenguest-image deploy
+inherit xenguest-image
 
 # We are creating our guest in a local subdirectory
 # force the value so that we are not impacted if the user is changing it
@@ -9,9 +9,6 @@ XENGUEST_IMAGE_DEPLOY_DIR = "${WORKDIR}/tmp-xenguest"
 
 # Name of deployed file (keep standard image name and add .xenguest)
 XENGUEST_IMAGE_DEPLOY ??= "${IMAGE_NAME}"
-
-# Deployed file when building with initramfs
-XENGUEST_IMAGE_INITRAMFS_DEPLOY ??= "Image-initramfs-${MACHINE}"
 
 # Add kernel XENGUEST_IMAGE_KERNEL from DEPLOY_DIR_IMAGE to image
 xenguest_image_add_kernel() {
@@ -35,20 +32,6 @@ xenguest_image_pack() {
     call_xenguest_mkimage pack \
         ${IMGDEPLOYDIR}/${XENGUEST_IMAGE_DEPLOY}.xenguest
 }
-
-# do_deploy is used for initramfs to pack the kernel initramfs in an image
-do_deploy() {
-    # Add kernel
-    xenguest_image_add_kernel
-
-    # Pack the image in deploydir
-    mkdir -p ${DEPLOYDIR}
-    rm -f ${DEPLOYDIR}/${XENGUEST_IMAGE_INITRAMFS_DEPLOY}.xenguest
-    call_xenguest_mkimage pack \
-        ${DEPLOYDIR}/${XENGUEST_IMAGE_INITRAMFS_DEPLOY}.xenguest
-}
-do_deploy[depends] += "${PN}:do_bootimg_xenguest"
-do_deploy[depends] += "virtual/kernel:do_deploy"
 
 #
 # Task finishing the bootimg
@@ -88,27 +71,23 @@ python __anonymous() {
         rootfs_needed = False
         rootfs_file = ''
         kernel_needed = False
-        initramfs_needed = False
 
         rootfs_file = xenguest_image_rootfs_file(d)
         if rootfs_file:
             rootfs_needed = True
 
-        if d.getVar('XENGUEST_IMAGE_KERNEL'):
+        if d.getVar('XENGUEST_IMAGE_KERNEL') and not d.getVar('INITRAMFS_IMAGE'):
+            # If INITRAMFS_IMAGE is set, even if INITRAMFS_IMAGE_BUNDLE is not
+            # set to 1 to bundle the initramfs with the kernel, kernel.bbclass
+            # is setting a dependency on ${PN}:do_image_complete. We cannot
+            # in this case depend on do_deploy as it would create a circular
+            # dependency:
+            # do_image_complete would depend on kernel:do_deploy which would
+            # depend on ${PN}:do_image_complete
+            # In the case INITRAMFS_IMAGE_BUNDLE = 1, the kernel-xenguest class
+            # will handle the creation of a xenguest image with the kernel.
+            # In the other case the kernel can be added manually to the image.
             kernel_needed = True
-
-        if d.getVar('INITRAMFS_IMAGE'):
-            if int(d.getVar('INITRAMFS_IMAGE_BUNDLE')) != 1:
-                bb.error("xenguest-fstype: INITRAMFS_IMAGE is set but INITRAMFS_IMAGE_BUNDLE is set to 0.\n")
-                bb.fatal("xenguest-fstype: This configuration is not supported by xenguest image type\n")
-            initramfs_needed = True
-
-        if initramfs_needed and rootfs_needed:
-            bb.warn("xenguest-fstype: Final image will use an initramfs kernel and rootfs in disk.\n")
-            bb.warn("xenguest-fstype: rootfs.tar.%s should be removed from XENGUEST_IMAGE_DISK_PARTITIONS.\n")
-
-        if not initramfs_needed and not rootfs_needed and not kernel_needed:
-            bb.warn("xenguest-fstype: Generated image will have no kernel and no rootfs.\n")
 
         bb.build.addtask('do_bootimg_xenguest', 'do_image_complete', None, d)
 
@@ -121,12 +100,9 @@ python __anonymous() {
             d.setVar('IMAGE_TYPEDEP_xenguest', 'tar' + (rootfs_file.split('.tar', 1)[1] or ''))
 
         if kernel_needed:
-            if initramfs_needed:
-                bb.build.addtask('do_deploy', 'do_build', None, d)
-            else:
-                # Tell do_bootimg_xenguest to call xenguest_image_add_kernel
-                d.appendVarFlag('do_bootimg_xenguest', 'subtasks', ' xenguest_image_add_kernel')
-                # we will need kernel do_deploy
-                d.appendVarFlag('do_bootimg_xenguest', 'depends', ' virtual/kernel:do_deploy')
+            # Tell do_bootimg_xenguest to call xenguest_image_add_kernel
+            d.appendVarFlag('do_bootimg_xenguest', 'subtasks', ' xenguest_image_add_kernel')
+            # we will need kernel do_deploy
+            d.appendVarFlag('do_bootimg_xenguest', 'depends', ' virtual/kernel:do_deploy')
 }
 
