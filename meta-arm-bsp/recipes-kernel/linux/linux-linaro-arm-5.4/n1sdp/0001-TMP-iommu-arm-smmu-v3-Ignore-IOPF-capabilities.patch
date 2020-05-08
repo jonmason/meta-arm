@@ -1,0 +1,46 @@
+From 4ebcbe09471d6b6b18fce42993489bed3801f10c Mon Sep 17 00:00:00 2001
+From: Jean-Philippe Brucker <jean-philippe@linaro.org>
+Date: Fri, 24 Jan 2020 10:17:14 +0100
+Subject: [PATCH 1/4] TMP: iommu/arm-smmu-v3: Ignore IOPF capabilities
+
+Don't mandate PRI or stall to enable SVA. Some devices have their own
+method for managing I/O page faults when they notice a translation
+request that fails.
+
+Signed-off-by: Jean-Philippe Brucker <jean-philippe@linaro.org>
+---
+ drivers/iommu/arm-smmu-v3.c | 18 +++++++++++++++++-
+ 1 file changed, 17 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/iommu/arm-smmu-v3.c b/drivers/iommu/arm-smmu-v3.c
+index fed6a9d5867e..a8d7d6ccbb21 100644
+--- a/drivers/iommu/arm-smmu-v3.c
++++ b/drivers/iommu/arm-smmu-v3.c
+@@ -3276,7 +3276,23 @@ static bool arm_smmu_ats_supported(struct arm_smmu_master *master)
+ 
+ static bool arm_smmu_iopf_supported(struct arm_smmu_master *master)
+ {
+-	return master->stall_enabled || master->pri_supported;
++	/* return master->stall_enabled || master->pri_supported; */
++
++	/*
++	 * FIXME: this temporary hack allows enabling SVA for any endpoint even
++	 * when they don't have PRI/stall.
++	 *
++	 * To implement this more cleanly, we need a third method, complementing
++	 * stall_enabled and pri_supported, to enable IOPF. A bit that says
++	 * "this device's page faults are handled out of band", called for
++	 * example master->oob_iopf. How to set it?  It can easily be a firmware
++	 * quirk, but that does not suffice in my opinion. We need to know that
++	 * there is software ready to handle these page faults. The device
++	 * driver owning this endpoint could for example call
++	 * iommu_dev_enable_feature(dev, IOMMU_DEV_FEAT_OOB_IOPF), before
++	 * enabling IOMMU_DEV_FEAT_SVA.
++	 */
++	return true;
+ }
+ 
+ static void arm_smmu_enable_ats(struct arm_smmu_master *master)
+-- 
+2.25.0
+
