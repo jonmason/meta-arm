@@ -11,7 +11,9 @@ COMPATIBLE_MACHINE ?= ""
 # KBRANCH is set to n1sdp by default as there is no master branch on the repository
 KBRANCH = "n1sdp"
 
-SRC_URI = "git://git.linaro.org/landing-teams/working/arm/kernel-release.git;branch=${KBRANCH};"
+SRC_URI = "git://git.linaro.org/landing-teams/working/arm/kernel-release.git;branch=${KBRANCH}; \
+           file://0001-menuconfig-mconf-cfg-Allow-specification-of-ncurses-location.patch \
+          "
 LIC_FILES_CHKSUM = "file://COPYING;md5=bbea815ee2795b2f4230826c0c6b8814"
 
 SRCREV = "${AUTOREV}"
