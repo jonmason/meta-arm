@@ -62,7 +62,7 @@ The file contains the following entries:
 - `DISK_PARTX=SIZE:FS:CONTENT`: create a partition number X (1 to 4) with a
   size of SIZE GB, format it with filesystem FS (can be ext2, ext3, ext4, vfat
   or swap) and extract CONTENT as initial partition content
-  (.tar[.gz|.xz|.bz2] file or img file to be dumped in the partition). FS and
+  (.tar[.gz|.xz|.bz2] file or img[.gz|.bz2] file to be dumped in the partition). FS and
   CONTENT can be empty.
 
 The disk-files contain files to be used for initializing the disk partitions

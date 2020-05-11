@@ -262,12 +262,30 @@ function xenguest_disk_init()
             fi
 
             case ${content} in
-                *.img)
+                *.img*)
+                    decompress=""
+                    case ${content} in
+                        *.img.gz)
+                            decompress='zcat'
+                            ;;
+                        *.img.bz2)
+                            decompress='bzcat'
+                            ;;
+                        *.img)
+                            decompress='cat'
+                            ;;
+                        *)
+                            # invalid/unknown compression type
+                            echo "${PREF} Invalid file format in disk ${content}"
+                            xenguest_detach_disk
+                            exit 1
+                            ;;
+                    esac
                     # dd into partition
                     echo "xenguest-mkimage extract-disk-file ${guestfile} " \
-                        "${content} | dd of=/dev/xvda${part} " >> ${LOGFILE} 2>&1
+                        "${content} | ${decompress} | dd of=/dev/xvda${part} " >> ${LOGFILE} 2>&1
                     xenguest-mkimage extract-disk-file ${guestfile} ${content} \
-                        | dd of=/dev/xvda${part} >> ${LOGFILE} 2>&1
+                        | ${decompress} | dd of=/dev/xvda${part} >> ${LOGFILE} 2>&1
                     if [ $? -ne 0 ]; then
                         echo "${PREF} Cannot populate partition ${part}"
                         xenguest_detach_disk
