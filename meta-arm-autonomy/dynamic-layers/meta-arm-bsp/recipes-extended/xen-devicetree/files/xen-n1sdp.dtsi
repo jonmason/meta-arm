@@ -1,0 +1,39 @@
+/*
+ * Modify N1SDP DTB to work properly when Xen is used
+ */
+
+/ {
+
+    /*
+     * pmu is using PPI interrupts which are reserved by xen
+     * remove pm nodes
+     */
+    /delete-node/ pmu;
+    /delete-node/ spe-pmu;
+
+    /*
+     * disable IOMMU until we have a proper support in xen
+     */
+    /delete-node/ iommu@4f000000;
+    /delete-node/ iommu@4f400000;
+
+    /*
+     * Set extra registers required for PCI quirks to communicate with SCP
+     * and remove invalid properties due to removal
+     */
+    pcie@68000000 {
+        reg = <0 0x68000000 0 0x1200000>,
+                <0 0x06000000 0 0x80000>,
+                <0 0x62000000 0 0x80000>;
+        /delete-property/ msi-map;
+        /delete-property/ iommu-map;
+    };
+
+    pcie@70000000 {
+        reg = <0 0x70000000 0 0x1200000>,
+                <0 0x06000000 0 0x80000>,
+                <0 0x60000000 0 0x80000>;
+        /delete-property/ msi-map;
+        /delete-property/ iommu-map;
+    };
+};
