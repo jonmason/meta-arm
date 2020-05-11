@@ -1,5 +1,5 @@
 #
-# Trusted firmware-A 2.1
+# Trusted firmware-A 2.2
 #
 
 require trusted-firmware-a.inc
@@ -9,12 +9,12 @@ SRC_URI = "git://git.trustedfirmware.org/TF-A/trusted-firmware-a.git;protocol=ht
 # Use TF-A for version
 SRCREV_FORMAT = "tfa"
 
-# TF-A v2.1
-SRCREV_tfa = "e1286bdb968ee74fc52f96cf303a4218e1ae2950"
+# TF-A v2.2
+SRCREV_tfa = "7192b956bde11652a835eee0724dca0e403fee90"
 
 S = "${WORKDIR}/git"
 
-LIC_FILES_CHKSUM = "file://license.rst;md5=c709b197e22b81ede21109dbffd5f363"
+LIC_FILES_CHKSUM = "file://docs/license.rst;md5=189505435dbcdcc8caa63c46fe93fa89"
 
 SRC_URI[tfa.md5sum] = "75c8f4958fb493d9bd7a8e5a9636ec18"
 SRC_URI[tfa.sha256sum] = "7c4c00a4f28d3cfbb235fd1a1fb28c4d2fc1d657c9301686e7d8824ef575d059"
