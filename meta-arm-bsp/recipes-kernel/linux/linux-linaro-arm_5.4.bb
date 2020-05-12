@@ -6,7 +6,7 @@ SECTION = "kernel"
 
 require recipes-kernel/linux/linux-yocto.inc
 
-COMPATIBLE_MACHINE ?= ""
+COMPATIBLE_MACHINE ?= "invalid"
 
 # KBRANCH is set to n1sdp by default as there is no master branch on the repository
 KBRANCH = "n1sdp"
