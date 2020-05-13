@@ -15,12 +15,7 @@ TFA_PLATFORM ?= "invalid"
 # Build for debug (set TFA_DEBUG to 1 to activate)
 TFA_DEBUG ?= "0"
 
-# Sub-directory in which to build.
-# This must be coherent with BUILD_PLAT make parameter so that deploy can find
-# the produced binaries
-TFA_BUILD_DIR ?= "build-${TFA_PLATFORM}"
-# set BUILD_PLAT depending on configured BUILD_DIR
-EXTRA_OEMAKE += "BUILD_PLAT=${TFA_BUILD_DIR}"
+B = "${WORKDIR}/build"
 
 # mbed TLS support (set TFA_MBEDTLS to 1 to activate)
 TFA_MBEDTLS ?= "0"
@@ -68,7 +63,7 @@ do_configure[noexec] = "1"
 DEPENDS_append = " dtc-native openssl-native"
 
 # Add platform parameter
-EXTRA_OEMAKE += "PLAT=${TFA_PLATFORM}"
+EXTRA_OEMAKE += "BUILD_BASE=${B} PLAT=${TFA_PLATFORM}"
 
 # Handle TFA_DEBUG parameter
 EXTRA_OEMAKE += "${@bb.utils.contains('TFA_DEBUG', '1', ' DEBUG=${TFA_DEBUG}', '', d)}"
@@ -85,6 +80,8 @@ EXTRA_OEMAKE += "${@bb.utils.contains('TFA_UBOOT', '1', ' BL33=${DEPLOY_DIR_IMAG
 # TFA is forcing the host compiler and its flags in the Makefile using :=
 # assignment for GCC and CFLAGS.
 do_compile() {
+    cd ${S}
+
     # These changes are needed to have the fiptool compiling and executing properly
     sed -i '/^LDLIBS/ s,$, \-L${RECIPE_SYSROOT_NATIVE}${libdir},' ${S}/tools/fiptool/Makefile
     sed -i '/^INCLUDE_PATHS/ s,$, \-I${RECIPE_SYSROOT_NATIVE}${includedir},' ${S}/tools/fiptool/Makefile
@@ -92,8 +89,15 @@ do_compile() {
 
     oe_runmake ${TFA_BUILD_TARGET}
 }
+do_compile[cleandirs] = "${B}"
 
 do_install() {
+    if ${@"true" if d.getVar('TFA_DEBUG') == '1' else "false"}; then
+        BUILD_PLAT=${B}/${TFA_PLATFORM}/debug/
+    else
+        BUILD_PLAT=${B}/${TFA_PLATFORM}/release/
+    fi
+
     install -d -m 755 ${D}/firmware
     for atfbin in ${TFA_INSTALL_TARGET}; do
         if [ "$atfbin" = "all" ]; then
@@ -102,21 +106,21 @@ do_install() {
             bberror "Please specify valid targets in TFA_INSTALL_TARGET or"
             bberror "rewrite or turn off do_install"
             exit 1
-        elif [ -f ${S}/${TFA_BUILD_DIR}/$atfbin.bin ]; then
+        elif [ -f $BUILD_PLAT/$atfbin.bin ]; then
             echo "Install $atfbin.bin"
-            install -m 0644 ${S}/${TFA_BUILD_DIR}/$atfbin.bin \
+            install -m 0644 $BUILD_PLAT/$atfbin.bin \
                 ${D}/firmware/$atfbin-${TFA_PLATFORM}.bin
-        elif [ -f ${S}/${TFA_BUILD_DIR}/$atfbin.elf ]; then
+        elif [ -f $BUILD_PLAT/$atfbin.elf ]; then
             echo "Install $atfbin.elf"
-            install -m 0644 ${S}/${TFA_BUILD_DIR}/$atfbin.elf \
+            install -m 0644 $BUILD_PLAT/$atfbin.elf \
                 ${D}/firmware/$atfbin-${TFA_PLATFORM}.elf
-        elif [ -f ${S}/${TFA_BUILD_DIR}/$atfbin ]; then
+        elif [ -f $BUILD_PLAT/$atfbin ]; then
             echo "Install $atfbin"
-            install -m 0644 ${S}/${TFA_BUILD_DIR}/$atfbin \
+            install -m 0644 $BUILD_PLAT/$atfbin \
                 ${D}/firmware/$atfbin-${TFA_PLATFORM}
         elif [ "$atfbin" = "dtbs" ]; then
             echo "dtbs install, skipped"
-        elif [ -f ${S}/tools/$atfbin/$atfbin ]; then
+        elif [ -f ${B}/tools/$atfbin/$atfbin ]; then
             echo "Tools $atfbin install, skipped"
         else
             bberror "Unsupported TFA_INSTALL_TARGET target $atfbin"
