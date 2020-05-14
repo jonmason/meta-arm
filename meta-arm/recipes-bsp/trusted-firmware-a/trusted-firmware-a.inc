@@ -116,29 +116,39 @@ do_install() {
 
     install -d -m 755 ${D}/firmware
     for atfbin in ${TFA_INSTALL_TARGET}; do
+        processes="0"
         if [ "$atfbin" = "all" ]; then
             # Target all is not handled by default
             bberror "all as TFA_INSTALL_TARGET is not handled by do_install"
             bberror "Please specify valid targets in TFA_INSTALL_TARGET or"
             bberror "rewrite or turn off do_install"
             exit 1
-        elif [ -f $BUILD_PLAT/$atfbin.bin ]; then
+        fi
+
+        if [ -f $BUILD_PLAT/$atfbin.bin ]; then
             echo "Install $atfbin.bin"
             install -m 0644 $BUILD_PLAT/$atfbin.bin \
                 ${D}/firmware/$atfbin-${TFA_PLATFORM}.bin
-        elif [ -f $BUILD_PLAT/$atfbin/$atfbin.elf ]; then
+            processes="1"
+        fi
+        if [ -f $BUILD_PLAT/$atfbin/$atfbin.elf ]; then
             echo "Install $atfbin.elf"
             install -m 0644 $BUILD_PLAT/$atfbin/$atfbin.elf \
                 ${D}/firmware/$atfbin-${TFA_PLATFORM}.elf
-        elif [ -f $BUILD_PLAT/$atfbin ]; then
+            processes="1"
+        fi
+        if [ -f $BUILD_PLAT/$atfbin ]; then
             echo "Install $atfbin"
             install -m 0644 $BUILD_PLAT/$atfbin \
                 ${D}/firmware/$atfbin-${TFA_PLATFORM}
-        elif [ "$atfbin" = "dtbs" ]; then
+            processes="1"
+        fi
+
+        if [ "$atfbin" = "dtbs" ]; then
             echo "dtbs install, skipped"
         elif [ -f ${B}/tools/$atfbin/$atfbin ]; then
             echo "Tools $atfbin install, skipped"
-        else
+        elif [ "$processed" = "0" ]; then
             bberror "Unsupported TFA_INSTALL_TARGET target $atfbin"
             exit 1
         fi
