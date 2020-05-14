@@ -21,10 +21,10 @@ LIC_FILES_CHKSUM = "file://docs/license.rst;md5=189505435dbcdcc8caa63c46fe93fa89
 # Those are used in trusted-firmware-a.inc if TFA_MBEDTLS is set to 1
 #
 
-SRC_URI_MBEDTLS = "git://github.com/ARMmbed/mbedtls.git;name=mbedtls;protocol=https;destsuffix=git/mbedtls;branch=mbedtls-2.18"
+SRC_URI_MBEDTLS = "git://github.com/ARMmbed/mbedtls.git;name=mbedtls;protocol=https;destsuffix=git/mbedtls;tag=v2.24.0"
 
 # mbed TLS v2.18.1
-SRCREV_mbedtls = "ca933c7e0c9e84738b168b6b0feb89af4183a60a"
+SRCREV_mbedtls = "v2.24.0"
 
 LIC_FILES_CHKSUM_MBEDTLS += " \
     file://mbedtls/apache-2.0.txt;md5=3b83ef96387f14655fc854ddc3c6bd57 \
