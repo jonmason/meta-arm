@@ -12,6 +12,10 @@ COMPATIBLE_MACHINE ?= "invalid"
 # Platform must be set for each machine
 TFA_PLATFORM ?= "invalid"
 
+# Some platforms can have multiple board configurations
+# Leave empty for default behavior
+TFA_BOARD ?= ""
+
 # Build for debug (set TFA_DEBUG to 1 to activate)
 TFA_DEBUG ?= "0"
 
@@ -65,6 +69,10 @@ DEPENDS_append = " dtc-native openssl-native"
 # Add platform parameter
 EXTRA_OEMAKE += "BUILD_BASE=${B} PLAT=${TFA_PLATFORM}"
 
+# Handle TFA_BOARD parameter
+EXTRA_OEMAKE += "${@'TARGET_BOARD=${TFA_BOARD}' if d.getVar('TFA_BOARD') else ''}"
+BUILD_DIR = "${TFA_PLATFORM}${@'/${TFA_BOARD}' if d.getVar('TFA_BOARD') else ''}"
+
 # Handle TFA_DEBUG parameter
 EXTRA_OEMAKE += "${@bb.utils.contains('TFA_DEBUG', '1', ' DEBUG=${TFA_DEBUG}', '', d)}"
 
@@ -93,9 +101,9 @@ do_compile[cleandirs] = "${B}"
 
 do_install() {
     if ${@"true" if d.getVar('TFA_DEBUG') == '1' else "false"}; then
-        BUILD_PLAT=${B}/${TFA_PLATFORM}/debug/
+        BUILD_PLAT=${B}/${BUILD_DIR}/debug/
     else
-        BUILD_PLAT=${B}/${TFA_PLATFORM}/release/
+        BUILD_PLAT=${B}/${BUILD_DIR}/release/
     fi
 
     install -d -m 755 ${D}/firmware
