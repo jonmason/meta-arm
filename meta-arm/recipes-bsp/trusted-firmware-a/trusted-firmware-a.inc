@@ -16,6 +16,11 @@ TFA_PLATFORM ?= "invalid"
 # Leave empty for default behavior
 TFA_BOARD ?= ""
 
+# Some platforms use SPD (Secure Payload Dispatcher) services
+# Few options are "opteed", "tlkd", "trusty", "tspd"...
+# Leave empty to not use SPD
+TFA_SPD ?= ""
+
 # Build for debug (set TFA_DEBUG to 1 to activate)
 TFA_DEBUG ?= "0"
 
@@ -73,16 +78,19 @@ EXTRA_OEMAKE += "BUILD_BASE=${B} PLAT=${TFA_PLATFORM}"
 EXTRA_OEMAKE += "${@'TARGET_BOARD=${TFA_BOARD}' if d.getVar('TFA_BOARD') else ''}"
 BUILD_DIR = "${TFA_PLATFORM}${@'/${TFA_BOARD}' if d.getVar('TFA_BOARD') else ''}"
 
+# Handle TFA_SPD parameter
+EXTRA_OEMAKE += "${@'SPD=${TFA_SPD}' if d.getVar('TFA_SPD') else ''}"
+
 # Handle TFA_DEBUG parameter
-EXTRA_OEMAKE += "${@bb.utils.contains('TFA_DEBUG', '1', ' DEBUG=${TFA_DEBUG}', '', d)}"
+EXTRA_OEMAKE += "${@bb.utils.contains('TFA_DEBUG', '1', 'DEBUG=${TFA_DEBUG}', '', d)}"
 
 # Handle MBEDTLS
-EXTRA_OEMAKE += "${@bb.utils.contains('TFA_MBEDTLS', '1', ' MBEDTLS_DIR=${TFA_MBEDTLS_DIR}', '', d)}"
+EXTRA_OEMAKE += "${@bb.utils.contains('TFA_MBEDTLS', '1', 'MBEDTLS_DIR=${TFA_MBEDTLS_DIR}', '', d)}"
 
 # Uboot support
 DEPENDS += " ${@bb.utils.contains('TFA_UBOOT', '1', 'u-boot', '', d)}"
 do_compile[depends] += " ${@bb.utils.contains('TFA_UBOOT', '1', 'u-boot:do_deploy', '', d)}"
-EXTRA_OEMAKE += "${@bb.utils.contains('TFA_UBOOT', '1', ' BL33=${DEPLOY_DIR_IMAGE}/u-boot.bin', '',d)}"
+EXTRA_OEMAKE += "${@bb.utils.contains('TFA_UBOOT', '1', 'BL33=${DEPLOY_DIR_IMAGE}/u-boot.bin', '',d)}"
 
 # The following hack is needed to fit properly in yocto build environment
 # TFA is forcing the host compiler and its flags in the Makefile using :=
