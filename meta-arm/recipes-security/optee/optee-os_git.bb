@@ -10,7 +10,7 @@ PV = "3.8.0+git${SRCPV}"
 inherit deploy python3native
 require optee.inc
 
-DEPENDS = "python3-pycrypto-native python3-pyelftools-native python3-pycryptodomex-native"
+DEPENDS = "python3-pycryptodome-native python3-pycryptodomex-native python3-pyelftools-native"
 
 SRCREV = "023e33656e2c9557ce50ad63a98b2e2c9b51c118"
 SRC_URI = " \
