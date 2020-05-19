@@ -16,6 +16,7 @@ SRCREV = "023e33656e2c9557ce50ad63a98b2e2c9b51c118"
 SRC_URI = " \
     git://github.com/OP-TEE/optee_os.git \
     file://0001-allow-setting-sysroot-for-libgcc-lookup.patch \
+    file://0001-arm64-Disable-outline-atomics-when-compiling.patch \
 "
 
 S = "${WORKDIR}/git"
