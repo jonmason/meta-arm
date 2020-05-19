@@ -5,7 +5,7 @@ PROVIDES = "virtual/trusted-firmware-a"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
-inherit deploy nopackages
+inherit deploy
 
 COMPATIBLE_MACHINE ?= "invalid"
 
@@ -158,7 +158,10 @@ do_install() {
     done
 }
 
+FILES_${PN} = "/firmware"
 SYSROOT_DIRS += "/firmware"
+# Skip QA check for relocations in .text of elf binaries
+INSANE_SKIP_${PN} = "textrel"
 
 do_deploy() {
     cp -rf ${D}/firmware/* ${DEPLOYDIR}/
