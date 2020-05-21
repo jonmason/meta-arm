@@ -18,20 +18,30 @@ SRC_URI = " \
 "
 
 S = "${WORKDIR}/git"
+B = "${WORKDIR}/build"
 
 SYSTEMD_SERVICE_${PN} = "tee-supplicant.service"
 
+EXTRA_OEMAKE = "O=${B}"
+
+do_compile() {
+    cd ${S}
+    oe_runmake
+}
+do_compile[cleandirs] = "${B}"
+
 do_install() {
+    cd ${S}
     oe_runmake install
 
-    install -D -p -m0755 ${S}/out/export/usr/sbin/tee-supplicant ${D}${sbindir}/tee-supplicant
+    install -D -p -m0755 ${B}/export/usr/sbin/tee-supplicant ${D}${sbindir}/tee-supplicant
 
-    install -D -p -m0644 ${S}/out/export/usr/lib/libteec.so.1.0 ${D}${libdir}/libteec.so.1.0
+    install -D -p -m0644 ${B}/export/usr/lib/libteec.so.1.0 ${D}${libdir}/libteec.so.1.0
     ln -sf libteec.so.1.0 ${D}${libdir}/libteec.so
     ln -sf libteec.so.1.0 ${D}${libdir}/libteec.so.1
 
     install -d ${D}${includedir}
-    install -p -m0644 ${S}/out/export/usr/include/*.h ${D}${includedir}
+    install -p -m0644 ${B}/export/usr/include/*.h ${D}${includedir}
 
     sed -i -e s:/etc:${sysconfdir}:g \
            -e s:/usr/bin:${bindir}:g \

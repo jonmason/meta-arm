@@ -20,10 +20,9 @@ SRC_URI = " \
 "
 
 S = "${WORKDIR}/git"
+B = "${WORKDIR}/build"
 
 OPTEEMACHINE ?= "${MACHINE}"
-OPTEEOUTPUTMACHINE ?= "${MACHINE}"
-
 OPTEE_ARCH = "null"
 OPTEE_ARCH_armv7a = "arm32"
 OPTEE_ARCH_aarch64 = "arm64"
@@ -38,6 +37,7 @@ EXTRA_OEMAKE = " \
     V=1 \
     ta-targets=ta_${OPTEE_ARCH} \
     LIBGCC_LOCATE_CFLAGS=--sysroot=${STAGING_DIR_HOST} \
+    O=${B} \
 "
 
 CFLAGS[unexport] = "1"
@@ -49,17 +49,19 @@ LD[unexport] = "1"
 do_configure[noexec] = "1"
 
 do_compile() {
+    cd ${S}
     oe_runmake all CFG_TEE_TA_LOG_LEVEL=0
 }
+do_compile[cleandirs] = "${B}"
 
 do_install() {
     #install core in firmware
     install -d ${D}${nonarch_base_libdir}/firmware/
-    install -m 644 ${B}/out/arm-plat-${OPTEEOUTPUTMACHINE}/core/*.bin ${D}${nonarch_base_libdir}/firmware/
+    install -m 644 ${B}/core/*.bin ${D}${nonarch_base_libdir}/firmware/
 
     #install TA devkit
     install -d ${D}${includedir}/optee/export-user_ta/
-    for f in ${B}/out/arm-plat-${OPTEEOUTPUTMACHINE}/export-ta_${OPTEE_ARCH}/* ; do
+    for f in ${B}/export-ta_${OPTEE_ARCH}/* ; do
         cp -aR $f ${D}${includedir}/optee/export-user_ta/
     done
 }

@@ -16,6 +16,7 @@ SRCREV = "30481e381cb4285706e7516853495a7699c93b2c"
 SRC_URI = "git://github.com/OP-TEE/optee_test.git"
 
 S = "${WORKDIR}/git"
+B = "${WORKDIR}/build"
 
 OPTEE_CLIENT_EXPORT = "${STAGING_DIR_HOST}${prefix}"
 TEEC_EXPORT         = "${STAGING_DIR_HOST}${prefix}"
@@ -27,21 +28,24 @@ EXTRA_OEMAKE = " TA_DEV_KIT_DIR=${TA_DEV_KIT_DIR} \
                  CROSS_COMPILE_HOST=${TARGET_PREFIX} \
                  CROSS_COMPILE_TA=${TARGET_PREFIX} \
                  V=1 \
+                 O=${B} \
                "
 
 do_compile() {
+    cd ${S}
     # Top level makefile doesn't seem to handle parallel make gracefully
     oe_runmake xtest
     oe_runmake ta
 }
+do_compile[cleandirs] = "${B}"
 
 do_install () {
-    install -D -p -m0755 ${S}/out/xtest/xtest ${D}${bindir}/xtest
+    install -D -p -m0755 ${B}/xtest/xtest ${D}${bindir}/xtest
 
     # install path should match the value set in optee-client/tee-supplicant
     # default TEEC_LOAD_PATH is /lib
     mkdir -p ${D}${nonarch_base_libdir}/optee_armtz/
-    install -D -p -m0444 ${S}/out/ta/*/*.ta ${D}${nonarch_base_libdir}/optee_armtz/
+    install -D -p -m0444 ${B}/ta/*/*.ta ${D}${nonarch_base_libdir}/optee_armtz/
 }
 
 FILES_${PN} += "${nonarch_base_libdir}/optee_armtz/"

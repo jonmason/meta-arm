@@ -17,6 +17,7 @@ SRC_URI = "git://github.com/linaro-swg/optee_examples.git"
 SRCREV = "559b2141c16bf0f57ccd72f60e4deb84fc2a05b0"
 
 S = "${WORKDIR}/git"
+B = "${WORKDIR}/build"
 
 OPTEE_CLIENT_EXPORT = "${STAGING_DIR_HOST}${prefix}"
 TEEC_EXPORT = "${STAGING_DIR_HOST}${prefix}"
@@ -28,17 +29,20 @@ EXTRA_OEMAKE = " TA_DEV_KIT_DIR=${TA_DEV_KIT_DIR} \
                  HOST_CROSS_COMPILE=${TARGET_PREFIX} \
                  TA_CROSS_COMPILE=${TARGET_PREFIX} \
                  V=1 \
+                 OUTPUT_DIR=${B} \
                "
 
 do_compile() {
+    cd ${S}
     oe_runmake
 }
+do_compile[cleandirs] = "${B}"
 
 do_install () {
     mkdir -p ${D}${nonarch_base_libdir}/optee_armtz
     mkdir -p ${D}${bindir}
-    install -D -p -m0755 ${S}/out/ca/* ${D}${bindir}
-    install -D -p -m0444 ${S}/out/ta/* ${D}${nonarch_base_libdir}/optee_armtz
+    install -D -p -m0755 ${B}/ca/* ${D}${bindir}
+    install -D -p -m0444 ${B}/ta/* ${D}${nonarch_base_libdir}/optee_armtz
 }
 
 FILES_${PN} += "${nonarch_base_libdir}/optee_armtz/"
