@@ -23,6 +23,7 @@ S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
 
 OPTEEMACHINE ?= "${MACHINE}"
+OPTEEMACHINE_aarch64_qemuall ?= "vexpress-qemu_armv8a"
 OPTEE_ARCH = "null"
 OPTEE_ARCH_armv7a = "arm32"
 OPTEE_ARCH_aarch64 = "arm64"
@@ -74,6 +75,8 @@ do_deploy() {
 }
 
 addtask deploy before do_build after do_install
+
+SYSROOT_DIRS += "${nonarch_base_libdir}/firmware"
 
 FILES_${PN} = "${nonarch_base_libdir}/firmware/"
 FILES_${PN}-dev = "${includedir}/optee/"
