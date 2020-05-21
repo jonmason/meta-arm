@@ -9,18 +9,17 @@ PV = "3.8.0+git${SRCPV}"
 
 require optee.inc
 
-inherit python3native systemd
+inherit python3native systemd update-rc.d
 
 SRCREV = "be4fa2e36f717f03ca46e574aa66f697a897d090"
 SRC_URI = " \
     git://github.com/OP-TEE/optee_client.git \
     file://tee-supplicant.service \
+    file://tee-supplicant.sh \
 "
 
 S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
-
-SYSTEMD_SERVICE_${PN} = "tee-supplicant.service"
 
 EXTRA_OEMAKE = "O=${B}"
 
@@ -43,9 +42,20 @@ do_install() {
     install -d ${D}${includedir}
     install -p -m0644 ${B}/export/usr/include/*.h ${D}${includedir}
 
-    sed -i -e s:/etc:${sysconfdir}:g \
-           -e s:/usr/bin:${bindir}:g \
-              ${WORKDIR}/tee-supplicant.service
-
     install -D -p -m0644 ${WORKDIR}/tee-supplicant.service ${D}${systemd_system_unitdir}/tee-supplicant.service
+
+    install -D -p -m0755 ${WORKDIR}/tee-supplicant.sh ${D}${sysconfdir}/init.d/tee-supplicant
+
+    sed -i -e s:@sysconfdir@:${sysconfdir}:g \
+           -e s:@sbindir@:${sbindir}:g \
+              ${D}${systemd_system_unitdir}/tee-supplicant.service \
+              ${D}${sysconfdir}/init.d/tee-supplicant
 }
+
+SYSTEMD_SERVICE_${PN} = "tee-supplicant.service"
+
+INITSCRIPT_PACKAGES = "${PN}"
+
+INITSCRIPT_NAME_${PN} = "tee-supplicant"
+INITSCRIPT_PARAMS_${PN} = "start 10 1 2 3 4 5 . stop 90 0 6 ."
+
