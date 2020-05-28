@@ -3,6 +3,7 @@ require recipes-devtools/gcc/gcc-common.inc
 # Third digit in PV should be incremented after a minor release
 
 PV = "arm-9.2"
+CVE_VERSION = "9.2"
 
 # BINV should be incremented to a revision after a minor gcc release
 
