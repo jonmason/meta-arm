@@ -15,8 +15,12 @@ DEPENDS = "python3-pycryptodome-native python3-pycryptodomex-native python3-pyel
 SRCREV = "023e33656e2c9557ce50ad63a98b2e2c9b51c118"
 SRC_URI = " \
     git://github.com/OP-TEE/optee_os.git \
-    file://0001-allow-setting-sysroot-for-libgcc-lookup.patch \
-    file://0001-arm64-Disable-outline-atomics-when-compiling.patch \
+    file://0001-mk-compile.mk-fix-cc-option-macro.patch \
+    file://0002-Allow-use-of-cc-option-in-core-arch-arm-arm.mk.patch \
+    file://0003-arm64-Disable-outline-atomics-when-compiling.patch \
+    file://0004-Cleanup-unused-comp-cflags-sm-from-libgcc-lookup-com.patch \
+    file://0005-Fixup-Allow-use-of-cc-option-in-core-arch-arm-arm.mk.patch \
+    file://0006-allow-setting-sysroot-for-libgcc-lookup.patch \
 "
 
 S = "${WORKDIR}/git"
