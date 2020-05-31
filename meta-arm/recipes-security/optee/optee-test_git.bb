@@ -13,7 +13,9 @@ DEPENDS = "optee-client optee-os python3-pycryptodomex-native"
 PV = "3.8.0+git${SRCPV}"
 
 SRCREV = "30481e381cb4285706e7516853495a7699c93b2c"
-SRC_URI = "git://github.com/OP-TEE/optee_test.git"
+SRC_URI = "git://github.com/OP-TEE/optee_test.git \
+           file://0001-host-xtest-Adjust-order-of-including-compiler.h.patch \
+          "
 
 S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"

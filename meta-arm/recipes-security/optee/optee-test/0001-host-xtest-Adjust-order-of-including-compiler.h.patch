@@ -1,0 +1,64 @@
+From fc95b3ccbbfd336797ae2cfd6dd4dc58644e146f Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Sat, 30 May 2020 17:52:18 -0700
+Subject: [PATCH] host/xtest: Adjust order of including compiler.h
+
+compiler.h defines some defines which violate libc namespace e.g.
+__unused, this works ok with glibc but fails in awkward ways with musl
+the reason is musl uses __unused in its internal structures and this
+define in compiler.h conflicts with system headers causing errors like
+
+recipe-sysroot/usr/include/bits/stat.h:17:19: error: expected identifier or '(' before '[' token unsigned __unused[2];
+                   ^
+including compiler.h afer sys/stat.h fixes the problem.
+
+Upstream-Status: Pending
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ host/xtest/install_ta.c | 2 +-
+ host/xtest/stats.c      | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/host/xtest/install_ta.c b/host/xtest/install_ta.c
+index 09a4c6d..6f7bb5c 100644
+--- a/host/xtest/install_ta.c
++++ b/host/xtest/install_ta.c
+@@ -4,7 +4,6 @@
+  * SPDX-License-Identifier: BSD-2-Clause
+  */
+ 
+-#include <compiler.h>
+ #include <dirent.h>
+ #include <err.h>
+ #include <errno.h>
+@@ -20,6 +19,7 @@
+ #include <sys/types.h>
+ #include <tee_client_api.h>
+ #include <unistd.h>
++#include <compiler.h>
+ 
+ #include "install_ta.h"
+ #include "xtest_helpers.h"
+diff --git a/host/xtest/stats.c b/host/xtest/stats.c
+index 96b0b5f..db9bf25 100644
+--- a/host/xtest/stats.c
++++ b/host/xtest/stats.c
+@@ -3,7 +3,6 @@
+  * Copyright (c) 2019, Linaro Limited
+  */
+ 
+-#include <compiler.h>
+ #include <dirent.h>
+ #include <err.h>
+ #include <errno.h>
+@@ -18,6 +17,7 @@
+ #include <sys/types.h>
+ #include <tee_client_api.h>
+ #include <unistd.h>
++#include <compiler.h>
+ #include "xtest_test.h"
+ #include "stats.h"
+ 
+-- 
+2.26.2
+
