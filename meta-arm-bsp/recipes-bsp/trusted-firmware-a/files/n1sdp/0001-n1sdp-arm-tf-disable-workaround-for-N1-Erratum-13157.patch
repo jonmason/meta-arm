@@ -1,0 +1,46 @@
+From 76847eb46e77d094eb8611760dd1ab880f617321 Mon Sep 17 00:00:00 2001
+From: James Yang <James.Yang@arm.com>
+Date: Wed, 4 Sep 2019 10:49:45 -0500
+Subject: [PATCH] n1sdp/arm-tf: disable workaround for N1 Erratum 1315703 and
+ Spectre v4
+
+This patch disables the workaround for Erratum 1315703 so that the N1 CPU
+performance in the N1 SDP better reflects that of released versions of the
+N1 for software that does not require mitigation for Spectre Variant 4.
+
+N1 SDP uses N1 version r1p0, which is affected by Erratum 1315703, which
+is fixed in N1 r3p1.  The workaround for r1p0 disables the CPU performance
+feature of bypassing of stores by younger loads.  This can significantly
+affect performance.  The Erratum is classified "Cat A (Rare)" and requires
+a specific sequence of events to occur.
+
+Disabling this CPU performance feature is also the mitigation for Spectre
+Variant 4 (CVE-2018-3639).  On CPUs that provide the PSTATE.SBSS feature,
+the OS selectively applies the mitigation only to programs that require it,
+leaving the performance of other programs unaffected.  However, N1 r1p0
+does not have the PSTATE.SBSS feature (which is introduced in N1 r3p1), and
+Arm-TF does not provide the interface to to dynamically disable the CPU
+performance feature.  Therefore, applying the workaround penalizes ALL
+software running on N1 SDP, including those that do not require mitigation.
+
+This patch is meant for performance evaluation purposes ONLY and should not
+be used for software that requires a seccomp computing environment.
+
+Signed-off-by: James Yang <James.Yang@arm.com>
+---
+ plat/arm/board/n1sdp/platform.mk | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/plat/arm/board/n1sdp/platform.mk b/plat/arm/board/n1sdp/platform.mk
+index 986bd70a..7e30c857 100644
+--- a/plat/arm/board/n1sdp/platform.mk
++++ b/plat/arm/board/n1sdp/platform.mk
+@@ -66,3 +66,5 @@ include plat/arm/common/arm_common.mk
+ include plat/arm/css/common/css_common.mk
+ include plat/arm/board/common/board_common.mk
+ 
++# N1SDP: disable workaround for Errata 1315703 and global Spectre v4 mitigation
++override ERRATA_N1_1315703 := 0
+-- 
+2.17.1
+
