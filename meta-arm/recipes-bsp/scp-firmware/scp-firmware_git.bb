@@ -1,0 +1,20 @@
+DESCRIPTION = "Firmware for SCP and MCP software reference implementation"
+HOMEPAGE = "https://github.com/ARM-software/SCP-firmware"
+
+LICENSE = "BSD-3-Clause & Apache-2.0"
+
+# SCP
+LIC_FILES_CHKSUM = "file://license.md;beginline=5;md5=9db9e3d2fb8d9300a6c3d15101b19731"
+# CMSIS
+LIC_FILES_CHKSUM += "file://cmsis/LICENSE.txt;md5=e3fc50a88d0a364313df4b21ef20c29e"
+
+SRC_URI = "\
+    git://github.com/ARM-software/SCP-firmware.git;protocol=https;name=scp;destsuffix=src;nobranch=1 \
+    git://github.com/ARM-software/CMSIS_5.git;protocol=https;name=cmsis;destsuffix=src/cmsis;lfs=0;nobranch=1 \
+"
+
+SRCREV_scp    = "db19910aca6d1032eb0329e5fbb70a92b997f6f2"
+SRCREV_cmsis  = "refs/tags/5.2.0"
+SRCREV_FORMAT = "scp_cmsis"
+
+require scp-firmware.inc
