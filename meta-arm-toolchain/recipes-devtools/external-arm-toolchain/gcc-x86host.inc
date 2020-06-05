@@ -10,7 +10,7 @@ do_install() {
 
     install -d ${D}${bindir}
     # Symlink all executables into bindir
-    for f in ${D}${datadir}/${BINNAME}/bin/${BINNAME}-*; do
+    for f in ${D}${datadir}/bin/${BINNAME}-*; do
         lnr $f ${D}${bindir}/$(basename $f)
     done
 }
