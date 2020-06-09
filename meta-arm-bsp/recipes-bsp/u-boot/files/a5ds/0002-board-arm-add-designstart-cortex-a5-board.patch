@@ -1,7 +1,7 @@
-From 2417d0991f73ee2c83946fcac208a7d6894f4530 Mon Sep 17 00:00:00 2001
+From d74c2d6f475bef05c114e859ab52bd721fbee7b2 Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Wed, 8 Jan 2020 09:48:11 +0000
-Subject: [PATCH 2/2] board: arm: add designstart cortex-a5 board
+Subject: [PATCH 2/3] board: arm: add designstart cortex-a5 board
 
 Arm added a new board, designstart, with a cortex-a5 chip, add the
 default configuration, initialization and makefile for this system.
@@ -22,10 +22,10 @@ Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
  create mode 100644 include/configs/designstart_ca5.h
 
 diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
-index f9dab073ea14..2cc9413114de 100644
+index bbb1e2738bfe..8f918f6e0375 100644
 --- a/arch/arm/Kconfig
 +++ b/arch/arm/Kconfig
-@@ -628,6 +628,12 @@ config ARCH_BCM6858
+@@ -636,6 +636,12 @@ config ARCH_BCM6858
        select OF_CONTROL
        imply CMD_DM
 
@@ -38,17 +38,17 @@ index f9dab073ea14..2cc9413114de 100644
  config TARGET_VEXPRESS_CA15_TC2
        bool "Support vexpress_ca15_tc2"
        select CPU_V7A
-@@ -1782,6 +1788,7 @@ source "board/Marvell/gplugd/Kconfig"
+@@ -1820,6 +1826,7 @@ source "board/Marvell/gplugd/Kconfig"
  source "board/armadeus/apf27/Kconfig"
  source "board/armltd/vexpress/Kconfig"
  source "board/armltd/vexpress64/Kconfig"
 +source "board/armltd/designstart/Kconfig"
+ source "board/cortina/presidio-asic/Kconfig"
  source "board/broadcom/bcm23550_w1d/Kconfig"
  source "board/broadcom/bcm28155_ap/Kconfig"
- source "board/broadcom/bcm963158/Kconfig"
 diff --git a/board/armltd/designstart/Kconfig b/board/armltd/designstart/Kconfig
 new file mode 100644
-index 000000000000..6446fe3f4492
+index 000000000000..a9564e8655e2
 --- /dev/null
 +++ b/board/armltd/designstart/Kconfig
 @@ -0,0 +1,12 @@
@@ -66,7 +66,7 @@ index 000000000000..6446fe3f4492
 +endif
 diff --git a/board/armltd/designstart/Makefile b/board/armltd/designstart/Makefile
 new file mode 100644
-index 000000000000..b64c905c7021
+index 000000000000..d2dc2b74ed85
 --- /dev/null
 +++ b/board/armltd/designstart/Makefile
 @@ -0,0 +1,8 @@
@@ -80,7 +80,7 @@ index 000000000000..b64c905c7021
 +obj-y := designstart.o
 diff --git a/board/armltd/designstart/designstart.c b/board/armltd/designstart/designstart.c
 new file mode 100644
-index 000000000000..b0400f110ce2
+index 000000000000..658057a00330
 --- /dev/null
 +++ b/board/armltd/designstart/designstart.c
 @@ -0,0 +1,49 @@
@@ -178,7 +178,7 @@ index 000000000000..a2a756740295
 +
 diff --git a/include/configs/designstart_ca5.h b/include/configs/designstart_ca5.h
 new file mode 100644
-index 000000000000..79c4b36060d2
+index 000000000000..6db5b1cf4ac2
 --- /dev/null
 +++ b/include/configs/designstart_ca5.h
 @@ -0,0 +1,122 @@
@@ -305,5 +305,5 @@ index 000000000000..79c4b36060d2
 +#define CONFIG_ENV_IS_IN_FLASH                1
 +#endif
 --
-2.25.0
+2.26.2
 
