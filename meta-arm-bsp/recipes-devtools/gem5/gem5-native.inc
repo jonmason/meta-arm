@@ -30,12 +30,6 @@ DEPENDS += "python3-six-native protobuf-native hdf5-native pkgconfig-native \
 
 EXTRA_OESCONS = "${GEM5_SCONS_ARGS}"
 
-do_compile_prepend() {
-    # We need to use the proper native libraries when executing
-    # compiled applications
-    export LD_LIBRARY_PATH="${STAGING_LIBDIR_NATIVE}"
-}
-
 do_install() {
 
     install -d ${D}${datadir}/gem5
