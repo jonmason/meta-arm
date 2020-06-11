@@ -9,7 +9,11 @@ S = "${WORKDIR}"
 # Please refer to documentation/xenguest-network-bridge.md for documentation on
 # those parameters
 XENGUEST_NETWORK_BRIDGE_NAME ?= "xenbr0"
-XENGUEST_NETWORK_BRIDGE_MEMBERS ?= "eth0"
+
+# The XENGUEST_NETWORK_BRIDGE_MEMBERS should be set in a machine.conf
+# or bbappend file.
+#XENGUEST_NETWORK_BRIDGE_MEMBERS ?= "eth0"
+
 XENGUEST_NETWORK_BRIDGE_CONFIG ?= "xenguest-network-bridge-dhcp.cfg.in"
 
 SRC_URI = " \
