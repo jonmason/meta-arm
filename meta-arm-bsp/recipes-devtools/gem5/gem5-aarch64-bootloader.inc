@@ -5,9 +5,11 @@ LICENSE = "BSD"
 
 inherit deploy
 
-PROVIDES = "virtual/gem5-bootloader"
+PROVIDES += "virtual/gem5-bootloader"
 
 COMPATIBLE_MACHINE = "gem5-arm64"
+
+BOOTLOADER_SRC_PATH ?= "${S}/system/arm/bootloader/arm64"
 
 # no configure step
 do_configure[noexec] = "1"
@@ -16,11 +18,11 @@ do_configure[noexec] = "1"
 do_install[noexec] = "1"
 
 do_compile() {
-    oe_runmake -C system/arm/aarch64_bootloader all CROSS_COMPILE=${TARGET_PREFIX}
+    oe_runmake -C ${BOOTLOADER_SRC_PATH} all CROSS_COMPILE=${TARGET_PREFIX}
 }
 
 do_deploy() {
-    oe_runmake -C system/arm/aarch64_bootloader install \
+    oe_runmake -C ${BOOTLOADER_SRC_PATH} install \
         CROSS_COMPILE=${TARGET_PREFIX} DESTDIR=${DEPLOYDIR}/binaries
 }
 
