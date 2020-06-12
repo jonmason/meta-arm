@@ -58,6 +58,7 @@ DISTRO_FEATURES_LIBC = "ipv4 ipv6 libc-backtrace libc-big-macros libc-bsd libc-c
 ENABLE_BINARY_LOCALE_GENERATION = "0"
 GLIBC_INTERNAL_USE_BINARY_LOCALE = "precompiled"
 LIBCOVERRIDE = ":libc-glibc"
+LIBC_DEPENDENCIES_remove = "glibc-gconv-cp1252 glibc-gconv-ibm850 glibc-gconv-iso8859-1 glibc-gconv-iso8859-15 glibc-localedata-i18n"
 
 ERROR_QA[type] ?= "list"
 python toolchain_metadata_setup () {
