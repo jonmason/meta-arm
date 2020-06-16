@@ -36,3 +36,4 @@ to reproduce the issue
 Maintainer(s)
 -------------
 * Jon Mason <jon.mason@arm.com>
+* Ross Burton <ross.burton@arm.com>
