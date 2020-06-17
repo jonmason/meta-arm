@@ -56,10 +56,14 @@ EOF
 
 function xenguest_volume_init()
 {
+    # Return:
+    # 0 - success
+    # 1 - failure
+
     if [ -z "${XENGUEST_VOLUME_DEVICE:-}" -o \
         ! -b ${XENGUEST_VOLUME_DEVICE:-} ]; then
         echo "${PREF} Invalid volume device in configuration: ${XENGUEST_VOLUME_DEVICE:-}"
-        exit 1
+        return 1
     fi
 
     if [ -z "${XENGUEST_VOLUME_NAME:-}" ]; then
@@ -69,14 +73,26 @@ function xenguest_volume_init()
 
     pvs ${XENGUEST_VOLUME_DEVICE} > /dev/null 2>&1
     if [ $? -ne 0 ]; then
-        echo "${PREF} Initialize lvm on ${XENGUEST_VOLUME_DEVICE}"
-        echo "pvcreate -f ${XENGUEST_VOLUME_DEVICE}" >> ${LOGFILE} 2>&1
-        pvcreate -f ${XENGUEST_VOLUME_DEVICE} >> ${LOGFILE} 2>&1
-        if [ $? -ne 0 ]; then
-            echo "${PREF} Error"
-            exit 1
+        # Check if there is no filesystem in the block device
+        echo "lsblk -n -o FSTYPE ${XENGUEST_VOLUME_DEVICE}" >> ${LOGFILE} 2>&1
+        filesystem=$(lsblk -n -o FSTYPE ${XENGUEST_VOLUME_DEVICE} 2>> ${LOGFILE})
+        if [[ $? -eq 0 && -z "$filesystem" ]]; then
+            echo "${PREF} Initialize lvm on ${XENGUEST_VOLUME_DEVICE}"
+            echo "pvcreate -f ${XENGUEST_VOLUME_DEVICE}" >> ${LOGFILE} 2>&1
+            pvcreate -f ${XENGUEST_VOLUME_DEVICE} >> ${LOGFILE} 2>&1
+            if [ $? -ne 0 ]; then
+                echo "${PREF} Error: initialing lvm on " \
+                     "${XENGUEST_VOLUME_DEVICE} failed." | tee -a ${LOGFILE}
+                return 1
+            fi
+        else
+            [ -z "$filesystem" ] || \
+                echo "${PREF} Error: The ${XENGUEST_VOLUME_DEVICE} is already " \
+                     "formatted as $filesystem." | tee -a ${LOGFILE}
+            return 1
         fi
     fi
+
     vgs ${XENGUEST_VOLUME_NAME} > /dev/null 2>&1
     if [ $? -ne 0 ]; then
         echo "${PREF} Create ${XENGUEST_VOLUME_NAME} volume"
@@ -85,10 +101,13 @@ function xenguest_volume_init()
         vgcreate ${XENGUEST_VOLUME_NAME} ${XENGUEST_VOLUME_DEVICE} \
             >> ${LOGFILE} 2>&1
         if [ $? -ne 0 ]; then
-            echo "${PREF} Error"
-            exit 1
+            echo "${PREF} Error: creating ${XENGUEST_VOLUME_NAME} volume " \
+                 "failed."  | tee -a ${LOGFILE}
+            return 1
         fi
     fi
+
+    return 0
 }
 
 # Detach a disk we attached to xen
@@ -102,12 +121,21 @@ function xenguest_detach_disk()
         >> ${LOGFILE} 2>&1
     if [ $? -ne 0 ]; then
         echo "${PREF} Error detaching partition ${part}"
-        exit 1
+        return 1
     fi
 }
 
 function xenguest_disk_init()
 {
+    # Inputs:
+    # $1 - guestname
+    # $2 - guestfile
+    #
+    # Outputs:
+    # 0 - success
+    # 1 - failed at guest disk preparation
+    # 2 - failed at guest disk creation
+
     guestname="$1"
     guestfile="$2"
     devname="/dev/${XENGUEST_VOLUME_NAME}/${guestname}"
@@ -119,12 +147,16 @@ function xenguest_disk_init()
         return
     fi
 
-    echo "${PREF} Create ${guestname} disk"
+    echo "${PREF} Create ${guestname} disk."
 
     # Init our volume
-    xenguest_volume_init
+    xenguest_volume_init ${guestname}
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
 
-    echo "${PREF} Create hard drive for ${guestname}"
+    echo "${PREF} Create hard drive for ${guestname}." \
+         "This might take a while..."
 
 
     # Remove volume if it already exist
@@ -135,7 +167,7 @@ function xenguest_disk_init()
         lvremove -y ${devname} >> ${LOGFILE} 2>&1
         if [ $? -ne 0 ]; then
             echo "${PREF} Error removing volume ${guestname}"
-            exit 1
+            return 1
         fi
     fi
 
@@ -146,7 +178,7 @@ function xenguest_disk_init()
         >> ${LOGFILE} 2>&1
     if [ $? -ne 0 ]; then
         echo "${PREF} Error creating volume ${guestname}"
-        exit 1
+        return 1
     fi
 
     # Add partition table
@@ -154,7 +186,7 @@ function xenguest_disk_init()
     parted -s ${devname} mklabel msdos >> ${LOGFILE} 2>&1
     if [ $? -ne 0 ]; then
         echo "${PREF} Error creating partition table on ${guestname}"
-        exit 1
+        return 1
     fi
 
     # Setup disk name in xen configuration
@@ -164,7 +196,7 @@ function xenguest_disk_init()
         --xen-disk=${devname} >> ${LOGFILE} 2>&1
     if [ $? -ne 0 ]; then
         echo "${PREF} Error setting disk in xen configuration"
-        exit 1
+        return 1
     fi
 
     # Create partitions
@@ -197,7 +229,7 @@ function xenguest_disk_init()
                 ${partend} >> ${LOGFILE} 2>&1
             if [ $? -ne 0 ]; then
                 echo "${PREF} Error adding partition ${part}"
-                exit 1
+                return 1
             fi
 
             # Set next partition start to current partition end
@@ -219,7 +251,7 @@ function xenguest_disk_init()
                     *)
                         echo "${PREF} partition ${part} of ${guestname}" \
                             "fstype is invalid: ${fstype}"
-                        exit 1
+                        return 1
                         ;;
                 esac
             else
@@ -231,7 +263,7 @@ function xenguest_disk_init()
             xl block-attach 0 phy:${devname} xvda w >> ${LOGFILE} 2>&1
             if [ $? -ne 0 ]; then
                 echo "${PREF} Error attaching partition ${part}"
-                exit 1
+                return 1
             fi
 
 
@@ -247,8 +279,7 @@ function xenguest_disk_init()
 
             if [ ! -b /dev/xvda${part} ]; then
                 echo "${PREF} Partition ${part} creation error"
-                xenguest_detach_disk
-                exit 1
+                return 2
             fi
 
             if [ -n "${formatcmd}" ]; then
@@ -256,8 +287,7 @@ function xenguest_disk_init()
                 ${formatcmd} /dev/xvda${part}
                 if [ $? -ne 0 ]; then
                     echo "${PREF} Cannot create partition ${part} FS"
-                    xenguest_detach_disk
-                    exit 1
+                    return 2
                 fi
             fi
 
@@ -277,8 +307,7 @@ function xenguest_disk_init()
                         *)
                             # invalid/unknown compression type
                             echo "${PREF} Invalid file format in disk ${content}"
-                            xenguest_detach_disk
-                            exit 1
+                            return 2
                             ;;
                     esac
                     # dd into partition
@@ -288,8 +317,7 @@ function xenguest_disk_init()
                         | ${decompress} | dd of=/dev/xvda${part} >> ${LOGFILE} 2>&1
                     if [ $? -ne 0 ]; then
                         echo "${PREF} Cannot populate partition ${part}"
-                        xenguest_detach_disk
-                        exit 1
+                        return 2
                     fi
                     ;;
                 *.tar*)
@@ -310,8 +338,7 @@ function xenguest_disk_init()
                         *)
                             # invalid/unknown tar type
                             echo "${PREF} Invalid file format in disk ${content}"
-                            xenguest_detach_disk
-                            exit 1
+                            return 2
                             ;;
                     esac
 
@@ -321,9 +348,8 @@ function xenguest_disk_init()
                     mount /dev/xvda${part} ${mntdir} >> ${LOGFILE} 2>&1
                     if [ $? -ne 0 ]; then
                         echo "${PREF} Cannot mount partition ${part}"
-                        xenguest_detach_disk
                         rm -rf ${mntdir}
-                        exit 1
+                        return 2
                     fi
 
                     # tar and unmount
@@ -336,16 +362,14 @@ function xenguest_disk_init()
                         echo "${PREF} Cannot populate partition ${part}"
                         umount ${mntdir}
                         rm -rf ${mntdir}
-                        xenguest_detach_disk
-                        exit 1
+                        return 2
                     fi
                     echo "umount ${mntdir}" >> ${LOGFILE} 2>&1
                     umount ${mntdir} >> ${LOGFILE} 2>&1
                     if [ $? -ne 0 ]; then
                         echo "${PREF} Error unmounting ${part}"
-                        xenguest_detach_disk
                         rm -rf ${mntdir}
-                        exit 1
+                        return 2
                     fi
                     rm -rf ${mntdir}
                     ;;
@@ -356,6 +380,9 @@ function xenguest_disk_init()
 
             # Detach disk
             xenguest_detach_disk
+            if [ $? -ne 0 ]; then
+                return 1
+            fi
         fi
     done
 
@@ -392,10 +419,21 @@ function xenguest_guest_create()
         --xen-name=${guestname} >> ${LOGFILE} 2>&1
     if [ $? -ne 0 ]; then
         echo "${PREF} Error setting guest name"
+        xenguest_guest_remove ${guestname}
         exit 1
     fi
 
     xenguest_disk_init ${guestname} ${guestfile}
+    disk_init_status=$?
+    if [ $disk_init_status -ne 0 ]; then
+        echo "${PREF} Error: ${guestname} disk creation failed."
+        if [ $disk_init_status -eq 2 ]; then
+            xenguest_detach_disk
+        fi
+        xenguest_guest_remove ${guestname}
+        exit 1
+    fi
+
 }
 
 function xenguest_guest_remove()
@@ -408,6 +446,7 @@ function xenguest_guest_remove()
     lvs ${XENGUEST_VOLUME_NAME}/${guestname} >> ${LOGFILE} 2>&1
     if [ $? -eq 0 ]; then
         # Remove guest volume
+        echo "${PREF} Removing ${guestname} volume. This might take a while..."
         echo "lvremove -y ${devname}" >> ${LOGFILE} 2>&1
         lvremove -y ${devname} >> ${LOGFILE} 2>&1
         if [ $? -ne 0 ]; then
@@ -417,6 +456,7 @@ function xenguest_guest_remove()
     fi
 
     # remove guest files
+    echo "${PREF} Removing ${guestname} configuration files."
     rm -rf ${XENGUEST_CONF_BASE}/guests/${guestname}
 }
 
@@ -602,6 +642,7 @@ case ${cmd} in
         fi
 
         xenguest_guest_create ${guestfile} ${guestname}
+        echo "${PREF} ${guestname} created."
         ;;
     remove)
         guestname="${arg1:-}"
@@ -619,6 +660,7 @@ case ${cmd} in
             fi
         fi
         xenguest_guest_remove ${guestname}
+        echo "${PREF} ${guestname} removed."
         ;;
     start)
         guestname="${arg1:-}"
