@@ -12,6 +12,9 @@ fi
 
 source ${XENGUEST_CONF_BASE}/xenguest-manager.conf
 
+# Make sure we properly initialized the Dom0
+/usr/bin/xenguest-manager check-xen || exit $?
+
 # Create guest list
 guestlist=$(/usr/bin/xenguest-manager list)
 

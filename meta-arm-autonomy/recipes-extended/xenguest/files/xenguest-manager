@@ -566,6 +566,24 @@ case ${cmd} in
         usage
         exit 0
         ;;
+
+esac
+
+# Check if we have a valid Dom0 booted with Xen
+ERROR_MSG=$(xl info 2>&1)
+if [ $? -ne 0 ]; then
+    echo "ERROR: Xen environment is not valid!!!" | tee -a ${LOGFILE}
+    echo "ERROR: Check if Xen has booted and the kernel configuration." \
+        | tee -a ${LOGFILE}
+    echo "ERROR: Output from 'xl info' command:" | tee -a ${LOGFILE}
+    echo "$ERROR_MSG" | tee -a ${LOGFILE}
+    exit 1
+fi
+
+case ${cmd} in
+    check-xen)
+        exit 0
+        ;;
     create)
         guestfile="${arg1}"
         guestname="${arg2}"
