@@ -46,7 +46,7 @@ do_install() {
 }
 
 # Things that we need on the target
-RDEPENDS_${PN} += "bash tar xenguest-mkimage lvm2 xen-tools parted e2fsprogs"
+RDEPENDS_${PN} += "bash tar xenguest-mkimage lvm2 xen-tools parted e2fsprogs dosfstools"
 
 FILES_${PN} += "${bindir}/xenguest-manager \
                ${sysconfdir}/xenguest"
