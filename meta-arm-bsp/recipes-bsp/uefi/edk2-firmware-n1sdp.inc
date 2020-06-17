@@ -1,6 +1,6 @@
 SRC_URI = "\
-    git://git.linaro.org/landing-teams/working/arm/edk2.git;name=edk2;destsuffix=${S}/edk2;nobranch=1 \
-    git://git.linaro.org/landing-teams/working/arm/edk2-platforms.git;name=edk2-platforms;destsuffix=${S}/edk2/edk2-platforms;nobranch=1 \
+    git://git.linaro.org/landing-teams/working/arm/edk2.git;name=edk2;destsuffix=git/edk2;nobranch=1 \
+    git://git.linaro.org/landing-teams/working/arm/edk2-platforms.git;name=edk2-platforms;destsuffix=git/edk2/edk2-platforms;nobranch=1 \
 "
 
 # TAGS and commit ID as per N1SDP-2020.03.26 release
@@ -16,4 +16,4 @@ EDK2_ARCH          = "AARCH64"
 
 COMPATIBLE_MACHINE = "n1sdp"
 
-PV ?= "201908+git${SRCPV}"
+PV = "201908+git${SRCPV}"
