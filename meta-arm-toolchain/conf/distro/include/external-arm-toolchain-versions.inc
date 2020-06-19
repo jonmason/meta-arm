@@ -117,6 +117,15 @@ def eat_get_gdb_version(d):
         first_line = stdout.splitlines()[0]
         return first_line.split()[-1]
 
+def eat_get_bfd_version(d):
+    try:
+        stdout, stderr = eat_run(d, 'as', '--version')
+    except bb.process.CmdError:
+        return 'UNKNOWN'
+    else:
+        first_line = stdout.splitlines()[0]
+        return first_line.split()[-1]
+
 python external_arm_toolchain_version_handler () {
     if not isinstance(e, bb.event.ConfigParsed):
         return
@@ -129,5 +138,6 @@ python external_arm_toolchain_version_handler () {
     d.setVar('EAT_VER_LIBC', eat_get_libc_version(ld))
     d.setVar('EAT_VER_KERNEL', eat_get_kernel_version(ld))
     d.setVar('EAT_VER_GDB', eat_get_gdb_version(ld))
+    d.setVar('EAT_VER_BFD', eat_get_bfd_version(ld))
 }
 addhandler external_arm_toolchain_version_handler
