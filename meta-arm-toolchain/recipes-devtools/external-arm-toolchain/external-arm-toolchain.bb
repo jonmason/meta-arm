@@ -670,13 +670,9 @@ SUMMARY_libitm-staticdev = "GNU transactional memory support library - static de
 
 EAT_VER_MAIN ??= ""
 
-
 python () {
     if not d.getVar("EAT_VER_MAIN", False):
         raise bb.parse.SkipPackage("External ARM toolchain not configured (EAT_VER_MAIN not set).")
-    import re
-    notglibc = (re.match('.*uclibc$', d.getVar('TARGET_OS', True)) != None) or (re.match('.*musl$', d.getVar('TARGET_OS', True)) != None)
-    if notglibc:
-        raise bb.parse.SkipPackage("incompatible with target %s" %
-                                   d.getVar('TARGET_OS', True))
+    if d.getVar('TCLIBC', True) != "glibc":
+        raise bb.parse.SkipPackage("incompatible with %s" % d.getVar('TCLIBC', True))
 }
