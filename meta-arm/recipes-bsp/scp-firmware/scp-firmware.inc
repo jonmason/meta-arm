@@ -6,6 +6,7 @@ SCP_BUILD_RELEASE   ?= "1"
 SCP_COMPILE_VERBOSE ?= "0"
 SCP_PLATFORM        ?= "invalid"
 SCP_COMPILER        ?= "arm-none-eabi"
+SCP_LOG_LEVEL       ?= "WARN"
 
 DEPENDS += "virtual/arm-none-eabi-gcc-native"
 
@@ -39,6 +40,7 @@ EXTRA_OEMAKE = "${SCP_COMP_STR} \
                 BUILD_PATH='${B}' \
                 PRODUCT='${SCP_PLATFORM}' \
                 MODE='${SCP_BUILD_STR}' \
+                LOG_LEVEL='${SCP_LOG_LEVEL}' \
                 CC='${SCP_COMPILER}-gcc' \
                 AR='${SCP_COMPILER}-ar' \
                 SIZE='${SCP_COMPILER}-size' \

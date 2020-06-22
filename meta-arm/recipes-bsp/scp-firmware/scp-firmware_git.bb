@@ -13,7 +13,7 @@ SRC_URI = "\
     git://github.com/ARM-software/CMSIS_5.git;protocol=https;name=cmsis;destsuffix=src/cmsis;lfs=0;nobranch=1 \
 "
 
-SRCREV_scp    = "db19910aca6d1032eb0329e5fbb70a92b997f6f2"
+SRCREV_scp    = "fd7c83561a7d76c7681d5d017fb23aa3664c028c"
 SRCREV_cmsis  = "refs/tags/5.2.0"
 SRCREV_FORMAT = "scp_cmsis"
 
