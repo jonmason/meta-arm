@@ -1,0 +1,160 @@
+From 0867e715d3563b0bc0ee7e04f9ec6b615de626b2 Mon Sep 17 00:00:00 2001
+From: Usama Arif <usama.arif@arm.com>
+Date: Thu, 04 Jun 2020 14:16:02 +0100
+Subject: [PATCH] Introduce Total Compute platform
+
+This is based off vexpress64 platform. It includes support for
+NOR flash and has bootargs setup for android boot.
+
+Change-Id: I965c81001a1c4a1a6788106f0ba2ca577dee4096
+Signed-off-by: Usama Arif <usama.arif@arm.com>
+Upstream-Status: Pending
+Signed-off-by: Teo Couprie Diaz <teo.coupriediaz@arm.com>
+---
+
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+index 21df1c4..c208a40 100644
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -1174,6 +1174,14 @@
+ 	select USB
+ 	select DM_USB
+ 
++config TARGET_TOTAL_COMPUTE
++	bool "Support Total Compute Platform"
++	select ARM64
++	select PL01X_SERIAL
++	select DM
++	select DM_SERIAL
++	select DM_ETH
++
+ config TARGET_LS2080A_EMU
+ 	bool "Support ls2080a_emu"
+ 	select ARCH_LS2080A
+diff --git a/board/armltd/vexpress64/Kconfig b/board/armltd/vexpress64/Kconfig
+index 1d13f54..d59769f 100644
+--- a/board/armltd/vexpress64/Kconfig
++++ b/board/armltd/vexpress64/Kconfig
+@@ -1,4 +1,4 @@
+-if TARGET_VEXPRESS64_BASE_FVP || TARGET_VEXPRESS64_JUNO
++if TARGET_VEXPRESS64_BASE_FVP || TARGET_VEXPRESS64_JUNO || TARGET_TOTAL_COMPUTE
+ 
+ config SYS_BOARD
+ 	default "vexpress64"
+diff --git a/configs/total_compute_defconfig b/configs/total_compute_defconfig
+new file mode 100644
+index 0000000..1faeb36
+--- /dev/null
++++ b/configs/total_compute_defconfig
+@@ -0,0 +1,40 @@
++CONFIG_ARM=y
++CONFIG_TARGET_TOTAL_COMPUTE=y
++CONFIG_SYS_TEXT_BASE=0xe0000000
++CONFIG_SYS_MALLOC_F_LEN=0x2000
++CONFIG_ENV_SIZE=0x10000
++CONFIG_NR_DRAM_BANKS=2
++CONFIG_DISTRO_DEFAULTS=y
++CONFIG_BOOTDELAY=1
++CONFIG_USE_BOOTARGS=y
++CONFIG_BOOTARGS="console=ttyAMA0 debug user_debug=31 earlycon=pl011,0x7ff80000 loglevel=9 androidboot.hardware=total_compute video=640x480-32@60 root=/dev/vda2 ip=dhcp androidboot.selinux=permissive"
++# CONFIG_USE_BOOTCOMMAND is not set
++# CONFIG_DISPLAY_CPUINFO is not set
++# CONFIG_DISPLAY_BOARDINFO is not set
++CONFIG_SYS_PROMPT="TOTAL_COMPUTE# "
++# CONFIG_CMD_CONSOLE is not set
++# CONFIG_CMD_XIMG is not set
++# CONFIG_CMD_EDITENV is not set
++CONFIG_CMD_MEMTEST=y
++CONFIG_SYS_MEMTEST_START=0x80000000
++CONFIG_SYS_MEMTEST_END=0xff000000
++CONFIG_CMD_ARMFLASH=y
++# CONFIG_CMD_LOADS is not set
++# CONFIG_CMD_ITEST is not set
++# CONFIG_CMD_SETEXPR is not set
++# CONFIG_CMD_NFS is not set
++CONFIG_CMD_CACHE=y
++# CONFIG_CMD_MISC is not set
++CONFIG_CMD_UBI=y
++# CONFIG_ISO_PARTITION is not set
++# CONFIG_EFI_PARTITION is not set
++# CONFIG_MMC is not set
++CONFIG_MTD=y
++CONFIG_MTD_NOR_FLASH=y
++CONFIG_FLASH_CFI_DRIVER=y
++CONFIG_SYS_FLASH_USE_BUFFER_WRITE=y
++CONFIG_SYS_FLASH_PROTECTION=y
++CONFIG_SYS_FLASH_CFI=y
++CONFIG_SMC911X=y
++CONFIG_SMC911X_32_BIT=y
++CONFIG_OF_LIBFDT=y
+diff --git a/include/configs/vexpress_aemv8a.h b/include/configs/vexpress_aemv8a.h
+index 09cdd3d..e39699e 100644
+--- a/include/configs/vexpress_aemv8a.h
++++ b/include/configs/vexpress_aemv8a.h
+@@ -13,7 +13,7 @@
+ #ifdef CONFIG_TARGET_VEXPRESS64_BASE_FVP
+ /* ATF loads u-boot here for BASE_FVP model */
+ #define CONFIG_SYS_INIT_SP_ADDR         (CONFIG_SYS_SDRAM_BASE + 0x03f00000)
+-#elif CONFIG_TARGET_VEXPRESS64_JUNO
++#elif defined(CONFIG_TARGET_VEXPRESS64_JUNO) || defined(CONFIG_TARGET_TOTAL_COMPUTE)
+ #define CONFIG_SYS_INIT_SP_ADDR         (CONFIG_SYS_SDRAM_BASE + 0x7fff0)
+ #endif
+ 
+@@ -40,7 +40,7 @@
+ #define V2M_KMI0			(V2M_PA_CS3 + V2M_PERIPH_OFFSET(6))
+ #define V2M_KMI1			(V2M_PA_CS3 + V2M_PERIPH_OFFSET(7))
+ 
+-#ifdef CONFIG_TARGET_VEXPRESS64_JUNO
++#if defined(CONFIG_TARGET_VEXPRESS64_JUNO) || defined(CONFIG_TARGET_TOTAL_COMPUTE)
+ #define V2M_UART0			0x7ff80000
+ #define V2M_UART1			0x7ff70000
+ #else /* Not Juno */
+@@ -79,7 +79,7 @@
+ #ifdef CONFIG_TARGET_VEXPRESS64_BASE_FVP
+ #define GICD_BASE			(0x2f000000)
+ #define GICC_BASE			(0x2c000000)
+-#elif CONFIG_TARGET_VEXPRESS64_JUNO
++#elif defined(CONFIG_TARGET_VEXPRESS64_JUNO) || defined(CONFIG_TARGET_TOTAL_COMPUTE)
+ #define GICD_BASE			(0x2C010000)
+ #define GICC_BASE			(0x2C02f000)
+ #endif
+@@ -88,14 +88,19 @@
+ /* Size of malloc() pool */
+ #define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (8 << 20))
+ 
++#ifdef CONFIG_TARGET_TOTAL_COMPUTE
++#define CONFIG_SMC911X_BASE		0x18000000
++#else
++
+ #ifndef CONFIG_TARGET_VEXPRESS64_JUNO
+ /* The Vexpress64 simulators use SMSC91C111 */
+ #define CONFIG_SMC91111			1
+ #define CONFIG_SMC91111_BASE		(0x01A000000)
+ #endif
+ 
++#endif
+ /* PL011 Serial Configuration */
+-#ifdef CONFIG_TARGET_VEXPRESS64_JUNO
++#if defined(CONFIG_TARGET_VEXPRESS64_JUNO) || defined(CONFIG_TARGET_TOTAL_COMPUTE)
+ #define CONFIG_PL011_CLOCK		7372800
+ #else
+ #define CONFIG_PL011_CLOCK		24000000
+@@ -189,8 +194,17 @@
+ 				"fi"
+ 
+ 
+-#endif
++#elif CONFIG_TARGET_TOTAL_COMPUTE
++#define CONFIG_EXTRA_ENV_SETTINGS	\
++				"kernel_addr_r=0x80080000\0"	\
++				"initrd_addr_r=0x88000000\0"	\
++				"fdt_addr_r=0x83000000\0"	\
++				"fdt_high=0xffffffffffffffff\0"	\
++				"initrd_high=0xffffffffffffffff\0"
+ 
++#define CONFIG_BOOTCOMMAND	"booti ${kernel_addr_r} ${initrd_addr_r} ${fdt_addr_r}"
++
++#endif
+ /* Monitor Command Prompt */
+ #define CONFIG_SYS_CBSIZE		512	/* Console I/O Buffer Size */
+ #define CONFIG_SYS_MAXARGS		64	/* max command args */
