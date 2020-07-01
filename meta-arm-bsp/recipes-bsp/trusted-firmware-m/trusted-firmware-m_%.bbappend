@@ -1,2 +1,4 @@
-COMPATIBLE_MACHINE = "musca_b1"
+COMPATIBLE_MACHINE = "musca_b1|musca_s1"
+
 TFM_PLATFORM_musca_b1 = "MUSCA_B1"
+TFM_PLATFORM_musca_s1 = "MUSCA_S1"
