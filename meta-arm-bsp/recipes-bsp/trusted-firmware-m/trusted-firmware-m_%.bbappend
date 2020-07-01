@@ -1,0 +1,2 @@
+COMPATIBLE_MACHINE = "musca_b1"
+TFM_PLATFORM_musca_b1 = "MUSCA_B1"
