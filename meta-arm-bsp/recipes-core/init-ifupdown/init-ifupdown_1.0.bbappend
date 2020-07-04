@@ -3,5 +3,6 @@
 #
 # Enable second network interface on startup
 #
+PACKAGE_ARCH = "${MACHINE_ARCH}"
 
-FILESEXTRAPATHS_prepend_juno := "${THISDIR}/files/juno:"
+FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
