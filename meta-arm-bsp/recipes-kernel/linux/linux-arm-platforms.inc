@@ -13,6 +13,7 @@ SRC_URI_append_foundation-armv8 = " ${SRC_URI_KMETA}"
 SRC_URI_append_fvp-base = " ${SRC_URI_KMETA}"
 SRC_URI_append_fvp-base-arm32 = " ${SRC_URI_KMETA}"
 SRC_URI_append_juno = " ${SRC_URI_KMETA}"
+SRC_URI_append_sgi575 = " ${SRC_URI_KMETA}"
 SRC_URI_append_gem5-arm64 = " ${SRC_URI_KMETA}"
 SRCREV_arm-platforms-kmeta = "6147e82375aa9df8f2a162d42ea6406c79c854c5"
 
@@ -47,6 +48,14 @@ SRC_URI_append_fvp-base-arm32 = " file://fvp-base-arm32-dts.patch"
 #
 COMPATIBLE_MACHINE_juno = "juno"
 KMACHINE_juno = "juno"
+
+#
+# SGI575 KMACHINE
+#
+COMPATIBLE_MACHINE_sgi575 = "sgi575"
+KMACHINE_sgi575 = "sgi575"
+KBUILD_DEFCONFIG_sgi575 = "defconfig"
+KCONFIG_MODE_sgi575 = "--alldefconfig"
 
 #
 # Total Compute KMACHINE
