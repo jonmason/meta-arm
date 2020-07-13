@@ -34,8 +34,8 @@ DISK_IMG_PARTITION3_CONTENT = ""
 
 SERIAL_CONSOLES = "115200;ttyAMA0"
 
-PREFERRED_PROVIDER_virtual/kernel ?= "linux-linaro-arm"
-PREFERRED_VERSION_linux-linaro-arm ?= "4.19%"
+PREFERRED_PROVIDER_virtual/kernel ?= "linux-yocto"
+PREFERRED_VERSION_linux-yocto ?= "5.4%"
 
 EXTRA_IMAGEDEPENDS += "virtual/trusted-firmware-a u-boot"
 
