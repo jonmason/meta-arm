@@ -35,6 +35,7 @@ inherit deploy
 B = "${WORKDIR}/build"
 S = "${WORKDIR}/git"
 
+PACKAGE_ARCH = "${MACHINE_ARCH}"
 COMPATIBLE_MACHINE ?= "invalid"
 
 LDFLAGS[unexport] = "1"
