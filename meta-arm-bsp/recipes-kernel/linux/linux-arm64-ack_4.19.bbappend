@@ -1,6 +1,5 @@
 # Machine specific configurations
 
-MACHINE_ACK_REQUIRE ?= ""
-MACHINE_ACK_REQUIRE_tc0 = "linux-arm64-ack-tc0.inc"
+FILESEXTRAPATHS_prepend := "${THISDIR}/linux-arm64-ack-4.19:${THISDIR}/files:"
 
-require ${MACHINE_ACK_REQUIRE}
+require linux-arm-platforms.inc

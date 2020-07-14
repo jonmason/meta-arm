@@ -3,7 +3,6 @@
 # Copyright (c) 2020 Arm Limited
 #
 
-
 DESCRIPTION = "Linux Android Common Kernel"
 SECTION = "kernel"
 LICENSE = "GPLv2"
