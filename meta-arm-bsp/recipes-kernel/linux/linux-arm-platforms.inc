@@ -11,6 +11,12 @@ FILESEXTRAPATHS_prepend := "${THISDIR}:${THISDIR}/files:"
 SRC_URI += "file://arm-platforms-kmeta;type=kmeta;name=arm-platforms-kmeta;destsuffix=arm-platforms-kmeta"
 
 #
+# Cortex-A5 DesignStart KMACHINE
+#
+COMPATIBLE_MACHINE_a5ds = "a5ds"
+KMACHINE_a5ds = "a5ds"
+
+#
 # FVP FOUNDATION KMACHINE
 #
 COMPATIBLE_MACHINE_foundation-armv8 = "foundation-armv8"
