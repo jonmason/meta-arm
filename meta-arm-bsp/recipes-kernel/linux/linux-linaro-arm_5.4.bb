@@ -1,22 +1,10 @@
-# Add support for Arm Linaro Kernel 5.4 for Arm Platforms (boards or simulators)
+SRCREV ?= "41e8d7be674f98a0f3bef67b16ea2162109fd522"
+SRCREV_meta ?= "e32057eca987b7abbe3eb47ba36f06af8711278a"
 
-SUMMARY = "Linux Kernel Upstream, supported by Arm/Linaro"
-LICENSE = "GPLv2"
-SECTION = "kernel"
+# KBRANCH is set to n1sdp by default as there is no master or 5.4 branch on the repository
+KBRANCH ?= "n1sdp"
+KMETA_BRANCH ?= "yocto-5.4"
 
-require recipes-kernel/linux/linux-yocto.inc
+SRC_URI_append = " file://fix-bfd-link.patch"
 
-COMPATIBLE_MACHINE ?= "invalid"
-
-# KBRANCH is set to n1sdp by default as there is no master branch on the repository
-KBRANCH = "n1sdp"
-
-SRC_URI = "git://git.linaro.org/landing-teams/working/arm/kernel-release.git;nobranch=1 \
-           file://0001-menuconfig-mconf-cfg-Allow-specification-of-ncurses-location.patch \
-           file://fix-bfd-link.patch \
-          "
-LIC_FILES_CHKSUM = "file://COPYING;md5=bbea815ee2795b2f4230826c0c6b8814"
-
-# Refer to commit TAG N1SDP-2020.03.26 since it will not get force pushed
-SRCREV = "137cccb0843e63b031acf67d1ca4f6447b8c417c"
-LINUX_VERSION ?= "${PV}"
+require linux-linaro-arm.inc

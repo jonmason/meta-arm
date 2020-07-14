@@ -15,7 +15,7 @@ SRC_URI_append_n1sdp = " \
     "
 
 # Referring to commit TAG N1SDP-2020.03.26
-SRCREV_n1sdp  = "137cccb0843e63b031acf67d1ca4f6447b8c417c"
+SRCREV_n1sdp  = "41e8d7be674f98a0f3bef67b16ea2162109fd522"
 SRCREV_dts_n1sdp = "3209a868152f348194cc1f20fd87c759d3a97d45"
 
 # Use intree defconfig
