@@ -51,7 +51,7 @@ disk_img_createpart() {
     local imagefile="$1"
     local start="$2"
     local size="$3"
-    local fstype="${4:-ext4}"
+    local fstype="${4:-}"
     local content="${5:-}"
     local formatargs=""
 
