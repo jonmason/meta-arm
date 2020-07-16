@@ -3,7 +3,7 @@
 # Copyright (c) 2020 Arm Limited
 #
 
-require external-arm-toolchain-x86host.inc
+require arm-binary-toolchain.inc
 
 SUMMARY = "Baremetal Armcompiler for Cortex-A, Cortex-R and Cortex-M processors"
 HOMEPAGE = "https://developer.arm.com/tools-and-software/embedded/arm-compiler/downloads/version-6"
