@@ -1,5 +1,3 @@
-COMPATIBLE_HOST = "x86_64.*-linux"
-
 FILES_${PN} = "${datadir} ${bindir}"
 
 BINNAME = "${@d.getVar("BPN").strip("gcc-")}"

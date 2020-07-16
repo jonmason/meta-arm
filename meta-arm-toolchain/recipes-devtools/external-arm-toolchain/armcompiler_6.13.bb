@@ -26,6 +26,8 @@ PROVIDES = "virtual/armcompiler"
 
 ARMCLANG_VERSION = "DS500-BN-00026-r5p0-15rel0"
 
+COMPATIBLE_HOST = "x86_64.*-linux"
+
 SRC_URI = "https://developer.arm.com/-/media/Files/downloads/compiler/${ARMCLANG_VERSION}.tgz;subdir=${ARMCLANG_VERSION}"
 
 SRC_URI[md5sum] = "fbed6edf5eb211c45df7b8548a10535a"
