@@ -39,7 +39,7 @@ ARM_AUTONOMY_HOST_IMAGE_EXTERN_GUESTS ??= ""
 IMAGE_INSTALL += " \
     packagegroup-core-boot \
     packagegroup-core-ssh-openssh \
-    qemu-xen \
+    qemu-system-i386 \
     xenguest-manager \
     xenguest-network-bridge \
     "
