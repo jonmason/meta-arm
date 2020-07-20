@@ -78,6 +78,8 @@ do_configure[noexec] = "1"
 DEPENDS_append = " dtc-native openssl-native"
 DEPENDS_append_aarch64_qemuall ?= " optee-os"
 
+EXTRA_OEMAKE += "V=1"
+
 # Add platform parameter
 EXTRA_OEMAKE += "BUILD_BASE=${B} PLAT=${TFA_PLATFORM}"
 
