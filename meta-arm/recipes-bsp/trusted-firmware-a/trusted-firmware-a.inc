@@ -71,6 +71,8 @@ do_configure[noexec] = "1"
 # We need openssl for fiptool
 DEPENDS_append = " dtc-native openssl-native"
 
+EXTRA_OEMAKE += "V=1"
+
 # Add platform parameter
 EXTRA_OEMAKE += "BUILD_BASE=${B} PLAT=${TFA_PLATFORM}"
 
