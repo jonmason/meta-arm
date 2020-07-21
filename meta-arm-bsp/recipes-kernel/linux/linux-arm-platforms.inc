@@ -32,12 +32,7 @@ KMACHINE_foundation-armv8 = "fvp"
 #
 COMPATIBLE_MACHINE_fvp-base = "fvp-base"
 KMACHINE_fvp-base = "fvp"
-SRC_URI_append_fvp-base = " file://dts/arm;subdir=add-files"
-
-do_patch_append_fvp-base() {
-    tar -C ${WORKDIR}/add-files/dts -cf - arm | \
-        tar -C arch/arm64/boot/dts -xf -
-}
+SRC_URI_append_fvp-base = " file://fvp-base-dts.patch"
 
 #
 # Juno KMACHINE
