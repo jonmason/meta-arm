@@ -1,17 +1,11 @@
 # FVP common parameters
 
 #
-# Capturing FVP common configurations (Armv8-A Base Platform FVP and
-# Armv8-A Foundation Platform).
+# Capturing FVP common configurations (Armv8-A Base Platform FVP,
+# Armv8-A Foundation Platform and Armv7-A Base Platform FVP).
 #
 
-TUNE_FEATURES = "aarch64"
-
-require conf/machine/include/arm/arch-armv8a.inc
-
 MACHINE_FEATURES = "optee"
-
-KERNEL_IMAGETYPE = "Image"
 
 IMAGE_CLASSES += "image_types_disk_img"
 IMAGE_FSTYPES += "disk.img"
@@ -39,5 +33,8 @@ PREFERRED_VERSION_linux-yocto ?= "5.4%"
 
 EXTRA_IMAGEDEPENDS += "virtual/trusted-firmware-a u-boot"
 
-# FVP u-boot configuration
-UBOOT_MACHINE = "vexpress_aemv8a_semi_defconfig"
+# Use haveged as a source of entropy instead of rng-tools (Needed for ssh).
+# rngd (Part of rng-tools) takes ~7 mins to init resulting in a slow boot time.
+PACKAGE_EXCLUDE_append = " rng-tools"
+MACHINE_EXTRA_RRECOMMENDS += "haveged"
+

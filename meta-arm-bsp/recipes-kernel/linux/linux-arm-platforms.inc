@@ -11,6 +11,7 @@ FILESEXTRAPATHS_prepend := "${THISDIR}:${THISDIR}/files:"
 SRC_URI_KMETA = "file://arm-platforms-kmeta;type=kmeta;name=arm-platforms-kmeta;destsuffix=arm-platforms-kmeta"
 SRC_URI_append_foundation-armv8 = " ${SRC_URI_KMETA}"
 SRC_URI_append_fvp-base = " ${SRC_URI_KMETA}"
+SRC_URI_append_fvp-base-arm32 = " ${SRC_URI_KMETA}"
 SRC_URI_append_juno = " ${SRC_URI_KMETA}"
 SRC_URI_append_gem5-arm64 = " ${SRC_URI_KMETA}"
 SRCREV_arm-platforms-kmeta = "6147e82375aa9df8f2a162d42ea6406c79c854c5"
@@ -33,6 +34,13 @@ KMACHINE_foundation-armv8 = "fvp"
 COMPATIBLE_MACHINE_fvp-base = "fvp-base"
 KMACHINE_fvp-base = "fvp"
 SRC_URI_append_fvp-base = " file://fvp-base-dts.patch"
+
+#
+# FVP BASE ARM32 KMACHINE
+#
+COMPATIBLE_MACHINE_fvp-base-arm32 = "fvp-base-arm32"
+KMACHINE_fvp-base-arm32 = "fvp-arm32"
+SRC_URI_append_fvp-base-arm32 = " file://fvp-base-arm32-dts.patch"
 
 #
 # Juno KMACHINE

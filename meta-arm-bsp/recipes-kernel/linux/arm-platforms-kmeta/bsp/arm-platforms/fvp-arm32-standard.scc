@@ -1,0 +1,7 @@
+define KMACHINE fvp-arm32
+define KTYPE standard
+define KARCH arm
+define KMETA_EXTERNAL_BSP t
+
+include fvp-arm32.scc
+
