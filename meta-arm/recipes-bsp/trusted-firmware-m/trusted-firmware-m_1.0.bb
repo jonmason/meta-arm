@@ -30,6 +30,11 @@ SRCREV_mbed-crypto ?= "mbedcrypto-3.0.1"
 SRCREV_mbedtls ?= "mbedtls-2.7.14"
 SRCREV_cmsis ?= "5.5.0"
 
+# Note to future readers of this recipe: until the CMakeLists don't abuse
+# installation (see do_install) there is no point in trying to inherit
+# cmake here. You can easily short-circuit the toolchain but the install
+# is so convoluted there's no gain.
+
 inherit python3native deploy
 
 TFM_DEPENDS ?= ""
@@ -39,7 +44,7 @@ DEPENDS += "python3-cryptography-native python3-pyasn1-native"
 DEPENDS += "python3-jinja2-native python3-cbor-native python3-pyyaml-native"
 
 S = "${WORKDIR}/git/tfm"
-B = "${S}/build"
+B = "${WORKDIR}/build"
 
 COMPATIBLE_MACHINE ?= "invalid"
 
@@ -89,28 +94,21 @@ do_check_config() {
     fi
 }
 
+do_configure[cleandirs] = "${B}"
 do_configure() {
     cd ${S}
-    python3 "tools/tfm_parse_manifest_list.py"
+    python3 tools/tfm_parse_manifest_list.py
+    cd -
 
-    if [ ! -d "${B}" ]
-    then
-        install -d ${B}
-    else
-        rm -f ${B}/CMakeCache.txt
-    fi
-
-    cd ${B}
     cmake -G"Unix Makefiles" --build ${S} ${EXTRA_OECMAKE}
 }
 
+# Invoke install here as there's no point in splitting compile from install: the
+# first thing the build does is 'install' inside the build tree thus causing a
+# rebuild. It also overrides the install prefix to be in the build tree, so you
+# can't use the usual install prefix variables.
 do_compile() {
-    if [ -d "${B}" ]
-    then
-        oe_runmake -C ${B} install
-    else
-        bbfatal "TF-M CMake not generated!"
-    fi
+    oe_runmake install
 }
 
 do_install() {
