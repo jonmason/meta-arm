@@ -41,7 +41,7 @@ TFM_DEPENDS ?= ""
 DEPENDS += "${TFM_DEPENDS}"
 DEPENDS += "cmake-native"
 DEPENDS += "python3-cryptography-native python3-pyasn1-native"
-DEPENDS += "python3-jinja2-native python3-cbor-native python3-pyyaml-native"
+DEPENDS += "python3-cbor-native"
 
 S = "${WORKDIR}/git/tfm"
 B = "${WORKDIR}/build"
@@ -96,10 +96,6 @@ do_check_config() {
 
 do_configure[cleandirs] = "${B}"
 do_configure() {
-    cd ${S}
-    python3 tools/tfm_parse_manifest_list.py
-    cd -
-
     cmake -G"Unix Makefiles" --build ${S} ${EXTRA_OECMAKE}
 }
 
