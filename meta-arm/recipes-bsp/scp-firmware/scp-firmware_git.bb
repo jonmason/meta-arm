@@ -21,7 +21,6 @@ SRCREV_FORMAT = "scp_cmsis"
 PROVIDES += "virtual/control-processor-firmware"
 
 SCP_BUILD_RELEASE   ?= "1"
-SCP_COMPILE_VERBOSE ?= "0"
 SCP_PLATFORM        ?= "invalid"
 SCP_COMPILER        ?= "arm-none-eabi"
 SCP_LOG_LEVEL       ?= "WARN"
@@ -29,7 +28,6 @@ SCP_LOG_LEVEL       ?= "WARN"
 DEPENDS += "virtual/arm-none-eabi-gcc-native"
 
 SCP_BUILD_STR = "${@bb.utils.contains('SCP_BUILD_RELEASE', '1', 'release', 'debug', d)}"
-SCP_COMP_STR  = "${@bb.utils.contains('SCP_COMPILE_VERBOSE', '0', '', 'V=1', d)}"
 
 inherit python3native
 inherit deploy
@@ -54,7 +52,7 @@ DEBUG_PREFIX_MAP_pn-scp = "\
 # No configure
 do_configure[noexec] = "1"
 
-EXTRA_OEMAKE = "${SCP_COMP_STR} \
+EXTRA_OEMAKE = "V=1 \
                 BUILD_PATH='${B}' \
                 PRODUCT='${SCP_PLATFORM}' \
                 MODE='${SCP_BUILD_STR}' \
