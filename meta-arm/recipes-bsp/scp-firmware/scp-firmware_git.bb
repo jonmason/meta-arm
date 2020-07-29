@@ -66,7 +66,7 @@ EXTRA_OEMAKE = "${SCP_COMP_STR} \
                 "
 
 do_compile() {
-    oe_runmake -C "${S}" ${EXTRA_OEMAKE}
+    oe_runmake -C "${S}"
 }
 do_compile[cleandirs] += "${B}"
 
