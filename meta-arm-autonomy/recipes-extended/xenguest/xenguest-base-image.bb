@@ -35,7 +35,12 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 XENGUEST_IMAGE_SRC_URI_DISK_FILES ??= ""
 
 # Add xen files
-XENGUEST_IMAGE_SRC_URI_XEN_FILES ??= ""
+# Any extrafiles files to be added to XENGUEST_IMAGE_SRC_URI_XEN_FILES should
+# be performed via XENGUEST_IMAGE_SRC_URI_XEN_FILES_append.
+# The dhcpd-params.cfg holds the dhcpd configuration for Dom0. And it is used
+# when XENGUEST_IMAGE_NETWORK_TYPE="nat". Any customizations to it should be
+# performed by replacing it via a xenguest-network.bbappend.
+XENGUEST_IMAGE_SRC_URI_XEN_FILES = "file://dhcpd-params.cfg"
 
 # Add xen configuration elements
 XENGUEST_IMAGE_SRC_URI_XEN_CONFIG ??= ""

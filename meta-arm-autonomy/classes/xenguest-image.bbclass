@@ -58,10 +58,14 @@ XENGUEST_IMAGE_DISK_SIZE ??= "${@ '4' if not d.getVar('INITRAMFS_IMAGE') else '0
 # and containing the root filesystem produced by Yocto
 XENGUEST_IMAGE_DISK_PARTITIONS ??= "1:${XENGUEST_IMAGE_DISK_SIZE}:ext4:rootfs.tar.gz"
 
-# XENGUEST_IMAGE_NETWORK_BRIDGE can be set to 1 to have a network interface
-# on the guest connected to host bridged network. This will provide the guest
-# with a network interface connected directly to the external network
-XENGUEST_IMAGE_NETWORK_BRIDGE ??= "1"
+# XENGUEST_IMAGE_NETWORK_TYPE can be set to "bridge", "nat" or "none".
+# The "bridge" type will share the physical eth interface from dom0 with the
+# domU. This will allow the domU to have access to the external network.
+# The "nat" type will setup a virtual network between dom0 and domU and also
+# configure and run the dhcpd on dom0 to serve the domU.
+# The "none" type will not affect any networking setting between on dom0 and
+# domU.
+XENGUEST_IMAGE_NETWORK_TYPE ??= "bridge"
 
 # Sub-directory in wich the guest is created. This is create in deploy as a
 # subdirectory and must be coherent between all components using this class so
@@ -147,10 +151,10 @@ xenguest_image_create() {
         call_xenguest_mkimage update --set-param=GUEST_AUTOBOOT=0
     fi
 
-    if [ "${XENGUEST_IMAGE_NETWORK_BRIDGE}" = "1" ]; then
-        call_xenguest_mkimage update --set-param=NETWORK_BRIDGE=1
+    if [ -n "${XENGUEST_IMAGE_NETWORK_TYPE}" ]; then
+        call_xenguest_mkimage update --set-param=XENGUEST_NETWORK_TYPE="${XENGUEST_IMAGE_NETWORK_TYPE}"
     else
-        call_xenguest_mkimage update --set-param=NETWORK_BRIDGE=0
+        call_xenguest_mkimage update --set-param=XENGUEST_NETWORK_TYPE="none"
     fi
 }
 

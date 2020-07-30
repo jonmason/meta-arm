@@ -41,7 +41,7 @@ IMAGE_INSTALL += " \
     packagegroup-core-ssh-openssh \
     qemu-system-i386 \
     xenguest-manager \
-    xenguest-network-bridge \
+    xenguest-network \
     "
 
 # Build xen binary

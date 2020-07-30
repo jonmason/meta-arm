@@ -1,5 +1,5 @@
 # Recipe to handle xenguest network configuration
-DESCRIPTION = "XenGuest Network Bridge"
+DESCRIPTION = "Xenguest Network"
 
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
@@ -20,6 +20,7 @@ SRC_URI = " \
     file://xenguest-network-bridge.in \
     file://xenguest-network-bridge-dhcp.cfg.in \
     file://network-bridge.sh.in \
+    file://00-vif-xenguest.hook \
     "
 
 # Bridge configurator needs to run before S01networking init script
@@ -49,8 +50,19 @@ do_install() {
     install -d -m 755 ${D}${sysconfdir}/xenguest/init.pre
     install -m 755 ${WORKDIR}/network-bridge.sh \
         ${D}${sysconfdir}/xenguest/init.pre/.
+
+    install -d ${D}${sysconfdir}/xen/scripts/vif-post.d
+    install -m 755 ${WORKDIR}/00-vif-xenguest.hook \
+        ${D}${sysconfdir}/xen/scripts/vif-post.d/.
 }
 
-RDEPENDS_${PN} += "bridge-utils"
+RDEPENDS_${PN} += "bridge-utils \
+                   iptables \
+                   dhcp-server \
+                   kernel-module-xt-tcpudp \
+                   kernel-module-xt-physdev \
+                   kernel-module-xt-comment \
+                  "
 FILES_${PN} += "${sysconfdir}/network/interfaces.d/xenguest-network-bridge.cfg"
 FILES_${PN} += "${sysconfdir}/xenguest/init.pre/network-bridge.sh"
+FILES_${PN} += "${sysconfdir}/xen/scripts/vif-post.d/00-vif-xenguest.hook"

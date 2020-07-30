@@ -1,0 +1,130 @@
+#============================================================================
+# ${XEN_SCRIPT_DIR}/vif-post.d/00-vif-xenguest.hook
+#
+# Script for performing local configuration of a vif.
+# This script will be sourced by, e.g., vif-bridge after the hotplugging
+# system calls vif-bridge. The script is here and not simply executed as
+# a udev rule because this allows simple access to several environment
+# variables set by the calling vif-* script.
+#
+# Environment vars:
+# command     (add|remove|online|offline)
+# dev         vif interface name (required).
+# main_ip     IP address of Dom0
+# ip          list of IP networks for the vif, space-separated
+# XENBUS_PATH path to this device's details in the XenStore (required).
+#============================================================================
+
+domid=$(xenstore_read "${XENBUS_PATH}/frontend-id")
+guestname=$(xenstore_read "/local/domain/${domid}/name")
+bridge=$(xenstore_read "${XENBUS_PATH}/bridge")
+
+if [ ! -f /etc/xenguest/guests/${guestname}/params.cfg ]; then
+    log debug "No /etc/xenguest/guests/${guestname}/params.cfg. Exiting."
+    return
+fi
+
+# Source the params file to get the choosen XENGUEST_NETWORK_TYPE
+. /etc/xenguest/guests/${guestname}/params.cfg
+
+# We need to get the xenguest subnet prefix to set the subnet and
+# the fixed ip to assing to the guest.
+get_subnet_prefix() {
+    # ${vif_ip} is set in the vif-nat script
+    echo ${vif_ip} | awk -F. '{print $1"."$2"."$3}'
+}
+
+subnetprefix=$(get_subnet_prefix)
+
+dhcpd_remove_conf_entry()
+{
+    local tmpfile=$(mktemp)
+
+    # Remove the the xenguest dhcpd config file inclusion in the dhcpd
+    # main config
+    grep -v "include \"${XENGUEST_DHCPD_CONF_FILE}\";" \
+            "${dhcpd_conf_file}" >"${tmpfile}"
+    if ! diff "${tmpfile}" "${dhcpd_conf_file}" >/dev/null
+    then
+        cp "${tmpfile}" "${dhcpd_conf_file}"
+    fi
+    rm ${tmpfile}
+
+    # Remove the generated the xenguest dhcpd file
+    rm ${XENGUEST_DHCPD_CONF_FILE}
+}
+
+# This function removes the dhcpd options added by the vif-nat script and
+# adds the user provided options under the ${XENGUEST_DHCPD_HOST_OPTIONS}
+# variable set in "/etc/xenguest/guests/${guestname}/files/dhcpd-params.cfg"
+# file.
+dhcpd_add_conf_entries()
+{
+    # We need to remove the previous added entry from vif-nat script
+    dhcp_remove_entry
+
+    # Include the xenguest dhcpd config file in the dhcpd main config
+    echo >>"${dhcpd_conf_file}" "include \"${XENGUEST_DHCPD_CONF_FILE}\";"
+
+    # Generate the xenguest dhcpd file
+    echo -e "$(eval "echo -e \"$(cat ${XENGUEST_DHCPD_PARAMS_FILE})\"")" \
+            >> "${XENGUEST_DHCPD_CONF_FILE}"
+
+    # Re-add the dhcpargs entries removed by dhcp_remove_entry call
+    dhcparg_add_entry
+}
+
+dhcpd_online(){
+    log debug "dhcpd_online"
+    claim_lock "vif-nat-dhcp"
+    dhcpd_add_conf_entries
+    release_lock "vif-nat-dhcp"
+   "$dhcpd_init_file" restart || true
+}
+
+dhcpd_offline(){
+    log debug "dhcpd_offline"
+    claim_lock "vif-nat-dhcp"
+    dhcpd_remove_conf_entry
+    release_lock "vif-nat-dhcp"
+    "$dhcpd_init_file" restart || true # We need to ignore failure because
+                                       # ISC dhcpd 3 borks if there is nothing
+                                       # for it to do, which is the case if
+                                       # the outgoing interface is not
+                                       # configured to offer leases and there
+                                       # are no vifs.
+}
+
+case "${XENGUEST_NETWORK_TYPE}" in
+    nat)
+        XENGUEST_DHCPD_PARAMS_FILE=${XENGUEST_DHCPD_PARAMS_FILE:-"/etc/xenguest/guests/${guestname}/files/dhcpd-params.cfg"}
+        if [ ! -f ${XENGUEST_DHCPD_PARAMS_FILE} ]; then
+            log debug "No ${XENGUEST_DHCPD_PARAMS_FILE} file. Aborting"
+            return
+        fi
+
+        XENGUEST_DHCPD_CONF_FILE="/etc/dhcp/dhcpd.dom$domid.conf"
+
+        case "$command" in
+            online)
+                dhcpd_online
+
+                # Enable ip forwarding and NAT for the ${bridge} interface
+                sysctl -w net.ipv4.ip_forward=1
+                iptables_w -t nat -A POSTROUTING -o ${bridge} -j MASQUERADE -m comment --comment "dom${domid}"
+                ;;
+            offline)
+                dhcpd_offline
+
+                # Remove the NAT iptables rules created for the dom${domid}
+                guest_ipt_rule=$(iptables_w -t nat -vL POSTROUTING -n --line-number | grep -w dom${domid} | awk '{print $1}' | tac)
+                for rule in ${guest_ipt_rule}; do iptables_w -t nat --delete POSTROUTING ${rule}; done
+
+                # If there is no more NAT iptables rules we disable ip forwarding
+                ipt_nat_rules=$(iptables_w -t nat -vL POSTROUTING -n --line-number | grep MASQUERADE | awk '{print $1}')
+                [ -z "${ipt_nat_rules##*[!0-9]*}" ] && sysctl -w net.ipv4.ip_forward=0
+               ;;
+        esac
+
+        ;;
+esac
