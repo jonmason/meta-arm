@@ -1,0 +1,9 @@
+#
+# Not directly sourced via a kernel type but via an external bb
+#
+
+define KFEATURE_DESCRIPTION "Enable netfilter + conn tracking + extras"
+define KFEATURE_COMPATIBILITY all
+
+include features/netfilter/netfilter.scc
+kconf non-hardware netfilter-extra.cfg
