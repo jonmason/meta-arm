@@ -66,5 +66,11 @@ The following parameters are available:
   image is created. It will be consumed by the
   "/etc/xen/scripts/vif-post.d/00-vif-xenguest.hook" script which is called by
   "/etc/xen/scripts/vif-nat" script when starting/stopping the xenguest.
+  In the guest project, the NAT port forward can be customised by changing
+  the XENGUEST_IMAGE_HOST_PORT (default: "1000 + ${domid}") and
+  XENGUEST_IMAGE_GUEST_PORT (default: "22") variables in local.conf or
+  xenguest-base-image.bbappend. This configuration is implemented and installed
+  in "/etc/xenguest/guests/${guestname}/files/00-xenguest-nat-port-forward.hook"
+  script which is called by "/etc/xen/scripts/vif-post.d/00-vif-xenguest.hook".
   The **none** type will not affect any networking setting between on dom0 and
   domU.

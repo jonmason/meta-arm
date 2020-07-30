@@ -23,6 +23,16 @@ LICENSE = "MIT"
 
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
+# When XENGUEST_IMAGE_NETWORK_TYPE="nat", the "00-xenguest-nat-port-forward.hook"
+# is called by "/etc/xen/scripts/vif-post.d/00-vif-xenguest.hook" to apply NAT
+# port forwarding. Both dom0 and domU ports can be be set by changing the
+# XENGUEST_IMAGE_HOST_PORT and XENGUEST_IMAGE_GUEST_PORT variables in local.conf
+# or xenguest-base-image.bbappend. The XENGUEST_IMAGE_NAT_PORT_FORWARD_SCRIPT
+# can also be replaced in a xenguest-base-image.bbappend
+XENGUEST_IMAGE_HOST_PORT ?= "\$( expr 1000 + \${domid} )"
+XENGUEST_IMAGE_GUEST_PORT ?= "22"
+XENGUEST_IMAGE_NAT_PORT_FORWARD_SCRIPT ?= "00-xenguest-nat-port-forward.hook"
+
 #
 # The following variables can contain SRC_URI compatible entries to add
 # files to the xenguest image.
@@ -40,7 +50,12 @@ XENGUEST_IMAGE_SRC_URI_DISK_FILES ??= ""
 # The dhcpd-params.cfg holds the dhcpd configuration for Dom0. And it is used
 # when XENGUEST_IMAGE_NETWORK_TYPE="nat". Any customizations to it should be
 # performed by replacing it via a xenguest-network.bbappend.
-XENGUEST_IMAGE_SRC_URI_XEN_FILES = "file://dhcpd-params.cfg"
+# The XENGUEST_IMAGE_NAT_PORT_FORWARD_SCRIPT file is only added if the
+# variable is set.
+XENGUEST_IMAGE_SRC_URI_XEN_FILES = "file://dhcpd-params.cfg \
+    ${@ "file://" + d.getVar('XENGUEST_IMAGE_NAT_PORT_FORWARD_SCRIPT') \
+      if d.getVar('XENGUEST_IMAGE_NAT_PORT_FORWARD_SCRIPT') else "" } \
+    "
 
 # Add xen configuration elements
 XENGUEST_IMAGE_SRC_URI_XEN_CONFIG ??= ""
@@ -82,8 +97,8 @@ python __anonymous() {
 
 # Make sure we are removing old files before redoing a fetch
 do_fetch[cleandirs] += "${WORKDIR}/extend"
+do_fetch[vardeps] += "XENGUEST_IMAGE_HOST_PORT XENGUEST_IMAGE_GUEST_PORT"
 
-do_configure[noexec] = "1"
 do_compile[noexec] = "1"
 do_install[noexec] = "1"
 
@@ -104,6 +119,15 @@ add_extend_files() {
                 fi
             done
         fi
+    fi
+}
+
+do_configure() {
+    if [ -f ${WORKDIR}/extend/files/${XENGUEST_IMAGE_NAT_PORT_FORWARD_SCRIPT} ]; then
+        sed -i "s,###HOST_PORT###,${XENGUEST_IMAGE_HOST_PORT}," \
+               ${WORKDIR}/extend/files/${XENGUEST_IMAGE_NAT_PORT_FORWARD_SCRIPT}
+        sed -i "s,###GUEST_PORT###,${XENGUEST_IMAGE_GUEST_PORT}," \
+               ${WORKDIR}/extend/files/${XENGUEST_IMAGE_NAT_PORT_FORWARD_SCRIPT}
     fi
 }
 

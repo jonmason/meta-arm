@@ -1,0 +1,48 @@
+#============================================================================
+# /etc/xenguest/guests/${guestname}/files/00-xenguest-nat-port-forward.hook
+#
+# Script for performing local configuration related to NAT port forwarding of
+# a vif.
+# This script will be sourced by
+# /etc/xen/scripts/vif-post.d/00-vif-xenguest.hook when
+# XENGUEST_IMAGE_NETWORK_TYPE="nat".
+# The ${bridge} and ${domid} are set in the 00-vif-xenguest.hook context,
+# and ${vip_if} in the vif-nat script context.
+#
+# Environment vars:
+# command     (add|remove|online|offline)
+# dev         vif interface name (required).
+# main_ip     IP address of Dom0
+# ip          list of IP networks for the vif, space-separated
+# XENBUS_PATH path to this device's details in the XenStore (required).
+#============================================================================
+
+host_port="###HOST_PORT###"
+guest_port="###GUEST_PORT###"
+
+port_num_check() {
+    if [ ${host_port} -gt 65535 -o ${guest_port} -gt 65535 ]; then
+        log error "host_port=${host_port} or guest_port=${guest_port} greater than 65535."
+        return 1
+    fi
+    return 0
+}
+
+case "${command}" in
+    online)
+        port_num_check
+        if [ $? -eq 0 ]; then
+            iptables_w -t nat -A PREROUTING -i ${bridge} -p tcp \
+                       --dport ${host_port} -j DNAT \
+                       --to-destination ${vif_ip}:${guest_port} \
+                       -m comment --comment "dom${domid}"
+        fi
+        ;;
+    offline)
+        # Remove the NAT iptables rules created for the dom${domid}
+        guest_ipt_rule=$(iptables_w -t nat -vL PREROUTING -n --line-number \
+                         | grep -w dom${domid} | awk '{print $1}' | tac)
+        for rule in ${guest_ipt_rule}; \
+            do iptables_w -t nat --delete PREROUTING ${rule}; done
+        ;;
+esac

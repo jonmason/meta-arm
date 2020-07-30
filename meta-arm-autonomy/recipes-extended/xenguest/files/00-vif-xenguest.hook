@@ -95,6 +95,20 @@ dhcpd_offline(){
                                        # are no vifs.
 }
 
+call_extra_hooks() {
+    for f in /etc/xenguest/guests/${guestname}/files/*.hook; do
+        if [ -x "$f" ]; then
+            log info "Executing $f"
+            . "$f"
+            if [ $? -ne 0 ]; then
+                log err "$f failed."
+            fi
+        else
+            log info "$f is not executable. Skipping."
+        fi
+    done
+}
+
 case "${XENGUEST_NETWORK_TYPE}" in
     nat)
         XENGUEST_DHCPD_PARAMS_FILE=${XENGUEST_DHCPD_PARAMS_FILE:-"/etc/xenguest/guests/${guestname}/files/dhcpd-params.cfg"}
@@ -126,5 +140,7 @@ case "${XENGUEST_NETWORK_TYPE}" in
                ;;
         esac
 
+        # We might have extra configs to be applied (e.g.: NAT port forward).
+        call_extra_hooks
         ;;
 esac
