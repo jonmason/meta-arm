@@ -1,0 +1,18 @@
+Upstream-Status: Pending
+Signed-off-by: Diego Sueiro <diego.sueiro@arm.com>
+
+Setting the hostname is failing because the "$XENBUS_PATH/domain"
+doesn't exist anymore. To fix this we set it to dom$domid
+
+Index: git/tools/hotplug/Linux/vif-nat
+===================================================================
+--- git.orig/tools/hotplug/Linux/vif-nat
++++ git/tools/hotplug/Linux/vif-nat
+@@ -86,6 +86,7 @@ router_ip=$(routing_ip "$ip")
+ vif_ip=`echo ${ip} | awk -F/ '{print $1}'`
+ 
+ hostname=$(xenstore_read "$XENBUS_PATH/domain" | tr -- '_.:/+' '-----')
++[ -z "${hostname}" ] && hostname=dom$domid
+ if [ "$vifid" != "1" ]
+ then
+   hostname="$hostname-$vifid"

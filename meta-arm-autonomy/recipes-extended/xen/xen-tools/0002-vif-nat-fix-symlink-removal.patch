@@ -1,0 +1,45 @@
+Upstream-Status: Pending
+Signed-off-by: Diego Sueiro <diego.sueiro@arm.com>
+
+Copy temp files used to add/remove dhcpd configurations to avoid
+replacing potential symlinks.
+
+Index: git/tools/hotplug/Linux/vif-nat
+===================================================================
+--- git.orig/tools/hotplug/Linux/vif-nat
++++ git/tools/hotplug/Linux/vif-nat
+@@ -99,7 +100,8 @@ dhcparg_remove_entry()
+   then
+     rm "$tmpfile"
+   else
+-    mv "$tmpfile" "$dhcpd_arg_file"
++    cp "$tmpfile" "$dhcpd_arg_file"
++    rm "$tmpfile"
+   fi
+ }
+ 
+@@ -109,11 +111,11 @@ dhcparg_add_entry()
+   local tmpfile=$(mktemp)
+   # handle Red Hat, SUSE, and Debian styles, with or without quotes
+   sed -e 's/^DHCPDARGS="*\([^"]*\)"*/DHCPDARGS="\1'"${dev} "'"/' \
+-     "$dhcpd_arg_file" >"$tmpfile" && mv "$tmpfile" "$dhcpd_arg_file"
++     "$dhcpd_arg_file" >"$tmpfile" && cp "$tmpfile" "$dhcpd_arg_file"
+   sed -e 's/^DHCPD_INTERFACE="*\([^"]*\)"*/DHCPD_INTERFACE="\1'"${dev} "'"/' \
+-     "$dhcpd_arg_file" >"$tmpfile" && mv "$tmpfile" "$dhcpd_arg_file"
++     "$dhcpd_arg_file" >"$tmpfile" && cp "$tmpfile" "$dhcpd_arg_file"
+   sed -e 's/^INTERFACES="*\([^"]*\)"*/INTERFACES="\1'"${dev} "'"/' \
+-     "$dhcpd_arg_file" >"$tmpfile" && mv "$tmpfile" "$dhcpd_arg_file"
++     "$dhcpd_arg_file" >"$tmpfile" && cp "$tmpfile" "$dhcpd_arg_file"
+   rm -f "$tmpfile"
+ }
+ 
+@@ -125,7 +127,8 @@ dhcp_remove_entry()
+   then
+     rm "$tmpfile"
+   else
+-    mv "$tmpfile" "$dhcpd_conf_file"
++    cp "$tmpfile" "$dhcpd_conf_file"
++    rm "$tmpfile"
+   fi
+   dhcparg_remove_entry
+ }
