@@ -21,6 +21,7 @@ SRC_URI = " \
     file://0004-Cleanup-unused-comp-cflags-sm-from-libgcc-lookup-com.patch \
     file://0005-Fixup-Allow-use-of-cc-option-in-core-arch-arm-arm.mk.patch \
     file://0006-allow-setting-sysroot-for-libgcc-lookup.patch \
+    file://missing-mkdir.patch \
 "
 
 S = "${WORKDIR}/git"
