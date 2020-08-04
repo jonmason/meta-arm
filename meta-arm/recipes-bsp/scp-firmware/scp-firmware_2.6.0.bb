@@ -34,13 +34,6 @@ COMPATIBLE_MACHINE ?= "invalid"
 
 LDFLAGS[unexport] = "1"
 
-# The gcc-arm-none-eabi version does not support -fmacro-prefix-max
-DEBUG_PREFIX_MAP_pn-scp = "\
-    -fdebug-prefix-map=${WORKDIR}=/usr/src/debug/${PN}/${EXTENDPE}${PV}-${PR} \
-    -fdebug-prefix-map=${STAGING_DIR_HOST}= \
-    -fdebug-prefix-map=${STAGING_DIR_NATIVE}= \
-"
-
 # No configure
 do_configure[noexec] = "1"
 
