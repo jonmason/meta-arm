@@ -24,7 +24,7 @@ SRC_URI[tfa.sha256sum] = "7c4c00a4f28d3cfbb235fd1a1fb28c4d2fc1d657c9301686e7d882
 # Those are used in trusted-firmware-a.inc if TFA_MBEDTLS is set to 1
 #
 
-SRC_URI_MBEDTLS = "git://github.com/ARMmbed/mbedtls.git;name=mbedtls;protocol=https;destsuffix=git/mbedtls"
+SRC_URI_MBEDTLS = "git://github.com/ARMmbed/mbedtls.git;name=mbedtls;protocol=https;destsuffix=git/mbedtls;branch=mbedtls-2.18"
 
 # mbed TLS v2.18.1
 SRCREV_mbedtls = "ca933c7e0c9e84738b168b6b0feb89af4183a60a"
