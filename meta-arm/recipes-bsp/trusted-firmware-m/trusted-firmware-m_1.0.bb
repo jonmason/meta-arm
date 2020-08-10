@@ -14,20 +14,17 @@ LICENSE = "BSD-3-Clause & Apachev2"
 
 LIC_FILES_CHKSUM ?= "file://license.rst;md5=07f368487da347f3c7bd0fc3085f3afa"
 LIC_FILES_CHKSUM += "file://../mbed-crypto/LICENSE;md5=302d50a6369f5f22efdb674db908167a"
-LIC_FILES_CHKSUM += "file://../mbedtls/LICENSE;md5=302d50a6369f5f22efdb674db908167a"
 LIC_FILES_CHKSUM += "file://../CMSIS_5/LICENSE.txt;md5=c4082b6c254c9fb71136710391d9728b"
 
 SRC_URI  = "git://git.trustedfirmware.org/trusted-firmware-m.git;protocol=https;branch=master;name=tfm;destsuffix=${S}"
 SRC_URI += "git://github.com/ARMmbed/mbed-crypto.git;protocol=https;branch=development;name=mbed-crypto;destsuffix=${S}/../mbed-crypto"
-SRC_URI += "git://github.com/ARMmbed/mbedtls.git;protocol=https;branch=mbedtls-2.7;name=mbedtls;destsuffix=${S}/../mbedtls"
 SRC_URI += "https://github.com/ARM-software/CMSIS_5/releases/download/5.5.0/ARM.CMSIS.5.5.0.pack;name=cmsis;subdir=${S}/../CMSIS_5;downloadfilename=ARM.CMSIS.5.5.0.zip"
 
 SRC_URI[cmsis.md5sum] = "73b6cf6b4ab06ac099478e6cf983c08e"
 SRC_URI[cmsis.sha256sum] = "fc6e46c77de29ed05ef3bfd4846a2da49b024bc8854c876ac053aaa8d348ac52"
 
-SRCREV_FORMAT ?= "tfm_mbed-crypto_mbedtls_cmsis"
+SRCREV_FORMAT ?= "tfm_mbed-crypto_cmsis"
 SRCREV_mbed-crypto ?= "mbedcrypto-3.0.1"
-SRCREV_mbedtls ?= "mbedtls-2.7.14"
 SRCREV_cmsis ?= "5.5.0"
 
 # Note to future readers of this recipe: until the CMakeLists don't abuse
