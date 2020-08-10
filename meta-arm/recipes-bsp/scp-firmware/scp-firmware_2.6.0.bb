@@ -28,6 +28,7 @@ S = "${WORKDIR}/git"
 
 # Allow platform specific copying of only scp or both scp & mcp, default to both
 FW_TARGETS ?= "scp mcp"
+FW_INSTALL ?= "ramfw romfw"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 COMPATIBLE_MACHINE ?= "invalid"
@@ -56,7 +57,7 @@ do_compile[cleandirs] += "${B}"
 do_install() {
      install -d ${D}/firmware
      for FW in ${FW_TARGETS}; do
-        for TYPE in ramfw romfw; do
+        for TYPE in ${FW_INSTALL}; do
            install -D "${B}/product/${SCP_PLATFORM}/${FW}_${TYPE}/release/bin/${FW}_${TYPE}.bin" "${D}/firmware/"
         done
      done
