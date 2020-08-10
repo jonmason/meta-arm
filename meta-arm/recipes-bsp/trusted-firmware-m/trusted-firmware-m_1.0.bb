@@ -8,8 +8,6 @@ DESCRIPTION = "Trusted Firmware-M"
 HOMEPAGE = "https://git.trustedfirmware.org/trusted-firmware-m.git"
 PROVIDES = "virtual/trusted-firmware-m"
 
-# TF-Mv1.0
-SRCREV_tfm = "TF-Mv1.0"
 LICENSE = "BSD-3-Clause & Apachev2"
 
 LIC_FILES_CHKSUM ?= "file://license.rst;md5=07f368487da347f3c7bd0fc3085f3afa"
@@ -23,9 +21,12 @@ SRC_URI += "https://github.com/ARM-software/CMSIS_5/releases/download/5.5.0/ARM.
 SRC_URI[cmsis.md5sum] = "73b6cf6b4ab06ac099478e6cf983c08e"
 SRC_URI[cmsis.sha256sum] = "fc6e46c77de29ed05ef3bfd4846a2da49b024bc8854c876ac053aaa8d348ac52"
 
-SRCREV_FORMAT ?= "tfm_mbed-crypto_cmsis"
-SRCREV_mbed-crypto ?= "mbedcrypto-3.0.1"
-SRCREV_cmsis ?= "5.5.0"
+SRCREV_FORMAT = "tfm_mbed-crypto_cmsis"
+# TF-Mv1.0
+SRCREV_tfm = "0768982ea41b5e7d207445f19ee23e5d67d9c89b"
+# mbedcrypto-3.0.1
+SRCREV_mbed-crypto = "1146b4e06011b69a6437e6b728f2af043a06ec19"
+SRCREV_cmsis = "5.5.0"
 
 # Note to future readers of this recipe: until the CMakeLists don't abuse
 # installation (see do_install) there is no point in trying to inherit
