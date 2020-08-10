@@ -8,6 +8,6 @@ TFA_UBOOT = "1"
 TFA_BUILD_TARGET = "bl1 fip"
 
 # Juno needs the System Control Processor Firmware
-DEPENDS += "virtual/scp-firmware"
+DEPENDS += "virtual/control-processor-firmware"
 
-EXTRA_OEMAKE_append = " SCP_BL2=${RECIPE_SYSROOT}/firmware/scp_bl2.bin"
+EXTRA_OEMAKE_append = " SCP_BL2=${RECIPE_SYSROOT}/firmware/scp_ramfw.bin"

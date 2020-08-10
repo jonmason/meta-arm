@@ -5,7 +5,7 @@ LICENSE = "BSD-3-Clause"
 SECTION = "firmware"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/BSD-3-Clause;md5=550794465ba0ec5312d6919e203a55f9"
 
-DEPENDS = "virtual/trusted-firmware-a virtual/kernel"
+DEPENDS = "virtual/trusted-firmware-a virtual/kernel virtual/control-processor-firmware"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
@@ -38,6 +38,9 @@ do_install() {
 
     cp -f ${RECIPE_SYSROOT}/firmware/fip-juno.bin \
         ${D}/${UNPACK_DIR}/SOFTWARE/fip.bin
+
+    cp -f ${RECIPE_SYSROOT}/firmware/scp_romfw_bypass.bin \
+        ${D}/${UNPACK_DIR}/SOFTWARE/scp_bl1.bin
 
     # u-boot environment file
     cp -f ${WORKDIR}/uEnv.txt ${D}/${UNPACK_DIR}/SOFTWARE/

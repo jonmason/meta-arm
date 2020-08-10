@@ -1,0 +1,7 @@
+# juno specific SCP configuration
+
+COMPATIBLE_MACHINE = "juno"
+
+SCP_PLATFORM = "juno"
+FW_TARGETS = "scp"
+FW_INSTALL_append = " romfw_bypass"
