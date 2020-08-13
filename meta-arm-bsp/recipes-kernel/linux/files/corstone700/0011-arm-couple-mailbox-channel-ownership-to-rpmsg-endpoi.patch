@@ -1,0 +1,107 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+
+From 451766a1eb1e070b585ab8cae31ed0dc7845a37a Mon Sep 17 00:00:00 2001
+From: Morten Borup Petersen <morten.petersen@arm.com>
+Date: Wed, 12 Jun 2019 12:11:57 +0100
+Subject: [PATCH 11/20] arm: couple mailbox channel ownership to rpmsg endpoint
+ lifecycle
+
+Previously, mailbox channels would be assigned once a write occured to the
+endpoint. This presents an issue wherein if a mailbox is opened with a given
+destination channel, and then read from, instead of writing to it, the target
+mailbox channel would not bind to the mailbox client, and thus not forward its
+received message to the rpmsg endpoint.
+
+This commits moves the ownership of a mailbox channel to the lifecycle of an
+rpmsg endpoint, thus registerring the mailbox channel with the mailbox client
+once the rpmsg endpoint is opened in userspace.
+
+Signed-off-by: Morten Borup Petersen <morten.petersen@arm.com>
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+---
+ drivers/rpmsg/rpmsg_arm_mailbox.c | 31 +++++++++++++++----------------
+ 1 file changed, 15 insertions(+), 16 deletions(-)
+
+diff --git a/drivers/rpmsg/rpmsg_arm_mailbox.c b/drivers/rpmsg/rpmsg_arm_mailbox.c
+index 4933187c61ea..0773b475a932 100644
+--- a/drivers/rpmsg/rpmsg_arm_mailbox.c
++++ b/drivers/rpmsg/rpmsg_arm_mailbox.c
+@@ -25,9 +25,9 @@
+ #define RPMSG_ADDR_ANY	0xFFFFFFFF
+ 
+ struct arm_channel {
+-	struct rpmsg_channel_info chinfo;
+ 	struct rpmsg_endpoint ept;
+ 	struct mbox_client cl;
++	struct mbox_chan *mbox;
+ };
+ 
+ #define arm_channel_from_rpmsg(_ept) container_of(_ept, struct arm_channel, ept)
+@@ -37,29 +37,25 @@ struct arm_channel {
+ static void arm_msg_rx_handler(struct mbox_client *cl, void *mssg)
+ {
+ 	struct arm_channel* channel = arm_channel_from_mbox(cl);
+-	channel->ept.cb(channel->ept.rpdev, mssg, 4, channel->ept.priv, RPMSG_ADDR_ANY);
++	int err = channel->ept.cb(channel->ept.rpdev, mssg, 4, channel->ept.priv, RPMSG_ADDR_ANY);
++	if(err) {
++		printk("ARM Mailbox: Endpoint callback failed with error: %d", err);
++	}
+ }
+ 
+ 
+ static void arm_destroy_ept(struct rpmsg_endpoint *ept)
+ {
+ 	struct arm_channel *channel = arm_channel_from_rpmsg(ept);
++	mbox_free_channel(channel->mbox);
+ 	kfree(channel);
+ }
+ 
+ static int arm_send(struct rpmsg_endpoint *ept, void *data, int len)
+ {
+ 	struct arm_channel *channel = arm_channel_from_rpmsg(ept);
+-	struct mbox_chan *mbox;
+-
+-	mbox = mbox_request_channel_byname(&channel->cl, channel->chinfo.name);
+-	if (IS_ERR_OR_NULL(mbox)) {
+-		printk("RPMsg ARM: Cannot get channel by name: '%s'\n", channel->chinfo.name);
+-		return -1;
+-	}
+ 
+-	mbox_send_message(mbox, data);
+-	mbox_free_channel(mbox);
++	mbox_send_message(channel->mbox, data);
+ 	return 0;
+ }
+ 
+@@ -72,12 +68,9 @@ static const struct rpmsg_endpoint_ops arm_endpoint_ops = {
+ static struct rpmsg_endpoint *arm_create_ept(struct rpmsg_device *rpdev,
+ 		rpmsg_rx_cb_t cb, void *priv, struct rpmsg_channel_info chinfo)
+ {
+-	struct arm_channel* channel;
+-	channel = kzalloc(sizeof(*channel), GFP_KERNEL);
++	struct arm_channel *channel;
+ 
+-	// store chinfo for determining destination mailbox when sending
+-	channel->chinfo = chinfo;
+-	strncpy(channel->chinfo.name, chinfo.name, RPMSG_NAME_SIZE);
++	channel = kzalloc(sizeof(*channel), GFP_KERNEL);
+ 
+ 	// Initialize rpmsg endpoint
+ 	kref_init(&channel->ept.refcount);
+@@ -94,6 +87,12 @@ static struct rpmsg_endpoint *arm_create_ept(struct rpmsg_device *rpdev,
+ 	channel->cl.tx_tout = 500; /* by half a second */
+ 	channel->cl.knows_txdone = false; /* depending upon protocol */
+ 
++	channel->mbox = mbox_request_channel_byname(&channel->cl, chinfo.name);
++	if (IS_ERR_OR_NULL(channel->mbox)) {
++		printk("RPMsg ARM: Cannot get channel by name: '%s'\n", chinfo.name);
++		return -1;
++	}
++
+ 	return &channel->ept;
+ }
+ 
+-- 
+2.17.1
+

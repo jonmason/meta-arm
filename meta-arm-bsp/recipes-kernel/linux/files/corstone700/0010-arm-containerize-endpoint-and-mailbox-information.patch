@@ -1,0 +1,181 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+
+From a0cee835763d884d8ce44d01d5271e7f2e68313f Mon Sep 17 00:00:00 2001
+From: Morten Borup Petersen <morten.petersen@arm.com>
+Date: Thu, 30 May 2019 15:30:54 +0100
+Subject: [PATCH 10/20] arm: containerize endpoint and mailbox information
+
+This commit adds the rpmsg_endpoint and mbox_client structs as members of the
+arm_channel struct. This allows for usage of the container_of macro, vastly
+simplifying lookup between endpoints and mailboxes.
+
+Furthermore, a memory leak from the allocation of mbox_client's is fixed.
+
+Signed-off-by: Morten Borup Petersen <morten.petersen@arm.com>
+Signed-off-by: Tushar Khandelwal <tushar.khandelwal@arm.com>
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+---
+ drivers/rpmsg/rpmsg_arm_mailbox.c | 113 ++++++++++--------------------
+ 1 file changed, 36 insertions(+), 77 deletions(-)
+
+diff --git a/drivers/rpmsg/rpmsg_arm_mailbox.c b/drivers/rpmsg/rpmsg_arm_mailbox.c
+index 1cf7e20142e2..4933187c61ea 100644
+--- a/drivers/rpmsg/rpmsg_arm_mailbox.c
++++ b/drivers/rpmsg/rpmsg_arm_mailbox.c
+@@ -23,84 +23,41 @@
+ 
+ #define RPMSG_NAME	"arm_rpmsg"
+ #define RPMSG_ADDR_ANY	0xFFFFFFFF
+-#define TX_TIMEOUT	500 /*by half second*/
+ 
+-struct arm_ept_info {
+-	struct rpmsg_channel_info info;
+-	struct rpmsg_endpoint *ept;
+-	struct mbox_client *cl;
+-
+-	struct list_head node;
++struct arm_channel {
++	struct rpmsg_channel_info chinfo;
++	struct rpmsg_endpoint ept;
++	struct mbox_client cl;
+ };
+ 
+-static LIST_HEAD(arm_ept_infos);
++#define arm_channel_from_rpmsg(_ept) container_of(_ept, struct arm_channel, ept)
++#define arm_channel_from_mbox(_ept) container_of(_ept, struct arm_channel, cl)
++
+ 
+ static void arm_msg_rx_handler(struct mbox_client *cl, void *mssg)
+ {
+-	struct arm_ept_info *it = NULL;
+-
+-	list_for_each_entry(it, &arm_ept_infos, node) {
+-		if (it->cl == cl) {
+-			struct rpmsg_endpoint *ept = it->ept;
+-
+-			ept->cb(ept->rpdev, mssg, 4, ept->priv, RPMSG_ADDR_ANY);
+-			return;
+-		}
+-	}
++	struct arm_channel* channel = arm_channel_from_mbox(cl);
++	channel->ept.cb(channel->ept.rpdev, mssg, 4, channel->ept.priv, RPMSG_ADDR_ANY);
+ }
+ 
+ 
+ static void arm_destroy_ept(struct rpmsg_endpoint *ept)
+ {
+-	struct arm_ept_info *it = NULL;
+-
+-	list_for_each_entry(it, &arm_ept_infos, node) {
+-		if (it->ept == ept) {
+-			list_del(&it->node);
+-			kfree(it);
+-			break;
+-		}
+-	}
+-	kfree(ept);
++	struct arm_channel *channel = arm_channel_from_rpmsg(ept);
++	kfree(channel);
+ }
+ 
+ static int arm_send(struct rpmsg_endpoint *ept, void *data, int len)
+ {
+-	struct arm_ept_info *it = NULL;
+-	struct arm_ept_info *arm_ept = NULL;
+-	struct mbox_client *cl;
++	struct arm_channel *channel = arm_channel_from_rpmsg(ept);
+ 	struct mbox_chan *mbox;
+ 
+-	// Locate registered endpoint
+-	list_for_each_entry(it, &arm_ept_infos, node) {
+-		if (it->ept == ept) {
+-			arm_ept = it;
+-			break;
+-		}
+-	}
+-
+-	if (arm_ept == NULL) {
+-		dev_printk(KERN_ERR, cl->dev,
+-			   "RPMsg ARM: Invalid endpoint\n");
+-		return -1;
+-	}
+-
+-	cl = kzalloc(sizeof(struct mbox_client), GFP_KERNEL);
+-	cl->dev = ept->rpdev->dev.parent;
+-	cl->rx_callback = arm_msg_rx_handler;
+-	cl->tx_done = NULL; /* operate in blocking mode */
+-	cl->tx_block = true;
+-	cl->tx_tout = TX_TIMEOUT; /* by half a second */
+-	cl->knows_txdone = false; /* depending upon protocol */
+-	arm_ept->cl = cl;
+-
+-	mbox = mbox_request_channel_byname(cl, arm_ept->info.name);
++	mbox = mbox_request_channel_byname(&channel->cl, channel->chinfo.name);
+ 	if (IS_ERR_OR_NULL(mbox)) {
+-		dev_printk(KERN_ERR, cl->dev,
+-		 "RPMsg ARM: Cannot get channel by name: '%s'\n",
+-		 arm_ept->info.name);
++		printk("RPMsg ARM: Cannot get channel by name: '%s'\n", channel->chinfo.name);
+ 		return -1;
+ 	}
++
+ 	mbox_send_message(mbox, data);
+ 	mbox_free_channel(mbox);
+ 	return 0;
+@@ -115,26 +72,29 @@ static const struct rpmsg_endpoint_ops arm_endpoint_ops = {
+ static struct rpmsg_endpoint *arm_create_ept(struct rpmsg_device *rpdev,
+ 		rpmsg_rx_cb_t cb, void *priv, struct rpmsg_channel_info chinfo)
+ {
+-	struct rpmsg_endpoint *ept;
+-	struct arm_ept_info *ept_mbox;
+-
+-	ept = kzalloc(sizeof(*ept), GFP_KERNEL);
+-	if (!ept)
+-		return NULL;
+-
+-	kref_init(&ept->refcount);
+-	ept->rpdev = rpdev;
+-	ept->cb = cb;
+-	ept->priv = priv;
+-	ept->ops = &arm_endpoint_ops;
++	struct arm_channel* channel;
++	channel = kzalloc(sizeof(*channel), GFP_KERNEL);
+ 
+ 	// store chinfo for determining destination mailbox when sending
+-	ept_mbox = kzalloc(sizeof(*ept_mbox), GFP_KERNEL);
+-	ept_mbox->info = chinfo;
+-	strncpy(ept_mbox->info.name, chinfo.name, RPMSG_NAME_SIZE);
+-	ept_mbox->ept = ept;
+-	list_add(&ept_mbox->node, &arm_ept_infos);
+-	return ept;
++	channel->chinfo = chinfo;
++	strncpy(channel->chinfo.name, chinfo.name, RPMSG_NAME_SIZE);
++
++	// Initialize rpmsg endpoint
++	kref_init(&channel->ept.refcount);
++	channel->ept.rpdev = rpdev;
++	channel->ept.cb = cb;
++	channel->ept.priv = priv;
++	channel->ept.ops = &arm_endpoint_ops;
++
++	// Initialize mailbox client
++	channel->cl.dev = rpdev->dev.parent;
++	channel->cl.rx_callback = arm_msg_rx_handler;
++	channel->cl.tx_done = NULL; /* operate in blocking mode */
++	channel->cl.tx_block = true;
++	channel->cl.tx_tout = 500; /* by half a second */
++	channel->cl.knows_txdone = false; /* depending upon protocol */
++
++	return &channel->ept;
+ }
+ 
+ static const struct rpmsg_device_ops arm_device_ops = {
+@@ -189,4 +149,3 @@ module_platform_driver(client_driver);
+ MODULE_LICENSE("GPL v2");
+ MODULE_DESCRIPTION("ARM RPMSG Driver");
+ MODULE_AUTHOR("Tushar Khandelwal <tushar.khandelwal@arm.com>");
+-
+-- 
+2.17.1
+

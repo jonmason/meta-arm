@@ -1,0 +1,50 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+
+From dbf2cd8967b6e2c47084e52aae8a15a669614cb1 Mon Sep 17 00:00:00 2001
+From: Vishnu Banavath <vishnu.banavath@arm.com>
+Date: Mon, 7 Oct 2019 12:26:06 +0100
+Subject: [PATCH 15/20] arm: Kconfig: disable ARM_VIRT extension if XIP_KERNEL
+
+XIP is intended to execute kernel inplace and typically from
+flash and is used mostly on low memory devices.
+
+.macro  store_primary_cpu_mode  reg1, reg2, reg3
+        mrs     \reg1, cpsr
+        and     \reg1, \reg1, #MODE_MASK
+        adr     \reg2, .L__boot_cpu_mode_offset
+        ldr     \reg3, [\reg2]
+        str     \reg1, [\reg2, \reg3]
+
+As text section is in flash memory and data section is in RAM.
+L__boot_cpu_mode_offset would evaluate to address based
+on virtual addresses provided by linker script. At this stage
+the MMU is OFF.
+
+The logic used based stored @L__boot_cpu_mode_offset on the offset
+between the  boot_cpu_mode in data section and the location of
+L__boot_cpu_mode_offset can't be used along with PC to fetch the value
+of boot_cpu_mode doesn't work.
+
+This change is to disable CONFIG_ARM_VIRT_EXT for XIP kernel
+
+Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
+---
+ arch/arm/mm/Kconfig | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/arm/mm/Kconfig b/arch/arm/mm/Kconfig
+index 65e4482e3849..69810125998b 100644
+--- a/arch/arm/mm/Kconfig
++++ b/arch/arm/mm/Kconfig
+@@ -703,6 +703,7 @@ config ARM_THUMBEE
+ 
+ config ARM_VIRT_EXT
+ 	bool
++	depends on !XIP_KERNEL
+ 	default y if CPU_V7
+ 	help
+ 	  Enable the kernel to make use of the ARM Virtualization
+-- 
+2.17.1
+

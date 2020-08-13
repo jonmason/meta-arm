@@ -1,0 +1,42 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+
+From eb92a2e53578326a15bc193c0dc2512793c8c502 Mon Sep 17 00:00:00 2001
+From: Vishnu Banavath <vishnu.banavath@arm.com>
+Date: Wed, 9 Oct 2019 13:28:51 +0100
+Subject: [PATCH 14/20] defconfig: adjust XIP physical address to 3MB offset
+
+Because of the memory constraint, reduced root filesystem
+to 2MB and as result XIP start address should be changed.
+This change is to adjust XIP PHYS start address to align
+with the rootfs size change
+
+Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+---
+ arch/arm/configs/corstone700_defconfig | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm/configs/corstone700_defconfig b/arch/arm/configs/corstone700_defconfig
+index 629b2163a534..61a0a3c3a209 100644
+--- a/arch/arm/configs/corstone700_defconfig
++++ b/arch/arm/configs/corstone700_defconfig
+@@ -25,7 +25,7 @@ CONFIG_PHYS_OFFSET=0x02100000
+ CONFIG_FLASH_MEM_BASE=0x08000000
+ CONFIG_FLASH_SIZE=0x4000000
+ CONFIG_XIP_KERNEL=y
+-CONFIG_XIP_PHYS_ADDR=0x08500000
++CONFIG_XIP_PHYS_ADDR=0x08300000
+ # CONFIG_ARCH_VEXPRESS_CA9X4=y
+ # CONFIG_ARCH_VEXPRESS_DCSCB=y
+ # CONFIG_ARCH_VEXPRESS_TC2_PM=y
+@@ -173,4 +173,4 @@ CONFIG_ARM_MHUv2=y
+ CONFIG_RPMSG=y
+ CONFIG_RPMSG_CHAR=y
+ CONFIG_RPMSG_ARM=y
+-CONFIG_EXTSYS_CTRL=y
+\ No newline at end of file
++CONFIG_EXTSYS_CTRL=y
+-- 
+2.17.1
+

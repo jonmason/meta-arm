@@ -1,0 +1,101 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+
+From f984be4e9b113b0c92ae2b618381f0499bf41865 Mon Sep 17 00:00:00 2001
+From: Manish Pandey <manish.pandey2@arm.com>
+Date: Mon, 18 Jun 2018 13:04:31 +0100
+Subject: [PATCH 02/20] arm: Add tiny vexpress machine.
+
+added tiny vexpress machine which is cut down version of
+vexpress machine and intended to be used for IOT devices.
+
+Signed-off-by: Manish Pandey <manish.pandey2@arm.com>
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+---
+ arch/arm/Kconfig                  |  2 ++
+ arch/arm/mach-tinyexpress/Kconfig | 28 ++++++++++++++++++++++++++++
+ drivers/clk/versatile/Kconfig     |  6 +++---
+ 3 files changed, 33 insertions(+), 3 deletions(-)
+ create mode 100644 arch/arm/mach-tinyexpress/Kconfig
+
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+index 04db53ed23fc..ef49bbc9d5e2 100644
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -752,6 +752,8 @@ source "arch/arm/mach-versatile/Kconfig"
+ source "arch/arm/mach-vexpress/Kconfig"
+ source "arch/arm/plat-versatile/Kconfig"
+ 
++source "arch/arm/mach-tinyexpress/Kconfig"
++
+ source "arch/arm/mach-vt8500/Kconfig"
+ 
+ source "arch/arm/mach-zx/Kconfig"
+diff --git a/arch/arm/mach-tinyexpress/Kconfig b/arch/arm/mach-tinyexpress/Kconfig
+new file mode 100644
+index 000000000000..f9946bad1170
+--- /dev/null
++++ b/arch/arm/mach-tinyexpress/Kconfig
+@@ -0,0 +1,28 @@
++config ARCH_TINY_VEXPRESS
++	bool "ARM Ltd. Tiny Versatile Express family"
++	depends on ARM_SINGLE_ARMV7A
++	select ARCH_SUPPORTS_BIG_ENDIAN
++	select ARM_AMBA
++	select ARM_GIC
++	select ARM_GLOBAL_TIMER
++	select ARM_TIMER_SP804
++	select COMMON_CLK_VERSATILE
++	select GPIOLIB
++	select HAVE_ARM_SCU if SMP
++	select HAVE_ARM_TWD if SMP
++	select HAVE_PATA_PLATFORM
++	select ICST
++	select NO_IOPORT_MAP
++	select PLAT_VERSATILE
++	select POWER_RESET
++	select POWER_RESET_VEXPRESS
++	select POWER_SUPPLY
++	select REGULATOR if MMC_ARMMMCI
++	select REGULATOR_FIXED_VOLTAGE if REGULATOR
++	select VEXPRESS_CONFIG
++	select VEXPRESS_SYSCFG
++	select MFD_VEXPRESS_SYSREG
++	help
++	  This option enables support for tiny linux based systems using Cortex
++	  processor based ARM core and logic (FPGA) tiles on the Versatile
++	  Express motherboard.
+diff --git a/drivers/clk/versatile/Kconfig b/drivers/clk/versatile/Kconfig
+index c2618f1477a2..f245f520df0c 100644
+--- a/drivers/clk/versatile/Kconfig
++++ b/drivers/clk/versatile/Kconfig
+@@ -6,7 +6,7 @@ config COMMON_CLK_VERSATILE
+ 	bool "Clock driver for ARM Reference designs"
+ 	depends on ARCH_INTEGRATOR || ARCH_REALVIEW || \
+ 		ARCH_VERSATILE || ARCH_VEXPRESS || ARM64 || \
+-		COMPILE_TEST
++		ARCH_TINY_VEXPRESS || COMPILE_TEST
+ 	select REGMAP_MMIO
+ 	---help---
+ 	  Supports clocking on ARM Reference designs:
+@@ -17,7 +17,7 @@ config COMMON_CLK_VERSATILE
+ config CLK_SP810
+ 	bool "Clock driver for ARM SP810 System Controller"
+ 	depends on COMMON_CLK_VERSATILE
+-	default y if ARCH_VEXPRESS
++	default y if ARCH_VEXPRESS || ARCH_TINY_VEXPRESS
+ 	---help---
+ 	  Supports clock muxing (REFCLK/TIMCLK to TIMERCLKEN0-3) capabilities
+ 	  of the ARM SP810 System Controller cell.
+@@ -26,7 +26,7 @@ config CLK_VEXPRESS_OSC
+ 	bool "Clock driver for Versatile Express OSC clock generators"
+ 	depends on COMMON_CLK_VERSATILE
+ 	depends on VEXPRESS_CONFIG
+-	default y if ARCH_VEXPRESS
++	default y if ARCH_VEXPRESS || ARCH_TINY_VEXPRESS
+ 	---help---
+ 	  Simple regmap-based driver driving clock generators on Versatile
+ 	  Express platforms hidden behind its configuration infrastructure,
+-- 
+2.17.1
+

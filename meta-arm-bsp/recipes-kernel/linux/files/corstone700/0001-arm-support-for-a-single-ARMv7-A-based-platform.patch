@@ -1,0 +1,97 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+
+From faac2fbc88b932b79b33b7299116d269d1167a18 Mon Sep 17 00:00:00 2001
+From: Manish Pandey <manish.pandey2@arm.com>
+Date: Mon, 18 Jun 2018 13:00:31 +0100
+Subject: [PATCH 01/20] arm: support for a single ARMv7-A based platform.
+
+The reason for having a single ARMv7A based platform is to bypass
+collection of configs provided/concealed by ARCH_MULTIPLATFORM, for
+example XIP_KERNEL cannot be enabled with ARCH_MULTIPLATFORM.
+
+Having a separate config for single ARMv7-A platform will give the
+freedom to choose only those configs which are required for a given
+ARMv7-A based platform.
+
+Signed-off-by: Manish Pandey <manish.pandey2@arm.com>
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+---
+ arch/arm/Kconfig          | 14 ++++++++++++++
+ arch/arm/Kconfig.debug    |  3 ++-
+ arch/arm/Makefile         |  2 ++
+ arch/arm/kernel/devtree.c |  3 ++-
+ 4 files changed, 20 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+index 97864aabc2a6..04db53ed23fc 100644
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -338,6 +338,20 @@ config ARM_SINGLE_ARMV7M
+ 	select SPARSE_IRQ
+ 	select USE_OF
+ 
++config ARM_SINGLE_ARMV7A
++	bool "ARMv7-A single platform"
++	select ARM_HAS_SG_CHAIN
++	select AUTO_ZRELADDR
++	select TIMER_OF
++	select COMMON_CLK
++	select CPU_V7
++	select GENERIC_CLOCKEVENTS
++	select MIGHT_HAVE_PCI
++	select MULTI_IRQ_HANDLER
++	select PCI_DOMAINS if PCI
++	select SPARSE_IRQ
++	select USE_OF
++
+ config ARCH_EBSA110
+ 	bool "EBSA-110"
+ 	select ARCH_USES_GETTIMEOFFSET
+diff --git a/arch/arm/Kconfig.debug b/arch/arm/Kconfig.debug
+index b70d7debf5ca..592f5d7aa412 100644
+--- a/arch/arm/Kconfig.debug
++++ b/arch/arm/Kconfig.debug
+@@ -1878,7 +1878,8 @@ config DEBUG_UNCOMPRESS
+ config UNCOMPRESS_INCLUDE
+ 	string
+ 	default "debug/uncompress.h" if ARCH_MULTIPLATFORM || ARCH_MSM || \
+-					PLAT_SAMSUNG || ARM_SINGLE_ARMV7M
++					PLAT_SAMSUNG || ARM_SINGLE_ARMV7M || \
++					ARM_SINGLE_ARMV7A
+ 	default "mach/uncompress.h"
+ 
+ config EARLY_PRINTK
+diff --git a/arch/arm/Makefile b/arch/arm/Makefile
+index 1fc32b611f8a..fa1519959f6a 100644
+--- a/arch/arm/Makefile
++++ b/arch/arm/Makefile
+@@ -267,9 +267,11 @@ platdirs := $(patsubst %,arch/arm/plat-%/,$(sort $(plat-y)))
+ 
+ ifneq ($(CONFIG_ARCH_MULTIPLATFORM),y)
+ ifneq ($(CONFIG_ARM_SINGLE_ARMV7M),y)
++ifneq ($(CONFIG_ARM_SINGLE_ARMV7A),y)
+ KBUILD_CPPFLAGS += $(patsubst %,-I$(srctree)/%include,$(machdirs) $(platdirs))
+ endif
+ endif
++endif
+ 
+ export	TEXT_OFFSET GZFLAGS MMUEXT
+ 
+diff --git a/arch/arm/kernel/devtree.c b/arch/arm/kernel/devtree.c
+index 39c978698406..88e9f22a6778 100644
+--- a/arch/arm/kernel/devtree.c
++++ b/arch/arm/kernel/devtree.c
+@@ -212,7 +212,8 @@ const struct machine_desc * __init setup_machine_fdt(unsigned int dt_phys)
+ {
+ 	const struct machine_desc *mdesc, *mdesc_best = NULL;
+ 
+-#if defined(CONFIG_ARCH_MULTIPLATFORM) || defined(CONFIG_ARM_SINGLE_ARMV7M)
++#if defined(CONFIG_ARCH_MULTIPLATFORM) || defined(CONFIG_ARM_SINGLE_ARMV7M)\
++				|| defined(CONFIG_ARM_SINGLE_ARMV7A)
+ 	DT_MACHINE_START(GENERIC_DT, "Generic DT based system")
+ 		.l2c_aux_val = 0x0,
+ 		.l2c_aux_mask = ~0x0,
+-- 
+2.17.1
+

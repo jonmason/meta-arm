@@ -1,0 +1,36 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+
+From 546e8277f0a187bc32c1e60b4317c87ea6145f90 Mon Sep 17 00:00:00 2001
+From: Vishnu Banavath <vishnu.banavath@arm.com>
+Date: Fri, 16 Aug 2019 13:40:39 +0100
+Subject: [PATCH 12/20] mailbox: arm_mhu_v2: add new AMBA ID to support MHU
+ v2.1
+
+With MHU v2.1 specification, AMBA ID is changed.
+This change is to add a new AMBA ID entry for MHU.
+
+Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+---
+ drivers/mailbox/arm_mhu_v2.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/mailbox/arm_mhu_v2.c b/drivers/mailbox/arm_mhu_v2.c
+index 7780958a16ab..fe43348db5e3 100644
+--- a/drivers/mailbox/arm_mhu_v2.c
++++ b/drivers/mailbox/arm_mhu_v2.c
+@@ -216,6 +216,10 @@ static struct amba_id mhuv2_ids[] = {
+ 		.id     = 0xbb0d1,
+ 		.mask   = 0xfffff,
+ 	},
++	{
++		.id     = 0xbb076,
++		.mask   = 0xfffff,
++	},
+ 	{ 0, 0 },
+ };
+ MODULE_DEVICE_TABLE(amba, mhuv2_ids);
+-- 
+2.17.1
+

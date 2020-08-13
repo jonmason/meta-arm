@@ -1,0 +1,34 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+
+From e5d99c1524576eb47c13e08d4dd20ebc72491477 Mon Sep 17 00:00:00 2001
+From: Vishnu Banavath <vishnu.banavath@arm.com>
+Date: Mon, 14 Oct 2019 15:15:46 +0100
+Subject: [PATCH 16/20] corstone700_defconfig: use DDR address instead of
+ shared RAM
+
+On fpga we use DDR for kernel data, dtb and rootfs.
+This change is to update CONFIG_PHYS_ADDR to 0x80000000
+
+Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+---
+ arch/arm/configs/corstone700_defconfig | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm/configs/corstone700_defconfig b/arch/arm/configs/corstone700_defconfig
+index 61a0a3c3a209..add9f5673395 100644
+--- a/arch/arm/configs/corstone700_defconfig
++++ b/arch/arm/configs/corstone700_defconfig
+@@ -21,7 +21,7 @@ CONFIG_BLK_DEV_INITRD=y
+ CONFIG_ARCH_TINY_VEXPRESS=y
+ CONFIG_ARM_SINGLE_ARMV7A=y
+ #CONFIG_DRAM_BASE=0x02100000
+-CONFIG_PHYS_OFFSET=0x02100000
++CONFIG_PHYS_OFFSET=0x80000000
+ CONFIG_FLASH_MEM_BASE=0x08000000
+ CONFIG_FLASH_SIZE=0x4000000
+ CONFIG_XIP_KERNEL=y
+-- 
+2.17.1
+

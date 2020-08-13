@@ -1,0 +1,322 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+
+From fb380896ff4e0be235a95ef32b6b3f67a56d1e9b Mon Sep 17 00:00:00 2001
+From: Samarth Parikh <samarthp@ymail.com>
+Date: Sun, 3 Feb 2019 16:35:03 +0000
+Subject: [PATCH 04/20] add driver of mailbox handling unit controller version
+ 2
+
+this driver design is based on MHUv1 driver.
+But there is change of logic while reading device tree
+entry because MHUv2.1 has sender and receiver channels
+separate.
+
+ARM has launched a next version of MHU i.e. MHUv2 with its latest
+subsystems. The main change is that the MHUv2 is now a distributed IP
+with different peripheral views (registers) for the sender and receiver.
+
+Another main difference is that MHUv1 duplex channels are now split into
+simplex/half duplex in MHUv2. MHUv2 has a configurable number of
+communication channels. There is a capability register (MSG_NO_CAP) to
+find out how many channels are available in a system.
+
+The register offsets have also changed for STAT, SET & CLEAR registers
+from 0x0, 0x8 & 0x10 in MHUv1 to 0x0, 0xC & 0x8 in MHUv2 respectively.
+
+0x0    0x4  0x8  0xC             0x1F
+------------------------....-----
+| STAT |    |    | SET |    |   |
+------------------------....-----
+      Transmit Channel
+
+0x0    0x4  0x8   0xC            0x1F
+------------------------....-----
+| STAT |    | CLR |    |    |   |
+------------------------....-----
+        Receive Channel
+
+The MHU controller can request the receiver to wake-up and once the
+request is removed, the receiver may go back to sleep, but the MHU
+itself does not actively puts a receiver to sleep.
+
+So, in order to wake-up the receiver when the sender wants to send data,
+the sender has to set ACCESS_REQUEST register first in order to wake-up
+receiver, state of which can be detected using ACCESS_READY register.
+ACCESS_REQUEST has an offset of 0xF88 & ACCESS_READY has an offset
+of 0xF8C and are accessible only on any sender channel.
+
+This patch adds necessary changes in a new file required to support the
+latest MHUv2 controller. This patch also need an update in DT binding for
+ARM MHUv2 as we need a second register base (tx base) which would be used
+as the send channel base.
+
+Signed-off-by: Tushar Khandelwal <tushar.khandelwal@arm.com>
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+---
+ drivers/mailbox/Kconfig      |   8 ++
+ drivers/mailbox/Makefile     |   2 +
+ drivers/mailbox/arm_mhu_v2.c | 219 +++++++++++++++++++++++++++++++++++
+ 3 files changed, 229 insertions(+)
+ create mode 100644 drivers/mailbox/arm_mhu_v2.c
+
+diff --git a/drivers/mailbox/Kconfig b/drivers/mailbox/Kconfig
+index ab4eb750bbdd..15d2974d9c20 100644
+--- a/drivers/mailbox/Kconfig
++++ b/drivers/mailbox/Kconfig
+@@ -16,6 +16,14 @@ config ARM_MHU
+ 	  The controller has 3 mailbox channels, the last of which can be
+ 	  used in Secure mode only.
+ 
++config ARM_MHUv2
++	tristate "ARM MHUv2 Mailbox"
++	depends on ARM_AMBA
++	help
++	  Say Y here if you want to build the ARM MHUv2 controller driver.
++	  The controller has transmitter and receiver channels with their
++	  interrupt lines.
++
+ config IMX_MBOX
+ 	tristate "i.MX Mailbox"
+ 	depends on ARCH_MXC || COMPILE_TEST
+diff --git a/drivers/mailbox/Makefile b/drivers/mailbox/Makefile
+index c22fad6f696b..ba77deeb86a2 100644
+--- a/drivers/mailbox/Makefile
++++ b/drivers/mailbox/Makefile
+@@ -7,6 +7,8 @@ obj-$(CONFIG_MAILBOX_TEST)	+= mailbox-test.o
+ 
+ obj-$(CONFIG_ARM_MHU)	+= arm_mhu.o
+ 
++obj-$(CONFIG_ARM_MHUv2)		+= arm_mhu_v2.o
++
+ obj-$(CONFIG_IMX_MBOX)	+= imx-mailbox.o
+ 
+ obj-$(CONFIG_ARMADA_37XX_RWTM_MBOX)	+= armada-37xx-rwtm-mailbox.o
+diff --git a/drivers/mailbox/arm_mhu_v2.c b/drivers/mailbox/arm_mhu_v2.c
+new file mode 100644
+index 000000000000..44ad125bf1c6
+--- /dev/null
++++ b/drivers/mailbox/arm_mhu_v2.c
+@@ -0,0 +1,219 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Message Handling Unit version 2 controller driver
++ * Copyright (C) 2019 ARM Ltd.
++ *
++ * Based on drivers/mailbox/arm_mhu.c
++ *
++ */
++
++#include <linux/interrupt.h>
++#include <linux/mutex.h>
++#include <linux/slab.h>
++#include <linux/err.h>
++#include <linux/io.h>
++#include <linux/module.h>
++#include <linux/amba/bus.h>
++#include <linux/mailbox_controller.h>
++#include <linux/of_device.h>
++#include <linux/of_address.h>
++
++#define MHU_V2_REG_STAT_OFS		0x0
++#define MHU_V2_REG_CLR_OFS		0x8
++#define MHU_V2_REG_SET_OFS		0xC
++#define MHU_V2_REG_MSG_NO_CAP_OFS	0xF80
++#define MHU_V2_REG_ACC_REQ_OFS		0xF88
++#define MHU_V2_REG_ACC_RDY_OFS		0xF8C
++
++#define MHU_V2_CHANS			2
++
++#define mbox_to_arm_mhuv2(c) container_of(c, struct arm_mhuv2, mbox)
++
++struct mhuv2_link {
++	unsigned int irq;
++	void __iomem *tx_reg;
++	void __iomem *rx_reg;
++};
++
++struct arm_mhuv2 {
++	void __iomem *base;
++	struct mhuv2_link mlink[MHU_V2_CHANS];
++	struct mbox_chan chan[MHU_V2_CHANS];
++	struct mbox_controller mbox;
++};
++
++static irqreturn_t mhuv2_rx_interrupt(int irq, void *p)
++{
++	struct mbox_chan *chan = p;
++	struct mhuv2_link *mlink = chan->con_priv;
++	u32 val;
++
++	val = readl_relaxed(mlink->rx_reg + MHU_V2_REG_STAT_OFS);
++	if (!val)
++		return IRQ_NONE;
++
++	mbox_chan_received_data(chan, (void *)&val);
++
++	writel_relaxed(val, mlink->rx_reg + MHU_V2_REG_CLR_OFS);
++
++	return IRQ_HANDLED;
++}
++
++static bool mhuv2_last_tx_done(struct mbox_chan *chan)
++{
++	struct mhuv2_link *mlink = chan->con_priv;
++	u32 val = readl_relaxed(mlink->tx_reg + MHU_V2_REG_STAT_OFS);
++
++	return (val == 0);
++}
++
++static int mhuv2_send_data(struct mbox_chan *chan, void *data)
++{
++	struct mhuv2_link *mlink = chan->con_priv;
++	u32 *arg = data;
++
++	writel_relaxed(*arg, mlink->tx_reg + MHU_V2_REG_SET_OFS);
++
++	return 0;
++}
++
++static int mhuv2_startup(struct mbox_chan *chan)
++{
++	struct mhuv2_link *mlink = chan->con_priv;
++	u32 val;
++	int ret;
++	struct arm_mhuv2 *mhuv2 = mbox_to_arm_mhuv2(chan->mbox);
++
++	writel_relaxed(0x1, mhuv2->base + MHU_V2_REG_ACC_REQ_OFS);
++
++	val = readl_relaxed(mlink->tx_reg + MHU_V2_REG_STAT_OFS);
++	writel_relaxed(val, mlink->tx_reg + MHU_V2_REG_CLR_OFS);
++
++	ret = request_irq(mlink->irq, mhuv2_rx_interrupt,
++			  IRQF_SHARED, "mhuv2_link", chan);
++	if (ret) {
++		dev_err(chan->mbox->dev,
++			"unable to acquire IRQ %d\n", mlink->irq);
++		return ret;
++	}
++
++	return 0;
++}
++
++static void mhuv2_shutdown(struct mbox_chan *chan)
++{
++	struct mhuv2_link *mlink = chan->con_priv;
++	struct arm_mhuv2 *mhuv2 = mbox_to_arm_mhuv2(chan->mbox);
++
++	writel_relaxed(0x0, mhuv2->base + MHU_V2_REG_ACC_REQ_OFS);
++
++	free_irq(mlink->irq, chan);
++}
++
++static const struct mbox_chan_ops mhuv2_ops = {
++	.send_data = mhuv2_send_data,
++	.startup = mhuv2_startup,
++	.shutdown = mhuv2_shutdown,
++	.last_tx_done = mhuv2_last_tx_done,
++};
++
++static int mhuv2_probe(struct amba_device *adev, const struct amba_id *id)
++{
++	int i, err;
++	struct arm_mhuv2 *mhuv2;
++	struct device *dev = &adev->dev;
++	void __iomem *rx_base, *tx_base;
++	const struct device_node *np = dev->of_node;
++	unsigned int pchans;
++
++	/* Allocate memory for device */
++	mhuv2 = devm_kzalloc(dev, sizeof(*mhuv2), GFP_KERNEL);
++	if (!mhuv2)
++		return -ENOMEM;
++
++	tx_base = of_iomap((struct device_node *)np, 0);
++	if (!tx_base) {
++		dev_err(dev, "failed to map tx registers\n");
++		iounmap(rx_base);
++		return -ENOMEM;
++	}
++
++	rx_base = of_iomap((struct device_node *)np, 1);
++	if (!rx_base) {
++		dev_err(dev, "failed to map rx registers\n");
++		return -ENOMEM;
++	}
++
++
++	pchans = readl_relaxed(tx_base + MHU_V2_REG_MSG_NO_CAP_OFS);
++	if (pchans == 0 || pchans > MHU_V2_CHANS || pchans % 2) {
++		dev_err(dev, "invalid number of channels %d\n", pchans);
++		iounmap(rx_base);
++		iounmap(tx_base);
++		return -EINVAL;
++	}
++	for (i = 0; i < pchans/2; i++) {
++		mhuv2->chan[i].con_priv = &mhuv2->mlink[i];
++		mhuv2->mlink[i].irq = adev->irq[i];
++		mhuv2->mlink[i].rx_reg = rx_base + i*0x4;
++		mhuv2->mlink[i].tx_reg = tx_base + i*0x4;
++	}
++
++	mhuv2->base = tx_base;
++	mhuv2->mbox.dev = dev;
++	mhuv2->mbox.chans = &mhuv2->chan[0];
++	mhuv2->mbox.num_chans = pchans;
++	mhuv2->mbox.ops = &mhuv2_ops;
++	mhuv2->mbox.txdone_irq = false;
++	mhuv2->mbox.txdone_poll = true;
++	mhuv2->mbox.txpoll_period = 1;
++
++	amba_set_drvdata(adev, mhuv2);
++
++	err = mbox_controller_register(&mhuv2->mbox);
++	if (err) {
++		dev_err(dev, "failed to register mailboxes %d\n", err);
++		iounmap(rx_base);
++		iounmap(tx_base);
++		return err;
++	}
++
++	dev_info(dev, "ARM MHUv2 Mailbox driver registered\n");
++	return 0;
++}
++
++static int mhuv2_remove(struct amba_device *adev)
++{
++	struct arm_mhuv2 *mhuv2 = amba_get_drvdata(adev);
++
++	mbox_controller_unregister(&mhuv2->mbox);
++
++	return 0;
++}
++
++static struct amba_id mhuv2_ids[] = {
++	{
++		.id     = 0x4b0d1,
++		.mask   = 0xfffff,
++	},
++	{
++		.id     = 0xbb0d1,
++		.mask   = 0xfffff,
++	},
++	{ 0, 0 },
++};
++MODULE_DEVICE_TABLE(amba, mhuv2_ids);
++
++static struct amba_driver arm_mhuv2_driver = {
++	.drv = {
++		.name	= "mhuv2",
++	},
++	.id_table	= mhuv2_ids,
++	.probe		= mhuv2_probe,
++	.remove		= mhuv2_remove,
++};
++module_amba_driver(arm_mhuv2_driver);
++
++MODULE_LICENSE("GPL v2");
++MODULE_DESCRIPTION("ARM MHUv2 Driver");
++MODULE_AUTHOR("Samarth Parikh <samarthp@ymail.com>");
+-- 
+2.17.1
+

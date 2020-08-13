@@ -1,0 +1,6 @@
+define KMACHINE corstone700
+define KTYPE standard
+define KARCH arm
+
+kconf hardware corstone700/base.cfg
+kconf hardware corstone700/xip.cfg
