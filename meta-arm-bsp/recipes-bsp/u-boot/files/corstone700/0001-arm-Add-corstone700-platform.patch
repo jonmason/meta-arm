@@ -1,0 +1,268 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+
+From 4b33e25ebb708faa987c903c1bbc70f6752ad543 Mon Sep 17 00:00:00 2001
+From: Rui Silva <rui.silva@linaro.org>
+Date: Thu, 13 Aug 2020 12:23:47 +0100
+Subject: [PATCH] arm: Add corstone700 platform
+
+Add support to the new Arm corstone700 platform family.
+
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+---
+ arch/arm/Kconfig                       |  7 +++
+ board/armltd/corstone700/Kconfig       | 12 ++++
+ board/armltd/corstone700/Makefile      |  8 +++
+ board/armltd/corstone700/corstone700.c | 49 ++++++++++++++++
+ configs/corstone700_defconfig          | 37 ++++++++++++
+ include/configs/corstone700.h          | 78 ++++++++++++++++++++++++++
+ 6 files changed, 191 insertions(+)
+ create mode 100644 board/armltd/corstone700/Kconfig
+ create mode 100644 board/armltd/corstone700/Makefile
+ create mode 100644 board/armltd/corstone700/corstone700.c
+ create mode 100644 configs/corstone700_defconfig
+ create mode 100644 include/configs/corstone700.h
+
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+index bbb1e2738b..ab2d246e29 100644
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -636,6 +636,12 @@ config ARCH_BCM6858
+ 	select OF_CONTROL
+ 	imply CMD_DM
+ 
++config TARGET_CORSTONE700
++	bool "Support Corstone700"
++	select CPU_V7A
++	select SEMIHOSTING
++	select PL01X_SERIAL
++
+ config TARGET_VEXPRESS_CA15_TC2
+ 	bool "Support vexpress_ca15_tc2"
+ 	select CPU_V7A
+@@ -1820,6 +1826,7 @@ source "board/Marvell/gplugd/Kconfig"
+ source "board/armadeus/apf27/Kconfig"
+ source "board/armltd/vexpress/Kconfig"
+ source "board/armltd/vexpress64/Kconfig"
++source "board/armltd/corstone700/Kconfig"
+ source "board/cortina/presidio-asic/Kconfig"
+ source "board/broadcom/bcm23550_w1d/Kconfig"
+ source "board/broadcom/bcm28155_ap/Kconfig"
+diff --git a/board/armltd/corstone700/Kconfig b/board/armltd/corstone700/Kconfig
+new file mode 100644
+index 0000000000..ae625d96ad
+--- /dev/null
++++ b/board/armltd/corstone700/Kconfig
+@@ -0,0 +1,12 @@
++if TARGET_CORSTONE700
++
++config SYS_BOARD
++	default "corstone700"
++
++config SYS_VENDOR
++	default "armltd"
++
++config SYS_CONFIG_NAME
++	default "corstone700"
++
++endif
+diff --git a/board/armltd/corstone700/Makefile b/board/armltd/corstone700/Makefile
+new file mode 100644
+index 0000000000..4f38135612
+--- /dev/null
++++ b/board/armltd/corstone700/Makefile
+@@ -0,0 +1,8 @@
++# SPDX-License-Identifier: GPL-2.0+
++#
++# (C) Copyright 2020 ARM Limited
++# (C) Copyright 2020 Linaro
++# Rui Miguel Silva <rui.silva@linaro.org>
++#
++
++obj-y	:= corstone700.o
+diff --git a/board/armltd/corstone700/corstone700.c b/board/armltd/corstone700/corstone700.c
+new file mode 100644
+index 0000000000..b6f3e660a8
+--- /dev/null
++++ b/board/armltd/corstone700/corstone700.c
+@@ -0,0 +1,49 @@
++// SPDX-License-Identifier: GPL-2.0+
++/*
++ * (C) Copyright 2020 ARM Limited
++ * (C) Copyright 2020 Linaro
++ * Rui Miguel Silva <rui.silva@linaro.org>
++ */
++
++#include <common.h>
++#include <dm.h>
++#include <dm/platform_data/serial_pl01x.h>
++#include <malloc.h>
++
++DECLARE_GLOBAL_DATA_PTR;
++
++static const struct pl01x_serial_platdata serial_platdata = {
++	.base = V2M_UART0,
++	.type = TYPE_PL011,
++	.clock = CONFIG_PL011_CLOCK,
++};
++
++U_BOOT_DEVICE(corstone700_serials) = {
++	.name = "serial_pl01x",
++	.platdata = &serial_platdata,
++};
++
++int board_init(void)
++{
++	return 0;
++}
++
++int dram_init(void)
++{
++	gd->ram_size = PHYS_SDRAM_1_SIZE;
++
++	return 0;
++}
++
++int dram_init_banksize(void)
++{
++	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
++	gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
++
++	return 0;
++}
++
++void reset_cpu(ulong addr)
++{
++}
++
+diff --git a/configs/corstone700_defconfig b/configs/corstone700_defconfig
+new file mode 100644
+index 0000000000..ee29a1eabf
+--- /dev/null
++++ b/configs/corstone700_defconfig
+@@ -0,0 +1,37 @@
++CONFIG_ARM=y
++CONFIG_ARM64_SUPPORT_AARCH32=y
++CONFIG_TARGET_CORSTONE700=y
++CONFIG_SYS_TEXT_BASE=0x02100000
++CONFIG_SYS_MALLOC_F_LEN=0x2000
++CONFIG_NR_DRAM_BANKS=1
++CONFIG_IDENT_STRING=" corstone700 aarch32"
++CONFIG_BOOTDELAY=3
++CONFIG_USE_BOOTARGS=y
++CONFIG_BOOTARGS="console=ttyAMA0 loglevel=9"
++# CONFIG_DISPLAY_CPUINFO is not set
++# CONFIG_DISPLAY_BOARDINFO is not set
++CONFIG_HUSH_PARSER=y
++CONFIG_SYS_PROMPT="corstone700# "
++# CONFIG_CMD_CONSOLE is not set
++CONFIG_CMD_BOOTZ=y
++CONFIG_CMD_BOOTM=y
++# CONFIG_CMD_XIMG is not set
++# CONFIG_CMD_EDITENV is not set
++# CONFIG_CMD_ENV_EXISTS is not set
++# CONFIG_CMD_ARMFLASH=y
++# CONFIG_CMD_LOADS is not set
++# CONFIG_CMD_ITEST is not set
++# CONFIG_CMD_SETEXPR is not set
++CONFIG_CMD_DHCP=y
++# CONFIG_CMD_NFS is not set
++CONFIG_CMD_MII=y
++CONFIG_CMD_PING=y
++CONFIG_CMD_CACHE=y
++# CONFIG_CMD_MISC is not set
++CONFIG_CMD_FAT=y
++CONFIG_DM=y
++# CONFIG_MMC is not set
++# CONFIG_MTD_NOR_FLASH=y
++CONFIG_DM_ETH=y
++CONFIG_DM_SERIAL=y
++CONFIG_OF_LIBFDT=y
+diff --git a/include/configs/corstone700.h b/include/configs/corstone700.h
+new file mode 100644
+index 0000000000..32238e4057
+--- /dev/null
++++ b/include/configs/corstone700.h
+@@ -0,0 +1,78 @@
++/* SPDX-License-Identifier: GPL-2.0+ */
++/*
++ * (C) Copyright 2020 ARM Limited
++ * (C) Copyright 2020 Linaro
++ * Rui Miguel Silva <rui.silva@linaro.org>
++ *
++ * Configuration for Corstone700. Parts were derived from other ARM
++ * configurations.
++ */
++
++#ifndef __CORSTONE700_H
++#define __CORSTONE700_H
++
++#define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_SDRAM_BASE + 0x03f00000)
++#define CONFIG_SKIP_LOWLEVEL_INIT
++
++#define CONFIG_SYS_HZ_CLOCK	320000000
++#define CONFIG_SYS_HZ		1000
++
++#define V2M_SRAM0		0x02000000
++#define V2M_QSPI		0x08000000
++
++#define V2M_DEBUG		0x10000000
++#define V2M_BASE_PERIPH		0x1A000000
++
++#define V2M_BASE		0x80000000
++
++#define V2M_PERIPH_OFFSET(x)	(x << 16)
++
++#define V2M_SYSID		(V2M_BASE_PERIPH)
++#define V2M_SYSCTL		(V2M_BASE_PERIPH + V2M_PERIPH_OFFSET(1))
++
++#define V2M_COUNTER_CTL		(V2M_BASE_PERIPH + V2M_PERIPH_OFFSET(32))
++#define V2M_COUNTER_READ	(V2M_BASE_PERIPH + V2M_PERIPH_OFFSET(33))
++
++#define V2M_TIMER_CTL		(V2M_BASE_PERIPH + V2M_PERIPH_OFFSET(34))
++#define V2M_TIMER_BASE0		(V2M_BASE_PERIPH + V2M_PERIPH_OFFSET(35))
++
++#define V2M_UART0		(V2M_BASE_PERIPH + V2M_PERIPH_OFFSET(81))
++#define V2M_UART1		(V2M_BASE_PERIPH + V2M_PERIPH_OFFSET(82))
++
++#define CONFIG_SYS_MMIO_TIMER
++
++#define CONFIG_PL011_CLOCK	32000000
++
++/* Physical Memory Map */
++#define PHYS_SDRAM_1		(V2M_BASE)
++#define PHYS_SDRAM_2		(V2M_QSPI)
++
++/* Top 16MB reserved for secure world use (maybe not needed) */
++#define DRAM_SEC_SIZE		0x01000000
++#define PHYS_SDRAM_1_SIZE	0x80000000 - DRAM_SEC_SIZE
++
++#define PHYS_SDRAM_2_SIZE	0x02000000
++
++/* Size of malloc() pool */
++#define CONFIG_SYS_MALLOC_LEN	(CONFIG_ENV_SIZE + (8 << 20))
++
++/* Miscellaneous configurable options */
++#define CONFIG_SYS_LOAD_ADDR	(V2M_BASE + 0x10000000)
++
++#define CONFIG_SYS_SDRAM_BASE	PHYS_SDRAM_1
++
++/* Monitor Command Prompt */
++#define CONFIG_SYS_CBSIZE		512	/* Console I/O Buffer Size */
++#define CONFIG_SYS_MAXARGS		64	/* max command args */
++
++#define CONFIG_EXTRA_ENV_SETTINGS	\
++				"kernel_name=zImage\0"		\
++				"kernel_addr_r=0x80000000\0"	\
++				"fdt_name=devtree.dtb\0"	\
++				"fdt_addr_r=0x82000000\0"		\
++				"fdt_high=0xffffffff\0"
++
++#define CONFIG_BOOTCOMMAND	"echo Booting Kernel...;" \
++				"bootz $kernel_addr_r - $fdt_addr_r"
++
++#endif
+-- 
+2.17.1
+

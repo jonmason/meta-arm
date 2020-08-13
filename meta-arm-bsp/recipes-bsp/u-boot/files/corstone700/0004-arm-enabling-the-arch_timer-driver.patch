@@ -1,0 +1,61 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+
+From a008f06b49a96dfd98943696ddc10134947fed91 Mon Sep 17 00:00:00 2001
+From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+Date: Wed, 5 Aug 2020 19:06:16 +0100
+Subject: [PATCH 6/6] arm: enabling the arch_timer driver
+
+This patch disables the use of the mmio_timer driver
+and enables the arch_timer driver.
+
+The mmio_timer tries a direct access to the Armv8-A CNTFRQ generic timer
+frequency register through memory mapping. This can not be done because
+this register is only accessible through memory mapping under a secure
+mode only. u-boot runs in non secure Hypervisor mode. To read the counter
+frequency u-boot should use the mrc instruction to read the CNTFRQ system
+register.
+
+The arch_timer driver reads the CNTFRQ register using the mrc instruction.
+
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+---
+ configs/corstone700_defconfig | 3 +++
+ include/configs/corstone700.h | 3 ---
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/configs/corstone700_defconfig b/configs/corstone700_defconfig
+index 655af3f058..58e03db044 100644
+--- a/configs/corstone700_defconfig
++++ b/configs/corstone700_defconfig
+@@ -36,3 +36,6 @@ CONFIG_DM=y
+ CONFIG_DM_ETH=y
+ CONFIG_DM_SERIAL=y
+ CONFIG_OF_LIBFDT=y
++# CONFIG_SYS_HZ_CLOCK is not set
++# CONFIG_SYS_MMIO_TIMER is not set
++CONFIG_SYS_ARCH_TIMER=y
+diff --git a/include/configs/corstone700.h b/include/configs/corstone700.h
+index cb9ca8af8e..0fb606f1ed 100644
+--- a/include/configs/corstone700.h
++++ b/include/configs/corstone700.h
+@@ -14,7 +14,6 @@
+ #define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_SDRAM_BASE + 0x03f00000)
+ #define CONFIG_SKIP_LOWLEVEL_INIT
+ 
+-#define CONFIG_SYS_HZ_CLOCK	320000000
+ #define CONFIG_SYS_HZ		1000
+ 
+ #define V2M_SRAM0		0x02000000
+@@ -39,8 +38,6 @@
+ #define V2M_UART0		(V2M_BASE_PERIPH + V2M_PERIPH_OFFSET(81))
+ #define V2M_UART1		(V2M_BASE_PERIPH + V2M_PERIPH_OFFSET(82))
+ 
+-#define CONFIG_SYS_MMIO_TIMER
+-
+ #define CONFIG_PL011_CLOCK	32000000
+ 
+ /* Physical Memory Map */
+-- 
+2.17.1
+

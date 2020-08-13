@@ -1,0 +1,39 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+
+From 9f4e54e2bc619124602584e0ec8e268ac6f6221e Mon Sep 17 00:00:00 2001
+From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+Date: Wed, 5 Aug 2020 19:05:08 +0100
+Subject: [PATCH 5/6] boot: starting the XIP kernel using bootx command
+
+bootx command is used as the default command to
+start the XIP kernel
+
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+---
+ include/configs/corstone700.h | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/include/configs/corstone700.h b/include/configs/corstone700.h
+index 32238e4057..cb9ca8af8e 100644
+--- a/include/configs/corstone700.h
++++ b/include/configs/corstone700.h
+@@ -67,12 +67,11 @@
+ 
+ #define CONFIG_EXTRA_ENV_SETTINGS	\
+ 				"kernel_name=zImage\0"		\
+-				"kernel_addr_r=0x80000000\0"	\
++				"kernel_addr_r=0x08300000\0"	\
+ 				"fdt_name=devtree.dtb\0"	\
+-				"fdt_addr_r=0x82000000\0"		\
++				"fdt_addr_r=0x80400000\0"	\
+ 				"fdt_high=0xffffffff\0"
+ 
+-#define CONFIG_BOOTCOMMAND	"echo Booting Kernel...;" \
+-				"bootz $kernel_addr_r - $fdt_addr_r"
++#define CONFIG_BOOTCOMMAND	"bootx $kernel_addr_r $fdt_addr_r"
+ 
+ #endif
+-- 
+2.17.1
+

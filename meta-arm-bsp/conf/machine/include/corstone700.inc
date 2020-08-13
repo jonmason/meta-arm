@@ -14,10 +14,13 @@ PREFERRED_VERSION_linux-stable ?= "5.6%"
 PREFERRED_PROVIDER_virtual/trusted-firmware-a ?= "trusted-firmware-a"
 PREFERRED_VERSION_trusted-firmware-a ?= "2.3%"
 
-EXTRA_IMAGEDEPENDS += "virtual/trusted-firmware-a external-system"
+EXTRA_IMAGEDEPENDS += "virtual/trusted-firmware-a external-system u-boot"
 
 WKS_FILE_DEPENDS_append = " ${EXTRA_IMAGEDEPENDS}"
 
 WKS_FILE ?= "arm-reference-image.corstone700.wks"
 
 VIRTUAL-RUNTIME_dev_manager = "busybox-mdev"
+
+UBOOT_MACHINE ?= "corstone700_defconfig"
+PREFERRED_VERSION_u-boot ?= "2020.04"

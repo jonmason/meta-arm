@@ -1,0 +1,136 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+
+From 42d975e5be4435799fb2cf2af48b4dd90aa637f0 Mon Sep 17 00:00:00 2001
+From: Rui Silva <rui.silva@linaro.org>
+Date: Wed, 5 Aug 2020 19:03:30 +0100
+Subject: [PATCH 4/6] boot: add bootx command to start XiP images
+
+Add boot command that will jump to xip kernel entries.
+
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+---
+ cmd/Kconfig                   |  8 ++++-
+ cmd/Makefile                  |  1 +
+ cmd/bootx.c                   | 58 +++++++++++++++++++++++++++++++++++
+ configs/corstone700_defconfig |  1 +
+ 4 files changed, 67 insertions(+), 1 deletion(-)
+ create mode 100644 cmd/bootx.c
+
+diff --git a/cmd/Kconfig b/cmd/Kconfig
+index 6403bc45a5..c974f6b33d 100644
+--- a/cmd/Kconfig
++++ b/cmd/Kconfig
+@@ -285,6 +285,12 @@ config CMD_BOOTZ
+ 	help
+ 	  Boot the Linux zImage
+ 
++config CMD_BOOTX
++	bool "Support booting XiP Kernel Image"
++	default y
++	help
++	  The bootx command is used to boot an XIP kernel.
++
+ config CMD_BOOTI
+ 	bool "booti"
+ 	depends on ARM64 || RISCV
+@@ -294,7 +300,7 @@ config CMD_BOOTI
+ 
+ config BOOTM_LINUX
+ 	bool "Support booting Linux OS images"
+-	depends on CMD_BOOTM || CMD_BOOTZ || CMD_BOOTI
++	depends on CMD_BOOTM || CMD_BOOTZ || CMD_BOOTI || CMD_BOOTX
+ 	default y
+ 	help
+ 	  Support booting the Linux kernel directly via a command such as bootm
+diff --git a/cmd/Makefile b/cmd/Makefile
+index f1dd513a4b..ce75b6112c 100644
+--- a/cmd/Makefile
++++ b/cmd/Makefile
+@@ -28,6 +28,7 @@ obj-$(CONFIG_CMD_BOOTCOUNT) += bootcount.o
+ obj-$(CONFIG_CMD_BOOTEFI) += bootefi.o
+ obj-$(CONFIG_CMD_BOOTMENU) += bootmenu.o
+ obj-$(CONFIG_CMD_BOOTSTAGE) += bootstage.o
++obj-$(CONFIG_CMD_BOOTX) += bootx.o
+ obj-$(CONFIG_CMD_BOOTZ) += bootz.o
+ obj-$(CONFIG_CMD_BOOTI) += booti.o
+ obj-$(CONFIG_CMD_BTRFS) += btrfs.o
+diff --git a/cmd/bootx.c b/cmd/bootx.c
+new file mode 100644
+index 0000000000..b6e06eab3f
+--- /dev/null
++++ b/cmd/bootx.c
+@@ -0,0 +1,58 @@
++/*
++ * Copyright (C) 2017 Renesas Electronics
++ * Copyright (C) 2017 Chris Brandt
++ *
++ * SPDX-License-Identifier:	GPL-2.0+
++ */
++
++ #include <common.h>
++
++/* XIP Kernel boot */
++int do_bootx(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
++{
++	ulong machid = 0xFFFFFFFF;	/* Device Tree Boot */
++	void (*kernel_entry)(int zero, int arch, uint params);
++	ulong r2;
++	ulong img_addr;
++	char *endp;
++
++	/* need at least two arguments */
++	if (argc < 2)
++		goto usage;
++
++	img_addr = simple_strtoul(argv[1], &endp, 16);
++	kernel_entry = (void (*)(int, int, uint))img_addr;
++
++#ifdef CONFIG_USB_DEVICE
++	udc_disconnect();
++#endif
++	cleanup_before_linux();
++
++	r2 = simple_strtoul(argv[2], NULL, 16);
++
++	/* The kernel expects the following when booting:
++	 *  r0 - 0
++	 *  r1 - machine type
++	 *  r2 - boot data (atags/dt) pointer
++	 *
++	 * For more info, refer to:
++	 *  https://www.kernel.org/doc/Documentation/arm/Booting
++	 */
++
++	printf("Booting Linux...\n");
++
++	kernel_entry(0, machid, r2);
++
++	return 0;
++
++usage:
++	return CMD_RET_USAGE;
++}
++static char bootx_help_text[] =
++	"x_addr dt_addr\n    - boot XIP kernel in Flash\n"
++	"\t x_addr: Address of XIP kernel in Flash\n"
++	"\tdt_addr: Address of Device Tree blob image";
++U_BOOT_CMD(
++	bootx,	CONFIG_SYS_MAXARGS,	1,	do_bootx,
++	"boot XIP kernel in Flash", bootx_help_text
++)
+diff --git a/configs/corstone700_defconfig b/configs/corstone700_defconfig
+index ee29a1eabf..655af3f058 100644
+--- a/configs/corstone700_defconfig
++++ b/configs/corstone700_defconfig
+@@ -14,6 +14,7 @@ CONFIG_HUSH_PARSER=y
+ CONFIG_SYS_PROMPT="corstone700# "
+ # CONFIG_CMD_CONSOLE is not set
+ CONFIG_CMD_BOOTZ=y
++CONFIG_CMD_BOOTX=y
+ CONFIG_CMD_BOOTM=y
+ # CONFIG_CMD_XIMG is not set
+ # CONFIG_CMD_EDITENV is not set
+-- 
+2.17.1
+
