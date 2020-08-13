@@ -10,10 +10,10 @@ SRC_URI = "gitsm://git.linaro.org/landing-teams/working/arm/external-system.git;
 SRCREV = "41ef76951c5119729c1ea305406f74776da90866"
 PV .= "~git${SRCPV}"
 
-COMPATIBLE_MACHINE = ""
+COMPATIBLE_MACHINE = "(corstone700-*)"
 
 # PRODUCT is passed to the Makefile to specify the platform to be used
-PRODUCT = ""
+PRODUCT = "corstone-700"
 
 S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
