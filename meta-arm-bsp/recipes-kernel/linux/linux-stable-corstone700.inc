@@ -52,3 +52,11 @@ KERNEL_FEATURES_append_corstone700-fvp = " \
                           bsp/arm-platforms/corstone700/eth_lan91c111.scc', \
                          'bsp/arm-platforms/corstone700/xip_cmdline.cfg', \
                           d)}"
+
+KERNEL_FEATURES_append_corstone700-mps3 = " \
+    ${@bb.utils.contains('MACHINE_FEATURES', \
+                         'eth_lan9115', \
+                         'bsp/arm-platforms/corstone700/xip_dhcp_cmdline.cfg \
+                          bsp/arm-platforms/corstone700/eth_lan9115.scc', \
+                         'bsp/arm-platforms/corstone700/xip_cmdline.cfg', \
+                          d)}"

@@ -1,0 +1,4 @@
+define KFEATURE_DESCRIPTION "Ethernet feature using lan9115"
+
+kconf hardware pnp.cfg
+kconf hardware lan9115.cfg
