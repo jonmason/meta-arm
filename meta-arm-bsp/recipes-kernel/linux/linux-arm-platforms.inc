@@ -48,6 +48,18 @@ SRC_URI_append_fvp-base-arm32 = " file://fvp-base-arm32-dts.patch"
 #
 COMPATIBLE_MACHINE_juno = "juno"
 KMACHINE_juno = "juno"
+KBUILD_DEFCONFIG_juno = "defconfig"
+KCONFIG_MODE_juno = "--alldefconfig"
+SRC_URI_append_juno = " \
+    file://0001-mailbox-add-support-for-doorbell-signal-mode-control.patch \
+    file://0002-dt-bindings-mailbox-add-bindings-to-support-ARM-MHU-.patch \
+    file://0003-mailbox-arm_mhu-migrate-to-threaded-irq-handler.patch \
+    file://0004-mailbox-arm_mhu-re-factor-data-structure-to-add-door.patch \
+    file://0005-mailbox-arm_mhu-add-full-support-for-the-doorbells.patch \
+    file://0006-mailbox-arm_mhu-add-support-to-read-and-record-mbox-.patch \
+    file://0007-arm64-defconfig-add-all-SCMI-related-configs.patch \
+    file://0008-arm64-dts-juno-add-mhu-doorbell-support-and-scmi-dev.patch \
+    "
 
 #
 # SGI575 KMACHINE

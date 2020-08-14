@@ -1,0 +1,106 @@
+From 620e29a3323608c23fe370744b79e2fd19fc4ee0 Mon Sep 17 00:00:00 2001
+From: Sudeep Holla <sudeep.holla@arm.com>
+Date: Tue, 2 May 2017 11:12:43 +0100
+Subject: [PATCH 3/8] mailbox: arm_mhu: migrate to threaded irq handler
+
+Upstream-Status: Submitted[https://patchwork.kernel.org/patch/10970345]
+
+In preparation to introduce support for doorbells which require the
+interrupt handlers to be threaded, this patch moves the existing
+interrupt handler to threaded handler.
+
+Also it moves out the registering and freeing of the handlers from
+the mailbox startup and shutdown methods. This also is required to
+support doorbells.
+
+Cc: Jassi Brar <jaswinder.singh@linaro.org>
+Signed-off-by: Sudeep Holla <sudeep.holla@arm.com>
+Signed-off-by: Damodar Santhapuri <damodar.santhapuri@arm.com>
+---
+ drivers/mailbox/arm_mhu.c | 46 +++++++++++++++++++--------------------
+ 1 file changed, 22 insertions(+), 24 deletions(-)
+
+diff --git a/drivers/mailbox/arm_mhu.c b/drivers/mailbox/arm_mhu.c
+index 9da236552bd7..d7a0b25df372 100644
+--- a/drivers/mailbox/arm_mhu.c
++++ b/drivers/mailbox/arm_mhu.c
+@@ -76,33 +76,16 @@ static int mhu_startup(struct mbox_chan *chan)
+ {
+ 	struct mhu_link *mlink = chan->con_priv;
+ 	u32 val;
+-	int ret;
+ 
+ 	val = readl_relaxed(mlink->tx_reg + INTR_STAT_OFS);
+ 	writel_relaxed(val, mlink->tx_reg + INTR_CLR_OFS);
+ 
+-	ret = request_irq(mlink->irq, mhu_rx_interrupt,
+-			  IRQF_SHARED, "mhu_link", chan);
+-	if (ret) {
+-		dev_err(chan->mbox->dev,
+-			"Unable to acquire IRQ %d\n", mlink->irq);
+-		return ret;
+-	}
+-
+ 	return 0;
+ }
+ 
+-static void mhu_shutdown(struct mbox_chan *chan)
+-{
+-	struct mhu_link *mlink = chan->con_priv;
+-
+-	free_irq(mlink->irq, chan);
+-}
+-
+ static const struct mbox_chan_ops mhu_ops = {
+ 	.send_data = mhu_send_data,
+ 	.startup = mhu_startup,
+-	.shutdown = mhu_shutdown,
+ 	.last_tx_done = mhu_last_tx_done,
+ };
+ 
+@@ -124,13 +107,6 @@ static int mhu_probe(struct amba_device *adev, const struct amba_id *id)
+ 		return PTR_ERR(mhu->base);
+ 	}
+ 
+-	for (i = 0; i < MHU_CHANS; i++) {
+-		mhu->chan[i].con_priv = &mhu->mlink[i];
+-		mhu->mlink[i].irq = adev->irq[i];
+-		mhu->mlink[i].rx_reg = mhu->base + mhu_reg[i];
+-		mhu->mlink[i].tx_reg = mhu->mlink[i].rx_reg + TX_REG_OFFSET;
+-	}
+-
+ 	mhu->mbox.dev = dev;
+ 	mhu->mbox.chans = &mhu->chan[0];
+ 	mhu->mbox.num_chans = MHU_CHANS;
+@@ -147,6 +123,28 @@ static int mhu_probe(struct amba_device *adev, const struct amba_id *id)
+ 		return err;
+ 	}
+ 
++	for (i = 0; i < MHU_CHANS; i++) {
++		int irq = mhu->mlink[i].irq = adev->irq[i];
++
++		if (irq <= 0) {
++			dev_dbg(dev, "No IRQ found for Channel %d\n", i);
++			continue;
++		}
++
++		mhu->chan[i].con_priv = &mhu->mlink[i];
++		mhu->mlink[i].rx_reg = mhu->base + mhu_reg[i];
++		mhu->mlink[i].tx_reg = mhu->mlink[i].rx_reg + TX_REG_OFFSET;
++
++		err = devm_request_threaded_irq(dev, irq, NULL,
++						mhu_rx_interrupt, IRQF_ONESHOT,
++						"mhu_link", &mhu->chan[i]);
++		if (err) {
++			dev_err(dev, "Can't claim IRQ %d\n", irq);
++			mbox_controller_unregister(&mhu->mbox);
++			return err;
++		}
++	}
++
+ 	dev_info(dev, "ARM MHU Mailbox registered\n");
+ 	return 0;
+ }
+-- 
+2.17.1
+

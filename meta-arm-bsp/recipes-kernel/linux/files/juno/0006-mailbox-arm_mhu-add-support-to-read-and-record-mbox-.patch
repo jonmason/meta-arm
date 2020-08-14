@@ -1,0 +1,67 @@
+From af51d09655236217ffa349ac776a4e16890e1bef Mon Sep 17 00:00:00 2001
+From: Sudeep Holla <sudeep.holla@arm.com>
+Date: Tue, 2 May 2017 12:08:36 +0100
+Subject: [PATCH 6/8] mailbox: arm_mhu: add support to read and record
+ mbox-name
+
+Upstream-Status: Submitted [https://lore.kernel.org/patchwork/patch/791692]
+
+It's sometimes useful to identify the mailbox controller with the name
+as specified in the devicetree via mbox-name property especially in a
+system with multiple controllers.
+
+This patch adds support to read and record the mailbox controller name.
+
+Cc: Jassi Brar <jaswinder.singh@linaro.org>
+Signed-off-by: Sudeep Holla <sudeep.holla@arm.com>
+Signed-off-by: Damodar Santhapuri <damodar.santhapuri@arm.com>
+---
+ drivers/mailbox/arm_mhu.c | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/mailbox/arm_mhu.c b/drivers/mailbox/arm_mhu.c
+index 5bdc494dc4ef..21259b252004 100644
+--- a/drivers/mailbox/arm_mhu.c
++++ b/drivers/mailbox/arm_mhu.c
+@@ -39,6 +39,7 @@ struct arm_mhu {
+ 	struct mhu_link mlink[MHU_NUM_PCHANS];
+ 	struct mbox_controller mbox;
+ 	struct device *dev;
++	const char *name;
+ };
+ 
+ /**
+@@ -249,8 +250,8 @@ static struct mbox_chan *mhu_mbox_xlate(struct mbox_controller *mbox,
+ 
+ 	chan->con_priv = chan_info;
+ 
+-	dev_dbg(mbox->dev, "mbox: created channel phys: %d doorbell: %d\n",
+-		pchan, doorbell);
++	dev_dbg(mbox->dev, "mbox: %s, created channel phys: %d doorbell: %d\n",
++		mhu->name, pchan, doorbell);
+ 
+ 	return chan;
+ }
+@@ -380,6 +381,10 @@ static int mhu_probe(struct amba_device *adev, const struct amba_id *id)
+ 		return PTR_ERR(mhu->base);
+ 	}
+ 
++	err = of_property_read_string(np, "mbox-name", &mhu->name);
++	if (err)
++		mhu->name = np->full_name;
++
+ 	chans = devm_kcalloc(dev, max_chans, sizeof(*chans), GFP_KERNEL);
+ 	if (!chans)
+ 		return -ENOMEM;
+@@ -431,7 +436,7 @@ static int mhu_probe(struct amba_device *adev, const struct amba_id *id)
+ 		}
+ 	}
+ 
+-	dev_info(dev, "ARM MHU Mailbox registered\n");
++	dev_info(dev, "%s mailbox registered\n", mhu->name);
+ 	return 0;
+ }
+ 
+-- 
+2.17.1
+
