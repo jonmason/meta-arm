@@ -12,6 +12,7 @@ SRC_URI_append_n1sdp = " \
     file://0003-pcie-Add-quirk-for-the-Arm-Neoverse-N1SDP-platform.patch \
     file://0004-n1sdp-update-n1sdp-pci-quirk-for-SR-IOV-support.patch \
     file://enable-realtek-R8169.cfg \
+    file://scripts-dtc-remove-redundant-YYLOC.patch \
     "
 
 # Referring to commit TAG N1SDP-2020.03.26
