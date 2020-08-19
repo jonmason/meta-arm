@@ -30,9 +30,10 @@ Once done, do the following to build and run an image:
 ```
 bash$ ./Foundation_Platform --cores=4 --no-sve --gicv3 \
          --data=${YOCTO_DEPLOY_IMGS_DIR}/bl1-fvp.bin@0x0 \
+         --data=${YOCTO_DEPLOY_IMGS_DIR}/fip-fvp.bin@0x8000000 \
          --data=${YOCTO_DEPLOY_IMGS_DIR}/Image@0x80080000 \
          --data=${YOCTO_DEPLOY_IMGS_DIR}/foundation-v8-gicv3-psci.dtb@0x83000000 \
-         --block-device=${YOCTO_DEPLOY_IMGS_DIR}/core-image-minimal-foundation-armv8.disk.img \
+         --block-device=${YOCTO_DEPLOY_IMGS_DIR}/core-image-minimal-foundation-armv8.disk.img
 ```
 
 If you have built a configuration without a ramdisk, you can use the following
