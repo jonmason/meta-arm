@@ -171,7 +171,7 @@ do_install() {
             echo "dtbs install, skipped"
         elif [ -f ${B}/tools/$atfbin/$atfbin ]; then
             echo "Tools $atfbin install, skipped"
-        elif [ "$processed" = "0" ]; then
+        elif [ "$processes" = "0" ]; then
             bberror "Unsupported TFA_INSTALL_TARGET target $atfbin"
             exit 1
         fi
