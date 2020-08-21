@@ -166,9 +166,13 @@ do_install() {
             ln -sf $atfbin-${TFA_PLATFORM} ${D}/firmware/$atfbin
             processes="1"
         fi
-
-        if [ "$atfbin" = "dtbs" ]; then
-            echo "dtbs install, skipped"
+        if [ -f ${BUILD_DIR}/fdts/$atfbin.dtb ]; then
+            echo "Install $atfbin.dtb"
+            install -m 0644 "${BUILD_DIR}/fdts/$atfbin.dtb" \
+                "${D}/firmware/$atfbin.dtb"
+            processes="1"
+        elif [ "$atfbin" = "dtbs" ]; then
+            echo "dtbs install, skipped: set dtbs in TFA_INSTALL_TARGET"
         elif [ -f ${B}/tools/$atfbin/$atfbin ]; then
             echo "Tools $atfbin install, skipped"
         elif [ "$processes" = "0" ]; then
