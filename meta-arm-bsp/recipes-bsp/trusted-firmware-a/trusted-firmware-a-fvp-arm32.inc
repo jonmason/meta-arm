@@ -3,7 +3,7 @@
 COMPATIBLE_MACHINE = "fvp-base-arm32"
 TFA_PLATFORM = "fvp"
 TFA_UBOOT = "1"
-TFA_BUILD_TARGET = "dtbs bl1 bl1 bl32 fip"
+TFA_BUILD_TARGET = "dtbs bl1 bl32 fip"
 
 EXTRA_OEMAKE_append = " \
     ARCH=aarch32 \
