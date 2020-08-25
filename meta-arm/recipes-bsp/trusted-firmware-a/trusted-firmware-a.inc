@@ -136,7 +136,7 @@ do_compile_append_aarch64_qemuall() {
 do_install() {
     install -d -m 755 ${D}/firmware
     for atfbin in ${TFA_INSTALL_TARGET}; do
-        processes="0"
+        processed="0"
         if [ "$atfbin" = "all" ]; then
             # Target all is not handled by default
             bberror "all as TFA_INSTALL_TARGET is not handled by do_install"
@@ -150,32 +150,32 @@ do_install() {
             install -m 0644 ${BUILD_DIR}/$atfbin.bin \
                 ${D}/firmware/$atfbin-${TFA_PLATFORM}.bin
             ln -sf $atfbin-${TFA_PLATFORM}.bin ${D}/firmware/$atfbin.bin
-            processes="1"
+            processed="1"
         fi
         if [ -f ${BUILD_DIR}/$atfbin/$atfbin.elf ]; then
             echo "Install $atfbin.elf"
             install -m 0644 ${BUILD_DIR}/$atfbin/$atfbin.elf \
                 ${D}/firmware/$atfbin-${TFA_PLATFORM}.elf
             ln -sf $atfbin-${TFA_PLATFORM}.elf ${D}/firmware/$atfbin.elf
-            processes="1"
+            processed="1"
         fi
         if [ -f ${BUILD_DIR}/$atfbin ]; then
             echo "Install $atfbin"
             install -m 0644 ${BUILD_DIR}/$atfbin \
                 ${D}/firmware/$atfbin-${TFA_PLATFORM}
             ln -sf $atfbin-${TFA_PLATFORM} ${D}/firmware/$atfbin
-            processes="1"
+            processed="1"
         fi
         if [ -f ${BUILD_DIR}/fdts/$atfbin.dtb ]; then
             echo "Install $atfbin.dtb"
             install -m 0644 "${BUILD_DIR}/fdts/$atfbin.dtb" \
                 "${D}/firmware/$atfbin.dtb"
-            processes="1"
+            processed="1"
         elif [ "$atfbin" = "dtbs" ]; then
             echo "dtbs install, skipped: set dtbs in TFA_INSTALL_TARGET"
         elif [ -f ${B}/tools/$atfbin/$atfbin ]; then
             echo "Tools $atfbin install, skipped"
-        elif [ "$processes" = "0" ]; then
+        elif [ "$processed" = "0" ]; then
             bberror "Unsupported TFA_INSTALL_TARGET target $atfbin"
             exit 1
         fi
