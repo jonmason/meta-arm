@@ -58,7 +58,7 @@ do_install() {
      install -d ${D}/firmware
      for FW in ${FW_TARGETS}; do
         for TYPE in ${FW_INSTALL}; do
-           install -D "${B}/product/${SCP_PLATFORM}/${FW}_${TYPE}/release/bin/${FW}_${TYPE}.bin" "${D}/firmware/"
+           install -D "${B}/product/${SCP_PLATFORM}/${FW}_${TYPE}/${SCP_BUILD_STR}/bin/${FW}_${TYPE}.bin" "${D}/firmware/"
         done
      done
 }
