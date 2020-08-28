@@ -105,7 +105,10 @@ do_compile() {
     sed -i '/^INCLUDE_PATHS/ s,$, \$\{BUILD_CFLAGS},' ${S}/tools/fiptool/Makefile
     sed -i 's^OPENSSL_DIR.*=.*$^OPENSSL_DIR = ${STAGING_DIR_NATIVE}/${prefix_native}^' ${S}/tools/*/Makefile
 
-    oe_runmake ${TFA_BUILD_TARGET}
+    # Currently there are races if you build all the targets at once in parallel
+    for T in ${TFA_BUILD_TARGET}; do
+        oe_runmake $T
+    done
 }
 do_compile[cleandirs] = "${B}"
 
