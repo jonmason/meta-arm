@@ -38,7 +38,7 @@ SRC_URI_MBEDTLS ??= ""
 # This should be set to MBEDTLS LIC FILES checksum
 LIC_FILES_CHKSUM_MBEDTLS ??= ""
 # add MBEDTLS to our sources if activated
-SRC_URI += "${@bb.utils.contains('TFA_MBEDTLS', '1', '${SRC_URI_MBEDTLS}', '', d)}"
+SRC_URI_append = " ${@bb.utils.contains('TFA_MBEDTLS', '1', '${SRC_URI_MBEDTLS}', '', d)}"
 # add mbed TLS chksum
 LIC_FILES_CHKSUM += "${@bb.utils.contains('TFA_MBEDTLS', '1', '${LIC_FILES_CHKSUM_MBEDTLS}', '', d)}"
 # add mbed TLS to version
