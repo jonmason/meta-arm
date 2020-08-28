@@ -1,7 +1,5 @@
 # SGI575 specific TFA support
 
-SRC_URI_append = " ${SRC_URI_MBEDTLS}"
-
 COMPATIBLE_MACHINE = "sgi575"
 TFA_PLATFORM       = "sgi575"
 TFA_BUILD_TARGET   = "all fip"

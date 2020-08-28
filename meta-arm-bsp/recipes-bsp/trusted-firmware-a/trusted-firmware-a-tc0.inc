@@ -3,8 +3,6 @@
 # Intermediate SHA with 2.3 baseline version
 SRCREV_tfa = "2fe7d18b0d99fdf4c4dbf84863bb2036dfebc537"
 
-SRC_URI_append = " ${SRC_URI_MBEDTLS}"
-
 DEPENDS += "scp-firmware"
 
 COMPATIBLE_MACHINE = "tc0"
