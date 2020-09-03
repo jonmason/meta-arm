@@ -9,6 +9,8 @@ XEN_DEVICETREE_DTSI_MERGE_append_juno = " xen-juno.dtsi"
 # Add a dtb snippet to remove pmu and iommu in dom0 on N1SDP
 SRC_URI_append_n1sdp = " file://xen-n1sdp.dtsi"
 XEN_DEVICETREE_DTSI_MERGE_append_n1sdp = " xen-n1sdp.dtsi"
+XEN_DEVICETREE_DEPEND_n1sdp = "virtual/trusted-firmware-a:do_deploy"
+XEN_DEVICETREE_DTBS_n1sdp = "n1sdp-single-chip.dtb"
 
 # Board specific configs
 XEN_DEVICETREE_DOM0_BOOTARGS_append_juno = " root=/dev/sda1 rootwait"
