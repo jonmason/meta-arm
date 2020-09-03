@@ -1,0 +1,174 @@
+Upstream-Status: Backport [https://gem5.googlesource.com/public/gem5/+/b50d61fb9ff5d94f401af98bb0b7f8e25d21d012]
+Signed-off-by: Diego Sueiro <diego.sueiro@arm.com>
+
+From b50d61fb9ff5d94f401af98bb0b7f8e25d21d012 Mon Sep 17 00:00:00 2001
+From: Giacomo Travaglini <giacomo.travaglini@arm.com>
+Date: Tue, 25 Aug 2020 13:10:23 +0100
+Subject: [PATCH] arch-arm: Check if PAC is implemented before executing insts
+
+If Armv8.3-PAuth (PAC) extension is not supported, most instrucions
+will trigger an Undefined Instruction fault; except for a group of
+them living in the HINT space; those should be treated as NOP.
+
+Change-Id: Idec920ed15e0310ec9132a3cb3701cdb7e7cf9d1
+Signed-off-by: Giacomo Travaglini <giacomo.travaglini@arm.com>
+Reviewed-on: https://gem5-review.googlesource.com/c/public/gem5/+/33455
+Reviewed-by: Andreas Sandberg <andreas.sandberg@arm.com>
+Maintainer: Andreas Sandberg <andreas.sandberg@arm.com>
+Tested-by: kokoro <noreply+kokoro@google.com>
+---
+
+diff --git a/src/arch/arm/isa/insts/pauth.isa b/src/arch/arm/isa/insts/pauth.isa
+index 4c5b371..4806e6a 100644
+--- a/src/arch/arm/isa/insts/pauth.isa
++++ b/src/arch/arm/isa/insts/pauth.isa
+@@ -1,5 +1,6 @@
+ // -*- mode:c++ -*-
+ 
++// Copyright (c) 2020 ARM Limited
+ // Copyright (c) 2020 Metempsy Technology Consulting
+ // All rights reserved
+ //
+@@ -41,20 +42,39 @@
+     decoder_output = ""
+     exec_output = ""
+ 
++    def pacEnabledCode(hint):
++        if hint:
++            code = """
++                if (!HavePACExt(xc->tcBase())) {
++                    return NoFault;
++                }
++                """
++        else:
++            code = """
++                if (!HavePACExt(xc->tcBase())) {
++                    return std::make_shared<UndefinedInstruction>(
++                        machInst, true);
++                }
++                """
++        return code
+ 
+-    def buildPauthObject(mnem, templateBase, opcode, optArgs=[]):
++    def buildPauthObject(mnem, templateBase, opcode, hint, optArgs=[]):
+         global header_output, decoder_output, exec_output
+-        pac_code = '''//uint64_t val = 0;
+-                uint64_t res;
+-                fault = %(op)s(xc->tcBase(), %(op1)s, %(op2)s, &res);
+-                XDest = res;
+-                '''
++        pac_code = '''
++            %(enabled)s
++
++            uint64_t res;
++            fault = %(op)s(xc->tcBase(), %(op1)s, %(op2)s, &res);
++            XDest = res;
++            '''
+         if templateBase=='DataX2Reg':
+-            code = pac_code % {"op1": 'Op164',
++            code = pac_code % {"enabled": pacEnabledCode(hint),
++                               "op1": 'Op164',
+                                "op2": 'Op264',
+                                "op":  opcode }
+         else:
+-            code = pac_code % {"op1": 'XDest',
++            code = pac_code % {"enabled": pacEnabledCode(hint),
++                               "op1": 'XDest',
+                                "op2": 'Op164',
+                                "op":  opcode }
+ 
+@@ -63,13 +83,15 @@
+         decoder_output += eval(templateBase + "Constructor").subst(iop)
+         exec_output += BasicExecute.subst(iop)
+ 
+-    def buildXPauthObject(mnem, optArgs=[]):
++    def buildXPauthObject(mnem, hint, optArgs=[]):
+         global header_output, decoder_output, exec_output
+         templateBase = "XPauthOpRegReg"
+ 
+-        code =  'uint64_t res;\n'\
+-                'fault = stripPAC(xc->tcBase(), XDest, data, &res);\n'
+-        code += 'XDest = res;'
++        code = pacEnabledCode(hint) + """
++            uint64_t res;
++            fault = stripPAC(xc->tcBase(), XDest, data, &res);
++            XDest = res;
++            """
+         regoptype = 'RegOp'
+ 
+         iop = InstObjParams(mnem, mnem, regoptype, code, optArgs)
+@@ -78,42 +100,42 @@
+         exec_output += BasicExecute.subst(iop)
+ 
+ 
+-    buildPauthObject("Pacda",  "DataX1Reg", 'addPACDA')
+-    buildPauthObject("Pacdza", "DataX1Reg", 'addPACDA')
+-    buildPauthObject("Pacdb",  "DataX1Reg", 'addPACDB')
+-    buildPauthObject("Pacdzb", "DataX1Reg", 'addPACDB')
+-    buildPauthObject("Pacga",  "DataX2Reg", 'addPACGA')
++    buildPauthObject("Pacda",  "DataX1Reg", 'addPACDA', hint=False)
++    buildPauthObject("Pacdza", "DataX1Reg", 'addPACDA', hint=False)
++    buildPauthObject("Pacdb",  "DataX1Reg", 'addPACDB', hint=False)
++    buildPauthObject("Pacdzb", "DataX1Reg", 'addPACDB', hint=False)
++    buildPauthObject("Pacga",  "DataX2Reg", 'addPACGA', hint=False)
+ 
+-    buildPauthObject("Pacia",     "DataX1Reg", 'addPACIA')
+-    buildPauthObject("Pacia1716", "DataX1Reg", 'addPACIA')
+-    buildPauthObject("Paciasp",   "DataX1Reg", 'addPACIA')
+-    buildPauthObject("Paciaz",    "DataX1Reg", 'addPACIA')
+-    buildPauthObject("Paciza",    "DataX1Reg", 'addPACIA')
++    buildPauthObject("Pacia",     "DataX1Reg", 'addPACIA', hint=False)
++    buildPauthObject("Pacia1716", "DataX1Reg", 'addPACIA', hint=True)
++    buildPauthObject("Paciasp",   "DataX1Reg", 'addPACIA', hint=True)
++    buildPauthObject("Paciaz",    "DataX1Reg", 'addPACIA', hint=True)
++    buildPauthObject("Paciza",    "DataX1Reg", 'addPACIA', hint=False)
+ 
+-    buildPauthObject("Pacib",     "DataX1Reg", 'addPACIB')
+-    buildPauthObject("Pacib1716", "DataX1Reg", 'addPACIB')
+-    buildPauthObject("Pacibsp",   "DataX1Reg", 'addPACIB')
+-    buildPauthObject("Pacibz",    "DataX1Reg", 'addPACIB')
+-    buildPauthObject("Pacizb",    "DataX1Reg", 'addPACIB')
++    buildPauthObject("Pacib",     "DataX1Reg", 'addPACIB', hint=False)
++    buildPauthObject("Pacib1716", "DataX1Reg", 'addPACIB', hint=True)
++    buildPauthObject("Pacibsp",   "DataX1Reg", 'addPACIB', hint=True)
++    buildPauthObject("Pacibz",    "DataX1Reg", 'addPACIB', hint=True)
++    buildPauthObject("Pacizb",    "DataX1Reg", 'addPACIB', hint=False)
+ 
+-    buildPauthObject("Autda",     "DataX1Reg", 'authDA')
+-    buildPauthObject("Autdza",    "DataX1Reg", 'authDA')
+-    buildPauthObject("Autdb",     "DataX1Reg", 'authDB')
+-    buildPauthObject("Autdzb",    "DataX1Reg", 'authDB')
++    buildPauthObject("Autda",     "DataX1Reg", 'authDA', hint=False)
++    buildPauthObject("Autdza",    "DataX1Reg", 'authDA', hint=False)
++    buildPauthObject("Autdb",     "DataX1Reg", 'authDB', hint=False)
++    buildPauthObject("Autdzb",    "DataX1Reg", 'authDB', hint=False)
+ 
+-    buildPauthObject("Autia",     "DataX1Reg", 'authIA')
+-    buildPauthObject("Autia1716", "DataX1Reg", 'authIA')
+-    buildPauthObject("Autiasp",   "DataX1Reg", 'authIA')
+-    buildPauthObject("Autiaz",    "DataX1Reg", 'authIA')
+-    buildPauthObject("Autiza",    "DataX1Reg", 'authIA')
++    buildPauthObject("Autia",     "DataX1Reg", 'authIA', hint=False)
++    buildPauthObject("Autia1716", "DataX1Reg", 'authIA', hint=True)
++    buildPauthObject("Autiasp",   "DataX1Reg", 'authIA', hint=True)
++    buildPauthObject("Autiaz",    "DataX1Reg", 'authIA', hint=True)
++    buildPauthObject("Autiza",    "DataX1Reg", 'authIA', hint=False)
+ 
+-    buildPauthObject("Autib",     "DataX1Reg", 'authIB')
+-    buildPauthObject("Autib1716", "DataX1Reg", 'authIB')
+-    buildPauthObject("Autibsp",   "DataX1Reg", 'authIB')
+-    buildPauthObject("Autibz",    "DataX1Reg", 'authIB')
+-    buildPauthObject("Autizb",    "DataX1Reg", 'authIB')
++    buildPauthObject("Autib",     "DataX1Reg", 'authIB', hint=False)
++    buildPauthObject("Autib1716", "DataX1Reg", 'authIB', hint=True)
++    buildPauthObject("Autibsp",   "DataX1Reg", 'authIB', hint=True)
++    buildPauthObject("Autibz",    "DataX1Reg", 'authIB', hint=True)
++    buildPauthObject("Autizb",    "DataX1Reg", 'authIB', hint=False)
+ 
+-    buildXPauthObject("Xpacd")
+-    buildXPauthObject("Xpaci")
+-    buildXPauthObject("Xpaclri")
++    buildXPauthObject("Xpacd", hint=False)
++    buildXPauthObject("Xpaci", hint=False)
++    buildXPauthObject("Xpaclri", hint=True)
+ }};
