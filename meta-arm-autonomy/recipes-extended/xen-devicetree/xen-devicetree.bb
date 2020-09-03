@@ -38,10 +38,10 @@ do_deploy() {
         die "xen.dtsi.in does not exist"
     fi
     cat ${WORKDIR}/xen.dtsi.in \
-        | sed -e "s,###XEN_DOM0_BOOTARGS###,${XEN_DEVICETREE_DOM0_BOOTARGS}," \
-        | sed -e "s,###XEN_XEN_BOOTARGS###,${XEN_DEVICETREE_XEN_BOOTARGS}," \
-        | sed -e "s,###XEN_DOM0_ADDR###,${XEN_DEVICETREE_DOM0_ADDR}," \
-        | sed -e "s,###XEN_DOM0_SIZE###,${XEN_DEVICETREE_DOM0_SIZE}," \
+        | sed -e "s?###XEN_DOM0_BOOTARGS###?${XEN_DEVICETREE_DOM0_BOOTARGS}?" \
+        | sed -e "s?###XEN_XEN_BOOTARGS###?${XEN_DEVICETREE_XEN_BOOTARGS}?" \
+        | sed -e "s?###XEN_DOM0_ADDR###?${XEN_DEVICETREE_DOM0_ADDR}?" \
+        | sed -e "s?###XEN_DOM0_SIZE###?${XEN_DEVICETREE_DOM0_SIZE}?" \
         > ${WORKDIR}/xen.dtsi
 
     # Generate final dtbs
