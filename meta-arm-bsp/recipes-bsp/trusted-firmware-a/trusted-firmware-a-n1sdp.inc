@@ -12,6 +12,6 @@ SRC_URI_append = " \
     file://0001-n1sdp-arm-tf-disable-workaround-for-N1-Erratum-13157.patch \
     "
 
-SRCREV_tfa = "f0b1864f8e309a41d2eb1c9510f8cd3c7aacbb1d"
+SRCREV_tfa = "50eee85e044a77ad59f4903a5dad91b266770a1d"
 
 PV = "2.3+git${SRCPV}"

@@ -15,8 +15,8 @@ SRC_URI_append_n1sdp = " \
     file://scripts-dtc-remove-redundant-YYLOC.patch \
     "
 
-# Referring to commit TAG N1SDP-2020.03.26
-SRCREV_n1sdp  = "41e8d7be674f98a0f3bef67b16ea2162109fd522"
+# Referring to commit TAG N1SDP-2020.07.27
+SRCREV_n1sdp  = "84baaae9e751c058717d9702438429257f077f03"
 SRCREV_dts_n1sdp = "3209a868152f348194cc1f20fd87c759d3a97d45"
 
 # Use intree defconfig

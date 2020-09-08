@@ -1,4 +1,4 @@
-SRCREV ?= "41e8d7be674f98a0f3bef67b16ea2162109fd522"
+SRCREV ?= "84baaae9e751c058717d9702438429257f077f03"
 SRCREV_meta ?= "e32057eca987b7abbe3eb47ba36f06af8711278a"
 
 # KBRANCH is set to n1sdp by default as there is no master or 5.4 branch on the repository

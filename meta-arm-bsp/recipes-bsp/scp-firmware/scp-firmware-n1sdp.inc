@@ -1,6 +1,6 @@
 # N1SDP specific SCP configurations and build instructions
 
-SRCREV        = "fd7c83561a7d76c7681d5d017fb23aa3664c028c"
+SRCREV        = "350be71a2ecef588b8ff5a095a0840de23506e45"
 SCP_PLATFORM  = "n1sdp"
 SCP_LOG_LEVEL = "INFO"
 
