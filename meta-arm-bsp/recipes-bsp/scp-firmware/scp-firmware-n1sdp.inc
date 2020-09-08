@@ -4,6 +4,12 @@ SRCREV        = "350be71a2ecef588b8ff5a095a0840de23506e45"
 SCP_PLATFORM  = "n1sdp"
 SCP_LOG_LEVEL = "INFO"
 
+FILESEXTRAPATHS_prepend := "${THISDIR}/files/:"
+
+SRC_URI_append = " \
+   file://0001-product-n1sdp-set-CCIX-speed-to-GEN3-to-work-with-in.patch \
+   "
+
 COMPATIBLE_MACHINE_n1sdp = "n1sdp"
 
 PV = "2.6.0+git${SRCPV}"
