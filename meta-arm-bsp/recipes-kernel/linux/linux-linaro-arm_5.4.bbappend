@@ -11,6 +11,7 @@ SRC_URI_append_n1sdp = " \
     file://0002-pci_quirk-add-acs-override-for-PCI-devices.patch \
     file://0003-pcie-Add-quirk-for-the-Arm-Neoverse-N1SDP-platform.patch \
     file://0004-n1sdp-update-n1sdp-pci-quirk-for-SR-IOV-support.patch \
+    file://0005-n1sdp-pcie-add-quirk-support-enabling-remote-chip-PC.patch \
     file://enable-realtek-R8169.cfg \
     file://scripts-dtc-remove-redundant-YYLOC.patch \
     "
