@@ -6,7 +6,8 @@ LICENSE = "BSD-3-Clause & Apache-2.0"
 LIC_FILES_CHKSUM = "file://license.md;beginline=5;md5=9db9e3d2fb8d9300a6c3d15101b19731 \
                     file://cmsis/LICENSE.txt;md5=e3fc50a88d0a364313df4b21ef20c29e"
 
-SRC_URI = "gitsm://github.com/ARM-software/SCP-firmware.git;protocol=https"
+SRC_URI = "gitsm://github.com/ARM-software/SCP-firmware.git;protocol=https \
+           file://0001-tools-gen_module_code-atomically-rewrite-the-generat.patch"
 SRCREV  = "db19910aca6d1032eb0329e5fbb70a92b997f6f2"
 
 PROVIDES += "virtual/control-processor-firmware"
