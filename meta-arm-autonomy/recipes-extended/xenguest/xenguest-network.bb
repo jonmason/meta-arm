@@ -63,6 +63,7 @@ RDEPENDS_${PN} += "bridge-utils \
                    kernel-module-xt-physdev \
                    kernel-module-xt-comment \
                    kernel-module-xt-nat \
+                   kernel-module-xt-masquerade \
                   "
 FILES_${PN} += "${sysconfdir}/network/interfaces.d/xenguest-network-bridge.cfg"
 FILES_${PN} += "${sysconfdir}/xenguest/init.pre/network-bridge.sh"
