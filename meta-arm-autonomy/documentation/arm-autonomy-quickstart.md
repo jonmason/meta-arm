@@ -26,6 +26,7 @@ First you must download the Yocto layers needed:
  - [poky](https://git.yoctoproject.org/poky)
  - [meta-virtualization](https://git.yoctoproject.org/meta-virtualization)
  - [meta-arm](https://git.yoctoproject.org/meta-arm)
+ - [meta-kernel](https://gitlab.com/openembedded/community/meta-kernel.git)
  - all other layers you might want to use
 
 For each of the downloaded layer make sure you checkout the release of Yocto
@@ -56,8 +57,9 @@ Here are the main steps to create an arm-autonomy project:
   bitbake-layers add-layer $LAYERDIR_BASE/meta-poky $LAYERDIR_BASE/meta-yocto-bsp \
    $LAYERDIR_BASE/meta-openembedded/meta-oe $LAYERDIR_BASE/meta-openembedded/meta-python \
    $LAYERDIR_BASE/meta-openembedded/meta-filesystems $LAYERDIR_BASE/meta-openembedded/meta-networking \
-   $LAYERDIR_BASE/meta-virtualization $LAYERDIR_BASE/meta-arm/meta-arm-autonomy \
-   $LAYERDIR_BASE/meta-arm/meta-arm $LAYERDIR_BASE/meta-arm/meta-arm-bsp
+   $LAYERDIR_BASE/meta-virtualization $LAYERDIR_BASE/meta-kernel \
+   $LAYERDIR_BASE/meta-arm/meta-arm $LAYERDIR_BASE/meta-arm/meta-arm-toolchain \
+   $LAYERDIR_BASE/meta-arm/meta-arm-bsp $LAYERDIR_BASE/meta-arm/meta-arm-autonomy \
   ```
 
   Example of a `conf/bblayers.conf`:
@@ -71,11 +73,16 @@ Here are the main steps to create an arm-autonomy project:
     /home/user/arm-autonomy/meta-openembedded/meta-filesystems \
     /home/user/arm-autonomy/meta-openembedded/meta-networking \
     /home/user/arm-autonomy/meta-virtualization \
-    /home/user/arm-autonomy/meta-arm/meta-arm-autonomy \
+    /home/user/arm-autonomy/meta-kernel \
     /home/user/arm-autonomy/meta-arm/meta-arm \
+    /home/user/arm-autonomy/meta-arm/meta-arm-toolchain \
     /home/user/arm-autonomy/meta-arm/meta-arm-bsp \
+    /home/user/arm-autonomy/meta-arm/meta-arm-autonomy \
     "
   ```
+
+  Be aware that changing the order may break some dependencies if editing the
+  config file manually.
 
 Those steps will have to be done for each project you will have to create.
 
