@@ -72,12 +72,7 @@ KCONFIG_MODE_sgi575 = "--alldefconfig"
 #
 # Total Compute KMACHINE
 #
+SRC_URI_append_tc0 = " file://defconfig"
 COMPATIBLE_MACHINE_tc0 = "tc0"
 KMACHINE_tc0 = "tc0"
-KBUILD_DEFCONFIG_tc0 = "defconfig"
 KCONFIG_MODE_tc0 = "--alldefconfig"
-SRC_URI_append_tc0 = " \
-    file://0001-drm-Add-component-aware-simple-encoder.patch \
-    file://0002-swap-red-and-blue-colors-in-HDLCD-driver.patch \
-    file://defconfig \
-    "
