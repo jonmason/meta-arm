@@ -41,7 +41,8 @@ SRC_URI_append_fvp-base = " file://fvp-base-dts.patch"
 #
 COMPATIBLE_MACHINE_fvp-base-arm32 = "fvp-base-arm32"
 KMACHINE_fvp-base-arm32 = "fvp-arm32"
-SRC_URI_append_fvp-base-arm32 = " file://fvp-base-arm32-dts.patch"
+SRC_URI_append_fvp-base-arm32 = " file://fvp-base-arm32-dts.patch \
+                                  file://0001-ARM-vexpress-enable-GICv3.patch"
 
 #
 # Juno KMACHINE
