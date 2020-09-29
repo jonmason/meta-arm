@@ -1,7 +1,7 @@
-From d74c2d6f475bef05c114e859ab52bd721fbee7b2 Mon Sep 17 00:00:00 2001
+From eed15d394137616a18add204a85b0e9dd5b00e0b Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Wed, 8 Jan 2020 09:48:11 +0000
-Subject: [PATCH 2/3] board: arm: add designstart cortex-a5 board
+Subject: [PATCH 2/2] board: arm: add designstart cortex-a5 board
 
 Arm added a new board, designstart, with a cortex-a5 chip, add the
 default configuration, initialization and makefile for this system.
@@ -22,23 +22,23 @@ Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
  create mode 100644 include/configs/designstart_ca5.h
 
 diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
-index bbb1e2738bfe..8f918f6e0375 100644
+index 54d65f84889f..7bc12f0b4300 100644
 --- a/arch/arm/Kconfig
 +++ b/arch/arm/Kconfig
-@@ -636,6 +636,12 @@ config ARCH_BCM6858
-       select OF_CONTROL
-       imply CMD_DM
-
+@@ -665,6 +665,12 @@ config ARCH_BCM6858
+ 	select OF_CONTROL
+ 	imply CMD_DM
+ 
 +config TARGET_DESIGNSTART_CA5
-+      bool "Support Designstart Cortex-A5"
-+      select CPU_V7A
-+      select SEMIHOSTING
-+      select PL01X_SERIAL
++	bool "Support Designstart Cortex-A5"
++	select CPU_V7A
++	select SEMIHOSTING
++	select PL01X_SERIAL
 +
  config TARGET_VEXPRESS_CA15_TC2
-       bool "Support vexpress_ca15_tc2"
-       select CPU_V7A
-@@ -1820,6 +1826,7 @@ source "board/Marvell/gplugd/Kconfig"
+ 	bool "Support vexpress_ca15_tc2"
+ 	select CPU_V7A
+@@ -1866,6 +1872,7 @@ source "board/Marvell/gplugd/Kconfig"
  source "board/armadeus/apf27/Kconfig"
  source "board/armltd/vexpress/Kconfig"
  source "board/armltd/vexpress64/Kconfig"
@@ -304,6 +304,6 @@ index 000000000000..6db5b1cf4ac2
 +#define CONFIG_ENV_SIZE                       CONFIG_ENV_SECT_SIZE
 +#define CONFIG_ENV_IS_IN_FLASH                1
 +#endif
---
-2.26.2
+-- 
+2.28.0
 
