@@ -1,4 +1,4 @@
-# Cortex-A5 DesignStart A5DS Platform Support in meta-arm-platforms
+# Cortex-A5 DesignStart A5DS Platform Support in meta-arm-bsp
 
 ## Howto Build and Run
 

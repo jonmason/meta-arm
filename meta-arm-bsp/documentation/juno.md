@@ -1,4 +1,4 @@
-# Juno Development Platform Support in meta-arm-platforms
+# Juno Development Platform Support in meta-arm-bsp
 
 ## Howto Build and Run
 

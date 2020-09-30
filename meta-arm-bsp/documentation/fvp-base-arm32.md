@@ -1,4 +1,4 @@
-# Armv7-A Base Platform FVP Support in meta-arm-platforms
+# Armv7-A Base Platform FVP Support in meta-arm-bsp
 
 ## How to build and run
 

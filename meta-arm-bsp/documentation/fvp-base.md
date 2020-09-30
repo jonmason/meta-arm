@@ -1,4 +1,4 @@
-# Armv8-A Base Platform FVP Support in meta-arm-platforms
+# Armv8-A Base Platform FVP Support in meta-arm-bsp
 
 ## Howto Build and Run
 
