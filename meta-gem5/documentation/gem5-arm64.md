@@ -1,4 +1,4 @@
-# Gem5 Arm64 Platform Support in meta-arm-platforms
+# Gem5 Arm64 Platform Support in meta-gem5
 
 ## Howto Build and Run
 
