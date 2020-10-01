@@ -1,0 +1,14 @@
+# short-description: Create an EFI disk image
+# long-description: Creates a partitioned EFI disk image that the user
+# can directly dd to boot media. Uses a custom grub.cfg file to configure the boot.
+
+# First boot partition normally populated as /dev/sda1
+part /boot --source bootimg-efi --sourceparams="loader=grub-efi" --ondisk sda --label msdos --active --align 1024
+
+# Second rootfs partition normally populated as /dev/sda2
+part / --source rootfs --ondisk sda --fstype=ext4 --label root --align 1024
+
+# Third partition to accomodate guests images normally populated as /dev/sda3 (used by XENGUEST_MANAGER_VOLUME_DEVICE)
+part --label guests --source empty --ondisk sda --size="${GUEST_PART_SIZE}${GUEST_PART_SIZE_UNIT}" --system-id 8e --align 1024
+
+bootloader --ptable msdos --configfile="${GRUB_CFG_FILE}"

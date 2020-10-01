@@ -12,3 +12,14 @@ RDEPENDS_${KERNEL_PACKAGE_NAME}-base ?= ""
 # Until we don't move to use the kea dhcp-server we build dhcp_4.4.2.bb recipe
 # which depends on bind_9.11.22.bb recipe.
 PREFERRED_VERSION_bind ?= "9.11%"
+
+# Require extra machine specific settings from meta-arm-bsp dynamic-layers only
+# if meta-arm-bsp is in the bblayers.conf
+# Directory for meta-arm-autonomy/dynamic-layers/meta-arm-bsp machine extra settings
+ARM_AUTONOMY_ARM_BSP_DYNAMIC_EXTRA_CFGDIR = "${ARM_AUTONOMY_ARM_BSP_DYNAMIC_DIR}/conf/machine"
+ARM_AUTONOMY_MACHINE_EXTRA_REQUIRE ?= \
+"${ARM_AUTONOMY_ARM_BSP_DYNAMIC_EXTRA_CFGDIR}/arm-autonomy-machine-extra-settings.inc"
+
+require ${@bb.utils.contains('BBFILE_COLLECTIONS', 'meta-arm-bsp', \
+                             '${ARM_AUTONOMY_MACHINE_EXTRA_REQUIRE}' , \
+                             '', d)}
