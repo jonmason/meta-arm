@@ -1,0 +1,11 @@
+header:
+  version: 9
+  includes:
+    - base.yml
+    - meta-zephyr.yml
+
+machine: musca-b1
+
+target:
+  - trusted-firmware-m
+  - zephyr-philosophers

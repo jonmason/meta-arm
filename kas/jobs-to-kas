@@ -1,0 +1,19 @@
+#! /bin/bash
+
+# Read a GitLab CI job name on $1 and transform it to a
+# list of Kas yaml files
+
+set -e -u
+
+# Read Job namne from $1 and split on /
+IFS=/ read -r -a PARTS<<<$1
+
+# Prefix each part with kas/
+PARTS=("${PARTS[@]/#/kas/}")
+
+# Suffix each part with .yml
+PARTS=("${PARTS[@]/%/.yml}")
+
+# Print colon-separated
+IFS=":"
+echo "${PARTS[*]}"

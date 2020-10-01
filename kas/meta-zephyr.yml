@@ -1,0 +1,8 @@
+header:
+  version: 9
+  includes:
+    - meta-python.yml
+
+repos:
+  meta-zephyr:
+    url: https://git.yoctoproject.org/git/meta-zephyr

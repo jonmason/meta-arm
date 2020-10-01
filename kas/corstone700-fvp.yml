@@ -1,0 +1,10 @@
+header:
+  version: 9
+  includes:
+    - base.yml
+
+machine: corstone700-fvp
+
+local_conf_header:
+  image: |
+    CORE_IMAGE_EXTRA_INSTALL = "corstone700-test-app"
