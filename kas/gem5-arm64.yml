@@ -1,0 +1,21 @@
+header:
+  version: 9
+  includes:
+    - base.yml
+
+repos:
+  meta-arm:
+    layers:
+      meta-gem5:
+
+  meta-openembedded:
+    url: https://git.openembedded.org/meta-openembedded
+    layers:
+      meta-oe:
+
+machine: gem5-arm64
+
+target:
+  - core-image-minimal
+  - perf
+  - gem5-aarch64-native

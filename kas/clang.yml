@@ -1,0 +1,12 @@
+header:
+  version: 9
+
+repos:
+  meta-clang:
+    url: https://github.com/kraj/meta-clang
+    # This doesn't (yet) have a gatesgarth branch
+    refspec: master
+
+local_conf_header:
+  clang: |
+    TOOLCHAIN = "clang"

@@ -1,0 +1,48 @@
+header:
+  version: 9
+
+distro: poky
+
+defaults:
+  repos:
+    refspec: gatesgarth
+
+repos:
+  meta-arm:
+    layers:
+      meta-arm:
+      meta-arm-bsp:
+      meta-arm-toolchain:
+
+  poky:
+    url: https://git.yoctoproject.org/git/poky
+    layers:
+      meta:
+      meta-poky:
+
+  meta-kernel:
+    url: https://gitlab.com/openembedded/community/meta-kernel.git
+
+env:
+  BB_LOGCONFIG: ""
+  PYTHONPATH: ""
+
+local_conf_header:
+  base: |
+    CONF_VERSION = "1"
+    PACKAGE_CLASSES = "package_ipk"
+    LICENSE_FLAGS_WHITELIST += "armcompiler"
+    PACKAGECONFIG_remove_pn-qemu-system-native = "gtk+ sdl"
+    BB_NUMBER_THREADS = "16"
+    PARALLEL_MAKE = "-j16"
+    INHERIT += "rm_work"
+    PACKAGECONFIG_append_pn-perf = " coresight"
+    ERROR_QA = "${WARN_QA}"
+  ptest: |
+    DISTRO_FEATURES_remove = "ptest"
+
+machine: unset
+
+target:
+  - core-image-base
+  - perf

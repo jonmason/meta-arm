@@ -1,0 +1,6 @@
+header:
+  version: 9
+  includes:
+    - corstone700-fvp.yml
+
+machine: corstone700-mps3
