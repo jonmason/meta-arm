@@ -59,4 +59,9 @@ KERNEL_FEATURES_append_corstone700-mps3 = " \
                          'bsp/arm-platforms/corstone700/xip_dhcp_cmdline.cfg \
                           bsp/arm-platforms/corstone700/eth_lan9115.scc', \
                          'bsp/arm-platforms/corstone700/xip_cmdline.cfg', \
+                          d)} \
+    ${@bb.utils.contains('MACHINE_FEATURES', \
+                         'usb_host', \
+                         'bsp/arm-platforms/corstone700/usb_host.cfg', \
+                        '', \
                           d)}"

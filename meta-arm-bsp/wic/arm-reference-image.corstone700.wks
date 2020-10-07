@@ -19,4 +19,4 @@ part --source rawcopy --sourceparams="file=fip.bin-corstone700" --no-table --ali
 part --source rawcopy --sourceparams="file=${IMGDEPLOYDIR}/arm-reference-image-${MACHINE}.cramfs-xip" --no-table --fixed-size 2
 
 # Rawcopy of the kernel binary
-part --source rawcopy --sourceparams="file=xipImage" --no-table --fixed-size 3
+part --source rawcopy --sourceparams="file=xipImage" --no-table --fixed-size 4

@@ -10,8 +10,8 @@ TFA_INSTALL_TARGET = "fip.bin"
 LIC_FILES_CHKSUM = "file://license.rst;md5=1dd070c98a281d18d9eefd938729b031"
 
 # TF-A v2.3 is not used because the following commit is needed:
-# corstone700: splitting the platform support into FVP and FPGA
-SRCREV_tfa = "ef93cfa3a2591084307a41e64f1cbba327310749"
+# fdts: corstone700: add NXP isp1763 node to device tree
+SRCREV_tfa = "a6f65b11529b618ff04017f64054dc661c489068"
 
 PV = "2.3+git${SRCPV}"
 
