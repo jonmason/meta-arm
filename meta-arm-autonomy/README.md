@@ -88,5 +88,5 @@ would like to contribute, please contact the maintainers
 
 Maintainer(s)
 -------------
+* Diego Sueiro <diego.sueiro@arm.com>
 * Bertrand Marquis <bertrand.marquis@arm.com>
-* Filipe Rinaldi <filipe.rinaldi@arm.com>
