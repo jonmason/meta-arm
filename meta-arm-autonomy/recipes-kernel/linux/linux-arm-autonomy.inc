@@ -24,3 +24,6 @@ KERNEL_FEATURES += "${@bb.utils.contains('DISTRO_FEATURES', \
 COMPATIBLE_MACHINE_arm64-autonomy-guest = "arm64-autonomy-guest"
 KMACHINE_arm64-autonomy-guest = "arm64-autonomy-guest"
 
+# Add Minimal Kernel Configs for Docker runtime
+KERNEL_FEATURES += "${@bb.utils.contains('DISTRO_FEATURES', \
+        'docker', 'features/arm-autonomy/docker-minimal.scc', '', d)}"

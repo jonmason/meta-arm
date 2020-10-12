@@ -1,0 +1,5 @@
+define KFEATURE_DESCRIPTION "Minimal Kernel configs for Docker runtime"
+
+include features/netfilter/netfilter.scc
+
+kconf non-hardware docker-minimal.cfg

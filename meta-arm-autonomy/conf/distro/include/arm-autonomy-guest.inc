@@ -9,3 +9,7 @@ IMAGE_FSTYPES += "xenguest"
 
 # xenguest kernel extension to handle initramfs
 KERNEL_CLASSES += "kernel-xenguest"
+
+IMAGE_INSTALL_append = "${@bb.utils.contains('DISTRO_FEATURES', 'docker', \
+                        ' packagegroup-docker-runtime-minimal', \
+                        '', d)}"
