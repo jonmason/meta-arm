@@ -21,7 +21,3 @@ XEN_DEVICETREE_XEN_BOOTARGS_append_n1sdp = " console=dtuart dtuart=serial0 boots
 
 XEN_DEVICETREE_DOM0_BOOTARGS_append_fvp-base = " root=/dev/vda2"
 XEN_DEVICETREE_XEN_BOOTARGS_append_fvp-base = " console=dtuart dtuart=serial0 bootscrub=0"
-
-XEN_DEVICETREE_DOM0_BOOTARGS_append_foundation-armv8 = " root=/dev/vda2"
-XEN_DEVICETREE_XEN_BOOTARGS_append_foundation-armv8 = " console=dtuart dtuart=serial0 bootscrub=0"
-

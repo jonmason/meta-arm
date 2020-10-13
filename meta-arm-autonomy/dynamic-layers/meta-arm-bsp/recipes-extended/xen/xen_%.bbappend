@@ -1,11 +1,6 @@
-# Foundation-armv8 support
-COMPATIBLE_MACHINE_foundation-armv8 = "foundation-armv8"
-FILESEXTRAPATHS_prepend_foundation-armv8 := "${THISDIR}/files/fvp:"
-SRC_URI_append_foundation-armv8 = " file://early-printk.cfg"
-
 # FVP Base support
 COMPATIBLE_MACHINE_fvp-base = "fvp-base"
-FILESEXTRAPATHS_prepend_fvp-base := "${THISDIR}/files/fvp:"
+FILESEXTRAPATHS_prepend_fvp-base := "${THISDIR}/files:"
 SRC_URI_append_fvp-base = " file://early-printk.cfg"
 
 # Juno support
