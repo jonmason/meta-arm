@@ -1,7 +1,7 @@
 # TCO specific TFA configuration
 
 # Intermediate SHA with 2.3 baseline version
-SRCREV_tfa = "2fe7d18b0d99fdf4c4dbf84863bb2036dfebc537"
+SRCREV_tfa = "16796a25fefc4ecf780211bf554d3b8dc5436fa4"
 
 DEPENDS += "scp-firmware"
 
