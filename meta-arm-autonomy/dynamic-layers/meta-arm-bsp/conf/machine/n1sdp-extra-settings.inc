@@ -1,3 +1,5 @@
+# Extra machine settings for n1sdp
+
 # We need to extent the wks search path to be able to find the wks file set in
 # ARM_AUTONOMY_WKS_FILE.
 WKS_SEARCH_PATH_prepend := "${ARM_AUTONOMY_ARM_BSP_DYNAMIC_DIR}/wic:"
@@ -18,6 +20,8 @@ GRUB_CFG_FILE ?= "${ARM_AUTONOMY_ARM_BSP_DYNAMIC_DIR}/wic/arm-autonomy-n1sdp-gru
 # From arm-autonomy-n1sdp-efidisk.wks.in, the /boot partition is /dev/sda1, and
 # the "/" partition is /dev/sda2.
 XENGUEST_MANAGER_VOLUME_DEVICE ?= "/dev/sda3"
+
+XENGUEST_NETWORK_BRIDGE_MEMBERS ?= "eth0"
 
 # The XEN_DEVICETREE_DEPEND and XEN_DEVICETREE_DTBS variables aftect the
 # xen-devicetree.bb recipe
