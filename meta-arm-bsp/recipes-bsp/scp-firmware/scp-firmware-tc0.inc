@@ -1,7 +1,8 @@
 # TC0 specific SCP configuration
 
 # Intermediate SHA with 2.6 baseline version
-SRCREV = "fd7c83561a7d76c7681d5d017fb23aa3664c028c"
+SRC_URI = "gitsm://github.com/ARM-software/SCP-firmware.git;protocol=https"
+SRCREV = "6fad1d3e2f82b2ef51e55928ac3a678a75f64ef4"
 
 COMPATIBLE_MACHINE = "tc0"
 
