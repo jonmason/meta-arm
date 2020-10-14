@@ -99,6 +99,8 @@ For a detailed help on available operations, please use:
   times to add several command line options.
 - --xen-device-tree=FILE: add dtb FILE as device tree. This both adding the
   file to the image and modifying the xen configuration to use it.
+- --xen-ramdisk=FILE: add ramdisk FILE as guest ramdisk. This both adding the
+  file to the image and modifying the xen configuration to use it.
 - --init-script=FILE: add guest init script. The script is embedded inside the
   image file. Several script can be added and the basename of FILE is used to
   distinguish them (calling the option twice with the same file will update the

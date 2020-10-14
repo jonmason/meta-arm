@@ -82,6 +82,9 @@ Xen configuration for the guest
 --xen-device-tree=      disable device tree parameter in xen configuration
 --xen-device-tree=FILE  set guest device tree in xen configuration and add
                          file to xen files
+--xen-ramdisk=          disable ramdisk parameter in xen configuration
+--xen-ramdisk=FILE      set guest ramdisk in xen configuration and add
+                         file to xen files
 --xen-disk=             disable disk parameter in xen configuration
 --xen-disk=DEV          set guest disk to device DEV (phy:DEV,xvda,w is set)
 --xen-append=FILE       append FILE content to xen configuration
@@ -666,6 +669,20 @@ for arg in "${@}"; do
                 xen_config_set_string "device_tree" "files/guest.dtb"
                 mkdir -p ${IMAGE_TMPDIR}/files
                 install -m 644 ${optarg} ${IMAGE_TMPDIR}/files/guest.dtb
+            fi
+            ;;
+        --xen-ramdisk=*)
+            if [ -z "${optarg}" ]; then
+                xen_config_disable_param "ramdisk"
+                rm -f ${IMAGE_TMPDIR}/files/ramdisk.img
+            else
+                if [ ! -f ${optarg} ]; then
+                    echo "Error: invalid ramdisk file ${optarg}"
+                    exit 1
+                fi
+                xen_config_set_string "ramdisk" "files/ramdisk.img"
+                mkdir -p ${IMAGE_TMPDIR}/files
+                install -m 644 ${optarg} ${IMAGE_TMPDIR}/files/ramdisk.img
             fi
             ;;
         --xen-disk=*)

@@ -12,6 +12,11 @@ inherit xenguest-image
 # recipes, the last recipe setting it will prevail.
 XENGUEST_EXTRA_DTB ??= ""
 
+# Add a ramdisk file for the guest
+# Only one file should be added, if this is set multiple times or in several
+# recipes, the last recipe setting it will prevail.
+XENGUEST_EXTRA_RAMDISK ??= ""
+
 # Append something to the guest xen configuration
 # All files here will be merged together in the final xen configuration
 # This can contain several files or be used in several recipes
@@ -47,6 +52,13 @@ do_deploy_append() {
             die "xenguest-image: DTB file ${XENGUEST_EXTRA_DTB} does not exist"
         fi
         call_xenguest_mkimage partial --xen-device-tree=${XENGUEST_EXTRA_DTB}
+    fi
+
+    if [ -n "${XENGUEST_EXTRA_RAMDISK}" ]; then
+        if [ ! -f ${XENGUEST_EXTRA_RAMDISK} ]; then
+            die "xenguest-image: DTB file ${XENGUEST_EXTRA_RAMDISK} does not exist"
+        fi
+        call_xenguest_mkimage partial --xen-ramdisk=${XENGUEST_EXTRA_RAMDISK}
     fi
 
     if [ -n "${XENGUEST_EXTRA_XENCONFIG}" ]; then
