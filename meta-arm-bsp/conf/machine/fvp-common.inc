@@ -33,8 +33,8 @@ PREFERRED_VERSION_linux-yocto ?= "5.4%"
 
 EXTRA_IMAGEDEPENDS += "virtual/trusted-firmware-a u-boot"
 
-# Use haveged as a source of entropy instead of rng-tools (Needed for ssh).
-# rngd (Part of rng-tools) takes ~7 mins to init resulting in a slow boot time.
-PACKAGE_EXCLUDE_append = " rng-tools"
-MACHINE_EXTRA_RRECOMMENDS += "haveged"
-
+# As this is a virtual target that will not be used in the real world there is
+# no need for real SSH keys.  Disable rng-tools (which takes too long to
+# initialise) and install the pre-generated keys.
+PACKAGECONFIG_remove_pn-openssh = "rng-tools"
+MACHINE_EXTRA_RRECOMMENDS += "ssh-pregen-hostkeys"
