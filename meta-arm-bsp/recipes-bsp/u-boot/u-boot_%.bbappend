@@ -1,7 +1,7 @@
 # Machine specific u-boot
 
 THIS_DIR := "${THISDIR}"
-FILESEXTRAPATHS_prepend = "${THIS_DIR}/files/:${THIS_DIR}/${BP}:"
+FILESEXTRAPATHS_prepend = "${THIS_DIR}/${BP}:"
 FILESEXTRAPATHS_prepend_fvp-base = "${THIS_DIR}/${BP}/fvp-common:"
 FILESEXTRAPATHS_prepend_foundation-armv8 = "${THIS_DIR}/${BP}/fvp-common:"
 
