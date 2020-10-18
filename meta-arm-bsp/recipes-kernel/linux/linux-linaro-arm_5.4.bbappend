@@ -6,7 +6,6 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}-5.4:"
 
 # Apply N1SDP specific patches
 SRC_URI_append_n1sdp = " \
-    git://git.linaro.org/landing-teams/working/arm/device-tree.git;name=dts;nobranch=1;destsuffix=git/arch/arm64/boot/dts \
     file://0001-TMP-iommu-arm-smmu-v3-Ignore-IOPF-capabilities.patch \
     file://0002-pci_quirk-add-acs-override-for-PCI-devices.patch \
     file://0003-pcie-Add-quirk-for-the-Arm-Neoverse-N1SDP-platform.patch \
