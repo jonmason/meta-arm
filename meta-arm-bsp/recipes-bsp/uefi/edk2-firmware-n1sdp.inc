@@ -17,3 +17,13 @@ EDK2_ARCH          = "AARCH64"
 COMPATIBLE_MACHINE = "n1sdp"
 
 PV = "201908+git${SRCPV}"
+
+# UEFI EDK2 on N1SDP is unable to detect FS2 during boot resulting in launching of
+# EDK2 shell instead of launching grub. The startup.nsh will force launching of grub
+EFIDIR             = "/EFI/BOOT"
+EFI_BOOT_IMAGE     = "bootaa64.efi"
+
+do_deploy_append() {
+    EFIPATH=$(echo "${EFIDIR}" | sed 's/\//\\/g')
+    printf 'FS2:%s\%s\n' "$EFIPATH" "${EFI_BOOT_IMAGE}" > ${DEPLOYDIR}/startup.nsh
+}
