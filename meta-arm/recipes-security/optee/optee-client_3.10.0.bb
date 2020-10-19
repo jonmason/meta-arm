@@ -5,13 +5,11 @@ HOMEPAGE = "https://www.op-tee.org/"
 LICENSE = "BSD"
 LIC_FILES_CHKSUM = "file://${S}/LICENSE;md5=69663ab153298557a59c67a60a743e5b"
 
-PV = "3.8.0+git${SRCPV}"
-
 require optee.inc
 
 inherit python3native systemd update-rc.d
 
-SRCREV = "be4fa2e36f717f03ca46e574aa66f697a897d090"
+SRCREV = "2a77cf88d956c34cb4a1c191bea6113e327f5fe0"
 SRC_URI = " \
     git://github.com/OP-TEE/optee_client.git \
     file://tee-supplicant.service \

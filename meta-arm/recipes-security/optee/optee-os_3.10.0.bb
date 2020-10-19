@@ -5,23 +5,15 @@ HOMEPAGE = "https://www.op-tee.org/"
 LICENSE = "BSD"
 LIC_FILES_CHKSUM = "file://${S}/LICENSE;md5=c1f21c4f72f372ef38a5a4aee55ec173"
 
-PV = "3.8.0+git${SRCPV}"
-
 inherit deploy python3native
 require optee.inc
 
 DEPENDS = "python3-pycryptodome-native python3-pycryptodomex-native python3-pyelftools-native"
 
-SRCREV = "023e33656e2c9557ce50ad63a98b2e2c9b51c118"
+SRCREV = "d1c635434c55b7d75eadf471bde04926bd1e50a7"
 SRC_URI = " \
     git://github.com/OP-TEE/optee_os.git \
-    file://0001-mk-compile.mk-fix-cc-option-macro.patch \
-    file://0002-Allow-use-of-cc-option-in-core-arch-arm-arm.mk.patch \
-    file://0003-arm64-Disable-outline-atomics-when-compiling.patch \
-    file://0004-Cleanup-unused-comp-cflags-sm-from-libgcc-lookup-com.patch \
-    file://0005-Fixup-Allow-use-of-cc-option-in-core-arch-arm-arm.mk.patch \
     file://0006-allow-setting-sysroot-for-libgcc-lookup.patch \
-    file://missing-mkdir.patch \
 "
 
 S = "${WORKDIR}/git"

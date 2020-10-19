@@ -5,8 +5,6 @@ HOMEPAGE = "https://github.com/linaro-swg/optee_examples"
 LICENSE = "GPLv2"
 LIC_FILES_CHKSUM = "file://${S}/LICENSE;md5=cd95ab417e23b94f381dafc453d70c30"
 
-PV = "3.8.0+git${SRCPV}"
-
 DEPENDS = "optee-client optee-os python3-pycryptodomex-native"
 
 inherit python3native
@@ -16,7 +14,7 @@ require optee.inc
 SRC_URI = "git://github.com/linaro-swg/optee_examples.git \
            file://0001-make-Pass-ldflags-during-link.patch \
            "
-SRCREV = "559b2141c16bf0f57ccd72f60e4deb84fc2a05b0"
+SRCREV = "c6eb00a9d83bf068a37e4806c97f582bb16e2973"
 
 S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
@@ -30,6 +28,7 @@ EXTRA_OEMAKE = " TA_DEV_KIT_DIR=${TA_DEV_KIT_DIR} \
                  TEEC_EXPORT=${TEEC_EXPORT} \
                  HOST_CROSS_COMPILE=${TARGET_PREFIX} \
                  TA_CROSS_COMPILE=${TARGET_PREFIX} \
+                 LIBGCC_LOCATE_CFLAGS=--sysroot=${STAGING_DIR_HOST} \
                  V=1 \
                  OUTPUT_DIR=${B} \
                "

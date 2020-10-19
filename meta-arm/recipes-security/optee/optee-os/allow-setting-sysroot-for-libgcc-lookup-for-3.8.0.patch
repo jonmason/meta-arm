@@ -1,22 +1,25 @@
-From 017994c477e2d082395460de83a7828d4e7d4b70 Mon Sep 17 00:00:00 2001
+From 030cd84cf0df1c27355ec02e0226317684897a97 Mon Sep 17 00:00:00 2001
 From: Joshua Watt <JPEWhacker@gmail.com>
 Date: Tue, 26 May 2020 14:38:02 -0500
-Subject: [PATCH] allow setting sysroot for libgcc lookup
+Subject: [PATCH 6/6] allow setting sysroot for libgcc lookup
 
 ---
  mk/gcc.mk | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/mk/gcc.mk b/mk/gcc.mk
-index adc77a24..e238b9f3 100644
+index c53a23b1..330b200a 100644
 --- a/mk/gcc.mk
 +++ b/mk/gcc.mk
-@@ -13,7 +13,7 @@ nostdinc$(sm)	:= -nostdinc -isystem $(shell $(CC$(sm)) \
+@@ -12,7 +12,7 @@ nostdinc$(sm)	:= -nostdinc -isystem $(shell $(CC$(sm)) \
  			-print-file-name=include 2> /dev/null)
  
  # Get location of libgcc from gcc
 -libgcc$(sm)  	:= $(shell $(CC$(sm)) $(CFLAGS$(arch-bits-$(sm))) \
 +libgcc$(sm)  	:= $(shell $(CC$(sm)) $(LIBGCC_LOCATE_CFLAGS) $(CFLAGS$(arch-bits-$(sm))) \
  			-print-libgcc-file-name 2> /dev/null)
- libstdc++$(sm)	:= $(shell $(CXX$(sm)) $(CXXFLAGS$(arch-bits-$(sm))) $(comp-cxxflags$(sm)) \
- 			-print-file-name=libstdc++.a 2> /dev/null)
+ 
+ # Define these to something to discover accidental use
+-- 
+2.17.1
+
