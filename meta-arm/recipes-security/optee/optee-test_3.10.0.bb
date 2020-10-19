@@ -13,6 +13,8 @@ DEPENDS = "optee-client optee-os python3-pycryptodomex-native"
 SRCREV = "30efcbeaf8864d0f2a5c4be593a5411001fab31b"
 SRC_URI = "git://github.com/OP-TEE/optee_test.git \
            file://0001-host-xtest-Adjust-order-of-including-compiler.h.patch \
+           file://0002-make-remove-Wno-unsafe-loop-for-clang.patch \
+           file://0003-make-remove-Wmissing-noreturn-for-clang.patch \
           "
 
 S = "${WORKDIR}/git"
@@ -21,12 +23,14 @@ B = "${WORKDIR}/build"
 OPTEE_CLIENT_EXPORT = "${STAGING_DIR_HOST}${prefix}"
 TEEC_EXPORT         = "${STAGING_DIR_HOST}${prefix}"
 TA_DEV_KIT_DIR      = "${STAGING_INCDIR}/optee/export-user_ta"
+OPTEE_COMPILER = "${@d.getVar('TOOLCHAIN') or 'gcc'}"
 
 EXTRA_OEMAKE = " TA_DEV_KIT_DIR=${TA_DEV_KIT_DIR} \
                  OPTEE_CLIENT_EXPORT=${OPTEE_CLIENT_EXPORT} \
                  TEEC_EXPORT=${TEEC_EXPORT} \
                  CROSS_COMPILE_HOST=${TARGET_PREFIX} \
                  CROSS_COMPILE_TA=${TARGET_PREFIX} \
+                 COMPILER=${OPTEE_COMPILER} \
                  LIBGCC_LOCATE_CFLAGS=--sysroot=${STAGING_DIR_HOST} \
                  V=1 \
                  O=${B} \

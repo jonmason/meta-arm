@@ -1,0 +1,31 @@
+From ed5a9d9f7a3e9e14ca0e8aea59008124ee0e5f96 Mon Sep 17 00:00:00 2001
+From: Brett Warren <brett.warren@arm.com>
+Date: Thu, 8 Oct 2020 10:20:52 +0100
+Subject: [PATCH] make: remove -Wno-unsafe-loop for clang
+
+When compiling with clang, the -Wno-unsafe-loop-optimizations option
+throws an error because clang doesn't recognise it. This option is
+removed to workaround this.
+
+Upstream-Status: Pending
+Change-Id: 5fe0892c73208aaffac8c9995cb3275936fb1ba6
+Signed-off-by: Brett Warren <brett.warren@arm.com>
+---
+ host/xtest/Makefile | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/host/xtest/Makefile b/host/xtest/Makefile
+index 96746de..73731d0 100644
+--- a/host/xtest/Makefile
++++ b/host/xtest/Makefile
+@@ -174,7 +174,6 @@ CFLAGS += -Wall -Wcast-align -Werror \
+ 	  -Wshadow -Wstrict-prototypes -Wswitch-default \
+ 	  -Wwrite-strings \
+ 	  -Wno-declaration-after-statement \
+-	  -Wno-unsafe-loop-optimizations \
+ 	  -Wno-missing-field-initializers -Wno-format-zero-length
+ endif
+ 
+-- 
+2.17.1
+

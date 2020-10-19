@@ -10,10 +10,13 @@ require optee.inc
 
 DEPENDS = "python3-pycryptodome-native python3-pycryptodomex-native python3-pyelftools-native"
 
+DEPENDS_append_toolchain-clang = " compiler-rt"
+
 SRCREV = "d1c635434c55b7d75eadf471bde04926bd1e50a7"
 SRC_URI = " \
     git://github.com/OP-TEE/optee_os.git \
     file://0006-allow-setting-sysroot-for-libgcc-lookup.patch \
+    file://0007-allow-setting-sysroot-for-clang.patch \
 "
 
 S = "${WORKDIR}/git"
@@ -25,12 +28,14 @@ OPTEE_ARCH = "null"
 OPTEE_ARCH_armv7a = "arm32"
 OPTEE_ARCH_aarch64 = "arm64"
 OPTEE_CORE = "${@d.getVar('OPTEE_ARCH').upper()}"
+OPTEE_COMPILER = "${@d.getVar('TOOLCHAIN') or 'gcc'}"
 
 EXTRA_OEMAKE = " \
     PLATFORM=${OPTEEMACHINE} \
     CFG_${OPTEE_CORE}_core=y \
     CROSS_COMPILE_core=${HOST_PREFIX} \
     CROSS_COMPILE_ta_${OPTEE_ARCH}=${HOST_PREFIX} \
+    COMPILER=${OPTEE_COMPILER} \
     NOWERROR=1 \
     V=1 \
     ta-targets=ta_${OPTEE_ARCH} \
