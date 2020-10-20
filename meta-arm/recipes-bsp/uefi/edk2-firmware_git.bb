@@ -52,17 +52,7 @@ export CONF_PATH           = "${WORKSPACE}/Conf"
 
 export BTOOLS_PATH = "${EDK_TOOLS_PATH}/BinWrappers/PosixLike"
 
-python __anonymous() {
-    # If GCC Version is greater than 4 then pass GCC5
-    # set GCC5 by default
-    d.setVar('GCC_VER', 'GCC5')
-
-    # Otherwise pass the corresponding version
-    G = d.getVar('GCCVERSION',True).split(".")
-    gcc_vlist = ['1', '2', '3', '4']
-    if G[0] in gcc_vlist:
-        d.setVar('GCC_VER', 'GCC'+G[0])
-}
+GCC_VER ?= "GCC5"
 
 do_compile() {
     sed -i -e 's:-I \.\.:-I \.\. ${BUILD_CFLAGS} :' ${EDK_TOOLS_PATH}/Source/C/Makefiles/header.makefile
