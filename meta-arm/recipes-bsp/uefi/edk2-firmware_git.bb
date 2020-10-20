@@ -33,15 +33,13 @@ inherit deploy
 
 S = "${WORKDIR}/edk2"
 B = "${WORKDIR}/build"
-do_compile[cleandirs] += "${B}"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 COMPATIBLE_MACHINE ?= "invalid"
 
 LDFLAGS[unexport] = "1"
 
-# No configure
-do_configure[noexec] = "1"
+do_configure[cleandirs] += "${B}"
 
 # Set variables as per envsetup
 export GCC5_AARCH64_PREFIX = "${STAGING_BINDIR_TOOLCHAIN}/${TARGET_PREFIX}"
