@@ -19,7 +19,7 @@ To build for Zephyr:
 ```bash$ bitbake zephyr-philosophers```
 
 To build the trusted firmware-m (and not Zephyr):
-```bash$ bitbake trusted-frimware-m```
+```bash$ bitbake trusted-firmware-m```
 
 ## Running
 To run Zephyr on the QEMU based machine, execute the following command
