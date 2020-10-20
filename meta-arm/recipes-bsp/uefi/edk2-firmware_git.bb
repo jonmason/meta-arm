@@ -12,7 +12,7 @@ LIC_FILES_CHKSUM = "file://edk2/License.txt;md5=2b415520383f7964e96700ae12b4570a
 LIC_FILES_CHKSUM += "file://edk2/edk2-platforms/License.txt;md5=2b415520383f7964e96700ae12b4570a"
 
 SRC_URI ?= "\
-    git://github.com/tianocore/edk2.git;name=edk2;destsuffix=${S}/edk2;nobranch=1 \
+    gitsm://github.com/tianocore/edk2.git;name=edk2;destsuffix=${S}/edk2;nobranch=1 \
     git://github.com/tianocore/edk2-platforms.git;name=edk2-platforms;destsuffix=${S}/edk2/edk2-platforms;nobranch=1 \
 "
 SRCREV_edk2           ?= "6ff7c838d09224dd4e4c9b5b93152d8db1b19740"
