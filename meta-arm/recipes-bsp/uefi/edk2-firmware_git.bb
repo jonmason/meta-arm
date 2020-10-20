@@ -29,7 +29,6 @@ EDK2_BUILD_MODE = "${@bb.utils.contains('EDK2_BUILD_RELEASE', '1', 'RELEASE', 'D
 
 DEPENDS += "util-linux-native iasl-native"
 
-inherit python3native
 inherit deploy
 
 B = "${WORKDIR}/build"
@@ -48,7 +47,7 @@ export GCC5_AARCH64_PREFIX = "${STAGING_BINDIR_TOOLCHAIN}/${TARGET_PREFIX}"
 export PACKAGES_PATH       = "${S}/edk2:${S}/edk2/edk2-platforms"
 export WORKSPACE           = "${S}/edk2"
 export EDK_TOOLS_PATH      = "${WORKSPACE}/BaseTools"
-export PYTHON_COMMAND      = "${PYTHON}"
+export PYTHON_COMMAND      = "python3"
 export CONF_PATH           = "${WORKSPACE}/Conf"
 
 export BTOOLS_PATH = "${EDK_TOOLS_PATH}/BinWrappers/PosixLike"
