@@ -1,0 +1,67 @@
+From 68ce2dfe4c6f3806001fb8d682d6e99a9580dc2a Mon Sep 17 00:00:00 2001
+From: Usama Arif <usama.arif@arm.com>
+Date: Wed, 24 Jun 2020 11:16:01 +0100
+Subject: [PATCH 7/9] firmware: arm_scmi: Add fast_switch_possible() api
+
+Add a new fast_switch_possible interface to the existing
+perf_ops api to export the information of whether or not
+fast_switch is possible in this driver.
+
+This can be used by the CPUFreq driver and framework to
+choose proper mechanism for frequency change.
+
+Suggested-by: Lukasz Luba <lukasz.luba@arm.com>
+Signed-off-by: Nicola Mazzucato <nicola.mazzucato@arm.com>
+
+Upstream-Status: Backport [https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/drivers/firmware/arm_scmi?id=1909872ff20fc378ec6a44ea1a2b2966d834e504]
+---
+ drivers/firmware/arm_scmi/perf.c | 12 ++++++++++++
+ include/linux/scmi_protocol.h    |  2 ++
+ 2 files changed, 14 insertions(+)
+
+diff --git a/drivers/firmware/arm_scmi/perf.c b/drivers/firmware/arm_scmi/perf.c
+index 601af4edad5e..c9350bb2ba1f 100644
+--- a/drivers/firmware/arm_scmi/perf.c
++++ b/drivers/firmware/arm_scmi/perf.c
+@@ -691,6 +691,17 @@ static int scmi_dvfs_est_power_get(const struct scmi_handle *handle, u32 domain,
+ 	return ret;
+ }
+ 
++static bool scmi_fast_switch_possible(const struct scmi_handle *handle,
++				   struct device *dev)
++{
++	struct perf_dom_info *dom;
++	struct scmi_perf_info *pi = handle->perf_priv;
++
++	dom = pi->dom_info + scmi_dev_domain_id(dev);
++
++	return (dom->fc_info && dom->fc_info->level_set_addr);
++}
++
+ static struct scmi_perf_ops perf_ops = {
+ 	.limits_set = scmi_perf_limits_set,
+ 	.limits_get = scmi_perf_limits_get,
+@@ -702,6 +713,7 @@ static struct scmi_perf_ops perf_ops = {
+ 	.freq_set = scmi_dvfs_freq_set,
+ 	.freq_get = scmi_dvfs_freq_get,
+ 	.est_power_get = scmi_dvfs_est_power_get,
++	.fast_switch_possible = scmi_fast_switch_possible,
+ };
+ 
+ static int scmi_perf_protocol_init(struct scmi_handle *handle)
+diff --git a/include/linux/scmi_protocol.h b/include/linux/scmi_protocol.h
+index 881fea47c83d..b1f4a88219c5 100644
+--- a/include/linux/scmi_protocol.h
++++ b/include/linux/scmi_protocol.h
+@@ -114,6 +114,8 @@ struct scmi_perf_ops {
+ 			unsigned long *rate, bool poll);
+ 	int (*est_power_get)(const struct scmi_handle *handle, u32 domain,
+ 			     unsigned long *rate, unsigned long *power);
++	bool (*fast_switch_possible)(const struct scmi_handle *handle,
++			struct device *dev);
+ };
+ 
+ /**
+-- 
+2.17.1
+

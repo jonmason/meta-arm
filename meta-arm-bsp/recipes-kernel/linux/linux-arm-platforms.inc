@@ -73,7 +73,18 @@ KCONFIG_MODE_sgi575 = "--alldefconfig"
 #
 # Total Compute KMACHINE
 #
-SRC_URI_append_tc0 = " file://defconfig"
 COMPATIBLE_MACHINE_tc0 = "tc0"
 KMACHINE_tc0 = "tc0"
 KCONFIG_MODE_tc0 = "--alldefconfig"
+SRC_URI_append_tc0 = " \
+    file://defconfig \
+    file://0001-drm-Add-component-aware-simple-encoder.patch \
+    file://0002-drm-arm-komeda-add-RENDER-capability-to-the-device-n.patch \
+    file://0003-mailbox-arm_mhuv2-add-device-tree-binding-documentat.patch \
+    file://0004-mailbox-arm_mhuv2-add-arm-mhuv2-driver.patch \
+    file://0005-mailbox-arm_mhuv2-add-doorbell-transport-protocol-op.patch \
+    file://0006-mailbox-arm_mhuv2-add-multi-word-transport-protocol-.patch \
+    file://0007-firmware-arm_scmi-Add-fast_switch_possible-api.patch \
+    file://0008-cpufreq-arm_scmi-Set-fast_switch_possible-conditiona.patch \
+    "
+
