@@ -1,0 +1,51 @@
+From f4c1a541fa351e4f613471bbf397931f9e1ddd27 Mon Sep 17 00:00:00 2001
+Message-Id: <f4c1a541fa351e4f613471bbf397931f9e1ddd27.1602683707.git.diego.sueiro@arm.com>
+From: Wei Chen <wei.chen@arm.com>
+Date: Fri, 28 Aug 2020 02:34:04 +0000
+Subject: [PATCH] xen/arm: Throw messages for unknown FP/SIMD implement ID
+
+Arm ID_AA64PFR0_EL1 register provides two fields to describe CPU
+FP/SIMD implementations. Currently, we exactly know the meaning of
+0x0, 0x1 and 0xf of these fields. Xen treats value < 8 as FP/SIMD
+features presented. If there is a value 0x2 bumped in the future,
+Xen behaviors for value <= 0x1 can also take effect. But what Xen
+done for value <= 0x1 may not always cover new value 0x2 required.
+We throw these messages to break the silence when Xen detected
+unknown FP/SIMD IDs to notice user to check.
+
+Signed-off-by: Wei Chen <wei.chen@arm.com>
+Reviewed-by: Bertrand Marquis <bertrand.marquis@arm.com>
+Acked-by: Julien Grall <jgrall@amazon.com>
+
+Upstream-Status: Backport
+Signed-off-by: Diego Sueiro <diego.sueiro@arm.com>
+---
+ xen/arch/arm/setup.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/xen/arch/arm/setup.c b/xen/arch/arm/setup.c
+index 7968cee..f16b33f 100644
+--- a/xen/arch/arm/setup.c
++++ b/xen/arch/arm/setup.c
+@@ -133,6 +133,18 @@ static void __init processor_id(void)
+            cpu_has_simd ? " AdvancedSIMD" : "",
+            cpu_has_gicv3 ? " GICv3-SysReg" : "");
+ 
++    /* Warn user if we find unknown floating-point features */
++    if ( cpu_has_fp && (boot_cpu_feature64(fp) >= 2) )
++        printk(XENLOG_WARNING "WARNING: Unknown Floating-point ID:%d, "
++               "this may result in corruption on the platform\n",
++               boot_cpu_feature64(fp));
++
++    /* Warn user if we find unknown AdvancedSIMD features */
++    if ( cpu_has_simd && (boot_cpu_feature64(simd) >= 2) )
++        printk(XENLOG_WARNING "WARNING: Unknown AdvancedSIMD ID:%d, "
++               "this may result in corruption on the platform\n",
++               boot_cpu_feature64(simd));
++
+     printk("  Debug Features: %016"PRIx64" %016"PRIx64"\n",
+            boot_cpu_data.dbg64.bits[0], boot_cpu_data.dbg64.bits[1]);
+     printk("  Auxiliary Features: %016"PRIx64" %016"PRIx64"\n",
+-- 
+2.7.4
+

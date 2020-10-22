@@ -1,0 +1,35 @@
+From 1814a626fb5811184eda64fe22f0055df4600211 Mon Sep 17 00:00:00 2001
+Message-Id: <1814a626fb5811184eda64fe22f0055df4600211.1602684203.git.diego.sueiro@arm.com>
+From: Julien Grall <jgrall@amazon.com>
+Date: Tue, 25 Aug 2020 18:38:10 +0100
+Subject: [PATCH] xen/arm: Update silicon-errata.txt with the Neovers AT
+ erratum
+
+Commit 858c0be8c2fa "xen/arm: Enable CPU Erratum 1165522 for Neoverse"
+added a new erratum but forgot to update silicon-errata.txt.
+
+Update the file accordingly to keep track of errata workaround in Xen.
+
+Signed-off-by: Julien Grall <jgrall@amazon.com>
+Reviewed-by: Bertrand Marquis <bertrand.marquis@arm.com>
+Acked-by: Stefano Stabellini <sstabellini@kernel.org>
+
+Upstream-Status: Backport
+Signed-off-by: Diego Sueiro <diego.sueiro@arm.com>
+---
+ docs/misc/arm/silicon-errata.txt | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/docs/misc/arm/silicon-errata.txt b/docs/misc/arm/silicon-errata.txt
+index 11e5a9d..e15d092 100644
+--- a/docs/misc/arm/silicon-errata.txt
++++ b/docs/misc/arm/silicon-errata.txt
+@@ -51,4 +51,5 @@ stable hypervisors.
+ | ARM            | Cortex-A57      | #1319537        | N/A                     |
+ | ARM            | Cortex-A72      | #1319367        | N/A                     |
+ | ARM            | Cortex-A76      | #1165522        | N/A                     |
++| ARM            | Neoverse-N1     | #1165522        | N/A
+ | ARM            | MMU-500         | #842869         | N/A                     |
+-- 
+2.7.4
+

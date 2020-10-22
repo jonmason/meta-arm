@@ -1,0 +1,40 @@
+From 3b418b33265402aab0cb1bf2b745a25724bae2d8 Mon Sep 17 00:00:00 2001
+Message-Id: <3b418b33265402aab0cb1bf2b745a25724bae2d8.1602684880.git.diego.sueiro@arm.com>
+From: Bertrand Marquis <bertrand.marquis@arm.com>
+Date: Tue, 18 Aug 2020 14:47:38 +0100
+Subject: [PATCH] arm: Add Neoverse N1 processor identification
+
+Add MIDR and CPU part numbers for Neoverse N1
+
+Signed-off-by: Bertrand Marquis <bertrand.marquis@arm.com>
+Acked-by: Julien Grall <jgrall@amazon.com>
+
+Upstream-Status: Backport
+Signed-off-by: Diego Sueiro <diego.sueiro@arm.com>
+---
+ xen/include/asm-arm/processor.h | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/xen/include/asm-arm/processor.h b/xen/include/asm-arm/processor.h
+index aa642e3..3ca67f8 100644
+--- a/xen/include/asm-arm/processor.h
++++ b/xen/include/asm-arm/processor.h
+@@ -58,6 +58,7 @@
+ #define ARM_CPU_PART_CORTEX_A73     0xD09
+ #define ARM_CPU_PART_CORTEX_A75     0xD0A
+ #define ARM_CPU_PART_CORTEX_A76     0xD0B
++#define ARM_CPU_PART_NEOVERSE_N1    0xD0C
+ 
+ #define MIDR_CORTEX_A12 MIDR_CPU_MODEL(ARM_CPU_IMP_ARM, ARM_CPU_PART_CORTEX_A12)
+ #define MIDR_CORTEX_A17 MIDR_CPU_MODEL(ARM_CPU_IMP_ARM, ARM_CPU_PART_CORTEX_A17)
+@@ -68,6 +69,7 @@
+ #define MIDR_CORTEX_A73 MIDR_CPU_MODEL(ARM_CPU_IMP_ARM, ARM_CPU_PART_CORTEX_A73)
+ #define MIDR_CORTEX_A75 MIDR_CPU_MODEL(ARM_CPU_IMP_ARM, ARM_CPU_PART_CORTEX_A75)
+ #define MIDR_CORTEX_A76 MIDR_CPU_MODEL(ARM_CPU_IMP_ARM, ARM_CPU_PART_CORTEX_A76)
++#define MIDR_NEOVERSE_N1 MIDR_CPU_MODEL(ARM_CPU_IMP_ARM, ARM_CPU_PART_NEOVERSE_N1)
+ 
+ /* MPIDR Multiprocessor Affinity Register */
+ #define _MPIDR_UP           (30)
+-- 
+2.7.4
+
