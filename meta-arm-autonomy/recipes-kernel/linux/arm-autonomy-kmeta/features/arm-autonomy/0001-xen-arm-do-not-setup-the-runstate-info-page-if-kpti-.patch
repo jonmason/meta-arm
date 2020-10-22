@@ -1,0 +1,83 @@
+From f88af7229f6f22ce7313c11a0bbb9c88317b7c5e Mon Sep 17 00:00:00 2001
+Message-Id: <f88af7229f6f22ce7313c11a0bbb9c88317b7c5e.1602759709.git.diego.sueiro@arm.com>
+From: Stefano Stabellini <stefano.stabellini@xilinx.com>
+Date: Thu, 24 Sep 2020 16:49:55 -0700
+Subject: [PATCH] xen/arm: do not setup the runstate info page if kpti is
+ enabled
+
+The VCPUOP_register_runstate_memory_area hypercall takes a virtual
+address of a buffer as a parameter. The semantics of the hypercall are
+such that the virtual address should always be valid.
+
+When KPTI is enabled and we are running userspace code, the virtual
+address is not valid, thus, Linux is violating the semantics of
+VCPUOP_register_runstate_memory_area.
+
+Do not call VCPUOP_register_runstate_memory_area when KPTI is enabled.
+
+Signed-off-by: Stefano Stabellini <stefano.stabellini@xilinx.com>
+CC: Bertrand Marquis <Bertrand.Marquis@arm.com>
+CC: boris.ostrovsky@oracle.com
+CC: jgross@suse.com
+Link: https://lore.kernel.org/r/20200924234955.15455-1-sstabellini@kernel.org
+Reviewed-by: Bertrand Marquis <bertrand.marquis@arm.com>
+Signed-off-by: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+
+Upstream-Status: Backport
+Signed-off-by: Diego Sueiro <diego.sueiro@arm.com>
+---
+ arch/arm/include/asm/xen/page.h   | 5 +++++
+ arch/arm/xen/enlighten.c          | 6 ++++--
+ arch/arm64/include/asm/xen/page.h | 6 ++++++
+ 3 files changed, 15 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm/include/asm/xen/page.h b/arch/arm/include/asm/xen/page.h
+index 31bbc80..dc7f6e9 100644
+--- a/arch/arm/include/asm/xen/page.h
++++ b/arch/arm/include/asm/xen/page.h
+@@ -1 +1,6 @@
+ #include <xen/arm/page.h>
++
++static inline bool xen_kernel_unmapped_at_usr(void)
++{
++	return false;
++}
+diff --git a/arch/arm/xen/enlighten.c b/arch/arm/xen/enlighten.c
+index e93145d..ea76562 100644
+--- a/arch/arm/xen/enlighten.c
++++ b/arch/arm/xen/enlighten.c
+@@ -158,7 +158,8 @@ static int xen_starting_cpu(unsigned int cpu)
+ 	BUG_ON(err);
+ 	per_cpu(xen_vcpu, cpu) = vcpup;
+ 
+-	xen_setup_runstate_info(cpu);
++	if (!xen_kernel_unmapped_at_usr())
++		xen_setup_runstate_info(cpu);
+ 
+ after_register_vcpu_info:
+ 	enable_percpu_irq(xen_events_irq, 0);
+@@ -387,7 +388,8 @@ static int __init xen_guest_init(void)
+ 		return -EINVAL;
+ 	}
+ 
+-	xen_time_setup_guest();
++	if (!xen_kernel_unmapped_at_usr())
++		xen_time_setup_guest();
+ 
+ 	if (xen_initial_domain())
+ 		pvclock_gtod_register_notifier(&xen_pvclock_gtod_notifier);
+diff --git a/arch/arm64/include/asm/xen/page.h b/arch/arm64/include/asm/xen/page.h
+index 31bbc80..dffdc77 100644
+--- a/arch/arm64/include/asm/xen/page.h
++++ b/arch/arm64/include/asm/xen/page.h
+@@ -1 +1,7 @@
+ #include <xen/arm/page.h>
++#include <asm/mmu.h>
++
++static inline bool xen_kernel_unmapped_at_usr(void)
++{
++	return arm64_kernel_unmapped_at_el0();
++}
+-- 
+2.7.4
+
