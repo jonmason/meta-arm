@@ -1,3 +1,5 @@
+FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
+
 # Include machine specific configurations for UEFI EDK2
 
 MACHINE_EDK2_REQUIRE ?= ""
