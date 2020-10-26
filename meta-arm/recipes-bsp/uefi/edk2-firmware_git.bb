@@ -20,8 +20,9 @@ SRC_URI = "\
     ${EDK2_PLATFORMS_SRC_URI};name=edk2-platforms;destsuffix=edk2/edk2-platforms;nobranch=1 \
 "
 
-SRCREV_edk2           ?= "6ff7c838d09224dd4e4c9b5b93152d8db1b19740"
-SRCREV_edk2-platforms ?= "ed4cc8059ec551032f0d8b8c172e9ec19214a638"
+PV = "202008+git${SRCPV}"
+SRCREV_edk2           ?= "06dc822d045c2bb42e497487935485302486e151"
+SRCREV_edk2-platforms ?= "7aab81a35aef7b295e73d7d6dfd528cc812790ed"
 SRCREV_FORMAT         = "edk2_edk2-platforms"
 
 EDK2_BUILD_RELEASE   ?= "0"
