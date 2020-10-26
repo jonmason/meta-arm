@@ -83,11 +83,13 @@ Inside the directory, scripts will be executed in alphabetical order.
 Since these scripts are sourced by xenguest-manager they can acccess functions
 and variables from the parent file's scope, including:
 
-- ${guestname} : The name of the guest being created
+- ${guestname}    : The name of the guest being created
 
-- ${guestdir}  : The path to the guest directory
+- ${guestdir}     : The path to the guest directory
 
-- ${LOGFILE}   : The file to append any logging to, e.g.
+- ${guestcfgfile} : The name of the config file for the starting guest
+
+- ${LOGFILE}      : The file to append any logging to, e.g.
                      echo "Hello, World" >> ${LOGFILE}
 
 Sourcing also allows the script to access params.cfg.

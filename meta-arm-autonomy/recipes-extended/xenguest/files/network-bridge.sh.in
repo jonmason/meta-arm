@@ -20,10 +20,10 @@ case "${XENGUEST_NETWORK_TYPE:-}" in
         if [ ! -f /etc/default/dhcp3-server ]; then
             ln -s dhcp-server /etc/default/dhcp3-server
         fi
-        echo "vif = ['script=vif-nat']" >> ${guestname}.cfg
+        echo "vif = ['script=vif-nat']" >> ${guestcfgfile}
         ;;
     bridge)
-        echo "vif = ['script=vif-bridge,bridge=${BRIDGE_NAME}']" >> ${guestname}.cfg
+        echo "vif = ['script=vif-bridge,bridge=${BRIDGE_NAME}']" >> ${guestcfgfile}
         ;;
     *)
         echo "${@}: XENGUEST_NETWORK_TYPE=$XENGUEST_NETWORK_TYPE invalid"

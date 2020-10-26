@@ -465,13 +465,15 @@ function xenguest_guest_start()
     guestname="${1}"
     guestdir=${XENGUEST_CONF_BASE}/guests/${guestname}
 
+    guestcfgfile=$(mktemp -u "${guestname}.XXXXXX" --tmpdir="${guestdir}" --suffix=".cfg")
+
     # Get guest configuration
     source ${guestdir}/params.cfg
 
     pushd ${guestdir} > /dev/null 2>&1
 
     # create config by merging all configurations together
-    cat guest.cfg $(find guest.d -type f 2> /dev/null) > ${guestname}.cfg
+    cat guest.cfg $(find guest.d -type f 2> /dev/null) > ${guestcfgfile}
 
     # Build init script lists (ignore non existing dirs errors,
     # sort alphabetically and run global scripts first)
@@ -491,7 +493,7 @@ function xenguest_guest_start()
             echo "( . $f )" >> ${LOGFILE} 2>&1
             ( . $f ) >> ${LOGFILE} 2>&1
             if [ $? -ne 0 ]; then
-                rm -f ${guestname}.cfg
+                rm -f ${guestcfgfile}
                 popd > /dev/null 2>&1
                 echo "Error in init script $f" >> ${LOGFILE} 2>&1
                 echo "${PREF} Error during pre init script of ${guestname}"
@@ -503,10 +505,10 @@ function xenguest_guest_start()
     done
 
     # Create non started guest
-    echo "xl create -p ${guestname}.cfg" >> ${LOGFILE} 2>&1
-    xl create -p ${guestname}.cfg >> ${LOGFILE} 2>&1
+    echo "xl create -p ${guestcfgfile}" >> ${LOGFILE} 2>&1
+    xl create -p ${guestcfgfile} >> ${LOGFILE} 2>&1
     if [ $? -ne 0 ]; then
-        rm -f ${guestname}.cfg
+        rm -f ${guestcfgfile}
         popd > /dev/null 2>&1
         echo "${PREF} Error starting ${guestname}"
         exit 1
@@ -518,7 +520,7 @@ function xenguest_guest_start()
             echo "( . $f )" >> ${LOGFILE} 2>&1
             ( . $f ) >> ${LOGFILE} 2>&1
             if [ $? -ne 0 ]; then
-                rm -f ${guestname}.cfg
+                rm -f ${guestcfgfile}
                 echo "xl destroy ${guestname}" >> ${LOGFILE} 2>&1
                 xl destroy ${guestname} >> ${LOGFILE} 2>&1
                 popd > /dev/null 2>&1
@@ -535,7 +537,7 @@ function xenguest_guest_start()
     echo "xl unpause ${guestname}" >> ${LOGFILE} 2>&1
     xl unpause ${guestname} >> ${LOGFILE} 2>&1
     if [ $? -ne 0 ]; then
-        rm -f ${guestname}.cfg
+        rm -f ${guestcfgfile}
         popd > /dev/null 2>&1
         echo "${PREF} Error starting ${guestname}"
         exit 1
@@ -547,7 +549,7 @@ function xenguest_guest_start()
             echo "( . $f )" >> ${LOGFILE} 2>&1
             ( . $f ) >> ${LOGFILE} 2>&1
             if [ $? -ne 0 ]; then
-                rm -f ${guestname}.cfg
+                rm -f ${guestcfgfile}
                 echo "xl destroy ${guestname}" >> ${LOGFILE} 2>&1
                 xl destroy ${guestname} >> ${LOGFILE} 2>&1
                 popd > /dev/null 2>&1
@@ -560,7 +562,7 @@ function xenguest_guest_start()
         fi
     done
 
-    rm -f ${guestname}.cfg
+    rm -f ${guestcfgfile}
     popd > /dev/null 2>&1
 }
 
