@@ -34,8 +34,10 @@ SRC_URI_append_juno = " file://u-boot_vexpress_uenv.patch"
 #
 # Total Compute KMACHINE
 #
-SRC_URI_append_tc0 = " file://0001-Add-support-for-Total-Compute.patch"
-
+SRC_URI_tc0 = "git://git.denx.de/u-boot.git \
+          "
+SRCREV_tc0 = "565add124de00c994652a0d2d6d1eb6b2a7c9553"
+LIC_FILES_CHKSUM_tc0 = "file://Licenses/README;md5=5a7450c57ffe5ae63fd732446b988025"
 #
 # Corstone700 KMACHINE
 #
