@@ -10,7 +10,7 @@ SRCREV_edk2-platforms = "d9d32e6c8b7456d21ce365486ac563b6be36c20d"
 # N1SDP specific EDK2 configurations
 EDK2_BUILD_RELEASE = "0"
 EDK2_PLATFORM      = "n1sdp"
-EDK2_PLATFORM_DSC  = "N1SdpPkg/N1SdpPlatform.dsc"
+EDK2_PLATFORM_DSC  = "Platform/ARM/N1SdpPkg/N1SdpPlatform.dsc"
 EDK2_BIN_NAME      = "BL33_AP_UEFI.fd"
 EDK2_ARCH          = "AARCH64"
 

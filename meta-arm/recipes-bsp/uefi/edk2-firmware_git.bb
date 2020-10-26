@@ -77,7 +77,7 @@ do_compile() {
        -a "${EDK2_ARCH}" \
        -b ${EDK2_BUILD_MODE} \
        -t ${EDK_COMPILER} \
-       -p "${S}/edk2-platforms/Platform/ARM/${EDK2_PLATFORM_DSC}"
+       -p ${EDK2_PLATFORM_DSC}
 }
 
 do_install() {
