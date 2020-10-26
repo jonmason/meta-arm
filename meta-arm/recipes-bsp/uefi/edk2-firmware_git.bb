@@ -56,7 +56,8 @@ export CONF_PATH           = "${S}/Conf"
 
 export BTOOLS_PATH = "${EDK_TOOLS_PATH}/BinWrappers/PosixLike"
 
-GCC_VER ?= "GCC5"
+EDK_COMPILER ?= "GCC5"
+EDK_COMPILER_toolchain-clang = "CLANG38"
 
 do_compile() {
     sed -i -e 's:-I \.\.:-I \.\. ${BUILD_CFLAGS} :' ${EDK_TOOLS_PATH}/Source/C/Makefiles/header.makefile
@@ -74,13 +75,13 @@ do_compile() {
     "${S}/BaseTools/BinWrappers/PosixLike/build" \
        -a "${EDK2_ARCH}" \
        -b ${EDK2_BUILD_MODE} \
-       -t ${GCC_VER} \
+       -t ${EDK_COMPILER} \
        -p "${S}/edk2-platforms/Platform/ARM/${EDK2_PLATFORM_DSC}"
 }
 
 do_install() {
     install -d ${D}/firmware
-    install ${B}/Build/${EDK2_PLATFORM}/${EDK2_BUILD_MODE}_${GCC_VER}/FV/${EDK2_BIN_NAME} ${D}/firmware/uefi.bin
+    install ${B}/Build/${EDK2_PLATFORM}/${EDK2_BUILD_MODE}_${EDK_COMPILER}/FV/${EDK2_BIN_NAME} ${D}/firmware/uefi.bin
 }
 
 FILES_${PN} = "/firmware"
