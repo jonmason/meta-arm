@@ -25,11 +25,11 @@ SRCREV_edk2           ?= "06dc822d045c2bb42e497487935485302486e151"
 SRCREV_edk2-platforms ?= "7aab81a35aef7b295e73d7d6dfd528cc812790ed"
 SRCREV_FORMAT         = "edk2_edk2-platforms"
 
-EDK2_BUILD_RELEASE   ?= "0"
-EDK2_PLATFORM        ?= "invalid"
-EDK2_PLATFORM_DSC    ?= ""
-EDK2_BIN_NAME        ?= ""
-EDK2_ARCH            ?= ""
+EDK2_BUILD_RELEASE   ?= "1"
+EDK2_PLATFORM        ?= "ArmVirtQemu-AARCH64"
+EDK2_PLATFORM_DSC    ?= "ArmVirtPkg/ArmVirtQemu.dsc"
+EDK2_BIN_NAME        ?= "QEMU_EFI.fd"
+EDK2_ARCH            ?= "AARCH64"
 
 EDK2_BUILD_MODE = "${@bb.utils.contains('EDK2_BUILD_RELEASE', '1', 'RELEASE', 'DEBUG', d)}"
 
@@ -41,7 +41,7 @@ S = "${WORKDIR}/edk2"
 B = "${WORKDIR}/build"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
-COMPATIBLE_MACHINE ?= "invalid"
+COMPATIBLE_MACHINE ?= "qemuarm64"
 
 LDFLAGS[unexport] = "1"
 
