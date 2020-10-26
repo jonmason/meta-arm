@@ -1,7 +1,5 @@
-SRC_URI = "\
-    git://git.linaro.org/landing-teams/working/arm/edk2.git;name=edk2;destsuffix=edk2;nobranch=1 \
-    git://git.linaro.org/landing-teams/working/arm/edk2-platforms.git;name=edk2-platforms;destsuffix=edk2/edk2-platforms;nobranch=1 \
-"
+EDK2_SRC_URI = "git://git.linaro.org/landing-teams/working/arm/edk2.git"
+EDK2_PLATFORMS_SRC_URI = "git://git.linaro.org/landing-teams/working/arm/edk2-platforms.git"
 
 # TAGS and commit ID as per N1SDP-2020.03.26 release
 SRCREV_edk2           = "3ff8a6bffabad761279817252014d59b6069d68a"
