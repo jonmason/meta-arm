@@ -48,16 +48,16 @@ project compilation (those can be set in your project local.conf, for example).
 
 The following parameters are available:
 
-- XENGUEST_MANAGER_VOLUME_DEVICE: This is the device path used by the 
+- XENGUEST_MANAGER_VOLUME_DEVICE: This is the device path used by the
   xenguest-manager on the device to create LVM disks when guests have a disk
   configuration.
   This is set by default to "/dev/sda2".
 
-- XENGUEST_MANAGER_VOLUME_NAME: This is the LVM volume name that the 
+- XENGUEST_MANAGER_VOLUME_NAME: This is the LVM volume name that the
   xenguest-manager will create and use to create guest LVM disks.
   This is set by default to "vg-xen".
 
-- XENGUEST_MANAGER_GUEST_DIR: This is the directory on Dom0 where the 
+- XENGUEST_MANAGER_GUEST_DIR: This is the directory on Dom0 where the
   xenguest-manager will look for xenguest images to create during init. That's
   the place where xenguest images can be added to have them automatically
   created during next Dom0 boot. The xenguests found there will only be created
@@ -65,3 +65,35 @@ The following parameters are available:
   name).
   This is set by default to "/usr/share/guests".
 
+Init scripts
+------------
+
+Shell scripts can be executed on the host when a guest is started. Depending on
+when the script should be executed it should be installed in a different
+directory on the target:
+
+- /etc/xenguest/init.pre  : Executed first, prior to guest creation
+
+- /etc/xenguest/init.d    : Executed after guest creation, but before it is started
+
+- /etc/xenguest/init.post : Executed after starting the guest
+
+Inside the directory, scripts will be executed in alphabetical order.
+
+Since these scripts are sourced by xenguest-manager they can acccess functions
+and variables from the parent file's scope, including:
+
+- ${guestname} : The name of the guest being created
+
+- ${guestdir}  : The path to the guest directory
+
+- ${LOGFILE}   : The file to append any logging to, e.g.
+                     echo "Hello, World" >> ${LOGFILE}
+
+Sourcing also allows the script to access params.cfg.
+
+
+An example of how to create the directory and install an init shell script can
+be found in:
+  recipes-extended/xenguest/xenguest-network.bb
+Where network-bridge.sh is installed from network-bridge.sh.in

@@ -1,13 +1,12 @@
 #!/bin/sh
 # This script is setting up a virtual network interface connected to the
 # xenguest-network-bridge if NETWORK_BRIDGE is set to 1 in the guest params
-
-guestname="${1}"
+#
+# Since this script is sourced by xenguest-manager, it can access variables
+# such as ${guestname} from the parent file's scope, as well as those in
+# params.cfg, for example XENGUEST_NETWORK_TYPE
 
 BRIDGE_NAME="###BRIDGE_NAME###"
-
-# get guest parameters
-. ./params.cfg
 
 case "${XENGUEST_NETWORK_TYPE:-}" in
     nat)

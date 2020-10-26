@@ -475,6 +475,9 @@ function xenguest_guest_start()
 
     # Build init script lists (ignore non existing dirs errors,
     # sort alphabetically and run global scripts first)
+    #
+    # These scripts are sourced throughout the start operation if they
+    # are executable
     init_pre="$(find ${XENGUEST_CONF_BASE}/init.pre -type f 2> /dev/null | \
             sort) $(find ${guestdir}/init.pre -type f 2> /dev/null | sort)"
     init_d="$(find ${XENGUEST_CONF_BASE}/init.d -type f 2> /dev/null | \
@@ -484,13 +487,18 @@ function xenguest_guest_start()
 
     # call pre init scripts
     for f in ${init_pre}; do
-        echo "$f ${guestname}" >> ${LOGFILE} 2>&1
-        $f ${guestname} >> ${LOGFILE} 2>&1
-        if [ $? -ne 0 ]; then
-            rm -f ${guestname}.cfg
-            popd > /dev/null 2>&1
-            echo "${PREF} Error during pre init script of ${guestname}"
-            exit 1
+        if [ -x "$f" ]; then
+            echo "( . $f )" >> ${LOGFILE} 2>&1
+            ( . $f ) >> ${LOGFILE} 2>&1
+            if [ $? -ne 0 ]; then
+                rm -f ${guestname}.cfg
+                popd > /dev/null 2>&1
+                echo "Error in init script $f" >> ${LOGFILE} 2>&1
+                echo "${PREF} Error during pre init script of ${guestname}"
+                exit 1
+            fi
+        else
+            echo "$f is not executable. Skipping." >> ${LOGFILE}
         fi
     done
 
@@ -506,15 +514,20 @@ function xenguest_guest_start()
 
     # call init scripts
     for f in ${init_d}; do
-        echo "$f ${guestname}" >> ${LOGFILE} 2>&1
-        $f ${guestname} >> ${LOGFILE} 2>&1
-        if [ $? -ne 0 ]; then
-            rm -f ${guestname}.cfg
-            echo "xl destroy ${guestname}" >> ${LOGFILE} 2>&1
-            xl destroy ${guestname} >> ${LOGFILE} 2>&1
-            popd > /dev/null 2>&1
-            echo "${PREF} Error during init script of ${guestname}"
-            exit 1
+        if [ -x "$f" ]; then
+            echo "( . $f )" >> ${LOGFILE} 2>&1
+            ( . $f ) >> ${LOGFILE} 2>&1
+            if [ $? -ne 0 ]; then
+                rm -f ${guestname}.cfg
+                echo "xl destroy ${guestname}" >> ${LOGFILE} 2>&1
+                xl destroy ${guestname} >> ${LOGFILE} 2>&1
+                popd > /dev/null 2>&1
+                echo "Error in init script $f" >> ${LOGFILE} 2>&1
+                echo "${PREF} Error during init script of ${guestname}"
+                exit 1
+            fi
+        else
+            echo "$f is not executable. Skipping." >> ${LOGFILE}
         fi
     done
 
@@ -530,15 +543,20 @@ function xenguest_guest_start()
 
     # call post init scripts
     for f in ${init_post}; do
-        echo "$f ${guestname}" >> ${LOGFILE} 2>&1
-        $f ${guestname} >> ${LOGFILE} 2>&1
-        if [ $? -ne 0 ]; then
-            rm -f ${guestname}.cfg
-            echo "xl destroy ${guestname}" >> ${LOGFILE} 2>&1
-            xl destroy ${guestname} >> ${LOGFILE} 2>&1
-            popd > /dev/null 2>&1
-            echo "${PREF} Error during post init script of ${guestname}"
-            exit 1
+        if [ -x "$f" ]; then
+            echo "( . $f )" >> ${LOGFILE} 2>&1
+            ( . $f ) >> ${LOGFILE} 2>&1
+            if [ $? -ne 0 ]; then
+                rm -f ${guestname}.cfg
+                echo "xl destroy ${guestname}" >> ${LOGFILE} 2>&1
+                xl destroy ${guestname} >> ${LOGFILE} 2>&1
+                popd > /dev/null 2>&1
+                echo "Error in init script $f" >> ${LOGFILE} 2>&1
+                echo "${PREF} Error during post init script of ${guestname}"
+                exit 1
+            fi
+        else
+            echo "$f is not executable. Skipping." >> ${LOGFILE}
         fi
     done
 
