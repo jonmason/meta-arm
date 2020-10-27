@@ -1,0 +1,539 @@
+From f409ffb29aa2fd9d531b5cf079e16dbe97f9054f Mon Sep 17 00:00:00 2001
+From: J-Alves <joao.alves@arm.com>
+Date: Thu, 22 Oct 2020 12:29:21 +0100
+Subject: [PATCH] FF-A: Booting SPs according to 'boot-order'
+
+Secure Hafnium boots partitions according to boot-order in the manifest.
+In this patch:
+- Added manifest parsing of "boot-order", and populated VM structure
+with it;
+- Added the field "next_boot" to the VM structure, in order to create a
+boot list that is sorted by the "boot-order";
+- If VMs have been configured with "boot-order" field at the partition's
+manifest, a boot list will be created with the VM structure;
+- The root of the list points to the highest priority VM;
+- Booting consists on traversing the list upon use of MSG_WAIT
+interface from the highest priority VMs;
+- After traversing the whole boot list, returns execution to SPMD;
+- If no partition has been configured with "boot-order" field, only the
+primary VM will boot;
+- "Manifest_Test.cc" updated to include "boot-order" field in
+tests to the partition manifest;
+- "vm_test.cc" updated to include unit test for the main logic of this
+patch.
+
+Change-Id: I43adf90447eed3bc24c8eb2ccb8eb979b471f3c3
+Signed-off-by: J-Alves <Joao.Alves@arm.com>
+---
+ inc/hf/api.h                          |  1 +
+ inc/hf/manifest.h                     |  2 +
+ inc/hf/vm.h                           | 10 ++++
+ src/api.c                             | 17 ++++++
+ src/arch/aarch64/hypervisor/cpu.c     |  5 ++
+ src/arch/aarch64/hypervisor/handler.c | 48 ++++++++++++++++-
+ src/load.c                            | 12 +++++
+ src/main.c                            | 19 ++++++-
+ src/manifest.c                        | 19 +++++++
+ src/manifest_test.cc                  | 11 ++++
+ src/vm.c                              | 39 ++++++++++++++
+ src/vm_test.cc                        | 75 ++++++++++++++++++++++++++-
+ 12 files changed, 255 insertions(+), 3 deletions(-)
+
+diff --git a/inc/hf/api.h b/inc/hf/api.h
+index a28c1d0..907d60b 100644
+--- a/inc/hf/api.h
++++ b/inc/hf/api.h
+@@ -37,6 +37,7 @@ struct ffa_value api_ffa_msg_send(ffa_vm_id_t sender_vm_id,
+ 				  ffa_vm_id_t receiver_vm_id, uint32_t size,
+ 				  uint32_t attributes, struct vcpu *current,
+ 				  struct vcpu **next);
++struct ffa_value api_ffa_msg_wait(struct vcpu *current, struct vcpu **next);
+ struct ffa_value api_ffa_msg_recv(bool block, struct vcpu *current,
+ 				  struct vcpu **next);
+ struct ffa_value api_ffa_rx_release(struct vcpu *current, struct vcpu **next);
+diff --git a/inc/hf/manifest.h b/inc/hf/manifest.h
+index 3e9eaf4..17b2ac9 100644
+--- a/inc/hf/manifest.h
++++ b/inc/hf/manifest.h
+@@ -29,6 +29,8 @@
+ /** Mask for getting read/write/execute permission */
+ #define MM_PERM_MASK 0x7
+ 
++#define DEFAULT_BOOT_ORDER 0xFF
++
+ enum run_time_el {
+ 	EL1 = 0,
+ 	S_EL0,
+diff --git a/inc/hf/vm.h b/inc/hf/vm.h
+index 01aaaca..0e4d23f 100644
+--- a/inc/hf/vm.h
++++ b/inc/hf/vm.h
+@@ -120,6 +120,13 @@ struct vm {
+ 
+ 	atomic_bool aborting;
+ 
++	/**
++	 * Booting parameters.
++	 */
++	bool initialized;
++	uint16_t boot_order;
++	struct vm *next_boot;
++
+ 	/** Arch-specific VM information. */
+ 	struct arch_vm arch;
+ };
+@@ -159,3 +166,6 @@ void vm_identity_commit(struct vm_locked vm_locked, paddr_t begin, paddr_t end,
+ bool vm_unmap(struct vm_locked vm_locked, paddr_t begin, paddr_t end,
+ 	      struct mpool *ppool);
+ bool vm_unmap_hypervisor(struct vm_locked vm_locked, struct mpool *ppool);
++
++void vm_update_boot(struct vm *vm);
++struct vm *vm_get_first_boot(void);
+diff --git a/src/api.c b/src/api.c
+index 1457d58..1da5df3 100644
+--- a/src/api.c
++++ b/src/api.c
+@@ -1260,6 +1260,23 @@ out:
+ 	return return_code;
+ }
+ 
++struct ffa_value api_ffa_msg_wait(struct vcpu *current, struct vcpu **next)
++{
++	struct vm *current_vm = current->vm;
++
++	/* If this a SP */
++	if (current_vm->id & HF_VM_ID_WORLD_MASK) {
++		*next = api_switch_to_other_world(
++			current, (struct ffa_value){.func = FFA_MSG_WAIT_32},
++			VCPU_STATE_BLOCKED_MAILBOX);
++
++		return (struct ffa_value){.func = FFA_INTERRUPT_32};
++	}
++
++	/* If NWd VM */
++	return api_ffa_msg_recv(true, current, next);
++}
++
+ /**
+  * Retrieves the next VM whose mailbox became writable. For a VM to be notified
+  * by this function, the caller must have called api_mailbox_send before with
+diff --git a/src/arch/aarch64/hypervisor/cpu.c b/src/arch/aarch64/hypervisor/cpu.c
+index 21bf6cf..0f6710e 100644
+--- a/src/arch/aarch64/hypervisor/cpu.c
++++ b/src/arch/aarch64/hypervisor/cpu.c
+@@ -65,7 +65,12 @@ void arch_regs_reset(struct vcpu *vcpu)
+ {
+ 	ffa_vm_id_t vm_id = vcpu->vm->id;
+ 	bool is_primary = vm_id == HF_PRIMARY_VM_ID;
++#if SECURE_WORLD == 0
+ 	cpu_id_t vcpu_id = is_primary ? vcpu->cpu->id : vcpu_index(vcpu);
++#else
++	cpu_id_t vcpu_id = vcpu_index(vcpu);
++#endif
++
+ 	paddr_t table = vcpu->vm->ptable.root;
+ 	struct arch_regs *r = &vcpu->regs;
+ 	uintreg_t pc = r->pc;
+diff --git a/src/arch/aarch64/hypervisor/handler.c b/src/arch/aarch64/hypervisor/handler.c
+index 4d3a462..f63b3c0 100644
+--- a/src/arch/aarch64/hypervisor/handler.c
++++ b/src/arch/aarch64/hypervisor/handler.c
+@@ -19,6 +19,7 @@
+ #include "hf/cpu.h"
+ #include "hf/dlog.h"
+ #include "hf/ffa.h"
++#include "hf/ffa_internal.h"
+ #include "hf/panic.h"
+ #include "hf/vm.h"
+ 
+@@ -259,6 +260,46 @@ static void set_virtual_interrupt_current(bool enable)
+ 	write_msr(hcr_el2, hcr_el2);
+ }
+ 
++#if SECURE_WORLD == 1
++static bool sp_boot_next(struct vcpu *current, struct vcpu **next,
++			 struct ffa_value *ret)
++{
++	struct vm_locked current_vm_locked = vm_lock(current->vm);
++	struct vm *vm_next;
++
++	/*
++	 * If VM hasn't been initialized, initialize it and traverse
++	 * booting list following "next_boot" field in the VM structure.
++	 * Once all the SPs have been booted (when "next_boot" is NULL),
++	 * return execution to the NWd.
++	 */
++	if (current_vm_locked.vm->initialized == false) {
++		current_vm_locked.vm->initialized = true;
++		dlog_verbose("Initialized VM: %#x, boot_order: %u\n",
++			     current_vm_locked.vm->id,
++			     current_vm_locked.vm->boot_order);
++
++		if (current_vm_locked.vm->next_boot != NULL) {
++			current->state = VCPU_STATE_BLOCKED_MAILBOX;
++			vm_next = current_vm_locked.vm->next_boot;
++			*next = vm_get_vcpu(vm_next, vcpu_index(current));
++			arch_regs_reset(*next);
++			(*next)->cpu = current->cpu;
++			(*next)->state = VCPU_STATE_RUNNING;
++
++			*ret = (struct ffa_value){.func = FFA_INTERRUPT_32};
++			return true;
++		}
++
++		dlog_verbose("Finished initializing all VMs.\n");
++	}
++
++	vm_unlock(&current_vm_locked);
++
++	return false;
++}
++#endif
++
+ /**
+  * Checks whether to block an SMC being forwarded from a VM.
+  */
+@@ -371,7 +412,12 @@ static bool ffa_handler(struct ffa_value *args, struct vcpu *current,
+ 			ffa_msg_send_attributes(*args), current, next);
+ 		return true;
+ 	case FFA_MSG_WAIT_32:
+-		*args = api_ffa_msg_recv(true, current, next);
++#if SECURE_WORLD == 1
++		if (sp_boot_next(current, next, args)) {
++			return true;
++		}
++#endif
++		*args = api_ffa_msg_wait(current, next);
+ 		return true;
+ 	case FFA_MSG_POLL_32:
+ 		*args = api_ffa_msg_recv(false, current, next);
+diff --git a/src/load.c b/src/load.c
+index f820204..ed57a70 100644
+--- a/src/load.c
++++ b/src/load.c
+@@ -148,7 +148,19 @@ static bool load_common(struct mm_stage1_locked stage1_locked,
+ 				return false;
+ 			}
+ 		}
++
++		/*
++		 * If DEFAULT_BOOT_ORDER is set, it means
++		 * boot-order hasn't been set.
++		 */
++		if (manifest_vm->sp.boot_order != DEFAULT_BOOT_ORDER) {
++			vm_locked.vm->boot_order = manifest_vm->sp.boot_order;
++
++			/* Updating Boot list according to boot_order */
++			vm_update_boot(vm_locked.vm);
++		}
+ 	}
++
+ 	/* Initialize architecture-specific features. */
+ 	arch_vm_features_set(vm_locked.vm);
+ 
+diff --git a/src/main.c b/src/main.c
+index 8a495db..c5604b4 100644
+--- a/src/main.c
++++ b/src/main.c
+@@ -16,13 +16,30 @@
+ struct vcpu *cpu_main(struct cpu *c)
+ {
+ 	struct vcpu *vcpu;
++#if SECURE_WORLD == 1
++	struct vm *first_boot = vm_get_first_boot();
+ 
++	/*
++	 * If `vm_get_first_boot` returns a valid VM, the first partition to
++	 * execute is in accordance to the boot-order field of the partition's
++	 * manifest.
++	 * Else, no partition has been configured with the "boot-order" field
++	 * in its manifest, and primary VM should be booted.
++	 */
++	if (!first_boot) {
++		first_boot = vm_find(HF_PRIMARY_VM_ID);
++	}
++
++	vcpu = vm_get_vcpu(first_boot, cpu_index(c));
++#else
+ 	vcpu = vm_get_vcpu(vm_find(HF_PRIMARY_VM_ID), cpu_index(c));
++#endif
++
+ 	vcpu->cpu = c;
+ 
+ 	arch_cpu_init();
+ 
+-	/* Reset the registers to give a clean start for the primary's vCPU. */
++	/* Reset the registers to give a clean start for vCPU. */
+ 	arch_regs_reset(vcpu);
+ 
+ 	return vcpu;
+diff --git a/src/manifest.c b/src/manifest.c
+index 60b0fa3..ab61b12 100644
+--- a/src/manifest.c
++++ b/src/manifest.c
+@@ -195,6 +195,21 @@ static enum manifest_return_code read_uint16(const struct fdt_node *node,
+ 	return MANIFEST_SUCCESS;
+ }
+ 
++static enum manifest_return_code read_optional_uint16(
++	const struct fdt_node *node, const char *property,
++	uint16_t default_value, uint16_t *out)
++{
++	enum manifest_return_code ret;
++
++	ret = read_uint16(node, property, out);
++	if (ret == MANIFEST_ERROR_PROPERTY_NOT_FOUND) {
++		*out = default_value;
++		return MANIFEST_SUCCESS;
++	}
++
++	return MANIFEST_SUCCESS;
++}
++
+ static enum manifest_return_code read_uint8(const struct fdt_node *node,
+ 					    const char *property, uint8_t *out)
+ {
+@@ -530,6 +545,10 @@ static enum manifest_return_code parse_ffa_manifest(struct fdt *fdt,
+ 	TRY(read_uint64(&root, "entrypoint-offset", &vm->sp.ep_offset));
+ 	dlog_verbose("  SP entry point offset %#x\n", vm->sp.ep_offset);
+ 
++	TRY(read_optional_uint16(&root, "boot-order", DEFAULT_BOOT_ORDER,
++				 &vm->sp.boot_order));
++	dlog_verbose(" SP boot order %#u\n", vm->sp.boot_order);
++
+ 	TRY(read_uint8(&root, "xlat-granule", (uint8_t *)&vm->sp.xlat_granule));
+ 	dlog_verbose("  SP translation granule %d\n", vm->sp.xlat_granule);
+ 
+diff --git a/src/manifest_test.cc b/src/manifest_test.cc
+index 98caf85..890ab26 100644
+--- a/src/manifest_test.cc
++++ b/src/manifest_test.cc
+@@ -235,6 +235,7 @@ class ManifestDtBuilder
+ 		Property("load-address", "<0x7000000>");
+ 		Property("entrypoint-offset", "<0x00001000>");
+ 		Property("xlat-granule", "<0>");
++		Property("boot-order", "<0>");
+ 		Property("messaging-method", "<1>");
+ 		return *this;
+ 	}
+@@ -730,6 +731,10 @@ TEST(manifest, ffa_missing_property)
+ 
+ TEST(manifest, ffa_validate_sanity_check)
+ {
++	/*
++	 * TODO: write test excluding all optional fields of the manifest, in
++	 * accordance with specification.
++	 */
+ 	struct manifest m;
+ 
+ 	/* Incompatible version */
+@@ -744,6 +749,7 @@ TEST(manifest, ffa_validate_sanity_check)
+ 		.Property("load-address", "<0x7000000>")
+ 		.Property("entrypoint-offset", "<0x00001000>")
+ 		.Property("xlat-granule", "<0>")
++		.Property("boot-order", "<0>")
+ 		.Property("messaging-method", "<1>")
+ 		.Build();
+ 	/* clang-format on */
+@@ -762,6 +768,7 @@ TEST(manifest, ffa_validate_sanity_check)
+ 		.Property("load-address", "<0x7000000>")
+ 		.Property("entrypoint-offset", "<0x00001000>")
+ 		.Property("xlat-granule", "<3>")
++		.Property("boot-order", "<0>")
+ 		.Property("messaging-method", "<1>")
+ 		.Build();
+ 	/* clang-format on */
+@@ -780,6 +787,7 @@ TEST(manifest, ffa_validate_sanity_check)
+ 		.Property("load-address", "<0x7000000>")
+ 		.Property("entrypoint-offset", "<0x00001000>")
+ 		.Property("xlat-granule", "<0>")
++		.Property("boot-order", "<0>")
+ 		.Property("messaging-method", "<1>")
+ 		.Build();
+ 	/* clang-format on */
+@@ -798,6 +806,7 @@ TEST(manifest, ffa_validate_sanity_check)
+ 		.Property("load-address", "<0x7000000>")
+ 		.Property("entrypoint-offset", "<0x00001000>")
+ 		.Property("xlat-granule", "<0>")
++		.Property("boot-order", "<0>")
+ 		.Property("messaging-method", "<1>")
+ 		.Build();
+ 	/* clang-format on */
+@@ -816,6 +825,7 @@ TEST(manifest, ffa_validate_sanity_check)
+ 		.Property("load-address", "<0x7000000>")
+ 		.Property("entrypoint-offset", "<0x00001000>")
+ 		.Property("xlat-granule", "<0>")
++		.Property("boot-order", "<0>")
+ 		.Property("messaging-method", "<3>")
+ 		.Build();
+ 	/* clang-format on */
+@@ -1054,6 +1064,7 @@ TEST(manifest, ffa_valid)
+ 	ASSERT_EQ(m.vm[0].sp.load_addr, 0x7000000);
+ 	ASSERT_EQ(m.vm[0].sp.ep_offset, 0x00001000);
+ 	ASSERT_EQ(m.vm[0].sp.xlat_granule, PAGE_4KB);
++	ASSERT_EQ(m.vm[0].sp.boot_order, 0);
+ 	ASSERT_EQ(m.vm[0].sp.messaging_method, INDIRECT_MESSAGING);
+ 	ASSERT_EQ(m.vm[0].sp.mem_regions[0].base_address, 0x7100000);
+ 	ASSERT_EQ(m.vm[0].sp.mem_regions[0].page_count, 4);
+diff --git a/src/vm.c b/src/vm.c
+index fbbdc9f..96e1212 100644
+--- a/src/vm.c
++++ b/src/vm.c
+@@ -21,6 +21,7 @@
+ static struct vm vms[MAX_VMS];
+ static struct vm other_world;
+ static ffa_vm_count_t vm_count;
++static struct vm *first_boot_vm;
+ 
+ struct vm *vm_init(ffa_vm_id_t id, ffa_vcpu_count_t vcpu_count,
+ 		   struct mpool *ppool)
+@@ -292,3 +293,41 @@ bool vm_unmap_hypervisor(struct vm_locked vm_locked, struct mpool *ppool)
+ 	       vm_unmap(vm_locked, layout_data_begin(), layout_data_end(),
+ 			ppool);
+ }
++
++/**
++ * Gets the first partition to boot, according to Boot Protocol from FFA spec.
++ */
++struct vm *vm_get_first_boot(void)
++{
++	return first_boot_vm;
++}
++
++/**
++ * Insert in boot list, sorted by `boot_order` parameter in the vm structure
++ * and rooted in `first_boot_vm`.
++ */
++void vm_update_boot(struct vm *vm)
++{
++	struct vm *current = NULL;
++	struct vm *previous = NULL;
++
++	if (first_boot_vm == NULL) {
++		first_boot_vm = vm;
++		return;
++	}
++
++	current = first_boot_vm;
++
++	while (current != NULL && current->boot_order >= vm->boot_order) {
++		previous = current;
++		current = current->next_boot;
++	}
++
++	if (previous != NULL) {
++		previous->next_boot = vm;
++	} else {
++		first_boot_vm = vm;
++	}
++
++	vm->next_boot = current;
++}
+diff --git a/src/vm_test.cc b/src/vm_test.cc
+index 6fb2bce..4a0c119 100644
+--- a/src/vm_test.cc
++++ b/src/vm_test.cc
+@@ -13,6 +13,7 @@ extern "C" {
+ #include "hf/vm.h"
+ }
+ 
++#include <list>
+ #include <memory>
+ #include <span>
+ #include <vector>
+@@ -29,7 +30,7 @@ using ::testing::SizeIs;
+ 
+ using struct_vm = struct vm;
+ 
+-constexpr size_t TEST_HEAP_SIZE = PAGE_SIZE * 16;
++constexpr size_t TEST_HEAP_SIZE = PAGE_SIZE * 32;
+ const int TOP_LEVEL = arch_mm_stage2_max_level();
+ 
+ class vm : public ::testing::Test
+@@ -49,6 +50,12 @@ class vm : public ::testing::Test
+ 
+        protected:
+ 	struct mpool ppool;
++
++       public:
++	static bool BootOrderBiggerThan(struct_vm *vm1, struct_vm *vm2)
++	{
++		return vm1->boot_order > vm2->boot_order;
++	}
+ };
+ 
+ /**
+@@ -70,4 +77,70 @@ TEST_F(vm, vm_unmap_hypervisor_not_mapped)
+ 	vm_unlock(&vm_locked);
+ }
+ 
++/**
++ * Validate the "boot_list" is created properly, according to vm's "boot_order"
++ * field.
++ */
++TEST_F(vm, vm_boot_order)
++{
++	struct_vm *vm_cur;
++	std::list<struct_vm *> expected_final_order;
++
++	EXPECT_FALSE(vm_get_first_boot());
++
++	/*
++	 * Insertion when no call to "vm_update_boot" has been made yet.
++	 * The "boot_list" is expected to be empty.
++	 */
++	EXPECT_TRUE(vm_init_next(1, &ppool, &vm_cur));
++	vm_cur->boot_order = 1;
++	vm_update_boot(vm_cur);
++	expected_final_order.push_back(vm_cur);
++
++	EXPECT_EQ(vm_get_first_boot()->id, vm_cur->id);
++
++	/* Insertion at the head of the boot list */
++	EXPECT_TRUE(vm_init_next(1, &ppool, &vm_cur));
++	vm_cur->boot_order = 3;
++	vm_update_boot(vm_cur);
++	expected_final_order.push_back(vm_cur);
++
++	EXPECT_EQ(vm_get_first_boot()->id, vm_cur->id);
++
++	/* Insertion of two in the middle of the boot list */
++	for (int i = 0; i < 2; i++) {
++		EXPECT_TRUE(vm_init_next(1, &ppool, &vm_cur));
++		vm_cur->boot_order = 2;
++		vm_update_boot(vm_cur);
++		expected_final_order.push_back(vm_cur);
++	}
++
++	/*
++	 * Insertion in the end of the list.
++	 * This tests shares the data with "vm_unmap_hypervisor_not_mapped".
++	 * As such, a VM is expected to have been initialized before this
++	 * test, with ID 1 and boot_order 0.
++	 */
++	vm_cur = vm_find(1);
++	EXPECT_FALSE(vm_cur == NULL);
++	vm_update_boot(vm_cur);
++	expected_final_order.push_back(vm_cur);
++
++	/*
++	 * Number of VMs initialized should be the same as in the
++	 * "expected_final_order", before the final verification.
++	 */
++	EXPECT_EQ(expected_final_order.size(), vm_get_count())
++		<< "Something went wrong with the test itself...\n";
++
++	/* Sort "expected_final_order" by "boot_order" field */
++	expected_final_order.sort(vm::BootOrderBiggerThan);
++
++	std::list<struct_vm *>::iterator it;
++	for (it = expected_final_order.begin(), vm_cur = vm_get_first_boot();
++	     it != expected_final_order.end() && vm_cur != NULL;
++	     it++, vm_cur = vm_cur->next_boot) {
++		EXPECT_EQ((*it)->id, vm_cur->id);
++	}
++}
+ } /* namespace */
+-- 
+2.17.1
+
