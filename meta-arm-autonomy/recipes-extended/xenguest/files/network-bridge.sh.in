@@ -10,16 +10,6 @@ BRIDGE_NAME="###BRIDGE_NAME###"
 
 case "${XENGUEST_NETWORK_TYPE:-}" in
     nat)
-        # Create the symlinks for the files that vif-nat script expects
-        if [ ! -f /etc/dhcpd.conf ]; then
-            ln -s dhcp/dhcpd.conf /etc/dhcpd.conf
-        fi
-        if [ ! -f /etc/init.d/dhcp3-server ]; then
-            ln -s dhcp-server /etc/init.d/dhcp3-server
-        fi
-        if [ ! -f /etc/default/dhcp3-server ]; then
-            ln -s dhcp-server /etc/default/dhcp3-server
-        fi
         echo "vif = ['script=vif-nat']" >> ${guestcfgfile}
         ;;
     bridge)

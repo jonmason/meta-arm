@@ -12,9 +12,10 @@ At the moment 3 types of network arrangements are provided:
 
 - Bridge: where the guest vif is added to the created bridge interface;
 
-- NAT: where a private subnet is created for the guest, a dhcpd is started on
-  the host to serve the guest and the proper iptables rules are created to
-  allow the guest to access the external network;
+- NAT: where a private subnet is created for the guest,
+  a kea dhcp4 server is started on the host to serve the guest
+  and the proper iptables rules are created
+  to allow the guest to access the external network;
 
 - None: the guest vif is not connected to the bridge.
 
@@ -55,17 +56,20 @@ The following parameters are available:
   contains the dom0 physical interface giving the guest direct access to the
   external network.
   The **nat** type will setup a private network between dom0 and domU, setup
-  the appropriate routing table, configure and run the dhcpd on dom0 to serve
-  the domU and apply the iptables rules to allow the guest to acess the
-  external network. The dhcpd configuration for the guest can be customised by
-  replacing the
-  "meta-arm-autonomy/recipes-extended/xenguest/files/dhcpd-params.cfg" file
-  in a xenguest-network.bbappend. The dhcpd-params.cfg file is installed in
+  the appropriate routing table, configure and run the kea dhcp4 server
+  on dom0 to serve the domU and apply the iptables rules to allow the guest
+  to acess the external network. The kea dhcp4 server configuration for
+  the guest can be customised by replacing the
+  "meta-arm-autonomy/recipes-extended/xenguest/files/kea-subnet4.json" file
+  in a xenguest-network.bbappend. The kea-subnet4.json file is installed in
   the xenguest image and copied to
-  "/etc/xenguest/guests/${guestname}/files/dhcpd-params.cfg" when the guest
+  "/etc/xenguest/guests/${guestname}/files/kea-subnet4.json" when the guest
   image is created. It will be consumed by the
   "/etc/xen/scripts/vif-post.d/00-vif-xenguest.hook" script which is called by
   "/etc/xen/scripts/vif-nat" script when starting/stopping the xenguest.
+  After guest start, "/etc/xenguest/init.post/xenguest-network-init-post.sh"
+  script is called to reload kea dhcp4 server with updated configuration,
+  after virtual network interface is ready.
   In the guest project, the NAT port forward can be customised by changing
   the XENGUEST_IMAGE_HOST_PORT (default: "1000 + ${domid}") and
   XENGUEST_IMAGE_GUEST_PORT (default: "22") variables in local.conf or

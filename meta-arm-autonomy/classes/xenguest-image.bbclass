@@ -62,7 +62,7 @@ XENGUEST_IMAGE_DISK_PARTITIONS ??= "1:${XENGUEST_IMAGE_DISK_SIZE}:ext4:rootfs.ta
 # The "bridge" type will share the physical eth interface from dom0 with the
 # domU. This will allow the domU to have access to the external network.
 # The "nat" type will setup a virtual network between dom0 and domU and also
-# configure and run the dhcpd on dom0 to serve the domU.
+# configure and run the kea dhcp4 server on dom0 to serve the domU.
 # The "none" type will not affect any networking setting between on dom0 and
 # domU.
 XENGUEST_IMAGE_NETWORK_TYPE ??= "bridge"
