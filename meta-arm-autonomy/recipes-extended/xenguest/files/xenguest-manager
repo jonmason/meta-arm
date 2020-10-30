@@ -597,11 +597,22 @@ function check_guest_exist()
     fi
 }
 
+function xl_list_contains()
+{
+    guestname="${1}"
+    # Select first column of xl list, and find guestname exactly using regex
+    running=$(xl list | awk 'NR > 1 {print $1}' | grep "^${guestname}$" || echo)
+    if [ "${running}" = "${guestname}" ]; then
+        return 0
+    fi
+
+    return 1
+}
+
 function check_guest_running()
 {
     guestname="${1}"
-    running=$(xl list | awk 'NR > 1 {print $1}' | grep "${guestname}" || echo)
-    if [ ! "${running}" = "${guestname}" ]; then
+    if ! xl_list_contains $guestname; then
         echo "${PREF} Guest ${guestname} is not running"
         exit 1
     fi
@@ -610,8 +621,7 @@ function check_guest_running()
 function check_guest_not_running()
 {
     guestname="${1}"
-    running=$(xl list | awk 'NR > 1 {print $1}' | grep "${guestname}" || echo)
-    if [ "${running}" = "${guestname}" ]; then
+    if xl_list_contains $guestname; then
         echo "${PREF} Guest ${guestname} is running"
         exit 1
     fi
@@ -668,10 +678,8 @@ case ${cmd} in
         guestname="${arg1:-}"
         check_guest_arg ${cmd} ${guestname}
         check_guest_exist ${guestname}
-        # We need to stop the guest first
-        running=$(xl list | awk 'NR > 1 {print $1}' | grep "${guestname}" \
-            || echo)
-        if [ "${running}" = "${guestname}" ]; then
+        # We need to stop the guest first if it is running
+        if xl_list_contains $guestname; then
             echo "xl destroy ${guestname}" >> ${LOGFILE} 2>&1
             xl destroy ${guestname} >> ${LOGFILE} 2>&1
             if [ $? -ne 0 ]; then
@@ -719,20 +727,25 @@ case ${cmd} in
         fi
         ;;
     status)
-        guestname="${arg1}"
-        if [ -n "${guestname}" ]; then
+
+        single_status() (
+            guestname="${1}"
             check_guest_exist ${guestname}
-            if xl list | awk 'NR > 1 {print $1}' | grep "${guestname}" > \
-                /dev/null 2>&1; then
+            if xl_list_contains $guestname; then
                 echo "${guestname}: Running"
             else
                 echo "${guestname}: Stopped"
             fi
+        )
+
+        guestname="${arg1}"
+        if [ -n "${guestname}" ]; then
+            single_status ${guestname}
         else
             guestlist=$($this list)
             if [ -n "${guestlist}" ]; then
                 for f in ${guestlist}; do
-                    $this status $f
+                    single_status $f
                 done
             fi
         fi
