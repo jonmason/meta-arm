@@ -8,7 +8,7 @@ SRCREV = "957d18219d162f52ebe2426f32a4263ec10f357d"
 
 S = "${WORKDIR}/git"
 
-COMPATIBLE_HOST = "(x86_64.*|aarch64.*)-linux"
+COMPATIBLE_HOST = "(i.86|x86_64|arm|aarch64).*-linux"
 
 EXTRA_OEMAKE = "ARCH='${TARGET_ARCH}' \
                 CROSS_COMPILE='${TARGET_SYS}-' \
