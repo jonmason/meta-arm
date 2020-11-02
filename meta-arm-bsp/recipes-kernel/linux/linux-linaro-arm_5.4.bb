@@ -5,6 +5,13 @@ SRCREV_meta ?= "e32057eca987b7abbe3eb47ba36f06af8711278a"
 KBRANCH ?= "n1sdp"
 KMETA_BRANCH ?= "yocto-5.4"
 
-SRC_URI_append = " file://fix-bfd-link.patch"
+# Apply following patches
+SRC_URI_append = " \
+    file://fix-bfd-link.patch \
+    file://perf-fixup-gcc10-01.patch \
+    file://perf-fixup-gcc10-02.patch \
+    file://perf-fixup-gcc10-03.patch \
+    file://perf-fixup-gcc10-04.patch \
+    "
 
 require linux-linaro-arm.inc
