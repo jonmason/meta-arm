@@ -2,8 +2,8 @@ SUMMARY = "OP-TEE examples"
 DESCRIPTION = "Open Portable Trusted Execution Environment - Sample Applications"
 HOMEPAGE = "https://github.com/linaro-swg/optee_examples"
 
-LICENSE = "GPLv2"
-LIC_FILES_CHKSUM = "file://${S}/LICENSE;md5=cd95ab417e23b94f381dafc453d70c30"
+LICENSE = "BSD-2-Clause"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=cd95ab417e23b94f381dafc453d70c30"
 
 DEPENDS = "optee-client optee-os python3-pycryptodomex-native"
 
@@ -36,8 +36,7 @@ TEEC_EXPORT = "${STAGING_DIR_HOST}${prefix}"
 TA_DEV_KIT_DIR = "${STAGING_INCDIR}/optee/export-user_ta"
 
 do_compile() {
-    cd ${S}
-    oe_runmake
+    oe_runmake -C ${S}
 }
 do_compile[cleandirs] = "${B}"
 
@@ -52,4 +51,3 @@ FILES_${PN} += "${nonarch_base_libdir}/optee_armtz/"
 
 # Imports machine specific configs from staging to build
 PACKAGE_ARCH = "${MACHINE_ARCH}"
-
