@@ -15,25 +15,14 @@ SRC_URI = "git://github.com/linaro-swg/optee_examples.git \
            file://0001-make-Pass-ldflags-during-link.patch \
           "
 
-OPTEE_COMPILER = "${@d.getVar('TOOLCHAIN') or 'gcc'}"
-
-EXTRA_OEMAKE = " TA_DEV_KIT_DIR=${TA_DEV_KIT_DIR} \
-                 OPTEE_CLIENT_EXPORT=${OPTEE_CLIENT_EXPORT} \
-                 TEEC_EXPORT=${TEEC_EXPORT} \
-                 HOST_CROSS_COMPILE=${TARGET_PREFIX} \
-                 LIBGCC_LOCATE_CFLAGS=--sysroot=${STAGING_DIR_HOST} \
-                 COMPILER=${OPTEE_COMPILER} \
-                 TA_CROSS_COMPILE=${TARGET_PREFIX} \
-                 V=1 \
+EXTRA_OEMAKE += "TA_DEV_KIT_DIR=${TA_DEV_KIT_DIR} \
+                 HOST_CROSS_COMPILE=${HOST_PREFIX} \
+                 TA_CROSS_COMPILE=${HOST_PREFIX} \
                  OUTPUT_DIR=${B} \
                "
 
 S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
-
-OPTEE_CLIENT_EXPORT = "${STAGING_DIR_HOST}${prefix}"
-TEEC_EXPORT = "${STAGING_DIR_HOST}${prefix}"
-TA_DEV_KIT_DIR = "${STAGING_INCDIR}/optee/export-user_ta"
 
 do_compile() {
     oe_runmake -C ${S}

@@ -17,25 +17,13 @@ SRC_URI = "git://github.com/OP-TEE/optee_os.git"
 S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
 
-OPTEEMACHINE ?= "${MACHINE}"
-OPTEEMACHINE_aarch64_qemuall ?= "vexpress-qemu_armv8a"
-OPTEE_ARCH = "null"
-OPTEE_ARCH_armv7a = "arm32"
-OPTEE_ARCH_aarch64 = "arm64"
-OPTEE_CORE = "${@d.getVar('OPTEE_ARCH').upper()}"
-OPTEE_COMPILER = "${@d.getVar('TOOLCHAIN') or 'gcc'}"
-
-
-EXTRA_OEMAKE = " \
+EXTRA_OEMAKE += " \
     PLATFORM=${OPTEEMACHINE} \
     CFG_${OPTEE_CORE}_core=y \
     CROSS_COMPILE_core=${HOST_PREFIX} \
     CROSS_COMPILE_ta_${OPTEE_ARCH}=${HOST_PREFIX} \
     NOWERROR=1 \
-    V=1 \
     ta-targets=ta_${OPTEE_ARCH} \
-    LIBGCC_LOCATE_CFLAGS=--sysroot=${STAGING_DIR_HOST} \
-    COMPILER=${OPTEE_COMPILER} \
     O=${B} \
 "
 
