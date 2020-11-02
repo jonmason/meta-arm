@@ -2,8 +2,8 @@ SUMMARY = "OP-TEE Trusted OS"
 DESCRIPTION = "Open Portable Trusted Execution Environment - Trusted side of the TEE"
 HOMEPAGE = "https://www.op-tee.org/"
 
-LICENSE = "BSD"
-LIC_FILES_CHKSUM = "file://${S}/LICENSE;md5=c1f21c4f72f372ef38a5a4aee55ec173"
+LICENSE = "BSD-2-Clause"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=c1f21c4f72f372ef38a5a4aee55ec173"
 
 inherit deploy python3native
 require optee.inc
@@ -48,8 +48,7 @@ LD[unexport] = "1"
 do_configure[noexec] = "1"
 
 do_compile() {
-    cd ${S}
-    oe_runmake all CFG_TEE_TA_LOG_LEVEL=0
+    oe_runmake -C ${S} all CFG_TEE_TA_LOG_LEVEL=0
 }
 do_compile[cleandirs] = "${B}"
 
