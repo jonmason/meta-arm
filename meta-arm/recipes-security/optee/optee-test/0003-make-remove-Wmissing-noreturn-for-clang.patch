@@ -7,7 +7,7 @@ When compiling with clang, the -Wno-unsafe-loop-optimizations option
 throws an error because clang doesn't recognise it. This option is
 removed to workaround this.
 
-Upstream-Status: Pending
+Upstream-Status: Pending [https://github.com/OP-TEE/optee_test/issues/452]
 Change-Id: 5fe0892c73208aaffac8c9995cb3275936fb1ba6
 Signed-off-by: Brett Warren <brett.warren@arm.com>
 ---
