@@ -8,6 +8,10 @@ LIC_FILES_CHKSUM = "file://${S}/LICENSE.md;md5=daa2bcccc666345ab8940aab1315a4fa"
 inherit python3native
 require optee.inc
 
+# Linking fails on musl due to C++/threads
+# https://github.com/OP-TEE/optee_test/issues/458#issuecomment-720540834
+COMPATIBLE_HOST_libc-musl = 'null'
+
 DEPENDS = "optee-client optee-os python3-pycryptodomex-native"
 
 SRC_URI = "git://github.com/OP-TEE/optee_test.git \
