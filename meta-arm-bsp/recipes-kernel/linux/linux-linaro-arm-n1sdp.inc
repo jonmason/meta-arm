@@ -1,4 +1,4 @@
-FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}-5.4:"
+FILESEXTRAPATHS_prepend := "${THISDIR}/linux-linaro-arm-5.4:"
 
 SRC_URI_append = " \
     file://0001-TMP-iommu-arm-smmu-v3-Ignore-IOPF-capabilities.patch \
@@ -21,3 +21,11 @@ KBUILD_DEFCONFIG = "defconfig"
 KCONFIG_MODE = "--alldefconfig"
 
 COMPATIBLE_MACHINE = "n1sdp"
+
+# RT kernel machine description
+FILESEXTRAPATHS_prepend_pn-linux-linaro-arm-rt := "${THISDIR}:"
+SRC_URI_append_pn-linux-linaro-arm-rt = " file://arm-platforms-kmeta;type=kmeta;name=arm-platforms-kmeta;destsuffix=arm-platforms-kmeta"
+
+# Since we use the intree defconfig and the preempt-rt turns off some configs
+# do_kernel_configcheck will display warnings. So, lets disable it.
+KCONF_AUDIT_LEVEL_pn-linux-linaro-arm-rt = "0"
