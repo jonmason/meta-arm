@@ -11,7 +11,6 @@ TUNECONFLICTS[armv7em] = "armv4 armv5 armv6 armv7a"
 
 require conf/machine/include/arm/arch-armv7m.inc
 
-
 AVAILTUNES                            += "armv7em"
 ARMPKGARCH_tune-armv7em                = "armv7em"
 TUNE_FEATURES_tune-armv7em             = "armv7em"
