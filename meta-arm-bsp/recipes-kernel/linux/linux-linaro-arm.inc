@@ -17,3 +17,9 @@ DEPENDS += "openssl-native util-linux-native"
 
 LINUX_VERSION ?= "${PV}"
 S = "${WORKDIR}/git"
+
+# Add machine-specific settings
+MACHINE_KERNEL_REQUIRE ?= ""
+MACHINE_KERNEL_REQUIRE_n1sdp = "linux-linaro-arm-n1sdp.inc"
+
+require ${MACHINE_KERNEL_REQUIRE}
