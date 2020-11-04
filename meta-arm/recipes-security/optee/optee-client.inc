@@ -16,6 +16,7 @@ SRC_URI = " \
 S = "${WORKDIR}/git"
 
 EXTRA_OECMAKE = "-DBUILD_SHARED_LIBS=ON"
+EXTRA_OECMAKE_append_toolchain-clang = " -DCFG_WERROR=0"
 
 do_install_append() {
     install -D -p -m0644 ${WORKDIR}/tee-supplicant.service ${D}${systemd_system_unitdir}/tee-supplicant.service
