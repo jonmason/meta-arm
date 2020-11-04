@@ -1,5 +1,5 @@
 DESCRIPTION = "Trusted Firmware-A"
-LICENSE = "BSD & Apache-2.0"
+LICENSE = "BSD-3-Clause"
 
 PROVIDES = "virtual/trusted-firmware-a"
 
@@ -39,8 +39,9 @@ SRC_URI_MBEDTLS ??= ""
 LIC_FILES_CHKSUM_MBEDTLS ??= ""
 # add MBEDTLS to our sources if activated
 SRC_URI_append = " ${@bb.utils.contains('TFA_MBEDTLS', '1', '${SRC_URI_MBEDTLS}', '', d)}"
-# add mbed TLS chksum
-LIC_FILES_CHKSUM += "${@bb.utils.contains('TFA_MBEDTLS', '1', '${LIC_FILES_CHKSUM_MBEDTLS}', '', d)}"
+# Update license variables
+LICENSE_append = "${@bb.utils.contains('TFA_MBEDTLS', '1', ' & Apache-2.0', '', d)}"
+LIC_FILES_CHKSUM_append = "${@bb.utils.contains('TFA_MBEDTLS', '1', ' ${LIC_FILES_CHKSUM_MBEDTLS}', '', d)}"
 # add mbed TLS to version
 SRCREV_FORMAT_append = "${@bb.utils.contains('TFA_MBEDTLS', '1', '_mbedtls', '', d)}"
 
