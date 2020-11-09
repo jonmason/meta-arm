@@ -4,7 +4,7 @@ inherit deploy nopackages
 
 DEPENDS = "virtual/uefi-firmware \
            virtual/control-processor-firmware \
-           board-firmware-n1sdp"
+           n1sdp-board-firmware"
 
 LICENSE = "MIT"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
