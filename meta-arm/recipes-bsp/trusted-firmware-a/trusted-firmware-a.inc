@@ -112,6 +112,9 @@ DEPENDS += " ${@bb.utils.contains('TFA_UBOOT', '1', 'u-boot', '', d)}"
 do_compile[depends] += " ${@bb.utils.contains('TFA_UBOOT', '1', 'u-boot:do_deploy', '', d)}"
 EXTRA_OEMAKE += "${@bb.utils.contains('TFA_UBOOT', '1', 'BL33=${DEPLOY_DIR_IMAGE}/u-boot.bin', '',d)}"
 
+# Tell the tools where the native OpenSSL is located
+EXTRA_OEMAKE += "OPENSSL_DIR=${STAGING_DIR_NATIVE}/${prefix_native}"
+
 EXTRA_OEMAKE_append_aarch64_qemuall = " \
     BL32=${STAGING_DIR_TARGET}${nonarch_base_libdir}/firmware/tee-header_v2.bin \
     BL32_EXTRA1=${STAGING_DIR_TARGET}${nonarch_base_libdir}/firmware/tee-pager_v2.bin \
@@ -132,6 +135,7 @@ do_compile() {
     # These changes are needed to have the native tools compiling and executing properly
     sed -i '/^LDLIBS/ s,$, \$\{BUILD_LDFLAGS},' ${S}/tools/fiptool/Makefile
     sed -i '/^INCLUDE_PATHS/ s,$, \$\{BUILD_CFLAGS},' ${S}/tools/fiptool/Makefile
+    # This can be removed when only TF-A 2.4 onwards is supported
     sed -i 's^OPENSSL_DIR.*=.*$^OPENSSL_DIR = ${STAGING_DIR_NATIVE}/${prefix_native}^' ${S}/tools/*/Makefile
 
     # Currently there are races if you build all the targets at once in parallel
