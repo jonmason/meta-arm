@@ -1,5 +1,3 @@
 define KFEATURE_DESCRIPTION "Enable XEN Host Drivers on autonomy systems"
 
 kconf non-hardware xen-host.cfg
-
-patch 0001-xen-arm-do-not-setup-the-runstate-info-page-if-kpti-.patch
