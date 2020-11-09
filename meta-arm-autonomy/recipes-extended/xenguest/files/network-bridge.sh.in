@@ -8,7 +8,7 @@
 
 BRIDGE_NAME="###BRIDGE_NAME###"
 
-case "${XENGUEST_NETWORK_TYPE:-}" in
+case "${XENGUEST_NETWORK_TYPE:=}" in
     nat)
         echo "vif = ['script=vif-nat']" >> ${guestcfgfile}
         ;;
