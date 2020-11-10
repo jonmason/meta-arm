@@ -4,7 +4,7 @@
 
 ### Configuration:
 In the local.conf file, MACHINE should be set as follow:
-MACHINE ?= "foundation-v8"
+MACHINE ?= "foundation-armv8"
 
 ### Build:
 ```bash$ bitbake core-image-minimal```
