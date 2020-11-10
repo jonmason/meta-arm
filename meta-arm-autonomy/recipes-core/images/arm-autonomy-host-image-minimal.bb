@@ -106,7 +106,14 @@ python add_extern_guests () {
         _, _, path, _, _, parm = bb.fetch.decodeurl(entry)
         if 'guestname' in parm:
             if os.path.islink(path):
-                bb.fatal("Guest file is a symlink: " + path)
+                realpath = os.path.realpath(path)
+
+                if not os.path.exists(realpath):
+                    bb.fatal("ARM_AUTONOMY_HOST_IMAGE_EXTERN_GUESTS link does not resolve: " + path)
+
+                bb.note("Guest file is a symlink:\n " + path + "\nResolved to:\n " + realpath)
+                path = realpath
+
             bb.utils.mkdirhier(guestdir)
             dstname = parm['guestname']
             # Add file extension if not there
