@@ -31,6 +31,8 @@ SERIAL_CONSOLES = "115200;ttyAMA0"
 PREFERRED_PROVIDER_virtual/kernel ?= "linux-yocto"
 PREFERRED_VERSION_linux-yocto ?= "5.4%"
 
+PREFERRED_VERSION_u-boot ?= "2020.07"
+
 EXTRA_IMAGEDEPENDS += "virtual/trusted-firmware-a u-boot"
 
 # As this is a virtual target that will not be used in the real world there is

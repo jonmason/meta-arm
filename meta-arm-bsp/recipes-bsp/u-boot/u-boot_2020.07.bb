@@ -6,8 +6,6 @@ application code."
 SECTION = "bootloaders"
 DEPENDS += "flex-native bison-native"
 
-COMPATIBLE_MACHINE = "(corstone700-*)"
-
 LICENSE = "GPLv2+"
 LIC_FILES_CHKSUM = "file://Licenses/README;md5=30503fd321432fc713238f582193b78e"
 PE = "1"
