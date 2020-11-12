@@ -1,13 +1,5 @@
 FILESEXTRAPATHS_prepend := "${THISDIR}/files/corstone700:"
 
-# including linux-yocto.inc to use configuration fragments
-require recipes-kernel/linux/linux-yocto.inc
-
-LINUX_VMAJOR = "5"
-LINUX_VMINOR = "6"
-LINUX_VPATCH = "14"
-LINUX_SRCREV = "e3ac9117b18596b7363d5b7904ab03a7d782b40c"
-
 COMPATIBLE_MACHINE = "${MACHINE}"
 
 KMACHINE = "corstone700"
