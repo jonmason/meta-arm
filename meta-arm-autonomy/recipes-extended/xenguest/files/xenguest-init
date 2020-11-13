@@ -65,8 +65,10 @@ case "$1" in
         ;;
   stop)
         echo "Stopping xenguest"
+        # update guest list
+        guestlist=$(xenguest-manager status | grep Running | cut -d ":" -f1)
         for f in ${guestlist}; do
-            /usr/bin/xenguest-manager stop ${f}
+            xl shutdown -w ${f} || xl destroy ${f}
         done
         ;;
   reload)
