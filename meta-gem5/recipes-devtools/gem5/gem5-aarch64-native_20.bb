@@ -8,8 +8,8 @@ SRC_URI = "git://gem5.googlesource.com/public/gem5;protocol=https;nobranch=1 \
            file://0002-arch-arm-Introduce-HavePACExt-helper.patch \
            file://0003-arch-arm-Check-if-PAC-is-implemented-before-executing-insts.patch \
           "
-RELEASE_TAG = "v20.0.0.1"
-SRCREV = "332a9de33db603e0aefedae1e05134db4257ea3e"
+RELEASE_TAG = "v20.0.0.3"
+SRCREV = "fa70478413e4650d0058cbfe81fd5ce362101994"
 
 PV = "${RELEASE_TAG}"
 
