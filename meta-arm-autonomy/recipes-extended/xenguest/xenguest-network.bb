@@ -29,9 +29,10 @@ PACKAGES =+ "${PN}-kea-dhcp4"
 
 # Bridge configurator needs to run before S01networking init script
 # Prefix with a_ to make sure it is executed in runlevel 01 before others
+# run start script before ifupdown and run stop script after ifupdown
 INITSCRIPT_PACKAGES = "${PN} ${PN}-kea-dhcp4"
 INITSCRIPT_NAME_${PN} = "a_xenguest-network-bridge"
-INITSCRIPT_PARAMS_${PN} = "defaults 01"
+INITSCRIPT_PARAMS_${PN} = "start 01 2 3 4 5 . stop 81 0 1 6 ."
 
 # Kea configuration needs to be restored before kea init scripts:
 # Kea dhcp4 server is 30, so lets use 20, to have higher priority

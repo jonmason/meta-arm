@@ -21,8 +21,9 @@ XENGUEST_MANAGER_VOLUME_NAME ?= "vg-xen"
 XENGUEST_MANAGER_GUEST_DIR ?= "${datadir}/guests/"
 
 # We add an init script to create and start guests automatically
+# run start script after xen-tools and run stop script before xen-tools
 INITSCRIPT_NAME = "xenguest"
-INITSCRIPT_PARAMS = "defaults 90"
+INITSCRIPT_PARAMS = "start 90 2 3 4 5 . stop 79 0 1 6 ."
 
 inherit update-rc.d
 
