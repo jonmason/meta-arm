@@ -9,7 +9,7 @@ FILESEXTRAPATHS_prepend_foundation-armv8 = "${THIS_DIR}/${BP}/fvp-common:"
 # Corstone-500 MACHINE
 #
 SRC_URI_append_corstone500 = " \
-                   file://0001-armv7-add-mmio-timer.patch \
+                   file://0001-armv7-adding-generic-timer-access-through-MMIO.patch \
                    file://0002-board-arm-add-corstone500-board.patch"
 
 #
