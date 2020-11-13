@@ -10,7 +10,7 @@ LICENSE = "BSD & MIT & LGPLv2.1"
 GEM5_BUILD_CONFIGS ?= "build/X86/gem5.opt"
 
 # Scons build arguments
-GEM5_SCONS_ARGS ?= "-j ${BB_NUMBER_THREADS} CC=${BUILD_CC} CXX=${BUILD_CXX} \
+GEM5_SCONS_ARGS ?= "CC=${BUILD_CC} CXX=${BUILD_CXX} \
     AS=${BUILD_AS} AR=${BUILD_AR} ${GEM5_BUILD_CONFIGS} \
     PYTHON_CONFIG=python3-config"
 
