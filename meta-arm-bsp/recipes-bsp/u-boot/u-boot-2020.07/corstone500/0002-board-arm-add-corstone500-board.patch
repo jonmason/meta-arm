@@ -1,4 +1,7 @@
-From eed15d394137616a18add204a85b0e9dd5b00e0b Mon Sep 17 00:00:00 2001
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+
+From f58e263f575c0520926e4737694e11da31cb4886 Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Wed, 8 Jan 2020 09:48:11 +0000
 Subject: [PATCH 2/2] board: arm: add designstart cortex-a5 board
@@ -22,7 +25,7 @@ Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
  create mode 100644 include/configs/designstart_ca5.h
 
 diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
-index 54d65f84889f..7bc12f0b4300 100644
+index 54d65f8488..7bc12f0b43 100644
 --- a/arch/arm/Kconfig
 +++ b/arch/arm/Kconfig
 @@ -665,6 +665,12 @@ config ARCH_BCM6858
@@ -48,7 +51,7 @@ index 54d65f84889f..7bc12f0b4300 100644
  source "board/broadcom/bcm28155_ap/Kconfig"
 diff --git a/board/armltd/designstart/Kconfig b/board/armltd/designstart/Kconfig
 new file mode 100644
-index 000000000000..a9564e8655e2
+index 0000000000..a9564e8655
 --- /dev/null
 +++ b/board/armltd/designstart/Kconfig
 @@ -0,0 +1,12 @@
@@ -66,7 +69,7 @@ index 000000000000..a9564e8655e2
 +endif
 diff --git a/board/armltd/designstart/Makefile b/board/armltd/designstart/Makefile
 new file mode 100644
-index 000000000000..d2dc2b74ed85
+index 0000000000..d2dc2b74ed
 --- /dev/null
 +++ b/board/armltd/designstart/Makefile
 @@ -0,0 +1,8 @@
@@ -80,7 +83,7 @@ index 000000000000..d2dc2b74ed85
 +obj-y := designstart.o
 diff --git a/board/armltd/designstart/designstart.c b/board/armltd/designstart/designstart.c
 new file mode 100644
-index 000000000000..658057a00330
+index 0000000000..658057a003
 --- /dev/null
 +++ b/board/armltd/designstart/designstart.c
 @@ -0,0 +1,49 @@
@@ -135,7 +138,7 @@ index 000000000000..658057a00330
 +
 diff --git a/configs/designstart_ca5_defconfig b/configs/designstart_ca5_defconfig
 new file mode 100644
-index 000000000000..a2a756740295
+index 0000000000..a2a7567402
 --- /dev/null
 +++ b/configs/designstart_ca5_defconfig
 @@ -0,0 +1,37 @@
@@ -178,7 +181,7 @@ index 000000000000..a2a756740295
 +
 diff --git a/include/configs/designstart_ca5.h b/include/configs/designstart_ca5.h
 new file mode 100644
-index 000000000000..6db5b1cf4ac2
+index 0000000000..6db5b1cf4a
 --- /dev/null
 +++ b/include/configs/designstart_ca5.h
 @@ -0,0 +1,122 @@
@@ -305,5 +308,5 @@ index 000000000000..6db5b1cf4ac2
 +#define CONFIG_ENV_IS_IN_FLASH                1
 +#endif
 -- 
-2.28.0
+2.17.1
 

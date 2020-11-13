@@ -6,10 +6,11 @@ FILESEXTRAPATHS_prepend_fvp-base = "${THIS_DIR}/${BP}/fvp-common:"
 FILESEXTRAPATHS_prepend_foundation-armv8 = "${THIS_DIR}/${BP}/fvp-common:"
 
 #
-# Cortex-A5 DesignStart KMACHINE
+# Corstone-500 MACHINE
 #
-SRC_URI_append_a5ds = " file://0001-armv7-add-mmio-timer.patch \
-                        file://0002-board-arm-add-designstart-cortex-a5-board.patch"
+SRC_URI_append_corstone500 = " \
+                   file://0001-armv7-add-mmio-timer.patch \
+                   file://0002-board-arm-add-corstone500-board.patch"
 
 #
 # FVP FOUNDATION KMACHINE

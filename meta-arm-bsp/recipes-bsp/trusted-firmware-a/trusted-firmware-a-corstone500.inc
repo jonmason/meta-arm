@@ -1,6 +1,6 @@
-# Cortex-A5 Designstart specific TFA support
+# Corstone-500 specific TFA support
 
-COMPATIBLE_MACHINE = "a5ds"
+COMPATIBLE_MACHINE = "corstone500"
 TFA_PLATFORM = "a5ds"
 TFA_DEBUG = "1"
 TFA_UBOOT = "1"

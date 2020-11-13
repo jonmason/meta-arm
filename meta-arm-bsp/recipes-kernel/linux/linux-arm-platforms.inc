@@ -18,10 +18,9 @@ SRC_URI_append_gem5-arm64 = " ${SRC_URI_KMETA}"
 SRCREV_arm-platforms-kmeta = "6147e82375aa9df8f2a162d42ea6406c79c854c5"
 
 #
-# Cortex-A5 DesignStart KMACHINE
+# Corstone-500 KMACHINE
 #
-COMPATIBLE_MACHINE_a5ds = "a5ds"
-KMACHINE_a5ds = "a5ds"
+COMPATIBLE_MACHINE_corstone500 = "corstone500"
 
 #
 # FVP FOUNDATION KMACHINE

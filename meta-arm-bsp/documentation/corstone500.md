@@ -1,19 +1,19 @@
-# Cortex-A5 DesignStart A5DS Platform Support in meta-arm-bsp
+# Corstone-500 Platform Support in meta-arm-bsp
 
 ## Howto Build and Run
 
 ### Configuration:
 In the local.conf file, MACHINE should be set as follow:
-MACHINE ?= "a5ds"
-DISTRO ?= "iota-tiny"
+MACHINE ?= "corstone500"
+DISTRO ?= "poky-tiny"
 
 Or set environment variables with that values:
 
-MACHINE "a5ds"
-DISTRO "iota-tiny"
+MACHINE "corstone500"
+DISTRO "poky-tiny"
 
 ### Build:
-``bash$ bitbake iota-tiny-image```
+``bash$ bitbake arm-reference-image```
 
 ### Run:
 To run the result in a Fixed Virtual Platform please get:
