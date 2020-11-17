@@ -1,0 +1,3 @@
+define KFEATURE_DESCRIPTION "Extra kernel configs when building with PREEMPT_RT"
+
+kconf non-hardware preempt-rt-extras.cfg
