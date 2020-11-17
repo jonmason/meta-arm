@@ -2,6 +2,10 @@
 
 DESCRIPTION = "Arm Autonomy stack host minimal image"
 
+# When alternate-kernel DISTRO_FEATURE is present we will build
+# and install the alternate kernel
+inherit ${@bb.utils.filter('DISTRO_FEATURES', 'alternate-kernel', d)}
+
 inherit core-image
 
 LICENSE = "MIT"
