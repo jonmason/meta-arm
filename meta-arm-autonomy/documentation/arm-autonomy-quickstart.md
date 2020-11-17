@@ -147,6 +147,9 @@ To create a guest project:
 The build will create a ".xenguest" image that can be use on an host project
 with the xenguest-manager.
 
+The guest can also be built as a 'multiconfig' sub project of the host, see
+`meta-arm-autonomy/documentation/arm-autonomy-multiconfig.md` for more information
+
 Include guests directly in the host image
 -----------------------------------------
 The layer provides a way to directly include in the host project one or several
