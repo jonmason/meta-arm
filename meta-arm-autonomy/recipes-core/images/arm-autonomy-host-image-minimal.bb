@@ -54,6 +54,24 @@ EXTRA_IMAGEDEPENDS += "xen"
 # Build xen-devicetree to produce a xen ready devicetree
 EXTRA_IMAGEDEPENDS += "xen-devicetree"
 
+# Documentation for setting up a multiconfig build can be found in:
+# meta-arm-autonomy/documentation/arm-autonomy-multiconfig.md
+
+# In a multiconfig build this variable will hold a dependency string, which differs based
+# on whether the guest has initramfs or not.
+# It may have a space seperated list of dependency strings if mulitple guest types are
+# configured
+MC_DOIMAGE_MCDEPENDS ?= ""
+# Example value: mc:host:guest:core-image-minimal:do_image_complete
+
+# In a multiconfig build the host task 'do_image' has a dependency on multiconfig guest.
+# This ensures that the guest image file already exists when it is needed by the host
+DO_IMAGE_MCDEPENDS := "${@ '${MC_DOIMAGE_MCDEPENDS}' if d.getVar('BBMULTICONFIG') else ''}"
+
+# Apply mc dependency. Empty string if multiconfig not enabled
+do_image[mcdepends] += "${DO_IMAGE_MCDEPENDS}"
+
+
 python __anonymous() {
     if bb.utils.contains('DISTRO_FEATURES', 'arm-autonomy-host', False, True, d):
         raise bb.parse.SkipRecipe("DISTRO_FEATURES does not contain 'arm-autonomy-host'")
