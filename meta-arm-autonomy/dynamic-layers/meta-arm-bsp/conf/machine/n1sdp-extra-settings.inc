@@ -38,3 +38,25 @@ do_image_wic[depends] += "xen:do_deploy"
 IMAGE_EFI_BOOT_FILES += "xen-n1sdp.efi;xen.efi"
 IMAGE_EFI_BOOT_FILES += "${XEN_MOD_DEVICETREE_DTBS}"
 
+# When alternate-kernel DISTRO_FEATURE is present we set the linux-linaro-arm-rt
+# by default
+PREFERRED_PROVIDER_alternate/kernel ?= "\
+${@bb.utils.contains('DISTRO_FEATURES', 'alternate-kernel', \
+'linux-linaro-arm-rt', '', d)}"
+
+KERNEL_PACKAGE_NAME_alternate/kernel ?= "kernel-rt"
+# When alternate-kernel DISTRO_FEATURE is present we set the kernel-rt by
+# default
+KERNEL_PACKAGE_NAME_pn-linux-linaro-arm-rt = "\
+${@ d.getVar('KERNEL_PACKAGE_NAME_alternate/kernel') \
+if bb.utils.contains('DISTRO_FEATURES', 'alternate-kernel', True, False, d) \
+else 'kernel' }"
+
+# Relative path from DEPLOY_DIR_IMAGE of the Kernel PREEMPT_RT deployed Image
+KERNEL_RT_IMAGE ?= "kernel-rt/Image-n1sdp.bin;Image-preempt-rt"
+# Only include the Kernel PREEMPT_RT Image if we are building with
+# alternate-kernel DISTRO_FEATURE
+IMAGE_EFI_BOOT_FILES += "\
+${@ d.getVar('KERNEL_RT_IMAGE',d) or '' \
+if bb.utils.contains('DISTRO_FEATURES', 'alternate-kernel', True, False, d) and \
+d.getVar('PREFERRED_PROVIDER_alternate/kernel') else ''}"
