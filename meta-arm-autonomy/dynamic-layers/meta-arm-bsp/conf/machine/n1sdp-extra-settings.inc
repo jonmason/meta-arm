@@ -15,7 +15,14 @@ GUEST_PART_SIZE ?= "4097"
 GUEST_PART_SIZE_UNIT ?= "M"
 
 # The GRUB_CFG_FILE affects arm-autonomy-n1sdp-efidisk.wks.in file
-GRUB_CFG_FILE ?= "${ARM_AUTONOMY_ARM_BSP_DYNAMIC_DIR}/wic/arm-autonomy-n1sdp-grub.cfg"
+#
+# When alternate-kernel DISTRO_FEATURE is present we set the
+# arm-autonomy-n1sdp-rt-grub.cfg by default. This GRUB config file has
+# additional entries for booting with the PREEMPT_RT kernel.
+GRUB_CFG_FILE ?= "${@bb.utils.contains('DISTRO_FEATURES','alternate-kernel', \
+                     '${ARM_AUTONOMY_ARM_BSP_DYNAMIC_DIR}/wic/arm-autonomy-n1sdp-rt-grub.cfg', \
+                     '${ARM_AUTONOMY_ARM_BSP_DYNAMIC_DIR}/wic/arm-autonomy-n1sdp-grub.cfg' \
+                     , d)}"
 
 # From arm-autonomy-n1sdp-efidisk.wks.in, the /boot partition is /dev/sda1, and
 # the "/" partition is /dev/sda2.
@@ -58,5 +65,18 @@ KERNEL_RT_IMAGE ?= "kernel-rt/Image-n1sdp.bin;Image-preempt-rt"
 # alternate-kernel DISTRO_FEATURE
 IMAGE_EFI_BOOT_FILES += "\
 ${@ d.getVar('KERNEL_RT_IMAGE',d) or '' \
+if bb.utils.contains('DISTRO_FEATURES', 'alternate-kernel', True, False, d) and \
+d.getVar('PREFERRED_PROVIDER_alternate/kernel') else ''}"
+
+
+EFIDIR ?= "/EFI/BOOT"
+GRUB_CFG_EXTRA_FILE ?= "${ARM_AUTONOMY_ARM_BSP_DYNAMIC_DIR}/wic/arm-autonomy-n1sdp-grub.cfg;.${EFIDIR}}"
+
+# When alternate-kernel DISTRO_FEATURE is present we set the
+# arm-autonomy-n1sdp-rt-grub.cfg by default. This GRUB config file has
+# additional entries for booting with the PREEMPT_RT kernel and also includes
+# the main GRUB config file set by GRUB_CFG_EXTRA_FILE.
+IMAGE_EFI_BOOT_FILES += "\
+${@ d.getVar('GRUB_CFG_EXTRA_FILE',d) or '' \
 if bb.utils.contains('DISTRO_FEATURES', 'alternate-kernel', True, False, d) and \
 d.getVar('PREFERRED_PROVIDER_alternate/kernel') else ''}"
