@@ -1,0 +1,80 @@
+From c2971c8a3f076ea8a522ce4fbb367d112d86c13a Mon Sep 17 00:00:00 2001
+From: Stefano Stabellini <sstabellini@kernel.org>
+Date: Mon, 27 Apr 2020 16:15:26 -0700
+Subject: [PATCH] xen: use handle_fasteoi_irq to handle xen dynamic events
+
+When handling Xen events, we need to make sure the following sequence is
+followed:
+
+- mask event
+- handle event and clear event (the order does not matter)
+- unmask event
+
+It is not possible to implement this flow with handle_edge_irq, so
+switch back to handle_fasteoi_irq. Please note that Xen event irqs are
+ONESHOT. Also note that handle_fasteoi_irq was in-use before the
+following commit, that is partially reverted by this patch:
+
+7e186bdd0098 xen: do not clear and mask evtchns in __xen_evtchn_do_upcall
+
+PIRQ handling is left unchanged.
+
+This patch fixes a domU hang observed when using LinuxRT as dom0 kernel.
+
+Link: https://lkml.org/lkml/2020/4/27/1287
+Signed-off-by: Stefano Stabellini <stefano.stabellini@xilinx.com>
+
+Upstream-Status: Inappropriate since the upstream solution diverges from this patch
+Signed-off-by: Kamil Dziezyk <kamil.dziezyk@arm.com>
+---
+ drivers/xen/events/events_base.c | 13 +++----------
+ 1 file changed, 3 insertions(+), 10 deletions(-)
+
+diff --git a/drivers/xen/events/events_base.c b/drivers/xen/events/events_base.c
+index 6c8843968a52..1873a19b8b24 100644
+--- a/drivers/xen/events/events_base.c
++++ b/drivers/xen/events/events_base.c
+@@ -845,7 +845,7 @@ int bind_evtchn_to_irq(unsigned int evtchn)
+ 			goto out;
+ 
+ 		irq_set_chip_and_handler_name(irq, &xen_dynamic_chip,
+-					      handle_edge_irq, "event");
++					      handle_fasteoi_irq, "event");
+ 
+ 		ret = xen_irq_info_evtchn_setup(irq, evtchn);
+ 		if (ret < 0) {
+@@ -978,7 +978,7 @@ int bind_virq_to_irq(unsigned int virq, unsigned int cpu, bool percpu)
+ 						      handle_percpu_irq, "virq");
+ 		else
+ 			irq_set_chip_and_handler_name(irq, &xen_dynamic_chip,
+-						      handle_edge_irq, "virq");
++						      handle_fasteoi_irq, "virq");
+ 
+ 		bind_virq.virq = virq;
+ 		bind_virq.vcpu = xen_vcpu_nr(cpu);
+@@ -1387,12 +1387,6 @@ static void ack_dynirq(struct irq_data *data)
+ 		clear_evtchn(evtchn);
+ }
+ 
+-static void mask_ack_dynirq(struct irq_data *data)
+-{
+-	disable_dynirq(data);
+-	ack_dynirq(data);
+-}
+-
+ static int retrigger_dynirq(struct irq_data *data)
+ {
+ 	unsigned int evtchn = evtchn_from_irq(data->irq);
+@@ -1595,8 +1589,7 @@ static struct irq_chip xen_dynamic_chip __read_mostly = {
+ 	.irq_mask		= disable_dynirq,
+ 	.irq_unmask		= enable_dynirq,
+ 
+-	.irq_ack		= ack_dynirq,
+-	.irq_mask_ack		= mask_ack_dynirq,
++	.irq_eoi		= ack_dynirq,
+ 
+ 	.irq_set_affinity	= set_affinity_irq,
+ 	.irq_retrigger		= retrigger_dynirq,
+-- 
+2.17.1
+
