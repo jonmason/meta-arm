@@ -30,7 +30,7 @@ First you must download the Yocto layers needed:
  - all other layers you might want to use
 
 For each of the downloaded layer make sure you checkout the release of Yocto
-you want to use (for example zeus using `git checkout zeus`).
+you want to use (for example gatesgarth using `git checkout gatesgarth`).
 
 Please follow [Yocto documentation](https://www.yoctoproject.org/docs/latest/brief-yoctoprojectqs/brief-yoctoprojectqs.html)
 in order to have the required dependencies.
