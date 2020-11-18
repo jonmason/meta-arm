@@ -32,7 +32,7 @@ PREFERRED_PROVIDER_virtual/kernel ?= "linux-yocto"
 PREFERRED_VERSION_linux-yocto ?= "5.4%"
 
 PREFERRED_VERSION_u-boot ?= "2020.07"
-PREFERRED_VERSION_trusted-firmware-a ?= "2.3%"
+PREFERRED_VERSION_trusted-firmware-a ?= "2.4%"
 
 EXTRA_IMAGEDEPENDS += "virtual/trusted-firmware-a u-boot"
 
