@@ -18,9 +18,7 @@ FIRMWARE_DIR = "n1sdp-board-firmware_source"
 PRIMARY_DIR = "${WORKDIR}/n1sdp-board-firmware_primary"
 SECONDARY_DIR = "${WORKDIR}/n1sdp-board-firmware_secondary"
 
-SOC_BINARIES_PRIMARY = "mcp_fw.bin scp_fw.bin ${SOC_BINARIES_SECONDARY}"
-SOC_BINARIES_SECONDARY = "mcp_rom.bin scp_rom.bin"
-
+SOC_BINARIES = "mcp_fw.bin scp_fw.bin mcp_rom.bin scp_rom.bin"
 
 prepare_package() {
     cd ${WORKDIR}
@@ -33,7 +31,7 @@ prepare_package() {
     cp -v ${RECIPE_SYSROOT}/firmware/uefi.bin ${PRIMARY_DIR}/SOFTWARE/
 
     # Copy SOC binaries
-    for f in ${SOC_BINARIES_PRIMARY}; do
+    for f in ${SOC_BINARIES}; do
         cp -v ${RECIPE_SYSROOT}/firmware/${f} ${PRIMARY_DIR}/SOFTWARE/
     done
 
@@ -49,7 +47,7 @@ prepare_package() {
     mkdir -p ${SECONDARY_DIR}/SOFTWARE/
 
     # Copy SOC binaries
-    for f in ${SOC_BINARIES_SECONDARY}; do
+    for f in ${SOC_BINARIES}; do
         cp -v ${RECIPE_SYSROOT}/firmware/${f} ${SECONDARY_DIR}/SOFTWARE/
     done
 
@@ -59,10 +57,8 @@ prepare_package() {
         ${SECONDARY_DIR}/MB/HBI0316A/io_v123f.txt
     sed -i -e 's|.*SOCCON: 0x1170.*PLATFORM_CTRL.*|SOCCON: 0x1170 0x00000101   ;SoC SCC PLATFORM_CTRL|' \
         ${SECONDARY_DIR}/MB/HBI0316A/io_v123f.txt
-    sed -i -e '/^TOTALIMAGES:/ s|5|2|' ${SECONDARY_DIR}/MB/HBI0316A/images.txt
-    sed -i -e 's|^IMAGE[^23]|;&|' ${SECONDARY_DIR}/MB/HBI0316A/images.txt
-    sed -i -e 's|^IMAGE2|IMAGE0|' ${SECONDARY_DIR}/MB/HBI0316A/images.txt
-    sed -i -e 's|^IMAGE3|IMAGE1|' ${SECONDARY_DIR}/MB/HBI0316A/images.txt
+    sed -i -e '/^TOTALIMAGES:/ s|5|4|' ${SECONDARY_DIR}/MB/HBI0316A/images.txt
+    sed -i -e 's|^IMAGE4|;&|' ${SECONDARY_DIR}/MB/HBI0316A/images.txt
 }
 
 do_deploy() {
@@ -81,4 +77,4 @@ do_deploy() {
 do_deploy[dirs] += "${PRIMARY_DIR} ${SECONDARY_DIR}"
 do_deploy[cleandirs] += "${PRIMARY_DIR} ${SECONDARY_DIR}"
 do_deploy[umask] = "022"
-addtask deploy after do_populate_sysroot
+addtask deploy after do_prepare_recipe_sysroot
