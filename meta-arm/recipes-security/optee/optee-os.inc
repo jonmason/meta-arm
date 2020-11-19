@@ -8,6 +8,8 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=c1f21c4f72f372ef38a5a4aee55ec173"
 inherit deploy python3native
 require optee.inc
 
+CVE_PRODUCT = "linaro:op-tee op-tee:op-tee_os"
+
 DEPENDS = "python3-pycryptodome-native python3-pycryptodomex-native python3-pyelftools-native"
 
 DEPENDS_append_toolchain-clang = " compiler-rt"
