@@ -7,6 +7,8 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 inherit deploy
 
+SRC_URI = "git://git.trustedfirmware.org/TF-A/trusted-firmware-a.git;protocol=https;name=tfa"
+
 COMPATIBLE_MACHINE ?= "invalid"
 COMPATIBLE_MACHINE_qemuarm64 ?= "qemuarm64"
 
@@ -27,6 +29,7 @@ TFA_SPD_aarch64_qemuall ?= "opteed"
 # Build for debug (set TFA_DEBUG to 1 to activate)
 TFA_DEBUG ?= "0"
 
+S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
 
 # mbed TLS support (set TFA_MBEDTLS to 1 to activate)

@@ -8,12 +8,8 @@ DEFAULT_PREFERENCE = "-1"
 
 require trusted-firmware-a.inc
 
-SRC_URI = "git://git.trustedfirmware.org/TF-A/trusted-firmware-a.git;protocol=https;name=tfa"
-
 # Use TF-A for version
 SRCREV_FORMAT = "tfa"
-
-S = "${WORKDIR}/git"
 
 LIC_FILES_CHKSUM += "file://docs/license.rst;md5=189505435dbcdcc8caa63c46fe93fa89"
 

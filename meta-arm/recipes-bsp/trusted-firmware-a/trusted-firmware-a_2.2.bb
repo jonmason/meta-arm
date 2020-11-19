@@ -4,15 +4,11 @@
 
 require trusted-firmware-a.inc
 
-SRC_URI = "git://git.trustedfirmware.org/TF-A/trusted-firmware-a.git;protocol=https;name=tfa"
-
 # Use TF-A for version
 SRCREV_FORMAT = "tfa"
 
 # TF-A v2.2
 SRCREV_tfa = "7192b956bde11652a835eee0724dca0e403fee90"
-
-S = "${WORKDIR}/git"
 
 LIC_FILES_CHKSUM += "file://docs/license.rst;md5=189505435dbcdcc8caa63c46fe93fa89"
 
