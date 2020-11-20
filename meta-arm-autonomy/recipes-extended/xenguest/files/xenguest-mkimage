@@ -412,13 +412,53 @@ check_size() {
     exit 1
 }
 
+disk_config_get_size() {
+    disksize=$(echo -e "$( . ${IMAGE_TMPDIR}/disk.cfg && echo $DISK_SIZE)")
+    check_size "${disksize}"
+}
+
+disk_config_get_parts() {
+    echo -e "$( . ${IMAGE_TMPDIR}/disk.cfg && \
+                typeset -p | awk '$3 ~ /^DISK_PART/ { print $3 }')"
+}
+
+disk_config_get_free_space() {
+    disk_usage="0"
+    for partinfo in $(disk_config_get_parts)
+    do
+        partsize=$(echo "${partinfo}" | cut -d '"' -f2 | sed -e "s/:.*//")
+        sizeMB=$(check_size "${partsize}")
+        [ -n "${sizeMB}" ] || exit 1
+        disk_usage=$((${sizeMB::${#sizeMB}-1} + $disk_usage))
+    done
+
+    disk_size=$(disk_config_get_size)
+    echo -e "$((${disk_size::${#disk_size}-1} - ${disk_usage}))M"
+}
+
 disk_config_add_part() {
     partconf="${1}"
     partid=$(echo ${partconf} | sed -e "s/:.*//")
     partinfo=$(echo ${partconf} | sed -e "s/[^:]*://")
+    partsize=$(echo ${partinfo} | cut -d ":" -f1)
+
+    # check size "ID:*SIZE*:FORMAT:CONTENT"
+    partsizeMB=$(check_size "${partsize}")
 
     # Make sure we don't add the same partition twice
-    disk_config_rm_part ${partid}
+    disk_config_rm_part "${partid}"
+
+    # check available disk space
+    freespace=$(disk_config_get_free_space)
+    if ((${partsizeMB::${#partsizeMB}-1} > ${freespace::${#freespace}-1}))
+    then
+        echo -e "Not enough free disk space(${freespace}) for partition "\
+                "'${partconf}'!"\
+                "\tTo adjust disk size use '--disk-size' parameter"\
+                "\tor shrink the partition with '--disk-add-part' parameter"
+        exit 1
+    fi
+
     echo "DISK_PART${partid}=\"${partinfo}\"" >> \
         ${IMAGE_TMPDIR}/disk.cfg
 }
