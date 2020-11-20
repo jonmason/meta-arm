@@ -248,11 +248,31 @@ function xenguest_disk_init()
     # with a : separated list defining the partition:
     # DISK_PART3="4:ext4:disk.tgz" means that partition 3 should be 4G formated
     # with ext4 and initialized with the content of disk.tgz
-    for part in $(seq 1 4); do
-        eval partdesc="\${DISK_PART${part}:-0}"
+    # Keep user defined partition order,
+    # even if previous partitions are not defined.
+    # Create 2MB partitions in this case
+    lastpart="0"
+    for partidx in $(seq 1 4); do
+        local _part="DISK_PART${partidx}"
+        if [ -n "${!_part:=}" ]; then
+            lastpart="${partidx}"
+        fi
+    done
+
+    if [ "${lastpart}" -eq "0" ]; then
+        # Nothing to be added here
+        # No partition definition found
+        return
+    fi
+
+    for part in $(seq 1 "${lastpart}"); do
+        eval partdesc="\${DISK_PART${part}:=}"
         size=$(echo ${partdesc} | sed -e "s/\(.*\):.*:.*/\1/")
         fstype=$(echo ${partdesc} | sed -e "s/.*:\(.*\):.*/\1/")
         content=$(echo ${partdesc} | sed -e "s/.*:.*:\(.*\)/\1/")
+
+        local _part="DISK_PART${part}"
+        [ -n "${!_part:=}" ] || size="2M"
 
         size=$(check_size "${size}")
         if [ -n "${size}" ] && [ "${size}" != "0M" ]; then
