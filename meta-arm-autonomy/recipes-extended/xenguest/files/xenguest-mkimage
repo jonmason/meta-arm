@@ -436,11 +436,70 @@ disk_config_get_free_space() {
     echo -e "$((${disk_size::${#disk_size}-1} - ${disk_usage}))M"
 }
 
+disk_check_partition_format() {
+    local partformat="${1}"
+    # if partformat is not defined let's skip this check
+    [ -n "${partformat}" ] || return 0
+
+    case "${partformat}" in
+         vfat|ext2|ext3|ext4|swap)
+            ;;
+        *)
+            # invalid/unknown fstype
+            echo "Invalid file fstype ${partformat}"
+            exit 1
+            ;;
+    esac
+}
+
+disk_check_partition_content() {
+    local partcontent="${1}"
+    # if partcontent is not defined let's skip this check
+    [ -n "${partcontent}" ] || return 0
+
+    case "${partcontent}" in
+        *.img*)
+            case "${partcontent}" in
+                *.img.gz|*.img.bz2|*.img)
+                    ;;
+                *)
+                    # invalid/unknown compression type
+                    echo "Invalid file format in disk ${partcontent}"
+                    exit 1
+                    ;;
+            esac
+            ;;
+        *.tar*)
+            case "${partcontent}" in
+                *.tar.gz|*.tar.bz2|*.tar.xz|*.tar)
+                    ;;
+                *)
+                    # invalid/unknown tar type
+                    echo "Invalid file format in disk ${partcontent}"
+                    exit 1
+                    ;;
+            esac
+            ;;
+        *)
+          #invalid content type
+          echo "Unsupported content type ${partcontent}!"
+          exit 1
+          ;;
+    esac
+    # do not allow to create multiple partitions the same content
+    if grep ":${partcontent}\"" <<< "$(disk_config_get_parts)"; then
+        echo "Error ${partcontent} is already inside guest image"
+        exit 1
+    fi
+}
+
 disk_config_add_part() {
     partconf="${1}"
     partid=$(echo ${partconf} | sed -e "s/:.*//")
     partinfo=$(echo ${partconf} | sed -e "s/[^:]*://")
     partsize=$(echo ${partinfo} | cut -d ":" -f1)
+    partformat=$(echo ${partinfo} | cut -d ":" -f2)
+    partcontent=$(echo ${partinfo} | cut -d ":" -f3)
 
     # check size "ID:*SIZE*:FORMAT:CONTENT"
     partsizeMB=$(check_size "${partsize}")
@@ -458,6 +517,12 @@ disk_config_add_part() {
                 "\tor shrink the partition with '--disk-add-part' parameter"
         exit 1
     fi
+
+    # check format "ID:SIZE:*FORMAT*:CONTENT"
+    disk_check_partition_format "${partformat}"
+
+    # check content "ID:SIZE:FORMAT:*CONTENT*"
+    disk_check_partition_content "${partcontent}"
 
     echo "DISK_PART${partid}=\"${partinfo}\"" >> \
         ${IMAGE_TMPDIR}/disk.cfg
