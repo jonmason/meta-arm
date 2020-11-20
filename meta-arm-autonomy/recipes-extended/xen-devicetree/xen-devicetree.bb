@@ -14,7 +14,9 @@ DESCRIPTION = "Add entries in DTB for Xen and Dom0"
 
 # Please refer to documentation/xen-devicetree.md for documentation on those
 # parameters
-XEN_DEVICETREE_DEPEND ?= "virtual/kernel:do_deploy"
+# kernel size is passed to xen via xen.dtb so wee need to add
+# 'virtual/kernel:do_deploy' as a dependency
+XEN_DEVICETREE_DEPEND_append = " virtual/kernel:do_deploy"
 XEN_DEVICETREE_DTBS ?= "${KERNEL_DEVICETREE}"
 XEN_DEVICETREE_XEN_BOOTARGS ?= "noreboot dom0_mem=${XEN_DEVICETREE_DOM0_MEM}"
 XEN_DEVICETREE_DOM0_MEM ?= "1024M"
@@ -67,6 +69,33 @@ do_deploy() {
     done
 }
 do_deploy[depends] += "${XEN_DEVICETREE_DEPEND}"
+do_deploy[prefuncs] += "calc_xen_dtb_dom0_size"
 
 addtask deploy after do_install
 
+python calc_xen_dtb_dom0_size() {
+    from math import ceil
+    size = 0
+    if d.getVar('KERNEL_IMAGE_MAXSIZE'):
+        bb.note('size calculation based on KERNEL_IMAGE_MAXSIZE')
+        size = int(d.getVar('KERNEL_IMAGE_MAXSIZE')) * 1024
+    else:
+        kernel = os.path.realpath(d.getVar('DEPLOY_DIR_IMAGE') + '/' +\
+                 d.getVar('KERNEL_IMAGETYPE'))
+        size = os.stat(kernel).st_size
+        bb.note('size calculation based on kernel Image file: %s' % kernel)
+
+    bb.note('size in bytes: %d' % size)
+    # Ceil to MiB
+    size_required = ceil(size / (2 ** 20)) * (2 ** 20)
+    size_defined = int(d.getVar('XEN_DEVICETREE_DOM0_SIZE'), 16)
+
+    if size_required > size_defined:
+        bb.warn ("Wrong kernel size setting inside xen dtb!\n"\
+                 "Required:\t%(req)d (%(req)#010X)\n"\
+                 "Requested:\t%(def)d (%(def)#010X)"\
+                 % {"req": size_required, "def": size_defined})
+        bb.warn ("Overriding XEN_DEVICETREE_DOM0_SIZE with "\
+                 "%(req)d (%(req)#010X)" % {"req": size_required})
+        d.setVar('XEN_DEVICETREE_DOM0_SIZE', hex(size_required))
+}
