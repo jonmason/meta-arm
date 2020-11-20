@@ -127,7 +127,7 @@ Disk configuration
 --disk-rm-part=ID       remove partition ID from the guest disk
 --disk-add-file=SRC:DST add file SRC as disk file DST in the xenguest image.
                          DST can then be used as a partition CONTENT.
---disk--rm-file=DST     remove disk file DST from the xenguest image.
+--disk-rm-file=DST     remove disk file DST from the xenguest image.
 EOF
 }
 
@@ -746,7 +746,7 @@ for arg in "${@}"; do
                 ${IMAGE_TMPDIR}/disk.cfg
             ;;
         --disk-device=*)
-            sed -i "s/DISK_DEVICE=.*/DISK_SIZE=\"${optarg}\"/" \
+            sed -i "s@DISK_DEVICE=.*@DISK_DEVICE=\"${optarg}\"@" \
                 ${IMAGE_TMPDIR}/disk.cfg
             ;;
         --disk-add-part=*)
