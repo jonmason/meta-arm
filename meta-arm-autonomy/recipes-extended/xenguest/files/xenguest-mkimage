@@ -110,7 +110,8 @@ Init configuration
 
 Disk configuration
 --disk-reset-config     reset disk guest configuration to default (no disk)
---disk-size=SZ          set guest disk size (in GB)
+--disk-size=SZ          set guest disk size in MB or GB(default),
+                         e.g 1000M or 2[G].
 --disk-device=DEV       set device to be used to create the guest disk
                         if unset or set to an empty string, the volume will be
                         create in the default manager volume group.
@@ -368,6 +369,47 @@ disk_config_reset() {
 disk_config_rm_part() {
     partid=$1
     sed -i "/DISK_PART${partid}=.*/d" ${IMAGE_TMPDIR}/disk.cfg
+}
+
+is_integer() {
+    if ! [[ "${1}" =~ ^[0-9]+$ ]]; then
+        >&2 echo "error: invalid number '${1}'"; exit 1
+    fi
+}
+
+# check size and convert it to MB, e.g '1[G]' => '1000M'
+check_size() {
+    local disksize="${1}"
+
+    [ -n "${disksize}" ] || disksize="invalid"
+
+    # disksize may have appended M or G suffix, let's extract it
+    # ${var:offset:length}, where #var is var length
+    local lastchar="${disksize:${#disksize}-1}"
+    case "${lastchar}" in
+        [0-9])
+            # backwards compatibility
+            is_integer "${disksize}"
+            echo -e "$((${disksize} * 1000))M"
+            return
+            ;;
+        G|M)
+            if [ "${#disksize}" -gt "1" ]; then
+                local size="${disksize::${#disksize}-1}"
+                is_integer "${size}"
+                # convert GB to MB
+                [ "${lastchar}" = "M" ] || size=$((${size} * 1000))
+                echo -e "${size}M"
+                return
+            fi
+            ;;
+        *)
+            ;;
+    esac
+
+    >&2 echo -e "Invalid size format '${1}'" \
+                "\n\tSupported size format is e.g 1000M or 2[G]"
+    exit 1
 }
 
 disk_config_add_part() {
@@ -742,7 +784,9 @@ for arg in "${@}"; do
             disk_config_reset
             ;;
         --disk-size=*)
-            sed -i "s/DISK_SIZE=.*/DISK_SIZE=\"${optarg}\"/" \
+            size=$(check_size "${optarg}")
+            [ -n "size" ] || exit 1
+            sed -i "s/DISK_SIZE=.*/DISK_SIZE=\"${size}\"/" \
                 ${IMAGE_TMPDIR}/disk.cfg
             ;;
         --disk-device=*)

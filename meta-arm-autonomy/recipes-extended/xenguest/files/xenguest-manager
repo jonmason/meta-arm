@@ -54,6 +54,47 @@ with ACTION being one of:
 EOF
 }
 
+is_integer() {
+    if ! [[ "${1}" =~ ^[0-9]+$ ]]; then
+        >&2 echo "error: invalid number '${1}'"; exit 1
+    fi
+}
+
+# check size and convert it to MB, e.g '1[G]' => '1000M'
+check_size() {
+    local disksize="${1}"
+
+    [ -n "${disksize}" ] || disksize="invalid"
+
+    # disksize may have appended M or G suffix, let's extract it
+    # ${var:offset:length}, where #var is var length
+    local lastchar="${disksize:${#disksize}-1}"
+    case "${lastchar}" in
+        [0-9])
+            # backwards compatibility
+            is_integer "${disksize}"
+            echo -e "$((${disksize} * 1000))M"
+            return
+            ;;
+        G|M)
+            if [ "${#disksize}" -gt "1" ]; then
+                local size="${disksize::${#disksize}-1}"
+                is_integer "${size}"
+                # convert GB to MB
+                [ "${lastchar}" = "M" ] || size=$((${size} * 1000))
+                echo -e "${size}M"
+                return
+            fi
+            ;;
+        *)
+            ;;
+    esac
+
+    >&2 echo -e "Invalid size format '${1}'" \
+                "\n\tSupported size format is e.g 1000M or 2[G]"
+    exit 1
+}
+
 function xenguest_volume_init()
 {
     # Return:
@@ -142,7 +183,8 @@ function xenguest_disk_init()
 
     source ${XENGUEST_CONF_BASE}/guests/${guestname}/disk.cfg
 
-    if [ ${DISK_SIZE:-0} -eq 0 ]; then
+    DISK_SIZE=$(check_size "${DISK_SIZE}")
+    if [ -z "${DISK_SIZE}" ] || [ "${DISK_SIZE}" = "0M" ]; then
         echo "${PREF} No disk for ${guestname}"
         return
     fi
@@ -172,9 +214,9 @@ function xenguest_disk_init()
     fi
 
     # Create volume
-    echo "lvcreate -y -L ${DISK_SIZE}G -n ${guestname} ${XENGUEST_VOLUME_NAME}" \
+    echo "lvcreate -y -L ${DISK_SIZE} -n ${guestname} ${XENGUEST_VOLUME_NAME}" \
         >> ${LOGFILE} 2>&1
-    lvcreate -y -L ${DISK_SIZE}G -n ${guestname} ${XENGUEST_VOLUME_NAME} \
+    lvcreate -y -L ${DISK_SIZE} -n ${guestname} ${XENGUEST_VOLUME_NAME} \
         >> ${LOGFILE} 2>&1
     if [ $? -ne 0 ]; then
         echo "${PREF} Error creating volume ${guestname}"
@@ -212,9 +254,11 @@ function xenguest_disk_init()
         fstype=$(echo ${partdesc} | sed -e "s/.*:\(.*\):.*/\1/")
         content=$(echo ${partdesc} | sed -e "s/.*:.*:\(.*\)/\1/")
 
-        if [ "${size}" -ne 0 ]; then
-            # Size is expressed in GB, pass it in MB
-            size=$(expr ${size} \* 1024)
+        size=$(check_size "${size}")
+        if [ -n "${size}" ] && [ "${size}" != "0M" ]; then
+            # size has appended M or G suffix, let's extract just the value
+            # ${var:offset:length}, where #var is var length
+            size="${size::${#size}-1}"
             partend=$(expr ${partstart} + ${size})
 
             # Let first MB of disk free for partition table
