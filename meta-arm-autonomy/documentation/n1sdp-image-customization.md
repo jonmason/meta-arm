@@ -11,12 +11,17 @@ perform a couple of customizations in the generated wic image:
    1 MiB per physical volume, hence it needs to be taken into account when
    setting GUEST_PART_SIZE.
 
-2. The wic image partition layout and contents with a custom wks file via
+2. Set the boot partition size (default: 100M) via `BOOT_PART_SIZE` and
+   `BOOT_PART_SIZE_UNIT` (M or G) variables in any conf file. The default
+   bootimg is ~44M so 100M leaves just over 50M of free space.
+
+3. The wic image partition layout and contents with a custom wks file via
    `ARM_AUTONOMY_WKS_FILE` variable (default:
    arm-autonomy-n1sdp-efidisk.wks.in which is affected by GUEST_PART_SIZE,
-   GUEST_PART_SIZE_UNIT and GRUB_CFG_FILE variables).
+   GUEST_PART_SIZE_UNIT, BOOT_PART_SIZE, BOOT_PART_SIZE_UNIT and
+   GRUB_CFG_FILE variables).
 
-3. Custom grub.cfg file via `GRUB_CFG_FILE` (default:
+4. Custom grub.cfg file via `GRUB_CFG_FILE` (default:
    arm-autonomy-n1sdp-grub.cfg) variable to be set in any conf file. The full
    path or relative to `ARM_AUTONOMY_WKS_FILE` should be set.
 

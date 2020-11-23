@@ -3,7 +3,7 @@
 # can directly dd to boot media. Uses a custom grub.cfg file to configure the boot.
 
 # First boot partition normally populated as /dev/sda1
-part /boot --source bootimg-efi --sourceparams="loader=grub-efi" --ondisk sda --label msdos --active --align 1024
+part /boot --source bootimg-efi --sourceparams="loader=grub-efi" --ondisk sda --size="${BOOT_PART_SIZE}${BOOT_PART_SIZE_UNIT}" --label msdos --active --align 1024
 
 # Second rootfs partition normally populated as /dev/sda2
 part / --source rootfs --ondisk sda --fstype=ext4 --label root --align 1024

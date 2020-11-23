@@ -14,6 +14,10 @@ WKS_FILE = "${ARM_AUTONOMY_WKS_FILE}"
 GUEST_PART_SIZE ?= "4097"
 GUEST_PART_SIZE_UNIT ?= "M"
 
+# Set default boot partition size and unit
+BOOT_PART_SIZE ?= "100"
+BOOT_PART_SIZE_UNIT ?= "M"
+
 # The GRUB_CFG_FILE affects arm-autonomy-n1sdp-efidisk.wks.in file
 #
 # When alternate-kernel DISTRO_FEATURE is present we set the
