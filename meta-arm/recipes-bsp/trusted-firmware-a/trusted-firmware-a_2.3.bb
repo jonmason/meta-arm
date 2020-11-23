@@ -12,6 +12,8 @@ SRCREV_tfa = "ecd27ad85f1eba29f6bf92c39dc002c85b07dad5"
 
 LIC_FILES_CHKSUM += "file://docs/license.rst;md5=189505435dbcdcc8caa63c46fe93fa89"
 
+SRC_URI += "file://0001-fdts-a5ds-Fix-for-the-system-timer-issue.patch"
+
 #
 # mbed TLS source
 # Those are used in trusted-firmware-a.inc if TFA_MBEDTLS is set to 1
