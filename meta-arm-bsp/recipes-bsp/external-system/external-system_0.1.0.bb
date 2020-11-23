@@ -2,7 +2,7 @@ SUMMARY = "External system Cortex-M3 Firmware"
 DESCRIPTION = "Firmware to be loaded and run in External System Harness in\
                support to the main application CPU."
 HOMEPAGE = "https://git.linaro.org/landing-teams/working/arm/external-system.git"
-DEPENDS = "coreutils-native gcc-arm-none-eabi-native"
+DEPENDS = "gcc-arm-none-eabi-native"
 LICENSE = "BSD-3-Clause"
 LIC_FILES_CHKSUM = "file://license.md;md5=e44b2531cd6ffe9dece394dbe988d9a0"
 
