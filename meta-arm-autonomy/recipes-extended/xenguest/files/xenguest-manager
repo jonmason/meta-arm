@@ -54,7 +54,24 @@ with ACTION being one of:
 EOF
 }
 
+# Ensure init scripts in subshells do not call private functions
+function check_private()
+{
+
+    # Return:
+    # 0 - success
+    # 1 - failure
+
+    if [ $BASH_SUBSHELL -ne 0 ]; then
+        echo "Attempted to execute private function ${FUNCNAME[1]} in subshell!"
+        exit 1
+    fi
+}
+
 is_integer() {
+
+    check_private
+
     if ! [[ "${1}" =~ ^[0-9]+$ ]]; then
         >&2 echo "error: invalid number '${1}'"; exit 1
     fi
@@ -62,6 +79,9 @@ is_integer() {
 
 # check size and convert it to MB, e.g '1[G]' => '1000M'
 check_size() {
+
+    check_private
+
     local disksize="${1}"
 
     [ -n "${disksize}" ] || disksize="invalid"
@@ -100,6 +120,8 @@ function xenguest_volume_init()
     # Return:
     # 0 - success
     # 1 - failure
+
+    check_private
 
     if [ -z "${XENGUEST_VOLUME_DEVICE:-}" -o \
         ! -b ${XENGUEST_VOLUME_DEVICE:-} ]; then
@@ -154,6 +176,8 @@ function xenguest_volume_init()
 # Detach a disk we attached to xen
 function xenguest_detach_disk()
 {
+    check_private
+
     echo "xl block-detach 0 \$\(xl block-list 0 | " \
         "grep \"domain/0\" | awk '{print \$1}'\)" \
             >> ${LOGFILE} 2>&1
@@ -176,6 +200,8 @@ function xenguest_disk_init()
     # 0 - success
     # 1 - failed at guest disk preparation
     # 2 - failed at guest disk creation
+
+    check_private
 
     guestname="$1"
     guestfile="$2"
@@ -454,6 +480,7 @@ function xenguest_disk_init()
 
 function xenguest_guest_create()
 {
+    check_private
     guestfile="$1"
     guestname="$2"
 
@@ -502,6 +529,8 @@ function xenguest_guest_create()
 
 function xenguest_guest_remove()
 {
+    check_private
+
     guestname="$1"
     devname="/dev/${XENGUEST_VOLUME_NAME}/${guestname}"
 
@@ -526,6 +555,8 @@ function xenguest_guest_remove()
 
 function xenguest_guest_start()
 {
+    check_private
+
     guestname="${1}"
     guestdir=${XENGUEST_CONF_BASE}/guests/${guestname}
 
@@ -560,7 +591,8 @@ function xenguest_guest_start()
                 rm -f ${guestcfgfile}
                 popd > /dev/null 2>&1
                 echo "Error in init script $f" >> ${LOGFILE} 2>&1
-                echo "${PREF} Error during pre init script of ${guestname}"
+                echo "${PREF} Error during pre init script $(basename $f) of ${guestname}"
+                echo "${PREF} Check the log: ${LOGFILE} for more information"
                 exit 1
             fi
         else
@@ -589,7 +621,8 @@ function xenguest_guest_start()
                 xl destroy ${guestname} >> ${LOGFILE} 2>&1
                 popd > /dev/null 2>&1
                 echo "Error in init script $f" >> ${LOGFILE} 2>&1
-                echo "${PREF} Error during init script of ${guestname}"
+                echo "${PREF} Error during init script $(basename $f) of ${guestname}"
+                echo "${PREF} Check the log: ${LOGFILE} for more information"
                 exit 1
             fi
         else
@@ -618,7 +651,8 @@ function xenguest_guest_start()
                 xl destroy ${guestname} >> ${LOGFILE} 2>&1
                 popd > /dev/null 2>&1
                 echo "Error in init script $f" >> ${LOGFILE} 2>&1
-                echo "${PREF} Error during post init script of ${guestname}"
+                echo "${PREF} Error during post init script $(basename $f) of ${guestname}"
+                echo "${PREF} Check the log: ${LOGFILE} for more information"
                 exit 1
             fi
         else
@@ -632,6 +666,8 @@ function xenguest_guest_start()
 
 function xenguest_guest_stop()
 {
+    check_private
+
     guestname="${1}"
     echo "xl shutdown ${guestname}" >> ${LOGFILE} 2>&1
     xl shutdown ${guestname} >> ${LOGFILE} 2>&1
@@ -643,6 +679,8 @@ function xenguest_guest_stop()
 
 function check_guest_arg()
 {
+    check_private
+
     cmd="${1}"
     guestname="${2:-}"
     if [ -z "${guestname:-}" ]; then
