@@ -1,5 +1,19 @@
 # N1SDP Development Platform Support in meta-arm-bsp
 
+## Overview
+The N1SDP provides access to the Arm Neoverse N1 SoC. The N1SDP enables software development for key enterprise technology
+and general Arm software development. The N1SDP consists of the N1 board containing the N1 SoC.
+The N1 SoC contains two dual-core Arm Neoverse N1 processor clusters.
+
+The system demonstrates Arm technology in the context of Cache-Coherent Interconnect for Accelerators (CCIX) protocol by:
+
+- Running coherent traffic between the N1 SoC and an accelerator card.
+- Coherent communication between two N1 SoCs.
+- Enabling development of CCIX-enabled FPGA accelerators.
+
+Further information on N1SDP can be found at
+https://community.arm.com/developer/tools-software/oss-platforms/w/docs/458/neoverse-n1-sdp
+
 ## Configuration:
 In the local.conf file, MACHINE should be set as follow:
 MACHINE ?= "n1sdp"
