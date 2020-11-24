@@ -21,7 +21,6 @@ DEPENDS += "virtual/arm-none-eabi-gcc-native"
 
 SCP_BUILD_STR = "${@bb.utils.contains('SCP_BUILD_RELEASE', '1', 'release', 'debug', d)}"
 
-inherit python3native
 inherit deploy
 
 B = "${WORKDIR}/build"
