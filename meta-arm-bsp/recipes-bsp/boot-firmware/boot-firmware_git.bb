@@ -6,8 +6,7 @@ LIC_FILES_CHKSUM = "file://license.md;md5=e44b2531cd6ffe9dece394dbe988d9a0 \
                     file://cmsis/LICENSE.txt;md5=e3fc50a88d0a364313df4b21ef20c29e"
 
 SRC_URI = "gitsm://git.linaro.org/landing-teams/working/arm/boot-firmware.git;protocol=https"
-# This is two commits on from CORSTONE-700-2020.02.10
-SRCREV = "a4dd1b60218b5172a94e6f44c96384b84a77588c"
+SRCREV = "af7eeb1bb8c5a85a5e5a76d48acc6fe864d715a9"
 PV = "2020.02.10+git${SRCPV}"
 
 PROVIDES += "virtual/control-processor-firmware"
