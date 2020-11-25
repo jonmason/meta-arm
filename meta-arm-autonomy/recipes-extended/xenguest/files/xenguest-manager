@@ -70,8 +70,6 @@ function check_private()
 
 is_integer() {
 
-    check_private
-
     if ! [[ "${1}" =~ ^[0-9]+$ ]]; then
         >&2 echo "error: invalid number '${1}'"; exit 1
     fi
@@ -79,8 +77,6 @@ is_integer() {
 
 # check size and convert it to MB, e.g '1[G]' => '1000M'
 check_size() {
-
-    check_private
 
     local disksize="${1}"
 
