@@ -3,6 +3,9 @@
 # Intermediate SHA with 2.3 baseline version
 SRCREV_tfa = "16796a25fefc4ecf780211bf554d3b8dc5436fa4"
 
+# This is incorporated into the SRCREV above
+SRC_URI_remove = "file://0001-fdts-a5ds-Fix-for-the-system-timer-issue.patch"
+
 DEPENDS += "scp-firmware"
 
 COMPATIBLE_MACHINE = "tc0"
