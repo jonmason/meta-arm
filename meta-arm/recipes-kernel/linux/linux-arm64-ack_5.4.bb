@@ -12,5 +12,5 @@ SRC_URI = " \
     file://0004-libtraceevent-Fix-build-with-binutils-2.35.patch \
     "
 
-# ASB-2020-06-05_5.4-stable tag commit
-SRCREV = "2068976fd7b172b64020006efde1ee57af6bbf99"
+# ASB-2020-07-05_5.4-stable tag commit
+SRCREV = "056684c0d252f75c13be4abb7408f692eedab653"
