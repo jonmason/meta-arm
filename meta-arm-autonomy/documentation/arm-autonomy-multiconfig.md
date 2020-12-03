@@ -159,3 +159,37 @@ and everything between `---Guest Config Start---` and
 Any copies of variables that start `MC_GUEST` must be altered to avoid
 collisions (e.g. `MC_GUEST_2_*`), and the name of the conf file must also
 be added to BBMULTICONFIG.
+
+
+Guest with provisioned disk
+----------------
+
+To add guest rootfs partition to host wic image,
+set `AUTONOMY_HOST_EXTRA_PARTITION` with proper wks partition entry, e.g:
+
+```
+AUTONOMY_HOST_EXTRA_PARTITION = "part --label provisioned-guest --source rawcopy --fstype=ext4 --ondisk sda --align 1024 \
+--sourceparams=file=${TOPDIR}/${MC_GUEST}/deploy/images/${MC_GUEST_MACHINE}/${MC_GUEST_FILENAME_PREFIX}-${MC_GUEST_MACHINE}.ext4"
+```
+
+inside host.conf file.
+
+The rest of the configuration has to be appended to guest.conf file:
+
+```
+XENGUEST_IMAGE_DISK_SIZE = "0"
+XENGUEST_IMAGE_SRC_URI_XEN_CONFIG = "file://\${TOPDIR}/path/to/rootdisk.cfg"
+XENGUEST_IMAGE_DISK_DEVICE = "_GUEST_DISK_DEVICE_"
+XENGUEST_IMAGE_ROOT = "/dev/xvda"
+IMAGE_ROOTFS_SIZE = "102400"
+IMAGE_FSTYPES = "ext4"
+```
+
+content of rootdisk.cfg"
+
+```
+disk = ["phy:_GUEST_DISK_DEVICE_,xvda,w"]
+```
+
+`_GUEST_DISK_DEVICE_` should be substituted with `/dev/sdaX`,
+according to wks file.
