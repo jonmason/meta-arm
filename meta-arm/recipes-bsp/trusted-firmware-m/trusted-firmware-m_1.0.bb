@@ -35,11 +35,8 @@ SRCREV_cmsis = "5.5.0"
 
 inherit python3native deploy
 
-TFM_DEPENDS ?= ""
-DEPENDS += "${TFM_DEPENDS}"
 DEPENDS += "cmake-native"
-DEPENDS += "python3-cryptography-native python3-pyasn1-native"
-DEPENDS += "python3-cbor-native"
+DEPENDS += "python3-cryptography-native python3-pyasn1-native python3-cbor-native"
 
 S = "${WORKDIR}/git/tfm"
 B = "${WORKDIR}/build"
