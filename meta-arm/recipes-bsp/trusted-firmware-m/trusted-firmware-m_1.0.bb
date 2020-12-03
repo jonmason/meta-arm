@@ -35,6 +35,9 @@ SRCREV_cmsis = "5.5.0"
 
 inherit python3native deploy
 
+# Baremetal, just need a compiler
+DEPENDS_remove = "virtual/${TARGET_PREFIX}compilerlibs virtual/libc"
+
 DEPENDS += "cmake-native"
 DEPENDS += "python3-cryptography-native python3-pyasn1-native python3-cbor-native"
 
