@@ -39,4 +39,12 @@ do_deploy_prepend_xen() {
     done
 
     bbnote "Xen binaries added under SOFTWARE/XEN directory"
+
+    if [ "${INITRAMFS_IMAGE_BUNDLE}" != "1" -a "${KERNEL_ALT_IMAGETYPE}" = "Image.lzma" ]; then
+        # KERNEL_ALT_IMAGETYPE is expected to be Image.lzma,
+        # however NOR flash filesystem is DOS compatible with 8.3 naming,
+        # so we need to replace ".lzma" with ".lzm"
+        cp -L -f ${DEPLOY_DIR_IMAGE}/${KERNEL_ALT_IMAGETYPE} \
+                 ${D}/${UNPACK_DIR}/SOFTWARE/Image.lzm
+    fi
 }
