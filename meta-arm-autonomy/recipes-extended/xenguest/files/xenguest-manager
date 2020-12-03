@@ -116,51 +116,56 @@ function xenguest_volume_init()
     # Return:
     # 0 - success
     # 1 - failure
+    local diskdevice
+    local volumename
 
-    check_private
+    if [ -z "${DISK_DEVICE}" ]; then
+        # By default guest is using disk defined inside xenguest-manager.conf
+        diskdevice="${XENGUEST_VOLUME_DEVICE}"
+        volumename="${XENGUEST_VOLUME_NAME}"
+    else
+        # If guest configuration contains custom disk setting,
+        # overwrite default one
+        diskdevice="${DISK_DEVICE}"
+        volumename="vg-xen-$(basename ${diskdevice})"
+    fi
 
-    if [ -z "${XENGUEST_VOLUME_DEVICE:-}" -o \
-        ! -b ${XENGUEST_VOLUME_DEVICE:-} ]; then
-        echo "${PREF} Invalid volume device in configuration: ${XENGUEST_VOLUME_DEVICE:-}"
+    if [ -z "${diskdevice}" -o ! -b "${diskdevice}" ]; then
+        echo "${PREF} Invalid volume device in configuration: ${diskdevice}"
         return 1
     fi
 
-    if [ -z "${XENGUEST_VOLUME_NAME:-}" ]; then
-        echo "${PREF} No volume name in configuration, using vg-xen..."
-        XENGUEST_VOLUME_NAME="vg-xen"
-    fi
-
-    pvs ${XENGUEST_VOLUME_DEVICE} > /dev/null 2>&1
+    pvs "${diskdevice}" > /dev/null 2>&1
     if [ $? -ne 0 ]; then
         # Check if there is no filesystem in the block device
-        echo "lsblk -n -o FSTYPE ${XENGUEST_VOLUME_DEVICE}" >> ${LOGFILE} 2>&1
-        filesystem=$(lsblk -n -o FSTYPE ${XENGUEST_VOLUME_DEVICE} 2>> ${LOGFILE})
+        echo "lsblk -n -o FSTYPE ${diskdevice}" >> ${LOGFILE} 2>&1
+        filesystem=$(lsblk -n -o FSTYPE "${diskdevice}" 2>> ${LOGFILE})
         if [[ $? -eq 0 && -z "$filesystem" ]]; then
-            echo "${PREF} Initialize lvm on ${XENGUEST_VOLUME_DEVICE}"
-            echo "pvcreate -f ${XENGUEST_VOLUME_DEVICE}" >> ${LOGFILE} 2>&1
-            pvcreate -f ${XENGUEST_VOLUME_DEVICE} >> ${LOGFILE} 2>&1
+            echo "${PREF} Initialize lvm on ${diskdevice}"
+            echo "pvcreate -f ${diskdevice}" >> ${LOGFILE} 2>&1
+            pvcreate -f "${diskdevice}" >> ${LOGFILE} 2>&1
             if [ $? -ne 0 ]; then
                 echo "${PREF} Error: initialing lvm on " \
-                     "${XENGUEST_VOLUME_DEVICE} failed." | tee -a ${LOGFILE}
+                     "${diskdevice} failed." | tee -a ${LOGFILE}
                 return 1
             fi
         else
             [ -z "$filesystem" ] || \
-                echo "${PREF} Error: The ${XENGUEST_VOLUME_DEVICE} is already " \
+                echo "${PREF} Error: The ${diskdevice} is already " \
                      "formatted as $filesystem." | tee -a ${LOGFILE}
             return 1
         fi
     fi
 
-    vgs ${XENGUEST_VOLUME_NAME} > /dev/null 2>&1
+    vgs "${volumename}" > /dev/null 2>&1
     if [ $? -ne 0 ]; then
-        echo "${PREF} Create ${XENGUEST_VOLUME_NAME} volume"
-        echo "vgcreate ${XENGUEST_VOLUME_NAME} ${XENGUEST_VOLUME_DEVICE}" \
+        echo "${PREF} Create ${volumename} volume"
+        echo "vgcreate ${volumename} ${diskdevice}" \
             >> ${LOGFILE} 2>&1
-        vgcreate ${XENGUEST_VOLUME_NAME} ${XENGUEST_VOLUME_DEVICE} \
+        vgcreate "${volumename}" "${diskdevice}" \
             >> ${LOGFILE} 2>&1
         if [ $? -ne 0 ]; then
-            echo "${PREF} Error: creating ${XENGUEST_VOLUME_NAME} volume " \
+            echo "${PREF} Error: creating ${volumename} volume " \
                  "failed."  | tee -a ${LOGFILE}
             return 1
         fi
@@ -201,9 +206,19 @@ function xenguest_disk_init()
 
     guestname="$1"
     guestfile="$2"
-    devname="/dev/${XENGUEST_VOLUME_NAME}/${guestname}"
 
     source ${XENGUEST_CONF_BASE}/guests/${guestname}/disk.cfg
+    if [ -z "${DISK_DEVICE}" ]; then
+        # By default guest is using disk defined inside xenguest-manager.conf
+        diskdevice="${XENGUEST_VOLUME_DEVICE}"
+        volumename="${XENGUEST_VOLUME_NAME}"
+    else
+        # If guest configuration contains custom disk setting,
+        # overwrite default one
+        diskdevice="${DISK_DEVICE}"
+        volumename="vg-xen-$(basename ${diskdevice})"
+    fi
+    devname="/dev/${volumename}/${guestname}"
 
     DISK_SIZE=$(check_size "${DISK_SIZE}")
     if [ -z "${DISK_SIZE}" ] || [ "${DISK_SIZE}" = "0M" ]; then
@@ -224,11 +239,11 @@ function xenguest_disk_init()
 
 
     # Remove volume if it already exist
-    echo "lvs ${XENGUEST_VOLUME_NAME}/${guestname}"  >> ${LOGFILE} 2>&1
-    lvs ${XENGUEST_VOLUME_NAME}/${guestname} >> ${LOGFILE} 2>&1
+    echo "lvs ${volumename}/${guestname}"  >> ${LOGFILE} 2>&1
+    lvs "${volumename}/${guestname}" >> ${LOGFILE} 2>&1
     if [ $? -eq 0 ]; then
         echo "lvremove -y ${devname}" >> ${LOGFILE} 2>&1
-        lvremove -y ${devname} >> ${LOGFILE} 2>&1
+        lvremove -y "${devname}" >> ${LOGFILE} 2>&1
         if [ $? -ne 0 ]; then
             echo "${PREF} Error removing volume ${guestname}"
             return 1
@@ -236,9 +251,9 @@ function xenguest_disk_init()
     fi
 
     # Create volume
-    echo "lvcreate -y -L ${DISK_SIZE} -n ${guestname} ${XENGUEST_VOLUME_NAME}" \
+    echo "lvcreate -y -L ${DISK_SIZE} -n ${guestname} ${volumename}" \
         >> ${LOGFILE} 2>&1
-    lvcreate -y -L ${DISK_SIZE} -n ${guestname} ${XENGUEST_VOLUME_NAME} \
+    lvcreate -y -L "${DISK_SIZE}" -n "${guestname}" "${volumename}" \
         >> ${LOGFILE} 2>&1
     if [ $? -ne 0 ]; then
         echo "${PREF} Error creating volume ${guestname}"
@@ -247,7 +262,7 @@ function xenguest_disk_init()
 
     # Add partition table
     echo "parted -s ${devname} mklabel msdos" >> ${LOGFILE} 2>&1
-    parted -s ${devname} mklabel msdos >> ${LOGFILE} 2>&1
+    parted -s "${devname}" mklabel msdos >> ${LOGFILE} 2>&1
     if [ $? -ne 0 ]; then
         echo "${PREF} Error creating partition table on ${guestname}"
         return 1
@@ -256,8 +271,8 @@ function xenguest_disk_init()
     # Setup disk name in xen configuration
     echo "xenguest-mkimage update ${XENGUEST_CONF_BASE}/guests/${guestname}" \
         "--xen-disk=${devname}" >> ${LOGFILE} 2>&1
-    xenguest-mkimage update ${XENGUEST_CONF_BASE}/guests/${guestname} \
-        --xen-disk=${devname} >> ${LOGFILE} 2>&1
+    xenguest-mkimage update "${XENGUEST_CONF_BASE}/guests/${guestname}" \
+        "--xen-disk=${devname}" >> ${LOGFILE} 2>&1
     if [ $? -ne 0 ]; then
         echo "${PREF} Error setting disk in xen configuration"
         return 1
@@ -311,8 +326,8 @@ function xenguest_disk_init()
             # Create partition
             echo "parted -s ${devname} unit MB mkpart primary ${partstart}" \
                 "${partend}" >> ${LOGFILE} 2>&1
-            parted -s ${devname} unit MB mkpart primary ${partstart} \
-                ${partend} >> ${LOGFILE} 2>&1
+            parted -s "${devname}" unit MB mkpart primary "${partstart}" \
+                "${partend}" >> ${LOGFILE} 2>&1
             if [ $? -ne 0 ]; then
                 echo "${PREF} Error adding partition ${part}"
                 return 1
@@ -346,7 +361,7 @@ function xenguest_disk_init()
 
             # Attach disk to xen
             echo "xl block-attach 0 phy:${devname} xvda w" >> ${LOGFILE} 2>&1
-            xl block-attach 0 phy:${devname} xvda w >> ${LOGFILE} 2>&1
+            xl block-attach 0 "phy:${devname}" xvda w >> ${LOGFILE} 2>&1
             if [ $? -ne 0 ]; then
                 echo "${PREF} Error attaching partition ${part}"
                 return 1
@@ -528,16 +543,27 @@ function xenguest_guest_remove()
     check_private
 
     guestname="$1"
-    devname="/dev/${XENGUEST_VOLUME_NAME}/${guestname}"
+    source ${XENGUEST_CONF_BASE}/guests/${guestname}/disk.cfg
+    if [ -z "${DISK_DEVICE}" ]; then
+        # By default guest is using disk defined inside xenguest-manager.conf
+        diskdevice="${XENGUEST_VOLUME_DEVICE}"
+        volumename="${XENGUEST_VOLUME_NAME}"
+    else
+        # If guest configuration contains custom disk setting,
+        # overwrite default one
+        diskdevice="${DISK_DEVICE}"
+        volumename="vg-xen-$(basename ${diskdevice})"
+    fi
+    devname="/dev/${volumename}/${guestname}"
 
     # check if guest had a volume
-    echo "lvs ${XENGUEST_VOLUME_NAME}/${guestname}"  >> ${LOGFILE} 2>&1
-    lvs ${XENGUEST_VOLUME_NAME}/${guestname} >> ${LOGFILE} 2>&1
+    echo "lvs ${volumename}/${guestname}"  >> ${LOGFILE} 2>&1
+    lvs ${volumename}/${guestname} >> ${LOGFILE} 2>&1
     if [ $? -eq 0 ]; then
         # Remove guest volume
         echo "${PREF} Removing ${guestname} volume. This might take a while..."
         echo "lvremove -y ${devname}" >> ${LOGFILE} 2>&1
-        lvremove -y ${devname} >> ${LOGFILE} 2>&1
+        lvremove -y "${devname}" >> ${LOGFILE} 2>&1
         if [ $? -ne 0 ]; then
             echo "${PREF} Error removing volume ${guestname}"
             exit 1

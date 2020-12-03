@@ -43,6 +43,9 @@ XENGUEST_IMAGE_KERNEL ??= "Image"
 # be included in the xenguest image)
 XENGUEST_IMAGE_DISK_SIZE ??= "${@ '4' if not d.getVar('INITRAMFS_IMAGE') else '0'}"
 
+# set empty partition to be used by xenguest-manager for this image
+XENGUEST_IMAGE_DISK_DEVICE ??= ""
+
 #
 # XENGUEST_IMAGE_DISK_PARTITIONS is used to describe the partitions to setup
 # and their content.
@@ -142,6 +145,11 @@ xenguest_image_create() {
                     call_xenguest_mkimage update --disk-add-part=$arg
                 done
             fi
+            diskdevice="${XENGUEST_IMAGE_DISK_DEVICE}"
+            if [ -n "$diskdevice" ]; then
+                call_xenguest_mkimage update --disk-device="${diskdevice}"
+            fi
+
             ;;
     esac
 

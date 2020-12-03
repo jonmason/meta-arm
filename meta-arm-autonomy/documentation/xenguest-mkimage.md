@@ -66,6 +66,11 @@ The file contains the following entries:
   and extract CONTENT as initial partition content (.tar[.gz|.xz|.bz2] file
   or img[.gz|.bz2] file to be dumped in the partition).
   FS and CONTENT can be empty.
+- `DISK_DEVICE=X`: disk or partition to be used by lvm. Setting this option
+  allows to bind guest disk with any partition or disk available on host,
+  e.g. /dev/sda3 or /dev/sdb.
+  This variable is not set by default, but if set, it overrides disk settings
+  inside xenguest-manager.conf - 'XENGUEST_VOLUME_DEVICE'.
 
 The disk-files contain files to be used for initializing the disk partitions
 content. Those should be used to create a LVM or a physical disk and initialize
