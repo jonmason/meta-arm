@@ -77,9 +77,12 @@ LD[unexport] = "1"
 # No configure
 do_configure[noexec] = "1"
 
+# Baremetal, just need a compiler
+DEPENDS_remove = "virtual/${TARGET_PREFIX}compilerlibs virtual/libc"
+
 # We need dtc for dtbs compilation
 # We need openssl for fiptool
-DEPENDS_append = " dtc-native openssl-native"
+DEPENDS = "dtc-native openssl-native"
 DEPENDS_append_aarch64_qemuall ?= " optee-os"
 
 # CC and LD introduce arguments which conflict with those otherwise provided by
