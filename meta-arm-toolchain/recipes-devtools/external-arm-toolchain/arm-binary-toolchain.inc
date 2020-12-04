@@ -13,7 +13,7 @@ do_install() {
     done
 }
 
-INSANE_SKIP_${PN} = "already-stripped libdir staticdev file-rdeps"
+INSANE_SKIP_${PN} = "already-stripped libdir staticdev file-rdeps arch dev-so"
 
 INHIBIT_SYSROOT_STRIP = "1"
 INHIBIT_PACKAGE_STRIP = "1"
