@@ -305,6 +305,19 @@ PACKAGES =+ "\
 	linux-libc-headers-dev \
 "
 
+# Re-order PACKAGES list in order to shift ${PN}-dev towards the end as
+# it is meant to pick up remaining dev libraries and headers that aren't
+# picked up by other packages. And since some static libraries needs to
+# be packaged in ${PN}-dev, so we need to keep ${PN}-staticdev later in
+# order.
+
+PACKAGES := "${@oe.utils.str_filter_out('${PN}-dev', '${PACKAGES}', d)}"
+PACKAGES := "${@oe.utils.str_filter_out('${PN}-staticdev', '${PACKAGES}', d)}"
+PACKAGES += "\
+	${PN}-dev \
+	${PN}-staticdev \
+"
+
 INSANE_SKIP_${PN}-dbg = "staticdev"
 INSANE_SKIP_${PN}-utils += "ldflags"
 INSANE_SKIP_libstdc++ += "ldflags"
