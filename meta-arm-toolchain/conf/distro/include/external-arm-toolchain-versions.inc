@@ -139,5 +139,19 @@ python external_arm_toolchain_version_handler () {
     d.setVar('EAT_VER_KERNEL', eat_get_kernel_version(ld))
     d.setVar('EAT_VER_GDB', eat_get_gdb_version(ld))
     d.setVar('EAT_VER_BFD', eat_get_bfd_version(ld))
+
+    lc_libc = "LGPL-2.1"
+    lc_gcc = "GPL-3.0"
+    lc_rle = "GPL-3.0-with-GCC-exception"
+    lc_gdb = "GPL-3.0"
+    lc_bfd = "GPL-3.0"
+
+    d.setVar('EAT_LIBC_LICENSE', lc_libc)
+    d.setVar('EAT_GCC_LICENSE', lc_gcc)
+    d.setVar('EAT_RLE_LICENSE', lc_rle)
+    d.setVar('EAT_GDB_LICENSE', lc_gdb)
+    d.setVar('EAT_BFD_LICENSE', lc_bfd)
+
+    d.setVar('EAT_LICENSE', "%s & %s & %s & %s & %s" % (lc_libc, lc_gcc, lc_rle, lc_gdb, lc_bfd))
 }
 addhandler external_arm_toolchain_version_handler
