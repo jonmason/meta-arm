@@ -1,0 +1,10 @@
+header:
+  version: 9
+
+repos:
+  meta-clang:
+    url: https://github.com/kraj/meta-clang
+
+local_conf_header:
+  clang: |
+    TOOLCHAIN = "clang"

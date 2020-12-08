@@ -1,0 +1,10 @@
+header:
+  version: 9
+  includes:
+    - base.yml
+
+machine: gem5-arm64
+
+target:
+  - core-image-minimal
+  - gem5-aarch64-native
