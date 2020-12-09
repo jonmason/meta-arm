@@ -20,10 +20,6 @@ repos:
       meta:
       meta-poky:
 
-env:
-  BB_LOGCONFIG: ""
-  PYTHONPATH: ""
-
 local_conf_header:
   base: |
     CONF_VERSION = "1"
