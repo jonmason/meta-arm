@@ -26,7 +26,7 @@ stages:
   extends: .setup
   script:
   - KASFILES=$(kas/jobs-to-kas $CI_JOB_NAME)
-  - kas shell --update $KASFILES -c 'cat conf/*.conf'
+  - kas shell --update --force-checkout $KASFILES -c 'cat conf/*.conf'
   - kas build $KASFILES
 
 
