@@ -23,6 +23,9 @@ repos:
   meta-kernel:
     url: https://gitlab.com/openembedded/community/meta-kernel.git
 
+env:
+  BB_LOGCONFIG: ""
+
 local_conf_header:
   base: |
     CONF_VERSION = "1"
