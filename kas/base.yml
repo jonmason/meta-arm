@@ -25,6 +25,9 @@ repos:
     layers:
       meta-oe:
 
+env:
+  BB_LOGCONFIG: ""
+
 local_conf_header:
   base: |
     CONF_VERSION = "1"
