@@ -21,6 +21,7 @@ SRC_URI = "\
 "
 
 SRCREV_FORMAT         = "edk2_edk2-platforms"
+UPSTREAM_CHECK_GITTAGREGEX = "^edk2-stable(?P<pver>\d+)$"
 
 EDK2_BUILD_RELEASE   ?= "1"
 EDK2_PLATFORM        ?= "ArmVirtQemu-AARCH64"
