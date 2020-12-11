@@ -10,6 +10,7 @@ require optee.inc
 
 # Linking fails on musl due to C++/threads
 # https://github.com/OP-TEE/optee_test/issues/458#issuecomment-720540834
+# When upgraded we should be able to remove this limitation
 COMPATIBLE_HOST_libc-musl = 'null'
 
 DEPENDS = "optee-client optee-os python3-pycryptodomex-native"
