@@ -113,25 +113,29 @@ check_size() {
 
 function xenguest_volume_init()
 {
-    # Return:
+    # Inputs:
+    # $1 - diskdevice
+    # $2 - volumename
+    #
+    # Outputs:
     # 0 - success
     # 1 - failure
+
+    check_private
+
     local diskdevice
     local volumename
 
-    if [ -z "${DISK_DEVICE}" ]; then
-        # By default guest is using disk defined inside xenguest-manager.conf
-        diskdevice="${XENGUEST_VOLUME_DEVICE}"
-        volumename="${XENGUEST_VOLUME_NAME}"
-    else
-        # If guest configuration contains custom disk setting,
-        # overwrite default one
-        diskdevice="${DISK_DEVICE}"
-        volumename="vg-xen-$(basename ${diskdevice})"
-    fi
+    diskdevice="${1}"
+    volumename="${2}"
 
     if [ -z "${diskdevice}" -o ! -b "${diskdevice}" ]; then
         echo "${PREF} Invalid volume device in configuration: ${diskdevice}"
+        return 1
+    fi
+
+    if [ -z "${volumename}" ]; then
+        echo "${PREF} Invalid volume name in configuration: ${volumename}"
         return 1
     fi
 
@@ -229,7 +233,7 @@ function xenguest_disk_init()
     echo "${PREF} Create ${guestname} disk."
 
     # Init our volume
-    xenguest_volume_init ${guestname}
+    xenguest_volume_init "${diskdevice}" "${volumename}"
     if [ $? -ne 0 ]; then
         return 1
     fi
