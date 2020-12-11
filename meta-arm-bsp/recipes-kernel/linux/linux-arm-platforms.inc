@@ -80,3 +80,8 @@ SRC_URI_append_tc0 = " \
     file://0008-cpufreq-arm_scmi-Set-fast_switch_possible-conditiona.patch \
     "
 
+#
+# Musca B1/S2 can't run Linux
+#
+COMPATIBLE_MACHINE_musca-b1 = "(^$)"
+COMPATIBLE_MACHINE_musca-s1 = "(^$)"
