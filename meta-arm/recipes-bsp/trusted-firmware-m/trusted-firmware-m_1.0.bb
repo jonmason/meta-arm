@@ -28,6 +28,8 @@ SRCREV_tfm = "0768982ea41b5e7d207445f19ee23e5d67d9c89b"
 SRCREV_mbed-crypto = "1146b4e06011b69a6437e6b728f2af043a06ec19"
 SRCREV_cmsis = "5.5.0"
 
+UPSTREAM_CHECK_GITTAGREGEX = "^TF-Mv(?P<pver>\d+(\.\d+)+)$"
+
 # Note to future readers of this recipe: until the CMakeLists don't abuse
 # installation (see do_install) there is no point in trying to inherit
 # cmake here. You can easily short-circuit the toolchain but the install
