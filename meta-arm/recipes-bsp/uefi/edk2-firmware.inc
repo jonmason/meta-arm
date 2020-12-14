@@ -20,9 +20,6 @@ SRC_URI = "\
     ${EDK2_PLATFORMS_SRC_URI};name=edk2-platforms;destsuffix=edk2/edk2-platforms;nobranch=1 \
 "
 
-PV = "202008+git${SRCPV}"
-SRCREV_edk2           ?= "06dc822d045c2bb42e497487935485302486e151"
-SRCREV_edk2-platforms ?= "7aab81a35aef7b295e73d7d6dfd528cc812790ed"
 SRCREV_FORMAT         = "edk2_edk2-platforms"
 
 EDK2_BUILD_RELEASE   ?= "1"
