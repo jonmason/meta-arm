@@ -36,13 +36,9 @@ stages:
 
 # Build a number of native tools first to ensure the other builders don't race
 # over them
-bootstrap:
+n1sdp/bootstrap:
   extends: .build
   stage: bootstrap
-  variables:
-    KAS_TARGET: binutils-cross-aarch64 gcc-cross-aarch64 python3-native opkg-native rpm-native
-  script:
-  - kas build kas/n1sdp.yml
 
 # What percentage of machines in the layer do we build
 machine-coverage:
