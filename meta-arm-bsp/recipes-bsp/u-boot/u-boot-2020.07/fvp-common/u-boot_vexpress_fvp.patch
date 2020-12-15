@@ -1,4 +1,5 @@
 Upstream-Status: Inappropriate [OE config specific]
+Signed-off-by: Anders Dellien <anders.dellien@arm.com>
 
 diff --git a/configs/vexpress_aemv8a_semi_defconfig b/configs/vexpress_aemv8a_semi_defconfig
 index f0ac2f9da3..93fcd3026a 100644

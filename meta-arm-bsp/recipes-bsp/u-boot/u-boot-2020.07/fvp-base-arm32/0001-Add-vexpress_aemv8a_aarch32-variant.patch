@@ -13,7 +13,7 @@ vexpress_armv8a.h.
 
 This patch is co-authored with Soby Mathew <Soby.Mathew@arm.com>.
 
-Upstream-status: Denied
+Upstream-Status: Denied
 
 For upstream discussion, please visit
 https://www.mail-archive.com/u-boot@lists.denx.de/msg233429.html
