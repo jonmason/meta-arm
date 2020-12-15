@@ -1,0 +1,9 @@
+header:
+  version: 9
+
+target:
+  - binutils-cross-aarch64
+  - gcc-cross-aarch64
+  - python3-native
+  - opkg-native
+  - rpm-native
