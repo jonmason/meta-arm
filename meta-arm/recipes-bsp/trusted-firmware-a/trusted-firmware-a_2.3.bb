@@ -21,6 +21,11 @@ SRC_URI += "file://0001-fdts-a5ds-Fix-for-the-system-timer-issue.patch"
 
 SRC_URI_MBEDTLS = "git://github.com/ARMmbed/mbedtls.git;name=mbedtls;protocol=https;destsuffix=git/mbedtls;branch=mbedtls-2.18"
 
+FILESEXTRAPATHS_prepend := "${THISDIR}/${BP}:"
+SRC_URI += " \
+    file://0001-make-link-compiler-rt-builtins-when-32-bit-2-3.patch \
+    "
+
 # mbed TLS v2.18.1
 SRCREV_mbedtls = "ca933c7e0c9e84738b168b6b0feb89af4183a60a"
 

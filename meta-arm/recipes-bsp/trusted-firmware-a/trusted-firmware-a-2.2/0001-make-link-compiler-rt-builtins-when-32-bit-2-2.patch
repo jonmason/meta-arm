@@ -1,0 +1,54 @@
+From f2855c0957ded1af279724c1a82c3e381cc036f9 Mon Sep 17 00:00:00 2001
+From: Brett Warren <brett.warren@arm.com>
+Date: Fri, 27 Nov 2020 10:12:07 +0000
+Subject: [PATCH 3/3] make: link compiler-rt builtins when 32-bit
+
+Compiler-rt builtins weren't previously linked when using
+GNU ld to link for aarch32; this is now explicitly linked
+in.
+
+For use with TFA 2.2
+
+Upstream-Status: Pending
+Signed-off-by: Brett Warren <brett.warren@arm.com>
+---
+ Makefile                     | 9 +++++++++
+ make_helpers/build_macros.mk | 2 +-
+ 2 files changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index 721246d51..5bf8e9a11 100644
+--- a/Makefile
++++ b/Makefile
+@@ -204,6 +204,15 @@ LD			=	$(LINKER)
+ AS			=	$(CC) -c -x assembler-with-cpp $(TF_CFLAGS_$(ARCH))
+ CPP			=	$(CC) -E
+ PP			=	$(CC) -E
++
++ifeq (${ARCH},aarch32)
++RUNTIME_LIB             =       $(shell $(CC) --sysroot=$(RUNTIME_SYSROOT) \
++                                              $(shell sed 's/none/linux/' <<< '$(target32-directive)') \
++                                              -mfloat-abi=$(TARGET_FPU) \
++                                              -rtlib=compiler-rt \
++                                              -print-libgcc-file-name 2> /dev/null)
++endif
++
+ else
+ TF_CFLAGS_aarch32	=	$(march32-directive)
+ TF_CFLAGS_aarch64	=	$(march64-directive)
+diff --git a/make_helpers/build_macros.mk b/make_helpers/build_macros.mk
+index b89d87ea6..1ff345336 100644
+--- a/make_helpers/build_macros.mk
++++ b/make_helpers/build_macros.mk
+@@ -436,7 +436,7 @@ ifneq ($(findstring armlink,$(notdir $(LD))),)
+ else
+ 	$$(Q)$$(LD) -o $$@ $$(TF_LDFLAGS) $$(LDFLAGS) -Map=$(MAPFILE) \
+ 		--script $(LINKERFILE) $(BUILD_DIR)/build_message.o \
+-		$(OBJS) $(LDPATHS) $(LIBWRAPPER) $(LDLIBS) $(BL_LIBS)
++		$(OBJS) $(LDPATHS) $(LIBWRAPPER) $(LDLIBS) $(BL_LIBS) $(RUNTIME_LIB)
+ endif
+ ifeq ($(DISABLE_BIN_GENERATION),1)
+ 	@${ECHO_BLANK_LINE}
+-- 
+2.17.1
+
