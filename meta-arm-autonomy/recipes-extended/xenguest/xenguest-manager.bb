@@ -9,6 +9,7 @@ LICENSE = "MIT"
 SRC_URI = " \
     file://xenguest-manager \
     file://xenguest-init \
+    file://logrotate-xenguest \
     "
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
@@ -19,6 +20,7 @@ S = "${WORKDIR}"
 XENGUEST_MANAGER_VOLUME_DEVICE ?= "/dev/sda2"
 XENGUEST_MANAGER_VOLUME_NAME ?= "vg-xen-$(basename ${XENGUEST_MANAGER_VOLUME_DEVICE})"
 XENGUEST_MANAGER_GUEST_DIR ?= "${datadir}/guests/"
+XENGUEST_MANAGER_LOG_LEVEL ?= "ERROR"
 
 # We add an init script to create and start guests automatically
 # run start script after xen-tools and run stop script before xen-tools
@@ -34,6 +36,8 @@ do_compile() {
         xenguest-manager.conf
     echo "XENGUEST_GUEST_DIR=\"${XENGUEST_MANAGER_GUEST_DIR}\"" >> \
         xenguest-manager.conf
+    echo "XENGUEST_LOG_LEVEL=\"${XENGUEST_MANAGER_LOG_LEVEL}\"" >> \
+        xenguest-manager.conf
 }
 
 do_install() {
@@ -44,10 +48,13 @@ do_install() {
     install -d -m 755 ${D}${sysconfdir}/init.d
     install -m 755 xenguest-init ${D}${sysconfdir}/init.d/${INITSCRIPT_NAME}
     install -d -m 755 ${D}${XENGUEST_GUEST_DIR}
+    install -d -m 755 ${D}${sysconfdir}/logrotate.d
+    install -m 644 logrotate-xenguest ${D}${sysconfdir}/logrotate.d/xenguest
 }
 
 # Things that we need on the target
-RDEPENDS_${PN} += "bash tar xenguest-mkimage lvm2 xen-tools parted e2fsprogs dosfstools"
+RDEPENDS_${PN} += "bash tar xenguest-mkimage lvm2 xen-tools parted e2fsprogs \
+                   dosfstools logrotate"
 
 FILES_${PN} += "${bindir}/xenguest-manager \
                ${sysconfdir}/xenguest"

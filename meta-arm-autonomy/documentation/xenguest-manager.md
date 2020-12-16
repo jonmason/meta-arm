@@ -23,7 +23,7 @@ Usage
 -----
 
 xenguest-manager must be called like this:
-`xenguest-manager OPERATION [OPTIONS]`
+`xenguest-manager [-v(v)] OPERATION [OPTIONS]`
 The following operations are available:
 - create XENGUEST_IMAGE [GUESTNAME]: create a guest from a xenguest image file
   as guest GUESTNAME. If GUESTNAME is not given the image file name is used
@@ -36,6 +36,9 @@ The following operations are available:
 - list: list the available guests.
 - status [GUESTNAME]: print the current status of GUESTNAME. If GUESTNAME is
   not given, print the status of all guests.
+
+Passing -v or -vv will increase the logging written to the logfile.
+The terminal will always show only error messages, regardless of the logfile.
 
 For a detailed help on available options please use:
 `xenguest-manager --help`
@@ -65,6 +68,13 @@ The following parameters are available:
   name).
   This is set by default to "/usr/share/guests".
 
+- XENGUEST_MANAGER_LOG_LEVEL: Set the default log level for xenguest manager. Must
+  be one of ERROR, INFO, VERBOSE (default: ERROR). The extra will be
+  written to /var/log/xenguest.
+
+  If a verbosity argument (-v or -vv) is passed to xenguest-manager directly, it
+  will override the setting in xenguest-manager.conf
+
 Init scripts
 ------------
 
@@ -80,7 +90,7 @@ directory on the target:
 
 Inside the directory, scripts will be executed in alphabetical order.
 
-Since these scripts are sourced by xenguest-manager they can acccess functions
+Since these scripts are sourced by xenguest-manager, they can acccess functions
 and variables from the parent file's scope, including:
 
 - ${guestname}    : The name of the guest being created
@@ -89,11 +99,30 @@ and variables from the parent file's scope, including:
 
 - ${guestcfgfile} : The name of the config file for the starting guest
 
-- ${LOGFILE}      : The file to append any logging to, e.g.
-                     echo "Hello, World" >> ${LOGFILE}
+- log()           : Used to write a log to the logfile, default level INFO.
+                    Takes an optional log level and a message body
+                    e.g. log ERROR "blah"
+
+                    Options for log level: ERROR, INFO, VERBOSE, and FATAL, which
+                    will call exit 1 immediately after logging the message
+
+- log_command()   : Used to call a shell command and log that it has been
+                    called, as well as capturing both stdout and stderr.
+
+                    By default the command output is dumped to the logfile as an error
+                    if the command returns a status > 0, or as a verbose message if the
+                    whole script is running in verbose mode. An optional log level can
+                    be passed to alter the level the log should be if the command returns
+                    a status >0,
+                    e.g. log_command INFO "ls -lh ~"
+
+                    Options for log level: ERROR, INFO, and VERBOSE
+
+Attempting to call any other functions from xenguest_manager in an init script may
+result in a fatal error, from which cleanup is not guarenteed.
+
 
 Sourcing also allows the script to access params.cfg.
-
 
 An example of how to create the directory and install an init shell script can
 be found in:

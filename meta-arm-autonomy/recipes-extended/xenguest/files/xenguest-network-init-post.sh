@@ -31,15 +31,14 @@ case "${XENGUEST_NETWORK_TYPE:-}" in
                 release_lock "vif-nat-kea"
                 exit 0
             fi
-            echo "Waiting for ${vif_name} - network interface is not ready..."\
-                 " try #${try}" >> "${LOGFILE}" 2>&1
+            log info "Waiting for ${vif_name} - network interface is not ready..."
+            log info "try #${try}"
             sleep 1
         done
-        echo "ERROR: Failed to get ${vif_name} "\
-             "network interface ready!" >> "${LOGFILE}" 2>&1
+        log error "Failed to get ${vif_name}. network interface ready!"
         exit 1
         ;;
     *)
-        echo "No action needed" >> "${LOGFILE}" 2>&1
+        log verbose "No action needed"
         ;;
 esac
