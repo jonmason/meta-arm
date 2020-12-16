@@ -15,9 +15,12 @@ https://git.linaro.org/landing-teams/working/arm/arm-reference-platforms.git/tre
 In the local.conf file, MACHINE should be set as follows:
 MACHINE = "tc0"
 
-To build the required binaries for tc0, run the commmand for the required image,
-for e.g for core-image-minimal:
-```bash$ bitbake core-image-minimal```
+To build the required binaries for tc0, run the commmand:
+```bash$ bitbake trusted-firmware-a```
+
+Trusted-firmware-a is the final component to be built with the rest of the
+components dependent of it, therefore building trusted-firmware-a will
+build all the required binaries.
 
 ## Running
 To run the produced binaries in a TC0 Fixed Virtual Platform please get
