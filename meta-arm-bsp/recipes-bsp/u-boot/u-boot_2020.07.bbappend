@@ -25,8 +25,3 @@ SRC_URI_append_fvp-base-arm32 = " file://0001-Add-vexpress_aemv8a_aarch32-varian
 # Juno KMACHINE
 #
 SRC_URI_append_juno = " file://u-boot_vexpress_uenv.patch"
-
-#
-# Total Compute KMACHINE
-#
-SRC_URI_append_tc0 = " file://0001-Add-support-for-Total-Compute.patch"
