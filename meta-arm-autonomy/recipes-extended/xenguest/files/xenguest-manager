@@ -354,6 +354,39 @@ function xenguest_detach_disk()
     log verbose "Partition '${part}' detached successfully"
 }
 
+#Private
+function xenguest_volume_remove()
+{
+    # Inputs:
+    # $1 - volumename
+    # $2 - guestname
+
+    local volumename
+    local guestname
+
+    volumename="${1}"
+    guestname="${2}"
+
+    devname="/dev/${volumename}/${guestname}"
+
+    # Remove volume if it exists
+    log verbose "Checking for volume ${devname}"
+    log_command verbose "lvs ${volumename}/${guestname}"
+    if [ $? -eq 0 ]; then
+        log info "Removing volume ${devname}"
+        log_command "lvremove -y ${devname}"
+        if [ $? -ne 0 ]; then
+            log error "Removing volume ${devname} failed."
+            return 1
+        else
+            log verbose "Volume ${devname} removed successfully"
+            return 0
+        fi
+    fi
+
+    log verbose "Volume ${devname} not found"
+}
+
 # Private
 function xenguest_disk_init()
 {
@@ -407,14 +440,9 @@ function xenguest_disk_init()
     log info "Creating hard drive for guest '${guestname}'. This might take a while..."
 
     # Remove volume if it already exist
-    log_command verbose "lvs ${volumename}/${guestname}"
-    if [ $? -eq 0 ]; then
-        log info "Removing existing volume ${devname}"
-        log_command "lvremove -y ${devname}"
-        if [ $? -ne 0 ]; then
-            log error "Removing existing volume ${devname} failed."
-            return 1
-        fi
+    xenguest_volume_remove ${volumename} ${guestname}
+    if [ $? -ne 0 ]; then
+        return 1
     fi
 
     # Create volume
@@ -719,24 +747,63 @@ function xenguest_guest_remove()
     fi
     devname="/dev/${volumename}/${guestname}"
 
-    # check if guest had a volume
-    log verbose "Checking if ${guestname} has a volume to remove"
-    log_command verbose "lvs ${volumename}/${guestname}"
-    if [ $? -eq 0 ]; then
-        # Remove guest volume
-        log info "Removing volume ${devname}. This might take a while..."
-        log_command "lvremove -y \"${devname}\""
-        if [ $? -ne 0 ]; then
-            log error "Removing volume ${devname} failed."
-            exit 1
-        fi
-    fi
+    # find and remove guest volume
+    xenguest_volume_remove ${volumename} ${guestname}
+    status=$?
 
     # remove guest files
     log info "Removing configuration files for guest '${guestname}'."
     log_command "rm -rf ${XENGUEST_CONF_BASE}/guests/${guestname}"
 
-    log info "Removed guest '${guestname}' succesfully"
+    if [ ${status} -ne 0 ]; then
+        # Shouldn't log success message if volume removal fails
+        exit 1
+    fi
+
+    log info "Removed guest '${guestname}' successfully"
+}
+
+# Private
+function xenguest_call_inits()
+{
+    # Inputs:
+    # $1 - script directory
+
+    local scriptdir
+    local guestdir
+    local guestcfgfile
+    local guestname
+
+    scriptdir="${1}"
+    guestdir="${2}"
+    guestcfgfile="${3}"
+    guestname="${4}"
+
+    log "Attempting to call all init scripts in ${scriptdir}"
+
+    check_private
+
+
+    init_scripts="$(find ${XENGUEST_CONF_BASE}/${scriptdir} -type f 2> /dev/null | \
+            sort) $(find ${guestdir}/${scriptdir} -type f 2> /dev/null | sort)"
+    for f in ${init_scripts}; do
+        if [ -x "$f" ]; then
+            log_source $f
+            if [ $? -ne 0 ]; then
+                rm -f ${guestcfgfile}
+                popd > /dev/null 2>&1
+                log fatal "Error during init script $(basename $f) of ${guestname}"
+            fi
+        else
+            log fatal "$f is not executable. Exiting..."
+        fi
+    done
+
+    if [ "${init_scripts}" = " " ]; then
+        log "No scripts found"
+    else
+        log "All init scripts in ${scriptdir} completed successfully"
+    fi
 }
 
 # Private
@@ -764,27 +831,12 @@ function xenguest_guest_start()
     #
     # These scripts are sourced throughout the start operation if they
     # are executable
-    init_pre="$(find ${XENGUEST_CONF_BASE}/init.pre -type f 2> /dev/null | \
-            sort) $(find ${guestdir}/init.pre -type f 2> /dev/null | sort)"
-    init_d="$(find ${XENGUEST_CONF_BASE}/init.d -type f 2> /dev/null | \
-            sort) $(find ${guestdir}/init.d -type f 2> /dev/null | sort)"
-    init_post="$(find ${XENGUEST_CONF_BASE}/init.post -type f 2> /dev/null | \
-            sort) $(find ${guestdir}/init.post -type f 2> /dev/null | sort)"
+    init_pre="init.pre"
+    init_d="init.d"
+    init_post="init.post"
 
     # call pre init scripts
-    log verbose "Calling pre-init scripts"
-    for f in ${init_pre}; do
-        if [ -x "$f" ]; then
-            log_source $f
-            if [ $? -ne 0 ]; then
-                rm -f ${guestcfgfile}
-                popd > /dev/null 2>&1
-                log fatal "Pre-init script $(basename $f) of ${guestname} returned non-zero status"
-            fi
-        else
-            log fatal "$f is not executable. Exiting..."
-        fi
-    done
+    xenguest_call_inits "${init_pre}" "${guestdir}" "${guestcfgfile}" "${guestname}"
 
     # Create non started guest
     log verbose "Initiating ${guestname}"
@@ -796,20 +848,7 @@ function xenguest_guest_start()
     fi
 
     # call init scripts
-    log verbose "Calling init scripts"
-    for f in ${init_d}; do
-        if [ -x "$f" ]; then
-            log_source $f
-            if [ $? -ne 0 ]; then
-                rm -f ${guestcfgfile}
-                log_command "xl destroy ${guestname}"
-                popd > /dev/null 2>&1
-                log fatal "Init script $(basename $f) of ${guestname} returned non-zero status"
-            fi
-        else
-            log fatal "$f is not executable. Exiting..."
-        fi
-    done
+    xenguest_call_inits "${init_d}" "${guestdir}" "${guestcfgfile}" "${guestname}"
 
     # Start guest
     log info "Starting ${guestname}"
@@ -821,20 +860,7 @@ function xenguest_guest_start()
     fi
 
     # call post init scripts
-    log verbose "Calling post-init scripts"
-    for f in ${init_post}; do
-        if [ -x "$f" ]; then
-            log_source $f
-            if [ $? -ne 0 ]; then
-                rm -f ${guestcfgfile}
-                log_command "xl destroy ${guestname}"
-                popd > /dev/null 2>&1
-                log fatal "Post-init script $(basename $f) of ${guestname} returned non-zero status"
-            fi
-        else
-            log fatal "$f is not executable. Exiting..."
-        fi
-    done
+    xenguest_call_inits "${init_post}" "${guestdir}" "${guestcfgfile}" "${guestname}"
 
     rm -f ${guestcfgfile}
     popd > /dev/null 2>&1
@@ -859,6 +885,23 @@ function xenguest_guest_stop()
 }
 
 # Private
+function xenguest_guest_kill()
+{
+    local guestname
+
+    guestname="${1}"
+    log "Attempting to kill guest '${guestname}'"
+
+    check_private
+
+    log_command "xl destroy ${guestname}"
+    if [ $? -ne 0 ]; then
+        log "fatal:Killing guest '${guestname}' failed."
+    fi
+    log "Guest '${guestname}' killed successfully"
+}
+
+# Private
 function check_guest_arg()
 {
     check_private
@@ -880,6 +923,17 @@ function check_guest_exist()
     fi
 
     log verbose "Guest '${guestname}' found: ${XENGUEST_CONF_BASE}/guests/${guestname}/"
+}
+
+# Public
+function xenguest_list_guests()
+{
+    guestlist=""
+    if [ -d ${XENGUEST_CONF_BASE}/guests ]; then
+        guestlist=$(find ${XENGUEST_CONF_BASE}/guests -mindepth 1 -maxdepth 1 -type d -exec sh -c 'if [ -f {}/guest.cfg ]; then basename {}; fi' \;)
+    else
+        log "Info: Guests directory ${XENGUEST_CONF_BASE}/guests not found"
+    fi
 }
 
 # Public
@@ -981,14 +1035,9 @@ case ${cmd} in
         guestname="${arg1:-}"
         check_guest_arg ${cmd} ${guestname}
         check_guest_exist ${guestname}
-        log info "Guest '${guestname}' exists. Removing"
         # We need to stop the guest first if it is running
         if xl_list_contains $guestname; then
-            log info "Guest '${guestname}' is running. Killing..."
-            log_command "xl destroy ${guestname}"
-            if [ $? -ne 0 ]; then
-                log fatal "Killing guest '${guestname}' failed."
-            fi
+            xenguest_guest_kill ${guestname}
         fi
         xenguest_guest_remove ${guestname}
         ;;
@@ -1011,22 +1060,11 @@ case ${cmd} in
         check_guest_arg ${cmd} ${guestname}
         check_guest_exist ${guestname}
         check_guest_running ${guestname}
-        log info "Attempting to kill guest '${guestname}'"
-        log_command "xl destroy ${guestname}"
-        if [ $? -ne 0 ]; then
-            log fatal "Killing guest '${guestname}' failed."
-        fi
-        log info "Guest '${guestname}' killed successfully"
+        xenguest_guest_kill ${guestname}
         ;;
     list)
-        if [ -d ${XENGUEST_CONF_BASE}/guests ]; then
-            list=$(find ${XENGUEST_CONF_BASE}/guests -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)
-            for f in ${list}; do
-                if [ -f ${XENGUEST_CONF_BASE}/guests/$f/guest.cfg ]; then
-                    echo "$f"
-                fi
-            done
-        fi
+        xenguest_list_guests
+        echo ${guestlist} | tr " " "\n"
         ;;
     status)
 
@@ -1044,7 +1082,7 @@ case ${cmd} in
         if [ -n "${guestname}" ]; then
             single_status ${guestname}
         else
-            guestlist=$($this list)
+            xenguest_list_guests
             if [ -n "${guestlist}" ]; then
                 for f in ${guestlist}; do
                     single_status $f
