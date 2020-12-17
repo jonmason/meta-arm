@@ -25,9 +25,6 @@ repos:
     layers:
       meta-oe:
 
-  meta-kernel:
-    url: https://gitlab.com/openembedded/community/meta-kernel.git
-
 local_conf_header:
   base: |
     CONF_VERSION = "1"
