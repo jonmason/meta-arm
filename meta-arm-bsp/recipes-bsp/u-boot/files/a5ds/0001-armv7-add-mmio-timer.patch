@@ -1,12 +1,13 @@
-From 8525c72c438b0aa66f1f38db37bd7aacf7e3ce34 Mon Sep 17 00:00:00 2001
+From 42fd533d68fd70e23a1150715da3dea7ce87b51f Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Wed, 18 Dec 2019 21:52:34 +0000
-Subject: [PATCH 1/2] armv7: add mmio timer
+Subject: [PATCH] armv7: add mmio timer
 
 This timer can be used by u-boot when arch-timer is not available in
 core, for example, Cortex-A5.
 
 Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+
 ---
  arch/arm/cpu/armv7/Makefile     |  1 +
  arch/arm/cpu/armv7/mmio_timer.c | 56 +++++++++++++++++++++++++++++++++
@@ -18,17 +19,17 @@ diff --git a/arch/arm/cpu/armv7/Makefile b/arch/arm/cpu/armv7/Makefile
 index 8c955d0d5284..82af9c031277 100644
 --- a/arch/arm/cpu/armv7/Makefile
 +++ b/arch/arm/cpu/armv7/Makefile
-@@ -28,6 +28,7 @@ obj-$(CONFIG_ARMV7_PSCI)     += psci.o psci-common.o
+@@ -28,6 +28,7 @@ obj-$(CONFIG_ARMV7_PSCI)	+= psci.o psci-common.o
  obj-$(CONFIG_IPROC) += iproc-common/
  obj-$(CONFIG_KONA) += kona-common/
  obj-$(CONFIG_SYS_ARCH_TIMER) += arch_timer.o
 +obj-$(CONFIG_SYS_MMIO_TIMER) += mmio_timer.o
-
+ 
  ifneq (,$(filter s5pc1xx exynos,$(SOC)))
  obj-y += s5p-common/
 diff --git a/arch/arm/cpu/armv7/mmio_timer.c b/arch/arm/cpu/armv7/mmio_timer.c
 new file mode 100644
-index 000000000000..1b905db8bb19
+index 000000000000..5d6f66172398
 --- /dev/null
 +++ b/arch/arm/cpu/armv7/mmio_timer.c
 @@ -0,0 +1,56 @@
@@ -100,6 +101,3 @@ index cf1808e051c8..8624714ae7a6 100644
  CONFIG_SYS_MONITOR_
  CONFIG_SYS_MONITOR_BASE
  CONFIG_SYS_MONITOR_BASE_EARLY
---
-2.25.0
-
