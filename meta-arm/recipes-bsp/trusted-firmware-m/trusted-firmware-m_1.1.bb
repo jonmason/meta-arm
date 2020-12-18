@@ -10,23 +10,25 @@ PROVIDES = "virtual/trusted-firmware-m"
 
 LICENSE = "BSD-3-Clause & Apachev2"
 
-LIC_FILES_CHKSUM ?= "file://license.rst;md5=07f368487da347f3c7bd0fc3085f3afa"
-LIC_FILES_CHKSUM += "file://../mbed-crypto/LICENSE;md5=302d50a6369f5f22efdb674db908167a"
-LIC_FILES_CHKSUM += "file://../CMSIS_5/LICENSE.txt;md5=c4082b6c254c9fb71136710391d9728b"
+LIC_FILES_CHKSUM = "file://license.rst;md5=07f368487da347f3c7bd0fc3085f3afa \
+                    file://../tf-m-tests/license.rst;md5=02d06ffb8d9f099ff4961c0cb0183a18 \
+                    file://../mbed-crypto/LICENSE;md5=302d50a6369f5f22efdb674db908167a \
+                    file://../mcuboot/LICENSE;md5=b6ee33f1d12a5e6ee3de1e82fb51eeb8"
 
-SRC_URI  = "git://git.trustedfirmware.org/trusted-firmware-m.git;protocol=https;branch=master;name=tfm;destsuffix=${S}"
-SRC_URI += "git://github.com/ARMmbed/mbed-crypto.git;protocol=https;branch=development;name=mbed-crypto;destsuffix=${S}/../mbed-crypto"
-SRC_URI += "https://github.com/ARM-software/CMSIS_5/releases/download/5.5.0/ARM.CMSIS.5.5.0.pack;name=cmsis;subdir=${S}/../CMSIS_5;downloadfilename=ARM.CMSIS.5.5.0.zip"
+SRC_URI  = "git://git.trustedfirmware.org/TF-M/trusted-firmware-m.git;protocol=https;branch=master;name=tfm;destsuffix=${S} \
+            git://git.trustedfirmware.org/TF-M/tf-m-tests.git;protocol=https;branch=master;name=tfm-tests;destsuffix=${S}/../tf-m-tests \
+            git://github.com/ARMmbed/mbed-crypto.git;protocol=https;branch=development;name=mbed-crypto;destsuffix=${S}/../mbed-crypto \
+            git://github.com/JuulLabs-OSS/mcuboot.git;protocol=https;name=mcuboot;destsuffix=${S}/../mcuboot \
+            file://objcopy.patch"
 
-SRC_URI[cmsis.md5sum] = "73b6cf6b4ab06ac099478e6cf983c08e"
-SRC_URI[cmsis.sha256sum] = "fc6e46c77de29ed05ef3bfd4846a2da49b024bc8854c876ac053aaa8d348ac52"
-
-SRCREV_FORMAT = "tfm_mbed-crypto_cmsis"
-# TF-Mv1.0
-SRCREV_tfm = "0768982ea41b5e7d207445f19ee23e5d67d9c89b"
+# TF-Mv1.1
+SRCREV_tfm = "a6b336c1509fd5f5522450e3cec0fcd6c060f9c8"
 # mbedcrypto-3.0.1
 SRCREV_mbed-crypto = "1146b4e06011b69a6437e6b728f2af043a06ec19"
-SRCREV_cmsis = "5.5.0"
+# TF-Mv1.1
+SRCREV_tfm-tests = "5a571808e7841f15cc966661a64dd6adb3b40f6c"
+# v1.6.0
+SRCREV_mcuboot = "50d24a57516f558dac72bef634723b60c5cfb46b"
 
 UPSTREAM_CHECK_GITTAGREGEX = "^TF-Mv(?P<pver>\d+(\.\d+)+)$"
 
@@ -42,8 +44,10 @@ INHIBIT_DEFAULT_DEPS = "1"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
-DEPENDS += "cmake-native"
-DEPENDS += "python3-cryptography-native python3-pyasn1-native python3-cbor-native"
+DEPENDS += "cmake-native \
+            python3-cryptography-native \
+            python3-pyasn1-native \
+            python3-cbor-native"
 
 S = "${WORKDIR}/git/tfm"
 B = "${WORKDIR}/build"
@@ -90,10 +94,6 @@ CFLAGS[unexport] = "1"
 LDFLAGS[unexport] = "1"
 AS[unexport] = "1"
 LD[unexport] = "1"
-
-# This is needed because CMSIS_5 source package originally has .pack extension not .zip
-# and bitbake checks this dependency based on file extension
-do_unpack[depends] += "unzip-native:do_populate_sysroot"
 
 do_configure[prefuncs] += "do_check_config"
 do_check_config() {
