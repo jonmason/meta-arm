@@ -80,6 +80,9 @@ EXTRA_OECMAKE += "-DCOMPILER=${TFM_COMPILER}"
 EXTRA_OECMAKE += "${@bb.utils.contains('TFM_DEBUG', '1', '-DCMAKE_BUILD_TYPE=Debug', '', d)}"
 EXTRA_OECMAKE += "-DPROJ_CONFIG=${S}/configs/${TFM_CONFIG}"
 
+# Verbose builds
+EXTRA_OECMAKE += "-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
+
 # Let the Makefile handle setting up the CFLAGS and LDFLAGS as it is a standalone application
 CFLAGS[unexport] = "1"
 LDFLAGS[unexport] = "1"
@@ -99,7 +102,7 @@ do_check_config() {
 
 do_configure[cleandirs] = "${B}"
 do_configure() {
-    cmake -G"Unix Makefiles" --build ${S} ${EXTRA_OECMAKE}
+    cmake -G"Unix Makefiles" ${S} ${EXTRA_OECMAKE}
 }
 
 # Invoke install here as there's no point in splitting compile from install: the
@@ -107,7 +110,7 @@ do_configure() {
 # rebuild. It also overrides the install prefix to be in the build tree, so you
 # can't use the usual install prefix variables.
 do_compile() {
-    oe_runmake install
+    cmake --build ./ -- install
 }
 
 do_install() {
