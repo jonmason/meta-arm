@@ -37,8 +37,8 @@ UPSTREAM_CHECK_GITTAGREGEX = "^TF-Mv(?P<pver>\d+(\.\d+)+)$"
 
 inherit python3native deploy
 
-# Baremetal, just need a compiler
-DEPENDS_remove = "virtual/${TARGET_PREFIX}compilerlibs virtual/libc"
+# Baremetal and we bring a compiler below
+INHIBIT_DEFAULT_DEPS = "1"
 
 DEPENDS += "cmake-native"
 DEPENDS += "python3-cryptography-native python3-pyasn1-native python3-cbor-native"
