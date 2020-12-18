@@ -40,6 +40,8 @@ inherit python3native deploy
 # Baremetal and we bring a compiler below
 INHIBIT_DEFAULT_DEPS = "1"
 
+PACKAGE_ARCH = "${MACHINE_ARCH}"
+
 DEPENDS += "cmake-native"
 DEPENDS += "python3-cryptography-native python3-pyasn1-native python3-cbor-native"
 
