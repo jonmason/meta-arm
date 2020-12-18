@@ -31,6 +31,8 @@ EDK2_ARCH            ?= "AARCH64"
 
 EDK2_BUILD_MODE = "${@bb.utils.contains('EDK2_BUILD_RELEASE', '1', 'RELEASE', 'DEBUG', d)}"
 
+# Baremetal, no need for a C library
+DEPENDS_remove = "virtual/${TARGET_PREFIX}compilerlibs virtual/libc"
 DEPENDS += "util-linux-native iasl-native"
 
 inherit deploy
