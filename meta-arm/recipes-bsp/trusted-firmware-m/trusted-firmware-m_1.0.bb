@@ -46,14 +46,17 @@ DEPENDS += "python3-cryptography-native python3-pyasn1-native python3-cbor-nativ
 S = "${WORKDIR}/git/tfm"
 B = "${WORKDIR}/build"
 
-COMPATIBLE_MACHINE ?= "invalid"
-
 # Build for debug (set TFA_DEBUG to 1 to activate)
 TFM_DEBUG ?= "0"
 # Set target config
 TFM_CONFIG ?= "ConfigDefault.cmake"
-# Platform must be set for each machine
-TFM_PLATFORM ?= "invalid"
+
+# Platform must be set, ideally in the machine configuration.
+TFM_PLATFORM ?= ""
+python() {
+    if not d.getVar("TFM_PLATFORM"):
+        raise bb.parse.SkipRecipe("TFM_PLATFORM needs to be set")
+}
 
 # Uncomment, or copy these lines to your local.conf to use the Arm Clang compiler
 # from meta-arm-toolchain.
