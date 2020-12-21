@@ -31,7 +31,6 @@ KERNEL_IMAGETYPE = "xipImage"
 
 KCONFIG_MODE = "--alldefconfig"
 
-KMETA = "arm-platforms-kmeta"
 SRC_URI_append = " ${SRC_URI_KMETA}"
 
 KERNEL_EXTRA_FEATURES = "bsp/arm-platforms/corstone700-bsp.scc"
