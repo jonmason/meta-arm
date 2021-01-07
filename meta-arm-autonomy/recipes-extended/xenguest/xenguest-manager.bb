@@ -2,6 +2,16 @@
 #
 # xenguest-manager is a tool to control xen guest (e.g. create, start, stop)
 #
+# By default xenguest-manager logs to /var/log when in verbose mode, which is a
+# Volatile directory. To persist logs across reboots the following needs to be
+# added to either local.conf or distro.conf
+#
+#   VOLATILE_LOG_DIR="no"
+#
+# Read more here: https://www.yoctoproject.org/docs/latest/mega-manual/mega-manual.html#var-VOLATILE_LOG_DIR
+#
+# When this is enabled, logrotate will monitor the file to ensure it does not grow
+# excessively large. See files/logrotate-xenguest
 
 DESCRIPTION = "Xen Guest Manager"
 LICENSE = "MIT"
