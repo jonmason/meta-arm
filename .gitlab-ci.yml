@@ -87,6 +87,9 @@ musca-s1:
 n1sdp:
   extends: .build
 
+n1sdp/armgcc:
+  extends: .build
+
 qemuarm64-secureboot:
   extends: .build
 
