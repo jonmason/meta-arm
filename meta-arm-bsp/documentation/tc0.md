@@ -16,11 +16,11 @@ In the local.conf file, MACHINE should be set as follows:
 MACHINE = "tc0"
 
 To build the required binaries for tc0, run the commmand:
-```bash$ bitbake trusted-firmware-a```
+```bash$ bitbake tc0-artifacts-image```
 
 Trusted-firmware-a is the final component to be built with the rest of the
-components dependent of it, therefore building trusted-firmware-a will
-build all the required binaries.
+components dependent of it, therefore building tc0-artifacts-image which depends
+on trusted-firmware-a will build all the required binaries.
 
 ## Running
 To run the produced binaries in a TC0 Fixed Virtual Platform please get
