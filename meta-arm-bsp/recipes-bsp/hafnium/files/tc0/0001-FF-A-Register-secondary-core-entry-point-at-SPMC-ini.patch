@@ -1,0 +1,324 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+
+From cb329ce33874abd8b69988c3dc63fd323a3413be Mon Sep 17 00:00:00 2001
+From: Max Shvetsov <maksims.svecovs@arm.com>
+Date: Thu, 27 Aug 2020 12:37:57 +0100
+Subject: [PATCH 1/4] FF-A: Register secondary core entry point at SPMC init.
+
+When the primary physical core boots the SPMC registers its secondary physical
+core entry points to the SPMD. All Secure Partition are then initialized on
+their primary Execution Contexts. A Secure Partition calls PSCI_CPU_ON from its
+first EC (trapped to the SPMC) passing entry point addresses of secondary ECs.
+ECs are turned "on" in their SPMC internal states, although they do not run yet
+(the service call does not reach the EL3 PSCI layer). Later, when the NWd
+(Hypervisor or OS Kernel) boots, it calls PSCI_CPU_ON for waking up physical
+cores down to EL3. The PSCI layer calls into SPMD PM hooks, then the SPMD calls
+into the SPMC by an exception return to the registered secondary entry point.
+The target secondary core then reaches Hafnium vcpu_main.
+
+Change-Id: I2bd42ea54e1a7feebff20e878345ec196ff352e9
+Signed-off-by: Max Shvetsov <maksims.svecovs@arm.com>
+Signed-off-by: Olivier Deprez <olivier.deprez@arm.com>
+---
+ inc/hf/arch/init.h                          |   7 ++
+ src/arch/aarch64/hypervisor/psci_handler.c  | 131 +++++++++++++++++---
+ src/arch/aarch64/inc/hf/arch/spmd_helpers.h |  15 +++
+ src/cpu.c                                   |   7 ++
+ src/init.c                                  |   2 +
+ 5 files changed, 143 insertions(+), 19 deletions(-)
+ create mode 100644 src/arch/aarch64/inc/hf/arch/spmd_helpers.h
+
+diff --git a/inc/hf/arch/init.h b/inc/hf/arch/init.h
+index 5205e4e..ef0e48f 100644
+--- a/inc/hf/arch/init.h
++++ b/inc/hf/arch/init.h
+@@ -8,6 +8,8 @@
+ 
+ #pragma once
+ 
++#include "hf/boot_params.h"
++
+ /**
+  * Performs arch specific boot time initialization.
+  *
+@@ -15,3 +17,8 @@
+  * possible.
+  */
+ void arch_one_time_init(void);
++
++/**
++ * Sets up secondary cores.
++ */
++void arch_psci_secondary_core_init(const struct boot_params *params);
+diff --git a/src/arch/aarch64/hypervisor/psci_handler.c b/src/arch/aarch64/hypervisor/psci_handler.c
+index f89a00b..bdcc1d3 100644
+--- a/src/arch/aarch64/hypervisor/psci_handler.c
++++ b/src/arch/aarch64/hypervisor/psci_handler.c
+@@ -11,9 +11,11 @@
+ #include <stdint.h>
+ 
+ #include "hf/arch/plat/psci.h"
++#include "hf/arch/spmd_helpers.h"
+ #include "hf/arch/types.h"
+ 
+ #include "hf/api.h"
++#include "hf/boot_params.h"
+ #include "hf/cpu.h"
+ #include "hf/dlog.h"
+ #include "hf/ffa.h"
+@@ -24,9 +26,32 @@
+ #include "smc.h"
+ 
+ static uint32_t el3_psci_version;
++static ffa_vm_id_t physical_ffa_id;
+ 
+ void cpu_entry(struct cpu *c);
+ 
++#if SECURE_WORLD == 1
++
++static void set_ffa_id(void)
++{
++	struct ffa_value res =
++		smc_ffa_call((struct ffa_value){.func = FFA_ID_GET_32});
++
++	if (res.func != FFA_SUCCESS_32) {
++		dlog_error("%s Failed to get it's own FF-A ID.\n", __func__);
++		physical_ffa_id = HF_INVALID_VM_ID;
++		return;
++	}
++	physical_ffa_id = res.arg2 & 0xFFFF;
++}
++
++#endif
++
++ffa_vm_id_t get_ffa_id(void)
++{
++	return physical_ffa_id;
++}
++
+ /* Performs arch specific boot time initialisation. */
+ void arch_one_time_init(void)
+ {
+@@ -53,9 +78,79 @@ void arch_one_time_init(void)
+ 	}
+ #else
+ 	el3_psci_version = PSCI_VERSION_1_1;
++
++	set_ffa_id();
+ #endif
+ }
+ 
++/**
++ * Register secondary physical core entry points to the SPMD.
++ */
++void arch_psci_secondary_core_init(const struct boot_params *params)
++{
++#if SECURE_WORLD == 1
++	struct ffa_value res;
++
++	for (uint32_t count = 0; count < params->cpu_count; count++) {
++		uint32_t id = params->cpu_ids[count];
++		struct cpu *cpu = cpu_find(id);
++		const ffa_vm_id_t ffa_id = get_ffa_id();
++
++		res = smc_ffa_call((struct ffa_value){
++			.func = FFA_MSG_SEND_DIRECT_REQ_32,
++			.arg1 = (ffa_id << 16) | SPMD_ID,
++			.arg3 = SPMD_DIRECT_MSG_SET_ENTRY_POINT,
++			.arg4 = params->cpu_ids[count],
++			.arg5 = (uintreg_t)&cpu_entry,
++			.arg6 = (uintreg_t)cpu});
++
++		if (res.func != FFA_SUCCESS_32) {
++			dlog_warning(
++				"%s Failed to initialize secondary core ID: "
++				"%u\n",
++				__func__, id);
++		}
++
++		dlog_verbose("SPMD EP register returned %#x\n", res.func);
++	}
++#endif
++}
++
++/**
++ * Convert a PSCI CPU / affinity ID for a secondary VM to the corresponding vCPU
++ * index.
++ */
++ffa_vcpu_index_t vcpu_id_to_index(cpu_id_t vcpu_id)
++{
++	/* For now we use indices as IDs for the purposes of PSCI. */
++	return vcpu_id;
++}
++
++#if SECURE_WORLD == 1
++/**
++ * Use vcpu_on only as a way to initialize entry point without
++ * an intent to power up vcpu.
++ */
++static uintreg_t ffa_register_entrypoint(cpu_id_t id, struct vm *vm,
++					 uintreg_t entrypoint, uintreg_t param)
++{
++	ffa_vcpu_index_t target_vcpu_index = vcpu_id_to_index(id);
++
++	if (target_vcpu_index >= vm->vcpu_count) {
++		return PSCI_ERROR_INVALID_PARAMETERS;
++	}
++
++	struct vcpu *target_vcpu = vm_get_vcpu(vm, target_vcpu_index);
++	struct vcpu_locked locked_target_vcpu = vcpu_lock(target_vcpu);
++
++	vcpu_on(locked_target_vcpu, ipa_init(entrypoint), param);
++
++	vcpu_unlock(&locked_target_vcpu);
++
++	return PSCI_RETURN_SUCCESS;
++}
++#endif
++
+ /**
+  * Handles PSCI requests received via HVC or SMC instructions from the primary
+  * VM.
+@@ -180,7 +275,8 @@ bool psci_primary_vm_handler(struct vcpu *vcpu, uint32_t func, uintreg_t arg0,
+ 		panic("CPU off failed");
+ 		break;
+ 
+-	case PSCI_CPU_ON:
++	case PSCI_CPU_ON: {
++#if SECURE_WORLD == 0
+ 		c = cpu_find(arg0);
+ 		if (!c) {
+ 			*ret = PSCI_ERROR_INVALID_PARAMETERS;
+@@ -208,7 +304,12 @@ bool psci_primary_vm_handler(struct vcpu *vcpu, uint32_t func, uintreg_t arg0,
+ 		if (*ret != PSCI_RETURN_SUCCESS) {
+ 			cpu_off(c);
+ 		}
++#else
++		*ret = ffa_register_entrypoint((cpu_id_t)arg0, vcpu->vm, arg1,
++					       arg2);
++#endif
+ 		break;
++	}
+ 
+ 	case PSCI_MIGRATE:
+ 	case PSCI_MIGRATE_INFO_TYPE:
+@@ -234,16 +335,6 @@ bool psci_primary_vm_handler(struct vcpu *vcpu, uint32_t func, uintreg_t arg0,
+ 	return true;
+ }
+ 
+-/**
+- * Convert a PSCI CPU / affinity ID for a secondary VM to the corresponding vCPU
+- * index.
+- */
+-ffa_vcpu_index_t vcpu_id_to_index(cpu_id_t vcpu_id)
+-{
+-	/* For now we use indices as IDs for the purposes of PSCI. */
+-	return vcpu_id;
+-}
+-
+ /**
+  * Handles PSCI requests received via HVC or SMC instructions from a secondary
+  * VM.
+@@ -337,22 +428,23 @@ bool psci_secondary_vm_handler(struct vcpu *vcpu, uint32_t func, uintreg_t arg0,
+ 	case PSCI_CPU_ON: {
+ 		/* Parameter names as per PSCI specification. */
+ 		cpu_id_t target_cpu = arg0;
+-		ipaddr_t entry_point_address = ipa_init(arg1);
+ 		uint64_t context_id = arg2;
+-		ffa_vcpu_index_t target_vcpu_index =
+-			vcpu_id_to_index(target_cpu);
+ 		struct vm *vm = vcpu->vm;
+-		struct vcpu *target_vcpu;
+ 
++#if SECURE_WORLD == 1
++		*ret = ffa_register_entrypoint((cpu_id_t)target_cpu, vm, arg1,
++					       context_id);
++#else
++		ffa_vcpu_index_t target_vcpu_index =
++			vcpu_id_to_index(target_cpu);
+ 		if (target_vcpu_index >= vm->vcpu_count) {
+ 			*ret = PSCI_ERROR_INVALID_PARAMETERS;
+ 			break;
+ 		}
++		struct vcpu *target_vcpu = vm_get_vcpu(vm, target_vcpu_index);
+ 
+-		target_vcpu = vm_get_vcpu(vm, target_vcpu_index);
+-
+-		if (vcpu_secondary_reset_and_start(
+-			    target_vcpu, entry_point_address, context_id)) {
++		if (vcpu_secondary_reset_and_start(target_vcpu, ipa_init(arg1),
++						   context_id)) {
+ 			/*
+ 			 * Tell the scheduler that it can start running the new
+ 			 * vCPU now.
+@@ -362,6 +454,7 @@ bool psci_secondary_vm_handler(struct vcpu *vcpu, uint32_t func, uintreg_t arg0,
+ 		} else {
+ 			*ret = PSCI_ERROR_ALREADY_ON;
+ 		}
++#endif
+ 
+ 		break;
+ 	}
+diff --git a/src/arch/aarch64/inc/hf/arch/spmd_helpers.h b/src/arch/aarch64/inc/hf/arch/spmd_helpers.h
+new file mode 100644
+index 0000000..6e11c36
+--- /dev/null
++++ b/src/arch/aarch64/inc/hf/arch/spmd_helpers.h
+@@ -0,0 +1,15 @@
++/*
++ * Copyright 2020 The Hafnium Authors.
++ *
++ * Use of this source code is governed by a BSD-style
++ * license that can be found in the LICENSE file or at
++ * https://opensource.org/licenses/BSD-3-Clause.
++ */
++
++#define SPMD_ID 0xFFFF
++#define SPMD_DIRECT_MSG_SET_ENTRY_POINT 1
++
++/**
++ * Get SPMC ID stored in the manifest.
++ */
++ffa_vm_id_t get_ffa_id(void);
+diff --git a/src/cpu.c b/src/cpu.c
+index 0a3fc6f..42a17fa 100644
+--- a/src/cpu.c
++++ b/src/cpu.c
+@@ -138,6 +138,8 @@ bool cpu_on(struct cpu *c, ipaddr_t entry, uintreg_t arg)
+ 	c->is_on = true;
+ 	sl_unlock(&c->lock);
+ 
++#if SECURE_WORLD == 0
++
+ 	if (!prev) {
+ 		struct vm *vm = vm_find(HF_PRIMARY_VM_ID);
+ 		struct vcpu *vcpu = vm_get_vcpu(vm, cpu_index(c));
+@@ -148,6 +150,11 @@ bool cpu_on(struct cpu *c, ipaddr_t entry, uintreg_t arg)
+ 		vcpu_unlock(&vcpu_locked);
+ 	}
+ 
++#else
++	(void)entry;
++	(void)arg;
++#endif
++
+ 	return prev;
+ }
+ 
+diff --git a/src/init.c b/src/init.c
+index a5b48ab..0121213 100644
+--- a/src/init.c
++++ b/src/init.c
+@@ -146,6 +146,8 @@ void one_time_init(void)
+ 
+ 	cpu_module_init(params.cpu_ids, params.cpu_count);
+ 
++	arch_psci_secondary_core_init(&params);
++
+ 	/* Load all VMs. */
+ 	update.reserved_ranges_count = 0;
+ 	if (!load_vms(mm_stage1_locked, &manifest, &cpio, &params, &update,
+-- 
+2.26.2
+

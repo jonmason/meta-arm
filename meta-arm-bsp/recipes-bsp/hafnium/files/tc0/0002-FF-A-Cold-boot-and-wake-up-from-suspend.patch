@@ -1,0 +1,65 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+
+From 8422e2a5d6b2094f9f451a2d818a593cba29af84 Mon Sep 17 00:00:00 2001
+From: Max Shvetsov <maksims.svecovs@arm.com>
+Date: Thu, 27 Aug 2020 12:39:50 +0100
+Subject: [PATCH 2/4] FF-A: Cold boot and wake up from suspend.
+
+WIP: Currently there is zero entry-point passed with no arguments, This
+will be reworked once a proper way to pass this information will be
+defined.
+
+Change-Id: Ic6050af16d4081ca31729744995fbb999b170e11
+Signed-off-by: Max Shvetsov <maksims.svecovs@arm.com>
+---
+ src/main.c | 23 +++++++++++++++++++++++
+ 1 file changed, 23 insertions(+)
+
+diff --git a/src/main.c b/src/main.c
+index 5f30aac..7b7264f 100644
+--- a/src/main.c
++++ b/src/main.c
+@@ -7,6 +7,7 @@
+  */
+ 
+ #include "hf/cpu.h"
++#include "hf/dlog.h"
+ #include "hf/vm.h"
+ 
+ /**
+@@ -16,9 +17,31 @@
+ struct vcpu *cpu_main(struct cpu *c)
+ {
+ 	struct vcpu *vcpu;
++
+ #if SECURE_WORLD == 1
+ 	struct vm *first_boot = vm_get_first_boot();
+ 
++	if (c->is_on == false) {
++		/*
++		 * This is the PSCI warm reset path (svc_cpu_on_finish
++		 * handler relayed by SPMD). Notice currenty the "first_boot"
++		 * VM is resumed on any CPU on event.
++		 */
++		(void)cpu_on(c, ipa_init(0UL), 0UL);
++		dlog_verbose("%s: cpu mpidr 0x%x on\n", __func__, c->id);
++	}
++
++	/*
++	 * If `vm_get_first_boot` returns a valid vm, the first partition to
++	 * execute is in accordance to the boot-order field of the partition's
++	 * manifest.
++	 * Else, no partition has been configured with the "boot-order" field
++	 * in its manifest, and primary vm should be booted.
++	 */
++	if (!first_boot) {
++		first_boot = vm_find(HF_PRIMARY_VM_ID);
++	}
++
+ 	vcpu = vm_get_vcpu(first_boot, cpu_index(c));
+ #else
+ 	vcpu = vm_get_vcpu(vm_find(HF_PRIMARY_VM_ID), cpu_index(c));
+-- 
+2.26.2
+
