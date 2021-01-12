@@ -76,6 +76,7 @@ SRC_URI_append_tc0 = " \
     file://0006-mailbox-arm_mhuv2-add-multi-word-transport-protocol-.patch \
     file://0007-firmware-arm_scmi-Add-fast_switch_possible-api.patch \
     file://0008-cpufreq-arm_scmi-Set-fast_switch_possible-conditiona.patch \
+    file://0009-driver-firmware-Initial-version-of-ffa-driver-based-.patch \
     "
 
 #
