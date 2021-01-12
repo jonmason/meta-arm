@@ -8,8 +8,6 @@ stages:
 
 # Common job fragment to get a worker ready
 .setup:
-  # Retry because the runner is flakey (see https://gitlab.com/gitlab-org/gitlab-runner/-/issues/2890)
-  retry: 2
   stage: build
   variables:
     KAS_WORK_DIR: $CI_PROJECT_DIR/work
