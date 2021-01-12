@@ -1,10 +1,8 @@
-# TCO specific TFA configuration
+# TC0 specific TFA configuration
 
-# Intermediate SHA with 2.3 baseline version
-SRCREV_tfa = "16796a25fefc4ecf780211bf554d3b8dc5436fa4"
-
-# This is incorporated into the SRCREV above
-SRC_URI_remove = "file://0001-fdts-a5ds-Fix-for-the-system-timer-issue.patch"
+# Intermediate SHA with 2.4 baseline version, required for OP-TEE SP
+SRCREV_tfa = "b153ce0391012e9228b807815a65fa0dc514cf77"
+PV = "2.4+git${SRCPV}"
 
 DEPENDS += "scp-firmware"
 
@@ -16,6 +14,15 @@ TFA_UBOOT = "1"
 TFA_INSTALL_TARGET = "bl1 fip"
 TFA_MBEDTLS = "1"
 TFA_DEBUG = "1"
+
+TFA_SPD = "spmd"
+TFA_SPMD_SPM_AT_SEL2 = "1"
+
+# Set optee as SP. Set spmc manifest and sp layout file to optee
+DEPENDS += "optee-os"
+
+TFA_SP_LAYOUT_FILE = "${RECIPE_SYSROOT}/lib/firmware/sp_layout.json"
+TFA_ARM_SPMC_MANIFEST_DTS = "plat/arm/board/tc0/fdts/tc0_spmc_optee_sp_manifest.dts"
 
 EXTRA_OEMAKE += "SCP_BL2=${RECIPE_SYSROOT}/firmware/scp_ramfw.bin"
 EXTRA_OEMAKE += "TRUSTED_BOARD_BOOT=1 GENERATE_COT=1 ARM_ROTPK_LOCATION=devel_rsa \
