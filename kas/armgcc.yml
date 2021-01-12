@@ -2,5 +2,5 @@ header:
   version: 9
 
 local_conf_header:
-  libc: |
+  cc: |
     GCCVERSION = "arm-10.2"
