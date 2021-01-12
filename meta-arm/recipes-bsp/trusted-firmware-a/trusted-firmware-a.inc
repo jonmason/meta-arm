@@ -22,10 +22,19 @@ TFA_PLATFORM_aarch64_qemuall ?= "qemu"
 TFA_BOARD ?= ""
 
 # Some platforms use SPD (Secure Payload Dispatcher) services
-# Few options are "opteed", "tlkd", "trusty", "tspd"...
+# Few options are "opteed", "tlkd", "trusty", "tspd", "spmd"...
 # Leave empty to not use SPD
 TFA_SPD ?= ""
 TFA_SPD_aarch64_qemuall ?= "opteed"
+
+# Variable used when TFA_SPD=spmd
+TFA_SPMD_SPM_AT_SEL2 ?= "1"
+
+# SP layout file location. Used when TFA_SPD=spmd and TFA_SPMD_SPM_AT_SEL2=1
+TFA_SP_LAYOUT_FILE ?= ""
+
+# SPMC manifest file location. Used when TFA_SPD=spmd and TFA_SPMD_SPM_AT_SEL2=1
+TFA_ARM_SPMC_MANIFEST_DTS ?= ""
 
 # Build for debug (set TFA_DEBUG to 1 to activate)
 TFA_DEBUG ?= "0"
@@ -114,6 +123,9 @@ EXTRA_OEMAKE += "${@'TARGET_BOARD=${TFA_BOARD}' if d.getVar('TFA_BOARD') else ''
 # Handle TFA_SPD parameter
 EXTRA_OEMAKE += "${@'SPD=${TFA_SPD}' if d.getVar('TFA_SPD') else ''}"
 
+# If TFA_SPD is spmd, set SPMD_SPM_AT_SEL2
+EXTRA_OEMAKE += "${@'SPMD_SPM_AT_SEL2=${TFA_SPMD_SPM_AT_SEL2}' if d.getVar('TFA_SPD', True) == 'spmd' else ''}"
+
 # Handle TFA_DEBUG parameter
 EXTRA_OEMAKE += "${@bb.utils.contains('TFA_DEBUG', '1', 'DEBUG=${TFA_DEBUG}', '', d)}"
 
@@ -124,6 +136,18 @@ EXTRA_OEMAKE += "${@bb.utils.contains('TFA_MBEDTLS', '1', 'MBEDTLS_DIR=${TFA_MBE
 DEPENDS += " ${@bb.utils.contains('TFA_UBOOT', '1', 'u-boot', '', d)}"
 do_compile[depends] += " ${@bb.utils.contains('TFA_UBOOT', '1', 'u-boot:do_deploy', '', d)}"
 EXTRA_OEMAKE += "${@bb.utils.contains('TFA_UBOOT', '1', 'BL33=${DEPLOY_DIR_IMAGE}/u-boot.bin', '',d)}"
+
+# Hafnium support
+SEL2_SPMC = "${@'${TFA_SPMD_SPM_AT_SEL2}' if d.getVar('TFA_SPD', True) == 'spmd' else ''}"
+
+DEPENDS += " ${@bb.utils.contains('SEL2_SPMC', '1', 'hafnium', '', d)}"
+
+EXTRA_OEMAKE += "${@bb.utils.contains('SEL2_SPMC', '1', 'CTX_INCLUDE_EL2_REGS=1 ARM_ARCH_MINOR=4 BL32=${RECIPE_SYSROOT}/firmware/hafnium.bin', '', d)}"
+
+# Add SP layout file and spmc manifest for hafnium
+EXTRA_OEMAKE += "${@bb.utils.contains('SEL2_SPMC', '1', 'SP_LAYOUT_FILE=${TFA_SP_LAYOUT_FILE}' if d.getVar('TFA_SP_LAYOUT_FILE') else '', '', d)}"
+
+EXTRA_OEMAKE += "${@bb.utils.contains('SEL2_SPMC', '1', 'ARM_SPMC_MANIFEST_DTS=${TFA_ARM_SPMC_MANIFEST_DTS}' if d.getVar('TFA_ARM_SPMC_MANIFEST_DTS') else '', '', d)}"
 
 # Tell the tools where the native OpenSSL is located
 EXTRA_OEMAKE += "OPENSSL_DIR=${STAGING_DIR_NATIVE}/${prefix_native}"
