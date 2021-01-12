@@ -70,6 +70,9 @@ fvp-base:
 fvp-base-arm32:
   extends: .build
 
+fvp-base-arm32/external-gcc-arm32:
+  extends: .build
+
 gem5-arm64:
   extends: .build
 
