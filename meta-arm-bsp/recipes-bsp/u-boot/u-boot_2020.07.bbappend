@@ -2,7 +2,6 @@
 
 THIS_DIR := "${THISDIR}"
 FILESEXTRAPATHS_prepend = "${THIS_DIR}/${BP}:"
-FILESEXTRAPATHS_prepend_fvp-base = "${THIS_DIR}/${BP}/fvp-common:"
 
 #
 # Corstone-500 MACHINE
@@ -10,16 +9,6 @@ FILESEXTRAPATHS_prepend_fvp-base = "${THIS_DIR}/${BP}/fvp-common:"
 SRC_URI_append_corstone500 = " \
                    file://0001-armv7-adding-generic-timer-access-through-MMIO.patch \
                    file://0002-board-arm-add-corstone500-board.patch"
-
-#
-# FVP BASE KMACHINE
-#
-SRC_URI_append_fvp-base = " file://u-boot_vexpress_fvp.patch"
-
-#
-# FVP BASE ARM32 KMACHINE
-#
-SRC_URI_append_fvp-base-arm32 = " file://0001-Add-vexpress_aemv8a_aarch32-variant.patch"
 
 #
 # Juno KMACHINE
