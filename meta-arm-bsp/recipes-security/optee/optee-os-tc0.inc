@@ -27,3 +27,25 @@ SRC_URI_append = " \
 COMPATIBLE_MACHINE = "tc0"
 
 OPTEEMACHINE = "totalcompute-tc0"
+
+# Enable optee memory layout and boot logs
+EXTRA_OEMAKE += " CFG_TEE_CORE_LOG_LEVEL=3"
+
+# default disable latency benchmarks (over all OP-TEE layers)
+EXTRA_OEMAKE += " CFG_TEE_BENCHMARK=n"
+
+# Enable stats
+EXTRA_OEMAKE += " CFG_WITH_STATS=y"
+
+EXTRA_OEMAKE += " CFG_CORE_SEL2_SPMC=y"
+
+# Copy optee manifest file and sp_layout
+# This function will be modified or removed once upstream optee-os adds support
+# for SEL2 SPMC config
+do_install_append() {
+    install -d ${D}${nonarch_base_libdir}/firmware/
+    install -m 644 ${S}/core/arch/arm/plat-totalcompute/sp_layout.json \
+        ${D}${nonarch_base_libdir}/firmware/
+    install -m 644 ${S}/core/arch/arm/plat-totalcompute/optee_manifest.dts \
+        ${D}${nonarch_base_libdir}/firmware/
+}
