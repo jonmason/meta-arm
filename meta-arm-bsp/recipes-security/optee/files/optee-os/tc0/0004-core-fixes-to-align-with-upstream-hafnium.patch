@@ -1,0 +1,188 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+
+From 5ca96d9ff7fa5481282fb8f59a54d3cc91a1ae36 Mon Sep 17 00:00:00 2001
+From: Olivier Deprez <olivier.deprez@arm.com>
+Date: Thu, 1 Oct 2020 07:59:54 +0200
+Subject: [PATCH 1/5] core: fixes to align with upstream hafnium
+
+FF-A: fix call to thread_spmc_populate_mobj_from_rx
+
+FF-A: fix typos in thread_spmc.c
+
+FF-A: fix mem retrieve request
+
+FF-A. fix mem relinquish
+
+FF-A: call rx release from thread_spmc_populate_mobj_from_rx
+
+Change-Id: I38794b34bf17428d62218e30bdd0180f75498ed4
+Signed-off-by: Olivier Deprez <olivier.deprez@arm.com>
+Signed-off-by: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+---
+ core/arch/arm/kernel/thread_spmc.c | 52 +++++++++++++++++++++---------
+ core/arch/arm/mm/mobj_ffa.c        |  3 +-
+ 2 files changed, 39 insertions(+), 16 deletions(-)
+
+diff --git a/core/arch/arm/kernel/thread_spmc.c b/core/arch/arm/kernel/thread_spmc.c
+index 3d7dc035..872221d6 100644
+--- a/core/arch/arm/kernel/thread_spmc.c
++++ b/core/arch/arm/kernel/thread_spmc.c
+@@ -48,7 +48,7 @@ struct mem_access_perm_descr {
+ };
+ 
+ /* Table 41: Endpoint memory access descriptor */
+-struct mem_accsess_descr {
++struct mem_access_descr {
+ 	struct mem_access_perm_descr mem_access_perm_descr;
+ 	uint32_t mem_region_offs;
+ 	uint64_t reserved;
+@@ -64,7 +64,7 @@ struct mem_transaction_descr {
+ 	uint64_t tag;
+ 	uint32_t reserved1;
+ 	uint32_t mem_access_descr_count;
+-	struct mem_accsess_descr mem_accsess_descr_array[];
++	struct mem_access_descr mem_access_descr_array[];
+ };
+ 
+ struct ffa_partition_info {
+@@ -453,8 +453,8 @@ static void handle_blocking_call(struct thread_smc_args *args)
+ 	}
+ }
+ 
+-#if CFG_CORE_SEL1_SPMC
+-static int get_acc_perms(struct mem_accsess_descr *mem_acc,
++#ifdef CFG_CORE_SEL1_SPMC
++static int get_acc_perms(struct mem_access_descr *mem_acc,
+ 			 unsigned int num_mem_accs, uint8_t *acc_perms,
+ 			 unsigned int *region_offs)
+ {
+@@ -495,7 +495,7 @@ static int mem_share_init(void *buf, size_t blen, unsigned int *page_count,
+ 
+ 	/* Check that the endpoint memory access descriptor array fits */
+ 	num_mem_accs = READ_ONCE(descr->mem_access_descr_count);
+-	if (MUL_OVERFLOW(sizeof(struct mem_accsess_descr), num_mem_accs, &n) ||
++	if (MUL_OVERFLOW(sizeof(struct mem_access_descr), num_mem_accs, &n) ||
+ 	    ADD_OVERFLOW(sizeof(*descr), n, &n) || n > blen)
+ 		return FFA_INVALID_PARAMETERS;
+ 
+@@ -503,7 +503,7 @@ static int mem_share_init(void *buf, size_t blen, unsigned int *page_count,
+ 		return FFA_INVALID_PARAMETERS;
+ 
+ 	/* Check that the access permissions matches what's expected */
+-	if (get_acc_perms(descr->mem_accsess_descr_array,
++	if (get_acc_perms(descr->mem_access_descr_array,
+ 			  num_mem_accs, &mem_acc_perm, &region_descr_offs) ||
+ 	    mem_acc_perm != exp_mem_acc_perm)
+ 		return FFA_INVALID_PARAMETERS;
+@@ -1263,17 +1263,29 @@ static struct mem_transaction_descr *spmc_retrieve_req(uint64_t cookie)
+ {
+ 	struct mem_transaction_descr *retrieve_region = (void *)tx_buf;
+ 
++	uint64_t size = sizeof(*retrieve_region) +
++		1 * sizeof(struct mem_access_descr);
+ 	struct thread_smc_args args = {
+ 		.a0 = FFA_MEM_RETRIEVE_REQ_64,
+-		.a1 =   sizeof(*retrieve_region),  	// Total Length
+-		.a2 =	sizeof(*retrieve_region),	// Frag Length == Total length
++		.a1 =   size,  	// Total Length
++		.a2 =	size,	// Frag Length == Total length
+ 		.a3 =	0,				// Address, Using TX -> MBZ
+ 		.a4 =   0 				// Using TX -> MBZ
+ 	};
+ 
+ 	/* TODO pass all the information required by the spec */
+-	memset(retrieve_region, 0, sizeof(*retrieve_region));
++	memset(retrieve_region, 0, size);
+ 	retrieve_region->global_handle = cookie;
++	retrieve_region->flags = 1;
++	retrieve_region->mem_access_descr_count = 1;
++	retrieve_region->mem_access_descr_array[0].mem_region_offs = 0;
++	retrieve_region->mem_access_descr_array[0].reserved = 0;
++	retrieve_region->mem_access_descr_array[0].mem_access_perm_descr =
++		(struct mem_access_perm_descr) {
++			.endpoint_id = my_sp_id,
++			.access_perm = 0,
++			.flags = 0
++		};
+ 
+ 	thread_smccc(&args);
+ 	if (args.a0 == FFA_ERROR /*TODO != FFA_MEM_RETRIEVE_RESP_64 */) {
+@@ -1296,6 +1308,8 @@ void thread_spmc_relinquish(uint64_t cookie)
+ 	relinquish_desc->handle = cookie;
+ 	relinquish_desc->flags = 0;
+ 	/* TODO: Add endpoint details. */
++	relinquish_desc->endpoint_count = 1;
++	relinquish_desc->endpoint_id_array[0] = my_sp_id;
+ 	thread_smccc(&args);
+ 	if (args.a0 != FFA_SUCCESS_32)
+ 		EMSG("Failed to relinquish cookie %#"PRIx64, cookie);
+@@ -1303,11 +1317,14 @@ void thread_spmc_relinquish(uint64_t cookie)
+ 
+ struct mobj_ffa *thread_spmc_populate_mobj_from_rx(uint64_t cookie)
+ {
++	struct mobj_ffa *ret = NULL;
+ 	struct mem_transaction_descr *retrieve_desc;
+ 	struct mem_region_descr *descr;
+ 	struct mobj_ffa *mf;
+ 	uint32_t num_pages;
+-
++	struct thread_smc_args ffa_rx_release_args = {
++		.a0 = FFA_RX_RELEASE
++	};
+ 
+ 	/* XXX Support single mem_region. */
+ 	retrieve_desc = spmc_retrieve_req(cookie);
+@@ -1319,23 +1336,28 @@ struct mobj_ffa *thread_spmc_populate_mobj_from_rx(uint64_t cookie)
+ 
+ 	descr = (struct mem_region_descr *)
+ 			((uint8_t *)retrieve_desc +
+-				retrieve_desc->mem_accsess_descr_array[0].mem_region_offs);
++				retrieve_desc->mem_access_descr_array[0].mem_region_offs);
+ 
+ 	num_pages = descr->total_page_count;
+ 	mf = mobj_ffa_sel2_spmc_new(cookie, num_pages);
+ 
+ 	if (!mf)
+-		return NULL;
++		goto out;
+ 
+ 	if (set_pages(descr->address_range_array,
+ 				  descr->address_range_count,
+ 				  num_pages, mf)) {
+ 		mobj_ffa_sel2_spmc_delete(mf);
+-		return NULL;
+-
++		goto out;
+ 	}
+ 
+-	return mf;
++	ret = mf;
++
++out:
++	/* Release RX buffer after the mem retrieve request. */
++	thread_smccc(&ffa_rx_release_args);
++
++	return ret;
+ }
+ 
+ static TEE_Result spmc_init(void)
+diff --git a/core/arch/arm/mm/mobj_ffa.c b/core/arch/arm/mm/mobj_ffa.c
+index e2c585a2..8e334f04 100644
+--- a/core/arch/arm/mm/mobj_ffa.c
++++ b/core/arch/arm/mm/mobj_ffa.c
+@@ -380,9 +380,10 @@ struct mobj *mobj_ffa_get_by_cookie(uint64_t cookie,
+ 		/* Try to retrieve it from the SPM at S-EL2 */
+ 		if (mf)
+ 			DMSG("cookie %#"PRIx64" resurrecting", cookie);
+-		if (!mf)
++		if (!mf) {
+ 			EMSG("Populating mobj from rx buffer\n");
+ 			mf = thread_spmc_populate_mobj_from_rx(cookie);
++		}
+ #endif
+ 		if (mf) {
+ #if defined(CFG_CORE_SEL1_SPMC)
+-- 
+2.26.2
+
