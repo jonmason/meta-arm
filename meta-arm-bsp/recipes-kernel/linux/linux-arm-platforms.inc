@@ -77,6 +77,10 @@ SRC_URI_append_tc0 = " \
     file://0007-firmware-arm_scmi-Add-fast_switch_possible-api.patch \
     file://0008-cpufreq-arm_scmi-Set-fast_switch_possible-conditiona.patch \
     file://0009-driver-firmware-Initial-version-of-ffa-driver-based-.patch \
+    file://0010-tee-add-support-for-session-s-client-UUID-generation.patch \
+    file://0011-tee-optee-Add-support-for-session-login-client-UUID-.patch \
+    file://0012-driver-optee-Support-for-ffa-transport.patch \
+    file://0013-tee-optee-fix-mem-handle-removal-in-ffa_shm_unregist.patch \
     "
 
 #
