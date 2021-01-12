@@ -1,0 +1,8 @@
+header:
+  version: 9
+
+local_conf_header:
+  cc: |
+    PNBLACKLIST[gcc-cross-arm] = "Using external toolchain"
+    TCMODE = "external-arm"
+    EXTERNAL_TOOLCHAIN = "/usr/local/gcc-arm-10.2-2020.11-aarch64-arm-none-linux-gnueabihf"
