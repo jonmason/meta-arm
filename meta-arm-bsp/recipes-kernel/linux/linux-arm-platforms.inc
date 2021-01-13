@@ -79,6 +79,25 @@ SRC_URI_append_tc0 = " \
     "
 
 #
+# N1SDP KMACHINE
+#
+FILESEXTRAPATHS_prepend_n1sdp := "${THISDIR}/linux-yocto-5.10/n1sdp:"
+COMPATIBLE_MACHINE_n1sdp = "n1sdp"
+KBUILD_DEFCONFIG_n1sdp = "defconfig"
+KCONFIG_MODE_n1sdp = "--alldefconfig"
+SRC_URI_append_n1sdp = " \
+    file://0001-pci_quirk-add-acs-override-for-PCI-devices.patch \
+    file://0002-pcie-Add-quirk-for-the-Arm-Neoverse-N1SDP-platform.patch \
+    file://0003-n1sdp-update-n1sdp-pci-quirk-for-SR-IOV-support.patch \
+    file://0004-n1sdp-pcie-add-quirk-support-enabling-remote-chip-PC.patch \
+    file://0005-r8169-Fix-to-avoid-duplicate-sysfs-entry-creation-er.patch \
+    file://0001-arm64-defconfig-drop-unused-BACKLIGHT_GENERIC-option.patch \
+    file://no-power-avs.patch \
+    file://enable-realtek-R8169.cfg \
+    file://enable-usb_conn_gpio.cfg \
+    "
+
+#
 # Musca B1/S2 can't run Linux
 #
 COMPATIBLE_MACHINE_musca-b1 = "(^$)"
