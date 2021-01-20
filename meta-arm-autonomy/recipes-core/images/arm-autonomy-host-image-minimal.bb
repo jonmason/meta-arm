@@ -6,7 +6,7 @@ DESCRIPTION = "Arm Autonomy stack host minimal image"
 # and install the alternate kernel
 inherit ${@bb.utils.filter('DISTRO_FEATURES', 'alternate-kernel', d)}
 
-inherit core-image
+inherit core-image features_check
 
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
@@ -80,18 +80,14 @@ DO_IMAGE_MCDEPENDS := "${@ '${MC_DOIMAGE_MCDEPENDS}' if d.getVar('BBMULTICONFIG'
 # Apply mc dependency. Empty string if multiconfig not enabled
 do_image[mcdepends] += "${DO_IMAGE_MCDEPENDS}"
 
+REQUIRED_DISTRO_FEATURES += 'arm-autonomy-host'
+REQUIRED_DISTRO_FEATURES += 'xen'
 
 python __anonymous() {
     import re
     guestfile_pattern = re.compile(r"^([^;]+);")
     guestname_pattern = re.compile(r";guestname=([^;]+);?")
     guestcount_pattern = re.compile(r";guestcount=(\d+);?")
-
-    if bb.utils.contains('DISTRO_FEATURES', 'arm-autonomy-host', False, True, d):
-        raise bb.parse.SkipRecipe("DISTRO_FEATURES does not contain 'arm-autonomy-host'")
-
-    if bb.utils.contains('DISTRO_FEATURES', 'xen', False, True, d):
-        raise bb.parse.SkipRecipe("DISTRO_FEATURES does not contain 'xen'")
 
     # Check in ARM_AUTONOMY_HOST_IMAGE_EXTERN_GUESTS for extra guests and add them
     # to SRC_URI with xenguest parameter if not set
