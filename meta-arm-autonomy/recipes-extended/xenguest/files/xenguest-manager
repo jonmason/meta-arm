@@ -1017,15 +1017,31 @@ case ${cmd} in
     create)
         guestfile="${arg1}"
         guestname="${arg2}"
-        if [ -z "${guestfile}" -o ! -f "${guestfile}" ]; then
+        # guestfile invalid if empty
+        if [ -z "${guestfile}" ]; then
             log fatal "Usage ${this} create XENGUEST_FILE [NAME]"
         fi
+        # Set Guest name before resolving any symlinks
         if [ -z "${guestname}" ]; then
             guestname=$(basename ${guestfile} .xenguest)
+            log info "guestname argument not provided, using '${guestname}'"
         fi
-
+        # Check for and resolve symlink
+        if [ -L "${guestfile}" ]; then
+            errmsg="'${guestfile}' is a broken symlink"
+            guestfile=$(readlink -e "${guestfile}")
+            if [ -z "${guestfile}" ]; then
+                log fatal "${errmsg}"
+            else
+                log info "Guestfile symlink resolved to path '${guestfile}'"
+            fi
+        fi
+        # Check that guestfile is a valid file
+        if [ ! -f "${guestfile}" ]; then
+            log fatal "File '${guestfile}' not found"
+        fi
+        # Check if guest already exists
         if [ -f ${XENGUEST_CONF_BASE}/guests/${guestname}/guest.cfg ]; then
-            # Guest already exist
             log fatal "Guest '${guestname}' already exists"
         fi
 

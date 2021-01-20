@@ -14,12 +14,21 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 # The ARM_AUTONOMY_HOST_IMAGE_EXTERN_GUESTS variable can be used to include in the
 # image one or several xenguest images.
 # The list must be space separated and each entry must have the following
-# format: URL[;guestname=NAME]
+# format: URL[;params]
 #  - URL can be the full path to a file or a Yocto compatible SRC_URI url
-#  - guestname=NAME can be used to specify the name of the guest. If not
-#    specified the basename of the file (without .xenguest extension) is used.
+#  - params encompasses two values that can be optionally set:
+#    - guestname=NAME can be used to specify the name of the guest. If not
+#      specified the default value is the basename of the file
+#      (without .xenguest extension).
+#    - guestcount=NUM can be used to created NUM guests with the same config.
+#      All guests after the first will have numbers appended to the guestname,
+#      starting from 2. In the rootfs additional xenguest files will be
+#      symlinks to the original.
+#  params should be semicolon seperated, without a space, and can appear in
+#  any order.
+#
 #  Here are examples of values:
-#  /home/mydir/myguest.xenguest;guestname=guest1
+#  /home/mydir/myguest.xenguest;guestname=guest1;guestcount=3
 #  http://www.url.com/testguest.xenguest
 #
 #  If you are using the output of an other Yocto project, you should use the
@@ -73,6 +82,11 @@ do_image[mcdepends] += "${DO_IMAGE_MCDEPENDS}"
 
 
 python __anonymous() {
+    import re
+    guestfile_pattern = re.compile(r"^([^;]+);")
+    guestname_pattern = re.compile(r";guestname=([^;]+);?")
+    guestcount_pattern = re.compile(r";guestcount=(\d+);?")
+
     if bb.utils.contains('DISTRO_FEATURES', 'arm-autonomy-host', False, True, d):
         raise bb.parse.SkipRecipe("DISTRO_FEATURES does not contain 'arm-autonomy-host'")
 
@@ -87,16 +101,19 @@ python __anonymous() {
             # If the user just specified a file instead of file://FILE, add
             # the file:// prefix
             if guest.startswith('/'):
-                guestfile = ''
-                guestname = ''
-                if ';guestname=' in guest:
-                    # user specified a guestname
-                    guestname = guest.split(';guestname=')[1]
-                    guestfile = guest.split(';guestname=')[0]
-                else:
-                    # no guestname so use the basename
-                    guestname = os.path.basename(guest)
-                    guestfile = guest
+                guestname = os.path.basename(guest)
+                guestfile = guest
+                guestcount = "1"
+                f = guestfile_pattern.search(guest)
+                n = guestname_pattern.search(guest)
+                c = guestcount_pattern.search(guest)
+
+                if f is not None:
+                    guestfile = f.group(1)
+                if n is not None:
+                    guestname = n.group(1)
+                if c is not None:
+                    guestcount = c.group(1)
                 # in case we have a link we need the destination
                 guestfile = os.path.realpath(guestfile)
 
@@ -105,7 +122,7 @@ python __anonymous() {
                     raise bb.parse.SkipRecipe("ARM_AUTONOMY_HOST_IMAGE_EXTERN_GUESTS entry does not exist: " + guest)
 
                 # In case the file is a symlink make sure we use the destination
-                d.appendVar('SRC_URI',  ' file://' + guestfile + ';guestname=' + guestname)
+                d.appendVar('SRC_URI',  ' file://' + guestfile + ';guestname=' + guestname + ';guestcount=' + guestcount)
             else:
                 # we have a Yocto URL
                 try:
@@ -141,8 +158,15 @@ python add_extern_guests () {
             # Add file extension if not there
             if not dstname.endswith('.xenguest'):
                 dstname += '.xenguest'
+
             if not bb.utils.copyfile(path, guestdir + '/' + dstname):
                 bb.fatal("Fail to copy Guest file " + path)
+
+        if 'guestcount' in parm:
+            guestcount = int(parm['guestcount']) + 1
+
+            for i in range(2, guestcount):
+                os.symlink('./' + dstname, guestdir + '/' + dstname.replace('.xenguest', str(i) + '.xenguest'))
 }
 
 IMAGE_PREPROCESS_COMMAND += "add_extern_guests; "
