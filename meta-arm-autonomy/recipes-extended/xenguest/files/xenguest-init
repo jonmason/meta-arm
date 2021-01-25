@@ -68,7 +68,7 @@ case "$1" in
         # update guest list
         guestlist=$(xenguest-manager status | grep Running | cut -d ":" -f1)
         for f in ${guestlist}; do
-            xl shutdown -w ${f} || xl destroy ${f}
+            xenguest-manager shutdown ${f} --kill
         done
         ;;
   reload)

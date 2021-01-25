@@ -200,6 +200,12 @@ with ACTION being one of:
 
  stop|shutdown GUESTNAME
    Stop guest GUESTNAME (send stop signal and let it shutdown normally)
+   Pass 'stop|shutdown GUESTNAME --nowait' to return immediately, rather
+   than waiting for success or failure to return.
+   Pass 'stop|shutdown GUESTNAME --kill' to force kill the guest if
+   signalling the graceful shutdown fails for any reason
+
+   These two parameters are incompatible, so only one should be passed
 
  kill|destroy GUESTNAME
    Kill guest GUESTNAME (stop directly the guest without signaling it)
@@ -871,17 +877,36 @@ function xenguest_guest_start()
 # Private
 function xenguest_guest_stop()
 {
+    local guestname
+    local extra_arg
+
     guestname="${1}"
+    extra_arg="${2}"
+
+    shutdown_args=""
+
     log info "Attempting to stop guest '${guestname}'"
+
+    if [[ ${extra_arg} != "--nowait" ]]; then
+        shutdown_args+=" -w"
+    fi
 
     check_private
 
-    log_command "xl shutdown ${guestname}"
+    log_command "xl shutdown ${shutdown_args} ${guestname}"
     if [ $? -ne 0 ]; then
-        log fatal "Stopping guest '${guestname}' failed."
+        if [[ ${extra_arg} == "--kill" ]]; then
+            log info "Stopping '${guestname}' failed, calling kill..."
+            xenguest_guest_kill "${guestname}"
+        else
+            log fatal "Stopping guest '${guestname}' failed."
+        fi
     fi
-
-    echo "Guest '${guestname}' may not have stopped yet. Use 'status' to check"
+    if [[ "${extra_arg}" != "--nowait" ]]; then
+        log info "Guest '${guestname}' stopped successfully"
+    else
+        log info "xl shutdown exited successfully for guest '${guestname}'."
+    fi
 }
 
 # Private
@@ -1066,10 +1091,11 @@ case ${cmd} in
         ;;
     stop|shutdown)
         guestname="${arg1:-}"
+        extra_arg="${arg2:-}"
         check_guest_arg ${cmd} ${guestname}
         check_guest_exist ${guestname}
         check_guest_running ${guestname}
-        xenguest_guest_stop ${guestname}
+        xenguest_guest_stop "${guestname}" "${extra_arg}"
         ;;
     kill|destroy)
         guestname="${arg1:-}"
