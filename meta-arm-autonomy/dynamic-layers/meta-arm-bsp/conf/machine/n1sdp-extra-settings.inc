@@ -49,6 +49,10 @@ do_image_wic[depends] += "xen:do_deploy"
 IMAGE_EFI_BOOT_FILES += "xen-n1sdp.efi;xen.efi"
 IMAGE_EFI_BOOT_FILES += "${XEN_MOD_DEVICETREE_DTBS}"
 
+# Use 5.4 kernel until later versions have been validated for autonomy-host
+PREFERRED_PROVIDER_virtual/kernel = "linux-linaro-arm"
+PREFERRED_VERSION_linux-linaro-arm = "5.4%"
+
 # When alternate-kernel DISTRO_FEATURE is present we set the linux-linaro-arm-rt
 # by default
 PREFERRED_PROVIDER_alternate/kernel ?= "\
