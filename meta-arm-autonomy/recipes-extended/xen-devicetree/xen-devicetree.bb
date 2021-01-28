@@ -35,6 +35,30 @@ do_configure[noexec] = "1"
 do_compile[noexec] = "1"
 do_install[noexec] = "1"
 
+# Validate xen devicetree variables
+python __anonymous() {
+
+    # Compare values of a list of variables to a regex pattern
+    def validate_type(pattern, var_list):
+        for varname in var_list:
+            if d.getVar(varname):
+                if not pattern.match(d.getVar(varname)):
+                    raise bb.parse.SkipRecipe(d.getVar(varname) + "' is not a valid value for " + varname + "!")
+            else:
+                raise bb.parse.SkipRecipe('Required variable ' + varname + ' is empty!')
+
+    import re
+
+    num_vars_to_check = ['XEN_DEVICETREE_DOM0_ADDR', 'XEN_DEVICETREE_DOM0_SIZE']
+    size_vars_to_check = ['XEN_DEVICETREE_DOM0_MEM']
+
+    num_pattern = re.compile(r'((0x[0-9a-fA-F]+)|[0-9]+)$')
+    size_pattern = re.compile(r'[0-9]+[MG](,max:[0-9]+[MG])?$')
+
+    validate_type(num_pattern, num_vars_to_check)
+    validate_type(size_pattern, size_vars_to_check)
+}
+
 do_deploy() {
     if [ ! -f ${WORKDIR}/xen.dtsi.in ]; then
         die "xen.dtsi.in does not exist"
