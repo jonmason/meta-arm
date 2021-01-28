@@ -30,6 +30,7 @@ XEN_DEVICETREE_DTSI_MERGE ?= "xen.dtsi"
 inherit nopackages deploy
 
 DEPENDS += "dtc-native"
+PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 do_configure[noexec] = "1"
 do_compile[noexec] = "1"

@@ -37,7 +37,7 @@ XENGUEST_MANAGER_LOG_LEVEL ?= "ERROR"
 INITSCRIPT_NAME = "xenguest"
 INITSCRIPT_PARAMS = "start 90 2 3 4 5 . stop 79 0 1 6 ."
 
-inherit update-rc.d
+inherit allarch update-rc.d
 
 do_compile() {
     echo "XENGUEST_VOLUME_DEVICE=\"${XENGUEST_MANAGER_VOLUME_DEVICE}\"" > \

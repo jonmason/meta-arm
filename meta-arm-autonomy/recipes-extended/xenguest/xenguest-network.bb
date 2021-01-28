@@ -39,7 +39,7 @@ INITSCRIPT_PARAMS_${PN} = "start 01 2 3 4 5 . stop 81 0 1 6 ."
 INITSCRIPT_NAME_${PN}-kea-dhcp4 = "kea-restore-default-config"
 INITSCRIPT_PARAMS_${PN}-kea-dhcp4 = "defaults 20"
 
-inherit update-rc.d
+inherit allarch update-rc.d
 
 do_install() {
     cat ${WORKDIR}/xenguest-network-bridge.in \
