@@ -91,11 +91,11 @@ python calc_xen_dtb_dom0_size() {
     size_defined = int(d.getVar('XEN_DEVICETREE_DOM0_SIZE'), 16)
 
     if size_required > size_defined:
-        bb.warn ("Wrong kernel size setting inside xen dtb!\n"\
+        bb.note ("Wrong kernel size setting inside xen dtb!\n"\
                  "Required:\t%(req)d (%(req)#010X)\n"\
                  "Requested:\t%(def)d (%(def)#010X)"\
                  % {"req": size_required, "def": size_defined})
-        bb.warn ("Overriding XEN_DEVICETREE_DOM0_SIZE with "\
+        bb.note ("Overriding XEN_DEVICETREE_DOM0_SIZE with "\
                  "%(req)d (%(req)#010X)" % {"req": size_required})
         d.setVar('XEN_DEVICETREE_DOM0_SIZE', hex(size_required))
 }
