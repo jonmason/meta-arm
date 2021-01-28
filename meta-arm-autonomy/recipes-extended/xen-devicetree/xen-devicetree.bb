@@ -88,7 +88,11 @@ python calc_xen_dtb_dom0_size() {
     bb.note('size in bytes: %d' % size)
     # Ceil to MiB
     size_required = ceil(size / (2 ** 20)) * (2 ** 20)
-    size_defined = int(d.getVar('XEN_DEVICETREE_DOM0_SIZE'), 16)
+    xen_devicetree_dom0_size = d.getVar('XEN_DEVICETREE_DOM0_SIZE')
+    if xen_devicetree_dom0_size[:2] == "0x":
+        size_defined = int(xen_devicetree_dom0_size, 16)
+    else:
+        size_defined = int(xen_devicetree_dom0_size)
 
     if size_required > size_defined:
         bb.note ("Wrong kernel size setting inside xen dtb!\n"\
