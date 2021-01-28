@@ -70,9 +70,10 @@ The following parameters are available:
   This variable is only used if XEN_DEVICETREE_XEN_BOOTARGS has a value
   containing "dom0_mem=${XEN_DEVICETREE_DOM0_MEM}" as the memory assigned to
   dom0 is defined using Xen boot arguments.
-  This variable is set by default to "1024M", and cannot be empty.
-  The value can also be of the form "1024M,max:1024M", as documented here:
-  https://wiki.xenproject.org/wiki/Do%EF%BB%BFm0_Memory_%E2%80%94_Where_It_Has_Not_Gone
+  This variable is set by default to "1024M,max:1024", and cannot be empty.
+  The value can simply specify a size, e.g. "1024M", but best practice is to
+  also provide a max, documented here:
+  https://wiki.xenproject.org/wiki/Xen_Project_Best_Practices
 
 - XEN_DEVICETREE_DOM0_BOOTARGS: Boot arguments to pass to Dom0 Linux when
   booting it.
