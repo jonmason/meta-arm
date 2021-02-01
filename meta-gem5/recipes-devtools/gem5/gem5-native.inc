@@ -18,7 +18,7 @@ GEM5_SCONS_ARGS ?= "CC=${BUILD_CC} CXX=${BUILD_CXX} \
 GEM5_RUN_PROFILE ?= "configs/example/fs.py"
 
 # We are building a native package and we need to use scons
-inherit native scons
+inherit scons native
 
 # the build is using several tools:
 # python3: scons and six
