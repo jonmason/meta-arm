@@ -1,9 +1,6 @@
 require gem5-source_20.inc
 
-SRC_URI += "file://0001-scons-Add-MARSHAL_XXFLAGS_EXTRA-for-the-marshal-object.patch \
-            file://0002-arch-arm-Introduce-HavePACExt-helper.patch \
-            file://0003-arch-arm-Check-if-PAC-is-implemented-before-executing-insts.patch \
-           "
+SRC_URI += "file://0001-dev-arm-SMMUv3-enable-interrupt-interface.patch"
 
 BPN = "gem5-aarch64-native"
 
