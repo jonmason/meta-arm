@@ -1,0 +1,32 @@
+Upstream-Status: Backport
+Signed-off-by: Ross Burton <ross.burton@arm.com>
+
+From ae2ee2a4a51914cf78deb5c253a3b03cbb53ce72 Mon Sep 17 00:00:00 2001
+From: Boris Staletic <boris.staletic@gmail.com>
+Date: Mon, 15 Jun 2020 19:36:43 +0200
+Subject: [PATCH] Avoid using deprecated API in python 3.9
+
+The PyEval_InitThreads() and PyEval_ThreadsInitialized() functions are
+now deprecated and will be removed in Python 3.11. Calling
+PyEval_InitThreads() now does nothing. The GIL is initialized by
+Py_Initialize() since Python 3.7.
+---
+ include/pybind11/detail/internals.h | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/include/pybind11/detail/internals.h b/include/pybind11/detail/internals.h
+index 6224dfb22..166a18a32 100644
+--- a/ext/pybind11/include/pybind11/detail/internals.h
++++ b/ext/pybind11/include/pybind11/detail/internals.h
+@@ -273,7 +273,10 @@ PYBIND11_NOINLINE inline internals &get_internals() {
+         auto *&internals_ptr = *internals_pp;
+         internals_ptr = new internals();
+ #if defined(WITH_THREAD)
+-        PyEval_InitThreads();
++
++        #if PY_VERSION_HEX < 0x03090000
++                PyEval_InitThreads();
++        #endif
+         PyThreadState *tstate = PyThreadState_Get();
+         #if PY_VERSION_HEX >= 0x03070000
+             internals_ptr->tstate = PyThread_tss_alloc();
