@@ -34,6 +34,6 @@ if [ -n "${GEM5_RUN_EXTRA}" ]; then
     args="$args ${GEM5_RUN_EXTRA}"
 fi
 
-${STAGING_BINDIR_NATIVE}/${GEM5_RUN_CONFIG} \
+oe-run-native gem5-aarch64-native ${GEM5_RUN_CONFIG} \
     ${STAGING_DATADIR_NATIVE}/gem5/${GEM5_RUN_PROFILE} ${args} "$@"
 

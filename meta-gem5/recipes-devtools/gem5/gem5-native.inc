@@ -41,14 +41,7 @@ do_install() {
     for f in ${GEM5_BUILD_CONFIGS}; do
         destname=$(basename $f)
         install -d ${D}${bindir}
-        install -m 755 $f ${D}${bindir}/$destname.real
-        cat <<EOF > ${D}${bindir}/$destname
-#!/bin/bash
-basedir=\$(cd \$(dirname \$0)/../../; pwd)
-export LD_LIBRARY_PATH="\$basedir/lib:\$basedir/usr/lib"
-\$basedir/usr/bin/$destname.real "\$@"
-EOF
-        chmod a+x ${D}${bindir}/$destname
+        install -m 755 $f ${D}${bindir}/$destname
     done
 }
 
@@ -56,3 +49,4 @@ FILES_${PN} = "${datadir}/gem5/* ${bindir}/*"
 INSANE_SKIP_${PN} += "already-stripped"
 RDEPENDS_${PN} += "python3-native hdf5-native protobuf-native libpng-native"
 
+addtask addto_recipe_sysroot before do_build
