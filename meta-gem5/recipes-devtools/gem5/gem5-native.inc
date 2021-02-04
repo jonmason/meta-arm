@@ -6,8 +6,11 @@ LICENSE = "BSD & MIT & LGPLv2.1"
 
 # Gem5 build and run parameter
 
+# See http://www.gem5.org/documentation/general_docs/building for the list of variants
+GEM5_BUILD_VARIANT ?= "opt"
+
 # What gem5 binary are we building
-GEM5_BUILD_CONFIGS ?= "build/X86/gem5.opt"
+GEM5_BUILD_CONFIGS ?= "build/X86/gem5.{GEM5_BUILD_VARIANT}"
 
 # Scons build arguments
 GEM5_SCONS_ARGS ?= "CC=${BUILD_CC} CXX=${BUILD_CXX} \
