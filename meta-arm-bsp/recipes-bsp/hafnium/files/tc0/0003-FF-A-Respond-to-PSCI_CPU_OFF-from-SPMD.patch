@@ -1,10 +1,10 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
+Upstream-Status: Pending [https://review.trustedfirmware.org/c/hafnium/hafnium/+/6011/29]
 Signed-off-by: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
 
-From 66d7628fea54dd7a25d25a13eb4f732c0a3428d0 Mon Sep 17 00:00:00 2001
+From 6a836b380265876a12b2edfb7f013523af89e754 Mon Sep 17 00:00:00 2001
 From: Max Shvetsov <maksims.svecovs@arm.com>
 Date: Fri, 18 Sep 2020 13:52:20 +0100
-Subject: [PATCH 3/4] FF-A: Respond to PSCI_CPU_OFF from SPMD.
+Subject: [PATCH 4/5] FF-A: Respond to PSCI_CPU_OFF from SPMD.
 
 At run-time when a PSCI call is made from NWd, the corresponding SPMD PM
 hooks gets called and is eventually routed to the SPMC.  This change
@@ -13,12 +13,13 @@ conveyed from SPMD to SPMC such as core suspend, core off.
 
 Change-Id: Id288e26d9fbb8328acc71f5cf68c39e095a0e3da
 Signed-off-by: Max Shvetsov <maksims.svecovs@arm.com>
+Signed-off-by: Olivier Deprez <olivier.deprez@arm.com>
 ---
- src/arch/aarch64/hypervisor/handler.c | 40 ++++++++++++++++++++++++++-
- 1 file changed, 39 insertions(+), 1 deletion(-)
+ src/arch/aarch64/hypervisor/handler.c | 49 +++++++++++++++++++++++++--
+ 1 file changed, 47 insertions(+), 2 deletions(-)
 
 diff --git a/src/arch/aarch64/hypervisor/handler.c b/src/arch/aarch64/hypervisor/handler.c
-index c10f77e..95d6a18 100644
+index b33298c..43a1404 100644
 --- a/src/arch/aarch64/hypervisor/handler.c
 +++ b/src/arch/aarch64/hypervisor/handler.c
 @@ -13,6 +13,7 @@
@@ -29,59 +30,86 @@ index c10f77e..95d6a18 100644
  
  #include "hf/api.h"
  #include "hf/check.h"
-@@ -478,6 +479,41 @@ static bool ffa_handler(struct ffa_value *args, struct vcpu *current,
+@@ -261,6 +262,7 @@ static void set_virtual_interrupt_current(bool enable)
+ }
  
  #if SECURE_WORLD == 1
- 
-+/**
-+ * Returns true if the message is sent directly from SPMD to SPMC.
-+ */
-+static bool is_spmd_message(const uint64_t arg)
-+{
-+	return (((arg & 0xFFFF) == get_ffa_id()) &&
-+		(((arg >> 16) & 0xFFFF) == SPMD_ID));
-+}
++
+ static bool sp_boot_next(struct vcpu *current, struct vcpu **next,
+ 			 struct ffa_value *ffa_ret)
+ {
+@@ -303,6 +305,41 @@ out:
+ 	vm_unlock(&current_vm_locked);
+ 	return ret;
+ }
 +
 +/**
 + * Handle special direct messages from SPMD to SPMC. For now related to power
 + * management only.
 + */
-+static bool spmd_handler(struct ffa_value *ret)
++static bool spmd_handler(struct ffa_value *args, struct vcpu *current)
 +{
-+	if (!is_spmd_message(ret->arg1)) {
++	ffa_vm_id_t spmc_ffa_id = arch_other_world_get_ffa_id();
++	ffa_vm_id_t sender = ffa_msg_send_sender(*args);
++	ffa_vm_id_t receiver = ffa_msg_send_receiver(*args);
++	ffa_vm_id_t current_vm_id = current->vm->id;
++
++	if (!((sender == SPMD_ID) && (receiver == spmc_ffa_id) &&
++	      (current_vm_id == HF_OTHER_WORLD_ID))) {
 +		return false;
 +	}
 +
-+	dlog_verbose("%s Handling direct PSCI calls from SPMD\n", __func__);
-+
-+	switch (ret->arg3) {
++	switch (args->arg3) {
 +	case PSCI_CPU_OFF:
-+		ret->func = FFA_MSG_SEND_DIRECT_RESP_32;
-+		ret->arg1 = (get_ffa_id() << 16) | SPMD_ID;
-+		ret->arg2 = 0U;
++		dlog_verbose("%s cpu off notification\n", __func__);
++		args->func = FFA_MSG_SEND_DIRECT_RESP_32;
++		args->arg1 = ((uint64_t)spmc_ffa_id << 16) | SPMD_ID;
++		args->arg2 = 0U;
++
++		cpu_off(current->cpu);
 +		break;
 +	default:
-+		dlog_verbose("Following message not handled %#x\n", ret->arg3);
++		dlog_verbose("%s message not handled %#x\n", __func__,
++			     args->arg3);
 +		return false;
 +	}
 +
 +	return true;
 +}
 +
+ #endif
+ 
  /**
-  * Called to switch to the other world and handle FF-A calls from it. Returns
-  * when it is ready to run a secure partition again.
-@@ -510,7 +546,9 @@ static void other_world_switch_loop(struct vcpu *other_world_vcpu,
+@@ -461,11 +498,17 @@ static bool ffa_handler(struct ffa_value *args, struct vcpu *current,
+ 					    (args->arg4 >> 16) & 0xffff,
+ 					    current);
+ 		return true;
+-	case FFA_MSG_SEND_DIRECT_REQ_32:
++	case FFA_MSG_SEND_DIRECT_REQ_32: {
++#if SECURE_WORLD == 1
++		if (spmd_handler(args, current)) {
++			return true;
++		}
++#endif
+ 		*args = api_ffa_msg_send_direct_req(
+ 			ffa_msg_send_sender(*args),
+ 			ffa_msg_send_receiver(*args), *args, current, next);
+ 		return true;
++	}
+ 	case FFA_MSG_SEND_DIRECT_RESP_32:
+ 		*args = api_ffa_msg_send_direct_resp(
+ 			ffa_msg_send_sender(*args),
+@@ -510,7 +553,9 @@ static void other_world_switch_loop(struct vcpu *other_world_vcpu,
  		 * the result of the call back to EL3 unless the API handler
  		 * sets *next to something different.
  		 */
 -		if (!ffa_handler(&other_world_args, other_world_vcpu, next)) {
 +
-+		if (!spmd_handler(&other_world_args) &&
++		if (!spmd_handler(&other_world_args, other_world_vcpu) &&
 +		    !ffa_handler(&other_world_args, other_world_vcpu, next)) {
  			other_world_args.func = SMCCC_ERROR_UNKNOWN;
  		}
  	}
 -- 
-2.26.2
+2.29.2
 
