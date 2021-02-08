@@ -106,4 +106,4 @@ delete-sstate:
   stage: bootstrap
   when: manual
   script:
-  - rm -rf $SSTATE_DIR
+  - rm -rf $SSTATE_DIR/*
