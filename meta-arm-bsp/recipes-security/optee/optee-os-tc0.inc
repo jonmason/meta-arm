@@ -22,6 +22,9 @@ SRC_URI_append = " \
     file://0006-plat-totalcompute-Add-support-for-S-EL2-SPMC.patch \
     file://0007-plat-totalcompute-add-optee-manifest-file-and-sp-lay.patch \
     file://0008-plat-totalcompute-define-tzdram-start-address-for-S-.patch \
+    file://0009-plat-totalcompute-add-Theodul-DSU-support.patch \
+    file://0010-WIP-OP-TEE-SP-declare-device-regions-in-manifest.patch \
+    file://0011-WIP-OP-TEE-SP-use-CNTVCT-in-place-of-CNTVCT.patch \
     "
 
 COMPATIBLE_MACHINE = "tc0"

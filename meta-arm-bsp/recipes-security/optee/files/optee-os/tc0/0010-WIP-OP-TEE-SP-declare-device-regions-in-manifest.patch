@@ -1,0 +1,47 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+
+From fd325f731da694057a2738411faa2ccbeea71778 Mon Sep 17 00:00:00 2001
+From: Olivier Deprez <olivier.deprez@arm.com>
+Date: Thu, 3 Dec 2020 22:29:37 +0100
+Subject: [PATCH 2/3] WIP OP-TEE SP declare device regions in manifest
+
+Secure Partitions must declare peripherals they access such
+that the SPMC maps IO regions in SP's Stage-2 translation
+regime. OP-TEE currently directly accesses the GIC Distributor
+and the UART0 peripheral hence declare those device regions in
+OP-TEE's manifest.
+
+Change-Id: I1fda46e5cf17153dfaf499042dceff325729d041
+Signed-off-by: Olivier Deprez <olivier.deprez@arm.com>
+---
+ .../arch/arm/plat-totalcompute/optee_manifest.dts | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/core/arch/arm/plat-totalcompute/optee_manifest.dts b/core/arch/arm/plat-totalcompute/optee_manifest.dts
+index 60cb5957..cdc28d98 100644
+--- a/core/arch/arm/plat-totalcompute/optee_manifest.dts
++++ b/core/arch/arm/plat-totalcompute/optee_manifest.dts
+@@ -30,4 +30,19 @@
+ 
+ 	/* Boot protocol */
+ 	gp-register-num = <0x0>;
++
++	device-regions {
++		compatible = "arm,ffa-manifest-device-regions";
++		uart0 {
++			base-address = <0x00000000 0x7ff70000>;
++			pages-count = <1>;
++			attributes = <0x3>; /* read-write */
++		};
++
++		gicd {
++			base-address = <0x00000000 0x30000000>;
++			pages-count = <16>;
++			attributes = <0x3>; /* read-write */
++		};
++	};
+ };
+-- 
+2.29.2
+
