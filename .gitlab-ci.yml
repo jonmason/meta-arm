@@ -133,3 +133,11 @@ prune-sstate:
   when: manual
   script:
   - find $SSTATE_DIR -type f -atime +30 -delete
+
+# Delete all sstate
+delete-sstate:
+  extends: .setup
+  stage: bootstrap
+  when: manual
+  script:
+  - rm -rf $SSTATE_DIR
