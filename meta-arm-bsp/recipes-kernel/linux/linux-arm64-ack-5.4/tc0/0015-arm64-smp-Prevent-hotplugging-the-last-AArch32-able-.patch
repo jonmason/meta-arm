@@ -1,0 +1,89 @@
+Upstream-Status: Backport [http://www.linux-arm.org/git?p=linux-power.git;a=commit;h=e6b567c1cc07dd1690e5d34b6a93ab9819ab2eeb]
+Signed-off-by: Usama Arif <usama.arif@arm.com>
+
+From d6acb605de7d40c295ada9b1f4c8336e4db71ae4 Mon Sep 17 00:00:00 2001
+From: Valentin Schneider <valentin.schneider@arm.com>
+Date: Thu, 5 Sep 2019 17:53:19 +0100
+Subject: [PATCH 2/2] arm64: smp: Prevent hotplugging the last AArch32-able CPU
+
+EL0 AArch32 tasks are now sigkilled when they can't run on any
+compatible CPU, either because there aren't any left (hotplug) or
+because they aren't allowed to run on those left (task affinity).
+
+However, it has been deemed valuable to prevent the loss of
+functionality resulting in offlining the last AArch32-compatible CPU.
+
+Add arch-specific hook in _cpu_down() that allows checking whether we
+can offline a cpu or not and use that hook to veto offlining the last
+AArch32 CPU.
+
+Signed-off-by: Valentin Schneider <valentin.schneider@arm.com>
+Signed-off-by: Qais Yousef <qais.yousef@arm.com>
+---
+ arch/arm64/kernel/smp.c | 22 ++++++++++++++++++++++
+ kernel/cpu.c            |  9 +++++++++
+ 2 files changed, 31 insertions(+)
+
+diff --git a/arch/arm64/kernel/smp.c b/arch/arm64/kernel/smp.c
+index 038ce6263d1c..c8ab4ee29f32 100644
+--- a/arch/arm64/kernel/smp.c
++++ b/arch/arm64/kernel/smp.c
+@@ -85,6 +85,28 @@ static inline int op_cpu_kill(unsigned int cpu)
+ }
+ #endif
+ 
++bool arch_allows_cpu_disable(int cpu, int tasks_frozen,
++			     enum cpuhp_state target)
++{
++	/*
++	 * Don't let the last AArch32-compatible CPU go down unless the request
++	 * is related to suspend (!tasks_frozen) then allow it to be offlined
++	 * or we'll break suspend-to-ram functionality.
++	 */
++	if (IS_ENABLED(CONFIG_ASYMMETRIC_AARCH32) &&
++	    !cpumask_empty(&aarch32_el0_mask) &&
++	    !tasks_frozen) {
++		cpumask_t online;
++
++		cpumask_and(&online, &aarch32_el0_mask, cpu_online_mask);
++
++		if (cpumask_weight(&online) == 1)
++			return false;
++	}
++
++	return true;
++}
++
+ 
+ /*
+  * Boot a secondary CPU, and assign it the specified idle task.
+diff --git a/kernel/cpu.c b/kernel/cpu.c
+index 261b5098f81c..4fae9b61f442 100644
+--- a/kernel/cpu.c
++++ b/kernel/cpu.c
+@@ -134,6 +134,12 @@ static struct cpuhp_step *cpuhp_get_step(enum cpuhp_state state)
+ 	return cpuhp_hp_states + state;
+ }
+ 
++bool __weak arch_allows_cpu_disable(int cpu, int tasks_frozen,
++				    enum cpuhp_state target)
++{
++	return true;
++}
++
+ /**
+  * cpuhp_invoke_callback _ Invoke the callbacks for a given state
+  * @cpu:	The cpu for which the callback should be invoked
+@@ -985,6 +991,9 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen,
+ 	if (!cpu_present(cpu))
+ 		return -EINVAL;
+ 
++	if (!arch_allows_cpu_disable(cpu, tasks_frozen, target))
++		return -EBUSY;
++
+ 	cpus_write_lock();
+ 
+ 	cpuhp_tasks_frozen = tasks_frozen;
+-- 
+2.29.2
+

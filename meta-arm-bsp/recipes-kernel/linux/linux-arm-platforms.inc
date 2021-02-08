@@ -81,6 +81,8 @@ SRC_URI_append_tc0 = " \
     file://0011-tee-optee-Add-support-for-session-login-client-UUID-.patch \
     file://0012-driver-optee-Support-for-ffa-transport.patch \
     file://0013-tee-optee-fix-mem-handle-removal-in-ffa_shm_unregist.patch \
+    file://0014-arm64-Add-support-for-asymmetric-AArch32-EL0-configu.patch \
+    file://0015-arm64-smp-Prevent-hotplugging-the-last-AArch32-able-.patch \
     "
 
 #
