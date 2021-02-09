@@ -34,6 +34,7 @@ local_conf_header:
     INHERIT += "rm_work"
     PACKAGECONFIG_append_pn-perf = " coresight"
     ERROR_QA = "${WARN_QA}"
+    INHERIT_remove = "uninative"
   ptest: |
     DISTRO_FEATURES_remove = "ptest"
 
