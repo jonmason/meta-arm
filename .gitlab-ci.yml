@@ -79,6 +79,9 @@ juno:
 juno/clang:
   extends: .build
 
+microbit-v1:
+  extends: .build
+
 musca-b1:
   extends: .build
 
