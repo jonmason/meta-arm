@@ -68,6 +68,7 @@ SRC_URI = "\
            file://0035-Fix-for-testsuite-failure.patch \
            file://0036-Re-introduce-spe-commandline-options.patch \
            file://0037-Fix-up-libsanitizer-build-with-master-glibc.patch \
+           file://0001-Backport-fix-for-PR-tree-optimization-97236-fix-bad-.patch \
 "
 SRC_URI[md5sum] = "9c570fc4286825b4e6f67b3d34aade23"
 
