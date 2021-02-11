@@ -4,7 +4,7 @@ LICENSE = "BSD"
 LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=bb63326febfb5fb909226c8e7ebcef5c"
 
 SRC_URI = "git://git.kernel.org/pub/scm/linux/kernel/git/mark/boot-wrapper-aarch64.git"
-SRCREV = "fd74c8cbd0e17483d2299208cad9742bee605ca7"
+SRCREV = "8d5a765251d9113c3c0f9fa14de42a9e7486fe8a"
 
 PV = "git${SRCPV}"
 
