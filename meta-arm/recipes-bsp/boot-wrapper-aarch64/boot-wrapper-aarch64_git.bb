@@ -1,14 +1,20 @@
-
 SUMMARY = "Linux aarch64 boot wrapper with FDT support"
 LICENSE = "BSD"
 
-inherit autotools deploy
+LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=bb63326febfb5fb909226c8e7ebcef5c"
 
-PROVIDES = "virtual/gem5-bootloader boot-wrapper-aarch64"
+SRC_URI = "git://git.kernel.org/pub/scm/linux/kernel/git/mark/boot-wrapper-aarch64.git"
+SRCREV = "fd74c8cbd0e17483d2299208cad9742bee605ca7"
+
+PV = "git${SRCPV}"
+
+S = "${WORKDIR}/git"
+
+inherit autotools deploy
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
-COMPATIBLE_MACHINE ?= ""
+COMPATIBLE_MACHINE ?= "invalid"
 
 # Device tree to put in the image
 # by default use the standard kernel devicetree
@@ -84,4 +90,3 @@ do_deploy() {
         ${DEPLOYDIR}/linux-system.axf
 }
 addtask deploy before do_build after do_compile
-
