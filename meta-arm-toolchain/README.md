@@ -111,4 +111,4 @@ Supported version: 9.2-2019.12
 Layer maintainer(s)
 -------------------
 * Sumit Garg <sumit.garg@linaro.org>
-* Denys Dmytriyenko <denys@ti.com>
+* Denys Dmytriyenko <denis@denix.org>
