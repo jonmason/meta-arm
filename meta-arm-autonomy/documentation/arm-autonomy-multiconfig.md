@@ -154,7 +154,9 @@ a different guestname.
 To have different config for each guest, each will need its own config
 file similar to guest.conf, ensuring TMPDIR is set to a different path,
 and everything between `---Guest Config Start---` and
-`---Guest Config End---` will need to be duplicated.
+`---Guest Config End---` will need to be duplicated. Ensure that the name
+of the multiconfig conf file does not contain any hyphens (-), since this
+will create errors when it becomes part of a function name.
 
 Any copies of variables that start `MC_GUEST` must be altered to avoid
 collisions (e.g. `MC_GUEST_2_*`), and the name of the conf file must also
