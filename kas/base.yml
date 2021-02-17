@@ -20,9 +20,6 @@ repos:
       meta:
       meta-poky:
 
-  meta-kernel:
-    url: https://gitlab.com/openembedded/community/meta-kernel.git
-
 env:
   BB_LOGCONFIG: ""
 
