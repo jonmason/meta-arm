@@ -38,8 +38,15 @@ python() {
     from distutils.version import LooseVersion
 
     kernelVersion = d.getVar('LINUX_VERSION')
+    pn = d.getVar('PN')
 
     if kernelVersion and LooseVersion(kernelVersion) < '5.10':
         if oe.utils.any_distro_features(d, "arm-autonomy-host arm-autonomy-guest"):
             d.appendVar('SRC_URI', ' file://files/0001-xen-arm-do-not-setup-the-runstate-info-page-if-kpti-.patch' )
+
+    if kernelVersion and LooseVersion(kernelVersion) < '5.4.95' \
+       and pn != 'linux-libc-headers' \
+       and not pn.startswith('linux-linaro-arm') \
+       and oe.utils.any_distro_features(d, "arm-autonomy-host"):
+        d.appendVar('SRC_URI', ' file://files/0001-xen-Fix-XenStore-initialisation-for-XS_LOCAL.patch' )
 }
