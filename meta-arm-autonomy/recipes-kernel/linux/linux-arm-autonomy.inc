@@ -49,4 +49,9 @@ python() {
        and not pn.startswith('linux-linaro-arm') \
        and oe.utils.any_distro_features(d, "arm-autonomy-host"):
         d.appendVar('SRC_URI', ' file://files/0001-xen-Fix-XenStore-initialisation-for-XS_LOCAL.patch' )
+
+    if kernelVersion and LooseVersion(kernelVersion) < '5.10.17' \
+       and pn != 'linux-libc-headers' \
+       and oe.utils.any_distro_features(d, "arm-autonomy-guest"):
+        d.appendVar('SRC_URI', ' file://files/0001-arm-xen-Don-t-probe-xenbus-as-part-of-an-early-initc.patch' )
 }
