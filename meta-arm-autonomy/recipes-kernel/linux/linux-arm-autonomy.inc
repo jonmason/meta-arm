@@ -33,3 +33,13 @@ KMACHINE_arm64-autonomy-guest = "arm64-autonomy-guest"
 # Add Minimal Kernel Configs for Docker runtime
 KERNEL_FEATURES += "${@bb.utils.contains('DISTRO_FEATURES', \
         'docker', 'features/arm-autonomy/docker-minimal.scc', '', d)}"
+
+python() {
+    from distutils.version import LooseVersion
+
+    kernelVersion = d.getVar('LINUX_VERSION')
+
+    if kernelVersion and LooseVersion(kernelVersion) < '5.10':
+        if oe.utils.any_distro_features(d, "arm-autonomy-host arm-autonomy-guest"):
+            d.appendVar('SRC_URI', ' file://files/0001-xen-arm-do-not-setup-the-runstate-info-page-if-kpti-.patch' )
+}
