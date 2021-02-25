@@ -5,7 +5,9 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/${BP}:"
 #
 # FVP BASE
 #
-SRC_URI_append_fvp-base = " file://u-boot_vexpress_fvp.patch"
+SRC_URI_append_fvp-base = " file://u-boot_vexpress_fvp.patch \
+                            file://0001-vexpress64_fvp-Set-DRAM-to-4G-to-match-with-kernel-d.patch \
+                          "
 
 #
 # FVP BASE ARM32

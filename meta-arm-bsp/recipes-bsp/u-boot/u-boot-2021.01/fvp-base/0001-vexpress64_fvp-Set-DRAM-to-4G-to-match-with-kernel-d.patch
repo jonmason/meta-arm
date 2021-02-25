@@ -1,0 +1,48 @@
+From 9abe5e68033dab0d521475090ffd0cef9cb2c581 Mon Sep 17 00:00:00 2001
+Message-Id: <9abe5e68033dab0d521475090ffd0cef9cb2c581.1614260356.git.diego.sueiro@arm.com>
+From: Diego Sueiro <diego.sueiro@arm.com>
+Date: Mon, 15 Feb 2021 07:27:57 +0000
+Subject: [PATCH] vexpress64_fvp: Set DRAM to 4G to match with kernel
+ devicetree
+
+Currently, the kernel devicetree is setting the DRAM size to ~4G.
+
+Signed-off-by: Diego Sueiro <diego.sueiro@arm.com>
+
+Upstream-Status: Backport
+Signed-off-by: Diego Sueiro <diego.sueiro@arm.com>
+---
+ configs/vexpress_aemv8a_semi_defconfig | 2 +-
+ include/configs/vexpress_aemv8a.h      | 3 +++
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/configs/vexpress_aemv8a_semi_defconfig b/configs/vexpress_aemv8a_semi_defconfig
+index a26137ef5d..2ecb7762ce 100644
+--- a/configs/vexpress_aemv8a_semi_defconfig
++++ b/configs/vexpress_aemv8a_semi_defconfig
+@@ -2,7 +2,7 @@ CONFIG_ARM=y
+ CONFIG_TARGET_VEXPRESS64_BASE_FVP=y
+ CONFIG_SYS_TEXT_BASE=0x88000000
+ CONFIG_SYS_MALLOC_F_LEN=0x2000
+-CONFIG_NR_DRAM_BANKS=1
++CONFIG_NR_DRAM_BANKS=2
+ CONFIG_SYS_MEMTEST_START=0x80000000
+ CONFIG_SYS_MEMTEST_END=0xff000000
+ CONFIG_ENV_SIZE=0x40000
+diff --git a/include/configs/vexpress_aemv8a.h b/include/configs/vexpress_aemv8a.h
+index 566bee5b87..7318fb6c58 100644
+--- a/include/configs/vexpress_aemv8a.h
++++ b/include/configs/vexpress_aemv8a.h
+@@ -117,6 +117,9 @@
+ #ifdef CONFIG_TARGET_VEXPRESS64_JUNO
+ #define PHYS_SDRAM_2			(0x880000000)
+ #define PHYS_SDRAM_2_SIZE		0x180000000
++#elif CONFIG_TARGET_VEXPRESS64_BASE_FVP && CONFIG_NR_DRAM_BANKS == 2
++#define PHYS_SDRAM_2			(0x880000000)
++#define PHYS_SDRAM_2_SIZE		0x80000000
+ #endif
+ 
+ /* Enable memtest */
+-- 
+2.17.1
+
