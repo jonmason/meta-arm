@@ -10,11 +10,11 @@ BRIDGE_NAME="###BRIDGE_NAME###"
 
 case "${XENGUEST_NETWORK_TYPE:=}" in
     nat)
-        echo "vif = ['script=vif-nat']" >> ${guestcfgfile}
+        echo "vif = ['script=vif-nat']" >> "${guestcfgfile:?}"
         log info "Network type is NAT"
         ;;
     bridge)
-        echo "vif = ['script=vif-bridge,bridge=${BRIDGE_NAME}']" >> ${guestcfgfile}
+        echo "vif = ['script=vif-bridge,bridge=${BRIDGE_NAME}']" >> "${guestcfgfile:?}"
         log info "Network type is bridge: ${BRIDGE_NAME}"
         ;;
     *)

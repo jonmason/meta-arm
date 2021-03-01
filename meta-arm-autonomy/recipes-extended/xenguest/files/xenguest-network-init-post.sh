@@ -11,19 +11,20 @@ set +u
 #
 
 check_if_vif_is_ready() {
-    ret=($(xl network-list "${guestname}" | grep  "${1}"))
-    # ${ret[4]} is network interface status value
+    ret=$(xl network-list "${guestname:?}" | grep  "${1}" \
+        | tr -s ' ' | cut -d' ' -f5)
+    # ${ret} is network interface status value
     # 1 means vif is not ready
     # 4 means vif is ready
-    [ "${ret[4]}" = "4" ] && return 0
+    [ "${ret}" = "4" ] && return 0
     return 1
 }
 
 case "${XENGUEST_NETWORK_TYPE:-}" in
     nat)
-        vif_name="$(xl network-list ${guestname} | grep -o vif.*)"
+        vif_name="$(xl network-list "${guestname:?}" | grep -o "vif.*")"
 
-        for try in {1..20}
+        for try in $(seq 20)
         do
             if check_if_vif_is_ready "${vif_name}"; then
                 claim_lock "vif-nat-kea"

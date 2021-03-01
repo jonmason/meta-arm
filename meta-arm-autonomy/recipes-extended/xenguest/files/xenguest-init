@@ -25,19 +25,19 @@ case "$1" in
         echo "Starting xenguest"
 
         # Create unconfigured guests
-        if [ -d ${XENGUEST_GUEST_DIR} ]; then
-            for f in $(find ${XENGUEST_GUEST_DIR} -name "*.xenguest" \
-                -exec basename {} .xenguest \;); do
-                if [ ! -f ${XENGUEST_CONF_BASE}/guests/${f}/guest.cfg ]; then
+        if [ -d "${XENGUEST_GUEST_DIR}" ]; then
+            shopt -s nullglob
+            for path in "${XENGUEST_GUEST_DIR}"/*.xenguest; do
+                f=$(basename "${path}" .xenguest)
+                if [ ! -f "${XENGUEST_CONF_BASE}/guests/${f}/guest.cfg" ]; then
                     # Check if this guest should be auto booted
                     autoboot=$(/usr/bin/xenguest-mkimage dump-paramsconfig \
-                        ${XENGUEST_GUEST_DIR}/${f}.xenguest | \
+                        "${path}" | \
                         grep GUEST_AUTOBOOT | sed -e "s,.*=,," | tr -d '"')
                     if [ "$autoboot" = "0" ]; then
                         echo "Do not create $f, autoboot disabled"
                     else
-                        /usr/bin/xenguest-manager create \
-                            ${XENGUEST_GUEST_DIR}/${f}.xenguest
+                        /usr/bin/xenguest-manager create "${path}"
                         # Update guestlist
                         if [ $? -eq 0 ]; then
                             guestlist="${guestlist} ${f}"
@@ -49,11 +49,11 @@ case "$1" in
         if [ -n "${guestlist}" ]; then
             for f in ${guestlist}; do
                 GUEST_AUTOBOOT="1"
-                if [ -f ${XENGUEST_CONF_BASE}/guests/${f}/params.cfg ]; then
-                    source ${XENGUEST_CONF_BASE}/guests/${f}/params.cfg
+                if [ -f "${XENGUEST_CONF_BASE}/guests/${f}/params.cfg" ]; then
+                    source "${XENGUEST_CONF_BASE}/guests/${f}/params.cfg"
                 fi
                 if [ "${GUEST_AUTOBOOT}" = "1" ]; then
-                    /usr/bin/xenguest-manager start ${f}
+                    /usr/bin/xenguest-manager start "${f}"
                 fi
             done
         else
@@ -68,7 +68,7 @@ case "$1" in
         # update guest list
         guestlist=$(xenguest-manager status | grep Running | cut -d ":" -f1)
         for f in ${guestlist}; do
-            xenguest-manager shutdown ${f} --kill
+            xenguest-manager shutdown "${f}" --kill
         done
         ;;
   reload)
