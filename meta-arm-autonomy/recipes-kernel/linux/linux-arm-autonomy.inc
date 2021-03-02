@@ -40,6 +40,11 @@ python() {
     kernelVersion = d.getVar('LINUX_VERSION')
     pn = d.getVar('PN')
 
+    if kernelVersion and LooseVersion(kernelVersion) < '5.9' \
+       and pn != 'linux-libc-headers' \
+       and oe.utils.any_distro_features(d, "arm-autonomy-host arm-autonomy-guest"):
+        d.appendVar('SRC_URI', ' file://files/0001-arm-arm64-xen-Fix-to-convert-percpu-address-to-gfn-c.patch' )
+
     if kernelVersion and LooseVersion(kernelVersion) < '5.10':
         if oe.utils.any_distro_features(d, "arm-autonomy-host arm-autonomy-guest"):
             d.appendVar('SRC_URI', ' file://files/0001-xen-arm-do-not-setup-the-runstate-info-page-if-kpti-.patch' )
