@@ -1,0 +1,160 @@
+Upstream-Status: Backport
+Signed-off-by: Ross Burton <ross.burton@arm.com>
+
+From b3eb31b79d6eee04020f0dc2ec5140ff5aa28282 Mon Sep 17 00:00:00 2001
+From: Mike Leach <mike.leach@linaro.org>
+Date: Mon, 16 Nov 2020 17:48:40 +0000
+Subject: [PATCH] build: Fix build race issue - #32 reported on github
+
+Issue reported of race when building tests. On a heavily loaded build
+machine the creation of the build directory could occur at the same time
+as compilation into that directory creating issue with finding object
+files.
+
+Reported-by: rossburton (github issue #32)
+Signed-off-by: Mike Leach <mike.leach@linaro.org>
+---
+ decoder/tests/build/linux/c_api_pkt_print_test/makefile | 6 +++---
+ decoder/tests/build/linux/echo_test_dcd_lib/makefile    | 6 +++---
+ decoder/tests/build/linux/mem_buffer_eg/makefile        | 6 +++---
+ decoder/tests/build/linux/snapshot_parser_lib/makefile  | 6 +++---
+ decoder/tests/build/linux/trc_pkt_lister/makefile       | 6 +++---
+ 5 files changed, 15 insertions(+), 15 deletions(-)
+
+diff --git a/decoder/tests/build/linux/c_api_pkt_print_test/makefile b/decoder/tests/build/linux/c_api_pkt_print_test/makefile
+index b0b5604..f1108e4 100644
+--- a/decoder/tests/build/linux/c_api_pkt_print_test/makefile
++++ b/decoder/tests/build/linux/c_api_pkt_print_test/makefile
+@@ -51,12 +51,12 @@ OBJECTS		=	$(BUILD_DIR)/c_api_pkt_print_test.o
+ LIBS		=	-L$(LIB_TARGET_DIR) -l$(LIB_BASE_NAME) -l$(LIB_CAPI_NAME) \
+ 				-L$(LIB_TEST_TARGET_DIR) -l_echo_test_dcd
+ 
+-all:  build_dir copy_libs
++all: copy_libs
+ 
+ test_app: 	$(BIN_TEST_TARGET_DIR)/$(PROG)
+ 
+ 
+- $(BIN_TEST_TARGET_DIR)/$(PROG): $(OBJECTS)
++ $(BIN_TEST_TARGET_DIR)/$(PROG): $(OBJECTS) | build_dir
+ 			mkdir -p  $(BIN_TEST_TARGET_DIR)
+ 			$(LINKER) $(LDFLAGS) $(OBJECTS) -Wl,--start-group $(LIBS) -Wl,--end-group -o $(BIN_TEST_TARGET_DIR)/$(PROG)
+ 			cp $(LIB_TARGET_DIR)/*.so .
+@@ -77,7 +77,7 @@ DEPS := $(OBJECTS:%.o=%.d)
+ -include $(DEPS)
+ 
+ ## object compile
+-$(BUILD_DIR)/%.o : %.c
++$(BUILD_DIR)/%.o : %.c | build_dir
+ 			$(CC) $(CFLAGS) $(CC_INCLUDES) -MMD $< -o $@ 
+ 
+ #### clean
+diff --git a/decoder/tests/build/linux/echo_test_dcd_lib/makefile b/decoder/tests/build/linux/echo_test_dcd_lib/makefile
+index 31ca38f..8c255a8 100644
+--- a/decoder/tests/build/linux/echo_test_dcd_lib/makefile
++++ b/decoder/tests/build/linux/echo_test_dcd_lib/makefile
+@@ -48,9 +48,9 @@ CC_INCLUDES	=	\
+ OBJECTS		=	$(BUILD_DIR)/ext_dcd_echo_test.o \
+ 				$(BUILD_DIR)/ext_dcd_echo_test_fact.o
+ 
+-all:  build_dir $(LIB_TEST_TARGET_DIR)/$(LIB_NAME).a
++all: $(LIB_TEST_TARGET_DIR)/$(LIB_NAME).a
+ 
+-$(LIB_TEST_TARGET_DIR)/$(LIB_NAME).a: $(OBJECTS)
++$(LIB_TEST_TARGET_DIR)/$(LIB_NAME).a: $(OBJECTS) | build_dir
+ 	mkdir -p $(LIB_TEST_TARGET_DIR)
+ 	$(LIB) $(ARFLAGS) $(LIB_TEST_TARGET_DIR)/$(LIB_NAME).a $(OBJECTS)
+ 
+@@ -64,7 +64,7 @@ DEPS := $(OBJECTS:%.o=%.d)
+ -include $(DEPS)
+ 
+ ## object compile
+-$(BUILD_DIR)/%.o : %.c
++$(BUILD_DIR)/%.o : %.c | build_dir
+ 			$(CC) $(CFLAGS) $(CC_INCLUDES) -MMD $< -o $@ 
+ 
+ #### clean
+diff --git a/decoder/tests/build/linux/mem_buffer_eg/makefile b/decoder/tests/build/linux/mem_buffer_eg/makefile
+index 850ed49..7939521 100644
+--- a/decoder/tests/build/linux/mem_buffer_eg/makefile
++++ b/decoder/tests/build/linux/mem_buffer_eg/makefile
+@@ -51,12 +51,12 @@ OBJECTS		=	$(BUILD_DIR)/mem_buff_demo.o
+ LIBS		=	-L$(LIB_TEST_TARGET_DIR) -lsnapshot_parser \
+ 				-L$(LIB_TARGET_DIR) -l$(LIB_BASE_NAME)
+ 
+-all:  build_dir copy_libs
++all: copy_libs
+ 
+ test_app: $(BIN_TEST_TARGET_DIR)/$(PROG)
+ 
+ 
+- $(BIN_TEST_TARGET_DIR)/$(PROG): $(OBJECTS)
++ $(BIN_TEST_TARGET_DIR)/$(PROG): $(OBJECTS) | build_dir
+ 			mkdir -p  $(BIN_TEST_TARGET_DIR)
+ 			$(LINKER) $(LDFLAGS) $(OBJECTS) -Wl,--start-group $(LIBS) -Wl,--end-group -o $(BIN_TEST_TARGET_DIR)/$(PROG)
+ 
+@@ -76,7 +76,7 @@ DEPS := $(OBJECTS:%.o=%.d)
+ -include $(DEPS)
+ 
+ ## object compile
+-$(BUILD_DIR)/%.o : %.cpp
++$(BUILD_DIR)/%.o : %.cpp | build_dir
+ 			$(CXX) $(CXXFLAGS) $(CXX_INCLUDES) -MMD $< -o $@
+ 
+ #### clean
+diff --git a/decoder/tests/build/linux/snapshot_parser_lib/makefile b/decoder/tests/build/linux/snapshot_parser_lib/makefile
+index 295bab6..ae566eb 100644
+--- a/decoder/tests/build/linux/snapshot_parser_lib/makefile
++++ b/decoder/tests/build/linux/snapshot_parser_lib/makefile
+@@ -63,9 +63,9 @@ OBJECTS=$(BUILD_DIR)/device_info.o \
+ 		$(BUILD_DIR)/snapshot_reader.o \
+ 		$(BUILD_DIR)/ss_to_dcdtree.o
+ 
+-all: build_dir $(LIB_TEST_TARGET_DIR)/$(LIB_NAME).a
++all: $(LIB_TEST_TARGET_DIR)/$(LIB_NAME).a
+ 
+-$(LIB_TEST_TARGET_DIR)/$(LIB_NAME).a: $(OBJECTS)
++$(LIB_TEST_TARGET_DIR)/$(LIB_NAME).a: $(OBJECTS) | build_dir
+ 	mkdir -p $(LIB_TEST_TARGET_DIR)
+ 	$(LIB) $(ARFLAGS) $(LIB_TEST_TARGET_DIR)/$(LIB_NAME).a $(OBJECTS)
+ 
+@@ -80,7 +80,7 @@ DEPS := $(OBJECTS:%.o=%.d)
+ -include $(DEPS)
+ 
+ ## object compile
+-$(BUILD_DIR)/%.o : %.cpp
++$(BUILD_DIR)/%.o : %.cpp | build_dir
+ 	$(CXX) $(CXXFLAGS) $(CXX_INCLUDES) -MMD $< -o $@
+ 
+ ### clean
+diff --git a/decoder/tests/build/linux/trc_pkt_lister/makefile b/decoder/tests/build/linux/trc_pkt_lister/makefile
+index 54ce27d..1027964 100644
+--- a/decoder/tests/build/linux/trc_pkt_lister/makefile
++++ b/decoder/tests/build/linux/trc_pkt_lister/makefile
+@@ -51,12 +51,12 @@ OBJECTS		=	$(BUILD_DIR)/trc_pkt_lister.o
+ LIBS		=	-L$(LIB_TEST_TARGET_DIR) -lsnapshot_parser \
+ 				-L$(LIB_TARGET_DIR) -l$(LIB_BASE_NAME)
+ 
+-all:  build_dir copy_libs
++all: copy_libs
+ 
+ test_app: $(BIN_TEST_TARGET_DIR)/$(PROG)
+ 
+ 
+- $(BIN_TEST_TARGET_DIR)/$(PROG): $(OBJECTS)
++ $(BIN_TEST_TARGET_DIR)/$(PROG): $(OBJECTS) | build_dir
+ 			mkdir -p  $(BIN_TEST_TARGET_DIR)
+ 			$(LINKER) $(LDFLAGS) $(OBJECTS) -Wl,--start-group $(LIBS) -Wl,--end-group -o $(BIN_TEST_TARGET_DIR)/$(PROG)
+ 
+@@ -76,7 +76,7 @@ DEPS := $(OBJECTS:%.o=%.d)
+ -include $(DEPS)
+ 
+ ## object compile
+-$(BUILD_DIR)/%.o : %.cpp
++$(BUILD_DIR)/%.o : %.cpp | build_dir
+ 			$(CXX) $(CXXFLAGS) $(CXX_INCLUDES) -MMD $< -o $@
+ 
+ #### clean
+-- 
+2.25.1
+

@@ -3,7 +3,9 @@ HOMEPAGE = "https://github.com/Linaro/OpenCSD"
 LICENSE = "BSD-3-Clause"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=ad8cb685eb324d2fa2530b985a43f3e5"
 
-SRC_URI = "git://github.com/Linaro/OpenCSD;protocol=https;branch=master"
+SRC_URI = "git://github.com/Linaro/OpenCSD;protocol=https;branch=master \
+           file://0001-build-Fix-build-race-issue-32-reported-on-github.patch"
+
 SRCREV = "957d18219d162f52ebe2426f32a4263ec10f357d"
 
 S = "${WORKDIR}/git"
