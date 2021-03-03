@@ -4,8 +4,7 @@ header:
 repos:
   meta-clang:
     url: https://github.com/kraj/meta-clang
-    # This doesn't (yet) have a gatesgarth branch
-    refspec: master
+    refspec: gatesgarth
 
 local_conf_header:
   clang: |
