@@ -12,7 +12,8 @@ OPTEE_ARCH_armv7a = "arm32"
 OPTEE_ARCH_aarch64 = "arm64"
 OPTEE_CORE = "${@d.getVar('OPTEE_ARCH').upper()}"
 
-OPTEE_COMPILER = "${@d.getVar('TOOLCHAIN') or 'gcc'}"
+OPTEE_TOOLCHAIN = "${@d.getVar('TOOLCHAIN') or 'gcc'}"
+OPTEE_COMPILER = "${@bb.utils.contains("BBFILE_COLLECTIONS", "clang-layer", "${OPTEE_TOOLCHAIN}", "gcc", d)}"
 
 # Set here but not passed to EXTRA_OEMAKE by default as that breaks
 # the optee-os build
