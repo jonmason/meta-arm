@@ -22,10 +22,6 @@ KCONFIG_MODE = "--alldefconfig"
 
 COMPATIBLE_MACHINE = "n1sdp"
 
-# RT kernel machine description
-FILESEXTRAPATHS_prepend_pn-linux-linaro-arm-rt := "${THISDIR}:"
-SRC_URI_append_pn-linux-linaro-arm-rt = " file://arm-platforms-kmeta;type=kmeta;name=arm-platforms-kmeta;destsuffix=arm-platforms-kmeta"
-
 # Since we use the intree defconfig and the preempt-rt turns off some configs
 # do_kernel_configcheck will display warnings. So, lets disable it.
 KCONF_AUDIT_LEVEL_pn-linux-linaro-arm-rt = "0"
