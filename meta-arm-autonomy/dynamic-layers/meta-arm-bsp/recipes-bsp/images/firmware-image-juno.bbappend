@@ -1,14 +1,14 @@
 # Use OVERRIDES to minimize the usage of
-# ${@bb.utils.contains('DISTRO_FEATURES', 'xen', ...
-OVERRIDES_append = "${@bb.utils.contains('DISTRO_FEATURES', 'xen', ':xen', '', d)}"
+# ${@bb.utils.contains('DISTRO_FEATURES', 'autonomy-host', ...
+OVERRIDES_append = "${@bb.utils.contains('DISTRO_FEATURES', 'arm-autonomy-host', ':autonomy-host', '', d)}"
 
-FILESEXTRAPATHS_prepend_xen := "${THISDIR}/${PN}:"
+FILESEXTRAPATHS_prepend_autonomy-host := "${THISDIR}/${PN}:"
 
-DEPENDS_append_xen = " dos2unix-native"
+DEPENDS_append_autonomy-host = " dos2unix-native"
 
-SRC_URI_append_xen = " file://add-xen-support.patch;patchdir=../"
+SRC_URI_append_autonomy-host = " file://add-xen-support.patch;patchdir=../"
 
-do_install_append_xen() {
+do_install_append_autonomy-host() {
     mv -v ${D}/${UNPACK_DIR}/SOFTWARE/uEnv.txt \
           ${D}/${UNPACK_DIR}/SOFTWARE/uenvfile
     for dir in $(ls ${D}/${UNPACK_DIR}/SITE1/)
@@ -18,11 +18,11 @@ do_install_append_xen() {
 }
 
 DEPLOY_EXTRA_DEPS ??= ""
-DEPLOY_EXTRA_DEPS_xen = "xen:do_deploy xen-devicetree:do_deploy"
+DEPLOY_EXTRA_DEPS_autonomy-host = "xen:do_deploy xen-devicetree:do_deploy"
 
 do_deploy[depends] += "${DEPLOY_EXTRA_DEPS}"
 
-do_deploy_prepend_xen() {
+do_deploy_prepend_autonomy-host() {
     # To avoid dependency loop between firmware-image-juno:do_install,
     # xen:do_deploy and xen-devicetree:do_deploy when
     # INITRAMFS_IMAGE_BUNDLE = "1", we need to handle the xen and
