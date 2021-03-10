@@ -30,7 +30,7 @@ XENGUEST_IMAGE_ROOT ??= "/dev/xvda1"
 # Guest kernel command line arguments
 XENGUEST_IMAGE_CMDLINE ??= "earlyprintk=xenboot console=hvc0 rw"
 
-# Extra commands to add to xenguest-image when creating the image
+# Extra commands to add to xenguest_image when creating the image
 XENGUEST_IMAGE_EXTRA_CMD ??= ""
 
 # Kernel binary
@@ -82,6 +82,18 @@ XENGUEST_IMAGE_DEPLOY_SUBDIR ?= "xenguest"
 #   recipe.
 # - something in ${WORKDIR} if you need to clone and manipulate an image
 XENGUEST_IMAGE_DEPLOY_DIR ??= "${DEPLOYDIR}"
+
+# These vars are used by image_types_xenguest.bbclass to generate the
+# xenguest.env file. In a recipe that inherits this class and extra variables
+# that should be included in xenguest.env need to be added to
+# XENGUEST_IMAGE_VARS_EXTRA
+XENGUEST_IMAGE_VARS ?= "\
+ MACHINE DISTRO DISTRO_VERSION DISTRO_FEATURES TUNE_FEATURES TARGET_FPU \
+ IMAGE_FEATURES INITRAMFS_IMAGE_BUNDLE INITRAMFS_IMAGE \
+ XENGUEST_IMAGE_MEMORY_SIZE XENGUEST_IMAGE_NUM_VCPUS XENGUEST_IMAGE_AUTOBOOT \
+ XENGUEST_IMAGE_ROOT XENGUEST_IMAGE_CMDLINE XENGUEST_IMAGE_EXTRA_CMD \
+ XENGUEST_IMAGE_KERNEL XENGUEST_IMAGE_DISK_SIZE XENGUEST_IMAGE_DISK_DEVICE \
+ XENGUEST_IMAGE_DISK_PARTITIONS XENGUEST_IMAGE_NETWORK_TYPE"
 
 #
 # Wrapper to call xenguest-mkimage
@@ -167,7 +179,38 @@ xenguest_image_create() {
     fi
 }
 
-#
+XENGUEST_ENV_STAGING_DIR ??= "${STAGING_DIR}/${MACHINE}/xenguestenv"
+
+# Create an intermediary file containing all variables used to by a
+# particular recipe that inherits this class
+
+# File will contain the values of all variables listed in:
+#   XENGUEST_IMAGE_VARS_EXTRA
+python do_deploy_xenguestenv () {
+    xenguest_vars = d.getVar('XENGUEST_IMAGE_VARS_EXTRA')
+    if not xenguest_vars:
+        return
+
+    outdir = d.getVar('XENGUEST_ENV_STAGING_DIR')
+
+    # Writes file to tmp/sysroots/${MACHINE}/xenguestenv/ by default
+    filename = os.path.basename(d.getVar('FILE')) + '.xenguestenv'
+    with open(os.path.join(outdir, filename), 'w') as envf:
+        for var in xenguest_vars.split():
+            value = d.getVar(var)
+            if value:
+                # Write value only if set
+                envf.write('%s="%s"\n' % (var, " ".join(value.split())))
+        envf.close()
+}
+
+# Since the intermediary file is deleted by do_merge_xenguestenv it
+# must be re-created every time
+do_deploy_xenguestenv[vardeps] += "${XENGUEST_IMAGE_VARS_EXTRA}"
+do_deploy_xenguestenv[dirs] = "${XENGUEST_ENV_STAGING_DIR}"
+
+addtask deploy_xenguestenv before do_populate_sysroot
+
 # Clone the current xenguest from deploy to manipulate it locally
 # This is required if you need to change things before packing an image
 # To set the local directory where to clone you must set
@@ -181,7 +224,7 @@ xenguest_image_clone() {
     fi
 
     if [ ! -f ${DEPLOY_DIR_IMAGE}/${XENGUEST_IMAGE_DEPLOY_SUBDIR}/guest.cfg ]; then
-        die "xenguest-image: ${DEPLOY_DIR_IMAGE}/${XENGUEST_IMAGE_DEPLOY_SUBDIR} does not contain a valid guest"
+        die "xenguest_image: ${DEPLOY_DIR_IMAGE}/${XENGUEST_IMAGE_DEPLOY_SUBDIR} does not contain a valid guest"
     fi
 
     rm -rf ${XENGUEST_IMAGE_DEPLOY_DIR}/${XENGUEST_IMAGE_DEPLOY_SUBDIR}

@@ -6,7 +6,7 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 
 S = "${WORKDIR}"
 
-inherit deploy xenguest-image
+inherit deploy xenguest_image
 
 # Name of the file we create in deploy
 XENGUEST_IMAGE_NODISK_DEPLOY = "xenguest-nodisk-image.xenguest"

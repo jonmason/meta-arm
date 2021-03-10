@@ -4,8 +4,11 @@
 # The class is extending deploy function so you recipe must inherit deploy and
 # have a do_deploy function (even if it is empty)
 
-# Use standard xenguest-image
-inherit xenguest-image
+# Add a variable name to XENGUEST_IMAGE_VARS_EXTRA if you want it to
+# appear in xenguest.env when the image is deployed
+
+# Use standard xenguest_image
+inherit xenguest_image
 
 # Add a DTB file for the guest
 # Only one file should be added, if this is set multiple times or in several
@@ -39,6 +42,12 @@ XENGUEST_EXTRA_FILES ??= ""
 # dir1/file1 file in the disk content parameters).
 XENGUEST_EXTRA_DISK_FILES ??= ""
 
+# Extra vars to be written to xenguest.env
+XENGUEST_IMAGE_VARS_EXTRA += "\
+ XENGUEST_EXTRA_DTB XENGUEST_EXTRA_RAMDISK XENGUEST_EXTRA_XENCONFIG \
+ XENGUEST_EXTRA_INIT_PRE XENGUEST_EXTRA_INIT XENGUEST_EXTRA_INIT_POST \
+ XENGUEST_EXTRA_FILES XENGUEST_EXTRA_DISK_FILES"
+
 do_deploy_append() {
     if [ -z "${XENGUEST_IMAGE_DEPLOY_DIR}" -o \
         -z "${XENGUEST_IMAGE_DEPLOY_SUBDIR}" ]; then
@@ -49,14 +58,14 @@ do_deploy_append() {
 
     if [ -n "${XENGUEST_EXTRA_DTB}" ]; then
         if [ ! -f ${XENGUEST_EXTRA_DTB} ]; then
-            die "xenguest-image: DTB file ${XENGUEST_EXTRA_DTB} does not exist"
+            die "xenguest_image: DTB file ${XENGUEST_EXTRA_DTB} does not exist"
         fi
         call_xenguest_mkimage partial --xen-device-tree=${XENGUEST_EXTRA_DTB}
     fi
 
     if [ -n "${XENGUEST_EXTRA_RAMDISK}" ]; then
         if [ ! -f ${XENGUEST_EXTRA_RAMDISK} ]; then
-            die "xenguest-image: DTB file ${XENGUEST_EXTRA_RAMDISK} does not exist"
+            die "xenguest_image: DTB file ${XENGUEST_EXTRA_RAMDISK} does not exist"
         fi
         call_xenguest_mkimage partial --xen-ramdisk=${XENGUEST_EXTRA_RAMDISK}
     fi
@@ -64,7 +73,7 @@ do_deploy_append() {
     if [ -n "${XENGUEST_EXTRA_XENCONFIG}" ]; then
         for f in ${XENGUEST_EXTRA_XENCONFIG}; do
             if [ ! -f $f ]; then
-                die "xenguest-image: Xen config $f does not exist"
+                die "xenguest_image: Xen config $f does not exist"
             fi
             call_xenguest_mkimage partial --xen-append=$f
         done
@@ -72,21 +81,21 @@ do_deploy_append() {
 
     if [ -n "${XENGUEST_EXTRA_INIT_PRE}" ]; then
         if [ ! -f ${XENGUEST_EXTRA_INIT_PRE} ]; then
-            die "xenguest-image: Init script ${XENGUEST_EXTRA_INIT_PRE} does not exist"
+            die "xenguest_image: Init script ${XENGUEST_EXTRA_INIT_PRE} does not exist"
         fi
         call_xenguest_mkimage partial --init-pre=${XENGUEST_EXTRA_INIT_PRE}
     fi
 
     if [ -n "${XENGUEST_EXTRA_INIT}" ]; then
         if [ ! -f ${XENGUEST_EXTRA_INIT} ]; then
-            die "xenguest-image: Init script ${XENGUEST_EXTRA_INIT} does not exist"
+            die "xenguest_image: Init script ${XENGUEST_EXTRA_INIT} does not exist"
         fi
         call_xenguest_mkimage partial --init-script=${XENGUEST_EXTRA_INIT}
     fi
 
     if [ -n "${XENGUEST_EXTRA_INIT_POST}" ]; then
         if [ ! -f ${XENGUEST_EXTRA_INIT_POST} ]; then
-            die "xenguest-image: Init script ${XENGUEST_EXTRA_INIT_POST} does not exist"
+            die "xenguest_image: Init script ${XENGUEST_EXTRA_INIT_POST} does not exist"
         fi
         call_xenguest_mkimage partial --init-post=${XENGUEST_EXTRA_INIT_POST}
     fi
@@ -94,7 +103,7 @@ do_deploy_append() {
     if [ -n "${XENGUEST_EXTRA_FILES}" ]; then
         for f in ${XENGUEST_EXTRA_FILES}; do
             if [ ! -f $f ]; then
-                die "xenguest-image: Xen file $f does not exist"
+                die "xenguest_image: Xen file $f does not exist"
             fi
             call_xenguest_mkimage partial --xen-add-file=$f
         done
@@ -103,12 +112,12 @@ do_deploy_append() {
     if [ -n "${XENGUEST_EXTRA_DISK_FILES}" ]; then
         for f in ${XENGUEST_EXTRA_DISK_FILES}; do
             if [ ! -f $f ]; then
-                die "xenguest-image: Disk file $f does not exist"
+                die "xenguest_image: Disk file $f does not exist"
             fi
             call_xenguest_mkimage partial --disk-add-file=$f
         done
     fi
 }
-# Need to have xenguest-image tool
+# Need to have xenguest_image tool
 do_deploy[depends] += "xenguest-base-image:do_deploy"
 

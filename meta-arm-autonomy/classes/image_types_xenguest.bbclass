@@ -1,7 +1,7 @@
 # Create a xenguest image with kernel and filesystem produced by Yocto
 # This will create a .xenguest file that the xenguest-manager can use.
 
-inherit xenguest-image
+inherit xenguest_image
 
 # We are creating our guest in a local subdirectory
 # force the value so that we are not impacted if the user is changing it
@@ -62,6 +62,67 @@ IMAGE_TYPEDEP_xenguest ?= "tar"
 # We must not be built at rootfs build time because we need the kernel
 IMAGE_TYPES_MASKED += "xenguest"
 IMAGE_TYPES += "xenguest"
+
+XENGUEST_IMAGE_RECIPE = "${PN}"
+XENGUEST_IMAGE_VARS += "XENGUEST_IMAGE_RECIPE"
+
+# Merge intermediate env files from all recipes into a single file
+python do_merge_xenguestenv () {
+
+    import re
+
+    # Open final merged file in DEPLOY_DIR_IMAGE for writing, or create
+    outdir = d.getVar('DEPLOY_DIR_IMAGE')
+    with open(os.path.join(outdir,'xenguest.env'), 'w') as merged_file:
+
+        # Adds vars from xenguest_image to list
+        merged_env = []
+        xenguest_vars = d.getVar('XENGUEST_IMAGE_VARS')
+        for var in xenguest_vars.split():
+            value = d.getVar(var)
+            if value:
+                merged_env.append(var + "=" + " ".join(value.split()) + "\n")
+
+        # Resolve dependencies for this task to find names of intermediate
+        # .xenguestenv files
+        taskdepdata = d.getVar('BB_TASKDEPDATA')
+        task_mc = d.getVar('BB_CURRENT_MC')
+        task_file = d.getVar('FILE')
+
+        # See runqueue.py function build_taskdepdata
+        DEPS_INDEX = 3
+
+        depdata_key = task_file + ":do_merge_xenguestenv"
+
+        # If in a multiconfig, need to add that to the key
+        if task_mc != "default":
+            depdata_key = "mc:" + task_mc + ":" + depdata_key
+
+        # Retrieve filename using regex
+        get_filename = re.compile(r'/([^/]+\.bb):do_deploy_xenguestenv$')
+        env_dir = d.getVar('XENGUEST_ENV_STAGING_DIR')
+
+        for task_dep in taskdepdata[depdata_key][DEPS_INDEX]:
+            if task_dep.endswith(":do_deploy_xenguestenv"):
+                filename = re.search(get_filename, task_dep).group(1) + ".xenguestenv"
+                bb.note("Merging: " + filename)
+                try:
+                    with open(env_dir + "/" + filename, 'r') as f:
+                        # Eliminate duplicates
+                        merged_env = list(set(merged_env + f.readlines()))
+                except (FileNotFoundError, IOError):
+                    bb.note(" " + filename + " has no extra vars")
+
+        # Sort Alphabetically and write
+        merged_env.sort()
+        merged_file.write("".join(merged_env))
+}
+do_merge_xenguestenv[dirs] = "${DEPLOY_DIR_IMAGE}"
+do_merge_xenguestenv[vardeps] += "${XENGUEST_IMAGE_VARS}"
+do_merge_xenguestenv[vardepsexclude] += "BB_TASKDEPDATA"
+do_merge_xenguestenv[recrdeptask] += "do_deploy_xenguestenv"
+
+addtask merge_xenguestenv before do_populate_lic_deploy after do_image_complete
 
 python __anonymous() {
     # Do not do anything if we are not in the want FSTYPES

@@ -142,7 +142,8 @@ To create a guest project:
    For example `bitbake core-image-minimal`
 
 The build will create a ".xenguest" image that can be use on an host project
-with the xenguest-manager.
+with the xenguest-manager, as well as a file "xenguest.env" containing the
+variables used to configure the guest image.
 
 The guest can also be built as a 'multiconfig' sub project of the host, see
 `meta-arm-autonomy/documentation/arm-autonomy-multiconfig.md` for more information

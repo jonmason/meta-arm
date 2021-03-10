@@ -3,7 +3,10 @@
 # This is done using kernel-fitimage as model
 # To activate this, kernel-xenguest must be added to KERNEL_CLASSES
 
-inherit xenguest-image
+# Add a variable name to XENGUEST_IMAGE_VARS_EXTRA if you want it to
+# appear in xenguest.env when the image is deployed
+
+inherit xenguest_image
 
 # use a local copy to pack all together
 XENGUEST_IMAGE_DEPLOY_DIR = "${WORKDIR}/tmp-xenguest"
@@ -24,7 +27,7 @@ do_assemble_xenguest_initramfs() {
     rm -f ${B}/${KERNEL_OUTPUT_DIR}/Image-initramfs.xenguest
     call_xenguest_mkimage pack ${B}/${KERNEL_OUTPUT_DIR}/Image-initramfs.xenguest
 }
-do_assemble_xenguest_initramfs[depends] += "${INITRAMFS_IMAGE}:do_image_complete"
+do_assemble_xenguest_initramfs[depends] += "${INITRAMFS_IMAGE}:do_merge_xenguestenv"
 
 kernel_do_deploy_append() {
     if [ -f "${B}/${KERNEL_OUTPUT_DIR}/Image-initramfs.xenguest" ]; then

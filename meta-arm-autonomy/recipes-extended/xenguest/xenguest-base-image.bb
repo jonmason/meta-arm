@@ -1,7 +1,7 @@
 # Create a xenguest base image
 #
 # This recipe creates a base image that is then extended by other recipes
-# through xenguest-image class.
+# through xenguest_image class.
 # xenguest image type is using this as base to add a kernel and a disk image
 # to create a guest
 #
@@ -72,7 +72,15 @@ XENGUEST_IMAGE_SRC_URI_INIT_POST ??= ""
 
 S = "${WORKDIR}"
 
-inherit deploy xenguest-image
+# Extra vars to add to xenguest.env
+XENGUEST_IMAGE_VARS_EXTRA += "\
+ XENGUEST_IMAGE_HOST_PORT XENGUEST_IMAGE_GUEST_PORT \
+ XENGUEST_IMAGE_NAT_PORT_FORWARD_SCRIPT XENGUEST_IMAGE_SRC_URI_DISK_FILES \
+ XENGUEST_IMAGE_SRC_URI_XEN_FILES XENGUEST_IMAGE_SRC_URI_XEN_CONFIG \
+ XENGUEST_IMAGE_SRC_URI_INIT_PRE XENGUEST_IMAGE_SRC_URI_INIT \
+ XENGUEST_IMAGE_SRC_URI_INIT_POST"
+
+inherit deploy xenguest_image
 
 # parse XENGUEST_IMAGE_SRC_URI_ variables and add them to SRC_URI
 python __anonymous() {
