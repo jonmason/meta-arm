@@ -29,8 +29,10 @@ S = "${WORKDIR}"
 # parameters
 XENGUEST_MANAGER_VOLUME_DEVICE ?= "/dev/sda2"
 XENGUEST_MANAGER_VOLUME_NAME ?= "vg-xen-$(basename ${XENGUEST_MANAGER_VOLUME_DEVICE})"
-XENGUEST_MANAGER_GUEST_DIR ?= "${datadir}/guests/"
 XENGUEST_MANAGER_LOG_LEVEL ?= "ERROR"
+#XENGUEST_MANAGER_GUEST_DIR set in xenguest.conf
+
+require conf/xenguest.conf
 
 # We add an init script to create and start guests automatically
 # run start script after xen-tools and run stop script before xen-tools

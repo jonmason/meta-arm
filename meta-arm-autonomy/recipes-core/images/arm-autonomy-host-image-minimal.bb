@@ -83,6 +83,9 @@ do_image[mcdepends] += "${DO_IMAGE_MCDEPENDS}"
 REQUIRED_DISTRO_FEATURES += 'arm-autonomy-host'
 REQUIRED_DISTRO_FEATURES += 'xen'
 
+# Configurable guest variables
+require conf/xenguest.conf
+
 python __anonymous() {
     import re
     guestfile_pattern = re.compile(r"^([^;]+);")
@@ -133,7 +136,7 @@ python __anonymous() {
 
 python add_extern_guests () {
     # Destination directory on the rootfs
-    guestdir = d.getVar('IMAGE_ROOTFS') + d.getVar('datadir') + '/guests'
+    guestdir = d.getVar('IMAGE_ROOTFS') + d.getVar('XENGUEST_MANAGER_GUEST_DIR')
 
     # Parse SRC_URI for files with ;guestname= parameter
     src_uri = d.getVar('SRC_URI')
