@@ -73,6 +73,9 @@ fvp-base-arm32/external-gcc-arm32:
 gem5-arm64:
   extends: .build
 
+gem5-arm64-xen:
+  extends: .build
+
 juno:
   extends: .build
 

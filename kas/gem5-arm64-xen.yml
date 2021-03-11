@@ -1,0 +1,28 @@
+
+header:
+  version: 9
+  includes:
+    - base.yml
+    - meta-python.yml
+
+repos:
+  meta-arm:
+    layers:
+      meta-gem5:
+  meta-openembedded:
+    url: https://git.openembedded.org/meta-openembedded
+    layers:
+      meta-oe:
+      meta-filesystems:
+      meta-networking:
+  meta-virtualization:
+    url: git://git.yoctoproject.org/meta-virtualization
+
+machine: gem5-arm64
+
+local_conf_header:
+  meta-virt:
+    DISTRO_FEATURES_append = " virtualization xen"
+
+target:
+  - xen-image-minimal
