@@ -1,6 +1,7 @@
 COMPATIBLE_MACHINE_qemuarm64 = "qemuarm64"
 
 TFA_PLATFORM_qemuarm64-secureboot = "qemu"
+TFA_PLATFORM_qemuarm64-sbsa = "qemu_sbsa"
 
 TFA_SPD_qemuarm64-secureboot = "opteed"
 
@@ -8,6 +9,7 @@ TFA_UBOOT_qemuarm64-secureboot = "1"
 TFA_BUILD_TARGET_aarch64_qemuall = "all fip"
 
 TFA_INSTALL_TARGET_qemuarm64-secureboot = "flash.bin"
+TFA_INSTALL_TARGET_qemuarm64-sbsa = "bl1 fip"
 
 DEPENDS_append_aarch64_qemuall = " optee-os"
 

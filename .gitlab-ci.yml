@@ -103,6 +103,9 @@ qemuarm:
 qemuarmv5:
   extends: .build
 
+qemuarm64-sbsa:
+  extends: .build
+
 qemuarm64-secureboot:
   extends: .build
 
