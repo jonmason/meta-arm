@@ -23,11 +23,11 @@ SRC_URI = "\
 SRCREV_FORMAT         = "edk2_edk2-platforms"
 UPSTREAM_CHECK_GITTAGREGEX = "^edk2-stable(?P<pver>\d+)$"
 
-EDK2_BUILD_RELEASE   ?= "1"
-EDK2_PLATFORM        ?= "ArmVirtQemu-AARCH64"
-EDK2_PLATFORM_DSC    ?= "ArmVirtPkg/ArmVirtQemu.dsc"
-EDK2_BIN_NAME        ?= "QEMU_EFI.fd"
-EDK2_ARCH            ?= "AARCH64"
+EDK2_BUILD_RELEASE = ""
+EDK2_PLATFORM      = ""
+EDK2_PLATFORM_DSC  = ""
+EDK2_BIN_NAME      = ""
+EDK2_ARCH          = ""
 
 EDK2_BUILD_MODE = "${@bb.utils.contains('EDK2_BUILD_RELEASE', '1', 'RELEASE', 'DEBUG', d)}"
 
@@ -41,7 +41,6 @@ S = "${WORKDIR}/edk2"
 B = "${WORKDIR}/build"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
-COMPATIBLE_MACHINE ?= "qemuarm64"
 
 LDFLAGS[unexport] = "1"
 

@@ -11,11 +11,9 @@ SRC_URI = "git://git.trustedfirmware.org/TF-A/trusted-firmware-a.git;protocol=ht
 UPSTREAM_CHECK_GITTAGREGEX = "^v(?P<pver>\d+(\.\d+)+)$"
 
 COMPATIBLE_MACHINE ?= "invalid"
-COMPATIBLE_MACHINE_qemuarm64 ?= "qemuarm64"
 
 # Platform must be set for each machine
 TFA_PLATFORM ?= "invalid"
-TFA_PLATFORM_aarch64_qemuall ?= "qemu"
 
 # Some platforms can have multiple board configurations
 # Leave empty for default behavior
@@ -25,7 +23,6 @@ TFA_BOARD ?= ""
 # Few options are "opteed", "tlkd", "trusty", "tspd", "spmd"...
 # Leave empty to not use SPD
 TFA_SPD ?= ""
-TFA_SPD_aarch64_qemuall ?= "opteed"
 
 # Variable used when TFA_SPD=spmd
 TFA_SPMD_SPM_AT_SEL2 ?= "1"
@@ -66,19 +63,16 @@ SRC_URI_append = " \
 # U-boot support (set TFA_UBOOT to 1 to activate)
 # When U-Boot support is activated BL33 is activated with u-boot.bin file
 TFA_UBOOT ?= "0"
-TFA_UBOOT_aarch64_qemuall ?= "1"
 
 # What to build
 # By default we only build bl1, do_deploy will copy
 # everything listed in this variable (by default bl1.bin)
 TFA_BUILD_TARGET ?= "bl1"
-TFA_BUILD_TARGET_aarch64_qemuall ?= "all fip"
 
 # What to install
 # do_install and do_deploy will install everything listed in this
 # variable. It is set by default to TFA_BUILD_TARGET
 TFA_INSTALL_TARGET ?= "${TFA_BUILD_TARGET}"
-TFA_INSTALL_TARGET_aarch64_qemuall ?= "flash.bin"
 
 # Requires CROSS_COMPILE set by hand as there is no configure script
 export CROSS_COMPILE="${TARGET_PREFIX}"
@@ -98,7 +92,6 @@ DEPENDS_remove = "virtual/${TARGET_PREFIX}compilerlibs virtual/libc"
 # We need dtc for dtbs compilation
 # We need openssl for fiptool
 DEPENDS = "dtc-native openssl-native"
-DEPENDS_append_aarch64_qemuall ?= " optee-os"
 DEPENDS_append_toolchain-clang = " compiler-rt"
 
 # CC and LD introduce arguments which conflict with those otherwise provided by
@@ -156,13 +149,6 @@ EXTRA_OEMAKE += "OPENSSL_DIR=${STAGING_DIR_NATIVE}/${prefix_native}"
 EXTRA_OEMAKE += "RUNTIME_SYSROOT=${STAGING_DIR_HOST}"
 EXTRA_OEMAKE += "TARGET_FPU=${TARGET_FPU}"
 
-EXTRA_OEMAKE_append_aarch64_qemuall = " \
-    BL32=${STAGING_DIR_TARGET}${nonarch_base_libdir}/firmware/tee-header_v2.bin \
-    BL32_EXTRA1=${STAGING_DIR_TARGET}${nonarch_base_libdir}/firmware/tee-pager_v2.bin \
-    BL32_EXTRA2=${STAGING_DIR_TARGET}${nonarch_base_libdir}/firmware/tee-pageable_v2.bin \
-    BL32_RAM_LOCATION=tdram \
-    "
-
 BUILD_DIR = "${B}/${TFA_PLATFORM}"
 BUILD_DIR .= "${@'/${TFA_BOARD}' if d.getVar('TFA_BOARD') else ''}"
 BUILD_DIR .= "/${@'debug' if d.getVar("TFA_DEBUG") == '1' else 'release'}"
@@ -185,13 +171,6 @@ do_compile() {
     done
 }
 do_compile[cleandirs] = "${B}"
-
-do_compile_append_aarch64_qemuall() {
-    # Create a secure flash image for booting AArch64 Qemu. See:
-    # https://git.trustedfirmware.org/TF-A/trusted-firmware-a.git/tree/docs/plat/qemu.rst
-    dd if=${BUILD_DIR}/bl1.bin of=${BUILD_DIR}/flash.bin bs=4096 conv=notrunc
-    dd if=${BUILD_DIR}/fip.bin of=${BUILD_DIR}/flash.bin seek=64 bs=4096 conv=notrunc
-}
 
 do_install() {
     install -d -m 755 ${D}/firmware
