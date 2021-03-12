@@ -76,6 +76,9 @@ gem5-arm64:
 gem5-arm64-xen:
   extends: .build
 
+generic-arm64:
+  extends: .build
+
 juno:
   extends: .build
 
