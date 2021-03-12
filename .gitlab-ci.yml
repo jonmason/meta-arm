@@ -97,6 +97,12 @@ n1sdp:
 n1sdp/armgcc:
   extends: .build
 
+qemuarm:
+  extends: .build
+
+qemuarmv5:
+  extends: .build
+
 qemuarm64-secureboot:
   extends: .build
 
