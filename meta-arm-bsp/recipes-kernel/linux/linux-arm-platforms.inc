@@ -104,6 +104,9 @@ SRC_URI_append_n1sdp = " \
     file://enable-realtek-R8169.cfg \
     file://enable-usb_conn_gpio.cfg \
     "
+# Since we use the intree defconfig and the preempt-rt turns off some configs
+# do_kernel_configcheck will display warnings. So, lets disable it.
+KCONF_AUDIT_LEVEL_n1sdp_pn-linux-yocto-rt = "0"
 
 #
 # Musca B1/S2 can't run Linux
