@@ -48,9 +48,4 @@ python() {
     if kernelVersion and LooseVersion(kernelVersion) < '5.10':
         if oe.utils.any_distro_features(d, "arm-autonomy-host arm-autonomy-guest"):
             d.appendVar('SRC_URI', ' file://files/0001-xen-arm-do-not-setup-the-runstate-info-page-if-kpti-.patch' )
-
-    if kernelVersion and LooseVersion(kernelVersion) < '5.10.17' \
-       and pn != 'linux-libc-headers' \
-       and oe.utils.any_distro_features(d, "arm-autonomy-guest"):
-        d.appendVar('SRC_URI', ' file://files/0001-arm-xen-Don-t-probe-xenbus-as-part-of-an-early-initc.patch' )
 }
