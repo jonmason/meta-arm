@@ -1,0 +1,16 @@
+Upstream Status: Inappropriate [meta-arm-autonomy specifc u-boot config]
+Signed-off-by: Nathan Dunne <nathan.dunne@arm.com>
+
+diff --git a/include/configs/vexpress_aemv8a.h b/include/configs/vexpress_aemv8a.h
+index e63c335f85..9ee050a4a6 100644
+--- a/include/configs/vexpress_aemv8a.h
++++ b/include/configs/vexpress_aemv8a.h
+@@ -162,7 +162,7 @@
+ #elif CONFIG_TARGET_VEXPRESS64_BASE_FVP
+ #define CONFIG_EXTRA_ENV_SETTINGS	\
+ 				"kernel_name=Image\0"		\
+-				"kernel_addr=0x80080000\0"	\
++				"kernel_addr=0x84000000\0"	\
+ 				"initrd_name=ramdisk.img\0"	\
+ 				"initrd_addr=0x88000000\0"	\
+ 				"fdtfile=devtree.dtb\0"		\
