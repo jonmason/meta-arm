@@ -7,17 +7,6 @@ TFA_UBOOT = "1"
 TFA_BUILD_TARGET = "all fip"
 TFA_INSTALL_TARGET = "fip.bin"
 
-LIC_FILES_CHKSUM = "file://license.rst;md5=1dd070c98a281d18d9eefd938729b031"
-
-# TF-A v2.3 is not used because the following commit is needed:
-# fdts: corstone700: add NXP isp1763 node to device tree
-SRCREV_tfa = "a6f65b11529b618ff04017f64054dc661c489068"
-
-# This is incorporated into the SRCREV above
-SRC_URI_remove = "file://0001-fdts-a5ds-Fix-for-the-system-timer-issue.patch"
-
-PV = "2.3+git${SRCPV}"
-
 EXTRA_OEMAKE_append = " \
                         ARCH=aarch32 \
                         TARGET_PLATFORM=${TFA_TARGET_PLATFORM} \

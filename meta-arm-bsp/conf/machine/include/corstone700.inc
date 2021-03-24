@@ -11,8 +11,7 @@ SERIAL_CONSOLES ?= "115200;ttyAMA0"
 PREFERRED_PROVIDER_virtual/kernel_corstone700 = "linux-yocto"
 PREFERRED_VERSION_linux-yocto ?= "5.6%"
 
-PREFERRED_PROVIDER_virtual/trusted-firmware-a ?= "trusted-firmware-a"
-PREFERRED_VERSION_trusted-firmware-a ?= "2.3%"
+PREFERRED_VERSION_trusted-firmware-a ?= "2.4%"
 
 PREFERRED_PROVIDER_virtual/control-processor-firmware ?= "boot-firmware"
 
