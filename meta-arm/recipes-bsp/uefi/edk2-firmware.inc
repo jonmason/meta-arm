@@ -30,6 +30,8 @@ EDK2_PLATFORM_DSC  = ""
 EDK2_BIN_NAME      = ""
 # build --arch
 EDK2_ARCH          = ""
+# Extra arguments passed to build
+EDK2_EXTRA_BUILD   = ""
 
 # build --buildtarget
 EDK2_BUILD_MODE ?= "${@bb.utils.contains('EDK2_BUILD_RELEASE', '1', 'RELEASE', 'DEBUG', d)}"
@@ -79,7 +81,8 @@ do_compile() {
        --arch "${EDK2_ARCH}" \
        --buildtarget ${EDK2_BUILD_MODE} \
        --tagname ${EDK_COMPILER} \
-       --platform ${EDK2_PLATFORM_DSC}
+       --platform ${EDK2_PLATFORM_DSC} \
+       ${EDK2_EXTRA_BUILD}
 }
 
 do_install() {
