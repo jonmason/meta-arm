@@ -25,11 +25,14 @@ UPSTREAM_CHECK_GITTAGREGEX = "^edk2-stable(?P<pver>\d+)$"
 
 EDK2_BUILD_RELEASE = ""
 EDK2_PLATFORM      = ""
+# build --platform
 EDK2_PLATFORM_DSC  = ""
 EDK2_BIN_NAME      = ""
+# build --arch
 EDK2_ARCH          = ""
 
-EDK2_BUILD_MODE = "${@bb.utils.contains('EDK2_BUILD_RELEASE', '1', 'RELEASE', 'DEBUG', d)}"
+# build --buildtarget
+EDK2_BUILD_MODE ?= "${@bb.utils.contains('EDK2_BUILD_RELEASE', '1', 'RELEASE', 'DEBUG', d)}"
 
 # Baremetal, no need for a C library
 DEPENDS_remove = "virtual/${TARGET_PREFIX}compilerlibs virtual/libc"
@@ -72,11 +75,11 @@ do_compile() {
     oe_runmake -C ${S}/BaseTools
 
     PATH="${WORKSPACE}:${BTOOLS_PATH}:$PATH" \
-    "${S}/BaseTools/BinWrappers/PosixLike/build" \
-       -a "${EDK2_ARCH}" \
-       -b ${EDK2_BUILD_MODE} \
-       -t ${EDK_COMPILER} \
-       -p ${EDK2_PLATFORM_DSC}
+    build \
+       --arch "${EDK2_ARCH}" \
+       --buildtarget ${EDK2_BUILD_MODE} \
+       --tagname ${EDK_COMPILER} \
+       --platform ${EDK2_PLATFORM_DSC}
 }
 
 do_install() {
