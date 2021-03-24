@@ -119,6 +119,10 @@ To boot the system using an u-boot base board you will need to:
 
 In this example the addresses might need to be adapted depending on your board.
 
+For arm-autonomy host on FVP-Base u-boot has been modified such that
+`booti 0x84000000 - 0x83000000` is the default boot command. If FVP-Base is your
+MACHINE target there should be no need to interfere with u-boot.
+
 Guest project
 -------------
 The guest projects are not target specific and will use a Yocto MACHINE defined
