@@ -49,23 +49,16 @@ do_image_wic[depends] += "xen:do_deploy"
 IMAGE_EFI_BOOT_FILES += "xen-n1sdp.efi;xen.efi"
 IMAGE_EFI_BOOT_FILES += "${XEN_MOD_DEVICETREE_DTBS}"
 
-# Use 5.4 kernel until later versions have been validated for autonomy-host
-python() {
-    if d.getVar('PREFERRED_PROVIDER_virtual/kernel') == 'linux-yocto':
-        d.setVar('PREFERRED_PROVIDER_virtual/kernel', 'linux-linaro-arm')
-        d.setVar('PREFERRED_VERSION_linux-linaro-arm', '5.4%')
-}
-
-# When alternate-kernel DISTRO_FEATURE is present we set the linux-linaro-arm-rt
+# When alternate-kernel DISTRO_FEATURE is present we set the linux-yocto-rt
 # by default
 PREFERRED_PROVIDER_alternate/kernel ?= "\
 ${@bb.utils.contains('DISTRO_FEATURES', 'alternate-kernel', \
-'linux-linaro-arm-rt', '', d)}"
+'linux-yocto-rt', '', d)}"
 
 KERNEL_PACKAGE_NAME_alternate/kernel ?= "kernel-rt"
 # When alternate-kernel DISTRO_FEATURE is present we set the kernel-rt by
 # default
-KERNEL_PACKAGE_NAME_pn-linux-linaro-arm-rt = "\
+KERNEL_PACKAGE_NAME_pn-linux-yocto-rt = "\
 ${@ d.getVar('KERNEL_PACKAGE_NAME_alternate/kernel') \
 if bb.utils.contains('DISTRO_FEATURES', 'alternate-kernel', True, False, d) \
 else 'kernel' }"
