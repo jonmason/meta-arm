@@ -1,0 +1,77 @@
+From 3bc59ed7bc26c967cfe6eb9c1ef9a1ef9108e99d Mon Sep 17 00:00:00 2001
+From: Luca Fancellu <luca.fancellu@arm.com>
+Date: Tue, 23 Mar 2021 16:16:39 +0000
+Subject: [PATCH 4/4] xen/evtchn: Change irq_info lock to raw_spinlock_t
+
+Unmask operation must be called with interrupt disabled,
+on preempt_rt spin_lock_irqsave/spin_unlock_irqrestore
+don't disable/enable interrupts, so use raw_* implementation
+and change lock variable in struct irq_info from spinlock_t
+to raw_spinlock_t
+
+Issue-Id: SCM-2147
+
+Upstream-Status: Pending
+Signed-off-by: Luca Fancellu <luca.fancellu@arm.com>
+---
+ drivers/xen/events/events_base.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/xen/events/events_base.c b/drivers/xen/events/events_base.c
+index 7bd03f6e0422..b91c19b90b8b 100644
+--- a/drivers/xen/events/events_base.c
++++ b/drivers/xen/events/events_base.c
+@@ -108,7 +108,7 @@ struct irq_info {
+ 	unsigned short eoi_cpu; /* EOI must happen on this cpu-1 */
+ 	unsigned int irq_epoch; /* If eoi_cpu valid: irq_epoch of event */
+ 	u64 eoi_time;           /* Time in jiffies when to EOI. */
+-	spinlock_t lock;
++	raw_spinlock_t lock;
+ 
+ 	union {
+ 		unsigned short virq;
+@@ -280,7 +280,7 @@ static int xen_irq_info_common_setup(struct irq_info *info,
+ 	info->evtchn = evtchn;
+ 	info->cpu = cpu;
+ 	info->mask_reason = EVT_MASK_REASON_EXPLICIT;
+-	spin_lock_init(&info->lock);
++	raw_spin_lock_init(&info->lock);
+ 
+ 	ret = set_evtchn_to_irq(evtchn, irq);
+ 	if (ret < 0)
+@@ -432,28 +432,28 @@ static void do_mask(struct irq_info *info, u8 reason)
+ {
+ 	unsigned long flags;
+ 
+-	spin_lock_irqsave(&info->lock, flags);
++	raw_spin_lock_irqsave(&info->lock, flags);
+ 
+ 	if (!info->mask_reason)
+ 		mask_evtchn(info->evtchn);
+ 
+ 	info->mask_reason |= reason;
+ 
+-	spin_unlock_irqrestore(&info->lock, flags);
++	raw_spin_unlock_irqrestore(&info->lock, flags);
+ }
+ 
+ static void do_unmask(struct irq_info *info, u8 reason)
+ {
+ 	unsigned long flags;
+ 
+-	spin_lock_irqsave(&info->lock, flags);
++	raw_spin_lock_irqsave(&info->lock, flags);
+ 
+ 	info->mask_reason &= ~reason;
+ 
+ 	if (!info->mask_reason)
+ 		unmask_evtchn(info->evtchn);
+ 
+-	spin_unlock_irqrestore(&info->lock, flags);
++	raw_spin_unlock_irqrestore(&info->lock, flags);
+ }
+ 
+ #ifdef CONFIG_X86
+-- 
+2.17.1
+

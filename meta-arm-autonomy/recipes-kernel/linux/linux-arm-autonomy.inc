@@ -40,10 +40,18 @@ python() {
     kernelVersion = d.getVar('LINUX_VERSION')
     pn = d.getVar('PN')
 
-    if kernelVersion and LooseVersion(kernelVersion) < '5.9' \
-       and pn != 'linux-libc-headers' \
+    if kernelVersion and pn != 'linux-libc-headers' \
        and oe.utils.any_distro_features(d, "arm-autonomy-host arm-autonomy-guest"):
-        d.appendVar('SRC_URI', ' file://files/0001-arm-arm64-xen-Fix-to-convert-percpu-address-to-gfn-c.patch' )
+        if LooseVersion(kernelVersion) < '5.9':
+           d.appendVar('SRC_URI', ' file://files/0001-arm-arm64-xen-Fix-to-convert-percpu-address-to-gfn-c.patch' )
+        if LooseVersion(kernelVersion) == '5.10.23':
+           # Kernel version < 5.10.24 needs these backport patches to apply the
+           # 0004-xen-evtchn-Change-irq_info-lock-to-raw_spinlock_t.patch
+           d.appendVar('SRC_URI', ' file://files/0001-xen-events-reset-affinity-of-2-level-event-when-tear.patch \
+                file://files/0002-xen-events-don-t-unmask-an-event-channel-when-an-eoi.patch \
+                file://files/0003-xen-events-avoid-handling-the-same-event-on-two-cpus.patch' )
+        if LooseVersion(kernelVersion) >= '5.10':
+           d.appendVar('SRC_URI', ' file://files/0004-xen-evtchn-Change-irq_info-lock-to-raw_spinlock_t.patch' )
 
     if kernelVersion and LooseVersion(kernelVersion) < '5.10':
         if oe.utils.any_distro_features(d, "arm-autonomy-host arm-autonomy-guest"):
