@@ -106,9 +106,6 @@ qemu-cortex-a53:
 qemuarm:
   extends: .build
 
-qemuarmv5:
-  extends: .build
-
 qemuarm64-sbsa:
   extends: .build
 
@@ -122,6 +119,9 @@ qemuarm64-secureboot/clang/musl:
   extends: .build
 
 qemuarm64-secureboot/musl:
+  extends: .build
+
+qemuarmv5:
   extends: .build
 
 sgi575:
