@@ -139,7 +139,7 @@ tc0:
 # Report on disk usage
 usage:
   extends: .setup
-  stage: bootstrap
+  stage: prep
   when: manual
   script:
   - du -h -s $DL_DIR $SSTATE_DIR
@@ -147,7 +147,7 @@ usage:
 # Wipe out old sstate
 prune-sstate:
   extends: .setup
-  stage: bootstrap
+  stage: prep
   when: manual
   script:
   - find $SSTATE_DIR -type f -atime +30 -delete
@@ -155,7 +155,7 @@ prune-sstate:
 # Delete all sstate
 delete-sstate:
   extends: .setup
-  stage: bootstrap
+  stage: prep
   when: manual
   script:
   - rm -rf $SSTATE_DIR/*
