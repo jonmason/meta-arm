@@ -3,6 +3,7 @@ image: $CI_REGISTRY/$CI_PROJECT_NAMESPACE/yocto-builder:master
 
   # First do a common bootstrap, and then build all the targets
 stages:
+  - prep
   - bootstrap
   - build
 
@@ -11,6 +12,7 @@ stages:
   stage: build
   variables:
     KAS_WORK_DIR: $CI_PROJECT_DIR/work
+    KAS_REPO_REF_DIR: $CI_BUILDS_DIR/persist/repos
     SSTATE_DIR: $CI_BUILDS_DIR/persist/sstate
     DL_DIR: $CI_BUILDS_DIR/persist/downloads
     BB_LOGCONFIG: $CI_PROJECT_DIR/kas/logging.yml
@@ -18,7 +20,7 @@ stages:
     - echo KAS_WORK_DIR = $KAS_WORK_DIR
     - echo SSTATE_DIR = $SSTATE_DIR
     - echo DL_DIR = $DL_DIR
-    - mkdir --verbose --parents $KAS_WORK_DIR $SSTATE_DIR $DL_DIR
+    - mkdir --verbose --parents $KAS_WORK_DIR $KAS_REPO_REF_DIR $SSTATE_DIR $DL_DIR
 
 # Generalised fragment to do a Kas build
 .build:
@@ -31,7 +33,17 @@ stages:
 
 
 #
-# First phase, bootstrap and machine coverage
+# Prep stage, update repositories once
+#
+update-repos:
+  extends: .setup
+  stage: prep
+  script:
+  - flock --verbose --timeout 60 $KAS_REPO_REF_DIR ./kas/update-repos
+
+
+#
+# Bootstrap stage, bootstrap and machine coverage
 #
 
 # Build a number of native tools first to ensure the other builders don't race
@@ -49,7 +61,7 @@ machine-coverage:
 
 
 #
-# Second phase, the actual build jobs
+# Build stage, the actual build jobs
 #
 
 a5ds:
