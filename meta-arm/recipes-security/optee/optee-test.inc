@@ -5,7 +5,7 @@ HOMEPAGE = "https://www.op-tee.org/"
 LICENSE = "BSD & GPLv2"
 LIC_FILES_CHKSUM = "file://${S}/LICENSE.md;md5=daa2bcccc666345ab8940aab1315a4fa"
 
-inherit python3native
+inherit python3native ptest
 require optee.inc
 
 # Linking fails on musl due to C++/threads
@@ -19,6 +19,7 @@ SRC_URI = "git://github.com/OP-TEE/optee_test.git \
            file://0001-host-xtest-Adjust-order-of-including-compiler.h.patch \
            file://0002-make-remove-Wno-unsafe-loop-for-clang.patch \ 
            file://0003-make-remove-Wmissing-noreturn-for-clang.patch \
+           file://run-ptest \
           "
 
 S = "${WORKDIR}/git"
