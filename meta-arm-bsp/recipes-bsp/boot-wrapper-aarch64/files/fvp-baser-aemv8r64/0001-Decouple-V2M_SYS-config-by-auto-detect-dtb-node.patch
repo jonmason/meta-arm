@@ -1,0 +1,67 @@
+From 7b8c821c22929cd2d3532f937672fcf05dc7d5d0 Mon Sep 17 00:00:00 2001
+Message-Id: <7b8c821c22929cd2d3532f937672fcf05dc7d5d0.1616744115.git.diego.sueiro@arm.com>
+From: Jaxson Han <jaxson.han@arm.com>
+Date: Thu, 25 Mar 2021 12:35:13 +0800
+Subject: [PATCH 1/2] Decouple V2M_SYS config by auto-detect dtb node
+
+An auto-detect switch is added to make it an option to enable/disable
+'arm,vexpress-sysreg', because not all platforms support this feature.
+
+Issue-ID: SCM-2221
+Signed-off-by: Jaxson Han <jaxson.han@arm.com>
+Change-Id: Ib8738aa62ca3902f7bdae2ad9a5a63aa2d225abf
+
+Upstream-Status: Pending
+Signed-off-by: Diego Sueiro <diego.sueiro@arm.com>
+---
+ Makefile.am | 2 +-
+ platform.c  | 4 ++++
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/Makefile.am b/Makefile.am
+index af694b7..e131207 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -19,7 +19,7 @@ NR_CPUS         := $(shell echo $(CPU_IDS) | tr ',' ' ' | wc -w)
+ DEFINES		= -DCNTFRQ=$(CNTFRQ)
+ DEFINES		+= -DCPU_IDS=$(CPU_IDS)
+ DEFINES		+= -DNR_CPUS=$(NR_CPUS)
+-DEFINES		+= -DSYSREGS_BASE=$(SYSREGS_BASE)
++DEFINES		+= $(if $(SYSREGS_BASE), -DSYSREGS_BASE=$(SYSREGS_BASE), )
+ DEFINES		+= -DUART_BASE=$(UART_BASE)
+ DEFINES		+= -DSTACK_SIZE=256
+ 
+diff --git a/platform.c b/platform.c
+index a528a55..d11f568 100644
+--- a/platform.c
++++ b/platform.c
+@@ -23,10 +23,12 @@
+ 
+ #define PL011(reg)	((void *)UART_BASE + PL011_##reg)
+ 
++#ifdef SYSREGS_BASE
+ #define V2M_SYS_CFGDATA		0xa0
+ #define V2M_SYS_CFGCTRL		0xa4
+ 
+ #define V2M_SYS(reg)	((void *)SYSREGS_BASE + V2M_SYS_##reg)
++#endif
+ 
+ static void print_string(const char *str)
+ {
+@@ -59,6 +61,7 @@ void init_platform(void)
+ 
+ 	print_string("Boot-wrapper v0.2\r\n\r\n");
+ 
++#ifdef SYSREGS_BASE
+ 	/*
+ 	 * CLCD output site MB
+ 	 */
+@@ -66,4 +69,5 @@ void init_platform(void)
+ 	/* START | WRITE | MUXFPGA | SITE_MB */
+ 	raw_writel((1 << 31) | (1 << 30) | (7 << 20) | (0 << 16),
+ 				V2M_SYS(CFGCTRL));
++#endif
+ }
+-- 
+2.17.1
+

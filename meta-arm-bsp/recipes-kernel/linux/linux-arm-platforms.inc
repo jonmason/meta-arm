@@ -13,6 +13,7 @@ SRC_URI_append_fvp-base = " ${SRC_URI_KMETA}"
 SRC_URI_append_fvp-base-arm32 = " ${SRC_URI_KMETA}"
 SRC_URI_append_juno = " ${SRC_URI_KMETA}"
 SRC_URI_append_n1sdp = " ${SRC_URI_KMETA}"
+SRC_URI_append_fvp-baser-aemv8r64 = " ${SRC_URI_KMETA}"
 SRCREV_arm-platforms-kmeta = "6147e82375aa9df8f2a162d42ea6406c79c854c5"
 
 #
@@ -113,3 +114,9 @@ KCONF_AUDIT_LEVEL_n1sdp_pn-linux-yocto-rt = "0"
 #
 COMPATIBLE_MACHINE_musca-b1 = "(^$)"
 COMPATIBLE_MACHINE_musca-s1 = "(^$)"
+
+#
+# FVP BaseR AEMv8r64 Machine
+#
+COMPATIBLE_MACHINE_fvp-baser-aemv8r64 = "fvp-baser-aemv8r64"
+SRC_URI_append_fvp-baser-aemv8r64 = " file://fvp-baser-aemv8r64.dts;subdir=git/arch/arm64/boot/dts/arm"
