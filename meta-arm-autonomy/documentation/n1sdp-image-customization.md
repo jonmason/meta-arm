@@ -28,7 +28,7 @@ perform a couple of customizations in the generated wic image:
 The `arm-autonomy-n1sdp-efidisk.wks.in` and `arm-autonomy-n1sdp-grub.cfg` files
 are located at `meta-arm-autonomy/dynamic-layers/meta-arm-bsp/wic`.
 
-Other variables can also be custmized to set what files need to be included
+Other variables can also be customized to set what files need to be included
 in the wic image boot partition. Please refer to
 `meta-arm-autonomy/dynamic-layers/meta-arm-bsp/conf/machine/n1sdp-extra-settings.inc`
 for more details.

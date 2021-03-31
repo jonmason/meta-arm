@@ -12,9 +12,9 @@ S = "${WORKDIR}"
 
 DESCRIPTION = "Add entries in DTB for Xen and Dom0"
 
-# Please refer to documentation/xen-devicetree.md for documentation on those
-# parameters
-# kernel size is passed to xen via xen.dtb so wee need to add
+# Please refer to documentation/xen-devicetree.md for documentation on these
+# customizable parameters
+# kernel size is passed to xen via xen.dtb so we need to add
 # 'virtual/kernel:do_deploy' as a dependency
 XEN_DEVICETREE_DEPEND_append = " virtual/kernel:do_deploy"
 XEN_DEVICETREE_DTBS ?= "${KERNEL_DEVICETREE}"
@@ -25,8 +25,8 @@ XEN_DEVICETREE_DOM0_ADDR ?= "0x80080000"
 XEN_DEVICETREE_DOM0_SIZE ?= "0x01000000"
 XEN_DEVICETREE_DTSI_MERGE ?= "xen.dtsi"
 
-# Our package does not generate any package for the rootfs but contributes to
-# deploy
+# Our package does not generate any packages for the rootfs, but instead
+# contributes to deploy
 inherit nopackages deploy
 
 DEPENDS += "dtc-native"

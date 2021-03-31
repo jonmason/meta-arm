@@ -4,9 +4,9 @@ Xenguest mkimage
 Introduction
 ------------
 
-xenguest-mkimage is a tool to create and modify images to be used as Guest with
-Xen. It defines a format to store completely defined guests as a file or as
-a directory and provides options to create and modify those images.
+xenguest-mkimage is a tool to create and modify images to be used as a Guest
+with Xen. It defines a format to store completely defined guests as a file or as
+a directory, and provides options to create and modify those images.
 
 A xenguest image contains all elements required to create a xen guest.
 This is the base elements like a Xen configuration and a Linux kernel binary
@@ -15,8 +15,8 @@ but also some more advanced elements like init scripts or a disk definition.
 The format is made to be deployable easily by storing everything in a single
 file and provide tools to easily manipulate the images. It can also easily be
 extended to have features like encryption or signature of images, updates or
-complex configurations by providing features to have init script that will be
-executed on the host embedded inside the image.
+complex configurations by providing the ability to have init scripts embedded
+inside the image that will be executed on the host when the guest is started.
 
 Xenguest images content
 -----------------------
@@ -35,7 +35,7 @@ before starting the guest.
 
 ### files
 This directory contains files that can be used by the xen configuration, for
-example the binary of the kernel referenced in xen configuration).
+example the kernel image referenced in xen configuration.
 This is where the kernel binary, the dtb or a ramdisk will be stored.
 
 ### init.pre, init.d and init.post
@@ -47,7 +47,7 @@ contains scripts called at a different time:
      generate part of the xen configuration dynamically.
  - init.d: scripts executed when the guest has been created but before it is
      started. This can be used to do some xenstore operations or configure the
-     guest behaviour using xl, for example.
+     guest behaviour, using xl for example.
  - init.post: scripts executed just after starting the guest. This can be
      used to configure things created by xen for the guest like network
      network interfaces.

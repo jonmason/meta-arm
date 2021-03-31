@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 S = "${WORKDIR}"
 
 # Please refer to documentation/xenguest-network-bridge.md for documentation on
-# those parameters
+# the parameters available for customization
 XENGUEST_NETWORK_BRIDGE_NAME ?= "xenbr0"
 
 # The XENGUEST_NETWORK_BRIDGE_MEMBERS should be set in a machine.conf

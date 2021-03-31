@@ -5,44 +5,11 @@
 # to the directory XENGUEST_MANAGER_GUEST_DIR
 #
 # src_uri_parse_var.bbclass is used to parse
-# ARM_AUTONOMY_HOST_IMAGE_EXTERN_GUESTS
+# ARM_AUTONOMY_HOST_IMAGE_EXTERN_GUESTS and add the guest paths to the SRC_URI
+# to be fetched and unpacked to ${WORKDIR}/${SRC_URI_FROM_VAR_UNPACK_DIR}
 #
-# There are 4 supported formats for ARM_AUTONOMY_HOST_IMAGE_EXTERN_GUESTS
-# entries:
-#
-# - http/https url
-#   - "https://[url]:[port]/foo.xenguest;md5sum=..."
-#
-# - file:// absolute local path from root
-#   - "file:///xenguests/bar.xenguest"
-#
-# - file:// path relative to FILESEXTRAPATHS
-#  - "file://relative/baz.xenguest"
-#
-# - plain absolute local path from root
-#   - "/xenguests/absolute/xyzzy.xenguest"
-#
-# It is not recommended to use other yocto URL types, as they may result in
-# undefined behaviour.
-#
-# A semicolon seperated list of install arguments can follow each image path:
-# - guestname  : the name that will be attached when the image is imported
-#                (default: [filename, without extension])
-# - guestcount : the number of copies of the guest to install, with
-#                incrementing numbers appended to the name
-#                (default: 1)
-#
-# Any other arguments, for example an md5sum, will be assumed to be fetch
-# arguments, and will be kept when the path is added to the SRC_URI
-#
-# e.g.  ARM_AUTONOMY_HOST_IMAGE_EXTERN_GUESTS = "\
-# https://[url]:[port]/base.xenguest;md5sum=[checksum];guestname=http \
-# file:///guests/base.xenguest;guestname=file_abs \
-# file://foo/base.xenguest;guestname=file_rel;guestcount=2 \
-# /guests/foo/bar/base.xenguest;guestname=no_fetcher \ "
-#
-# Documentation for setting up a multiconfig build can be found in:
-# meta-arm-autonomy/documentation/arm-autonomy-multiconfig.md
+# Further documentation can be found in documentation/arm-autonomy-quickstart.md,
+# in the section named "Include guests directly in the host image"
 
 DESCRIPTION = "Xenguest Extern Guests"
 LICENSE = "MIT"

@@ -2,10 +2,10 @@
 #
 # This recipe creates a base image that is then extended by other recipes
 # through xenguest_image class.
-# xenguest image type is using this as base to add a kernel and a disk image
-# to create a guest
+# xenguest image type uses this recipe as a base to add a kernel and a disk
+# image to create a guest
 #
-# The recipe is also adding files in those directories to the xenguest image:
+# The recipe also adds files in those directories to the xenguest image:
 # - ${WORKDIR}/extend/disk-files: all files in this directory will be added to
 #   the guest disk files (using --disk-add-file)
 # - ${WORKDIR}/extend/files: all files in this directory will be added to the

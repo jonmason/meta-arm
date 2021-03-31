@@ -6,6 +6,10 @@
 # the columns:   archive   name   tag   keep
 # for each container. This file is read by the import_containers
 # script to determine the parameters of the import
+#
+# Since the script needs knowledge of the values of $CONTAINERS_INSTALL_DIR
+# and $CONTAINERS_MANIFEST these are substituted for placeholder strings when
+# the script is installed.
 
 DESCRIPTION = "Add init script to import docker images at boot"
 LICENSE = "MIT"

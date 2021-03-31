@@ -1,4 +1,4 @@
-# Recipe to create a minimal Arm Autonomy stack host image
+# Recipe to create a minimal Arm Autonomy reference stack host image
 
 DESCRIPTION = "Arm Autonomy stack host minimal image"
 

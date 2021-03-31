@@ -2,8 +2,11 @@
 #
 # xenguest-mkimage is a tool to create/modify images to be used as xen guests
 # Produced images contains a xen configuration and several optional components
-# (kernel, device-tree, disk definition and files, init scripts) which all
-# together fully define a full xen guest
+# (kernel, device-tree, disk definition and files, and init scripts) which all
+# together fully define a xen guest image
+#
+# Usage documentation for the xenguest-mkimage tool can be found in
+# meta-arm-autonomy/documentation/xenguest-mkimage.md
 
 DESCRIPTION = "Xenguest mkimage tool"
 LICENSE = "MIT"

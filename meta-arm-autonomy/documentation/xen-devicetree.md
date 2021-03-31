@@ -56,7 +56,8 @@ The following parameters are available:
   the xen devicetrees are properly regenerated if the source DTBs are changed.
   This variable is set by default to "virtual/kernel:do_deploy" to use DTBs
   generated during the compilation of the Linux kernel. This must be changed
-  if the machine your are using is not using a DTB listed in KERNEL_DEVICETREE.
+  if the machine you are using is not using a DTB listed in
+  KERNEL_DEVICETREE.
 
 - XEN_DEVICETREE_DTBS: This should be set to the list of DTBs you want to be
   modified by xen-devicetree. Those must be files that xen-devicetree can find

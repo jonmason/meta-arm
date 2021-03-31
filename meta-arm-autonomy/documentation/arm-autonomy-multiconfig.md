@@ -32,16 +32,16 @@ Ensure it has all the required layers in bblayers.conf as listed in
 Add multiconfig
 ----------------
 
-Here are the steps required to make the project build both the host and any
-number of guests as required.
+The steps required to make the project build both the host and any
+number of guests as required are:
 
 1. Create a new directory under `conf/` named `multiconfig/`
 
 2. Create two new files in this directory:
 `multiconfig/host.conf`
 `multiconfig/guest.conf`
-These files will contain any configurations that a specific to either the
-host or the guest
+These files will contain any configurations that are specific to either the
+host or the guest. The resulting directory tree should be:
 
 ```
 -- conf
@@ -73,7 +73,7 @@ MC_GUEST_INITRAMFS_IMAGE ?= ""
 #MC_GUEST_INITRAMFS_IMAGE_BUNDLE = "1"
 #MC_GUEST_INITRAMFS_IMAGE = "${MC_GUEST_IMAGERECIPE}"
 
-# These variables are set automatically, don't edit them!
+# These variables are set automatically, don't override them!
 MC_GUEST_FILENAME_PREFIX = "${@ 'Image-initramfs' if d.getVar('MC_GUEST_INITRAMFS_IMAGE_BUNDLE',d) else '${MC_GUEST_IMAGERECIPE}' }"
 
 MC_GUEST_FILENAME = "${MC_GUEST_FILENAME_PREFIX}-${MC_GUEST_MACHINE}.xenguest"
@@ -114,9 +114,10 @@ IMAGE_FSTYPES += "${@ 'cpio' if d.getVar('MC_GUEST_INITRAMFS_IMAGE_BUNDLE',d) el
 # ANY OTHER GUEST CONFIG
 ```
 
-This contents shouldn't be changed directly, rather change the equivalent
-config in local.conf. You can append any other config desired for the
-guest at this point, for example `XENGUEST_IMAGE_DISK_SIZE`
+To modify the MACHINE or INITRAMFS variables change the equivalent
+config in local.conf rather than modifying this file directly. You can also
+append any other config desired for the guest after "ANY OTHER GUEST CONFIG",
+for example `XENGUEST_IMAGE_DISK_SIZE`.
 
 Make sure not to change `${DEPLOY_DIR_IMAGE}` to anything other than
 `${TMPDIR}/deploy/images`, as this is assumed by local.conf.
@@ -127,6 +128,8 @@ Make sure not to change `${DEPLOY_DIR_IMAGE}` to anything other than
 TMPDIR = "${TOPDIR}/${MC_HOST}"
 
 DISTRO_FEATURES += " arm-autonomy-host"
+
+# ANY OTHER HOST CONFIG
 ```
 
 Building the image
@@ -137,31 +140,56 @@ To build the multiconfig image the command is:
 bitbake mc:host:arm-autonomy-host-image-minimal
 ```
 
-You should see that this triggers guest tasks to be built in
-parallel. Once the build completes the guest will already be in the
-rootfs of the host thanks to `ARM_AUTONOMY_HOST_IMAGE_EXTERN_GUEST`
+The first time this is run you may see a warning related to the SRC_URI:
+```
+Unable to get checksum for xenguest-extern-guests SRC_URI entry foo.xenguest: file could not be found
+```
 
-The deployed image including the guest will be in `host/deploy/images/`
+This is expected, and only indicates that the guest image has not yet been
+generated when the host parses the SRC_URI. By the time it is needed by the
+host recipe fetch task it will be present.
+
+During the build you should see that guest tasks are also being executed in
+parallel. Once the build completes the guest will already be in the rootfs of
+the host thanks to `ARM_AUTONOMY_HOST_IMAGE_EXTERN_GUEST`
+
+The final host image including the guests will be deployed in
+`host/deploy/images/`
 
 
 Multiple Guests
 ----------------
 
 To have multiple guests with the same config the line which appends to
-`ARM_AUTONOMY_HOST_IMAGE_EXTERN_GUEST` just needs to be duplicated with
-a different guestname.
+`ARM_AUTONOMY_HOST_IMAGE_EXTERN_GUESTS` just needs to pass the argument
+'guestcount=#' to install symlink copies of the xenguest file on the host.
+Documentation for the guestcount parameter can be found in
+documentation/arm-autonomy-quickstart.md in the section titled
+'Include guests directly in the host image'. This will ensure that the guest
+is still only built once, despite resulting in multiple copies on the target.
 
-To have different config for each guest, each will need its own config
-file similar to guest.conf, ensuring TMPDIR is set to a different path,
-and everything between `---Guest Config Start---` and
-`---Guest Config End---` will need to be duplicated. Ensure that the name
-of the multiconfig conf file does not contain any hyphens (-), since this
-will create errors when it becomes part of a function name.
+If guests are required to have different configurations, each will need its own
+config file, e.g. 'netguest.conf'. Ensure that the name of the conf file does
+not contain any hyphens, as this will create errors when it becomes part of a
+function name. In this file the values of TMPDIR, MACHINE, DISTRO_FEATURES etc.
+should be the same as above, but with the prefix "MC_GUEST_*" modified to
+something different to avoid collisions (e.g. MC_GUEST_2_*).
 
-Any copies of variables that start `MC_GUEST` must be altered to avoid
-collisions (e.g. `MC_GUEST_2_*`), and the name of the conf file must also
-be added to BBMULTICONFIG.
+As before, your additional config for the guest type should
+follow "ANY OTHER GUEST CONFIG"
 
+In your local.conf, everything between `---Guest Config Start---` and
+`---Guest Config End---` will need to be duplicated for each desired guest type.
+All copies of variables that start `MC_GUEST` must be modified with the same
+prefix as in the new guest config file (e.g. `MC_GUEST_2_*`).
+
+Each chunk of guest config in local.conf has automatic guest variables
+(found after the line "These variables are set automatically...").
+These should all use the same prefix as their chunk in their values,
+for example:
+```
+MC_GUEST_2_FILENAME_PREFIX = "${@ 'Image-initramfs' if d.getVar('MC_GUEST_2_INITRAMFS_IMAGE_BUNDLE',d) else '${MC_GUEST_2_IMAGERECIPE}' }"
+```
 
 Guest with provisioned disk
 ----------------
@@ -174,11 +202,12 @@ AUTONOMY_HOST_EXTRA_PARTITION = "part --label provisioned-guest --source rawcopy
 --sourceparams=file=${TOPDIR}/${MC_GUEST}/deploy/images/${MC_GUEST_MACHINE}/${MC_GUEST_FILENAME_PREFIX}-${MC_GUEST_MACHINE}.ext4"
 ```
 
-inside host.conf file.
+inside your host.conf file.
 
 The rest of the configuration has to be appended to guest.conf file:
 
 ```
+# ANY OTHER GUEST CONFIG
 XENGUEST_IMAGE_DISK_SIZE = "0"
 XENGUEST_IMAGE_SRC_URI_XEN_CONFIG = "file://\${TOPDIR}/path/to/rootdisk.cfg"
 XENGUEST_IMAGE_DISK_DEVICE = "_GUEST_DISK_DEVICE_"
@@ -187,7 +216,7 @@ IMAGE_ROOTFS_SIZE = "102400"
 IMAGE_FSTYPES = "ext4"
 ```
 
-content of rootdisk.cfg"
+Example content of rootdisk.cfg:
 
 ```
 disk = ["phy:_GUEST_DISK_DEVICE_,xvda,w"]
