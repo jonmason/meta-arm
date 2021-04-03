@@ -22,6 +22,7 @@ repos:
 
 env:
   BB_LOGCONFIG: ""
+  TOOLCHAIN_DIR: ""
 
 local_conf_header:
   base: |

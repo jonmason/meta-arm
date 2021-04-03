@@ -1,0 +1,52 @@
+#!/bin/bash
+set -u
+
+HOST_ARCH=$(uname -m)
+VER="10.2-2020.11"
+
+DOWNLOAD_DIR=$1
+TOOLCHAIN_DIR=$2
+
+# These should be already created by .bitlab-ci.yml, but do here if run outside of that env
+mkdir -p $DOWNLOAD_DIR $TOOLCHAIN_DIR
+
+if [ $HOST_ARCH = "aarch64" ]; then
+	#AArch64 Linux hosted cross compilers
+
+	#AArch32 target with hard float (arm-none-linux-gnueabihf)
+	wget -P $DOWNLOAD_DIR -nc https://developer.arm.com/-/media/Files/downloads/gnu-a/$VER/binrel/gcc-arm-$VER-$HOST_ARCH-arm-none-linux-gnueabihf.tar.xz
+elif [ $HOST_ARCH = "x86_64" ]; then
+	#x86_64 Linux hosted cross compilers
+
+	#AArch32 target with hard float (arm-linux-none-gnueabihf)
+	wget -P $DOWNLOAD_DIR -nc https://developer.arm.com/-/media/Files/downloads/gnu-a/$VER/binrel/gcc-arm-$VER-$HOST_ARCH-arm-none-linux-gnueabihf.tar.xz
+
+	#AArch64 GNU/Linux target (aarch64-none-linux-gnu)
+	wget -P $DOWNLOAD_DIR -nc https://developer.arm.com/-/media/Files/downloads/gnu-a/$VER/binrel/gcc-arm-$VER-$HOST_ARCH-aarch64-none-linux-gnu.tar.xz
+
+	#AArch64 GNU/Linux target (aarch64_be-none-linux-gnu)
+	wget -P $DOWNLOAD_DIR -nc https://developer.arm.com/-/media/Files/downloads/gnu-a/$VER/binrel/gcc-arm-$VER-$HOST_ARCH-aarch64_be-none-linux-gnu.tar.xz
+else
+	echo "ERROR - Unknown build arch of $HOST_ARCH"
+	exit 1
+fi
+
+for i in arm aarch64 aarch64_be; do
+	if [ ! -f $DOWNLOAD_DIR/gcc-arm-$VER-$HOST_ARCH-$i-none-linux-gnu*.tar.xz ]; then
+		continue
+	fi
+
+	if [ -d $TOOLCHAIN_DIR/$i ]; then
+		echo "$TOOLCHAIN_DIR/$i EXISTS!"
+		MANIFEST=$(ls $TOOLCHAIN_DIR/$i | grep txt)
+		if [[ $MANIFEST != $VER-$HOST_ARCH-$i-none-linux-gnu*.txt ]]; then
+			echo "Removing old $MANIFEST for $VER-$HOST_ARCH-$i-*.txt toolchain"
+			rm -rf $TOOLCHAIN_DIR/$i
+		fi
+	fi
+
+	if [ ! -d $TOOLCHAIN_DIR/$i ]; then
+		tar -C $TOOLCHAIN_DIR -axvf $DOWNLOAD_DIR/gcc-arm-$VER-$HOST_ARCH-$i-none-linux-gnu*.tar.xz
+		mv $TOOLCHAIN_DIR/gcc-arm-$VER-$HOST_ARCH-$i-none-linux-gnu*/ $TOOLCHAIN_DIR/$i
+	fi
+done
