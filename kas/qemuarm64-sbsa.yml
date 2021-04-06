@@ -4,3 +4,8 @@ header:
     - base.yml
 
 machine: qemuarm64-sbsa
+
+target:
+  - core-image-base
+  - perf
+  - sbsa-acs
