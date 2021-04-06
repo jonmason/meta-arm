@@ -1,0 +1,216 @@
+From f5ad583b2b3d480ab21682056b56eb59057fca70 Mon Sep 17 00:00:00 2001
+From: Khasim Syed Mohammed <khasim.mohammed@arm.com>
+Date: Tue, 6 Apr 2021 15:06:57 +0530
+Subject: [PATCH 1/4] Silicon/ARM/NeoverseN1Soc: Add mem regions to support C2C
+ usecase
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Khasim Syed Mohammed <khasim.mohammed@arm.com>
+
+This patch adds resource descriptor for multi-chip usecase and
+introduces corresponding PCD definitions.
+
+Change-Id: Iadf432a8008f1becf916e21ff84fa1c387b1ceae
+
+Signed-off-by: Chandni Cherukuri <chandni.cherukuri@arm.com>
+Signed-off-by: Khasim Syed Mohammed <khasim.mohammed@arm.com>
+---
+ .../Library/PlatformLib/PlatformLib.inf       | 14 +++-
+ .../Library/PlatformLib/PlatformLibMem.c      | 67 ++++++++++++++++++-
+ Silicon/ARM/NeoverseN1Soc/NeoverseN1Soc.dec   | 28 +++++++-
+ 3 files changed, 103 insertions(+), 6 deletions(-)
+
+diff --git a/Silicon/ARM/NeoverseN1Soc/Library/PlatformLib/PlatformLib.inf b/Silicon/ARM/NeoverseN1Soc/Library/PlatformLib/PlatformLib.inf
+index 166c9e0444..791aeb96ad 100644
+--- a/Silicon/ARM/NeoverseN1Soc/Library/PlatformLib/PlatformLib.inf
++++ b/Silicon/ARM/NeoverseN1Soc/Library/PlatformLib/PlatformLib.inf
+@@ -1,6 +1,6 @@
+ ## @file
+ #
+-#  Copyright (c) 2018-2020, ARM Limited. All rights reserved.
++#  Copyright (c) 2018-2021, ARM Limited. All rights reserved.<BR>
+ #
+ #  SPDX-License-Identifier: BSD-2-Clause-Patent
+ #
+@@ -47,6 +47,18 @@
+ 
+   gArmNeoverseN1SocTokenSpaceGuid.PcdDramBlock2Base
+ 
++  gArmNeoverseN1SocTokenSpaceGuid.PcdExtMemorySpace
++
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixBusMax
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixBusMin
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixExpressBaseAddress
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixMmio32Base
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixMmio32Size
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixMmio64Base
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixMmio64Size
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixRootPortConfigBaseAddress
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixRootPortConfigBaseSize
++
+ [Guids]
+   gEfiHobListGuid          ## CONSUMES  ## SystemTable
+ 
+diff --git a/Silicon/ARM/NeoverseN1Soc/Library/PlatformLib/PlatformLibMem.c b/Silicon/ARM/NeoverseN1Soc/Library/PlatformLib/PlatformLibMem.c
+index f9b3d03753..a2785dcfbd 100644
+--- a/Silicon/ARM/NeoverseN1Soc/Library/PlatformLib/PlatformLibMem.c
++++ b/Silicon/ARM/NeoverseN1Soc/Library/PlatformLib/PlatformLibMem.c
+@@ -1,6 +1,6 @@
+ /** @file
+ *
+-*  Copyright (c) 2018 - 2020, ARM Limited. All rights reserved.
++*  Copyright (c) 2018 - 2021, ARM Limited. All rights reserved.<BR>
+ *
+ *  SPDX-License-Identifier: BSD-2-Clause-Patent
+ *
+@@ -13,7 +13,7 @@
+ #include <NeoverseN1Soc.h>
+ 
+ // The total number of descriptors, including the final "end-of-table" descriptor.
+-#define MAX_VIRTUAL_MEMORY_MAP_DESCRIPTORS 13
++#define MAX_VIRTUAL_MEMORY_MAP_DESCRIPTORS 19
+ 
+ /**
+   Returns the Virtual Memory Map of the platform.
+@@ -35,6 +35,7 @@ ArmPlatformGetVirtualMemoryMap (
+   EFI_RESOURCE_ATTRIBUTE_TYPE   ResourceAttributes;
+   NEOVERSEN1SOC_PLAT_INFO       *PlatInfo;
+   UINT64                        DramBlock2Size;
++  UINT64                        RemoteDdrSize;
+ 
+   PlatInfo = (NEOVERSEN1SOC_PLAT_INFO *)NEOVERSEN1SOC_PLAT_INFO_STRUCT_BASE;
+   DramBlock2Size = ((UINT64)(PlatInfo->LocalDdrSize -
+@@ -55,6 +56,24 @@ ArmPlatformGetVirtualMemoryMap (
+     FixedPcdGet64 (PcdDramBlock2Base),
+     DramBlock2Size);
+ 
++  if (PlatInfo->MultichipMode == 1) {
++    RemoteDdrSize = ((PlatInfo->RemoteDdrSize - 2) * 1024UL * 1024UL * 1024UL);
++
++    BuildResourceDescriptorHob (
++      EFI_RESOURCE_SYSTEM_MEMORY,
++      ResourceAttributes,
++      FixedPcdGet64 (PcdExtMemorySpace) + FixedPcdGet64 (PcdSystemMemoryBase),
++      PcdGet64 (PcdSystemMemorySize)
++      );
++
++    BuildResourceDescriptorHob (
++      EFI_RESOURCE_SYSTEM_MEMORY,
++      ResourceAttributes,
++      FixedPcdGet64 (PcdExtMemorySpace) + FixedPcdGet64 (PcdDramBlock2Base),
++      RemoteDdrSize
++      );
++  }
++
+   ASSERT (VirtualMemoryMap != NULL);
+   Index = 0;
+ 
+@@ -114,6 +133,32 @@ ArmPlatformGetVirtualMemoryMap (
+   VirtualMemoryTable[Index].Length          = PcdGet64 (PcdPcieMmio64Size);
+   VirtualMemoryTable[Index].Attributes      = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
+ 
++  // CCIX RC Configuration Space
++  VirtualMemoryTable[++Index].PhysicalBase  = PcdGet32 (PcdCcixRootPortConfigBaseAddress);
++  VirtualMemoryTable[Index].VirtualBase     = PcdGet32 (PcdCcixRootPortConfigBaseAddress);
++  VirtualMemoryTable[Index].Length          = PcdGet32 (PcdCcixRootPortConfigBaseSize);
++  VirtualMemoryTable[Index].Attributes      = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
++
++  // CCIX ECAM Configuration Space
++  VirtualMemoryTable[++Index].PhysicalBase  = PcdGet32 (PcdCcixExpressBaseAddress);
++  VirtualMemoryTable[Index].VirtualBase     = PcdGet32 (PcdCcixExpressBaseAddress);
++  VirtualMemoryTable[Index].Length          = (FixedPcdGet32 (PcdCcixBusMax) -
++                                               FixedPcdGet32 (PcdCcixBusMin) + 1) *
++                                               SIZE_1MB;
++  VirtualMemoryTable[Index].Attributes      = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
++
++  // CCIX MMIO32 Memory Space
++  VirtualMemoryTable[++Index].PhysicalBase  = PcdGet32 (PcdCcixMmio32Base);
++  VirtualMemoryTable[Index].VirtualBase     = PcdGet32 (PcdCcixMmio32Base);
++  VirtualMemoryTable[Index].Length          = PcdGet32 (PcdCcixMmio32Size);
++  VirtualMemoryTable[Index].Attributes      = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
++
++ // CCIX MMIO64 Memory Space
++  VirtualMemoryTable[++Index].PhysicalBase  = PcdGet64 (PcdCcixMmio64Base);
++  VirtualMemoryTable[Index].VirtualBase     = PcdGet64 (PcdCcixMmio64Base);
++  VirtualMemoryTable[Index].Length          = PcdGet64 (PcdCcixMmio64Size);
++  VirtualMemoryTable[Index].Attributes      = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
++
+   // SubSystem Pheripherals - UART0
+   VirtualMemoryTable[++Index].PhysicalBase  = NEOVERSEN1SOC_UART0_BASE;
+   VirtualMemoryTable[Index].VirtualBase     = NEOVERSEN1SOC_UART0_BASE;
+@@ -138,6 +183,24 @@ ArmPlatformGetVirtualMemoryMap (
+   VirtualMemoryTable[Index].Length          = NEOVERSEN1SOC_EXP_PERIPH_BASE0_SZ;
+   VirtualMemoryTable[Index].Attributes      = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
+ 
++  if (PlatInfo->MultichipMode == 1) {
++    //Remote DDR (2GB)
++    VirtualMemoryTable[++Index].PhysicalBase  = PcdGet64 (PcdExtMemorySpace) +
++                                                PcdGet64 (PcdSystemMemoryBase);
++    VirtualMemoryTable[Index].VirtualBase     = PcdGet64 (PcdExtMemorySpace) +
++                                                PcdGet64 (PcdSystemMemoryBase);
++    VirtualMemoryTable[Index].Length          = PcdGet64 (PcdSystemMemorySize);
++    VirtualMemoryTable[Index].Attributes      = ARM_MEMORY_REGION_ATTRIBUTE_WRITE_THROUGH;
++
++    //Remote DDR
++    VirtualMemoryTable[++Index].PhysicalBase  = PcdGet64 (PcdExtMemorySpace) +
++                                                PcdGet64 (PcdDramBlock2Base);
++    VirtualMemoryTable[Index].VirtualBase     = PcdGet64 (PcdExtMemorySpace) +
++                                                PcdGet64 (PcdDramBlock2Base);
++    VirtualMemoryTable[Index].Length          = RemoteDdrSize;
++    VirtualMemoryTable[Index].Attributes      = ARM_MEMORY_REGION_ATTRIBUTE_WRITE_THROUGH;
++  }
++
+   // End of Table
+   VirtualMemoryTable[++Index].PhysicalBase  = 0;
+   VirtualMemoryTable[Index].VirtualBase     = 0;
+diff --git a/Silicon/ARM/NeoverseN1Soc/NeoverseN1Soc.dec b/Silicon/ARM/NeoverseN1Soc/NeoverseN1Soc.dec
+index 54b793a937..aa7c6615d1 100644
+--- a/Silicon/ARM/NeoverseN1Soc/NeoverseN1Soc.dec
++++ b/Silicon/ARM/NeoverseN1Soc/NeoverseN1Soc.dec
+@@ -1,5 +1,5 @@
+ #
+-#  Copyright (c) 2018 - 2020, ARM Limited. All rights reserved.
++#  Copyright (c) 2018 - 2021, ARM Limited. All rights reserved.<BR>
+ #
+ #  SPDX-License-Identifier: BSD-2-Clause-Patent
+ #
+@@ -33,8 +33,8 @@
+   gArmNeoverseN1SocTokenSpaceGuid.PcdPcieBusMax|17|UINT32|0x00000005
+   gArmNeoverseN1SocTokenSpaceGuid.PcdPcieBusMin|0|UINT32|0x00000006
+   gArmNeoverseN1SocTokenSpaceGuid.PcdPcieIoBase|0x0|UINT32|0x00000007
+-  gArmNeoverseN1SocTokenSpaceGuid.PcdPcieIoMaxBase|0x00FFFFFF|UINT32|0x00000008
+-  gArmNeoverseN1SocTokenSpaceGuid.PcdPcieIoSize|0x01000000|UINT32|0x00000009
++  gArmNeoverseN1SocTokenSpaceGuid.PcdPcieIoMaxBase|0x001FFFF|UINT32|0x00000008
++  gArmNeoverseN1SocTokenSpaceGuid.PcdPcieIoSize|0x020000|UINT32|0x00000009
+   gArmNeoverseN1SocTokenSpaceGuid.PcdPcieIoTranslation|0x75200000|UINT32|0x0000000A
+   gArmNeoverseN1SocTokenSpaceGuid.PcdPcieMmio32Base|0x71200000|UINT32|0x0000000B
+   gArmNeoverseN1SocTokenSpaceGuid.PcdPcieMmio32MaxBase|0x751FFFFF|UINT32|0x0000000C
+@@ -44,3 +44,25 @@
+   gArmNeoverseN1SocTokenSpaceGuid.PcdPcieMmio64MaxBase|0x28FFFFFFFF|UINT64|0x00000010
+   gArmNeoverseN1SocTokenSpaceGuid.PcdPcieMmio64Size|0x2000000000|UINT64|0x00000011
+   gArmNeoverseN1SocTokenSpaceGuid.PcdPcieMmio64Translation|0x0|UINT64|0x00000012
++
++  # CCIX
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixBusCount|18|UINT32|0x00000016
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixBusMax|17|UINT32|0x00000017
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixBusMin|0|UINT32|0x00000018
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixExpressBaseAddress|0x68000000|UINT32|0x00000019
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixIoBase|0x0|UINT32|0x0000001A
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixIoMaxBase|0x01FFFF|UINT32|0x0000001B
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixIoSize|0x020000|UINT32|0x0000001C
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixIoTranslation|0x6D200000|UINT32|0x00000001D
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixMmio32Base|0x69200000|UINT32|0x0000001E
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixMmio32MaxBase|0x6D1FFFFF|UINT32|0x00000001F
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixMmio32Size|0x04000000|UINT32|0x00000020
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixMmio32Translation|0x0|UINT32|0x00000021
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixMmio64Base|0x2900000000|UINT64|0x00000022
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixMmio64MaxBase|0x48FFFFFFFF|UINT64|0x00000023
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixMmio64Size|0x2000000000|UINT64|0x00000024
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixMmio64Translation|0x0|UINT64|0x00000025
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixRootPortConfigBaseAddress|0x62000000|UINT32|0x00000026
++  gArmNeoverseN1SocTokenSpaceGuid.PcdCcixRootPortConfigBaseSize|0x00001000|UINT32|0x00000027
++
++  gArmNeoverseN1SocTokenSpaceGuid.PcdExtMemorySpace|0x40000000000|UINT64|0x00000029
+-- 
+2.17.1
+

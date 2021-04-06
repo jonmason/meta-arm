@@ -1,0 +1,245 @@
+From 94709b223eeb11c56f882d94df93579d2294ce6b Mon Sep 17 00:00:00 2001
+From: Khasim Syed Mohammed <khasim.mohammed@arm.com>
+Date: Tue, 6 Apr 2021 15:20:46 +0530
+Subject: [PATCH 3/4] Platform/ARM/N1Sdp: Enable N1SDP platform specific
+ configurations
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Khasim Syed Mohammed <khasim.mohammed@arm.com>
+
+The patch
+  - adds GUIDs for Coresight,
+  - RAM Disk device registration and support.
+
+Change-Id: Ic6adb6400a114c1bbbba08008a8c1e187deb2e4e
+
+Signed-off-by: Deepak Pandey <Deepak.Pandey@arm.com>
+Signed-off-by: Khasim Syed Mohammed <khasim.mohammed@arm.com>
+---
+ Platform/ARM/N1Sdp/N1SdpPlatform.dec | 91 ++++++++++++++++++++++++++++
+ Platform/ARM/N1Sdp/N1SdpPlatform.dsc | 25 +++++++-
+ Platform/ARM/N1Sdp/N1SdpPlatform.fdf |  9 ++-
+ 3 files changed, 123 insertions(+), 2 deletions(-)
+ create mode 100644 Platform/ARM/N1Sdp/N1SdpPlatform.dec
+
+diff --git a/Platform/ARM/N1Sdp/N1SdpPlatform.dec b/Platform/ARM/N1Sdp/N1SdpPlatform.dec
+new file mode 100644
+index 0000000000..6b83d7c442
+--- /dev/null
++++ b/Platform/ARM/N1Sdp/N1SdpPlatform.dec
+@@ -0,0 +1,91 @@
++#
++#  Copyright (c) 2021, ARM Limited. All rights reserved.<BR>
++#
++#  SPDX-License-Identifier: BSD-2-Clause-Patent
++#
++
++[Defines]
++  DEC_SPECIFICATION              = 0x0001001A
++  PACKAGE_NAME                   = N1SdpPlatform
++  PACKAGE_GUID                   = 29aacb23-61e8-4fe2-8a06-793537cd26e9
++  PACKAGE_VERSION                = 0.1
++
++################################################################################
++#
++# Include Section - list of Include Paths that are provided by this package.
++#                   Comments are used for Keywords and Module Types.
++#
++# Supported Module Types:
++#  BASE SEC PEI_CORE PEIM DXE_CORE DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SMM_DRIVER DXE_SAL_DRIVER UEFI_DRIVER UEFI_APPLICATION
++#
++################################################################################
++[Includes.common]
++
++[LibraryClasses]
++  ArmPlatformLib|Silicon/ARM/NeoverseN1Soc/Library/PlatformLib/PlatformLib.inf
++
++[Guids.common]
++  gArmN1SdpTokenSpaceGuid =  { 0xd8f1624a, 0x98c1, 0x4f64, { 0xa6, 0x41, 0x19, 0x5e, 0xb5, 0x3b, 0x26, 0x0f } }
++
++[PcdsFixedAtBuild]
++  gArmN1SdpTokenSpaceGuid.PcdRamDiskBase|0x88000000|UINT32|0x00000001
++  gArmN1SdpTokenSpaceGuid.PcdRamDiskSize|0x18000000|UINT32|0x00000002
++
++  # External memory
++  gArmNeoverseN1SocTokenSpaceGuid.PcdExtMemorySpace|0|UINT64|0x00000029
++
++[PcdsFeatureFlag.common]
++  gArmN1SdpTokenSpaceGuid.PcdRamDiskSupported|FALSE|BOOLEAN|0x00000003
++
++[PcdsFixedAtBuild.common]
++  #
++  # CoreSight Debug and Trace components
++  #
++
++  # CoreSight ETMs
++  gArmN1SdpTokenSpaceGuid.PcdCsEtm0Base|0x402040000|UINT64|0x0000002D
++  gArmN1SdpTokenSpaceGuid.PcdCsEtm0MaxBase|0x402040FFF|UINT64|0x0000002E
++  gArmN1SdpTokenSpaceGuid.PcdCsEtm1Base|0x402140000|UINT64|0x0000002F
++  gArmN1SdpTokenSpaceGuid.PcdCsEtm1MaxBase|0x402140FFF|UINT64|0x00000030
++  gArmN1SdpTokenSpaceGuid.PcdCsEtm2Base|0x403040000|UINT64|0x00000031
++  gArmN1SdpTokenSpaceGuid.PcdCsEtm2MaxBase|0x403040FFF|UINT64|0x00000032
++  gArmN1SdpTokenSpaceGuid.PcdCsEtm3Base|0x403140000|UINT64|0x00000033
++  gArmN1SdpTokenSpaceGuid.PcdCsEtm3MaxBase|0x403140FFF|UINT64|0x00000034
++
++  # CoreSight TMC (ETRs/ETFs/ETBs)
++  gArmN1SdpTokenSpaceGuid.PcdCsEtf0Base|0x400410000|UINT64|0x00000035
++  gArmN1SdpTokenSpaceGuid.PcdCsEtf0MaxBase|0x400410FFF|UINT64|0x00000036
++  gArmN1SdpTokenSpaceGuid.PcdCsEtf1Base|0x400420000|UINT64|0x00000037
++  gArmN1SdpTokenSpaceGuid.PcdCsEtf1MaxBase|0x400420FFF|UINT64|0x00000038
++  gArmN1SdpTokenSpaceGuid.PcdCsEtf2Base|0x400010000|UINT64|0x00000039
++  gArmN1SdpTokenSpaceGuid.PcdCsEtf2MaxBase|0x400010FFF|UINT64|0x0000003A
++  gArmN1SdpTokenSpaceGuid.PcdCsEtrBase|0x400120000|UINT64|0x00000043
++  gArmN1SdpTokenSpaceGuid.PcdCsEtrMaxBase|0x400120FFF|UINT64|0x00000044
++
++  # CoreSight Dynamic Funnel(s)
++  gArmN1SdpTokenSpaceGuid.PcdCsFunnel0Base|0x4000B0000|UINT64|0x0000003B
++  gArmN1SdpTokenSpaceGuid.PcdCsFunnel0MaxBase|0x4000B0FFF|UINT64|0x0000003C
++  gArmN1SdpTokenSpaceGuid.PcdCsFunnel1Base|0x4000A0000|UINT64|0x0000003D
++  gArmN1SdpTokenSpaceGuid.PcdCsFunnel1MaxBase|0x4000A0FFF|UINT64|0x0000003E
++
++  # CoreSight Dynamic Replicator(s)
++  gArmN1SdpTokenSpaceGuid.PcdCsReplicatorBase|0x400110000|UINT64|0x0000003F
++  gArmN1SdpTokenSpaceGuid.PcdCsReplicatorMaxBase|0x400110FFF|UINT64|0x00000040
++
++  # CoreSight TPIU
++  gArmN1SdpTokenSpaceGuid.PcdCsTpiuBase|0x400130000|UINT64|0x00000041
++  gArmN1SdpTokenSpaceGuid.PcdCsTpiuMaxBase|0x400130FFF|UINT64|0x00000042
++
++  # CoreSight STM and STM Stimulus
++  gArmN1SdpTokenSpaceGuid.PcdCsStmBase|0x400800000|UINT64|0x00000045
++  gArmN1SdpTokenSpaceGuid.PcdCsStmMaxBase|0x400800FFF|UINT64|0x00000046
++  gArmN1SdpTokenSpaceGuid.PcdCsStmStimulusBase|0x4D000000|UINT32|0x00000047
++  gArmN1SdpTokenSpaceGuid.PcdCsStmStimulusSize|0x1000000|UINT32|0x00000048
++
++  # CoreSight Components' Size
++  #
++  # Newton TRMs specify the size for these coresight components as 64K.
++  # The actual size is just 4K though 64K is reserved. Access to the
++  # unmapped reserved region results in a DECERR response.
++  #
++  gArmN1SdpTokenSpaceGuid.PcdCsComponentSize|0x1000|UINT32|0x00000049
+diff --git a/Platform/ARM/N1Sdp/N1SdpPlatform.dsc b/Platform/ARM/N1Sdp/N1SdpPlatform.dsc
+index 92376aab8f..1b46eb2734 100644
+--- a/Platform/ARM/N1Sdp/N1SdpPlatform.dsc
++++ b/Platform/ARM/N1Sdp/N1SdpPlatform.dsc
+@@ -1,5 +1,5 @@
+ #
+-#  Copyright (c) 2018 - 2020, ARM Limited. All rights reserved.
++#  Copyright (c) 2018 - 2021, ARM Limited. All rights reserved.<BR>
+ #
+ #  SPDX-License-Identifier: BSD-2-Clause-Patent
+ #
+@@ -32,6 +32,9 @@
+   TimerLib|ArmPkg/Library/ArmArchTimerLib/ArmArchTimerLib.inf
+   UefiUsbLib|MdePkg/Library/UefiUsbLib/UefiUsbLib.inf
+ 
++  # Ramdisk Support
++  FileExplorerLib|MdeModulePkg/Library/FileExplorerLib/FileExplorerLib.inf
++
+ [LibraryClasses.common.SEC]
+   HobLib|MdePkg/Library/PeiHobLib/PeiHobLib.inf
+   MemoryAllocationLib|MdePkg/Library/PeiMemoryAllocationLib/PeiMemoryAllocationLib.inf
+@@ -70,6 +73,9 @@
+ [LibraryClasses.common.DXE_RUNTIME_DRIVER]
+   BaseMemoryLib|MdePkg/Library/BaseMemoryLib/BaseMemoryLib.inf
+   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
++!if $(TARGET) != RELEASE
++  DebugLib|MdePkg/Library/DxeRuntimeDebugLibSerialPort/DxeRuntimeDebugLibSerialPort.inf
++!endif
+ 
+ [LibraryClasses.common.UEFI_DRIVER, LibraryClasses.common.UEFI_APPLICATION, LibraryClasses.common.DXE_RUNTIME_DRIVER, LibraryClasses.common.DXE_DRIVER]
+   PcdLib|MdePkg/Library/DxePcdLib/DxePcdLib.inf
+@@ -81,11 +87,16 @@
+ ################################################################################
+ 
+ [PcdsFeatureFlag.common]
++  gArmN1SdpTokenSpaceGuid.PcdRamDiskSupported|TRUE
+   gEfiMdeModulePkgTokenSpaceGuid.PcdTurnOffUsbLegacySupport|TRUE
+ 
+ [PcdsFixedAtBuild.common]
+   gArmTokenSpaceGuid.PcdVFPEnabled|1
+ 
++  # RAM Disk
++  gArmN1SdpTokenSpaceGuid.PcdRamDiskBase|0x88000000
++  gArmN1SdpTokenSpaceGuid.PcdRamDiskSize|0x18000000
++
+   # Stacks for MPCores in Normal World
+   gArmPlatformTokenSpaceGuid.PcdCPUCoresStackBase|0x80000000
+   gArmPlatformTokenSpaceGuid.PcdCPUCorePrimaryStackSize|0x40000
+@@ -98,6 +109,9 @@
+   # Secondary DDR memory
+   gArmNeoverseN1SocTokenSpaceGuid.PcdDramBlock2Base|0x8080000000
+ 
++  # External memory
++  gArmNeoverseN1SocTokenSpaceGuid.PcdExtMemorySpace|0x40000000000
++
+   # GIC Base Addresses
+   gArmTokenSpaceGuid.PcdGicInterruptInterfaceBase|0x2C000000
+   gArmTokenSpaceGuid.PcdGicDistributorBase|0x30000000
+@@ -197,6 +211,9 @@
+       BaseMemoryLib|MdePkg/Library/BaseMemoryLib/BaseMemoryLib.inf
+   }
+ 
++  # Platform driver
++  Platform/ARM/N1Sdp/Drivers/PlatformDxe/PlatformDxe.inf
++
+   # Human Interface Support
+   MdeModulePkg/Universal/HiiDatabaseDxe/HiiDatabaseDxe.inf
+ 
+@@ -235,6 +252,9 @@
+   # SATA Controller
+   MdeModulePkg/Bus/Pci/SataControllerDxe/SataControllerDxe.inf
+ 
++  # NVMe boot devices
++  MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
++
+   # Usb Support
+   MdeModulePkg/Bus/Pci/UhciDxe/UhciDxe.inf
+   MdeModulePkg/Bus/Pci/EhciDxe/EhciDxe.inf
+@@ -243,3 +263,6 @@
+   MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
+   MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
+   MdeModulePkg/Bus/Pci/NonDiscoverablePciDeviceDxe/NonDiscoverablePciDeviceDxe.inf
++
++  # RAM Disk
++  MdeModulePkg/Universal/Disk/RamDiskDxe/RamDiskDxe.inf
+diff --git a/Platform/ARM/N1Sdp/N1SdpPlatform.fdf b/Platform/ARM/N1Sdp/N1SdpPlatform.fdf
+index c4e1f7b4b8..64a812f563 100644
+--- a/Platform/ARM/N1Sdp/N1SdpPlatform.fdf
++++ b/Platform/ARM/N1Sdp/N1SdpPlatform.fdf
+@@ -1,5 +1,5 @@
+ #
+-#  Copyright (c) 2018 - 2020, ARM Limited. All rights reserved.
++#  Copyright (c) 2018 - 2021, ARM Limited. All rights reserved.<BR>
+ #
+ #  SPDX-License-Identifier: BSD-2-Clause-Patent
+ #
+@@ -109,6 +109,9 @@ READ_LOCK_STATUS   = TRUE
+   # SATA Controller
+   INF MdeModulePkg/Bus/Pci/SataControllerDxe/SataControllerDxe.inf
+ 
++  # NVMe boot devices
++  INF  MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
++
+   # Usb Support
+   INF MdeModulePkg/Bus/Pci/UhciDxe/UhciDxe.inf
+   INF MdeModulePkg/Bus/Pci/EhciDxe/EhciDxe.inf
+@@ -137,10 +140,14 @@ READ_LOCK_STATUS   = TRUE
+ 
+   # FV FileSystem
+   INF MdeModulePkg/Universal/FvSimpleFileSystemDxe/FvSimpleFileSystemDxe.inf
++  INF MdeModulePkg/Universal/Disk/RamDiskDxe/RamDiskDxe.inf
+ 
+   # UEFI applications
+   INF  ShellPkg/Application/Shell/Shell.inf
+ 
++  # Platform driver
++  INF Platform/ARM/N1Sdp/Drivers/PlatformDxe/PlatformDxe.inf
++
+   # Bds
+   INF MdeModulePkg/Application/UiApp/UiApp.inf
+   INF MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
+-- 
+2.17.1
+

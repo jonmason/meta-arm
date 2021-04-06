@@ -1,11 +1,14 @@
 FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 
-SRC_URI += "file://initialise.patch"
+SRC_URI_append = " file://Add-mem-regions-to-support.patch;patchdir=${S}/edk2-platforms \
+                   file://Introduce-platform-DXE-driver.patch;patchdir=${S}/edk2-platforms \
+                   file://Enable-N1SDP-platform-specific-configs.patch;patchdir=${S}/edk2-platforms \
+                   file://Configuration-Manager-for-N1SDP.patch;patchdir=${S}/edk2-platforms "
 
 # N1SDP specific EDK2 configurations
 EDK2_BUILD_RELEASE = "0"
 EDK2_PLATFORM      = "n1sdp"
-EDK2_PLATFORM_DSC  = "Platform/ARM/N1SdpPkg/N1SdpPlatform.dsc"
+EDK2_PLATFORM_DSC  = "Platform/ARM/N1Sdp/N1SdpPlatform.dsc"
 EDK2_BIN_NAME      = "BL33_AP_UEFI.fd"
 EDK2_ARCH          = "AARCH64"
 

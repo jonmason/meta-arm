@@ -1,0 +1,122 @@
+From 5119374cdf5b86e8b6ff38329d87f0e494e2b356 Mon Sep 17 00:00:00 2001
+From: Khasim Syed Mohammed <khasim.mohammed@arm.com>
+Date: Tue, 6 Apr 2021 15:12:27 +0530
+Subject: [PATCH 2/4] Platform/ARM/N1Sdp: Introduce platform DXE driver
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Khasim Syed Mohammed <khasim.mohammed@arm.com>
+
+Add an initial platform DXE driver and support for ramdisk devices.
+
+Change-Id: Idf61fdc3dbde384e0414a80739078bb206784fc3
+
+Signed-off-by: Deepak Pandey <Deepak.Pandey@arm.com>
+Signed-off-by: Khasim Syed Mohammed <khasim.mohammed@arm.com>
+---
+ .../N1Sdp/Drivers/PlatformDxe/PlatformDxe.c   | 43 +++++++++++++++++++
+ .../N1Sdp/Drivers/PlatformDxe/PlatformDxe.inf | 43 +++++++++++++++++++
+ 2 files changed, 86 insertions(+)
+ create mode 100644 Platform/ARM/N1Sdp/Drivers/PlatformDxe/PlatformDxe.c
+ create mode 100644 Platform/ARM/N1Sdp/Drivers/PlatformDxe/PlatformDxe.inf
+
+diff --git a/Platform/ARM/N1Sdp/Drivers/PlatformDxe/PlatformDxe.c b/Platform/ARM/N1Sdp/Drivers/PlatformDxe/PlatformDxe.c
+new file mode 100644
+index 0000000000..c9eac1e4a9
+--- /dev/null
++++ b/Platform/ARM/N1Sdp/Drivers/PlatformDxe/PlatformDxe.c
+@@ -0,0 +1,43 @@
++/** @file
++*
++*  Copyright (c) 2021, ARM Limited. All rights reserved.<BR>
++*
++*  SPDX-License-Identifier: BSD-2-Clause-Patent
++*
++**/
++
++#include <Library/DebugLib.h>
++#include <Library/UefiBootServicesTableLib.h>
++#include <Protocol/RamDisk.h>
++
++EFI_STATUS
++EFIAPI
++ArmN1SdpEntryPoint (
++  IN EFI_HANDLE         ImageHandle,
++  IN EFI_SYSTEM_TABLE   *SystemTable
++  )
++{
++  EFI_STATUS                 Status;
++  EFI_RAM_DISK_PROTOCOL      *RamDisk;
++  EFI_DEVICE_PATH_PROTOCOL   *DevicePath;
++
++  Status = EFI_UNSUPPORTED;
++  if (FeaturePcdGet (PcdRamDiskSupported)) {
++    Status = gBS->LocateProtocol (&gEfiRamDiskProtocolGuid, NULL, (VOID**) &RamDisk);
++    if (EFI_ERROR (Status)) {
++      DEBUG ((DEBUG_ERROR, "%a: Couldn't find the RAM Disk protocol - %r\n", __FUNCTION__, Status));
++      return Status;
++    }
++
++    Status = RamDisk->Register (
++               (UINTN)PcdGet32(PcdRamDiskBase),
++               (UINTN)PcdGet32(PcdRamDiskSize),
++               &gEfiVirtualCdGuid,
++               NULL,
++               &DevicePath);
++    if (EFI_ERROR (Status)) {
++      DEBUG ((DEBUG_ERROR, "%a: Failed to register RAM Disk - %r\n", __FUNCTION__, Status));
++    }
++  }
++  return Status;
++}
+diff --git a/Platform/ARM/N1Sdp/Drivers/PlatformDxe/PlatformDxe.inf b/Platform/ARM/N1Sdp/Drivers/PlatformDxe/PlatformDxe.inf
+new file mode 100644
+index 0000000000..0a3915734d
+--- /dev/null
++++ b/Platform/ARM/N1Sdp/Drivers/PlatformDxe/PlatformDxe.inf
+@@ -0,0 +1,43 @@
++## @file
++#
++#  Copyright (c) 2021, ARM Limited. All rights reserved.<BR>
++#
++#  SPDX-License-Identifier: BSD-2-Clause-Patent
++#
++##
++
++[Defines]
++  INF_VERSION                    = 0x0001001B
++  BASE_NAME                      = PlatformDxe
++  FILE_GUID                      = 11fc8b5a-377d-47a8-aee9-0093d3d3407f
++  MODULE_TYPE                    = DXE_DRIVER
++  VERSION_STRING                 = 1.0
++  ENTRY_POINT                    = ArmN1SdpEntryPoint
++
++[Sources.common]
++  PlatformDxe.c
++
++[Packages]
++  ArmPkg/ArmPkg.dec
++  ArmPlatformPkg/ArmPlatformPkg.dec
++  EmbeddedPkg/EmbeddedPkg.dec
++  MdePkg/MdePkg.dec
++  MdeModulePkg/MdeModulePkg.dec
++  Platform/ARM/N1Sdp/N1SdpPlatform.dec
++
++[LibraryClasses]
++  HobLib
++  UefiDriverEntryPoint
++
++[Protocols]
++  gEfiRamDiskProtocolGuid
++
++[FeaturePcd]
++  gArmN1SdpTokenSpaceGuid.PcdRamDiskSupported
++
++[FixedPcd]
++  gArmN1SdpTokenSpaceGuid.PcdRamDiskBase
++  gArmN1SdpTokenSpaceGuid.PcdRamDiskSize
++
++[Depex]
++  gEfiRamDiskProtocolGuid
+-- 
+2.17.1
+
