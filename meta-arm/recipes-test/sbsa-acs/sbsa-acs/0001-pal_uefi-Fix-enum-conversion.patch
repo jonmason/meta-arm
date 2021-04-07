@@ -1,0 +1,31 @@
+From d9101f353b16bf82fb0e8f1dac573aca97a6f3a7 Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Tue, 6 Apr 2021 23:57:19 -0700
+Subject: [PATCH] pal_uefi: Fix enum conversion
+
+clang complains about enum type mismatches
+al_uefi/src/pal_gic.c:224:20: error: implicit conversion from enumeration type 'INTR_TRIGGER_INFO_TYPE_e' to different enumeration type 'EFI_HARDWARE_INTERRUPT2_TRIGGER_TYPE' [-Werror,-Wenum-conversion]
+
+Upstream-Status: Pending
+
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ platform/pal_uefi/src/pal_gic.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/ShellPkg/Application/sbsa-acs/platform/pal_uefi/src/pal_gic.c b/ShellPkg/Application/sbsa-acs/platform/pal_uefi/src/pal_gic.c
+index 7ce343d..b61aefc 100644
+--- a/ShellPkg/Application/sbsa-acs/platform/pal_uefi/src/pal_gic.c
++++ b/ShellPkg/Application/sbsa-acs/platform/pal_uefi/src/pal_gic.c
+@@ -221,7 +221,7 @@ pal_gic_set_intr_trigger(UINT32 int_id, INTR_TRIGGER_INFO_TYPE_e trigger_type)
+   Status = gInterrupt2->SetTriggerType (
+                    gInterrupt2,
+                    int_id,
+-                   trigger_type
++                   (EFI_HARDWARE_INTERRUPT2_TRIGGER_TYPE)trigger_type
+                    );
+ 
+   if (EFI_ERROR(Status))
+-- 
+2.31.1
+

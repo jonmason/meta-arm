@@ -7,7 +7,8 @@ LIC_FILES_CHKSUM += "file://ShellPkg/Application/sbsa-acs/LICENSE.md;md5=2a94494
 
 SRC_URI += "git://github.com/ARM-software/sbsa-acs;destsuffix=edk2/ShellPkg/Application/sbsa-acs;protocol=https;branch=release;name=acs \
             git://github.com/tianocore/edk2-libc;destsuffix=edk2/edk2-libc;protocol=https;branch=master;name=libc \
-            file://shell.patch"
+            file://shell.patch \
+            file://0001-pal_uefi-Fix-enum-conversion.patch"
 
 SRCREV_acs = "1b3a37214fe6809e07e471f79d1ef856461bc803"
 SRCREV_libc = "61687168fe02ac4d933a36c9145fdd242ac424d1"
