@@ -1,0 +1,16 @@
+{
+	"secure-storage" : {
+		"image": "secure-storage.bin",
+		"pm": "secure-storage.dts"
+	},
+
+	"crypto" : {
+		"image": "crypto-sp.bin",
+		"pm": "crypto.dts"
+	},
+
+	"op-tee" : {
+		"image": "tee-pager_v2.bin",
+		"pm": "optee_manifest.dts"
+	}
+}
