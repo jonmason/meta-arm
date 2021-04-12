@@ -6,8 +6,7 @@ Subject: [PATCH] pal_uefi: Fix enum conversion
 clang complains about enum type mismatches
 al_uefi/src/pal_gic.c:224:20: error: implicit conversion from enumeration type 'INTR_TRIGGER_INFO_TYPE_e' to different enumeration type 'EFI_HARDWARE_INTERRUPT2_TRIGGER_TYPE' [-Werror,-Wenum-conversion]
 
-Upstream-Status: Pending
-
+Upstream-Status: Backport [a68f6bc5933d912a938baf841304b8637ff923ce]
 Signed-off-by: Khem Raj <raj.khem@gmail.com>
 ---
  platform/pal_uefi/src/pal_gic.c | 2 +-
