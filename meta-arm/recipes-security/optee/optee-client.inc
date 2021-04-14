@@ -17,7 +17,10 @@ UPSTREAM_CHECK_GITTAGREGEX = "^(?P<pver>\d+(\.\d+)+)$"
 
 S = "${WORKDIR}/git"
 
-EXTRA_OECMAKE = "-DBUILD_SHARED_LIBS=ON"
+EXTRA_OECMAKE = " \
+    -DBUILD_SHARED_LIBS=ON \
+    -DCFG_TEE_FS_PARENT_PATH='${localstatedir}/lib/tee' \
+"
 EXTRA_OECMAKE_append_toolchain-clang = " -DCFG_WERROR=0"
 
 do_install_append() {
