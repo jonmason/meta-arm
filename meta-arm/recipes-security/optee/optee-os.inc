@@ -45,7 +45,7 @@ do_compile[cleandirs] = "${B}"
 do_install() {
     #install core in firmware
     install -d ${D}${nonarch_base_libdir}/firmware/
-    install -m 644 ${B}/core/*.bin ${D}${nonarch_base_libdir}/firmware/
+    install -m 644 ${B}/core/*.bin ${B}/core/tee.elf ${D}${nonarch_base_libdir}/firmware/
 
     #install TA devkit
     install -d ${D}${includedir}/optee/export-user_ta/
