@@ -38,7 +38,7 @@ LD[unexport] = "1"
 do_configure[noexec] = "1"
 
 do_compile() {
-    oe_runmake -C ${S} all CFG_TEE_TA_LOG_LEVEL=0
+    oe_runmake -C ${S} all
 }
 do_compile[cleandirs] = "${B}"
 
