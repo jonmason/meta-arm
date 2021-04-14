@@ -13,7 +13,7 @@ require optee.inc
 # When upgraded we should be able to remove this limitation
 COMPATIBLE_HOST_libc-musl = 'null'
 
-DEPENDS = "optee-client optee-os python3-pycryptodomex-native"
+DEPENDS = "optee-client optee-os python3-pycryptodome-native"
 
 SRC_URI = "git://github.com/OP-TEE/optee_test.git \
            file://0001-host-xtest-Adjust-order-of-including-compiler.h.patch \
