@@ -1,0 +1,44 @@
+From de8c7b4ba36606067f68799f63b1a6a7de2c1a70 Mon Sep 17 00:00:00 2001
+From: Davidson K <davidson.kumaresan@arm.com>
+Date: Fri, 19 Feb 2021 11:34:26 +0530
+Subject: [PATCH 04/13] Release rx buffer after memory retrieve request
+
+After the RX buffer is consumed by the SP, the ownership has to be
+transferred to the SPM so that SPM can own it as a producer and write
+to it whenever needed.
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Davidson K <davidson.kumaresan@arm.com>
+Change-Id: Ib058e1ef8a4f5286d1618394de2a74c3b7431476
+Signed-off-by: Ben Horgan <ben.horgan@arm.com>
+---
+ components/rpc/ffarpc/endpoint/ffarpc_call_ep.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/components/rpc/ffarpc/endpoint/ffarpc_call_ep.c b/components/rpc/ffarpc/endpoint/ffarpc_call_ep.c
+index 8109345..f65398b 100644
+--- a/components/rpc/ffarpc/endpoint/ffarpc_call_ep.c
++++ b/components/rpc/ffarpc/endpoint/ffarpc_call_ep.c
+@@ -40,6 +40,7 @@ static void init_shmem_buf(struct ffa_call_ep *call_ep, uint16_t source_id,
+ 			   const uint32_t *req_args, uint32_t *resp_args)
+ {
+ 	sp_result sp_res = SP_RESULT_INTERNAL_ERROR;
++	ffa_result ffa_res;
+ 	struct sp_memory_descriptor desc = { };
+ 	struct sp_memory_access_descriptor acc_desc = { };
+ 	struct sp_memory_region region = { };
+@@ -68,6 +69,11 @@ static void init_shmem_buf(struct ffa_call_ep *call_ep, uint16_t source_id,
+ 		EMSG("memory retrieve error: %d", sp_res);
+ 	}
+ 
++	ffa_res = ffa_rx_release();
++	if (ffa_res != FFA_OK) {
++		EMSG("ffa_rx_release(): error %"PRId32, ffa_res);
++	}
++
+ 	set_mgmt_resp_args(resp_args, req_args[FFA_CALL_ARGS_OPCODE], rpc_status);
+ }
+ 
+-- 
+2.29.2
+

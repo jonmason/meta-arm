@@ -1,0 +1,69 @@
+From 8603e07c95ec9c543c38181f60d0a3ead4a5f237 Mon Sep 17 00:00:00 2001
+From: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+Date: Mon, 12 Apr 2021 13:12:41 +0100
+Subject: [PATCH 13/13] libsp: modify FFA ABIs with supported convention
+
+SPMC at SEL2 (hafnium) only supports 64-bit variant of FFA_RXTX_MAP
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+Change-Id: I17ba68bc298fd5d26dbead23dd0750b84319d9c6
+Signed-off-by: Ben Horgan <ben.horgan@arm.com>
+---
+ components/messaging/ffa/libsp/ffa.c     | 6 +++---
+ components/messaging/ffa/libsp/sp_rxtx.c | 4 ++--
+ 2 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/components/messaging/ffa/libsp/ffa.c b/components/messaging/ffa/libsp/ffa.c
+index 648d3c8..2bdd31b 100644
+--- a/components/messaging/ffa/libsp/ffa.c
++++ b/components/messaging/ffa/libsp/ffa.c
+@@ -1,6 +1,6 @@
+ // SPDX-License-Identifier: BSD-3-Clause
+ /*
+- * Copyright (c) 2020, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2020-2021, Arm Limited and Contributors. All rights reserved.
+  */
+ 
+ #include <assert.h>            // for assert
+@@ -133,14 +133,14 @@ ffa_result ffa_rxtx_map(const void *tx_buffer, const void *rx_buffer,
+ 	page_count = SHIFT_U32(page_count & FFA_RXTX_MAP_PAGE_COUNT_MASK,
+ 			       FFA_RXTX_MAP_PAGE_COUNT_SHIFT);
+ 
+-	ffa_svc(FFA_RXTX_MAP_32, (uintptr_t)tx_buffer, (uintptr_t)rx_buffer,
++	ffa_svc(FFA_RXTX_MAP_64, (uintptr_t)tx_buffer, (uintptr_t)rx_buffer,
+ 		page_count, FFA_PARAM_MBZ, FFA_PARAM_MBZ, FFA_PARAM_MBZ,
+ 		FFA_PARAM_MBZ, &result);
+ 
+ 	if (result.a0 == FFA_ERROR)
+ 		return ffa_get_errorcode(&result);
+ 
+-	assert(result.a0 == FFA_SUCCESS_32);
++	assert(result.a0 == FFA_SUCCESS_64);
+ 	return FFA_OK;
+ }
+ 
+diff --git a/components/messaging/ffa/libsp/sp_rxtx.c b/components/messaging/ffa/libsp/sp_rxtx.c
+index a3de270..9468d83 100644
+--- a/components/messaging/ffa/libsp/sp_rxtx.c
++++ b/components/messaging/ffa/libsp/sp_rxtx.c
+@@ -1,6 +1,6 @@
+ // SPDX-License-Identifier: BSD-3-Clause
+ /*
+- * Copyright (c) 2020, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2020-2021, Arm Limited and Contributors. All rights reserved.
+  */
+ 
+ #include "sp_rxtx.h"
+@@ -99,7 +99,7 @@ sp_result sp_rxtx_buffer_alignment_boundary_get(uintptr_t *alignment)
+ 		return SP_RESULT_INVALID_PARAMETERS;
+ 
+ 	/* Querying FFX_RXTX_MAP features */
+-	result = ffa_features(FFA_RXTX_MAP_32, &interface_props);
++	result = ffa_features(FFA_RXTX_MAP_64, &interface_props);
+ 	if (result != FFA_OK) {
+ 		*alignment = 0;
+ 		return SP_RESULT_FFA(result);
+-- 
+2.29.2
+

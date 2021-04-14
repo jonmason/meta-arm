@@ -1,0 +1,93 @@
+From 78ddf721076d2baca395f418973d5eb5d19ec4ab Mon Sep 17 00:00:00 2001
+From: Ben Horgan <ben.horgan@arm.com>
+Date: Tue, 30 Mar 2021 13:15:54 +0000
+Subject: [PATCH 12/13] libc: Add missing libc function declarations
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Change-Id: I00e54db41b3226cc60a89bf4a81edea0a6fbb2a5
+Signed-off-by: Ben Horgan <ben.horgan@arm.com>
+---
+ environments/shim/include/lib/libc/assert.h |  4 +---
+ environments/shim/include/lib/libc/memory.h |  7 +++++++
+ environments/shim/include/lib/libc/stdint.h | 18 +++++++++---------
+ environments/shim/include/lib/libc/stdlib.h |  2 ++
+ 4 files changed, 19 insertions(+), 12 deletions(-)
+ create mode 100644 environments/shim/include/lib/libc/memory.h
+
+diff --git a/environments/shim/include/lib/libc/assert.h b/environments/shim/include/lib/libc/assert.h
+index ec28c26..e32259b 100644
+--- a/environments/shim/include/lib/libc/assert.h
++++ b/environments/shim/include/lib/libc/assert.h
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2018, ARM Limited and Contributors. All rights reserved.
++ * Copyright (c) 2018 - 2021, ARM Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -9,8 +9,6 @@
+ 
+ #include <cdefs.h>
+ 
+-#include <common/debug.h>
+-
+ #if ENABLE_ASSERTIONS
+ #define assert(e)	((e) ? (void)0 : __assert(__FILE__, __LINE__, #e))
+ #else
+diff --git a/environments/shim/include/lib/libc/memory.h b/environments/shim/include/lib/libc/memory.h
+new file mode 100644
+index 0000000..823bf26
+--- /dev/null
++++ b/environments/shim/include/lib/libc/memory.h
+@@ -0,0 +1,7 @@
++/*
++ * Copyright (c) 2021, ARM Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <string.h>
+diff --git a/environments/shim/include/lib/libc/stdint.h b/environments/shim/include/lib/libc/stdint.h
+index d5dbfc4..b636299 100644
+--- a/environments/shim/include/lib/libc/stdint.h
++++ b/environments/shim/include/lib/libc/stdint.h
+@@ -107,15 +107,15 @@ typedef unsigned short uint16_least_t;
+ typedef unsigned int uint32_least_t;
+ typedef unsigned long long uint64_least_t;
+ 
+-typedef int int8_fast_t;
+-typedef int int16_fast_t;
+-typedef int int32_fast_t;
+-typedef long long int64_fast_t;
+-
+-typedef unsigned int uint8_fast_t;
+-typedef unsigned int uint16_fast_t;
+-typedef unsigned int uint32_fast_t;
+-typedef unsigned long long uint64_fast_t;
++typedef int int_fast8_t;
++typedef int int_fast16_t;
++typedef int int_fast32_t;
++typedef long long int_fast64_t;
++
++typedef unsigned int uint_fast8_t;
++typedef unsigned int uint_fast16_t;
++typedef unsigned int uint_fast32_t;
++typedef unsigned long long uint_fast64_t;
+ 
+ typedef long intptr_t;
+ typedef unsigned long uintptr_t;
+diff --git a/environments/shim/include/lib/libc/stdlib.h b/environments/shim/include/lib/libc/stdlib.h
+index bbd6889..7f01cfb 100644
+--- a/environments/shim/include/lib/libc/stdlib.h
++++ b/environments/shim/include/lib/libc/stdlib.h
+@@ -30,5 +30,7 @@ void srand(unsigned int seed);
+ void malloc_add_pool(void *buf, size_t len);
+ void *malloc(size_t size);
+ void free(void *ptr);
++void *calloc(size_t nmemb, size_t size);
++void *realloc(void *ptr, size_t size);
+ 
+ #endif /* STDLIB_H */
+-- 
+2.29.2
+

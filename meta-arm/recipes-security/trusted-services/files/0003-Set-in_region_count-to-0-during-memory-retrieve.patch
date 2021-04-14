@@ -1,0 +1,39 @@
+From 6109a46678f147b6b617edf3805738f2f41b0f19 Mon Sep 17 00:00:00 2001
+From: Davidson K <davidson.kumaresan@arm.com>
+Date: Fri, 5 Feb 2021 18:27:05 +0530
+Subject: [PATCH 03/13] Set in_region_count to 0 during memory retrieve
+
+in_region_count will be used during the lend, donate and share memory
+transactions and it is not needed for the retrieve request.
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Davidson K <davidson.kumaresan@arm.com>
+Change-Id: Id9f805aa7b9e16878a1114f71cd465dc97cc5dfd
+Signed-off-by: Ben Horgan <ben.horgan@arm.com>
+---
+ components/rpc/ffarpc/endpoint/ffarpc_call_ep.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/components/rpc/ffarpc/endpoint/ffarpc_call_ep.c b/components/rpc/ffarpc/endpoint/ffarpc_call_ep.c
+index bb40cf3..8109345 100644
+--- a/components/rpc/ffarpc/endpoint/ffarpc_call_ep.c
++++ b/components/rpc/ffarpc/endpoint/ffarpc_call_ep.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2020, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2021, Arm Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -43,7 +43,7 @@ static void init_shmem_buf(struct ffa_call_ep *call_ep, uint16_t source_id,
+ 	struct sp_memory_descriptor desc = { };
+ 	struct sp_memory_access_descriptor acc_desc = { };
+ 	struct sp_memory_region region = { };
+-	uint32_t in_region_count = 1;
++	uint32_t in_region_count = 0;
+ 	uint32_t out_region_count = 1;
+ 	uint64_t handle = 0;
+ 	rpc_status_t rpc_status = TS_RPC_ERROR_INTERNAL;
+-- 
+2.29.2
+

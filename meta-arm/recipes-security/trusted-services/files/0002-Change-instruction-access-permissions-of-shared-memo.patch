@@ -1,0 +1,41 @@
+From 5930446f09ab1df10ca70f47a3d1bb21a010effe Mon Sep 17 00:00:00 2001
+From: Davidson K <davidson.kumaresan@arm.com>
+Date: Fri, 5 Feb 2021 12:29:37 +0530
+Subject: [PATCH 02/13] Change instruction access permissions of shared memory
+
+According to the FFA spec (Section 5.11.3 - Instruction Access Permissions Usage)
+the instruction access permission of the memory that has to be shared should be
+set as "Not specified and must be ignored" by the Lender in an invocation of
+FFA_MEM_SHARE or FFA_MEM_LEND ABIs.
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Davidson K <davidson.kumaresan@arm.com>
+Change-Id: I6d84c46da8c648f93673afd7cf06a88cd4de139e
+Signed-off-by: Ben Horgan <ben.horgan@arm.com>
+---
+ components/rpc/ffarpc/caller/sp/ffarpc_caller.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/components/rpc/ffarpc/caller/sp/ffarpc_caller.c b/components/rpc/ffarpc/caller/sp/ffarpc_caller.c
+index 9d98512..269cbd4 100644
+--- a/components/rpc/ffarpc/caller/sp/ffarpc_caller.c
++++ b/components/rpc/ffarpc/caller/sp/ffarpc_caller.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2020, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2021, Arm Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -211,7 +211,7 @@ int ffarpc_caller_open(struct ffarpc_caller *s, uint16_t call_ep_id)
+ 	desc.mem_region_attr.normal_memory.shareability = sp_shareability_inner_shareable;
+ 
+ 	acc_desc.data_access = sp_data_access_read_write;
+-	acc_desc.instruction_access = sp_instruction_access_not_executable;
++	acc_desc.instruction_access = sp_instruction_access_not_specified;
+ 	acc_desc.receiver_id = call_ep_id;
+ 
+ 	region.address = shared_buffer;
+-- 
+2.29.2
+

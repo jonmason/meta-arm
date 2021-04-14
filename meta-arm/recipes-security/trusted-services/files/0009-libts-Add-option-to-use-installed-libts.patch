@@ -1,0 +1,81 @@
+From 6eb38e38bc50655b659494b3ca4e53dc727f6c53 Mon Sep 17 00:00:00 2001
+From: Ben Horgan <ben.horgan@arm.com>
+Date: Thu, 8 Apr 2021 10:00:37 +0000
+Subject: [PATCH 09/13] libts: Add option to use installed libts
+
+Allows using libts as dependency of trusted service tests in yocto
+Set LIBTS_USE_INSTALLED to use installed libts. The default is
+unchanged.
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Change-Id: Ied743afc80a490238361feea64a37faadacd8dda
+Signed-off-by: Ben Horgan <ben.horgan@arm.com>
+---
+ deployments/ts-demo/ts-demo.cmake                 | 14 ++++++++++++--
+ deployments/ts-service-test/ts-service-test.cmake | 15 +++++++++++++--
+ 2 files changed, 25 insertions(+), 4 deletions(-)
+
+diff --git a/deployments/ts-demo/ts-demo.cmake b/deployments/ts-demo/ts-demo.cmake
+index 4c85a40..f968612 100644
+--- a/deployments/ts-demo/ts-demo.cmake
++++ b/deployments/ts-demo/ts-demo.cmake
+@@ -1,5 +1,5 @@
+ #-------------------------------------------------------------------------------
+-# Copyright (c) 2020, Arm Limited and Contributors. All rights reserved.
++# Copyright (c) 2020-2021, Arm Limited and Contributors. All rights reserved.
+ #
+ # SPDX-License-Identifier: BSD-3-Clause
+ #
+@@ -16,7 +16,17 @@
+ #  libts will be imported for the enviroment in which service tests are
+ #  deployed.
+ #-------------------------------------------------------------------------------
+-include(${TS_ROOT}/deployments/libts/libts-import.cmake)
++
++if (NOT LIBTS_USE_INSTALLED)
++	include(${TS_ROOT}/deployments/libts/libts-import.cmake)
++else()
++	find_library(libts_lib ts REQUIRED)
++	find_path(libts_inc rpc_status.h REQUIRED)
++	add_library(libts SHARED IMPORTED)
++	set_property(TARGET libts PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${libts_inc}")
++	set_property(TARGET libts PROPERTY IMPORTED_LOCATION "${libts_lib}")
++endif()
++
+ target_link_libraries(ts-demo PRIVATE libts)
+ 
+ #-------------------------------------------------------------------------------
+diff --git a/deployments/ts-service-test/ts-service-test.cmake b/deployments/ts-service-test/ts-service-test.cmake
+index 1593188..5f78b36 100644
+--- a/deployments/ts-service-test/ts-service-test.cmake
++++ b/deployments/ts-service-test/ts-service-test.cmake
+@@ -1,5 +1,5 @@
+ #-------------------------------------------------------------------------------
+-# Copyright (c) 2020, Arm Limited and Contributors. All rights reserved.
++# Copyright (c) 2020-2021, Arm Limited and Contributors. All rights reserved.
+ #
+ # SPDX-License-Identifier: BSD-3-Clause
+ #
+@@ -16,7 +16,18 @@
+ #  libts will be imported for the enviroment in which service tests are
+ #  deployed.
+ #-------------------------------------------------------------------------------
+-include(${TS_ROOT}/deployments/libts/libts-import.cmake)
++
++if (NOT LIBTS_USE_INSTALLED)
++	include(${TS_ROOT}/deployments/libts/libts-import.cmake)
++else()
++	find_library(libts_lib ts REQUIRED)
++	message("benhor01: ${libts_lib}")
++	find_path(libts_inc rpc_status.h REQUIRED)
++	add_library(libts SHARED IMPORTED)
++	set_property(TARGET libts PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${libts_inc}")
++	set_property(TARGET libts PROPERTY IMPORTED_LOCATION "${libts_lib}")
++endif()
++
+ target_link_libraries(ts-service-test PRIVATE libts)
+ 
+ #-------------------------------------------------------------------------------
+-- 
+2.29.2
+

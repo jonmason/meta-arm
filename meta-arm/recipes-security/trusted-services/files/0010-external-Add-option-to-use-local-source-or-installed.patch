@@ -1,0 +1,599 @@
+From 10b56be594b945c70af428116ae734660d8e11bb Mon Sep 17 00:00:00 2001
+From: Ben Horgan <ben.horgan@arm.com>
+Date: Thu, 8 Apr 2021 10:07:13 +0000
+Subject: [PATCH 10/13] external: Add option to use local source or installed
+ libs
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Change-Id: I6bd466af8518a928f402f0d6474e607092c7340a
+Signed-off-by: Ben Horgan <ben.horgan@arm.com>
+---
+ external/CppUTest/CppUTest.cmake      | 138 +++++++++---------
+ external/mbed-crypto/mbedcrypto.cmake | 131 ++++++++++-------
+ external/nanopb/nanopb.cmake          | 200 +++++++++++++++-----------
+ 3 files changed, 264 insertions(+), 205 deletions(-)
+
+diff --git a/external/CppUTest/CppUTest.cmake b/external/CppUTest/CppUTest.cmake
+index c18f3e3..9b65ae5 100644
+--- a/external/CppUTest/CppUTest.cmake
++++ b/external/CppUTest/CppUTest.cmake
+@@ -1,44 +1,47 @@
+ #-------------------------------------------------------------------------------
+-# Copyright (c) 2020, Arm Limited and Contributors. All rights reserved.
++# Copyright (c) 2020-2021, Arm Limited and Contributors. All rights reserved.
+ #
+ # SPDX-License-Identifier: BSD-3-Clause
+ #
+ #-------------------------------------------------------------------------------
+ 
+-set(CPPUTEST_URL "https://github.com/cpputest/cpputest.git" CACHE STRING "CppUTest repository URL")
+-set(CPPUTEST_REFSPEC "v3.8" CACHE STRING "CppUTest git refspec")
+-set(CPPUTEST_INSTALL_PATH ${CMAKE_CURRENT_BINARY_DIR}/CppUTest_install CACHE PATH "CppUTest installation directory")
+ 
+-include(FetchContent)
++if (NOT CPPUTEST_USE_INSTALLED)
+ 
+-# Checking git
+-find_program(GIT_COMMAND "git")
+-if (NOT GIT_COMMAND)
+-	message(FATAL_ERROR "Please install git")
+-endif()
++	set(CPPUTEST_URL "https://github.com/cpputest/cpputest.git" CACHE STRING "CppUTest repository URL")
++	set(CPPUTEST_REFSPEC "v3.8" CACHE STRING "CppUTest git refspec")
++	set(CPPUTEST_INSTALL_PATH ${CMAKE_CURRENT_BINARY_DIR}/CppUTest_install CACHE PATH "CppUTest installation directory")
++
++	include(FetchContent)
++
++	# Checking git
++	find_program(GIT_COMMAND "git")
++	if (NOT GIT_COMMAND)
++		message(FATAL_ERROR "Please install git")
++	endif()
+ 
+-# Fetching CppUTest
+-FetchContent_Declare(
+-	cpputest
+-	GIT_REPOSITORY ${CPPUTEST_URL}
+-	GIT_TAG ${CPPUTEST_REFSPEC}
+-	GIT_SHALLOW TRUE
+-	PATCH_COMMAND git stash
++	# Fetching CppUTest
++	FetchContent_Declare(
++		cpputest
++		GIT_REPOSITORY ${CPPUTEST_URL}
++		GIT_TAG ${CPPUTEST_REFSPEC}
++		GIT_SHALLOW TRUE
++		PATCH_COMMAND git stash
+ 		COMMAND git apply ${CMAKE_CURRENT_LIST_DIR}/cpputest-cmake-fix.patch
+-)
++		)
+ 
+-# FetchContent_GetProperties exports cpputest_SOURCE_DIR and cpputest_BINARY_DIR variables
+-FetchContent_GetProperties(cpputest)
+-if(NOT cpputest_POPULATED)
+-	message(STATUS "Fetching CppUTest")
+-	FetchContent_Populate(cpputest)
+-endif()
++	# FetchContent_GetProperties exports cpputest_SOURCE_DIR and cpputest_BINARY_DIR variables
++	FetchContent_GetProperties(cpputest)
++	if(NOT cpputest_POPULATED)
++		message(STATUS "Fetching CppUTest")
++		FetchContent_Populate(cpputest)
++	endif()
+ 
+-# Build and install CppUTest configuration time. This makes us able to use CppUTest as a CMake package.
+-# Memory leak detection is turned off to avoid conflict with memcheck.
+-if(NOT CMAKE_CROSSCOMPILING)
+-	execute_process(COMMAND
+-		${CMAKE_COMMAND}
++	# Build and install CppUTest configuration time. This makes us able to use CppUTest as a CMake package.
++	# Memory leak detection is turned off to avoid conflict with memcheck.
++	if(NOT CMAKE_CROSSCOMPILING)
++		execute_process(COMMAND
++			${CMAKE_COMMAND}
+ 			-DMEMORY_LEAK_DETECTION=OFF
+ 			-DLONGLONG=ON
+ 			-DC++11=ON
+@@ -48,47 +51,54 @@ if(NOT CMAKE_CROSSCOMPILING)
+ 			${cpputest_SOURCE_DIR}
+ 		WORKING_DIRECTORY
+ 			${cpputest_BINARY_DIR}
+-			RESULT_VARIABLE
+-				_exec_error
+-	)
+-else()
++		RESULT_VARIABLE
++			_exec_error
++			)
++	else()
++		execute_process(COMMAND
++			${CMAKE_COMMAND}
++			-DMEMORY_LEAK_DETECTION=OFF
++			-DLONGLONG=ON
++			-DC++11=ON
++			-DCMAKE_INSTALL_PREFIX=${CPPUTEST_INSTALL_PATH}
++			-DCMAKE_TOOLCHAIN_FILE=${TS_EXTERNAL_LIB_TOOLCHAIN_FILE}
++			-DTESTS=OFF
++			-DEXTENSIONS=OFF
++			-DHAVE_FORK=OFF
++			-DCPP_PLATFORM=armcc
++			-DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY
++			-G${CMAKE_GENERATOR}
++			${cpputest_SOURCE_DIR}
++		WORKING_DIRECTORY
++			${cpputest_BINARY_DIR}
++		RESULT_VARIABLE
++			_exec_error
++			)
++	endif()
++	if (NOT _exec_error EQUAL 0)
++		message(FATAL_ERROR "Configuriong CppUTest build failed.")
++	endif()
+ 	execute_process(COMMAND
+-	${CMAKE_COMMAND}
+-		-DMEMORY_LEAK_DETECTION=OFF
+-		-DLONGLONG=ON
+-		-DC++11=ON
+-		-DCMAKE_INSTALL_PREFIX=${CPPUTEST_INSTALL_PATH}
+-		-DCMAKE_TOOLCHAIN_FILE=${TS_EXTERNAL_LIB_TOOLCHAIN_FILE}
+-		-DTESTS=OFF
+-		-DEXTENSIONS=OFF
+-		-DHAVE_FORK=OFF
+-		-DCPP_PLATFORM=armcc
+-		-DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY
+-		-G${CMAKE_GENERATOR}
+-		${cpputest_SOURCE_DIR}
+-	WORKING_DIRECTORY
+-		${cpputest_BINARY_DIR}
+-	RESULT_VARIABLE
+-		_exec_error
+-	)
+-endif()
+-if (NOT _exec_error EQUAL 0)
+-	message(FATAL_ERROR "Configuriong CppUTest build failed.")
+-endif()
+-execute_process(COMMAND
+-	${CMAKE_COMMAND}
++		${CMAKE_COMMAND}
+ 		--build ${cpputest_BINARY_DIR}
+ 		-- install -j8
+-	RESULT_VARIABLE
++		RESULT_VARIABLE
+ 		_exec_error
+-	)
+-if (NOT _exec_error EQUAL 0)
+-	message(FATAL_ERROR "Building CppUTest failed.")
++		)
++	if (NOT _exec_error EQUAL 0)
++		message(FATAL_ERROR "Building CppUTest failed.")
++	endif()
++
++	# Finding CppUTest package. CMake will check [package name]_DIR variable.
++	set(CppUTest_DIR ${CPPUTEST_INSTALL_PATH}/lib/CppUTest/cmake CACHE PATH "CppUTest package location" FORCE)
++	find_package(CppUTest CONFIG REQUIRED NO_DEFAULT_PATH PATHS ${CppUTest_DIR})
++
++else()
++
++	find_package(CppUTest REQUIRED)
++
+ endif()
+ 
+-# Finding CppUTest package. CMake will check [package name]_DIR variable.
+-set(CppUTest_DIR ${CPPUTEST_INSTALL_PATH}/lib/CppUTest/cmake CACHE PATH "CppUTest package location" FORCE)
+-find_package(CppUTest CONFIG REQUIRED NO_DEFAULT_PATH PATHS ${CppUTest_DIR})
+ # CppUTest package files do not set include path properties on the targets.
+ # Fix this here.
+ foreach(_cpputest_target IN LISTS CppUTest_LIBRARIES)
+diff --git a/external/mbed-crypto/mbedcrypto.cmake b/external/mbed-crypto/mbedcrypto.cmake
+index bf00588..f681e74 100644
+--- a/external/mbed-crypto/mbedcrypto.cmake
++++ b/external/mbed-crypto/mbedcrypto.cmake
+@@ -1,46 +1,59 @@
+ #-------------------------------------------------------------------------------
+-# Copyright (c) 2020, Arm Limited and Contributors. All rights reserved.
++# Copyright (c) 2020-2021, Arm Limited and Contributors. All rights reserved.
+ #
+ # SPDX-License-Identifier: BSD-3-Clause
+ #
+ #-------------------------------------------------------------------------------
+ 
+-set(MBEDCRYPTO_URL "https://github.com/ARMmbed/mbed-crypto.git" CACHE STRING "mbedcrypto repository URL")
+-set(MBEDCRYPTO_REFSPEC "mbedcrypto-3.1.0" CACHE STRING "mbedcrypto git refspec")
+-set(MBEDCRYPTO_INSTALL_PATH "${CMAKE_CURRENT_BINARY_DIR}/mbedcrypto_install" CACHE PATH "mbedcrypto installation directory")
+-set(MBEDCRYPTO_PACKAGE_PATH "${MBEDCRYPTO_INSTALL_PATH}/lib/mbedcrypto/cmake" CACHE PATH "mbedcrypto CMake package directory")
++if(NOT MBEDCRYPTO_USE_INSTALLED)
+ 
+-include(FetchContent)
++	include(FetchContent)
+ 
+-# Checking git
+-find_program(GIT_COMMAND "git")
+-if (NOT GIT_COMMAND)
+-	message(FATAL_ERROR "Please install git")
+-endif()
++	if (NOT MBEDCRYPTO_SOURCE_PATH)
+ 
+-# Fetching mbedcrypto
+-FetchContent_Declare(
+-	mbedcrypto
+-	GIT_REPOSITORY ${MBEDCRYPTO_URL}
+-	GIT_TAG ${MBEDCRYPTO_REFSPEC}
+-	GIT_SHALLOW TRUE
+-)
+-
+-# FetchContent_GetProperties exports mbedcrypto_SOURCE_DIR and mbedcrypto_BINARY_DIR variables
+-FetchContent_GetProperties(mbedcrypto)
+-if(NOT mbedcrypto_POPULATED)
+-	message(STATUS "Fetching mbedcrypto")
+-	FetchContent_Populate(mbedcrypto)
+-endif()
++		set(MBEDCRYPTO_URL "https://github.com/ARMmbed/mbed-crypto.git" CACHE STRING "mbedcrypto repository URL")
++		set(MBEDCRYPTO_REFSPEC "mbedcrypto-3.1.0" CACHE STRING "mbedcrypto git refspec")
+ 
+-# Convert the include path list to a string. Needed to make parameter passing to
+-# mbedcrypto build work fine.
+-string(REPLACE ";" "\\;" MBEDCRYPTO_EXTRA_INCLUDES "${MBEDCRYPTO_EXTRA_INCLUDES}")
++		# Checking git
++		find_program(GIT_COMMAND "git")
++		if (NOT GIT_COMMAND)
++			message(FATAL_ERROR "Please install git")
++		endif()
+ 
+-#Configure the library
+-if(NOT CMAKE_CROSSCOMPILING)
+-	execute_process(COMMAND
+-		${CMAKE_COMMAND}
++		# Fetching mbedcrypto
++		FetchContent_Declare(
++			mbedcrypto
++			GIT_REPOSITORY ${MBEDCRYPTO_URL}
++			GIT_TAG ${MBEDCRYPTO_REFSPEC}
++			GIT_SHALLOW TRUE
++			)
++
++	else()
++
++		FetchContent_Declare(
++			mbedcrypto
++			SOURCE_DIR ${MBEDCRYPTO_SOURCE_PATH}
++			)
++
++	endif()
++
++	# FetchContent_GetProperties exports mbedcrypto_SOURCE_DIR and mbedcrypto_BINARY_DIR variables
++	FetchContent_GetProperties(mbedcrypto)
++
++	if(NOT mbedcrypto_POPULATED)
++		message(STATUS "Fetching mbedcrypto")
++		FetchContent_Populate(mbedcrypto)
++	endif()
++
++	set(MBEDCRYPTO_INSTALL_PATH "${CMAKE_CURRENT_BINARY_DIR}/mbedcrypto_install" CACHE PATH "mbedcrypto installation directory")
++	set(MBEDCRYPTO_PACKAGE_PATH "${MBEDCRYPTO_INSTALL_PATH}/lib/mbedcrypto/cmake" CACHE PATH "mbedcrypto CMake package directory")
++	# Convert the include path list to a string. Needed to make parameter passing to
++	# mbedcrypto build work fine.
++	string(REPLACE ";" "\\;" MBEDCRYPTO_EXTRA_INCLUDES "${MBEDCRYPTO_EXTRA_INCLUDES}")
++	#Configure the library
++	if(NOT CMAKE_CROSSCOMPILING)
++		execute_process(COMMAND
++			${CMAKE_COMMAND}
+ 			-DENABLE_PROGRAMS=OFF
+ 			-DENABLE_TESTING=OFF
+ 			-DCMAKE_INSTALL_PREFIX=${MBEDCRYPTO_INSTALL_PATH}
+@@ -49,12 +62,12 @@ if(NOT CMAKE_CROSSCOMPILING)
+ 			-Dthirdparty_inc=${MBEDCRYPTO_EXTRA_INCLUDES}
+ 			-GUnix\ Makefiles
+ 			${mbedcrypto_SOURCE_DIR}
+-		WORKING_DIRECTORY
++			WORKING_DIRECTORY
+ 			${mbedcrypto_BINARY_DIR}
+-		)
+-else()
+-	execute_process(COMMAND
+-		${CMAKE_COMMAND}
++			)
++	else()
++		execute_process(COMMAND
++			${CMAKE_COMMAND}
+ 			-DENABLE_PROGRAMS=OFF
+ 			-DENABLE_TESTING=OFF
+ 			-DCMAKE_INSTALL_PREFIX=${MBEDCRYPTO_INSTALL_PATH}
+@@ -64,30 +77,38 @@ else()
+ 			-Dthirdparty_inc=${MBEDCRYPTO_EXTRA_INCLUDES}
+ 			-GUnix\ Makefiles
+ 			${mbedcrypto_SOURCE_DIR}
+-		WORKING_DIRECTORY
++			WORKING_DIRECTORY
+ 			${mbedcrypto_BINARY_DIR}
+-		RESULT_VARIABLE _exec_error
+-	)
++			RESULT_VARIABLE _exec_error
++			)
+ 
+-	if (_exec_error)
+-		message(FATAL_ERROR "Configuration step of mbedcrypto failed with ${_exec_error}.")
++		if (_exec_error)
++			message(FATAL_ERROR "Configuration step of mbedcrypto failed with ${_exec_error}.")
++		endif()
+ 	endif()
+-endif()
+ 
+-#TODO: add dependnecy to generated project on this file!
+-#TODO: add custom target to rebuild mbedcrypto
++	#TODO: add dependnecy to generated project on this file!
++	#TODO: add custom target to rebuild mbedcrypto
+ 
+-#Build the library
+-execute_process(COMMAND
++	#Build the library
++	execute_process(COMMAND
+ 		${CMAKE_COMMAND} --build ${mbedcrypto_BINARY_DIR} -- install -j8
+ 		RESULT_VARIABLE _exec_error
+-	)
+-if (_exec_error)
+-	message(FATAL_ERROR "Build step of mbedcrypto failed with ${_exec_error}.")
+-endif()
++		)
++	if (_exec_error)
++		message(FATAL_ERROR "Build step of mbedcrypto failed with ${_exec_error}.")
++	endif()
++
++	add_library(mbedcrypto STATIC IMPORTED)
++	set_property(TARGET mbedcrypto PROPERTY IMPORTED_LOCATION "${MBEDCRYPTO_INSTALL_PATH}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}mbedcrypto${CMAKE_STATIC_LIBRARY_SUFFIX}")
++	set_property(TARGET mbedcrypto PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${MBEDCRYPTO_INSTALL_PATH}/include")
+ 
+-#Create an imported target to have clean abstraction in the build-system.
+-add_library(mbedcrypto STATIC IMPORTED)
+-set_property(TARGET mbedcrypto PROPERTY IMPORTED_LOCATION "${MBEDCRYPTO_INSTALL_PATH}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}mbedcrypto${CMAKE_STATIC_LIBRARY_SUFFIX}")
+-set_property(TARGET mbedcrypto PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${MBEDCRYPTO_INSTALL_PATH}/include")
++else()
++
++	find_library(mbedcrypto_lib mbedcrypto REQUIRED)
++	find_path(mbedcrypto_inc mbedtls/version.h REQUIRED)
++	add_library(mbedcrypto STATIC IMPORTED)
++	set_property(TARGET mbedcrypto PROPERTY IMPORTED_LOCATION "${mbedcrypto_lib}")
++	set_property(TARGET mbedcrypto PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${mbedcrypto_inc}")
+ 
++endif()
+diff --git a/external/nanopb/nanopb.cmake b/external/nanopb/nanopb.cmake
+index eda00e4..f6ac047 100644
+--- a/external/nanopb/nanopb.cmake
++++ b/external/nanopb/nanopb.cmake
+@@ -1,12 +1,12 @@
+ #-------------------------------------------------------------------------------
+-# Copyright (c) 2020, Arm Limited and Contributors. All rights reserved.
++# Copyright (c) 2020-2021, Arm Limited and Contributors. All rights reserved.
+ #
+ # SPDX-License-Identifier: BSD-3-Clause
+ #
+ #-------------------------------------------------------------------------------
+ 
+ #[===[.rst:
+-NonoPB integration for cmake
++NanoPB integration for cmake
+ ----------------------------
+ 
+ This module will:
+@@ -26,107 +26,135 @@ running this module.
+ 
+ #### Get the dependency
+ 
+-set(NANOPB_URL "https://github.com/nanopb/nanopb.git" CACHE STRING "nanopb repository URL")
+-set(NANOPB_REFSPEC "nanopb-0.4.2" CACHE STRING "nanopb git refspec")
+-set(NANOPB_INSTALL_PATH "${CMAKE_CURRENT_BINARY_DIR}/nanopb_install" CACHE PATH "nanopb installation directory")
+-set(NANOPB_PACKAGE_PATH "${NANOPB_INSTALL_PATH}/libnanopb/cmake" CACHE PATH "nanopb CMake package directory")
++if (NOT NANOPB_USE_INSTALLED)
+ 
+-include(FetchContent)
++	include(FetchContent)
+ 
+-# Checking git
+-find_program(GIT_COMMAND "git")
+-if (NOT GIT_COMMAND)
+-	message(FATAL_ERROR "Please install git")
+-endif()
++	set(NANOPB_INSTALL_PATH "${CMAKE_CURRENT_BINARY_DIR}/nanopb_install" CACHE PATH "nanopb installation directory")
++	set(NANOPB_PACKAGE_PATH "${NANOPB_INSTALL_PATH}/libnanopb/cmake" CACHE PATH "nanopb CMake package directory")
+ 
+-# Fetching nanopb
+-FetchContent_Declare(
+-	nanopb
+-	GIT_REPOSITORY ${NANOPB_URL}
+-	GIT_TAG ${NANOPB_REFSPEC}
+-	GIT_SHALLOW TRUE
+-	#See the .patch file for details on why it is needed.
+-	PATCH_COMMAND git stash
+-		COMMAND git apply ${CMAKE_CURRENT_LIST_DIR}/fix-pyhon-name.patch
+-)
+-
+-# FetchContent_GetProperties exports nanopb_SOURCE_DIR and nanopb_BINARY_DIR variables
+-FetchContent_GetProperties(nanopb)
+-if(NOT nanopb_POPULATED)
+-	message(STATUS "Fetching nanopb")
+-	FetchContent_Populate(nanopb)
+-endif()
++	if (NOT NANOPB_SOURCE_PATH)
+ 
+-#### Build the runtime and the generator.
+-if( NOT CMAKE_CROSSCOMPILING)
+-	execute_process(COMMAND
+-		${CMAKE_COMMAND}
+-				-DBUILD_SHARED_LIBS=Off
+-				-DBUILD_STATIC_LIBS=On
+-				-Dnanopb_BUILD_RUNTIME=On
+-				-Dnanopb_BUILD_GENERATOR=On
+-				-Dnanopb_PROTOC_PATH=${nanopb_SOURCE_DIR}/generator/protoc
+-				-Dnanopb_MSVC_STATIC_RUNTIME=Off
+-				-DCMAKE_INSTALL_PREFIX=${NANOPB_INSTALL_PATH}
+-				-DCMAKE_TOOLCHAIN_FILE=${TS_EXTERNAL_LIB_TOOLCHAIN_FILE}
+-				-GUnix\ Makefiles
+-				${nanopb_SOURCE_DIR}
+-			WORKING_DIRECTORY
+-				${nanopb_BINARY_DIR}
+-			RESULT_VARIABLE _exec_error
+-	)
+-else()
+-	execute_process(COMMAND
+-		${CMAKE_COMMAND}
+-				-DBUILD_SHARED_LIBS=Off
+-				-DBUILD_STATIC_LIBS=On
+-				-Dnanopb_BUILD_RUNTIME=On
+-				-Dnanopb_BUILD_GENERATOR=On
+-				-Dnanopb_PROTOC_PATH=${nanopb_SOURCE_DIR}/generator/protoc
+-				-Dnanopb_MSVC_STATIC_RUNTIME=Off
+-				-DCMAKE_INSTALL_PREFIX=${NANOPB_INSTALL_PATH}
+-				-DCMAKE_TOOLCHAIN_FILE=${TS_EXTERNAL_LIB_TOOLCHAIN_FILE}
+-				-DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY
+-				-GUnix\ Makefiles
+-				${nanopb_SOURCE_DIR}
+-			WORKING_DIRECTORY
+-				${nanopb_BINARY_DIR}
+-			RESULT_VARIABLE _exec_error
+-	)
+-endif()
++		set(NANOPB_URL "https://github.com/nanopb/nanopb.git" CACHE STRING "nanopb repository URL")
++		set(NANOPB_REFSPEC "nanopb-0.4.2" CACHE STRING "nanopb git refspec")
+ 
+-if (_exec_error)
+-	message(FATAL_ERROR "Configuration step of nanopb runtime failed with ${_exec_error}.")
+-endif()
++		# Checking git
++		find_program(GIT_COMMAND "git")
++		if (NOT GIT_COMMAND)
++			message(FATAL_ERROR "Please install git")
++		endif()
++
++		# Fetching nanopb
++		FetchContent_Declare(
++			nanopb
++			GIT_REPOSITORY ${NANOPB_URL}
++			GIT_TAG ${NANOPB_REFSPEC}
++			GIT_SHALLOW TRUE
++			#See the .patch file for details on why it is needed.
++			PATCH_COMMAND git stash
++			COMMAND git apply ${CMAKE_CURRENT_LIST_DIR}/fix-pyhon-name.patch
++			)
++
++	else()
+ 
+-execute_process(COMMAND
++		FetchContent_Declare(
++			nanopb
++			SOURCE_DIR ${NANOPB_SOURCE_PATH}
++			)
++
++	endif()
++
++	# FetchContent_GetProperties exports nanopb_SOURCE_DIR and nanopb_BINARY_DIR variables
++	FetchContent_GetProperties(nanopb)
++	if(NOT nanopb_POPULATED)
++		message(STATUS "Fetching nanopb")
++		FetchContent_Populate(nanopb)
++	endif()
++
++	#### Build the runtime and the generator.
++	if( NOT CMAKE_CROSSCOMPILING)
++		execute_process(COMMAND
++			${CMAKE_COMMAND}
++			-DBUILD_SHARED_LIBS=Off
++			-DBUILD_STATIC_LIBS=On
++			-Dnanopb_BUILD_RUNTIME=On
++			-Dnanopb_BUILD_GENERATOR=On
++			-Dnanopb_PROTOC_PATH=${nanopb_SOURCE_DIR}/generator/protoc
++			-Dnanopb_MSVC_STATIC_RUNTIME=Off
++			-DCMAKE_INSTALL_PREFIX=${NANOPB_INSTALL_PATH}
++			-DCMAKE_TOOLCHAIN_FILE=${TS_EXTERNAL_LIB_TOOLCHAIN_FILE}
++			-GUnix\ Makefiles
++			${nanopb_SOURCE_DIR}
++		WORKING_DIRECTORY
++			${nanopb_BINARY_DIR}
++		RESULT_VARIABLE _exec_error
++			)
++	else()
++		execute_process(COMMAND
++			${CMAKE_COMMAND}
++			-DBUILD_SHARED_LIBS=Off
++			-DBUILD_STATIC_LIBS=On
++			-Dnanopb_BUILD_RUNTIME=On
++			-Dnanopb_BUILD_GENERATOR=On
++			-Dnanopb_PROTOC_PATH=${nanopb_SOURCE_DIR}/generator/protoc
++			-Dnanopb_MSVC_STATIC_RUNTIME=Off
++			-DCMAKE_INSTALL_PREFIX=${NANOPB_INSTALL_PATH}
++			-DCMAKE_TOOLCHAIN_FILE=${TS_EXTERNAL_LIB_TOOLCHAIN_FILE}
++			-DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY
++			-GUnix\ Makefiles
++			${nanopb_SOURCE_DIR}
++		WORKING_DIRECTORY
++			${nanopb_BINARY_DIR}
++		RESULT_VARIABLE _exec_error
++			)
++	endif()
++
++	if (_exec_error)
++		message(FATAL_ERROR "Configuration step of nanopb runtime failed with ${_exec_error}.")
++	endif()
++
++	execute_process(COMMAND
+ 		${CMAKE_COMMAND} --build ${nanopb_BINARY_DIR} -- install -j8
+ 		RESULT_VARIABLE _exec_error
+-	)
+-if (_exec_error)
+-	message(FATAL_ERROR "Build step of nanopb runtime failed with ${_exec_error}.")
+-endif()
++		)
++	if (_exec_error)
++		message(FATAL_ERROR "Build step of nanopb runtime failed with ${_exec_error}.")
++	endif()
+ 
+-#### Include Nanopb runtime in the build.
+-find_package(Nanopb
+-			PATHS "${NANOPB_INSTALL_PATH}"
+-			NO_DEFAULT_PATH
++	#### Include Nanopb runtime in the build.
++	find_package(Nanopb
++		PATHS "${NANOPB_INSTALL_PATH}"
++		NO_DEFAULT_PATH
+ 		)
+ 
+-#### Build access to the protobuf compiler
+-#TODO: verify protoc dependencies: python3-protobuf
+-find_package(Python3 COMPONENTS Interpreter)
++else()
++
++	#### Build access to the protobuf compiler
++	#TODO: verify protoc dependencies: python3-protobuf
++	find_package(Nanopb REQUIRED)
++
++endif()
+ 
++find_package(Python3 COMPONENTS Interpreter)
+ if (NOT Python3_Interpreter_FOUND)
+ 	message(FATAL_ERROR "Failed to find python3 interpreter.")
+ endif()
+ 
+-find_file(NANOPB_GENERATOR_PATH
+-			NAMES nanopb_generator.py
+-			PATHS ${nanopb_SOURCE_DIR}/generator
+-			DOC "nanopb protobuf compiler"
+-			NO_DEFAULT_PATH
++if (NOT NANOPB_USE_INSTALLED)
++	find_file(NANOPB_GENERATOR_PATH
++		NAMES nanopb_generator.py
++		PATHS "${nanopb_SOURCE_DIR}/generator"
++		DOC "nanopb protobuf compiler"
++		REQUIRED
++		NO_DEFAULT_PATH
++		)
++else()
++	find_file(NANOPB_GENERATOR_PATH
++		NAMES nanopb_generator.py
++		DOC "nanopb protobuf compiler"
++		REQUIRED
+ 		)
++endif()
+ 
+ if (NOT NANOPB_GENERATOR_PATH)
+ 	message(FATAL_ERROR "Nanopb generator was not found!")
+-- 
+2.29.2
+

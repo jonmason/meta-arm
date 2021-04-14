@@ -1,0 +1,49 @@
+From 0075dc6cf30df6a2d91ab3870dabed4ac220a468 Mon Sep 17 00:00:00 2001
+From: Ben Horgan <ben.horgan@arm.com>
+Date: Mon, 22 Mar 2021 11:00:40 +0000
+Subject: [PATCH 11/13] aarch64: Allow the stack to be further than 1MB from
+ where it is set up
+
+Trusted-services crypto  was previously building with the linaro 7.5
+ aarch64-linux-gnu but not with arm 10.2 aarch64-none-linux-gnu.
+Build error was:
+aarch64/sp_entrypoint.S:22:(.text.sp_entrypoint+0x0):
+ relocation truncated to fit: R_AARCH64_ADR_PREL_LO21 against `.bss.stacks'
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Ben Horgan <ben.horgan@arm.com>
+Change-Id: Ia422722c986bce50543f026ccbad728e6938f2b0
+Signed-off-by: Ben Horgan <ben.horgan@arm.com>
+---
+ environments/shim/aarch64/sp_entrypoint.S | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/environments/shim/aarch64/sp_entrypoint.S b/environments/shim/aarch64/sp_entrypoint.S
+index 8ef330b..ee7f84d 100644
+--- a/environments/shim/aarch64/sp_entrypoint.S
++++ b/environments/shim/aarch64/sp_entrypoint.S
+@@ -12,17 +12,18 @@
+ 	.globl	sp_entrypoint
+ 
+ .section .bss.stacks
+-	.balign CACHE_WRITEBACK_GRANULE
++	.balign	CACHE_WRITEBACK_GRANULE
+ 	.fill	SP_STACKS_SIZE
+ stacks_end:
+ 
+ func sp_entrypoint
+ 
+ 	/* Setup the stack pointer. */
+-	adr	x0, stacks_end
++	adrp	x0, stacks_end
++	add	x0, x0, :lo12:stacks_end
+ 	mov	sp, x0
+ 	/* Mask FIQs */
+-	msr     daifset, #DAIF_FIQ_BIT
++	msr	daifset, #DAIF_FIQ_BIT
+ 	isb
+ 
+ 	/* And jump to the C entrypoint. */
+-- 
+2.29.2
+
