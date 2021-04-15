@@ -1,30 +1,32 @@
-From e8042fda56aa470cdda723757a957a81cd95dde8 Mon Sep 17 00:00:00 2001
+From fd177558a1da73fa7e10f8b2997864bb76d66dc8 Mon Sep 17 00:00:00 2001
 From: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
-Date: Tue, 2 Feb 2021 12:12:32 +0000
-Subject: [PATCH] tc0: Add Theodul DSU support
+Date: Thu, 15 Apr 2021 10:46:33 +0100
+Subject: [PATCH] tc0: Add Theodul DSU support and GICR changes
 
 Signed-off-by: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
-Upstream-Status: Pending [Not submitted to upstream yet]
 Change-Id: I4a9b7e4350410fdacccd8c12ff03a61b7e64e98b
+Upstream-Status: Pending [Not submitted to upstream yet]
 ---
  project/reference/BUILD.gn | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/project/reference/BUILD.gn b/project/reference/BUILD.gn
 index 5596009..ffcaab7 100644
 --- a/project/reference/BUILD.gn
 +++ b/project/reference/BUILD.gn
-@@ -159,8 +159,8 @@ aarch64_toolchains("secure_tc0") {
+@@ -160,9 +160,9 @@ aarch64_toolchains("secure_tc0") {
+   iommu = "//src/iommu:absent"
    gic_version = 3
    gicd_base_address = "0x30000000"
-   gicr_base_address = "0x30140000"
+-  gicr_base_address = "0x30140000"
 -  heap_pages = 60
 -  max_cpus = 4
++  gicr_base_address = "0x30080000"
 +  heap_pages = 80
 +  max_cpus = 8
    max_vms = 16
    toolchain_args = {
-     secure_world = "1"
+     plat_psci = "//src/arch/aarch64/plat/psci:spmc"
 -- 
 2.29.2
 

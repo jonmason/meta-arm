@@ -1,0 +1,256 @@
+From 7a8b0d634b23e77bb6c84f1b34c5cc031aa8c105 Mon Sep 17 00:00:00 2001
+From: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+Date: Mon, 12 Apr 2021 10:08:29 +0100
+Subject: [PATCH 1/3] Revert "FFA: Set and verify allocator of memory handle"
+
+This reverts commit 917d2f2dc46b20625156e9067329e04c7fec587d.
+Reverting this commit enables memory sharing between SPs
+
+Upstream-Status: Inappropriate [will not be submitted as its only required for ACK 5.4]
+---
+ inc/hf/arch/ffa_memory_handle.h               | 25 ----------------
+ inc/vmapi/hf/ffa.h                            | 14 ++++-----
+ src/api.c                                     |  4 +--
+ src/arch/aarch64/hypervisor/BUILD.gn          |  1 -
+ .../aarch64/hypervisor/ffa_memory_handle.c    | 29 -------------------
+ src/arch/fake/hypervisor/BUILD.gn             |  1 -
+ src/arch/fake/hypervisor/ffa_memory_handle.c  | 20 -------------
+ src/ffa_memory.c                              | 19 ++++--------
+ 8 files changed, 14 insertions(+), 99 deletions(-)
+ delete mode 100644 inc/hf/arch/ffa_memory_handle.h
+ delete mode 100644 src/arch/aarch64/hypervisor/ffa_memory_handle.c
+ delete mode 100644 src/arch/fake/hypervisor/ffa_memory_handle.c
+
+diff --git a/inc/hf/arch/ffa_memory_handle.h b/inc/hf/arch/ffa_memory_handle.h
+deleted file mode 100644
+index 9eba5d4..0000000
+--- a/inc/hf/arch/ffa_memory_handle.h
++++ /dev/null
+@@ -1,25 +0,0 @@
+-/*
+- * Copyright 2021 The Hafnium Authors.
+- *
+- * Use of this source code is governed by a BSD-style
+- * license that can be found in the LICENSE file or at
+- * https://opensource.org/licenses/BSD-3-Clause.
+- */
+-
+-#ifndef FFA_MEMORY_HANDLE_H
+-#define FFA_MEMORY_HANDLE_H
+-
+-#include "hf/ffa.h"
+-
+-/**
+- * Encodes memory handle according to section 5.10.2 of the FF-A v1.0 spec.
+- */
+-ffa_memory_handle_t ffa_memory_handle_make(uint64_t index);
+-
+-/**
+- * Checks whether given handle was allocated by current world, according to
+- * handle encoding rules.
+- */
+-bool ffa_memory_handle_allocated_by_current_world(ffa_memory_handle_t handle);
+-
+-#endif
+diff --git a/inc/vmapi/hf/ffa.h b/inc/vmapi/hf/ffa.h
+index a79f2eb..a948930 100644
+--- a/inc/vmapi/hf/ffa.h
++++ b/inc/vmapi/hf/ffa.h
+@@ -189,23 +189,21 @@ ATTR_FUNCTION_SET(memory_shareability, ffa_memory_attributes_t,
+ ATTR_FUNCTION_GET(memory_shareability, ffa_memory_attributes_t,
+ 		  FFA_MEMORY_SHAREABILITY_OFFSET, FFA_MEMORY_SHAREABILITY_MASK)
+ 
+-/**
+- * A globally-unique ID assigned by the hypervisor for a region of memory being
+- * sent between VMs.
+- */
+-typedef uint64_t ffa_memory_handle_t;
+-
+ #define FFA_MEMORY_HANDLE_ALLOCATOR_MASK \
+ 	((ffa_memory_handle_t)(UINT64_C(1) << 63))
+ #define FFA_MEMORY_HANDLE_ALLOCATOR_HYPERVISOR \
+ 	((ffa_memory_handle_t)(UINT64_C(1) << 63))
+-
+-#define FFA_MEMORY_HANDLE_ALLOCATOR_SPMC (UINT64_C(0) << 63)
+ #define FFA_MEMORY_HANDLE_INVALID (~UINT64_C(0))
+ 
+ /** The ID of a VM. These are assigned sequentially starting with an offset. */
+ typedef uint16_t ffa_vm_id_t;
+ 
++/**
++ * A globally-unique ID assigned by the hypervisor for a region of memory being
++ * sent between VMs.
++ */
++typedef uint64_t ffa_memory_handle_t;
++
+ /**
+  * A count of VMs. This has the same range as the VM IDs but we give it a
+  * different name to make the different semantics clear.
+diff --git a/src/api.c b/src/api.c
+index fa5c9b7..16626b6 100644
+--- a/src/api.c
++++ b/src/api.c
+@@ -9,7 +9,6 @@
+ #include "hf/api.h"
+ 
+ #include "hf/arch/cpu.h"
+-#include "hf/arch/ffa_memory_handle.h"
+ #include "hf/arch/mm.h"
+ #include "hf/arch/other_world.h"
+ #include "hf/arch/timer.h"
+@@ -2158,7 +2157,8 @@ struct ffa_value api_ffa_mem_reclaim(ffa_memory_handle_t handle,
+ 	struct vm *to = current->vm;
+ 	struct ffa_value ret;
+ 
+-	if (ffa_memory_handle_allocated_by_current_world(handle)) {
++	if ((handle & FFA_MEMORY_HANDLE_ALLOCATOR_MASK) ==
++	    FFA_MEMORY_HANDLE_ALLOCATOR_HYPERVISOR) {
+ 		struct vm_locked to_locked = vm_lock(to);
+ 
+ 		ret = ffa_memory_reclaim(to_locked, handle, flags,
+diff --git a/src/arch/aarch64/hypervisor/BUILD.gn b/src/arch/aarch64/hypervisor/BUILD.gn
+index 8f57598..0f9c15e 100644
+--- a/src/arch/aarch64/hypervisor/BUILD.gn
++++ b/src/arch/aarch64/hypervisor/BUILD.gn
+@@ -17,7 +17,6 @@ offset_size_header("offsets") {
+ source_set("other_world") {
+   public_configs = [ "//src/arch/aarch64:config" ]
+   sources = [
+-    "ffa_memory_handle.c",
+     "other_world.c",
+   ]
+   deps = [
+diff --git a/src/arch/aarch64/hypervisor/ffa_memory_handle.c b/src/arch/aarch64/hypervisor/ffa_memory_handle.c
+deleted file mode 100644
+index 647186d..0000000
+--- a/src/arch/aarch64/hypervisor/ffa_memory_handle.c
++++ /dev/null
+@@ -1,29 +0,0 @@
+-/*
+- * Copyright 2021 The Hafnium Authors.
+- *
+- * Use of this source code is governed by a BSD-style
+- * license that can be found in the LICENSE file or at
+- * https://opensource.org/licenses/BSD-3-Clause.
+- */
+-
+-#include "hf/arch/ffa_memory_handle.h"
+-
+-ffa_memory_handle_t ffa_memory_handle_make(uint64_t index)
+-{
+-#if SECURE_WORLD == 1
+-	return (index & ~FFA_MEMORY_HANDLE_ALLOCATOR_MASK) |
+-	       FFA_MEMORY_HANDLE_ALLOCATOR_SPMC;
+-#else
+-	return index | FFA_MEMORY_HANDLE_ALLOCATOR_HYPERVISOR;
+-#endif
+-}
+-
+-bool ffa_memory_handle_allocated_by_current_world(ffa_memory_handle_t handle)
+-{
+-	return (handle & FFA_MEMORY_HANDLE_ALLOCATOR_MASK) ==
+-#if SECURE_WORLD == 1
+-	       FFA_MEMORY_HANDLE_ALLOCATOR_SPMC;
+-#else
+-	       FFA_MEMORY_HANDLE_ALLOCATOR_HYPERVISOR;
+-#endif
+-}
+diff --git a/src/arch/fake/hypervisor/BUILD.gn b/src/arch/fake/hypervisor/BUILD.gn
+index 8f28802..97a82f6 100644
+--- a/src/arch/fake/hypervisor/BUILD.gn
++++ b/src/arch/fake/hypervisor/BUILD.gn
+@@ -16,7 +16,6 @@ source_set("hypervisor") {
+ 
+ source_set("other_world") {
+   sources = [
+-    "ffa_memory_handle.c",
+     "other_world.c",
+   ]
+ }
+diff --git a/src/arch/fake/hypervisor/ffa_memory_handle.c b/src/arch/fake/hypervisor/ffa_memory_handle.c
+deleted file mode 100644
+index 9091295..0000000
+--- a/src/arch/fake/hypervisor/ffa_memory_handle.c
++++ /dev/null
+@@ -1,20 +0,0 @@
+-/*
+- * Copyright 2021 The Hafnium Authors.
+- *
+- * Use of this source code is governed by a BSD-style
+- * license that can be found in the LICENSE file or at
+- * https://opensource.org/licenses/BSD-3-Clause.
+- */
+-
+-#include "hf/arch/ffa_memory_handle.h"
+-
+-ffa_memory_handle_t ffa_memory_handle_make(uint64_t index)
+-{
+-	return index;
+-}
+-
+-bool ffa_memory_handle_allocated_by_current_world(ffa_memory_handle_t handle)
+-{
+-	(void)handle;
+-	return true;
+-}
+diff --git a/src/ffa_memory.c b/src/ffa_memory.c
+index 8b28191..00ec68c 100644
+--- a/src/ffa_memory.c
++++ b/src/ffa_memory.c
+@@ -8,7 +8,6 @@
+ 
+ #include "hf/ffa_memory.h"
+ 
+-#include "hf/arch/ffa_memory_handle.h"
+ #include "hf/arch/other_world.h"
+ 
+ #include "hf/api.h"
+@@ -121,14 +120,6 @@ static struct ffa_memory_share_state share_states[MAX_MEM_SHARES];
+ alignas(PAGE_SIZE) static uint8_t
+ 	tee_retrieve_buffer[HF_MAILBOX_SIZE * MAX_FRAGMENTS];
+ 
+-/**
+- * Extracts the index from a memory handle allocated by Hafnium's current world.
+- */
+-uint64_t ffa_memory_handle_get_index(ffa_memory_handle_t handle)
+-{
+-	return handle & ~FFA_MEMORY_HANDLE_ALLOCATOR_MASK;
+-}
+-
+ /**
+  * Initialises the next available `struct ffa_memory_share_state` and sets
+  * `share_state_ret` to a pointer to it. If `handle` is
+@@ -159,7 +150,8 @@ static bool allocate_share_state(
+ 
+ 			if (handle == FFA_MEMORY_HANDLE_INVALID) {
+ 				memory_region->handle =
+-					ffa_memory_handle_make(i);
++					i |
++					FFA_MEMORY_HANDLE_ALLOCATOR_HYPERVISOR;
+ 			} else {
+ 				memory_region->handle = handle;
+ 			}
+@@ -213,7 +205,7 @@ static bool get_share_state(struct share_states_locked share_states,
+ 			    struct ffa_memory_share_state **share_state_ret)
+ {
+ 	struct ffa_memory_share_state *share_state;
+-	uint64_t index;
++	uint32_t index;
+ 
+ 	CHECK(share_states.share_states != NULL);
+ 	CHECK(share_state_ret != NULL);
+@@ -222,8 +214,9 @@ static bool get_share_state(struct share_states_locked share_states,
+ 	 * First look for a share_state allocated by us, in which case the
+ 	 * handle is based on the index.
+ 	 */
+-	if (ffa_memory_handle_allocated_by_current_world(handle)) {
+-		index = ffa_memory_handle_get_index(handle);
++	if ((handle & FFA_MEMORY_HANDLE_ALLOCATOR_MASK) ==
++	    FFA_MEMORY_HANDLE_ALLOCATOR_HYPERVISOR) {
++		index = handle & ~FFA_MEMORY_HANDLE_ALLOCATOR_MASK;
+ 		if (index < MAX_MEM_SHARES) {
+ 			share_state = &share_states.share_states[index];
+ 			if (share_state->share_func != 0) {
+-- 
+2.29.2
+

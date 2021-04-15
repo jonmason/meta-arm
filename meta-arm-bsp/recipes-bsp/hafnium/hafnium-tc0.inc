@@ -1,16 +1,15 @@
 # TC0 specific configuration
 
 # Intermediate SHA with 2.4 baseline version, required for OP-TEE SEL1 support
-SRCREV = "fe7f737ec20add15d49c587ebeb55f7ea0118226"
+SRCREV = "2904b2c5361f06d35c324f37d2e71e3278d351a7"
 PV = "2.4+git${SRCPV}"
 
 FILESEXTRAPATHS_prepend_tc0 := "${THISDIR}/files/tc0:"
 
 SRC_URI_append = " \
-    file://0001-FF-A-Register-secondary-core-entry-point-at-SPMC-ini.patch \
-    file://0002-FF-A-Cold-boot-and-wake-up-from-suspend.patch \
-    file://0003-FF-A-Respond-to-PSCI_CPU_OFF-from-SPMD.patch \
-    file://0004-tc0-Add-Theodul-DSU-support.patch \
+    file://0001-Revert-FFA-Set-and-verify-allocator-of-memory-handle.patch \
+    file://0002-FF-A-Fix-to-fetch-proper-vCPU-index-for-UP-SP.patch \
+    file://0003-tc0-Theodul-GICR-changes.patch \
     "
 
 COMPATIBLE_MACHINE = "tc0"
