@@ -25,6 +25,8 @@ SRC_URI_append = " \
     file://0009-plat-totalcompute-add-Theodul-DSU-support.patch \
     file://0010-WIP-OP-TEE-SP-declare-device-regions-in-manifest.patch \
     file://0011-WIP-OP-TEE-SP-use-CNTVCT-in-place-of-CNTVCT.patch \
+    file://0012-core-Add-FFA_SECONDARY_EP_REGISTER-support.patch \
+    file://0013-core-arm-modify-FFA-ABIs-with-supported-convention.patch \
     "
 
 COMPATIBLE_MACHINE = "tc0"

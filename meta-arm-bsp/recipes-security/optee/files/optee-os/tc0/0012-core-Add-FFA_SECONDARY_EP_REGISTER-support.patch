@@ -1,0 +1,155 @@
+From 5d903d035e376e3b4c411e4f8947f6508ef577d9 Mon Sep 17 00:00:00 2001
+From: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+Date: Mon, 12 Apr 2021 15:42:29 +0100
+Subject: [PATCH 1/2] core: Add FFA_SECONDARY_EP_REGISTER support
+
+Signed-off-by: Olivier Deprez <olivier.deprez@arm.com>
+Signed-off-by: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+Change-Id: I806b07b815278512abaecc7c77b29a0d395e3d35
+Upstream-Status: Pending [Not submitted to upstream yet]
+---
+ core/arch/arm/include/ffa.h                   |  3 +-
+ core/arch/arm/include/kernel/boot.h           |  3 +-
+ core/arch/arm/kernel/entry_a64.S              |  3 +-
+ core/arch/arm/plat-totalcompute/tc0_spmc_pm.c | 55 ++++---------------
+ 4 files changed, 17 insertions(+), 47 deletions(-)
+
+diff --git a/core/arch/arm/include/ffa.h b/core/arch/arm/include/ffa.h
+index 6c78dacc..f5480c00 100644
+--- a/core/arch/arm/include/ffa.h
++++ b/core/arch/arm/include/ffa.h
+@@ -1,7 +1,7 @@
+ /* SPDX-License-Identifier: BSD-3-Clause */
+ /*
+  * Copyright (c) 2020, Linaro Limited
+- * Copyright (c) 2018-2019, Arm Limited. All rights reserved.
++ * Copyright (c) 2018-2021, Arm Limited. All rights reserved.
+  */
+ 
+ #ifndef __FFA_H
+@@ -68,6 +68,7 @@
+ #define FFA_MEM_RECLAIM			U(0x84000077)
+ #define FFA_MEM_FRAG_RX			U(0x8400007A)
+ #define FFA_MEM_FRAG_TX			U(0x8400007B)
++#define FFA_SECONDARY_EP_REGISTER_64	U(0xC4000084)
+ 
+ /* Special value for traffic targeted to the Hypervisor or SPM */
+ #define FFA_TARGET_INFO_MBZ		U(0x0)
+diff --git a/core/arch/arm/include/kernel/boot.h b/core/arch/arm/include/kernel/boot.h
+index 278d514f..30eb1596 100644
+--- a/core/arch/arm/include/kernel/boot.h
++++ b/core/arch/arm/include/kernel/boot.h
+@@ -1,6 +1,7 @@
+ /* SPDX-License-Identifier: BSD-2-Clause */
+ /*
+  * Copyright (c) 2015-2020, Linaro Limited
++ * Copyright (c) 2021, Arm Limited. All rights reserved.
+  */
+ #ifndef __KERNEL_BOOT_H
+ #define __KERNEL_BOOT_H
+@@ -86,6 +87,6 @@ void *get_external_dt(void);
+ 
+ unsigned long get_aslr_seed(void *fdt);
+ 
+-void ffa_secondary_cpu_boot_req(vaddr_t secondary_ep, uint64_t cookie);
++void ffa_secondary_cpu_ep_register(vaddr_t secondary_ep);
+ 
+ #endif /* __KERNEL_BOOT_H */
+diff --git a/core/arch/arm/kernel/entry_a64.S b/core/arch/arm/kernel/entry_a64.S
+index 9ae6b32e..7d7b8aaf 100644
+--- a/core/arch/arm/kernel/entry_a64.S
++++ b/core/arch/arm/kernel/entry_a64.S
+@@ -1,6 +1,7 @@
+ /* SPDX-License-Identifier: BSD-2-Clause */
+ /*
+  * Copyright (c) 2015, Linaro Limited
++ * Copyright (c) 2021, Arm Limited. All rights reserved.
+  */
+ 
+ #include <platform_config.h>
+@@ -239,7 +240,7 @@ clear_nex_bss:
+ 	 */
+ 	ldr	x1, boot_mmu_config + CORE_MMU_CONFIG_LOAD_OFFSET
+ 	sub	x0, x0, x1
+-	bl	ffa_secondary_cpu_boot_req
++	bl	ffa_secondary_cpu_ep_register
+ 	b	thread_ffa_msg_wait
+ #else
+ 	/*
+diff --git a/core/arch/arm/plat-totalcompute/tc0_spmc_pm.c b/core/arch/arm/plat-totalcompute/tc0_spmc_pm.c
+index 3fb32823..f31324b9 100644
+--- a/core/arch/arm/plat-totalcompute/tc0_spmc_pm.c
++++ b/core/arch/arm/plat-totalcompute/tc0_spmc_pm.c
+@@ -1,6 +1,6 @@
+ // SPDX-License-Identifier: BSD-2-Clause
+ /*
+- * Copyright (c) 2020, Arm Limited
++ * Copyright (c) 2020 - 2021, Arm Limited
+  */
+ 
+ #include <arm.h>
+@@ -8,51 +8,18 @@
+ #include <ffa.h>
+ #include <sm/psci.h>
+ 
+-/*
+- * Lookup table of core and cluster affinities on the TC0. In the absence of a
+- * DT that provides the same information, this table is used to initialise
+- * OP-TEE on secondary cores.
+- */
+-static const uint64_t core_clus_aff_array[] = {
+-	0x0000,		/* Cluster 0 Cpu 0 */
+-	0x0001,		/* Cluster 0 Cpu 1 */
+-	0x0002,		/* Cluster 0 Cpu 2 */
+-	0x0003,		/* Cluster 0 Cpu 3 */
+-	0x0004,		/* Cluster 0 Cpu 4 */
+-	0x0005,		/* Cluster 0 Cpu 5 */
+-	0x0006,		/* Cluster 0 Cpu 6 */
+-	0x0007		/* Cluster 0 Cpu 7 */
+-};
+-
+-void ffa_secondary_cpu_boot_req(vaddr_t secondary_ep, uint64_t cookie)
++void ffa_secondary_cpu_ep_register(vaddr_t secondary_ep)
+ {
+-	unsigned long mpidr = read_mpidr();
+-	unsigned int aff_shift = 0;
+-	unsigned long a1 = 0;
+-	unsigned int cnt = 0;
+-	int32_t ret = 0;
+-
+-	if (mpidr & MPIDR_MT_MASK)
+-		aff_shift = MPIDR_CLUSTER_SHIFT;
++	unsigned int ret = 0;
+ 
+-	for (cnt = 0; cnt < ARRAY_SIZE(core_clus_aff_array); cnt++) {
+-		/* Clear out the affinity fields until level 2 */
+-		a1 = mpidr & ~(unsigned long)MPIDR_AARCH32_AFF_MASK;
++	/* Invoke FFA_SECONDARY_EP_REGISTER_64 to the SPMC */
++	ret = thread_smc(FFA_SECONDARY_EP_REGISTER_64, secondary_ep, 0, 0);
+ 
+-		/* Create an mpidr from core_clus_aff_array */
+-		a1 |= core_clus_aff_array[cnt] << aff_shift;
+-
+-		/* Ignore current cpu */
+-		if (a1 == mpidr)
+-			continue;
+-
+-		/* Invoke the PSCI_CPU_ON_SMC64 function */
+-		ret = thread_smc(PSCI_CPU_ON_SMC64, a1, secondary_ep, cookie);
+-
+-		if (ret != PSCI_RET_SUCCESS)
+-			EMSG("PSCI_CPU_ON op on mpidr 0x%lx failed %"PRId32,
+-			     a1, ret);
+-		else
+-			DMSG("PSCI_CPU_ON op on mpidr 0x%lx done", a1);
++	if (ret != FFA_SUCCESS_32) {
++		EMSG("FFA_SECONDARY_EP_REGISTER_64 ret %"PRId32, ret);
++	} else {
++		DMSG("FFA_SECONDARY_EP_REGISTER_64 done");
+ 	}
++
++	return;
+ }
+-- 
+2.29.2
+
