@@ -35,7 +35,7 @@ local_conf_header:
     PACKAGECONFIG_append_pn-perf = " coresight"
     ERROR_QA = "${WARN_QA}"
     INHERIT_remove = "uninative"
-  ptest: |
+  noptest: |
     DISTRO_FEATURES_remove = "ptest"
 
 machine: unset
