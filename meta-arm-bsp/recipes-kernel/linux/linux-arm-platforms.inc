@@ -83,6 +83,8 @@ SRC_URI_append_tc0 = " \
     file://0013-tee-optee-fix-mem-handle-removal-in-ffa_shm_unregist.patch \
     file://0014-arm64-Add-support-for-asymmetric-AArch32-EL0-configu.patch \
     file://0015-arm64-smp-Prevent-hotplugging-the-last-AArch32-able-.patch \
+    file://0016-drivers-buf-Add-userspace-ff-a-driver-buf-and-add-to.patch \
+    file://0017-drivers-ffa-modify-FFA-ABIs-with-supported-conventio.patch \
     "
 
 #
