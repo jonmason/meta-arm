@@ -1,0 +1,817 @@
+From 6be977b3196b555cdee0758a380102264410f651 Mon Sep 17 00:00:00 2001
+From: Usama Arif <usama.arif@arm.com>
+Date: Sun, 31 Jan 2021 22:13:07 +0000
+Subject: [PATCH 1/2] product/tc0: add clock and dvfs support for all cores.
+
+This patch corrects the OPPs of cores 0-3 (klein cores)
+and adds the right OPPs for matterhorn cores.
+
+Signed-off-by: Usama Arif <usama.arif@arm.com>
+Change-Id: I1070d71c29ca2d06f9945708c135fa812b172003
+
+Upstream-Status: Backport [https://github.com/ARM-software/SCP-firmware/commit/a550dd1042ecc1e6191ea2636b67d370ee865024]
+Signed-off-by: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+---
+ product/tc0/include/clock_soc.h           |  15 +++-
+ product/tc0/include/scp_soc_mmap.h        |   4 +
+ product/tc0/include/tc0_timer.h           |   3 +-
+ product/tc0/scp_ramfw/config_clock.c      |  18 +++-
+ product/tc0/scp_ramfw/config_css_clock.c  | 105 +++++++++++++++++++---
+ product/tc0/scp_ramfw/config_dvfs.c       |  62 +++++++++++--
+ product/tc0/scp_ramfw/config_mock_psu.c   |  16 +++-
+ product/tc0/scp_ramfw/config_pik_clock.c  |  77 +++++++++++++---
+ product/tc0/scp_ramfw/config_psu.c        |  11 ++-
+ product/tc0/scp_ramfw/config_scmi_perf.c  |   1 +
+ product/tc0/scp_ramfw/config_system_pll.c |  19 +++-
+ product/tc0/scp_romfw/config_clock.c      |   6 +-
+ product/tc0/scp_romfw/config_css_clock.c  |  40 ++++-----
+ product/tc0/scp_romfw/config_pik_clock.c  |  20 ++---
+ product/tc0/scp_romfw/config_system_pll.c |   6 +-
+ 15 files changed, 327 insertions(+), 76 deletions(-)
+
+diff --git a/product/tc0/include/clock_soc.h b/product/tc0/include/clock_soc.h
+index 3e05bbab..2c2805c0 100644
+--- a/product/tc0/include/clock_soc.h
++++ b/product/tc0/include/clock_soc.h
+@@ -17,7 +17,8 @@
+  * PLL clock indexes.
+  */
+ enum clock_pll_idx {
+-    CLOCK_PLL_IDX_CPU0,
++    CLOCK_PLL_IDX_CPU_KLEIN,
++    CLOCK_PLL_IDX_CPU_MATTERHORN,
+     CLOCK_PLL_IDX_SYS,
+     CLOCK_PLL_IDX_INTERCONNECT,
+     CLOCK_PLL_IDX_DPU,
+@@ -30,11 +31,15 @@ enum clock_pll_idx {
+  * PIK clock indexes.
+  */
+ enum clock_pik_idx {
++    CLOCK_PIK_IDX_INTERCONNECT,
+     CLOCK_PIK_IDX_CLUS0_CPU0,
+     CLOCK_PIK_IDX_CLUS0_CPU1,
+     CLOCK_PIK_IDX_CLUS0_CPU2,
+     CLOCK_PIK_IDX_CLUS0_CPU3,
+-    CLOCK_PIK_IDX_INTERCONNECT,
++    CLOCK_PIK_IDX_CLUS0_CPU4,
++    CLOCK_PIK_IDX_CLUS0_CPU5,
++    CLOCK_PIK_IDX_CLUS0_CPU6,
++    CLOCK_PIK_IDX_CLUS0_CPU7,
+     CLOCK_PIK_IDX_SCP,
+     CLOCK_PIK_IDX_GIC,
+     CLOCK_PIK_IDX_PCLKSCP,
+@@ -48,7 +53,8 @@ enum clock_pik_idx {
+  * CSS clock indexes.
+  */
+ enum clock_css_idx {
+-    CLOCK_CSS_IDX_CPU_GROUP0,
++    CLOCK_CSS_IDX_CPU_GROUP_KLEIN,
++    CLOCK_CSS_IDX_CPU_GROUP_MATTERHORN,
+     CLOCK_CSS_IDX_DPU,
+     CLOCK_CSS_IDX_COUNT
+ };
+@@ -58,7 +64,8 @@ enum clock_css_idx {
+  */
+ enum clock_idx {
+     CLOCK_IDX_INTERCONNECT,
+-    CLOCK_IDX_CPU_GROUP0,
++    CLOCK_IDX_CPU_GROUP_KLEIN,
++    CLOCK_IDX_CPU_GROUP_MATTERHORN,
+     CLOCK_IDX_DPU,
+     CLOCK_IDX_PIXEL_0,
+     CLOCK_IDX_PIXEL_1,
+diff --git a/product/tc0/include/scp_soc_mmap.h b/product/tc0/include/scp_soc_mmap.h
+index 14f8a8d5..774bbc29 100644
+--- a/product/tc0/include/scp_soc_mmap.h
++++ b/product/tc0/include/scp_soc_mmap.h
+@@ -22,5 +22,9 @@
+ #define SCP_PLL_CPU1 (SCP_PLL_BASE + 0x00000104)
+ #define SCP_PLL_CPU2 (SCP_PLL_BASE + 0x00000108)
+ #define SCP_PLL_CPU3 (SCP_PLL_BASE + 0x0000010C)
++#define SCP_PLL_CPU4 (SCP_PLL_BASE + 0x00000110)
++#define SCP_PLL_CPU5 (SCP_PLL_BASE + 0x00000114)
++#define SCP_PLL_CPU6 (SCP_PLL_BASE + 0x00000118)
++#define SCP_PLL_CPU7 (SCP_PLL_BASE + 0x0000011C)
+ 
+ #endif /* SCP_SOC_MMAP_H */
+diff --git a/product/tc0/include/tc0_timer.h b/product/tc0/include/tc0_timer.h
+index 03d6893c..6f4bf06c 100644
+--- a/product/tc0/include/tc0_timer.h
++++ b/product/tc0/include/tc0_timer.h
+@@ -9,7 +9,8 @@
+ #define CONFIG_TIMER_H
+ 
+ enum config_timer_refclk_sub_element_idx {
+-    CONFIG_TIMER_DVFS_CPU,
++    CONFIG_TIMER_DVFS_CPU_KLEIN,
++    CONFIG_TIMER_DVFS_CPU_MATTERHORN,
+     CONFIG_TIMER_SUB_ELEMENT_IDX_COUNT,
+ };
+ 
+diff --git a/product/tc0/scp_ramfw/config_clock.c b/product/tc0/scp_ramfw/config_clock.c
+index db545119..98863a01 100644
+--- a/product/tc0/scp_ramfw/config_clock.c
++++ b/product/tc0/scp_ramfw/config_clock.c
+@@ -32,13 +32,25 @@ static const struct fwk_element clock_dev_desc_table[] = {
+                     MOD_PIK_CLOCK_API_TYPE_CLOCK),
+             }),
+         },
+-    [CLOCK_IDX_CPU_GROUP0] =
++    [CLOCK_IDX_CPU_GROUP_KLEIN] =
+         {
+-            .name = "CPU_GROUP0",
++            .name = "CPU_GROUP_KLEIN",
+             .data = &((struct mod_clock_dev_config){
+                 .driver_id = FWK_ID_ELEMENT_INIT(
+                     FWK_MODULE_IDX_CSS_CLOCK,
+-                    CLOCK_CSS_IDX_CPU_GROUP0),
++                    CLOCK_CSS_IDX_CPU_GROUP_KLEIN),
++                .api_id = FWK_ID_API_INIT(
++                    FWK_MODULE_IDX_CSS_CLOCK,
++                    MOD_CSS_CLOCK_API_TYPE_CLOCK),
++            }),
++        },
++    [CLOCK_IDX_CPU_GROUP_MATTERHORN] =
++        {
++            .name = "CPU_GROUP_MATTERHORN",
++            .data = &((struct mod_clock_dev_config){
++                .driver_id = FWK_ID_ELEMENT_INIT(
++                    FWK_MODULE_IDX_CSS_CLOCK,
++                    CLOCK_CSS_IDX_CPU_GROUP_MATTERHORN),
+                 .api_id = FWK_ID_API_INIT(
+                     FWK_MODULE_IDX_CSS_CLOCK,
+                     MOD_CSS_CLOCK_API_TYPE_CLOCK),
+diff --git a/product/tc0/scp_ramfw/config_css_clock.c b/product/tc0/scp_ramfw/config_css_clock.c
+index 1ad285ae..14a23d63 100644
+--- a/product/tc0/scp_ramfw/config_css_clock.c
++++ b/product/tc0/scp_ramfw/config_css_clock.c
+@@ -17,7 +17,60 @@
+ #include <fwk_module.h>
+ #include <fwk_module_idx.h>
+ 
+-static const struct mod_css_clock_rate rate_table_cpu_group[] = {
++static const struct mod_css_clock_rate rate_table_cpu_group_klein[] = {
++    {
++        /* Super Underdrive */
++        .rate = 768 * FWK_MHZ,
++        .pll_rate = 768 * FWK_MHZ,
++        .clock_source = MOD_PIK_CLOCK_CLUSCLK_SOURCE_PLL0,
++        .clock_div_type = MOD_PIK_CLOCK_MSCLOCK_DIVIDER_DIV_EXT,
++        .clock_div = 1,
++        .clock_mod_numerator = 1,
++        .clock_mod_denominator = 1,
++    },
++    {
++        /* Underdrive */
++        .rate = 1153 * FWK_MHZ,
++        .pll_rate = 1153 * FWK_MHZ,
++        .clock_source = MOD_PIK_CLOCK_CLUSCLK_SOURCE_PLL0,
++        .clock_div_type = MOD_PIK_CLOCK_MSCLOCK_DIVIDER_DIV_EXT,
++        .clock_div = 1,
++        .clock_mod_numerator = 1,
++        .clock_mod_denominator = 1,
++    },
++    {
++        /* Nominal */
++        .rate = 1537 * FWK_MHZ,
++        .pll_rate = 1537 * FWK_MHZ,
++        .clock_source = MOD_PIK_CLOCK_CLUSCLK_SOURCE_PLL0,
++        .clock_div_type = MOD_PIK_CLOCK_MSCLOCK_DIVIDER_DIV_EXT,
++        .clock_div = 1,
++        .clock_mod_numerator = 1,
++        .clock_mod_denominator = 1,
++    },
++    {
++        /* Overdrive */
++        .rate = 1844 * FWK_MHZ,
++        .pll_rate = 1844 * FWK_MHZ,
++        .clock_source = MOD_PIK_CLOCK_CLUSCLK_SOURCE_PLL0,
++        .clock_div_type = MOD_PIK_CLOCK_MSCLOCK_DIVIDER_DIV_EXT,
++        .clock_div = 1,
++        .clock_mod_numerator = 1,
++        .clock_mod_denominator = 1,
++    },
++    {
++        /* Super Overdrive */
++        .rate = 2152 * FWK_MHZ,
++        .pll_rate = 2152 * FWK_MHZ,
++        .clock_source = MOD_PIK_CLOCK_CLUSCLK_SOURCE_PLL0,
++        .clock_div_type = MOD_PIK_CLOCK_MSCLOCK_DIVIDER_DIV_EXT,
++        .clock_div = 1,
++        .clock_mod_numerator = 1,
++        .clock_mod_denominator = 1,
++    },
++};
++
++static const struct mod_css_clock_rate rate_table_cpu_group_matterhorn[] = {
+     {
+         /* Super Underdrive */
+         .rate = 946 * FWK_MHZ,
+@@ -70,39 +123,71 @@ static const struct mod_css_clock_rate rate_table_cpu_group[] = {
+     },
+ };
+ 
+-static const fwk_id_t member_table_cpu_group_0[] = {
++static const fwk_id_t member_table_cpu_group_klein[] = {
+     FWK_ID_ELEMENT_INIT(FWK_MODULE_IDX_PIK_CLOCK, CLOCK_PIK_IDX_CLUS0_CPU0),
+     FWK_ID_ELEMENT_INIT(FWK_MODULE_IDX_PIK_CLOCK, CLOCK_PIK_IDX_CLUS0_CPU1),
+     FWK_ID_ELEMENT_INIT(FWK_MODULE_IDX_PIK_CLOCK, CLOCK_PIK_IDX_CLUS0_CPU2),
+     FWK_ID_ELEMENT_INIT(FWK_MODULE_IDX_PIK_CLOCK, CLOCK_PIK_IDX_CLUS0_CPU3),
+ };
+ 
++static const fwk_id_t member_table_cpu_group_matterhorn[] = {
++    FWK_ID_ELEMENT_INIT(FWK_MODULE_IDX_PIK_CLOCK, CLOCK_PIK_IDX_CLUS0_CPU4),
++    FWK_ID_ELEMENT_INIT(FWK_MODULE_IDX_PIK_CLOCK, CLOCK_PIK_IDX_CLUS0_CPU5),
++    FWK_ID_ELEMENT_INIT(FWK_MODULE_IDX_PIK_CLOCK, CLOCK_PIK_IDX_CLUS0_CPU6),
++    FWK_ID_ELEMENT_INIT(FWK_MODULE_IDX_PIK_CLOCK, CLOCK_PIK_IDX_CLUS0_CPU7),
++};
++
++
+ static const fwk_id_t member_table_dpu[] = {
+     FWK_ID_ELEMENT_INIT(FWK_MODULE_IDX_PIK_CLOCK, CLOCK_PIK_IDX_DPU),
+ };
+ 
+ static const struct fwk_element css_clock_element_table[] = {
+-    [CLOCK_CSS_IDX_CPU_GROUP0] =
++    [CLOCK_CSS_IDX_CPU_GROUP_KLEIN] =
++        {
++            .name = "CPU_GROUP_KLEIN",
++            .data = &((struct mod_css_clock_dev_config){
++                .clock_type = MOD_CSS_CLOCK_TYPE_INDEXED,
++                .rate_table = rate_table_cpu_group_klein,
++                .rate_count = FWK_ARRAY_SIZE(rate_table_cpu_group_klein),
++                .clock_switching_source =
++                    MOD_PIK_CLOCK_CLUSCLK_SOURCE_SYSREFCLK,
++                .pll_id = FWK_ID_ELEMENT_INIT(
++                    FWK_MODULE_IDX_SYSTEM_PLL,
++                    CLOCK_PLL_IDX_CPU_KLEIN),
++                .pll_api_id = FWK_ID_API_INIT(
++                    FWK_MODULE_IDX_SYSTEM_PLL,
++                    MOD_SYSTEM_PLL_API_TYPE_DEFAULT),
++                .member_table = member_table_cpu_group_klein,
++                .member_count = FWK_ARRAY_SIZE(member_table_cpu_group_klein),
++                .member_api_id = FWK_ID_API_INIT(
++                    FWK_MODULE_IDX_PIK_CLOCK,
++                    MOD_PIK_CLOCK_API_TYPE_CSS),
++                .initial_rate = 1537 * FWK_MHZ,
++                .modulation_supported = true,
++            }),
++        },
++    [CLOCK_CSS_IDX_CPU_GROUP_MATTERHORN] =
+         {
+-            .name = "CPU_GROUP_0",
++            .name = "CPU_GROUP_MATTERHORN",
+             .data = &((struct mod_css_clock_dev_config){
+                 .clock_type = MOD_CSS_CLOCK_TYPE_INDEXED,
+-                .rate_table = rate_table_cpu_group,
+-                .rate_count = FWK_ARRAY_SIZE(rate_table_cpu_group),
++                .rate_table = rate_table_cpu_group_matterhorn,
++                .rate_count = FWK_ARRAY_SIZE(rate_table_cpu_group_matterhorn),
+                 .clock_switching_source =
+                     MOD_PIK_CLOCK_CLUSCLK_SOURCE_SYSREFCLK,
+                 .pll_id = FWK_ID_ELEMENT_INIT(
+                     FWK_MODULE_IDX_SYSTEM_PLL,
+-                    CLOCK_PLL_IDX_CPU0),
++                    CLOCK_PLL_IDX_CPU_MATTERHORN),
+                 .pll_api_id = FWK_ID_API_INIT(
+                     FWK_MODULE_IDX_SYSTEM_PLL,
+                     MOD_SYSTEM_PLL_API_TYPE_DEFAULT),
+-                .member_table = member_table_cpu_group_0,
+-                .member_count = FWK_ARRAY_SIZE(member_table_cpu_group_0),
++                .member_table = member_table_cpu_group_matterhorn,
++                .member_count = FWK_ARRAY_SIZE(member_table_cpu_group_matterhorn),
+                 .member_api_id = FWK_ID_API_INIT(
+                     FWK_MODULE_IDX_PIK_CLOCK,
+                     MOD_PIK_CLOCK_API_TYPE_CSS),
+-                .initial_rate = 2271 * FWK_MHZ,
++                .initial_rate = 1893 * FWK_MHZ,
+                 .modulation_supported = true,
+             }),
+         },
+diff --git a/product/tc0/scp_ramfw/config_dvfs.c b/product/tc0/scp_ramfw/config_dvfs.c
+index a0b59b2b..4b952ef8 100644
+--- a/product/tc0/scp_ramfw/config_dvfs.c
++++ b/product/tc0/scp_ramfw/config_dvfs.c
+@@ -16,7 +16,35 @@
+ #include <fwk_module.h>
+ #include <fwk_module_idx.h>
+ 
+-static struct mod_dvfs_opp opps[] = { {
++static struct mod_dvfs_opp opps_klein[] = { {
++                                          .level = 768 * 1000000UL,
++                                          .frequency = 768 * FWK_KHZ,
++                                          .voltage = 550,
++                                      },
++                                      {
++                                          .level = 1153 * 1000000UL,
++                                          .frequency = 1153 * FWK_KHZ,
++                                          .voltage = 650,
++                                      },
++                                      {
++                                          .level = 1537 * 1000000UL,
++                                          .frequency = 1537 * FWK_KHZ,
++                                          .voltage = 750,
++                                      },
++                                      {
++                                          .level = 1844 * 1000000UL,
++                                          .frequency = 1844 * FWK_KHZ,
++                                          .voltage = 850,
++                                      },
++                                      {
++                                          .level = 2152 * 1000000UL,
++                                          .frequency = 2152 * FWK_KHZ,
++                                          .voltage = 950,
++                                      },
++                                      { 0 } };
++
++
++static struct mod_dvfs_opp opps_matterhorn[] = { {
+                                           .level = 946 * 1000000UL,
+                                           .frequency = 946 * FWK_KHZ,
+                                           .voltage = 550,
+@@ -43,11 +71,26 @@ static struct mod_dvfs_opp opps[] = { {
+                                       },
+                                       { 0 } };
+ 
+-static const struct mod_dvfs_domain_config cpu_group = {
++static const struct mod_dvfs_domain_config cpu_group_klein = {
+     .psu_id = FWK_ID_ELEMENT_INIT(FWK_MODULE_IDX_PSU, 0),
+-    .clock_id = FWK_ID_ELEMENT_INIT(FWK_MODULE_IDX_CLOCK, CLOCK_IDX_CPU_GROUP0),
++    .clock_id = FWK_ID_ELEMENT_INIT(FWK_MODULE_IDX_CLOCK, CLOCK_IDX_CPU_GROUP_KLEIN),
++    .alarm_id =
++        FWK_ID_SUB_ELEMENT_INIT(FWK_MODULE_IDX_TIMER, 0, CONFIG_TIMER_DVFS_CPU_KLEIN),
++    .notification_id = FWK_ID_MODULE_INIT(FWK_MODULE_IDX_SCMI_PERF),
++    .updates_api_id = FWK_ID_API_INIT(
++        FWK_MODULE_IDX_SCMI_PERF,
++        MOD_SCMI_PERF_DVFS_UPDATE_API),
++    .retry_ms = 1,
++    .latency = 1200,
++    .sustained_idx = 2,
++    .opps = opps_klein,
++};
++
++static const struct mod_dvfs_domain_config cpu_group_matterhorn = {
++    .psu_id = FWK_ID_ELEMENT_INIT(FWK_MODULE_IDX_PSU, 1),
++    .clock_id = FWK_ID_ELEMENT_INIT(FWK_MODULE_IDX_CLOCK, CLOCK_IDX_CPU_GROUP_MATTERHORN),
+     .alarm_id =
+-        FWK_ID_SUB_ELEMENT_INIT(FWK_MODULE_IDX_TIMER, 0, CONFIG_TIMER_DVFS_CPU),
++        FWK_ID_SUB_ELEMENT_INIT(FWK_MODULE_IDX_TIMER, 0, CONFIG_TIMER_DVFS_CPU_MATTERHORN),
+     .notification_id = FWK_ID_MODULE_INIT(FWK_MODULE_IDX_SCMI_PERF),
+     .updates_api_id = FWK_ID_API_INIT(
+         FWK_MODULE_IDX_SCMI_PERF,
+@@ -55,13 +98,18 @@ static const struct mod_dvfs_domain_config cpu_group = {
+     .retry_ms = 1,
+     .latency = 1200,
+     .sustained_idx = 2,
+-    .opps = opps,
++    .opps = opps_matterhorn,
+ };
+ 
+ static const struct fwk_element element_table[] = { [0] =
+                                                         {
+-                                                            .name = "CPU_GROUP",
+-                                                            .data = &cpu_group,
++                                                            .name = "CPU_GROUP_KLEIN",
++                                                            .data = &cpu_group_klein,
++                                                        },
++                                                    [1] =
++                                                        {
++                                                            .name = "CPU_GROUP_MATTERHORN",
++                                                            .data = &cpu_group_matterhorn,
+                                                         },
+                                                     { 0 } };
+ 
+diff --git a/product/tc0/scp_ramfw/config_mock_psu.c b/product/tc0/scp_ramfw/config_mock_psu.c
+index 1f9411ca..2d3742f2 100644
+--- a/product/tc0/scp_ramfw/config_mock_psu.c
++++ b/product/tc0/scp_ramfw/config_mock_psu.c
+@@ -12,7 +12,21 @@
+ 
+ static const struct fwk_element element_table[] = {
+     {
+-        .name = "DVFS_GROUP0",
++        .name = "DVFS_GROUP_KLEIN",
++        .data =
++            &(const struct mod_mock_psu_element_cfg){
++                .async_alarm_id = FWK_ID_NONE_INIT,
++                .async_alarm_api_id = FWK_ID_NONE_INIT,
++
++                .async_response_id = FWK_ID_NONE_INIT,
++                .async_response_api_id = FWK_ID_NONE_INIT,
++
++                .default_enabled = true,
++                .default_voltage = 550,
++            },
++    },
++    {
++        .name = "DVFS_GROUP_MATTERHORN",
+         .data =
+             &(const struct mod_mock_psu_element_cfg){
+                 .async_alarm_id = FWK_ID_NONE_INIT,
+diff --git a/product/tc0/scp_ramfw/config_pik_clock.c b/product/tc0/scp_ramfw/config_pik_clock.c
+index d2c03865..38837a91 100644
+--- a/product/tc0/scp_ramfw/config_pik_clock.c
++++ b/product/tc0/scp_ramfw/config_pik_clock.c
+@@ -21,9 +21,18 @@
+ /*
+  * Rate lookup tables
+  */
+-static struct mod_pik_clock_rate rate_table_cpu_group[] = {
++static struct mod_pik_clock_rate rate_table_cpu_group_klein[] = {
+     {
+-        .rate = 1750 * FWK_MHZ,
++        .rate = 1537 * FWK_MHZ,
++        .source = MOD_PIK_CLOCK_CLUSCLK_SOURCE_PLL0,
++        .divider_reg = MOD_PIK_CLOCK_MSCLOCK_DIVIDER_DIV_EXT,
++        .divider = 1, /* Rate adjusted via CPU PLL */
++    },
++};
++
++static struct mod_pik_clock_rate rate_table_cpu_group_matterhorn[] = {
++    {
++        .rate = 1893 * FWK_MHZ,
+         .source = MOD_PIK_CLOCK_CLUSCLK_SOURCE_PLL0,
+         .divider_reg = MOD_PIK_CLOCK_MSCLOCK_DIVIDER_DIV_EXT,
+         .divider = 1, /* Rate adjusted via CPU PLL */
+@@ -103,8 +112,8 @@ static const struct fwk_element pik_clock_element_table[] = {
+             .control_reg = &CLUSTER_PIK_PTR(0)->CORECLK[0].CTRL,
+             .divext_reg = &CLUSTER_PIK_PTR(0)->CORECLK[0].DIV,
+             .modulator_reg = &CLUSTER_PIK_PTR(0)->CORECLK[0].MOD,
+-            .rate_table = rate_table_cpu_group,
+-            .rate_count = FWK_ARRAY_SIZE(rate_table_cpu_group),
++            .rate_table = rate_table_cpu_group_klein,
++            .rate_count = FWK_ARRAY_SIZE(rate_table_cpu_group_klein),
+         }),
+     },
+     [CLOCK_PIK_IDX_CLUS0_CPU1] = {
+@@ -115,8 +124,8 @@ static const struct fwk_element pik_clock_element_table[] = {
+             .control_reg = &CLUSTER_PIK_PTR(0)->CORECLK[1].CTRL,
+             .divext_reg = &CLUSTER_PIK_PTR(0)->CORECLK[1].DIV,
+             .modulator_reg = &CLUSTER_PIK_PTR(0)->CORECLK[1].MOD,
+-            .rate_table = rate_table_cpu_group,
+-            .rate_count = FWK_ARRAY_SIZE(rate_table_cpu_group),
++            .rate_table = rate_table_cpu_group_klein,
++            .rate_count = FWK_ARRAY_SIZE(rate_table_cpu_group_klein),
+         }),
+     },
+     [CLOCK_PIK_IDX_CLUS0_CPU2] = {
+@@ -127,8 +136,8 @@ static const struct fwk_element pik_clock_element_table[] = {
+             .control_reg = &CLUSTER_PIK_PTR(0)->CORECLK[2].CTRL,
+             .divext_reg = &CLUSTER_PIK_PTR(0)->CORECLK[2].DIV,
+             .modulator_reg = &CLUSTER_PIK_PTR(0)->CORECLK[2].MOD,
+-            .rate_table = rate_table_cpu_group,
+-            .rate_count = FWK_ARRAY_SIZE(rate_table_cpu_group),
++            .rate_table = rate_table_cpu_group_klein,
++            .rate_count = FWK_ARRAY_SIZE(rate_table_cpu_group_klein),
+         }),
+     },
+     [CLOCK_PIK_IDX_CLUS0_CPU3] = {
+@@ -139,8 +148,56 @@ static const struct fwk_element pik_clock_element_table[] = {
+             .control_reg = &CLUSTER_PIK_PTR(0)->CORECLK[3].CTRL,
+             .divext_reg = &CLUSTER_PIK_PTR(0)->CORECLK[3].DIV,
+             .modulator_reg = &CLUSTER_PIK_PTR(0)->CORECLK[3].MOD,
+-            .rate_table = rate_table_cpu_group,
+-            .rate_count = FWK_ARRAY_SIZE(rate_table_cpu_group),
++            .rate_table = rate_table_cpu_group_klein,
++            .rate_count = FWK_ARRAY_SIZE(rate_table_cpu_group_klein),
++        }),
++    },
++    [CLOCK_PIK_IDX_CLUS0_CPU4] = {
++        .name = "CLUS0_CPU4",
++        .data = &((struct mod_pik_clock_dev_config) {
++            .type = MOD_PIK_CLOCK_TYPE_CLUSTER,
++            .is_group_member = true,
++            .control_reg = &CLUSTER_PIK_PTR(0)->CORECLK[4].CTRL,
++            .divext_reg = &CLUSTER_PIK_PTR(0)->CORECLK[4].DIV,
++            .modulator_reg = &CLUSTER_PIK_PTR(0)->CORECLK[4].MOD,
++            .rate_table = rate_table_cpu_group_matterhorn,
++            .rate_count = FWK_ARRAY_SIZE(rate_table_cpu_group_matterhorn),
++        }),
++    },
++    [CLOCK_PIK_IDX_CLUS0_CPU5] = {
++        .name = "CLUS0_CPU5",
++        .data = &((struct mod_pik_clock_dev_config) {
++            .type = MOD_PIK_CLOCK_TYPE_CLUSTER,
++            .is_group_member = true,
++            .control_reg = &CLUSTER_PIK_PTR(0)->CORECLK[5].CTRL,
++            .divext_reg = &CLUSTER_PIK_PTR(0)->CORECLK[5].DIV,
++            .modulator_reg = &CLUSTER_PIK_PTR(0)->CORECLK[5].MOD,
++            .rate_table = rate_table_cpu_group_matterhorn,
++            .rate_count = FWK_ARRAY_SIZE(rate_table_cpu_group_matterhorn),
++        }),
++    },
++    [CLOCK_PIK_IDX_CLUS0_CPU6] = {
++        .name = "CLUS0_CPU6",
++        .data = &((struct mod_pik_clock_dev_config) {
++            .type = MOD_PIK_CLOCK_TYPE_CLUSTER,
++            .is_group_member = true,
++            .control_reg = &CLUSTER_PIK_PTR(0)->CORECLK[6].CTRL,
++            .divext_reg = &CLUSTER_PIK_PTR(0)->CORECLK[6].DIV,
++            .modulator_reg = &CLUSTER_PIK_PTR(0)->CORECLK[6].MOD,
++            .rate_table = rate_table_cpu_group_matterhorn,
++            .rate_count = FWK_ARRAY_SIZE(rate_table_cpu_group_matterhorn),
++        }),
++    },
++    [CLOCK_PIK_IDX_CLUS0_CPU7] = {
++        .name = "CLUS0_CPU7",
++        .data = &((struct mod_pik_clock_dev_config) {
++            .type = MOD_PIK_CLOCK_TYPE_CLUSTER,
++            .is_group_member = true,
++            .control_reg = &CLUSTER_PIK_PTR(0)->CORECLK[7].CTRL,
++            .divext_reg = &CLUSTER_PIK_PTR(0)->CORECLK[7].DIV,
++            .modulator_reg = &CLUSTER_PIK_PTR(0)->CORECLK[7].MOD,
++            .rate_table = rate_table_cpu_group_matterhorn,
++            .rate_count = FWK_ARRAY_SIZE(rate_table_cpu_group_matterhorn),
+         }),
+     },
+     [CLOCK_PIK_IDX_INTERCONNECT] = {
+diff --git a/product/tc0/scp_ramfw/config_psu.c b/product/tc0/scp_ramfw/config_psu.c
+index 8e3bcb5a..3bf0f7fd 100644
+--- a/product/tc0/scp_ramfw/config_psu.c
++++ b/product/tc0/scp_ramfw/config_psu.c
+@@ -14,7 +14,7 @@
+ 
+ static const struct fwk_element element_table[] = {
+     {
+-        .name = "DVFS_GROUP0",
++        .name = "DVFS_GROUP_KLEIN",
+         .data =
+             &(const struct mod_psu_element_cfg){
+                 .driver_id = FWK_ID_ELEMENT_INIT(FWK_MODULE_IDX_MOCK_PSU, 0),
+@@ -22,6 +22,15 @@ static const struct fwk_element element_table[] = {
+                     FWK_MODULE_IDX_MOCK_PSU,
+                     MOD_MOCK_PSU_API_IDX_DRIVER) },
+     },
++    {
++        .name = "DVFS_GROUP_MATTERHORN",
++        .data =
++            &(const struct mod_psu_element_cfg){
++                .driver_id = FWK_ID_ELEMENT_INIT(FWK_MODULE_IDX_MOCK_PSU, 1),
++                .driver_api_id = FWK_ID_API_INIT(
++                    FWK_MODULE_IDX_MOCK_PSU,
++                    MOD_MOCK_PSU_API_IDX_DRIVER) },
++    },
+     { 0 }
+ };
+ 
+diff --git a/product/tc0/scp_ramfw/config_scmi_perf.c b/product/tc0/scp_ramfw/config_scmi_perf.c
+index f2be2253..6ef6146b 100644
+--- a/product/tc0/scp_ramfw/config_scmi_perf.c
++++ b/product/tc0/scp_ramfw/config_scmi_perf.c
+@@ -15,6 +15,7 @@
+ 
+ static const struct mod_scmi_perf_domain_config domains[] = {
+     [0] = {},
++    [1] = {},
+ };
+ 
+ const struct fwk_module_config config_scmi_perf = {
+diff --git a/product/tc0/scp_ramfw/config_system_pll.c b/product/tc0/scp_ramfw/config_system_pll.c
+index b55dd642..37578855 100644
+--- a/product/tc0/scp_ramfw/config_system_pll.c
++++ b/product/tc0/scp_ramfw/config_system_pll.c
+@@ -18,14 +18,27 @@
+ 
+ static const struct fwk_element system_pll_element_table[] =
+     {
+-        [CLOCK_PLL_IDX_CPU0] =
++        [CLOCK_PLL_IDX_CPU_KLEIN] =
+             {
+-                .name = "CPU_PLL_0",
++                .name = "CPU_PLL_KLEIN",
+                 .data = &((struct mod_system_pll_dev_config){
+                     .control_reg = (void *)SCP_PLL_CPU0,
+                     .status_reg = (void *)&SCP_PIK_PTR->PLL_STATUS[1],
+                     .lock_flag_mask = PLL_STATUS_CPUPLLLOCK(0),
+-                    .initial_rate = 1750 * FWK_MHZ,
++                    .initial_rate = 1537 * FWK_MHZ,
++                    .min_rate = MOD_SYSTEM_PLL_MIN_RATE,
++                    .max_rate = MOD_SYSTEM_PLL_MAX_RATE,
++                    .min_step = MOD_SYSTEM_PLL_MIN_INTERVAL,
++                }),
++            },
++        [CLOCK_PLL_IDX_CPU_MATTERHORN] =
++            {
++                .name = "CPU_PLL_MATTERHORN",
++                .data = &((struct mod_system_pll_dev_config){
++                    .control_reg = (void *)SCP_PLL_CPU4,
++                    .status_reg = (void *)&SCP_PIK_PTR->PLL_STATUS[1],
++                    .lock_flag_mask = PLL_STATUS_CPUPLLLOCK(0),
++                    .initial_rate = 1893 * FWK_MHZ,
+                     .min_rate = MOD_SYSTEM_PLL_MIN_RATE,
+                     .max_rate = MOD_SYSTEM_PLL_MAX_RATE,
+                     .min_step = MOD_SYSTEM_PLL_MIN_INTERVAL,
+diff --git a/product/tc0/scp_romfw/config_clock.c b/product/tc0/scp_romfw/config_clock.c
+index f43b61b0..96806211 100644
+--- a/product/tc0/scp_romfw/config_clock.c
++++ b/product/tc0/scp_romfw/config_clock.c
+@@ -35,13 +35,13 @@ static const struct fwk_element clock_dev_desc_table[] = {
+ 
+             }),
+         },
+-    [CLOCK_IDX_CPU_GROUP0] =
++    [CLOCK_IDX_CPU_GROUP_KLEIN] =
+         {
+-            .name = "CPU_GROUP0",
++            .name = "CPU_GROUP_KLEIN",
+             .data = &((struct mod_clock_dev_config){
+                 .driver_id = FWK_ID_ELEMENT_INIT(
+                     FWK_MODULE_IDX_CSS_CLOCK,
+-                    CLOCK_CSS_IDX_CPU_GROUP0),
++                    CLOCK_CSS_IDX_CPU_GROUP_KLEIN),
+                 .api_id = FWK_ID_API_INIT(
+                     FWK_MODULE_IDX_CSS_CLOCK,
+                     MOD_CSS_CLOCK_API_TYPE_CLOCK),
+diff --git a/product/tc0/scp_romfw/config_css_clock.c b/product/tc0/scp_romfw/config_css_clock.c
+index fcb9bbbb..ca284ee7 100644
+--- a/product/tc0/scp_romfw/config_css_clock.c
++++ b/product/tc0/scp_romfw/config_css_clock.c
+@@ -17,11 +17,11 @@
+ #include <fwk_module.h>
+ #include <fwk_module_idx.h>
+ 
+-static const struct mod_css_clock_rate rate_table_cpu_group[] = {
++static const struct mod_css_clock_rate rate_table_cpu_group_klein[] = {
+     {
+         /* Super Underdrive */
+-        .rate = 946 * FWK_MHZ,
+-        .pll_rate = 946 * FWK_MHZ,
++        .rate = 768 * FWK_MHZ,
++        .pll_rate = 768 * FWK_MHZ,
+         .clock_source = MOD_PIK_CLOCK_CLUSCLK_SOURCE_PLL0,
+         .clock_div_type = MOD_PIK_CLOCK_MSCLOCK_DIVIDER_DIV_EXT,
+         .clock_div = 1,
+@@ -30,8 +30,8 @@ static const struct mod_css_clock_rate rate_table_cpu_group[] = {
+     },
+     {
+         /* Underdrive */
+-        .rate = 1419 * FWK_MHZ,
+-        .pll_rate = 1419 * FWK_MHZ,
++        .rate = 1153 * FWK_MHZ,
++        .pll_rate = 1153 * FWK_MHZ,
+         .clock_source = MOD_PIK_CLOCK_CLUSCLK_SOURCE_PLL0,
+         .clock_div_type = MOD_PIK_CLOCK_MSCLOCK_DIVIDER_DIV_EXT,
+         .clock_div = 1,
+@@ -40,8 +40,8 @@ static const struct mod_css_clock_rate rate_table_cpu_group[] = {
+     },
+     {
+         /* Nominal */
+-        .rate = 1893 * FWK_MHZ,
+-        .pll_rate = 1893 * FWK_MHZ,
++        .rate = 1537 * FWK_MHZ,
++        .pll_rate = 1537 * FWK_MHZ,
+         .clock_source = MOD_PIK_CLOCK_CLUSCLK_SOURCE_PLL0,
+         .clock_div_type = MOD_PIK_CLOCK_MSCLOCK_DIVIDER_DIV_EXT,
+         .clock_div = 1,
+@@ -50,8 +50,8 @@ static const struct mod_css_clock_rate rate_table_cpu_group[] = {
+     },
+     {
+         /* Overdrive */
+-        .rate = 2271 * FWK_MHZ,
+-        .pll_rate = 2271 * FWK_MHZ,
++        .rate = 1844 * FWK_MHZ,
++        .pll_rate = 1844 * FWK_MHZ,
+         .clock_source = MOD_PIK_CLOCK_CLUSCLK_SOURCE_PLL0,
+         .clock_div_type = MOD_PIK_CLOCK_MSCLOCK_DIVIDER_DIV_EXT,
+         .clock_div = 1,
+@@ -60,8 +60,8 @@ static const struct mod_css_clock_rate rate_table_cpu_group[] = {
+     },
+     {
+         /* Super Overdrive */
+-        .rate = 2650 * FWK_MHZ,
+-        .pll_rate = 2650 * FWK_MHZ,
++        .rate = 2152 * FWK_MHZ,
++        .pll_rate = 2152 * FWK_MHZ,
+         .clock_source = MOD_PIK_CLOCK_CLUSCLK_SOURCE_PLL0,
+         .clock_div_type = MOD_PIK_CLOCK_MSCLOCK_DIVIDER_DIV_EXT,
+         .clock_div = 1,
+@@ -70,7 +70,7 @@ static const struct mod_css_clock_rate rate_table_cpu_group[] = {
+     },
+ };
+ 
+-static const fwk_id_t member_table_cpu_group_0[] = {
++static const fwk_id_t member_table_cpu_group_klein[] = {
+     FWK_ID_ELEMENT_INIT(FWK_MODULE_IDX_PIK_CLOCK, CLOCK_PIK_IDX_CLUS0_CPU0),
+     FWK_ID_ELEMENT_INIT(FWK_MODULE_IDX_PIK_CLOCK, CLOCK_PIK_IDX_CLUS0_CPU1),
+     FWK_ID_ELEMENT_INIT(FWK_MODULE_IDX_PIK_CLOCK, CLOCK_PIK_IDX_CLUS0_CPU2),
+@@ -78,27 +78,27 @@ static const fwk_id_t member_table_cpu_group_0[] = {
+ };
+ 
+ static const struct fwk_element css_clock_element_table[] = {
+-    [CLOCK_CSS_IDX_CPU_GROUP0] =
++    [CLOCK_CSS_IDX_CPU_GROUP_KLEIN] =
+         {
+-            .name = "CPU_GROUP_0",
++            .name = "CPU_GROUP_KLEIN",
+             .data = &((struct mod_css_clock_dev_config){
+                 .clock_type = MOD_CSS_CLOCK_TYPE_INDEXED,
+-                .rate_table = rate_table_cpu_group,
+-                .rate_count = FWK_ARRAY_SIZE(rate_table_cpu_group),
++                .rate_table = rate_table_cpu_group_klein,
++                .rate_count = FWK_ARRAY_SIZE(rate_table_cpu_group_klein),
+                 .clock_switching_source =
+                     MOD_PIK_CLOCK_CLUSCLK_SOURCE_SYSREFCLK,
+                 .pll_id = FWK_ID_ELEMENT_INIT(
+                     FWK_MODULE_IDX_SYSTEM_PLL,
+-                    CLOCK_PLL_IDX_CPU0),
++                    CLOCK_PLL_IDX_CPU_KLEIN),
+                 .pll_api_id = FWK_ID_API_INIT(
+                     FWK_MODULE_IDX_SYSTEM_PLL,
+                     MOD_SYSTEM_PLL_API_TYPE_DEFAULT),
+-                .member_table = member_table_cpu_group_0,
+-                .member_count = FWK_ARRAY_SIZE(member_table_cpu_group_0),
++                .member_table = member_table_cpu_group_klein,
++                .member_count = FWK_ARRAY_SIZE(member_table_cpu_group_klein),
+                 .member_api_id = FWK_ID_API_INIT(
+                     FWK_MODULE_IDX_PIK_CLOCK,
+                     MOD_PIK_CLOCK_API_TYPE_CSS),
+-                .initial_rate = 2271 * FWK_MHZ,
++                .initial_rate = 1537 * FWK_MHZ,
+                 .modulation_supported = true,
+             }),
+         },
+diff --git a/product/tc0/scp_romfw/config_pik_clock.c b/product/tc0/scp_romfw/config_pik_clock.c
+index ba7c3ddc..2c883084 100644
+--- a/product/tc0/scp_romfw/config_pik_clock.c
++++ b/product/tc0/scp_romfw/config_pik_clock.c
+@@ -19,9 +19,9 @@
+ /*
+  * Rate lookup tables
+  */
+-static struct mod_pik_clock_rate rate_table_cpu_group[] = {
++static struct mod_pik_clock_rate rate_table_cpu_group_klein[] = {
+     {
+-        .rate = 1750 * FWK_MHZ,
++        .rate = 1537 * FWK_MHZ,
+         .source = MOD_PIK_CLOCK_CLUSCLK_SOURCE_PLL0,
+         .divider_reg = MOD_PIK_CLOCK_MSCLOCK_DIVIDER_DIV_EXT,
+         .divider = 1, /* Rate adjusted via CPU PLL */
+@@ -94,8 +94,8 @@ static const struct fwk_element
+                         .control_reg = &CLUSTER_PIK_PTR(0)->CORECLK[0].CTRL,
+                         .divext_reg = &CLUSTER_PIK_PTR(0)->CORECLK[0].DIV,
+                         .modulator_reg = &CLUSTER_PIK_PTR(0)->CORECLK[0].MOD,
+-                        .rate_table = rate_table_cpu_group,
+-                        .rate_count = FWK_ARRAY_SIZE(rate_table_cpu_group),
++                        .rate_table = rate_table_cpu_group_klein,
++                        .rate_count = FWK_ARRAY_SIZE(rate_table_cpu_group_klein),
+                     }),
+                 },
+             [CLOCK_PIK_IDX_CLUS0_CPU1] =
+@@ -107,8 +107,8 @@ static const struct fwk_element
+                         .control_reg = &CLUSTER_PIK_PTR(0)->CORECLK[1].CTRL,
+                         .divext_reg = &CLUSTER_PIK_PTR(0)->CORECLK[1].DIV,
+                         .modulator_reg = &CLUSTER_PIK_PTR(0)->CORECLK[1].MOD,
+-                        .rate_table = rate_table_cpu_group,
+-                        .rate_count = FWK_ARRAY_SIZE(rate_table_cpu_group),
++                        .rate_table = rate_table_cpu_group_klein,
++                        .rate_count = FWK_ARRAY_SIZE(rate_table_cpu_group_klein),
+                     }),
+                 },
+             [CLOCK_PIK_IDX_CLUS0_CPU2] =
+@@ -120,8 +120,8 @@ static const struct fwk_element
+                         .control_reg = &CLUSTER_PIK_PTR(0)->CORECLK[2].CTRL,
+                         .divext_reg = &CLUSTER_PIK_PTR(0)->CORECLK[2].DIV,
+                         .modulator_reg = &CLUSTER_PIK_PTR(0)->CORECLK[2].MOD,
+-                        .rate_table = rate_table_cpu_group,
+-                        .rate_count = FWK_ARRAY_SIZE(rate_table_cpu_group),
++                        .rate_table = rate_table_cpu_group_klein,
++                        .rate_count = FWK_ARRAY_SIZE(rate_table_cpu_group_klein),
+                     }),
+                 },
+             [CLOCK_PIK_IDX_CLUS0_CPU3] =
+@@ -133,8 +133,8 @@ static const struct fwk_element
+                         .control_reg = &CLUSTER_PIK_PTR(0)->CORECLK[3].CTRL,
+                         .divext_reg = &CLUSTER_PIK_PTR(0)->CORECLK[3].DIV,
+                         .modulator_reg = &CLUSTER_PIK_PTR(0)->CORECLK[3].MOD,
+-                        .rate_table = rate_table_cpu_group,
+-                        .rate_count = FWK_ARRAY_SIZE(rate_table_cpu_group),
++                        .rate_table = rate_table_cpu_group_klein,
++                        .rate_count = FWK_ARRAY_SIZE(rate_table_cpu_group_klein),
+                     }),
+                 },
+             [CLOCK_PIK_IDX_INTERCONNECT] =
+diff --git a/product/tc0/scp_romfw/config_system_pll.c b/product/tc0/scp_romfw/config_system_pll.c
+index e6b578ff..8440f126 100644
+--- a/product/tc0/scp_romfw/config_system_pll.c
++++ b/product/tc0/scp_romfw/config_system_pll.c
+@@ -17,14 +17,14 @@
+ #include <fwk_module.h>
+ 
+ static const struct fwk_element system_pll_element_table[] = {
+-    [CLOCK_PLL_IDX_CPU0] =
++    [CLOCK_PLL_IDX_CPU_KLEIN] =
+         {
+-            .name = "CPU_PLL_0",
++            .name = "CPU_PLL_KLEIN",
+             .data = &((struct mod_system_pll_dev_config){
+                 .control_reg = (void *)SCP_PLL_CPU0,
+                 .status_reg = (void *)&SCP_PIK_PTR->PLL_STATUS[1],
+                 .lock_flag_mask = PLL_STATUS_CPUPLLLOCK(0),
+-                .initial_rate = 1750 * FWK_MHZ,
++                .initial_rate = 1537 * FWK_MHZ,
+                 .min_rate = MOD_SYSTEM_PLL_MIN_RATE,
+                 .max_rate = MOD_SYSTEM_PLL_MAX_RATE,
+                 .min_step = MOD_SYSTEM_PLL_MIN_INTERVAL,
+-- 
+2.29.2
+
