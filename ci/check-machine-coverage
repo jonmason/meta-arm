@@ -14,7 +14,7 @@ machines = metaarm.glob("meta-*/conf/machine/*.conf")
 machines = set(p.stem for p in machines)
 
 # All kas files
-kas = metaarm.glob("kas/*.yml")
+kas = metaarm.glob("ci/*.yml")
 kas = set(p.stem for p in kas)
 
 missing = machines - kas
