@@ -45,7 +45,7 @@ do_compile[cleandirs] = "${B}"
 do_install() {
     #install core in firmware
     install -d ${D}${nonarch_base_libdir}/firmware/
-    install -m 644 ${B}/core/*.bin ${D}${nonarch_base_libdir}/firmware/
+    install -m 644 ${B}/core/*.bin ${B}/core/tee.elf ${D}${nonarch_base_libdir}/firmware/
 
     #install TA devkit
     install -d ${D}${includedir}/optee/export-user_ta/
@@ -68,6 +68,8 @@ SYSROOT_DIRS += "${nonarch_base_libdir}/firmware"
 FILES_${PN} = "${nonarch_base_libdir}/firmware/"
 FILES_${PN}-dev = "${includedir}/optee/"
 
+# note: "textrel" is not triggered on all archs
+INSANE_SKIP_${PN} = "textrel"
 INSANE_SKIP_${PN}-dev = "staticdev"
 
 INHIBIT_PACKAGE_STRIP = "1"
