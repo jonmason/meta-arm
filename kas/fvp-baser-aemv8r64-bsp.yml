@@ -1,0 +1,32 @@
+header:
+  version: 9
+
+distro: poky
+machine: fvp-baser-aemv8r64
+
+defaults:
+  repos:
+    refspec: hardknott
+
+repos:
+  meta-arm:
+    layers:
+      meta-arm:
+      meta-arm-bsp:
+      meta-arm-toolchain:
+
+  poky:
+    url: https://git.yoctoproject.org/git/poky
+    layers:
+      meta:
+      meta-poky:
+
+local_conf_header:
+  base: |
+    CONF_VERSION = "1"
+    PACKAGE_CLASSES = "package_ipk"
+    PACKAGECONFIG_remove_pn-qemu-system-native = "gtk+ sdl"
+    EXTRA_IMAGE_FEATURES_append = " debug-tweaks"
+
+target:
+  - core-image-minimal
