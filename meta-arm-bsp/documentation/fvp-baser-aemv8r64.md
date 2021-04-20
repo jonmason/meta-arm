@@ -1,4 +1,4 @@
-# AEM Armv8-R64 BaseR Platform FVP Support in meta-arm-bsp
+# Armv8-R AArch64 AEM FVP Support in meta-arm-bsp
 
 ## Overview
 Fixed Virtual Platforms (FVP) are complete simulations of an Arm system,
@@ -6,8 +6,8 @@ including processor, memory and peripherals. These are set out in a
 "programmer's view", which gives you a comprehensive model on which to build
 and test your software.
 
-The AEMv8-R BaseR Platform FVP is the Fixed Virtual Platform of the latest
-Armv8-R architecture features.
+The Armv8-R AEM FVP is a free of charge Armv8-R Fixed Virtual Platform. It
+supports the latest Armv8-R feature set.
 
 This BSP implements a reference stack for the AArch64 support in the R-class
 first announced with the Cortex-R82 processor:
@@ -17,38 +17,45 @@ Fast Models Fixed Virtual Platforms (FVP) Reference Guide:
 https://developer.arm.com/docs/100966/latest
 
 ## BSP Support
-Supported components:
+The fvp-baser-aemv8r64 Yocto MACHINE supports the following BSP components:
 
  - boot-wrapper-aarch64
  - Kernel: linux-yocto-5.10
 
-## Howto Build and Run
+## Quick start: Howto Build and Run
 
-### Configuration:
-In the local.conf file, MACHINE should be set as follow:
-`MACHINE ?= "fvp-baser-aemv8r64"`
+### Host environment setup
+Install the Required Packages for the Build Host:
+https://www.yoctoproject.org/docs/latest/mega-manual/mega-manual.html#required-packages-for-the-build-host
 
-If a quicker boot is required add the following line in the local.conf:
-`INIT_MANAGER = "mdev-busybox"`
+Install the kas setup tool for bitbake based projects:
+https://kas.readthedocs.io/en/latest/userguide.html#dependencies-installation
 
-### Build:
+### Fetch sources
+Fetch meta-arm repository:
 ```
-bitbake core-image-minimal
+mkdir -p ~/fvp-baser-aemv8r64-bsp
+cd ~/fvp-baser-aemv8r64-bsp
+git clone https://git.yoctoproject.org/git/meta-arm
 ```
 
-### Run:
+### Build
+```
+cd ~/fvp-baser-aemv8r64-bsp
+kas build meta-arm/kas/fvp-baser-aemv8r64-bsp.yml
+```
+
+### Run
 To Run the Fixed Virtual Platform simulation tool you must download "Armv8-R
-BaseR AEM FVP" from Arm developer (This might require the user to
-register) from this address:
+AEM FVP" from Arm developer (This might require the user to register) from this
+address:
 https://developer.arm.com/tools-and-software/simulation-models/fixed-virtual-platforms/arm-ecosystem-models
 and install it on your host PC.
-**DISCLAIMER:** The AEMv8-R BaseR Platform FVP package will be available for
-download soon.
 
-Once the build is done, do the following run an image:
+To run an image after the build is done:
 ```
-export YOCTO_DEPLOY_IMGS_DIR="<yocto-build-dir/tmp/deploy/images/fvp-baser-aemv8r64>"
-cd <path-to-FVP_BaseR_AEMv8R_pkg-dir/models/Linux64_GCC-X.X/>
+export YOCTO_DEPLOY_IMGS_DIR="~/fvp-baser-aemv8r64-bsp/build/tmp/deploy/images/fvp-baser-aemv8r64/"
+cd <path-to-AEMv8R_base_pkg>/models/Linux64_GCC-6.4/
 ./FVP_BaseR_AEMv8R \
 -C bp.dram_metadata.init_value=0 \
 -C bp.dram_metadata.is_enabled=true \
@@ -81,6 +88,8 @@ cd <path-to-FVP_BaseR_AEMv8R_pkg-dir/models/Linux64_GCC-X.X/>
 -a cluster0*=${YOCTO_DEPLOY_IMGS_DIR}/linux-system.axf \
 -C bp.virtioblockdevice.image_path=${YOCTO_DEPLOY_IMGS_DIR}/core-image-minimal-fvp-baser-aemv8r64.wic
 ```
+
+The terminal console login is `root` without password.
 
 ## Devices supported in the kernel
 - serial
