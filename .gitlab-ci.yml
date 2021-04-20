@@ -142,7 +142,21 @@ usage:
   stage: prep
   when: manual
   script:
-  - du -h -s $DL_DIR $SSTATE_DIR
+  - du -h -s $DL_DIR $SSTATE_DIR $KAS_REPO_REF_DIR
+
+delete-dl-dir:
+  extends: .setup
+  stage: prep
+  when: manual
+  script:
+  - rm -rf $DL_DIR/*
+
+delete-repo-dir:
+  extends: .setup
+  stage: prep
+  when: manual
+  script:
+  - rm -rf $KAS_REPO_REF_DIR/*
 
 # Wipe out old sstate
 prune-sstate:
