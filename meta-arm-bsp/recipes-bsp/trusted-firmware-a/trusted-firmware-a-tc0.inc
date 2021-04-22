@@ -12,15 +12,7 @@ SRC_URI_append = " \
     file://0001-product-tc0-Add-support-for-Trusted-Services-Secure-.patch \
     file://0002-tc0-update-GICR-base-address.patch \
     "
-
 DEPENDS += "scp-firmware"
-DEPENDS += "spm"
-
-# Currenly only test partition images are available to be executed at S-EL1.
-SP_AT_SEL1 = "cactus"
-
-# Enable test secure partitions if SP_AT_SEL1 is cactus
-DEPENDS += " tf-a-tests "
 
 COMPATIBLE_MACHINE = "tc0"
 
@@ -29,6 +21,7 @@ TFA_BUILD_TARGET = "all fip"
 TFA_UBOOT = "1"
 TFA_INSTALL_TARGET = "bl1 fip"
 TFA_MBEDTLS = "1"
+TFA_DEBUG = "1"
 
 TFA_SPD = "spmd"
 TFA_SPMD_SPM_AT_SEL2 = "1"
