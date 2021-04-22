@@ -1,0 +1,15 @@
+header:
+  version: 9
+  includes:
+    - gem5-arm64.yml
+
+repos:
+  meta-arm:
+    layers:
+      meta-atp:
+
+machine: gem5-atp-arm64
+
+target:
+  - atp-native
+  - core-image-minimal

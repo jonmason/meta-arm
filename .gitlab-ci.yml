@@ -91,6 +91,9 @@ gem5-arm64:
 gem5-arm64-xen:
   extends: .build
 
+gem5-atp-arm64:
+  extends: .build
+
 generic-arm64:
   extends: .build
 
