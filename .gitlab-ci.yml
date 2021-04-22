@@ -1,5 +1,4 @@
-# Use our custom Crops-derived image
-image: $CI_REGISTRY/$CI_PROJECT_NAMESPACE/yocto-builder:master
+image: ghcr.io/siemens/kas/kas
 
   # First do a common bootstrap, and then build all the targets
 stages:
