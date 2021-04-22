@@ -1,0 +1,73 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+
+From 582bf63102ec37dadff2147dcebcb62783dcf377 Mon Sep 17 00:00:00 2001
+From: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+Date: Mon, 16 Nov 2020 18:03:21 +0000
+Subject: [PATCH 4/5] plat-totalcompute: add optee manifest file and sp layout
+
+For S-EL2 SPMC, add optee manifest file and sp layout file
+
+Change-Id: Ic3179987decf4e017cd4a0ad91b3beeea2bd6ca1
+Signed-off-by: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+---
+ .../arm/plat-totalcompute/optee_manifest.dts  | 33 +++++++++++++++++++
+ .../arch/arm/plat-totalcompute/sp_layout.json |  6 ++++
+ 2 files changed, 39 insertions(+)
+ create mode 100644 core/arch/arm/plat-totalcompute/optee_manifest.dts
+ create mode 100644 core/arch/arm/plat-totalcompute/sp_layout.json
+
+diff --git a/core/arch/arm/plat-totalcompute/optee_manifest.dts b/core/arch/arm/plat-totalcompute/optee_manifest.dts
+new file mode 100644
+index 00000000..4e60cbe1
+--- /dev/null
++++ b/core/arch/arm/plat-totalcompute/optee_manifest.dts
+@@ -0,0 +1,33 @@
++/*
++ * Copyright (c) 2020, Arm Limited. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ * This file is a Partition Manifest (PM) for a minimal Secure Partition (SP)
++ * that has additional optional properties defined.
++ *
++ */
++
++/dts-v1/;
++
++/ {
++	compatible = "arm,ffa-manifest-1.0";
++
++	/* Properties */
++	description = "op-tee";
++	ffa-version = <0x00010000>; /* 31:16 - Major, 15:0 - Minor */
++	uuid = <0x486178e0 0xe7f811e3 0xbc5e0002 0xa5d5c51b>;
++	id = <1>;
++	execution-ctx-count = <4>;
++	exception-level = <2>; /* S-EL1 */
++	execution-state = <0>; /* AARCH64 */
++	load-address = <0xfd280000>;
++	entrypoint-offset = <0x1000>;
++	xlat-granule = <0>; /* 4KiB */
++	boot-order = <0>;
++	messaging-method = <0>; /* Direct messaging only */
++	run-time-model = <1>; /* Run to completion */
++
++	/* Boot protocol */
++	gp-register-num = <0x0>;
++};
+diff --git a/core/arch/arm/plat-totalcompute/sp_layout.json b/core/arch/arm/plat-totalcompute/sp_layout.json
+new file mode 100644
+index 00000000..05bc7851
+--- /dev/null
++++ b/core/arch/arm/plat-totalcompute/sp_layout.json
+@@ -0,0 +1,6 @@
++{
++	"op-tee" : {
++		"image": "tee-pager_v2.bin",
++		"pm": "optee_manifest.dts"
++	}
++}
+-- 
+2.26.2
+

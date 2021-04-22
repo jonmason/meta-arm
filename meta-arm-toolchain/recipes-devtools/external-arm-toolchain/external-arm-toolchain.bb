@@ -115,6 +115,8 @@ do_install() {
 	rm -rf ${D}${bindir}/gdbserver
 	sed -i -e 's#/arm/tools/gnu/bash/4.2/rhe6-x86_64##' ${D}${bindir}/tzselect
 	sed -i -e 's#/arm/tools/gnu/bash/4.2/rhe6-x86_64##' ${D}${bindir}/ldd
+	sed -i -e 's#/usr/bin/bash#/bin/sh#' ${D}${bindir}/tzselect
+	sed -i -e 's#/usr/bin/bash#/bin/sh#' ${D}${bindir}/ldd
 	sed -i -e 's#/bin/bash#/bin/sh#' ${D}${bindir}/tzselect
 	sed -i -e 's#/bin/bash#/bin/sh#' ${D}${bindir}/ldd
 

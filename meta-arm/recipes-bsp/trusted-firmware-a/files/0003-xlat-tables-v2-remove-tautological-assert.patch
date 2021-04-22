@@ -1,0 +1,31 @@
+From a0b72074ee4cfdf0ff3b807b01a962898761def4 Mon Sep 17 00:00:00 2001
+From: Brett Warren <brett.warren@arm.com>
+Date: Fri, 27 Nov 2020 10:29:48 +0000
+Subject: [PATCH] xlat_tables_v2: remove tautological assert
+
+When compiling with clang for aarch32, an assert triggered
+-Wtautological error. This assertion is removed, as
+this means there is no way for it to resolve as false anyway.
+
+Upstream-Status: Pending
+Signed-off-by: Brett Warren <brett.warren@arm.com>
+---
+ lib/xlat_tables_v2/aarch32/xlat_tables_arch.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/lib/xlat_tables_v2/aarch32/xlat_tables_arch.c b/lib/xlat_tables_v2/aarch32/xlat_tables_arch.c
+index b69c6702b..52a75b37a 100644
+--- a/lib/xlat_tables_v2/aarch32/xlat_tables_arch.c
++++ b/lib/xlat_tables_v2/aarch32/xlat_tables_arch.c
+@@ -203,8 +203,6 @@ void setup_mmu_cfg(uint64_t *params, unsigned int flags,
+ 
+ 		assert(virtual_addr_space_size >=
+ 			xlat_get_min_virt_addr_space_size());
+-		assert(virtual_addr_space_size <=
+-			MAX_VIRT_ADDR_SPACE_SIZE);
+ 		assert(IS_POWER_OF_TWO(virtual_addr_space_size));
+ 
+ 		/*
+-- 
+2.17.1
+

@@ -1,11 +1,14 @@
 DESCRIPTION = "Trusted Firmware-A"
-LICENSE = "BSD & Apache-2.0"
+LICENSE = "BSD-3-Clause"
 
 PROVIDES = "virtual/trusted-firmware-a"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 inherit deploy
+
+SRC_URI = "git://git.trustedfirmware.org/TF-A/trusted-firmware-a.git;protocol=https;name=tfa"
+UPSTREAM_CHECK_GITTAGREGEX = "^v(?P<pver>\d+(\.\d+)+)$"
 
 COMPATIBLE_MACHINE ?= "invalid"
 COMPATIBLE_MACHINE_qemuarm64 ?= "qemuarm64"
@@ -19,14 +22,24 @@ TFA_PLATFORM_aarch64_qemuall ?= "qemu"
 TFA_BOARD ?= ""
 
 # Some platforms use SPD (Secure Payload Dispatcher) services
-# Few options are "opteed", "tlkd", "trusty", "tspd"...
+# Few options are "opteed", "tlkd", "trusty", "tspd", "spmd"...
 # Leave empty to not use SPD
 TFA_SPD ?= ""
 TFA_SPD_aarch64_qemuall ?= "opteed"
 
+# Variable used when TFA_SPD=spmd
+TFA_SPMD_SPM_AT_SEL2 ?= "1"
+
+# SP layout file location. Used when TFA_SPD=spmd and TFA_SPMD_SPM_AT_SEL2=1
+TFA_SP_LAYOUT_FILE ?= ""
+
+# SPMC manifest file location. Used when TFA_SPD=spmd and TFA_SPMD_SPM_AT_SEL2=1
+TFA_ARM_SPMC_MANIFEST_DTS ?= ""
+
 # Build for debug (set TFA_DEBUG to 1 to activate)
 TFA_DEBUG ?= "0"
 
+S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
 
 # mbed TLS support (set TFA_MBEDTLS to 1 to activate)
@@ -39,10 +52,16 @@ SRC_URI_MBEDTLS ??= ""
 LIC_FILES_CHKSUM_MBEDTLS ??= ""
 # add MBEDTLS to our sources if activated
 SRC_URI_append = " ${@bb.utils.contains('TFA_MBEDTLS', '1', '${SRC_URI_MBEDTLS}', '', d)}"
-# add mbed TLS chksum
-LIC_FILES_CHKSUM += "${@bb.utils.contains('TFA_MBEDTLS', '1', '${LIC_FILES_CHKSUM_MBEDTLS}', '', d)}"
+# Update license variables
+LICENSE_append = "${@bb.utils.contains('TFA_MBEDTLS', '1', ' & Apache-2.0', '', d)}"
+LIC_FILES_CHKSUM_append = "${@bb.utils.contains('TFA_MBEDTLS', '1', ' ${LIC_FILES_CHKSUM_MBEDTLS}', '', d)}"
 # add mbed TLS to version
 SRCREV_FORMAT_append = "${@bb.utils.contains('TFA_MBEDTLS', '1', '_mbedtls', '', d)}"
+
+SRC_URI_append = " \
+    file://0002-pmf.h-made-PMF_STOTE_ENABLE-pass-Wtautological.patch  \
+    file://0003-xlat-tables-v2-remove-tautological-assert.patch \
+    "
 
 # U-boot support (set TFA_UBOOT to 1 to activate)
 # When U-Boot support is activated BL33 is activated with u-boot.bin file
@@ -73,10 +92,14 @@ LD[unexport] = "1"
 # No configure
 do_configure[noexec] = "1"
 
+# Baremetal, just need a compiler
+DEPENDS_remove = "virtual/${TARGET_PREFIX}compilerlibs virtual/libc"
+
 # We need dtc for dtbs compilation
 # We need openssl for fiptool
-DEPENDS_append = " dtc-native openssl-native"
+DEPENDS = "dtc-native openssl-native"
 DEPENDS_append_aarch64_qemuall ?= " optee-os"
+DEPENDS_append_toolchain-clang = " compiler-rt"
 
 # CC and LD introduce arguments which conflict with those otherwise provided by
 # this recipe. The heads of these variables excluding those arguments
@@ -100,6 +123,9 @@ EXTRA_OEMAKE += "${@'TARGET_BOARD=${TFA_BOARD}' if d.getVar('TFA_BOARD') else ''
 # Handle TFA_SPD parameter
 EXTRA_OEMAKE += "${@'SPD=${TFA_SPD}' if d.getVar('TFA_SPD') else ''}"
 
+# If TFA_SPD is spmd, set SPMD_SPM_AT_SEL2
+EXTRA_OEMAKE += "${@'SPMD_SPM_AT_SEL2=${TFA_SPMD_SPM_AT_SEL2}' if d.getVar('TFA_SPD', True) == 'spmd' else ''}"
+
 # Handle TFA_DEBUG parameter
 EXTRA_OEMAKE += "${@bb.utils.contains('TFA_DEBUG', '1', 'DEBUG=${TFA_DEBUG}', '', d)}"
 
@@ -110,6 +136,25 @@ EXTRA_OEMAKE += "${@bb.utils.contains('TFA_MBEDTLS', '1', 'MBEDTLS_DIR=${TFA_MBE
 DEPENDS += " ${@bb.utils.contains('TFA_UBOOT', '1', 'u-boot', '', d)}"
 do_compile[depends] += " ${@bb.utils.contains('TFA_UBOOT', '1', 'u-boot:do_deploy', '', d)}"
 EXTRA_OEMAKE += "${@bb.utils.contains('TFA_UBOOT', '1', 'BL33=${DEPLOY_DIR_IMAGE}/u-boot.bin', '',d)}"
+
+# Hafnium support
+SEL2_SPMC = "${@'${TFA_SPMD_SPM_AT_SEL2}' if d.getVar('TFA_SPD', True) == 'spmd' else ''}"
+
+DEPENDS += " ${@bb.utils.contains('SEL2_SPMC', '1', 'hafnium', '', d)}"
+
+EXTRA_OEMAKE += "${@bb.utils.contains('SEL2_SPMC', '1', 'CTX_INCLUDE_EL2_REGS=1 ARM_ARCH_MINOR=4 BL32=${RECIPE_SYSROOT}/firmware/hafnium.bin', '', d)}"
+
+# Add SP layout file and spmc manifest for hafnium
+EXTRA_OEMAKE += "${@bb.utils.contains('SEL2_SPMC', '1', 'SP_LAYOUT_FILE=${TFA_SP_LAYOUT_FILE}' if d.getVar('TFA_SP_LAYOUT_FILE') else '', '', d)}"
+
+EXTRA_OEMAKE += "${@bb.utils.contains('SEL2_SPMC', '1', 'ARM_SPMC_MANIFEST_DTS=${TFA_ARM_SPMC_MANIFEST_DTS}' if d.getVar('TFA_ARM_SPMC_MANIFEST_DTS') else '', '', d)}"
+
+# Tell the tools where the native OpenSSL is located
+EXTRA_OEMAKE += "OPENSSL_DIR=${STAGING_DIR_NATIVE}/${prefix_native}"
+
+# Runtime variables
+EXTRA_OEMAKE += "RUNTIME_SYSROOT=${STAGING_DIR_HOST}"
+EXTRA_OEMAKE += "TARGET_FPU=${TARGET_FPU}"
 
 EXTRA_OEMAKE_append_aarch64_qemuall = " \
     BL32=${STAGING_DIR_TARGET}${nonarch_base_libdir}/firmware/tee-header_v2.bin \
@@ -131,6 +176,7 @@ do_compile() {
     # These changes are needed to have the native tools compiling and executing properly
     sed -i '/^LDLIBS/ s,$, \$\{BUILD_LDFLAGS},' ${S}/tools/fiptool/Makefile
     sed -i '/^INCLUDE_PATHS/ s,$, \$\{BUILD_CFLAGS},' ${S}/tools/fiptool/Makefile
+    # This can be removed when only TF-A 2.4 onwards is supported
     sed -i 's^OPENSSL_DIR.*=.*$^OPENSSL_DIR = ${STAGING_DIR_NATIVE}/${prefix_native}^' ${S}/tools/*/Makefile
 
     # Currently there are races if you build all the targets at once in parallel
@@ -205,3 +251,8 @@ do_deploy() {
     cp -rf ${D}/firmware/* ${DEPLOYDIR}/
 }
 addtask deploy after do_install
+
+CVE_PRODUCT = "arm:arm-trusted-firmware \
+               arm:trusted_firmware-a \
+               arm:arm_trusted_firmware \
+               arm_trusted_firmware_project:arm_trusted_firmware"

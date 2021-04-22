@@ -8,6 +8,11 @@ LIC_FILES_CHKSUM = "file://${S}/LICENSE.md;md5=daa2bcccc666345ab8940aab1315a4fa"
 inherit python3native
 require optee.inc
 
+# Linking fails on musl due to C++/threads
+# https://github.com/OP-TEE/optee_test/issues/458#issuecomment-720540834
+# When upgraded we should be able to remove this limitation
+COMPATIBLE_HOST_libc-musl = 'null'
+
 DEPENDS = "optee-client optee-os python3-pycryptodomex-native"
 
 SRC_URI = "git://github.com/OP-TEE/optee_test.git \
@@ -19,19 +24,9 @@ SRC_URI = "git://github.com/OP-TEE/optee_test.git \
 S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
 
-OPTEE_CLIENT_EXPORT = "${STAGING_DIR_HOST}${prefix}"
-TEEC_EXPORT         = "${STAGING_DIR_HOST}${prefix}"
-TA_DEV_KIT_DIR      = "${STAGING_INCDIR}/optee/export-user_ta"
-OPTEE_COMPILER = "${@d.getVar('TOOLCHAIN') or 'gcc'}"
-
-EXTRA_OEMAKE = " TA_DEV_KIT_DIR=${TA_DEV_KIT_DIR} \
-                 OPTEE_CLIENT_EXPORT=${OPTEE_CLIENT_EXPORT} \
-                 TEEC_EXPORT=${TEEC_EXPORT} \
-                 LIBGCC_LOCATE_CFLAGS=--sysroot=${STAGING_DIR_HOST} \
-                 COMPILER=${OPTEE_COMPILER} \
-                 CROSS_COMPILE_HOST=${TARGET_PREFIX} \
-                 CROSS_COMPILE_TA=${TARGET_PREFIX} \
-                 V=1 \
+EXTRA_OEMAKE += "TA_DEV_KIT_DIR=${TA_DEV_KIT_DIR} \
+                 CROSS_COMPILE_HOST=${HOST_PREFIX} \
+                 CROSS_COMPILE_TA=${HOST_PREFIX} \
                  O=${B} \
                "
 

@@ -1,4 +1,0 @@
-COMPATIBLE_MACHINE = "musca-b1|musca-s1"
-
-TFM_PLATFORM_musca-b1 = "MUSCA_B1"
-TFM_PLATFORM_musca-s1 = "MUSCA_S1"

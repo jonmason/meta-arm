@@ -1,0 +1,43 @@
+Upstream-Status: Backport
+Signed-off-by: Ross Burton <ross.burton@arm.com>
+
+From 30a4e41456dc0d6dcfe55bbf9f5a5302a921b760 Mon Sep 17 00:00:00 2001
+From: Arnaldo Carvalho de Melo <acme@redhat.com>
+Date: Mon, 2 Mar 2020 11:13:19 -0300
+Subject: [PATCH 2/4] perf tests bp_account: Make global variable static
+
+To fix the build with newer gccs, that without this patch exit with:
+
+    LD       /tmp/build/perf/tests/perf-in.o
+  ld: /tmp/build/perf/tests/bp_account.o:/git/perf/tools/perf/tests/bp_account.c:22: multiple definition of `the_var'; /tmp/build/perf/tests/bp_signal.o:/git/perf/tools/perf/tests/bp_signal.c:38: first defined here
+  make[4]: *** [/git/perf/tools/build/Makefile.build:145: /tmp/build/perf/tests/perf-in.o] Error 1
+
+First noticed in fedora:rawhide/32 with:
+
+  [perfbuilder@a5ff49d6e6e4 ~]$ gcc --version
+  gcc (GCC) 10.0.1 20200216 (Red Hat 10.0.1-0.8)
+
+Reported-by: Jiri Olsa <jolsa@kernel.org>
+Cc: Adrian Hunter <adrian.hunter@intel.com>
+Cc: Namhyung Kim <namhyung@kernel.org>
+Signed-off-by: Arnaldo Carvalho de Melo <acme@redhat.com>
+---
+ tools/perf/tests/bp_account.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/tools/perf/tests/bp_account.c b/tools/perf/tests/bp_account.c
+index 153624e2d0f5..a4c8007d0046 100644
+--- a/tools/perf/tests/bp_account.c
++++ b/tools/perf/tests/bp_account.c
+@@ -22,7 +22,7 @@
+ #include "perf.h"
+ #include "cloexec.h"
+ 
+-volatile long the_var;
++static volatile long the_var;
+ 
+ static noinline int test_function(void)
+ {
+-- 
+2.25.1
+

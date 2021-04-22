@@ -1,0 +1,55 @@
+Upstream-Status: Backport
+Signed-off-by: Ross Burton <ross.burton@arm.com>
+
+From 73196b58ea6978ffa5e581738030f51c5789ef73 Mon Sep 17 00:00:00 2001
+From: Volodymyr Babchuk <volodymyr_babchuk@epam.com>
+Date: Tue, 13 Oct 2020 22:54:13 +0300
+Subject: [PATCH 2/3] link.mk: implement support for libnames-after-libgcc
+ variable
+
+Newer versions of libgcc depend on external __getauxval() symbol, which is
+now provided by libutils. But libgcc is linked after libutils, so linker
+can't resolve that symbol. We can't include libgcc into linking group with
+libtutils, because libgcc provides symbols that conflict with libutil's
+ones, like __aeabi_idiv with friends for instance.
+
+So, to resolve libgcc dependency on libutils we need to link with libutils
+second time. To make things more generic, we will introduce
+$(libnames-after-libgcc) variable for libraries that should be linked after
+libgcc.
+
+Signed-off-by: Volodymyr Babchuk <volodymyr_babchuk@epam.com>
+Reviewed-by: Jens Wiklander <jens.wiklander@linaro.org>
+Reviewed-by: Jerome Forissier <jerome@forissier.org>
+---
+ ta/arch/arm/link.mk | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/ta/arch/arm/link.mk b/ta/arch/arm/link.mk
+index 445c285d..3025acb1 100644
+--- a/ta/arch/arm/link.mk
++++ b/ta/arch/arm/link.mk
+@@ -55,8 +55,11 @@ link-ldflags += --eh-frame-hdr
+ link-ldadd += $(libstdc++$(sm)) $(libgcc_eh$(sm))
+ endif
+ link-ldadd += --end-group
+-ldargs-$(user-ta-uuid).elf := $(link-ldflags) $(objs) $(link-ldadd) $(libgcc$(sm))
+ 
++link-ldadd-after-libgcc += $(addprefix -l,$(libnames-after-libgcc))
++
++ldargs-$(user-ta-uuid).elf := $(link-ldflags) $(objs) $(link-ldadd) \
++				$(libgcc$(sm)) $(link-ldadd-after-libgcc)
+ 
+ link-script-cppflags-$(sm) := \
+ 	$(filter-out $(CPPFLAGS_REMOVE) $(cppflags-remove), \
+@@ -76,6 +79,7 @@ $(link-script-pp$(sm)): $(link-script$(sm)) $(conf-file) $(link-script-pp-makefi
+ 		$(link-script-cppflags-$(sm)) $$< -o $$@
+ 
+ $(link-out-dir$(sm))/$(user-ta-uuid).elf: $(objs) $(libdeps) \
++					  $(libdeps-after-libgcc) \
+ 					  $(link-script-pp$(sm)) \
+ 					  $(dynlistdep) \
+ 					  $(additional-link-deps)
+-- 
+2.25.1
+

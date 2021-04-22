@@ -2,8 +2,8 @@ SUMMARY = "OP-TEE examples"
 DESCRIPTION = "Open Portable Trusted Execution Environment - Sample Applications"
 HOMEPAGE = "https://github.com/linaro-swg/optee_examples"
 
-LICENSE = "GPLv2"
-LIC_FILES_CHKSUM = "file://${S}/LICENSE;md5=cd95ab417e23b94f381dafc453d70c30"
+LICENSE = "BSD-2-Clause"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=cd95ab417e23b94f381dafc453d70c30"
 
 DEPENDS = "optee-client optee-os python3-pycryptodomex-native"
 
@@ -15,29 +15,17 @@ SRC_URI = "git://github.com/linaro-swg/optee_examples.git \
            file://0001-make-Pass-ldflags-during-link.patch \
           "
 
-OPTEE_COMPILER = "${@d.getVar('TOOLCHAIN') or 'gcc'}"
-
-EXTRA_OEMAKE = " TA_DEV_KIT_DIR=${TA_DEV_KIT_DIR} \
-                 OPTEE_CLIENT_EXPORT=${OPTEE_CLIENT_EXPORT} \
-                 TEEC_EXPORT=${TEEC_EXPORT} \
-                 HOST_CROSS_COMPILE=${TARGET_PREFIX} \
-                 LIBGCC_LOCATE_CFLAGS=--sysroot=${STAGING_DIR_HOST} \
-                 COMPILER=${OPTEE_COMPILER} \
-                 TA_CROSS_COMPILE=${TARGET_PREFIX} \
-                 V=1 \
+EXTRA_OEMAKE += "TA_DEV_KIT_DIR=${TA_DEV_KIT_DIR} \
+                 HOST_CROSS_COMPILE=${HOST_PREFIX} \
+                 TA_CROSS_COMPILE=${HOST_PREFIX} \
                  OUTPUT_DIR=${B} \
                "
 
 S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
 
-OPTEE_CLIENT_EXPORT = "${STAGING_DIR_HOST}${prefix}"
-TEEC_EXPORT = "${STAGING_DIR_HOST}${prefix}"
-TA_DEV_KIT_DIR = "${STAGING_INCDIR}/optee/export-user_ta"
-
 do_compile() {
-    cd ${S}
-    oe_runmake
+    oe_runmake -C ${S}
 }
 do_compile[cleandirs] = "${B}"
 
@@ -52,4 +40,3 @@ FILES_${PN} += "${nonarch_base_libdir}/optee_armtz/"
 
 # Imports machine specific configs from staging to build
 PACKAGE_ARCH = "${MACHINE_ARCH}"
-

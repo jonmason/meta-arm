@@ -1,0 +1,14 @@
+# short-description: Create a disk image
+# long-description: Creates a partitioned disk image that the user
+# can directly dd to boot media.
+
+# For Juno first partition is rootfs normally populated as /dev/sda1
+part / --source rootfs --ondisk sda --fstype=ext4 --label root --align 1024
+
+# Second partition to accomodate guests images normally populated as /dev/sda2 (used by XENGUEST_MANAGER_VOLUME_DEVICE)
+part --label guests --source empty --ondisk sda --size="${GUEST_PART_SIZE}${GUEST_PART_SIZE_UNIT}" --system-id 8e --align 1024
+
+# Third partition is user defined entry normally populated as /dev/sda3
+${AUTONOMY_HOST_EXTRA_PARTITION}
+
+bootloader --ptable msdos

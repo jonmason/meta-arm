@@ -1,19 +1,6 @@
-# gem5 simulator source and checksum information
+require gem5-source_20.inc
 
-LIC_FILES_CHKSUM = "file://COPYING;md5=2d9514d69d8abf88b6e9125e759bf0ab \
-                    file://LICENSE;md5=a585e2893cee63d16a1d8bc16c6297ec"
-
-SRC_URI = "git://gem5.googlesource.com/public/gem5;protocol=https;nobranch=1 \
-           file://0001-scons-Add-MARSHAL_XXFLAGS_EXTRA-for-the-marshal-object.patch \
-           file://0002-arch-arm-Introduce-HavePACExt-helper.patch \
-           file://0003-arch-arm-Check-if-PAC-is-implemented-before-executing-insts.patch \
-          "
-RELEASE_TAG = "v20.0.0.1"
-SRCREV = "332a9de33db603e0aefedae1e05134db4257ea3e"
-
-PV = "${RELEASE_TAG}"
-
-S = "${WORKDIR}/git"
+SRC_URI += "file://0001-dev-arm-SMMUv3-enable-interrupt-interface.patch"
 
 BPN = "gem5-aarch64-native"
 

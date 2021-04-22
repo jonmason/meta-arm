@@ -1,0 +1,59 @@
+From bc31cd2454854ab44aa9861b98f13848c2b474aa Mon Sep 17 00:00:00 2001
+From: Usama Arif <usama.arif@arm.com>
+Date: Tue, 30 Mar 2021 16:39:19 +0100
+Subject: [PATCH 2/2] tc0: update GICR base address
+
+The number of ITS have changed from 4 to 1, resulting
+in GICR base address change.
+
+Signed-off-by: Usama Arif <usama.arif@arm.com>
+Change-Id: I28101f0d1faf9f3c58591b642033c3fd49a275e7
+Upstream-Status: Pending [Not submitted to upstream yet]
+---
+ fdts/tc0.dts                              | 4 ++--
+ plat/arm/board/tc0/include/platform_def.h | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/fdts/tc0.dts b/fdts/tc0.dts
+index 2d7611cf2..382860d9d 100644
+--- a/fdts/tc0.dts
++++ b/fdts/tc0.dts
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2020, Arm Limited. All rights reserved.
++ * Copyright (c) 2020-2021, Arm Limited. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -236,7 +236,7 @@
+ 		ranges;
+ 		interrupt-controller;
+ 		reg = <0x0 0x30000000 0 0x10000>, /* GICD */
+-		      <0x0 0x30140000 0 0x200000>; /* GICR */
++		      <0x0 0x30080000 0 0x200000>; /* GICR */
+ 		interrupts = <0x1 0x9 0x4>;
+ 	};
+ 
+diff --git a/plat/arm/board/tc0/include/platform_def.h b/plat/arm/board/tc0/include/platform_def.h
+index 30b5ab716..b169d7720 100644
+--- a/plat/arm/board/tc0/include/platform_def.h
++++ b/plat/arm/board/tc0/include/platform_def.h
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2020, Arm Limited. All rights reserved.
++ * Copyright (c) 2020-2021, Arm Limited. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -220,7 +220,7 @@
+ /* GIC related constants */
+ #define PLAT_ARM_GICD_BASE		UL(0x30000000)
+ #define PLAT_ARM_GICC_BASE		UL(0x2C000000)
+-#define PLAT_ARM_GICR_BASE		UL(0x30140000)
++#define PLAT_ARM_GICR_BASE		UL(0x30080000)
+ 
+ /*
+  * PLAT_CSS_MAX_SCP_BL2_SIZE is calculated using the current
+-- 
+2.29.2
+

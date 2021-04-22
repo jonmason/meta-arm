@@ -1,0 +1,17 @@
+Upstream-Status: Inappropriate [OE config specific]
+Signed-off-by: Anders Dellien <anders.dellien@arm.com>
+
+diff --git a/configs/vexpress_aemv8a_semi_defconfig b/configs/vexpress_aemv8a_semi_defconfig
+index f0ac2f9da3..93fcd3026a 100644
+--- a/configs/vexpress_aemv8a_semi_defconfig
++++ b/configs/vexpress_aemv8a_semi_defconfig
+@@ -10,7 +10,7 @@ CONFIG_DISTRO_DEFAULTS=y
+ CONFIG_ANDROID_BOOT_IMAGE=y
+ CONFIG_BOOTDELAY=1
+ CONFIG_USE_BOOTARGS=y
+-CONFIG_BOOTARGS="console=ttyAMA0 earlycon=pl011,0x1c090000 debug user_debug=31 loglevel=9"
++CONFIG_BOOTARGS="console=ttyAMA0 earlycon=pl011,0x1c090000 debug user_debug=31 androidboot.hardware=fvpbase root=/dev/vda2 rw rootwait loglevel=9"
+ # CONFIG_USE_BOOTCOMMAND is not set
+ # CONFIG_DISPLAY_CPUINFO is not set
+ # CONFIG_DISPLAY_BOARDINFO is not set
+

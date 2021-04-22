@@ -1,8 +1,7 @@
 # gem5 aarch64 specific configuration
 
 # Build arm64 gem5
-GEM5_BUILD_CONFIGS ?= "build/ARM/gem5.opt build/ARM/gem5.fast \
-    build/ARM/gem5.debug"
+GEM5_BUILD_CONFIGS ?= "build/ARM/gem5.${GEM5_BUILD_VARIANT}"
 
 SRC_URI += "file://start-gem5.sh"
 
@@ -10,7 +9,7 @@ inherit deploy
 
 # Parameters for the start script
 
-GEM5_RUN_CONFIG ?= "gem5.fast"
+GEM5_RUN_CONFIG ?= "gem5.${GEM5_BUILD_VARIANT}"
 
 # Linux kernel file to boot
 GEM5_RUN_KERNEL ?= "vmlinux"

@@ -43,14 +43,17 @@ XENGUEST_IMAGE_KERNEL ??= "Image"
 # be included in the xenguest image)
 XENGUEST_IMAGE_DISK_SIZE ??= "${@ '4' if not d.getVar('INITRAMFS_IMAGE') else '0'}"
 
+# set empty partition to be used by xenguest-manager for this image
+XENGUEST_IMAGE_DISK_DEVICE ??= ""
+
 #
-# XENGUEST_IMAGE_DISK PARTITIONS is used to describe the partitions to setup
+# XENGUEST_IMAGE_DISK_PARTITIONS is used to describe the partitions to setup
 # and their content.
 # It must be set to a space separated list of entries with each entry having
-# the format num:sz:fs:[file] where:
+# the format num:sz:[fs]:[file] where:
 # - num is a partition number
-# - sz is the partition size in Gigabit
-# - fs is the filesystem to use for the partition
+# - sz is the partition size in MB or GB(default), e.g 1000M or 1[G]
+# - fs is optional filesystem to use for the partition
 # - file is optionally pointing to a file to use as content of the partition
 #   Please check image_types_xenguest.bbclass for rootfs handling of files
 #
@@ -62,7 +65,7 @@ XENGUEST_IMAGE_DISK_PARTITIONS ??= "1:${XENGUEST_IMAGE_DISK_SIZE}:ext4:rootfs.ta
 # The "bridge" type will share the physical eth interface from dom0 with the
 # domU. This will allow the domU to have access to the external network.
 # The "nat" type will setup a virtual network between dom0 and domU and also
-# configure and run the dhcpd on dom0 to serve the domU.
+# configure and run the kea dhcp4 server on dom0 to serve the domU.
 # The "none" type will not affect any networking setting between on dom0 and
 # domU.
 XENGUEST_IMAGE_NETWORK_TYPE ??= "bridge"
@@ -129,21 +132,27 @@ xenguest_image_create() {
 
     # create disk if needed
     disksize="${XENGUEST_IMAGE_DISK_SIZE}"
-    if [ -z "$disksize" ]; then
-        disksize="0"
-    fi
-    if [ $disksize -gt 0 ]; then
-        # setup disk size
-        call_xenguest_mkimage update --disk-reset-config --disk-size=$disksize
+    case ${disksize:=0} in
+        0|0M|0G)
+            ;;
+        *)
+            # setup disk size
+            call_xenguest_mkimage update --disk-reset-config --disk-size=$disksize
 
-        diskparts="${XENGUEST_IMAGE_DISK_PARTITIONS}"
-        if [ -n "$diskparts" ]; then
-            for arg in $diskparts; do
-                call_xenguest_mkimage update --disk-add-part=$arg
-                partnum="$(expr $partnum + 1)"
-            done
-        fi
-    fi
+            diskparts="${XENGUEST_IMAGE_DISK_PARTITIONS}"
+            if [ -n "$diskparts" ]; then
+                for arg in $diskparts; do
+                    call_xenguest_mkimage update --disk-add-part=$arg
+                done
+            fi
+            diskdevice="${XENGUEST_IMAGE_DISK_DEVICE}"
+            if [ -n "$diskdevice" ]; then
+                call_xenguest_mkimage update --disk-device="${diskdevice}"
+            fi
+
+            ;;
+    esac
+
 
     if [ "${XENGUEST_IMAGE_AUTOBOOT}" = "1" ]; then
         call_xenguest_mkimage update --set-param=GUEST_AUTOBOOT=1

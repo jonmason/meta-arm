@@ -1,0 +1,125 @@
+From 492c5d094b5c9aaeffe076265840056a2b9d57ac Mon Sep 17 00:00:00 2001
+From: Usama Arif <usama.arif@arm.com>
+Date: Tue, 23 Feb 2021 15:06:46 +0000
+Subject: [PATCH 2/2] module/cmn_booker: amend CFGM base address
+
+The CFGM base address calculation depends on the number of ports
+per XP.
+
+Signed-off-by: Usama Arif <usama.arif@arm.com>
+Change-Id: Iabb9e76b86ee80b345857deb86e9acd4cec5988c
+
+Upstream-Status: Backport [https://github.com/ARM-software/SCP-firmware/commit/5abe1656f27216f633b3fc29e20ff64340f47bfe]
+Signed-off-by: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+---
+ module/cmn_booker/include/mod_cmn_booker.h |  7 +++++++
+ module/cmn_booker/src/cmn_booker.c         | 18 +++++++++++++++---
+ module/cmn_booker/src/cmn_booker.h         |  5 +++--
+ module/cmn_booker/src/mod_cmn_booker.c     |  2 +-
+ product/tc0/scp_romfw/config_cmn_booker.c  |  1 +
+ 5 files changed, 27 insertions(+), 6 deletions(-)
+
+diff --git a/module/cmn_booker/include/mod_cmn_booker.h b/module/cmn_booker/include/mod_cmn_booker.h
+index 5d395521..a172b336 100644
+--- a/module/cmn_booker/include/mod_cmn_booker.h
++++ b/module/cmn_booker/include/mod_cmn_booker.h
+@@ -127,6 +127,13 @@ struct mod_cmn_booker_config {
+      *      to a CAL port, node id of HN-F will be a odd number).
+      */
+     bool hnf_cal_mode;
++
++    /*! \
++     * \brief Number of device ports per XP
++     * \details The calculation for CFGM base address depends on the number of
++     *      ports per cross point
++     */
++    unsigned int ports_per_xp;
+ };
+ 
+ /*!
+diff --git a/module/cmn_booker/src/cmn_booker.c b/module/cmn_booker/src/cmn_booker.c
+index d6e90964..277415ef 100644
+--- a/module/cmn_booker/src/cmn_booker.c
++++ b/module/cmn_booker/src/cmn_booker.c
+@@ -196,7 +196,7 @@ unsigned int get_node_pos_y(void *node_base)
+ 
+ struct cmn_booker_cfgm_reg *get_root_node(uintptr_t base,
+     unsigned int hnd_node_id, unsigned int mesh_size_x,
+-    unsigned int mesh_size_y)
++    unsigned int mesh_size_y, unsigned int ports_per_xp)
+ {
+     unsigned int node_pos_x;
+     unsigned int node_pos_y;
+@@ -217,11 +217,23 @@ struct cmn_booker_cfgm_reg *get_root_node(uintptr_t base,
+     node_port = (hnd_node_id >> CMN_BOOKER_NODE_ID_PORT_POS) &
+                 CMN_BOOKER_NODE_ID_PORT_MASK;
+ 
++    /* Calculate node address offset */
++    if(ports_per_xp > 4)
++    {
++        // Single XP configuration, upto 6 device ports allowed
++        offset = ((node_port & 0x3) << CMN_BOOKER_ROOT_NODE_OFFSET_PORT_POS);
++    } else if(ports_per_xp > 2)
++    {
++        // XPs which have more than 2 device ports
++        offset = (((node_port)>>1) << CMN_BOOKER_ROOT_NODE_OFFSET_PORT_POS);
++    }else
++    {
++        offset = (node_port << CMN_BOOKER_ROOT_NODE_OFFSET_PORT_POS);
++    }
+     /* Calculate node address offset */
+     offset = (node_pos_y << CMN_BOOKER_ROOT_NODE_OFFSET_Y_POS) |
+              (node_pos_x << (CMN_BOOKER_ROOT_NODE_OFFSET_Y_POS +
+-                             encoding_bits)) |
+-             (node_port << CMN_BOOKER_ROOT_NODE_OFFSET_PORT_POS);
++                             encoding_bits)) | offset;
+ 
+     return (struct cmn_booker_cfgm_reg *)(base + offset);
+ }
+diff --git a/module/cmn_booker/src/cmn_booker.h b/module/cmn_booker/src/cmn_booker.h
+index 9a89f173..b0d59804 100644
+--- a/module/cmn_booker/src/cmn_booker.h
++++ b/module/cmn_booker/src/cmn_booker.h
+@@ -417,12 +417,13 @@ unsigned int get_node_pos_y(void *node_base);
+  * \param base CMN BOOKER peripheral base address
+  * \param hnd_node_id HN-D node identifier containing the global configuration
+  * \param mesh_size_x Size of the mesh along the x-axis
+- * \param mesh_size_y Size of the mesh along the x-axis
++ * \param mesh_size_y Size of the mesh along the y-axis
++ * \param mesh_size_y Device ports per XP
+  *
+  * \return Pointer to the root node descriptor
+  */
+ struct cmn_booker_cfgm_reg *get_root_node(uintptr_t base,
+     unsigned int hnd_node_id, unsigned int mesh_size_x,
+-    unsigned int mesh_size_y);
++    unsigned int mesh_size_y, unsigned int ports_per_xp);
+ 
+ #endif /* CMN_BOOKER_H */
+diff --git a/module/cmn_booker/src/mod_cmn_booker.c b/module/cmn_booker/src/mod_cmn_booker.c
+index cbff273e..09fc8884 100644
+--- a/module/cmn_booker/src/mod_cmn_booker.c
++++ b/module/cmn_booker/src/mod_cmn_booker.c
+@@ -536,7 +536,7 @@ static int cmn_booker_init(fwk_id_t module_id, unsigned int element_count,
+         return FWK_E_DATA;
+ 
+     ctx->root = get_root_node(config->base, config->hnd_node_id,
+-        config->mesh_size_x, config->mesh_size_y);
++        config->mesh_size_x, config->mesh_size_y, config->ports_per_xp);
+ 
+     ctx->config = config;
+ 
+diff --git a/product/tc0/scp_romfw/config_cmn_booker.c b/product/tc0/scp_romfw/config_cmn_booker.c
+index a076d8d7..d13138b2 100644
+--- a/product/tc0/scp_romfw/config_cmn_booker.c
++++ b/product/tc0/scp_romfw/config_cmn_booker.c
+@@ -116,5 +116,6 @@ const struct fwk_module_config config_cmn_booker = {
+         .clock_id =
+             FWK_ID_ELEMENT_INIT(FWK_MODULE_IDX_CLOCK, CLOCK_IDX_INTERCONNECT),
+         .hnf_cal_mode = false,
++        .ports_per_xp = 4,
+     }),
+ };
+-- 
+2.29.2
+

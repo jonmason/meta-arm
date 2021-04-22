@@ -70,7 +70,10 @@ The following parameters are available:
   This variable is only used if XEN_DEVICETREE_XEN_BOOTARGS has a value
   containing "dom0_mem=${XEN_DEVICETREE_DOM0_MEM}" as the memory assigned to
   dom0 is defined using Xen boot arguments.
-  This variable is set by default to "1024M".
+  This variable is set by default to "1024M,max:1024", and cannot be empty.
+  The value can simply specify a size, e.g. "1024M", but best practice is to
+  also provide a max, documented here:
+  https://wiki.xenproject.org/wiki/Xen_Project_Best_Practices
 
 - XEN_DEVICETREE_DOM0_BOOTARGS: Boot arguments to pass to Dom0 Linux when
   booting it.
@@ -84,7 +87,8 @@ The following parameters are available:
 - XEN_DEVICETREE_DOM0_ADDR: This is the address from which the Linux kernel to
   be used for Dom0 will be copied. When using u-boot, this is the address at
   which you will load the kernel Image before starting Xen.
-  This variable is set by default to "0x80080000".
+  This variable is set by default to "0x80080000", and cannot be empty.
+  Values for this variable can be in hex (prefixed with '0x') or in decimal.
 
 - XEN_DEVICETREE_DOM0_SIZE: This is the size of the kernel loaded at
   ${XEN_DEVICETREE_DOM0_ADDR}. Xen will copy this amount of data inside the
@@ -92,7 +96,8 @@ The following parameters are available:
   size but can be bigger. You must be careful not to have a value too big as it
   could slow down boot or copy other parts with it (like the DTB).
   You might need to increase this if you use a kernel with a bundled initramfs.
-  This variable is set by default to "0x01000000".
+  This variable is set by default to "0x01000000" and cannot be empty.
+  Values for this variable can be in hex (prefixed with '0x') or in decimal.
 
 - XEN_DEVICETREE_DTSI_MERGE: This variable contains the list of dtsi files that
   must be included inside the generated DTB file. By default the only one

@@ -1,0 +1,41 @@
+Upstream-Status: Backport
+Signed-off-by: Ross Burton <ross.burton@arm.com>
+
+From 717c4c8336486781630893508b3347ae18953fae Mon Sep 17 00:00:00 2001
+From: Andrey Zhizhikin <andrey.zhizhikin@leica-geosystems.com>
+Date: Tue, 1 Dec 2020 22:29:19 +0000
+Subject: [PATCH] arm64: defconfig: drop unused BACKLIGHT_GENERIC option
+
+Commit 7ecdea4a0226 ("backlight: generic_bl: Remove this driver as it is
+unused") removed geenric_bl driver from the tree, together with
+corresponding config option.
+
+Remove BACKLIGHT_GENERIC config item from arm64 configuration.
+
+Fixes: 7ecdea4a0226 ("backlight: generic_bl: Remove this driver as it is unused")
+Signed-off-by: Andrey Zhizhikin <andrey.zhizhikin@leica-geosystems.com>
+Reviewed-by: Krzysztof Kozlowski <krzk@kernel.org>
+Acked-by: Daniel Thompson <daniel.thompson@linaro.org>
+Acked-by: Sam Ravnborg <sam@ravnborg.org>
+Cc: Sam Ravnborg <sam@ravnborg.org>
+Link: https://lore.kernel.org/r/20201201222922.3183-3-andrey.zhizhikin@leica-geosystems.com'
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+ arch/arm64/configs/defconfig | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/arch/arm64/configs/defconfig b/arch/arm64/configs/defconfig
+index 98e15de04c5d..6493079e2c54 100644
+--- a/arch/arm64/configs/defconfig
++++ b/arch/arm64/configs/defconfig
+@@ -698,7 +698,6 @@ CONFIG_DRM_PANFROST=m
+ CONFIG_FB=y
+ CONFIG_FB_MODE_HELPERS=y
+ CONFIG_FB_EFI=y
+-CONFIG_BACKLIGHT_GENERIC=m
+ CONFIG_BACKLIGHT_PWM=m
+ CONFIG_BACKLIGHT_LP855X=m
+ CONFIG_LOGO=y
+-- 
+2.25.1
+

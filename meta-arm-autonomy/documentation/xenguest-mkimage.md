@@ -58,12 +58,19 @@ order.
 ### disk.cfg and disk-files
 disk.cfg contains the guest disk description (disk size and disk partitions).
 The file contains the following entries:
-- `DISK_SIZE=X`: size of the disk to create in GB
+- `DISK_SIZE=X`: size of the disk to create in MB or GB(default),
+   e.g. 1000M or 4[G]
 - `DISK_PARTX=SIZE:FS:CONTENT`: create a partition number X (1 to 4) with a
-  size of SIZE GB, format it with filesystem FS (can be ext2, ext3, ext4, vfat
-  or swap) and extract CONTENT as initial partition content
-  (.tar[.gz|.xz|.bz2] file or img[.gz|.bz2] file to be dumped in the partition). FS and
-  CONTENT can be empty.
+  size of SIZE MB or GB(default), e.g 1000M or 2[G].
+  Format it with filesystem FS (can be ext2, ext3, ext4, vfat or swap)
+  and extract CONTENT as initial partition content (.tar[.gz|.xz|.bz2] file
+  or img[.gz|.bz2] file to be dumped in the partition).
+  FS and CONTENT can be empty.
+- `DISK_DEVICE=X`: disk or partition to be used by lvm. Setting this option
+  allows to bind guest disk with any partition or disk available on host,
+  e.g. /dev/sda3 or /dev/sdb.
+  This variable is not set by default, but if set, it overrides disk settings
+  inside xenguest-manager.conf - 'XENGUEST_VOLUME_DEVICE'.
 
 The disk-files contain files to be used for initializing the disk partitions
 content. Those should be used to create a LVM or a physical disk and initialize
@@ -105,12 +112,12 @@ For a detailed help on available operations, please use:
   image file. Several script can be added and the basename of FILE is used to
   distinguish them (calling the option twice with the same file will update the
   script in the image with the second one).
- --disk-size=SIZE: set the guest disk size to SIZE in GB. Calling this with 0
-  disable the guest disk.
+ --disk-size=SIZE: set the guest disk size to SIZE in MB or GB(default),
+   e.g 1000M or 2[G]. Calling this with 0 disable the guest disk.
 - --disk-add-part=NUM:SIZE:FS:CONTENT: This is adding a partition to the
   xenguest image disk. The partition is described with the arguments:
   - NUM: partition number.
-  - SIZE: partition size in GB.
+  - SIZE: partition size in MB or GB(default), e.g 1000M or 2[G].
   - FS: filesystem to format the partition with. This can be ext2, ext3, ext4,
     vfat of swap. If empty the partition is not formated.
   - CONTENT: tar of img file to use to initialize the partition. The file must

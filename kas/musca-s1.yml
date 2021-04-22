@@ -1,0 +1,10 @@
+header:
+  version: 9
+  includes:
+    - base.yml
+    - meta-python.yml
+
+machine: musca-s1
+
+target:
+  - trusted-firmware-m

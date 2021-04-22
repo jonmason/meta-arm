@@ -1,0 +1,29 @@
+#!/bin/sh
+#
+# Xenguest Restore default kea dhcp4 configuration
+# This script restores a dhcp4 server configuration, to prevent
+# kea startup failures after random board hangs or powercuts.
+#
+
+case "$1" in
+  start)
+        ret=$(keactrl status | grep -i "dhcpv4 server" | cut -d ' ' -f 3)
+        if [ "$ret" = "active" ]; then
+            echo "WARNING: cowardly refusing to replace dhcp4 configuration"
+            echo "kea dhcp4 server is up and running!"
+        else
+            echo "Resetting kea dhcp4 configuration."
+            cp -f /etc/kea/kea-dhcp4.conf.original /etc/kea/kea-dhcp4.conf
+        fi
+        ;;
+  status|stop|reload|force-reload|restart)
+        true
+        ;;
+  *)
+        # do not advertise unreasonable commands that there is no reason
+        # to use with this device
+        echo $"Usage: $0 {start|stop|status|restart|force-reload}"
+        exit 1
+esac
+
+exit $?

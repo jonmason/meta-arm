@@ -1,0 +1,1461 @@
+Upstream-Status: Pending [https://git.kernel.org/pub/scm/linux/kernel/git/sudeep.holla/linux.git/commit/?h=ffa_rel_proto&id=74aeede25bd737f4930e1322f5780ec1c61b9fd5]
+Signed-off-by: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+
+From 411f4ed69a06f213fb2abb7dbef0be5ce31ff55e Mon Sep 17 00:00:00 2001
+From: Jose Marinho <jose.marinho@arm.com>
+Date: Tue, 29 Oct 2019 09:28:55 +0000
+Subject: [PATCH] driver: firmware: Initial version of ffa driver based on
+ ffa_rel_proto
+
+Initial version of ffa driver based on ffa_rel_proto [1].
+
+[1]: https://git.kernel.org/pub/scm/linux/kernel/git/sudeep.holla/linux.git/log/?h=ffa_rel_proto
+
+Squashed in:
+	 firmware: arm64/spci: Add initial SPCI driver
+
+	 Add initial SPCI driver
+
+	 firmware: spci: add conduit selection from DT
+
+	 The driver can use smc or hvc conduits depending on what is
+	 specified in the spci node in the DT.
+
+	 arm64: spci/smccc: Create smc call returning on x0 to x7
+
+	 The new smc call is SMCCCv1.2 compliant.
+
+	 arm_spci: Register Rx/Tx buffers.
+
+	 Registers the Rx/Tx buffers with the SPCI implementation at a higher EL.
+	 The buffers are restricted to 4KB in this implementation.
+
+	 arm_spci: Add SPCI memory sharing mechanisms.
+
+	 Add mem_share and mem_reclaim to the SPCI driver interface.
+	 These two methods allow for the basic memory sharing use-case where
+	 normal world shares a set of pages with secure world.
+	 The memory region description is in this implementation restricted to
+	 4KB (i.e. it must fit in the Tx buffer of the normal world VM).
+
+	 spci_driver/mem_share: Add lock around TX Buffer
+
+	 Ensure we aquire a lock around the TX buffer when sending information to
+	 prevent race conditions.
+
+	 arm_spci: Expose SPCI_PARTITION_INFO_GET
+
+	 Expose the SPCI_PARTITION_INFO_GET ABI to allow querying the system for
+	 information about a set of partitions identified by a specified UUID.
+
+	 The function expects the 128bit UUID to be discovered passed via 4 32bit
+	 words in the format: UUID_0-UUID_1-UUID_2-UUID3 and a pointer to an
+	 array of `spci_partition_info` structs that will allocated and populated
+	 with the discovered partitions information by the SPCI driver.  The
+	 caller is responsible for freeing this memory allocated by the SPCI
+	 driver.
+
+	 The function returns the number of the partitions found (and therefore
+	 the number of elements in the array) or a negative value indicating the
+	 error code if unsuccessful.
+
+	 This implementation currently disallows use of the NULL UUID.
+
+	 arm_spci: Implement rx_release
+
+	 SPCI: Move driver to directory
+
+	 The SPCI driver has a specific directory at drivers/firmware/spci.
+
+	 SPCI: multi-fragment memory share support
+
+	 arm_spci: use scatterlist in mem_share interface
+
+	 Previously an array of page* was passed in the mem_share interface.
+	 This commit introduces a scatterlist as partameter to mem_share function.
+
+	 arm_spci: Add RX_RELEASE return to spci_rx_release
+
+	 A Hypervisor can return SPCI_RX_RELEASE when the PVM calls
+	 SPCI_RX_RELEASE to signal that other VMs need to be scheduled.
+
+	 arm_spci: Change spci_memory_reclaim declaration
+
+	 Function takes an enum mem_clear_t flag to denote if memory should be
+	 cleared upon reclaim.
+
+	 arm_spci: Allow nil UUID in spci_parition_info_get
+
+	 Previously the nil UUID was disallowed.
+
+	 arm_spci: Add support for non-Tx buffer mem_share
+
+	 This commit introduces the buffer*, buffer_size parameters to the
+	 mem_share function. The buffer can be used alternatively to the Tx
+	 buffer. The mem_share function will populate the IPA-contiguous memory
+	 pointed to by buffer using the information in sg.
+
+	 The buffer* must be NULL is mem_share should use the Tx buffer.
+	 The buffer*, if non-NULL, must point to a IPA-contiguous memory region
+	 of size multiple of 4kiB.
+
+	 arm_spci: Support pause/resume in mem_share handle
+
+	 The Hypervisor is allowed to return SPCI_MEM_OPS_PAUSE if a mem_share
+	 operation is taking too long. The PVM must reply with
+	 SPCI_MEM_OPS_RESUME.
+
+	 arm_spci: Ammend debug print.
+
+	 arm_spci: add missing fields in mem descriptor
+
+	 The sender_id, vm_id fields were not properly filled in the mem_share
+	 function.
+
+	 arm_spci: mem_share selection of Tx or alloc buf
+
+	 This commit allows the mem_share invokation to select the  tx buffer or a
+	 dynamically allocated buffer to be used for the transfer of the memory
+	 region description.
+
+	 if use_tx == true: the tx_lock is held until the memory region is fully
+	 transmitted.
+
+	 if use_tx == false: the tx_lock is very briefly held in the preamble
+	 and postamble of the mem_share procedure.
+
+	 arm_spci: Allow compilation for arm arch [smcccv1_2 bits]
+
+	 arm_spci: Allow compilation for arm arch [arm_spci bits]
+
+	 Implement  SPCI features
+
+	 Currently only SPCI_Direct_Req is checked during SPCI driver
+	 initialisation.
+
+	 arm_spci: add err print when features does not report direct_req support
+
+	 arm_spci: refactor mem_share implementation for EAC [arm_spci bits]
+
+	 arm_spci: introduce support for SPCI_INTERRUPT
+
+	 A SP while executing in the context of a SPCI_MSG_SEND_DIRECT_REQ
+	 may be interrupted. In which case the scheduler must be instructed and
+	 be provided with the necessary information to resume the interrupted SP.
+
+	 arm_ffa: optee: Swap spci/SPCI for ffa/FFA. [arm_ffa bits]
+
+	 arm_ffa: Implement ffa_version discovery.
+
+	 arm_ffa: corrections to EAC support.
+
+	 arm_ffa: cast status return to signed for compare
+
+	 arm_ffa: rename 1st member of arm_smcccv1_2_return [arm-smcccv1_2.h bits]
+
+	 The smcccv1_2_return.func is renamed to arg0.
+
+	 arm_ffa: rename 1st member of arm_smcccv1_2_return [arm_ffa bits]
+
+	 The smcccv1_2_return.func is renamed to arg0.
+
+	 arm_ffa: set the default shareability to inner.
+
+	 Pages are shared with inner shareability attribute set in S2.
+
+	 arm_ffa: remove some panic calls
+
+	 Some panics were swaped by pr_warns and an error code return when the
+	 error condition being signaled is predicted by the FFA spec. The panics
+	 issued when an unexpected status is returned from EL2 or
+	 EL3 (behaviour deviating from the FFA spec) are left in the driver.
+
+	 arm_ffa: fix warnings and remove debug print
+
+	 Fixed few warnings related to unused variable and in pr_warn prints
+
+	 arm_ffa: correct checkpatch warnings
+
+	 arm_ffa.h: Split memory access permissions
+
+	 Split the FF-A instruction and data access permissions.
+	 This allows for specifying one attribute but not the other. This is
+	 required for lenders of memory for which must not specify the
+	 instruction access permission.
+
+Signed-off-by: Jose Marinho <jose.marinho@arm.com>
+Signed-off-by: Marc Bonnici <marc.bonnici@arm.com>
+Signed-off-by: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+Change-Id: I7bd8cf453e99498ab4df1f01092137a67116d15d
+---
+ arch/arm/kernel/Makefile            |   1 +
+ arch/arm/kernel/smcccv1_2-call.S    |  58 +++
+ arch/arm64/kernel/Makefile          |   2 +-
+ arch/arm64/kernel/smccc_v1_2-call.S |  24 +
+ drivers/firmware/Kconfig            |  11 +
+ drivers/firmware/Makefile           |   1 +
+ drivers/firmware/ffa/Makefile       |   6 +
+ drivers/firmware/ffa/arm_ffa.c      | 782 ++++++++++++++++++++++++++++
+ include/linux/arm-smcccv1_2.h       |  51 ++
+ include/linux/arm_ffa.h             | 235 +++++++++
+ 10 files changed, 1170 insertions(+), 1 deletion(-)
+ create mode 100644 arch/arm/kernel/smcccv1_2-call.S
+ create mode 100644 arch/arm64/kernel/smccc_v1_2-call.S
+ create mode 100644 drivers/firmware/ffa/Makefile
+ create mode 100644 drivers/firmware/ffa/arm_ffa.c
+ create mode 100644 include/linux/arm-smcccv1_2.h
+ create mode 100644 include/linux/arm_ffa.h
+
+diff --git a/arch/arm/kernel/Makefile b/arch/arm/kernel/Makefile
+index 8cad59465af3..5be97585d130 100644
+--- a/arch/arm/kernel/Makefile
++++ b/arch/arm/kernel/Makefile
+@@ -101,5 +101,6 @@ obj-$(CONFIG_SMP)		+= psci_smp.o
+ endif
+ 
+ obj-$(CONFIG_HAVE_ARM_SMCCC)	+= smccc-call.o
++obj-$(CONFIG_HAVE_ARM_SMCCC)	+= smcccv1_2-call.o
+ 
+ extra-y := $(head-y) vmlinux.lds
+diff --git a/arch/arm/kernel/smcccv1_2-call.S b/arch/arm/kernel/smcccv1_2-call.S
+new file mode 100644
+index 000000000000..9a577c4045a7
+--- /dev/null
++++ b/arch/arm/kernel/smcccv1_2-call.S
+@@ -0,0 +1,58 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright (c) 2020, Linaro Limited
++ */
++#include <linux/linkage.h>
++
++#include <asm-generic/export.h>
++#include <asm/opcodes-sec.h>
++#include <asm/opcodes-virt.h>
++#include <asm/unwind.h>
++
++	/*
++	 * Wrap c macros in asm macros to delay expansion until after the
++	 * SMCCC asm macro is expanded.
++	 */
++	.macro SMCCC_SMC
++	__SMC(0)
++	.endm
++
++	.macro SMCCC_HVC
++	__HVC(0)
++	.endm
++
++	.macro SMCCC instr
++UNWIND(	.fnstart)
++	mov	r12, sp
++	push	{r4-r7}
++UNWIND(	.save	{r4-r7})
++	ldm	r12, {r4-r7}
++	\instr
++	ldr	r12, [sp, #(4 * 8)]
++	stm	r12, {r0-r7}
++	pop	{r4-r7}
++	bx	lr
++UNWIND(	.fnend)
++	.endm
++
++/*
++ * void smccc_smc(unsigned long a0, unsigned long a1, unsigned long a2,
++ *		  unsigned long a3, unsigned long a4, unsigned long a5,
++ *		  unsigned long a6, unsigned long a7, struct arm_smccc_res *res,
++ *		  struct arm_smccc_quirk *quirk)
++ */
++ENTRY(__arm_smcccv1_2_smc)
++	SMCCC SMCCC_SMC
++ENDPROC(__arm_smcccv1_2_smc)
++EXPORT_SYMBOL(__arm_smcccv1_2_smc)
++
++/*
++ * void smccc_hvc(unsigned long a0, unsigned long a1, unsigned long a2,
++ *		  unsigned long a3, unsigned long a4, unsigned long a5,
++ *		  unsigned long a6, unsigned long a7, struct arm_smccc_res *res,
++ *		  struct arm_smccc_quirk *quirk)
++ */
++ENTRY(__arm_smcccv1_2_hvc)
++	SMCCC SMCCC_HVC
++ENDPROC(__arm_smcccv1_2_hvc)
++EXPORT_SYMBOL(__arm_smcccv1_2_hvc)
+diff --git a/arch/arm64/kernel/Makefile b/arch/arm64/kernel/Makefile
+index b3995329d9e5..4327ef6f4f8d 100644
+--- a/arch/arm64/kernel/Makefile
++++ b/arch/arm64/kernel/Makefile
+@@ -19,7 +19,7 @@ obj-y			:= debug-monitors.o entry.o irq.o fpsimd.o		\
+ 			   return_address.o cpuinfo.o cpu_errata.o		\
+ 			   cpufeature.o alternative.o cacheinfo.o		\
+ 			   smp.o smp_spin_table.o topology.o smccc-call.o	\
+-			   syscall.o
++			   syscall.o smccc_v1_2-call.o
+ 
+ extra-$(CONFIG_EFI)			:= efi-entry.o
+ 
+diff --git a/arch/arm64/kernel/smccc_v1_2-call.S b/arch/arm64/kernel/smccc_v1_2-call.S
+new file mode 100644
+index 000000000000..518e849409ed
+--- /dev/null
++++ b/arch/arm64/kernel/smccc_v1_2-call.S
+@@ -0,0 +1,24 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright (C) 2019 Arm Ltd.
++ */
++
++#include <linux/linkage.h>
++
++.macro SMC_CALL conduit
++	\conduit #0
++	ldr x8, [sp]
++	stp x0, x1, [x8]
++	stp x2, x3, [x8, #16]
++	stp x4, x5, [x8, #32]
++	stp x6, x7, [x8, #48]
++	ret
++.endm
++
++ENTRY(__arm_smcccv1_2_hvc)
++	SMC_CALL hvc
++ENDPROC(__arm_smcccv1_2_hvc)
++
++ENTRY(__arm_smcccv1_2_smc)
++	SMC_CALL smc
++ENDPROC(__arm_smcccv1_2_smc)
+diff --git a/drivers/firmware/Kconfig b/drivers/firmware/Kconfig
+index 1bc0e965f2e9..3bcf3d4514e4 100644
+--- a/drivers/firmware/Kconfig
++++ b/drivers/firmware/Kconfig
+@@ -77,6 +77,17 @@ config ARM_SDE_INTERFACE
+ 	  standard for registering callbacks from the platform firmware
+ 	  into the OS. This is typically used to implement RAS notifications.
+ 
++config ARM_FFA_TRANSPORT
++	bool "ARM Secure Partition Client Interface (FFA)"
++	depends on ARM64 || ARM
++	help
++	  The Secure Partition Client Interface (FFA) is an Arm standard for
++	  communication and memory sharing between entities managed by SMCCC
++	  compliant firmware.
++
++	  This driver provides interface for all the client drivers making
++	  use of the features offered by FFA.
++
+ config EDD
+ 	tristate "BIOS Enhanced Disk Drive calls determine boot disk"
+ 	depends on X86
+diff --git a/drivers/firmware/Makefile b/drivers/firmware/Makefile
+index 64f5391e5749..10041c5f4d07 100644
+--- a/drivers/firmware/Makefile
++++ b/drivers/firmware/Makefile
+@@ -29,6 +29,7 @@ obj-$(CONFIG_TURRIS_MOX_RWTM)	+= turris-mox-rwtm.o
+ 
+ obj-$(CONFIG_ARM_SCMI_PROTOCOL)	+= arm_scmi/
+ obj-y				+= psci/
++obj-y				+= ffa/
+ obj-y				+= broadcom/
+ obj-y				+= meson/
+ obj-$(CONFIG_GOOGLE_FIRMWARE)	+= google/
+diff --git a/drivers/firmware/ffa/Makefile b/drivers/firmware/ffa/Makefile
+new file mode 100644
+index 000000000000..37f4ccae197b
+--- /dev/null
++++ b/drivers/firmware/ffa/Makefile
+@@ -0,0 +1,6 @@
++# SPDX-License-Identifier: GPL-2.0
++#
++# Makefile for the linux kernel.
++#
++obj-$(CONFIG_ARM_FFA_TRANSPORT)	+= arm_ffa.o
++ccflags-y += -Og
+diff --git a/drivers/firmware/ffa/arm_ffa.c b/drivers/firmware/ffa/arm_ffa.c
+new file mode 100644
+index 000000000000..21838f8c4632
+--- /dev/null
++++ b/drivers/firmware/ffa/arm_ffa.c
+@@ -0,0 +1,782 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Secure Partitions Communication Interface (FFA) Protocol driver
++ *
++ * FFA is a system message passing and memory sharing protocol allowing for
++ * execution contexts to exchange information with other execution contexts
++ * residing on other Secure Partitions or Virtual Machines managed by any FFA
++ * compliant firmware framework.
++ *
++ * Copyright (C) 2019, 2020 Arm Ltd.
++ */
++#define DEBUG
++
++#include <linux/platform_device.h>
++#include <linux/arm_ffa.h>
++#include <linux/arm-smcccv1_2.h>
++#include <linux/of_address.h>
++#include <linux/of_platform.h>
++#include <linux/module.h>
++#include <linux/mm.h>
++#include <linux/mutex.h>
++#include <linux/slab.h>
++#include <linux/scatterlist.h>
++
++
++static DEFINE_MUTEX(rx_lock);
++static DEFINE_MUTEX(tx_lock);
++
++static ffa_sp_id_t vm_id;
++
++static struct page *rx_buffer;
++static struct page *tx_buffer;
++
++static struct arm_smcccv1_2_return
++(*arm_ffa_smccc)(u32 func, u64 arg1, u64 arg2, u64 arg3, u64 arg4,
++		  u64 arg5, u64 arg6, u64 arg7);
++
++#define FFA_DEFINE_CALL(conduit)					\
++static struct arm_smcccv1_2_return					\
++arm_ffa_##conduit(u32 func, u64 arg1, u64 arg2, u64 arg3, u64 arg4,	\
++		   u64 arg5, u64 arg6, u64 arg7)			\
++{									\
++	struct arm_smcccv1_2_return smccc_ret;				\
++									\
++	__arm_smcccv1_2_##conduit(func, arg1, arg2, arg3, arg4, arg5,	\
++				  arg6,	arg7, &smccc_ret);		\
++									\
++	return smccc_ret;						\
++}
++
++FFA_DEFINE_CALL(smc)
++FFA_DEFINE_CALL(hvc)
++
++static u32 sender_receiver_pack(u32 src_id, u32 dst_id)
++{
++	return (((src_id << 16) & 0xffff0000) | (dst_id & 0xffff));
++}
++
++int ffa_msg_send(ffa_sp_id_t dst_id, u32 len, u32 attributes)
++{
++	struct arm_smcccv1_2_return msg_send_return;
++
++	/* w1[32:16] Sender endpoint ID, w1[15:0] destination endpoint id. */
++	u32 sender_receiver = sender_receiver_pack(vm_id, dst_id);
++
++	msg_send_return = arm_ffa_smccc(FFA_MSG_SEND_32, sender_receiver,
++					 0, len, attributes, 0, 0, 0);
++
++	if (msg_send_return.arg0  == FFA_ERROR_32) {
++		switch ((int)msg_send_return.arg2) {
++		case FFA_INVALID_PARAMETERS:
++			return -ENXIO;
++		case FFA_DENIED:
++		case FFA_BUSY:
++			return -EAGAIN;
++		default:
++			panic("%s: Unhandled return code (%lld)\n", __func__,
++			      msg_send_return.arg2);
++		}
++	}
++	return 0;
++}
++
++struct arm_smcccv1_2_return
++ffa_msg_send_direct_req(ffa_sp_id_t dst_id, u64 w3, u64 w4, u64 w5,
++			 u64 w6, u64 w7)
++{
++	struct arm_smcccv1_2_return ret;
++
++	/* w1[32:16] Sender endpoint ID, w1[15:0] destination endpoint id. */
++	u32 sender_receiver = sender_receiver_pack(vm_id, dst_id);
++
++	ret = arm_ffa_smccc(FFA_MSG_SEND_DIRECT_REQ_32, sender_receiver, 0,
++			     w3, w4, w5, w6, w7);
++
++	while (ret.arg0 != FFA_MSG_SEND_DIRECT_RESP_32 &&
++		ret.arg0 != FFA_SUCCESS_32) {
++		if (ret.arg0 == FFA_ERROR_32) {
++			pr_err("%s: Error sending message %llu\n", __func__,
++				ret.arg0);
++			switch ((int)ret.arg1) {
++			case FFA_INVALID_PARAMETERS:
++				ret.arg0 = -ENXIO;
++				goto out;
++
++			case FFA_DENIED:
++			case FFA_NOT_SUPPORTED:
++				ret.arg0 = -EIO;
++				goto out;
++
++			case FFA_BUSY:
++				ret.arg0 = -EAGAIN;
++				goto out;
++			}
++		} else if (ret.arg0 == FFA_INTERRUPT_32) {
++			ret = arm_ffa_smccc(FFA_RUN_32, ret.arg1,
++				0, 0, 0, 0, 0, 0);
++		}
++
++	}
++
++	ret.arg0 = 0;
++
++out:
++	return ret;
++}
++
++static int ffa_share_next_frag(u64 handle, u32 frag_len, u32 *tx_offset)
++{
++
++	struct arm_smcccv1_2_return smccc_return;
++	u32 handle_high = (handle >> 32) & 0xffffffff;
++	u32 handle_low = handle & 0xffffffff;
++
++	smccc_return =
++		arm_ffa_smccc(FFA_MEM_FRAG_TX_32, handle_low,
++			handle_high, frag_len, 0, 0, 0, 0);
++
++	while (smccc_return.arg0 != FFA_MEM_FRAG_RX_32) {
++
++		if (smccc_return.arg0 == FFA_ERROR_32) {
++			switch ((int)smccc_return.arg2) {
++			case FFA_INVALID_PARAMETERS:
++				return -ENXIO;
++			case FFA_NOT_SUPPORTED:
++				return -ENODEV;
++			default:
++				pr_warn("%s: Unknown Error code %llx\n",
++					__func__, smccc_return.arg2);
++				return -EIO;
++			}
++		}
++
++		if (smccc_return.arg0 == FFA_MEM_OP_PAUSE_32) {
++
++			smccc_return = arm_ffa_smccc(FFA_MEM_OP_RESUME_32,
++				smccc_return.arg1, smccc_return.arg2, 0, 0, 0,
++				0, 0);
++		}
++	}
++
++	*tx_offset = smccc_return.arg3;
++
++	return 0;
++}
++
++static int ffa_share_init_frag(phys_addr_t buffer, u32 buffer_size,
++	u32 fragment_len, u32 total_len, u64 *handle)
++{
++
++	struct arm_smcccv1_2_return smccc_return;
++
++	smccc_return =
++		arm_ffa_smccc(FFA_MEM_SHARE_64, total_len, fragment_len, buffer,
++		buffer_size, 0, 0, 0);
++
++	while (smccc_return.arg0 != FFA_SUCCESS_32) {
++
++		if (smccc_return.arg0 == FFA_ERROR_32) {
++			switch ((int)smccc_return.arg2) {
++			case FFA_INVALID_PARAMETERS:
++				return -ENXIO;
++			case FFA_DENIED:
++				return -EIO;
++			case FFA_NO_MEMORY:
++				return -ENOMEM;
++			case FFA_ABORTED:
++				return -EAGAIN;
++			default:
++				pr_warn("%s: Unknown Error code %llx\n",
++					__func__, smccc_return.arg2);
++				return -EIO;
++			}
++		}
++
++		if (smccc_return.arg0 == FFA_MEM_OP_PAUSE_32) {
++
++			smccc_return = arm_ffa_smccc(FFA_MEM_OP_RESUME_32,
++				smccc_return.arg1, smccc_return.arg2, 0, 0, 0,
++				0, 0);
++		}
++	}
++
++	*handle = (smccc_return.arg3 << 32) | smccc_return.arg2;
++
++	return 0;
++}
++
++static inline u32 compute_composite_offset(u32 num_attributes)
++{
++	u32 composite_offset = offsetof(struct ffa_mem_region,
++		endpoints[num_attributes]);
++
++	/* ensure composite are 8 byte aligned. */
++	if (composite_offset & 0x7)
++		return (composite_offset & (~(u32)0x7)) + 0x8;
++
++	return composite_offset;
++}
++
++static inline u32 compute_constituent_offset(u32 num_attributes)
++{
++	u32 constituent_offset = offsetof(struct ffa_mem_region,
++		endpoints[num_attributes]) +
++		offsetof(struct ffa_composite_memory_region, constituents[0]);
++
++	/* ensure constituents are 8 byte aligned. */
++	if (constituent_offset & 0x7)
++		return (constituent_offset & (~(u32)0x7)) + 0x8;
++
++	return constituent_offset;
++}
++
++static inline u32 compute_region_length(u32 num_constituents,
++	u32 num_attributes)
++{
++	/* This assumes that there is a single ffa_composite_memory_region. */
++	return compute_constituent_offset(num_attributes) +
++		sizeof(struct ffa_mem_region_constituent)*num_constituents;
++}
++
++static int ffa_rx_release(void)
++{
++	struct arm_smcccv1_2_return rx_release_return;
++
++	rx_release_return = arm_ffa_smccc(FFA_RX_RELEASE_32,
++					      0, 0, 0, 0, 0, 0, 0);
++
++	if (rx_release_return.arg0 == FFA_ERROR_32) {
++		switch ((int)rx_release_return.arg2) {
++		case FFA_DENIED:
++			return -EAGAIN;
++		default:
++			panic("%s: Unhandled return code (%lld)\n", __func__,
++			      rx_release_return.arg2);
++		}
++	}
++
++	if (rx_release_return.arg0 == FFA_RX_RELEASE_32) {
++		/*
++		 * FFA implementation returned FFA_RX_RELEASE which signals
++		 * the PVM that other VMs need to be scheduled.
++		 */
++		return 1;
++	}
++
++	return 0;
++}
++
++static uint32_t ffa_get_num_pages_sg(struct scatterlist *sg)
++{
++	uint32_t num_pages = 0;
++
++	do {
++		num_pages += sg->length/PAGE_SIZE;
++	} while ((sg = sg_next(sg)));
++
++	return num_pages;
++}
++
++static inline struct ffa_memory_region_attribute ffa_set_region_normal(
++	enum ffa_mem_cacheability cacheability,
++	enum ffa_mem_shareability shareability)
++{
++	struct ffa_memory_region_attribute attr = {0};
++
++	attr.attribute = (FFA_MEM_NORMAL << FFA_MEMTYPE_OFFSET) |
++		(cacheability << FFA_CACHEABILITY_OFFSET) | shareability;
++
++	return attr;
++}
++
++static inline struct ffa_memory_region_attribute ffa_set_region_device(
++	enum ffa_mem_device_type device_type)
++{
++	struct ffa_memory_region_attribute attr = {0};
++
++	attr.attribute = (FFA_MEM_DEVICE << FFA_MEMTYPE_OFFSET) |
++		(device_type << FFA_DEVICE_OFFSET);
++
++	return attr;
++}
++
++static inline int ffa_transmit_fragment(u32 *tx_offset, phys_addr_t buffer,
++	u32 buffer_size, u32 frag_len, u32 total_len, u64 *handle)
++{
++	int rc;
++
++	if (*tx_offset == 0) {
++		rc = ffa_share_init_frag(buffer, buffer_size,
++			frag_len, total_len, handle);
++
++		*tx_offset = frag_len;
++	} else
++		rc = ffa_share_next_frag(*handle, frag_len, tx_offset);
++
++
++	return rc;
++}
++
++/*
++ * Share a set of pages with a list of destination endpoints.
++ * Returns a system-wide unique handle
++ */
++static int _ffa_share_memory(u32 tag, enum mem_clear_t flags,
++	struct ffa_mem_region_attributes *attrs,
++	u32 num_attrs, struct scatterlist *sg, u32 nents,
++	ffa_mem_handle_t *handle, phys_addr_t buffer, uint32_t buffer_size)
++{
++	struct ffa_mem_region *mem_region;
++	u32 index;
++	u32 num_constituents;
++	struct ffa_mem_region_constituent *constituents;
++	u32 total_len;
++	u32 fragment_len = sizeof(struct ffa_mem_region);
++	u32 max_fragment_size;
++	int rc = 0;
++	u32 tx_offset = 0;
++	struct ffa_composite_memory_region *composite = NULL;
++
++	if (buffer) {
++
++		BUG_ON(!buffer_size);
++		max_fragment_size = buffer_size * FFA_BASE_GRANULE_SIZE;
++		mem_region = phys_to_virt(buffer);
++
++	} else {
++
++		BUG_ON(buffer_size);
++		mem_region = (struct ffa_mem_region *)page_address(tx_buffer);
++		max_fragment_size = FFA_BASE_GRANULE_SIZE;
++
++	}
++
++	mem_region->flags = flags;
++	mem_region->tag = tag;
++	mem_region->sender_id = vm_id;
++	mem_region->region_attr = ffa_set_region_normal(FFA_WRITE_BACK,
++		FFA_INNER_SHAREABLE);
++	composite = ffa_get_composite(mem_region, num_attrs);
++	composite->total_page_count = ffa_get_num_pages_sg(sg);
++
++	fragment_len = compute_constituent_offset(num_attrs);
++
++	/* Ensure attribute description fits within the Tx buffer. */
++	if (fragment_len > max_fragment_size)
++		return -ENXIO;
++
++	constituents = (struct ffa_mem_region_constituent *)
++		(((void *)mem_region) + fragment_len);
++
++	composite->constituent_count = nents;
++	total_len = compute_region_length(nents, num_attrs);
++
++	for (index = 0; index < num_attrs; index++) {
++		mem_region->endpoints[index].receiver = attrs[index].receiver;
++		mem_region->endpoints[index].attrs =
++			attrs[index].attrs;
++
++		mem_region->endpoints[index].composite_off =
++			compute_composite_offset(num_attrs);
++	}
++	mem_region->endpoint_count = num_attrs;
++
++	num_constituents = 0;
++
++	do {
++		phys_addr_t address;
++
++		/*
++		 * If current fragment size equal Tx size trigger fragment
++		 * transfer.
++		 */
++		if (fragment_len == max_fragment_size) {
++
++			/* Transmit fragment. */
++			rc = ffa_transmit_fragment(&tx_offset, buffer,
++				buffer_size, fragment_len, total_len, handle);
++
++			if (rc < 0)
++				return -ENXIO;
++
++
++			constituents =
++				(struct ffa_mem_region_constituent *)mem_region;
++
++			num_constituents = 0;
++			fragment_len = 0;
++		}
++
++		address = sg_phys(sg);
++
++		/*
++		 * Detect if any part of the constituent region surpasses the Tx
++		 * region.
++		 */
++		if (((void *) &constituents[num_constituents])
++			- (void *)mem_region > max_fragment_size) {
++			pr_err("%s: memory region fragment greater that the Tx buffer",
++				__func__);
++			return -EFAULT;
++		}
++#if 0
++		pr_devel("arm_ffa mem_share pa=%#lX\n", address);
++#endif
++		constituents[num_constituents].address = address;
++		constituents[num_constituents].page_count =
++			sg->length/PAGE_SIZE;
++		num_constituents++;
++		fragment_len += sizeof(struct ffa_mem_region_constituent);
++
++
++	} while ((sg = sg_next(sg)));
++
++	rc = ffa_transmit_fragment(&tx_offset, buffer, buffer_size,
++		fragment_len, total_len, handle);
++
++	return rc;
++}
++
++/*
++ * Share a set of pages with a list of destination endpoints.
++ *
++ * Returns a system-wide unique handle
++ */
++static int ffa_share_memory(u32 tag, enum mem_clear_t flags,
++	struct ffa_mem_region_attributes *attrs,
++	u32 num_attrs, struct scatterlist *sg, u32 nents,
++	ffa_mem_handle_t *global_handle, bool use_tx)
++{
++	u32 buffer_size = 0;
++	phys_addr_t buffer_pa = 0;
++	int ret;
++	struct page *buffer_page = NULL;
++
++	if (!use_tx) {
++		/* Allocate buffer for this mem_share operation. */
++		buffer_page = alloc_page(GFP_KERNEL);
++		if (IS_ERR_OR_NULL(buffer_page)) {
++			/* print error. Return as tx lock is not held. */
++			pr_err("%s: unable to allocate buffer", __func__);
++			return -ENOMEM;
++		}
++
++		buffer_pa = page_to_phys(buffer_page);
++
++		buffer_size = 1;
++	}
++
++	if (use_tx)
++		mutex_lock(&tx_lock);
++
++	ret = _ffa_share_memory(tag, flags, attrs, num_attrs, sg, nents,
++		global_handle, buffer_pa, buffer_size);
++
++	if (use_tx)
++		mutex_unlock(&tx_lock);
++
++	return ret;
++}
++
++static int ffa_memory_reclaim(ffa_mem_handle_t global_handle,
++	enum mem_clear_t flags)
++{
++
++	struct arm_smcccv1_2_return smccc_return;
++	u32 handle_high = (global_handle >> 32) & 0xffffffff;
++	u32 handle_low = global_handle & 0xffffffff;
++
++	smccc_return = arm_ffa_smccc(FFA_MEM_RECLAIM_32, handle_low,
++		handle_high, flags, 0, 0, 0, 0);
++
++	if (smccc_return.arg0 == FFA_ERROR_32) {
++		pr_err("%s: Error sending message %llu\n", __func__,
++			smccc_return.arg0);
++		switch ((int)smccc_return.arg2) {
++		case FFA_INVALID_PARAMETERS:
++			return -ENXIO;
++		case FFA_DENIED:
++		case FFA_NOT_SUPPORTED:
++			return -EIO;
++		case FFA_BUSY:
++			return -EAGAIN;
++		default:
++			pr_warn("%s: Unknown Error code %llx\n", __func__,
++				smccc_return.arg2);
++			return -EIO;
++		}
++	}
++
++	return 0;
++}
++
++/*
++ * Returns a negative value if function not supported. Otherwise returns w2,
++ * supplying optional feature parameter else 0.
++ */
++
++static int ffa_features(uint32_t function_id)
++{
++	struct arm_smcccv1_2_return features_return =
++		arm_ffa_smccc(FFA_FEATURES_32, function_id, 0, 0, 0, 0, 0, 0);
++
++	if (features_return.arg0 == FFA_ERROR_32) {
++		switch ((int)features_return.arg2) {
++		case FFA_NOT_SUPPORTED:
++			return -ENODEV;
++		default:
++			panic("%s: Unhandled return code (%lld)\n", __func__,
++			      features_return.arg2);
++		}
++	} else {
++		return features_return.arg2;
++	}
++}
++
++static ffa_sp_id_t ffa_id_get(ffa_sp_id_t *vm_id_p)
++{
++	struct  arm_smcccv1_2_return id_get_return =
++		arm_ffa_smccc(FFA_ID_GET_32, 0, 0, 0, 0, 0, 0, 0);
++
++	if (id_get_return.arg0 == FFA_ERROR_32) {
++		pr_warn("%s: failed to obtain vm id\n", __func__);
++		return -EIO;
++	}
++
++	*vm_id_p = id_get_return.arg2 & 0xffff;
++
++	return 0;
++}
++
++static int ffa_partition_info_get(uint32_t uuid0, uint32_t uuid1,
++				     uint32_t uuid2, uint32_t uuid3,
++				     struct ffa_partition_info **buffer)
++{
++	int rc = 0;
++	uint32_t count;
++	struct ffa_partition_info *info =
++		(struct ffa_partition_info *) page_address(rx_buffer);
++	struct arm_smcccv1_2_return partition_info_get_return;
++
++	mutex_lock(&rx_lock);
++	partition_info_get_return = arm_ffa_smccc(FFA_PARTITION_INFO_GET_32,
++						   uuid0, uuid1, uuid2, uuid3,
++						   0, 0, 0);
++
++	if (partition_info_get_return.arg0 == FFA_ERROR_32) {
++		switch ((int)partition_info_get_return.arg2) {
++		case FFA_INVALID_PARAMETERS:
++			rc = -ENXIO;
++			goto err;
++		case FFA_NO_MEMORY:
++			rc = -ENOMEM;
++			goto err;
++		case FFA_NOT_SUPPORTED:
++			rc = -ENODEV;
++			goto err;
++		default:
++			panic("%s: Unhandled return code (%lld)\n", __func__,
++			      partition_info_get_return.arg2);
++		}
++	}
++
++	count = partition_info_get_return.arg2;
++
++	/* Allocate and copy the info structs.
++	 * Client is responsible for freeing.
++	 */
++	*buffer = kzalloc(sizeof(struct ffa_partition_info) * count,
++			  GFP_KERNEL);
++	if (*buffer == NULL) {
++		rc = -ENOMEM;
++		goto err;
++	}
++	memcpy(*buffer, info, sizeof(struct ffa_partition_info) * count);
++
++	ffa_rx_release();
++
++	rc = count;
++err:
++	mutex_unlock(&rx_lock);
++
++	return rc;
++}
++
++static struct ffa_ops ffa_ops = {
++	.async_msg_send = ffa_msg_send,
++	.sync_msg_send = ffa_msg_send_direct_req,
++	.mem_share = ffa_share_memory,
++	.mem_reclaim = ffa_memory_reclaim,
++	.partition_info_get = ffa_partition_info_get,
++};
++
++struct ffa_ops *get_ffa_ops(void)
++{
++	return &ffa_ops;
++}
++EXPORT_SYMBOL_GPL(get_ffa_ops);
++
++static int ffa_dt_init(struct device_node *np)
++{
++	const char *conduit;
++
++	pr_info("FFA: obtaining conduit from DT.\n");
++
++	if (of_property_read_string(np, "conduit", &conduit)) {
++		pr_warn("FFA: cannot find conduit in DT\n");
++		return -ENXIO;
++	}
++
++	if (!strcmp("smc", conduit))
++		arm_ffa_smccc = arm_ffa_smc;
++	else if (!strcmp("hvc", conduit))
++		arm_ffa_smccc = arm_ffa_hvc;
++	else {
++		pr_warn("%s: unrecognized FFA conduit\n", __func__);
++		return -EIO;
++	}
++
++	return 0;
++}
++
++static const struct of_device_id ffa_of_match[] = {
++	{.compatible = "arm,ffa"},
++	{},
++};
++
++static int ffa_rxtx_map(uintptr_t tx_page, uintptr_t rx_page)
++{
++	struct arm_smcccv1_2_return map_return;
++
++	map_return = arm_ffa_smccc(FFA_RXTX_MAP_32, tx_page,
++					 rx_page, 1, 0, 0, 0, 0);
++
++	if (map_return.arg0 == FFA_ERROR_32) {
++		switch ((int)map_return.arg2) {
++		case FFA_INVALID_PARAMETERS:
++			return -ENXIO;
++		case FFA_DENIED:
++			return -EAGAIN;
++		case FFA_NO_MEMORY:
++			return -ENOMEM;
++		case FFA_NOT_SUPPORTED:
++			return -ENODEV;
++
++		default:
++			panic("%s: Unhandled return code (%lld)\n", __func__,
++			      map_return.arg2);
++		}
++	}
++
++	return 0;
++}
++
++static int ffa_version_check(void)
++{
++	struct arm_smcccv1_2_return version_return;
++	u16 major = 1;
++	u16 minor = 0;
++	u32 hv_version;
++
++	version_return = arm_ffa_smccc(FFA_VERSION_32, ((u32)major<<16)|minor,
++		 0, 0, 0, 0, 0, 0);
++
++	if ((int)version_return.arg0 == FFA_NOT_SUPPORTED) {
++		pr_err("%s: FFA ABI is not supported at higher exception levels\n",
++			__func__);
++		return -ENODEV;
++	}
++
++	hv_version = version_return.arg0;
++
++	if ((hv_version>>16) == major)
++		if ((hv_version & 0xffff) >= minor)
++			return 0;
++
++	pr_err("%s: incompatible FFA ABI at higher exception level (%x)\n",
++		__func__, hv_version);
++	return -ENODEV;
++}
++
++static int ffa_probe(struct platform_device *pdev)
++{
++	int ret;
++
++	ret = ffa_dt_init(pdev->dev.of_node);
++	if (ret) {
++		pr_warn("%s: FFA driver initialization failed\n", __func__);
++		return ret;
++	}
++
++	ret = ffa_version_check();
++	if (ret)
++		return ret;
++
++	/* Initialize VM ID. */
++	ret = ffa_id_get(&vm_id);
++	if (ret) {
++		pr_warn("%s: failed to obtain own FFA endpoint ID\n", __func__);
++		return ret;
++	}
++
++	if (ffa_features(FFA_MSG_SEND_DIRECT_REQ_32)) {
++		pr_err("%s: FFA implementation at EL2 does not support FFA_MSG_SEND_DIRECT_REQ_32\n",
++			__func__);
++		return -ENXIO;
++	}
++
++	/* Allocate Rx buffer. */
++	rx_buffer = alloc_page(GFP_KERNEL);
++
++	/*
++	 * Ensure buffer was correctly allocated and that the refcout was
++	 * incremented.
++	 */
++	if (!rx_buffer || !try_get_page(rx_buffer)) {
++		pr_err("%s: failed to allocate FFA Rx buffer\n", __func__);
++		return -ENOMEM;
++	}
++
++	/* Allocate Tx buffer. */
++	tx_buffer = alloc_page(GFP_KERNEL);
++
++	/*
++	 * Ensure buffer was correctly allocated and that the refcout was
++	 * incremented.
++	 */
++	if (!tx_buffer || !try_get_page(rx_buffer)) {
++		put_page(rx_buffer);
++		__free_page(rx_buffer);
++
++		pr_err("%s: failed to allocate FFA Tx buffer\n", __func__);
++		return -ENOMEM;
++	}
++
++	/* Register the RxTx buffers with the FFA supervisor implementation. */
++	ret = ffa_rxtx_map(page_to_phys(tx_buffer), page_to_phys(rx_buffer));
++	if (ret) {
++		put_page(rx_buffer);
++		put_page(tx_buffer);
++		__free_page(rx_buffer);
++		__free_page(tx_buffer);
++
++		pr_err("%s: failed to register FFA RxTx buffers\n", __func__);
++		return ret;
++	}
++
++	return 0;
++}
++
++static struct platform_driver ffa_driver = {
++	.driver = {
++		.name = "ffa_protocol",
++		.of_match_table = ffa_of_match,
++	},
++	.probe = ffa_probe,
++};
++module_platform_driver(ffa_driver);
++
++MODULE_AUTHOR("Arm");
++MODULE_DESCRIPTION("Arm FFA transport driver");
++MODULE_LICENSE("GPL v2");
+diff --git a/include/linux/arm-smcccv1_2.h b/include/linux/arm-smcccv1_2.h
+new file mode 100644
+index 000000000000..a622cc352ae1
+--- /dev/null
++++ b/include/linux/arm-smcccv1_2.h
+@@ -0,0 +1,51 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright (C) 2019 Arm Ltd.
++ */
++
++//#if defined(ARM64)
++#if CONFIG_ARM64 
++struct arm_smcccv1_2_return {
++	u64 arg0;
++	u64 arg1;
++	u64 arg2;
++	u64 arg3;
++	u64 arg4;
++	u64 arg5;
++	u64 arg6;
++	u64 arg7;
++};
++#elif CONFIG_ARM
++struct arm_smcccv1_2_return {
++	u32 arg0;
++	u32 arg1;
++	u32 arg2;
++	u32 arg3;
++	u32 arg4;
++	u32 arg5;
++	u32 arg6;
++	u32 arg7;
++};
++#endif
++
++/**
++ * __arm_smcccv1_2_hvc() - make HVC calls
++ * @a0-a7: arguments passed in registers 0 to 7
++ * @res: result values from registers 0 to 7
++ */
++asmlinkage
++void __arm_smcccv1_2_hvc(unsigned long a0, unsigned long a1, unsigned long a2,
++			 unsigned long a3, unsigned long a4, unsigned long a5,
++			 unsigned long a6, unsigned long a7,
++			 struct arm_smcccv1_2_return  *res);
++
++/**
++ * __arm_smcccv1_2_smc() - make SMC calls
++ * @a0-a7: arguments passed in registers 0 to 7
++ * @res: result values from registers 0 to 7
++ */
++asmlinkage
++void __arm_smcccv1_2_smc(unsigned long a0, unsigned long a1, unsigned long a2,
++			 unsigned long a3, unsigned long a4, unsigned long a5,
++			 unsigned long a6, unsigned long a7,
++			 struct arm_smcccv1_2_return  *res);
+diff --git a/include/linux/arm_ffa.h b/include/linux/arm_ffa.h
+new file mode 100644
+index 000000000000..d3c80b7f9e07
+--- /dev/null
++++ b/include/linux/arm_ffa.h
+@@ -0,0 +1,235 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (C) 2019, 2020 Arm Ltd.
++ */
++
++#ifndef __LINUX_ARM_FFA_H
++#define __LINUX_ARM_FFA_H
++
++#define FFA_ERROR_32                 0x84000060
++#define FFA_SUCCESS_32               0x84000061
++#define FFA_INTERRUPT_32             0x84000062
++#define FFA_VERSION_32               0x84000063
++#define FFA_FEATURES_32              0x84000064
++#define FFA_RX_RELEASE_32            0x84000065
++#define FFA_RXTX_MAP_32              0x84000066
++
++#define FFA_PARTITION_INFO_GET_32    0x84000068
++#define FFA_ID_GET_32                0x84000069
++
++#define FFA_RUN_32                   0x8400006D
++#define FFA_MSG_SEND_32              0x8400006E
++#define FFA_MSG_SEND_DIRECT_REQ_32   0x8400006F
++#define FFA_MSG_SEND_DIRECT_RESP_32  0x84000070
++#define FFA_MEM_RECLAIM_32           0x84000077
++#define FFA_MEM_OP_PAUSE_32          0x84000078
++#define FFA_MEM_OP_RESUME_32         0x84000079
++
++#define FFA_MEM_SHARE_64             0xC4000073
++
++#define FFA_MEM_FRAG_RX_32			  0x8400007A
++#define FFA_MEM_FRAG_TX_32			  0x8400007B
++
++/* FFA error codes. */
++#define FFA_SUCCESS            (0)
++#define FFA_NOT_SUPPORTED      (-1)
++#define FFA_INVALID_PARAMETERS (-2)
++#define FFA_NO_MEMORY          (-3)
++#define FFA_BUSY               (-4)
++#define FFA_INTERRUPTED        (-5)
++#define FFA_DENIED             (-6)
++#define FFA_RETRY              (-7)
++#define FFA_ABORTED            (-8)
++
++#define FFA_BASE_GRANULE_SIZE 4096
++
++struct scatterlist;
++
++enum ffa_mem_permission {
++	FFA_MEM_R   = 0x1,
++	FFA_MEM_RW  = 0x2,
++	FFA_MEM_XN  = 0x4,
++	FFA_MEM_X   = 0x8,
++};
++
++#define FFA_MEMTYPE_OFFSET 4
++enum ffa_mem_type {
++	FFA_MEM_DEVICE = 0x1,
++	FFA_MEM_NORMAL = 0x2,
++};
++
++
++#define FFA_CACHEABILITY_OFFSET 2
++enum ffa_mem_cacheability {
++	FFA_NON_CACHEABLE = 0x1,
++	FFA_WRITE_BACK = 0x3,
++};
++
++enum ffa_mem_shareability {
++	FFA_NON_SHAREABLE,
++	FFA_OUTER_SHAREABLE = 0x2,
++	FFA_INNER_SHAREABLE = 0x3,
++};
++
++#define FFA_DEVICE_OFFSET 2
++enum ffa_mem_device_type {
++	FFA_NGNRNE,
++	FFA_NGNRE,
++	FFA_NGRE,
++	FFA_GRE,
++};
++
++enum mem_clear_t {
++	FFA_KEEP_MEMORY,
++	FFA_CLEAR_MEMORY,
++};
++
++typedef u64 ffa_mem_handle_t;
++
++/* The type of an FFA endpoint ID */
++typedef u16 ffa_sp_id_t;
++
++struct ffa_mem_region_constituent {
++	u64 address;
++	u32 page_count;
++	u32 reserved_12_15;
++};
++
++struct ffa_composite_memory_region {
++
++	uint32_t total_page_count;
++	uint32_t constituent_count;
++
++	uint64_t reserved_0;
++
++	struct ffa_mem_region_constituent constituents[];
++};
++
++struct ffa_mem_region_attributes {
++	ffa_sp_id_t receiver;
++	u8 attrs;
++	u32 composite_off;
++	u64 reserved_8_15;
++};
++
++/* Table 43 */
++struct ffa_memory_region_attribute {
++	uint8_t attribute;
++};
++
++struct ffa_mem_region {
++	u16 sender_id;
++	struct ffa_memory_region_attribute region_attr;
++	u8 reserved_0;
++	u32 flags;
++	u64 handle;
++	u64 tag;
++	u32 reserved_1;
++	u32 endpoint_count;
++	struct ffa_mem_region_attributes endpoints[];
++};
++
++static inline struct ffa_composite_memory_region *
++ffa_get_composite(struct ffa_mem_region *mem_region, u32 num_endpoints)
++{
++	struct ffa_composite_memory_region *composite;
++
++	composite = (struct ffa_composite_memory_region *)
++		(&mem_region->endpoints[num_endpoints]);
++	return composite;
++}
++
++
++struct ffa_partition_info {
++		/** The ID of the VM the information is about. */
++		ffa_sp_id_t id;
++		/**
++		 * The number of execution contexts implemented by the
++		 * partition.
++		 */
++		uint16_t execution_context;
++		/**
++		 * The Partition's properties, e.g. supported messaging
++		 * methods
++		 */
++		uint32_t partition_properties;
++};
++
++
++/**
++ * struct ffa_ops - represents the various FFA protocol operations
++ * available for an SCPI endpoint.
++ */
++struct ffa_ops {
++	int (*async_msg_send)(ffa_sp_id_t dst_id, u32 len, u32 attributes);
++	struct arm_smcccv1_2_return
++	(*sync_msg_send)(ffa_sp_id_t dst_id, u64 w3, u64 w4, u64 w5,
++			 u64 w6, u64 w7);
++
++	/**
++	 * Registers a memory region with the FFA implementation.
++	 *
++	 * Params:
++	 *  - tag: Implementation defined value.
++	 *  - flags:
++	 *   - FFA_KEEP_MEMORY: DO not clear the memory region;
++	 *   - FFA_CLEAR_MEMORY: Clear the memory region.
++	 *  - attrs[]: Array of destination VMs and permissions with which the
++	 *     Stage-2 mappings are set.
++	 *  - num_attrs: Count of elements pointed to by attrs.
++	 *  - sg: scatter list holding the pages to be shared.
++	 *  - global_handle: A system-wide unique handle referring to the shared
++	 *     set of physical pages being shared.
++	 *  - use_tx: select if memorry region description is transmitted in tx
++	 *     or in a dynamically allocated buffer. When using the tx buffer a
++	 *     global lock on the tx buffer will be held.
++	 *
++	 * Return: 0 in case of success, otherwise a negative value
++	 * (error code).
++	 */
++	int (*mem_share)(u32 tag, enum mem_clear_t flags,
++			  struct ffa_mem_region_attributes attrs[],
++			  u32 num_attrs, struct scatterlist *sg, u32 nents,
++			  ffa_mem_handle_t *global_handle, bool use_tx);
++
++	/**
++	 * Reclaims a memory region previously registered with the FFA
++	 *  implementation.
++	 * Params:
++	 *  - global_handle: The global identifier of the memory region being
++	 *     reclaimed.
++	 *  - clear_memory: Set if the memory is meant to be cleared before
++	 *     being mapped in the owner's Stage-2.
++	 *
++	 * Return: 0 in case of success, otherwise a negative value
++	 * (error code).
++	 */
++	int (*mem_reclaim)(ffa_mem_handle_t global_handle,
++		enum mem_clear_t flags);
++	/**
++	 * Returns information on a sub-set of partitions within a system
++	 * identified by a UUID.
++	 * Params:
++	 *  - uuid0-3: The 128 bit UUID of the desired partition(s) represented
++	 *              as 4 32 bit uints in form: uuid0-uuid1-uuid2-uuid3.
++	 *  - ffa_partition_info**: A pointer to an array of
++	 *	                     `ffa_parition_info` structs that will be
++	 *	                     allocated and populated with the
++	 *	                     discovered partitions information. The
++	 *	                     caller is responsible for freeing the
++	 *	                     memory allocated by the FFA driver.
++	 * Return: The number of discovered partitions in the system and the
++	 *	   length of the array of ffa_partition_info structs,
++	 *	   otherwise a negative value (error code).
++	 */
++	int (*partition_info_get)(u32 uuid0, u32 uuid1, u32 uuid2, u32 uuid3,
++				   struct ffa_partition_info **buffer);
++};
++
++#if IS_REACHABLE(CONFIG_ARM_FFA_TRANSPORT)
++struct ffa_ops *get_ffa_ops(void);
++#else
++static inline struct ffa_ops *get_ffa_ops(void) { return NULL; }
++#endif
++
++#endif /*__LINUX_ARM_FFA_H*/
+-- 
+2.26.2
+

@@ -23,7 +23,7 @@ Usage
 -----
 
 xenguest-manager must be called like this:
-`xenguest-manager OPERATION [OPTIONS]`
+`xenguest-manager [-v(v)] OPERATION [OPTIONS]`
 The following operations are available:
 - create XENGUEST_IMAGE [GUESTNAME]: create a guest from a xenguest image file
   as guest GUESTNAME. If GUESTNAME is not given the image file name is used
@@ -37,6 +37,9 @@ The following operations are available:
 - status [GUESTNAME]: print the current status of GUESTNAME. If GUESTNAME is
   not given, print the status of all guests.
 
+Passing -v or -vv will increase the logging written to the logfile.
+The terminal will always show only error messages, regardless of the logfile.
+
 For a detailed help on available options please use:
 `xenguest-manager --help`
 
@@ -48,16 +51,16 @@ project compilation (those can be set in your project local.conf, for example).
 
 The following parameters are available:
 
-- XENGUEST_MANAGER_VOLUME_DEVICE: This is the device path used by the 
+- XENGUEST_MANAGER_VOLUME_DEVICE: This is the device path used by the
   xenguest-manager on the device to create LVM disks when guests have a disk
   configuration.
   This is set by default to "/dev/sda2".
 
-- XENGUEST_MANAGER_VOLUME_NAME: This is the LVM volume name that the 
+- XENGUEST_MANAGER_VOLUME_NAME: This is the LVM volume name that the
   xenguest-manager will create and use to create guest LVM disks.
   This is set by default to "vg-xen".
 
-- XENGUEST_MANAGER_GUEST_DIR: This is the directory on Dom0 where the 
+- XENGUEST_MANAGER_GUEST_DIR: This is the directory on Dom0 where the
   xenguest-manager will look for xenguest images to create during init. That's
   the place where xenguest images can be added to have them automatically
   created during next Dom0 boot. The xenguests found there will only be created
@@ -65,3 +68,63 @@ The following parameters are available:
   name).
   This is set by default to "/usr/share/guests".
 
+- XENGUEST_MANAGER_LOG_LEVEL: Set the default log level for xenguest manager. Must
+  be one of ERROR, INFO, VERBOSE (default: ERROR). The extra will be
+  written to /var/log/xenguest.
+
+  If a verbosity argument (-v or -vv) is passed to xenguest-manager directly, it
+  will override the setting in xenguest-manager.conf
+
+Init scripts
+------------
+
+Shell scripts can be executed on the host when a guest is started. Depending on
+when the script should be executed it should be installed in a different
+directory on the target:
+
+- /etc/xenguest/init.pre  : Executed first, prior to guest creation
+
+- /etc/xenguest/init.d    : Executed after guest creation, but before it is started
+
+- /etc/xenguest/init.post : Executed after starting the guest
+
+Inside the directory, scripts will be executed in alphabetical order.
+
+Since these scripts are sourced by xenguest-manager, they can acccess functions
+and variables from the parent file's scope, including:
+
+- ${guestname}    : The name of the guest being created
+
+- ${guestdir}     : The path to the guest directory
+
+- ${guestcfgfile} : The name of the config file for the starting guest
+
+- log()           : Used to write a log to the logfile, default level INFO.
+                    Takes an optional log level and a message body
+                    e.g. log ERROR "blah"
+
+                    Options for log level: ERROR, INFO, VERBOSE, and FATAL, which
+                    will call exit 1 immediately after logging the message
+
+- log_command()   : Used to call a shell command and log that it has been
+                    called, as well as capturing both stdout and stderr.
+
+                    By default the command output is dumped to the logfile as an error
+                    if the command returns a status > 0, or as a verbose message if the
+                    whole script is running in verbose mode. An optional log level can
+                    be passed to alter the level the log should be if the command returns
+                    a status >0,
+                    e.g. log_command INFO "ls -lh ~"
+
+                    Options for log level: ERROR, INFO, and VERBOSE
+
+Attempting to call any other functions from xenguest_manager in an init script may
+result in a fatal error, from which cleanup is not guarenteed.
+
+
+Sourcing also allows the script to access params.cfg.
+
+An example of how to create the directory and install an init shell script can
+be found in:
+  recipes-extended/xenguest/xenguest-network.bb
+Where network-bridge.sh is installed from network-bridge.sh.in

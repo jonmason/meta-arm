@@ -1,0 +1,32 @@
+These variables can be returned without being set, so assign reasonable
+fallback values for the error paths.
+
+Upstream-Status: Pending
+Signed-off-by: Ross Burton <ross.burton@arm.com>
+
+From ef296251231a9a646051efbed0d81131f0876e25 Mon Sep 17 00:00:00 2001
+From: Ross Burton <ross.burton@arm.com>
+Date: Wed, 21 Oct 2020 17:29:17 +0100
+Subject: [PATCH] Add missing Status assignments
+
+---
+ Platform/ARM/Drivers/CcixDxe/CcixEnumeration.c          | 2 +-
+ Platform/ARM/N1SdpPkg/Drivers/PlatformDxe/PlatformDxe.c | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/Platform/ARM/Drivers/CcixDxe/CcixEnumeration.c b/Platform/ARM/Drivers/CcixDxe/CcixEnumeration.c
+index b605d9adbd..6b11a8545d 100644
+--- a/edk2-platforms/Platform/ARM/Drivers/CcixDxe/CcixEnumeration.c
++++ b/edk2-platforms/Platform/ARM/Drivers/CcixDxe/CcixEnumeration.c
+@@ -684 +684 @@ CcixAgentInit(
+-  EFI_STATUS Status;
++  EFI_STATUS Status = EFI_ABORTED;
+diff --git a/Platform/ARM/N1SdpPkg/Drivers/PlatformDxe/PlatformDxe.c b/Platform/ARM/N1SdpPkg/Drivers/PlatformDxe/PlatformDxe.c
+index c828165d07..e1f7f5e8ea 100644
+--- a/edk2-platforms/Platform/ARM/N1SdpPkg/Drivers/PlatformDxe/PlatformDxe.c
++++ b/edk2-platforms/Platform/ARM/N1SdpPkg/Drivers/PlatformDxe/PlatformDxe.c
+@@ -26 +26 @@ ArmN1SdpPkgEntryPoint (
+-  EFI_STATUS                 Status;
++  EFI_STATUS                 Status = EFI_UNSUPPORTED;
+-- 
+2.25.1

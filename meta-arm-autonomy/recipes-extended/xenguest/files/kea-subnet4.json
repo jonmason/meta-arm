@@ -1,0 +1,35 @@
+# This file holds the guest kea dhcp4 server options running on Dom0.
+# The "/etc/xen/scripts/vif-post.d/00-vif-xenguest.hook" called in the end of
+# the vif-nat script will use this file to generate the final dhcp
+# configuration.
+
+# This file is added in the xenguest image and installed in dom0 under
+# /etc/xenguest/guests/${guestname}/files/kea-subnet4.json when the guest
+# image is created.
+# Any customizations to it should be performed by replacing it via a bbappend.
+
+# The \${vif_ip} and \${router_ip} variables are set in
+# the vif-nat script context. The \${subnetprefix} and \${mac} variable are set in the
+# 00-vif-xenguest.hook script context.
+
+# The "subnet" configuration node is mandatory in order to have the dhcp
+# properly running.
+        {
+            \"subnet\": \"${subnetprefix}.0/24\",
+            \"option-data\": [
+                {
+                    \"name\": \"routers\",
+                    \"data\": \"${router_ip}\"
+                },
+                {
+                    \"name\": \"domain-name-servers\",
+                    \"data\": \"8.8.8.8, 8.8.4.4\"
+                }
+            ],
+            \"reservations\": [
+                {
+                    \"hw-address\": \"${mac}\",
+                    \"ip-address\": \"${vif_ip}\"
+                }
+            ]
+        },

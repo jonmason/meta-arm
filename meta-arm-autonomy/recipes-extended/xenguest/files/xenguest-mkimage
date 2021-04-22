@@ -110,7 +110,8 @@ Init configuration
 
 Disk configuration
 --disk-reset-config     reset disk guest configuration to default (no disk)
---disk-size=SZ          set guest disk size (in GB)
+--disk-size=SZ          set guest disk size in MB or GB(default),
+                         e.g 1000M or 2[G].
 --disk-device=DEV       set device to be used to create the guest disk
                         if unset or set to an empty string, the volume will be
                         create in the default manager volume group.
@@ -127,7 +128,7 @@ Disk configuration
 --disk-rm-part=ID       remove partition ID from the guest disk
 --disk-add-file=SRC:DST add file SRC as disk file DST in the xenguest image.
                          DST can then be used as a partition CONTENT.
---disk--rm-file=DST     remove disk file DST from the xenguest image.
+--disk-rm-file=DST     remove disk file DST from the xenguest image.
 EOF
 }
 
@@ -370,13 +371,159 @@ disk_config_rm_part() {
     sed -i "/DISK_PART${partid}=.*/d" ${IMAGE_TMPDIR}/disk.cfg
 }
 
+is_integer() {
+    if ! [[ "${1}" =~ ^[0-9]+$ ]]; then
+        >&2 echo "error: invalid number '${1}'"; exit 1
+    fi
+}
+
+# check size and convert it to MB, e.g '1[G]' => '1000M'
+check_size() {
+    local disksize="${1}"
+
+    [ -n "${disksize}" ] || disksize="invalid"
+
+    # disksize may have appended M or G suffix, let's extract it
+    # ${var:offset:length}, where #var is var length
+    local lastchar="${disksize:${#disksize}-1}"
+    case "${lastchar}" in
+        [0-9])
+            # backwards compatibility
+            is_integer "${disksize}"
+            echo -e "$((${disksize} * 1000))M"
+            return
+            ;;
+        G|M)
+            if [ "${#disksize}" -gt "1" ]; then
+                local size="${disksize::${#disksize}-1}"
+                is_integer "${size}"
+                # convert GB to MB
+                [ "${lastchar}" = "M" ] || size=$((${size} * 1000))
+                echo -e "${size}M"
+                return
+            fi
+            ;;
+        *)
+            ;;
+    esac
+
+    >&2 echo -e "Invalid size format '${1}'" \
+                "\n\tSupported size format is e.g 1000M or 2[G]"
+    exit 1
+}
+
+disk_config_get_size() {
+    disksize=$(echo -e "$( . ${IMAGE_TMPDIR}/disk.cfg && echo $DISK_SIZE)")
+    check_size "${disksize}"
+}
+
+disk_config_get_parts() {
+    echo -e "$( . ${IMAGE_TMPDIR}/disk.cfg && \
+                typeset -p | awk '$3 ~ /^DISK_PART/ { print $3 }')"
+}
+
+disk_config_get_free_space() {
+    disk_usage="0"
+    for partinfo in $(disk_config_get_parts)
+    do
+        partsize=$(echo "${partinfo}" | cut -d '"' -f2 | sed -e "s/:.*//")
+        sizeMB=$(check_size "${partsize}")
+        [ -n "${sizeMB}" ] || exit 1
+        disk_usage=$((${sizeMB::${#sizeMB}-1} + $disk_usage))
+    done
+
+    disk_size=$(disk_config_get_size)
+    echo -e "$((${disk_size::${#disk_size}-1} - ${disk_usage}))M"
+}
+
+disk_check_partition_format() {
+    local partformat="${1}"
+    # if partformat is not defined let's skip this check
+    [ -n "${partformat}" ] || return 0
+
+    case "${partformat}" in
+         vfat|ext2|ext3|ext4|swap)
+            ;;
+        *)
+            # invalid/unknown fstype
+            echo "Invalid file fstype ${partformat}"
+            exit 1
+            ;;
+    esac
+}
+
+disk_check_partition_content() {
+    local partcontent="${1}"
+    # if partcontent is not defined let's skip this check
+    [ -n "${partcontent}" ] || return 0
+
+    case "${partcontent}" in
+        *.img*)
+            case "${partcontent}" in
+                *.img.gz|*.img.bz2|*.img)
+                    ;;
+                *)
+                    # invalid/unknown compression type
+                    echo "Invalid file format in disk ${partcontent}"
+                    exit 1
+                    ;;
+            esac
+            ;;
+        *.tar*)
+            case "${partcontent}" in
+                *.tar.gz|*.tar.bz2|*.tar.xz|*.tar)
+                    ;;
+                *)
+                    # invalid/unknown tar type
+                    echo "Invalid file format in disk ${partcontent}"
+                    exit 1
+                    ;;
+            esac
+            ;;
+        *)
+          #invalid content type
+          echo "Unsupported content type ${partcontent}!"
+          exit 1
+          ;;
+    esac
+    # do not allow to create multiple partitions the same content
+    if grep ":${partcontent}\"" <<< "$(disk_config_get_parts)"; then
+        echo "Error ${partcontent} is already inside guest image"
+        exit 1
+    fi
+}
+
 disk_config_add_part() {
     partconf="${1}"
     partid=$(echo ${partconf} | sed -e "s/:.*//")
     partinfo=$(echo ${partconf} | sed -e "s/[^:]*://")
+    partsize=$(echo ${partinfo} | cut -d ":" -f1)
+    partformat=$(echo ${partinfo} | cut -d ":" -f2)
+    partcontent=$(echo ${partinfo} | cut -d ":" -f3)
+
+    # check size "ID:*SIZE*:FORMAT:CONTENT"
+    partsizeMB=$(check_size "${partsize}")
 
     # Make sure we don't add the same partition twice
-    disk_config_rm_part ${partid}
+    disk_config_rm_part "${partid}"
+
+    # check available disk space
+    freespace=$(disk_config_get_free_space)
+    if ((${partsizeMB::${#partsizeMB}-1} > ${freespace::${#freespace}-1}))
+    then
+        echo -e "Not enough free disk space(${freespace}) for partition "\
+                "'${partconf}'!"\
+                "\tTo adjust disk size use '--disk-size' parameter"\
+                "\tor shrink the partition with '--disk-add-part' parameter"
+        exit 1
+    fi
+
+    # check format "ID:SIZE:*FORMAT*:CONTENT"
+    disk_check_partition_format "${partformat}"
+
+    # check content "ID:SIZE:FORMAT:*CONTENT*"
+    disk_check_partition_content "${partcontent}"
+
     echo "DISK_PART${partid}=\"${partinfo}\"" >> \
         ${IMAGE_TMPDIR}/disk.cfg
 }
@@ -742,11 +889,13 @@ for arg in "${@}"; do
             disk_config_reset
             ;;
         --disk-size=*)
-            sed -i "s/DISK_SIZE=.*/DISK_SIZE=\"${optarg}\"/" \
+            size=$(check_size "${optarg}")
+            [ -n "size" ] || exit 1
+            sed -i "s/DISK_SIZE=.*/DISK_SIZE=\"${size}\"/" \
                 ${IMAGE_TMPDIR}/disk.cfg
             ;;
         --disk-device=*)
-            sed -i "s/DISK_DEVICE=.*/DISK_SIZE=\"${optarg}\"/" \
+            sed -i "s@DISK_DEVICE=.*@DISK_DEVICE=\"${optarg}\"@" \
                 ${IMAGE_TMPDIR}/disk.cfg
             ;;
         --disk-add-part=*)

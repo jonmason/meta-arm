@@ -9,25 +9,15 @@ FILESEXTRAPATHS_prepend := "${THISDIR}:${THISDIR}/files:"
 
 # Arm platforms kmeta
 SRC_URI_KMETA = "file://arm-platforms-kmeta;type=kmeta;name=arm-platforms-kmeta;destsuffix=arm-platforms-kmeta"
-SRC_URI_append_foundation-armv8 = " ${SRC_URI_KMETA}"
 SRC_URI_append_fvp-base = " ${SRC_URI_KMETA}"
 SRC_URI_append_fvp-base-arm32 = " ${SRC_URI_KMETA}"
 SRC_URI_append_juno = " ${SRC_URI_KMETA}"
-SRC_URI_append_sgi575 = " ${SRC_URI_KMETA}"
-SRC_URI_append_gem5-arm64 = " ${SRC_URI_KMETA}"
 SRCREV_arm-platforms-kmeta = "6147e82375aa9df8f2a162d42ea6406c79c854c5"
 
 #
-# Cortex-A5 DesignStart KMACHINE
+# Corstone-500 KMACHINE
 #
-COMPATIBLE_MACHINE_a5ds = "a5ds"
-KMACHINE_a5ds = "a5ds"
-
-#
-# FVP FOUNDATION KMACHINE
-#
-COMPATIBLE_MACHINE_foundation-armv8 = "foundation-armv8"
-KMACHINE_foundation-armv8 = "fvp"
+COMPATIBLE_MACHINE_corstone500 = "corstone500"
 
 #
 # FVP BASE KMACHINE
@@ -86,5 +76,38 @@ SRC_URI_append_tc0 = " \
     file://0006-mailbox-arm_mhuv2-add-multi-word-transport-protocol-.patch \
     file://0007-firmware-arm_scmi-Add-fast_switch_possible-api.patch \
     file://0008-cpufreq-arm_scmi-Set-fast_switch_possible-conditiona.patch \
+    file://0009-driver-firmware-Initial-version-of-ffa-driver-based-.patch \
+    file://0010-tee-add-support-for-session-s-client-UUID-generation.patch \
+    file://0011-tee-optee-Add-support-for-session-login-client-UUID-.patch \
+    file://0012-driver-optee-Support-for-ffa-transport.patch \
+    file://0013-tee-optee-fix-mem-handle-removal-in-ffa_shm_unregist.patch \
+    file://0014-arm64-Add-support-for-asymmetric-AArch32-EL0-configu.patch \
+    file://0015-arm64-smp-Prevent-hotplugging-the-last-AArch32-able-.patch \
+    file://0016-drivers-buf-Add-userspace-ff-a-driver-buf-and-add-to.patch \
+    file://0017-drivers-ffa-modify-FFA-ABIs-with-supported-conventio.patch \
     "
 
+#
+# N1SDP KMACHINE
+#
+FILESEXTRAPATHS_prepend_n1sdp := "${THISDIR}/linux-yocto-5.10/n1sdp:"
+COMPATIBLE_MACHINE_n1sdp = "n1sdp"
+KBUILD_DEFCONFIG_n1sdp = "defconfig"
+KCONFIG_MODE_n1sdp = "--alldefconfig"
+SRC_URI_append_n1sdp = " \
+    file://0001-pci_quirk-add-acs-override-for-PCI-devices.patch \
+    file://0002-pcie-Add-quirk-for-the-Arm-Neoverse-N1SDP-platform.patch \
+    file://0003-n1sdp-update-n1sdp-pci-quirk-for-SR-IOV-support.patch \
+    file://0004-n1sdp-pcie-add-quirk-support-enabling-remote-chip-PC.patch \
+    file://0005-r8169-Fix-to-avoid-duplicate-sysfs-entry-creation-er.patch \
+    file://0001-arm64-defconfig-drop-unused-BACKLIGHT_GENERIC-option.patch \
+    file://no-power-avs.patch \
+    file://enable-realtek-R8169.cfg \
+    file://enable-usb_conn_gpio.cfg \
+    "
+
+#
+# Musca B1/S2 can't run Linux
+#
+COMPATIBLE_MACHINE_musca-b1 = "(^$)"
+COMPATIBLE_MACHINE_musca-s1 = "(^$)"

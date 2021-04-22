@@ -26,11 +26,10 @@ First you must download the Yocto layers needed:
  - [poky](https://git.yoctoproject.org/poky)
  - [meta-virtualization](https://git.yoctoproject.org/meta-virtualization)
  - [meta-arm](https://git.yoctoproject.org/meta-arm)
- - [meta-kernel](https://gitlab.com/openembedded/community/meta-kernel.git)
  - all other layers you might want to use
 
 For each of the downloaded layer make sure you checkout the release of Yocto
-you want to use (for example zeus using `git checkout zeus`).
+you want to use (for example gatesgarth using `git checkout gatesgarth`).
 
 Please follow [Yocto documentation](https://www.yoctoproject.org/docs/latest/brief-yoctoprojectqs/brief-yoctoprojectqs.html)
 in order to have the required dependencies.
@@ -57,7 +56,6 @@ Here are the main steps to create an arm-autonomy project:
   bitbake-layers add-layer $LAYERDIR_BASE/meta-poky $LAYERDIR_BASE/meta-yocto-bsp \
    $LAYERDIR_BASE/meta-openembedded/meta-oe $LAYERDIR_BASE/meta-openembedded/meta-python \
    $LAYERDIR_BASE/meta-openembedded/meta-filesystems $LAYERDIR_BASE/meta-openembedded/meta-networking \
-   $LAYERDIR_BASE/meta-virtualization $LAYERDIR_BASE/meta-kernel \
    $LAYERDIR_BASE/meta-arm/meta-arm $LAYERDIR_BASE/meta-arm/meta-arm-toolchain \
    $LAYERDIR_BASE/meta-arm/meta-arm-bsp $LAYERDIR_BASE/meta-arm/meta-arm-autonomy \
   ```
@@ -73,7 +71,6 @@ Here are the main steps to create an arm-autonomy project:
     /home/user/arm-autonomy/meta-openembedded/meta-filesystems \
     /home/user/arm-autonomy/meta-openembedded/meta-networking \
     /home/user/arm-autonomy/meta-virtualization \
-    /home/user/arm-autonomy/meta-kernel \
     /home/user/arm-autonomy/meta-arm/meta-arm \
     /home/user/arm-autonomy/meta-arm/meta-arm-toolchain \
     /home/user/arm-autonomy/meta-arm/meta-arm-bsp \
@@ -147,6 +144,9 @@ To create a guest project:
 The build will create a ".xenguest" image that can be use on an host project
 with the xenguest-manager.
 
+The guest can also be built as a 'multiconfig' sub project of the host, see
+`meta-arm-autonomy/documentation/arm-autonomy-multiconfig.md` for more information
+
 Include guests directly in the host image
 -----------------------------------------
 The layer provides a way to directly include in the host project one or several
@@ -209,7 +209,7 @@ and is configuring it by default to use dhcp.
 If you need a different type of configuration you can set
 XENGUEST_NETWORK_BRIDGE_CONFIG in a xenguest-network-bridge.bbappend to use
 a different file.
-The recipe will look for the file in ${WORKDIR} so you will need to add it to 
+The recipe will look for the file in ${WORKDIR} so you will need to add it to
 SRC_URI in your bbappend.
 The recipe will also substitute `###BRIDGE_NAME###` with the bridge name
 configured in ${XENGUEST_NETWORK_BRIDGE_NAME}.

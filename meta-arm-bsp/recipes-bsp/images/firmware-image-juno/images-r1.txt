@@ -23,14 +23,14 @@ NOR2LOAD: 00000000               ;Image Load Address
 NOR2ENTRY: 00000000              ;Image Entry Point
 
 NOR3UPDATE: AUTO                 ;Image Update:NONE/AUTO/FORCE
-NOR3ADDRESS: 0x02700000          ;Image Flash Address
+NOR3ADDRESS: 0x02900000          ;Image Flash Address
 NOR3FILE: \SOFTWARE\juno-r1.dtb  ;Image File Name
 NOR3NAME: board.dtb              ;Specify target filename to preserve file extension
 NOR3LOAD: 00000000               ;Image Load Address
 NOR3ENTRY: 00000000              ;Image Entry Point
 
 NOR4UPDATE: AUTO                 ;Image Update:NONE/AUTO/FORCE
-NOR4ADDRESS: 0x025C0000          ;Image Flash Address
+NOR4ADDRESS: 0x029C0000          ;Image Flash Address
 NOR4FILE: \SOFTWARE\hdlcdclk.dat ;Image File Name
 NOR4LOAD: 00000000               ;Image Load Address
 NOR4ENTRY: 00000000              ;Image Entry Point
@@ -56,13 +56,13 @@ NOR7LOAD: 00000000               ;Image Load Address
 NOR7ENTRY: 00000000              ;Image Entry Point
 
 NOR8UPDATE: AUTO                 ;Image Update:NONE/AUTO/FORCE
-NOR8ADDRESS: 0x02600000          ;Image Flash Address
+NOR8ADDRESS: 0x02A00000          ;Image Flash Address
 NOR8FILE: \SOFTWARE\selftest     ;Image File Name
 NOR8LOAD: 00000000               ;Image Load Address
 NOR8ENTRY: 00000000              ;Image Entry Point
 
 NOR9UPDATE: AUTO                 ;Image Update:NONE/AUTO/FORCE
-NOR9ADDRESS: 0x02780000          ;Image Flash Address
+NOR9ADDRESS: 0x02A80000          ;Image Flash Address
 NOR9NAME: uEnv.txt
 NOR9FILE: \SOFTWARE\uEnv.txt     ;Image File Name
 NOR9LOAD: 00000000               ;Image Load Address

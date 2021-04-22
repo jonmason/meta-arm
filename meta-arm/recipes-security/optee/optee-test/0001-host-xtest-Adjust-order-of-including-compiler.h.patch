@@ -12,7 +12,7 @@ recipe-sysroot/usr/include/bits/stat.h:17:19: error: expected identifier or '(' 
                    ^
 including compiler.h afer sys/stat.h fixes the problem.
 
-Upstream-Status: Pending
+Upstream-Status: Pending [https://github.com/OP-TEE/optee_test/issues/453]
 Signed-off-by: Khem Raj <raj.khem@gmail.com>
 ---
  host/xtest/install_ta.c | 2 +-

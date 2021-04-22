@@ -17,11 +17,11 @@ SCP_PLATFORM        ?= "invalid"
 SCP_COMPILER        ?= "arm-none-eabi"
 SCP_LOG_LEVEL       ?= "WARN"
 
-DEPENDS += "virtual/arm-none-eabi-gcc-native"
+INHIBIT_DEFAULT_DEPS = "1"
+DEPENDS = "virtual/arm-none-eabi-gcc-native"
 
 SCP_BUILD_STR = "${@bb.utils.contains('SCP_BUILD_RELEASE', '1', 'release', 'debug', d)}"
 
-inherit python3native
 inherit deploy
 
 B = "${WORKDIR}/build"

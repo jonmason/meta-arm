@@ -12,7 +12,6 @@ TUNECONFLICTS[armv8-1m-main] = "armv4 armv5 armv6 armv7a"
 
 require conf/machine/include/arm/arch-armv8m-main.inc
 
-
 AVAILTUNES                            += "armv8-1m-main"
 ARMPKGARCH_tune-armv8-1m-main          = "armv8-1m-main"
 TUNE_FEATURES_tune-armv8-1m-main       = "armv8-1m-main"

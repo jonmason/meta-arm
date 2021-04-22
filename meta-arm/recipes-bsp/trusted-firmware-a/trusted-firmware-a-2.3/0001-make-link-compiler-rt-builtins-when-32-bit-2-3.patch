@@ -1,0 +1,52 @@
+From 39d139a56c54856a718218e30114f732188832ea Mon Sep 17 00:00:00 2001
+From: Brett Warren <brett.warren@arm.com>
+Date: Fri, 27 Nov 2020 14:41:43 +0000
+Subject: [PATCH] make: link compiler-rt builtins when 32-bit
+
+Compiler-rt builtins weren't previously linked when using
+GNU ld to link for aarch32; this is now explicitly linked
+in.
+
+For use with TFA 2.3
+
+Upstream-Status: Pending
+Signed-off-by: Brett Warren <brett.warren@arm.com>
+---
+ Makefile                     | 7 +++++++
+ make_helpers/build_macros.mk | 2 +-
+ 2 files changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index f01a9ae3e..493b80b14 100644
+--- a/Makefile
++++ b/Makefile
+@@ -243,6 +243,13 @@ endif
+ AS			=	$(CC) -c -x assembler-with-cpp $(TF_CFLAGS_$(ARCH))
+ CPP			=	$(CC) -E
+ PP			=	$(CC) -E
++ifeq (${ARCH},aarch32)
++RUNTIME_LIB             =       $(shell $(CC) --sysroot=$(RUNTIME_SYSROOT) \
++                                              $(shell sed 's/none/linux/' <<< '$(target32-directive)') \
++                                              -mfloat-abi=$(TARGET_FPU) \
++                                              -rtlib=compiler-rt \
++                                              -print-libgcc-file-name 2> /dev/null)
++endif
+ else ifneq ($(findstring gcc,$(notdir $(CC))),)
+ TF_CFLAGS_aarch32	=	$(march32-directive)
+ TF_CFLAGS_aarch64	=	$(march64-directive)
+diff --git a/make_helpers/build_macros.mk b/make_helpers/build_macros.mk
+index 1c3d14d05..2a1abd4fe 100644
+--- a/make_helpers/build_macros.mk
++++ b/make_helpers/build_macros.mk
+@@ -482,7 +482,7 @@ ifneq ($(findstring armlink,$(notdir $(LD))),)
+ else ifneq ($(findstring gcc,$(notdir $(LD))),)
+ 	$$(Q)$$(LD) -o $$@ $$(TF_LDFLAGS) $$(LDFLAGS) -Wl,-Map=$(MAPFILE) \
+ 		-Wl,-T$(LINKERFILE) $(BUILD_DIR)/build_message.o \
+-		$(OBJS) $(LDPATHS) $(LIBWRAPPER) $(LDLIBS) $(BL_LIBS)
++		$(OBJS) $(LDPATHS) $(LIBWRAPPER) $(LDLIBS) $(BL_LIBS) $(RUNTIME_LIB)
+ else
+ 	$$(Q)$$(LD) -o $$@ $$(TF_LDFLAGS) $$(LDFLAGS) $(BL_LDFLAGS) -Map=$(MAPFILE) \
+ 		--script $(LINKERFILE) $(BUILD_DIR)/build_message.o \
+-- 
+2.17.1
+

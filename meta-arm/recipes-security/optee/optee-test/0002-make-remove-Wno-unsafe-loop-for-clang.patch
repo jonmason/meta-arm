@@ -6,7 +6,7 @@ Subject: [PATCH] make: remove -Wmissing-noreturn for clang
 When compiling when clang, -Wmissing-noreturn causes an error because
 of non-compliant code. This option is removed to workaround this.
 
-Upstream-Status: Pending
+Upstream-Status: Pending [https://github.com/OP-TEE/optee_test/issues/452]
 Changed-Id: 71cb511904547d790d1ea98f93bf8e5a6afcb36d
 Signed-off-by: Brett Warren <brett.warren@arm.com>
 ---

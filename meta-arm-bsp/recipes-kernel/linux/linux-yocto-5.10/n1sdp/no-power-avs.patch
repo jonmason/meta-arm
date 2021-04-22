@@ -1,0 +1,29 @@
+Remove CONFIG_POWER_AVS, this config option was removed in 785b5bb41b0a.
+
+Upstream-Status: Pending
+Signed-off-by: Ross Burton <ross.burton@arm.com>
+
+diff --git a/arch/arm/configs/multi_v7_defconfig b/arch/arm/configs/multi_v7_defconfig
+index c5f25710fedc..62650dc10119 100644
+--- a/arch/arm/configs/multi_v7_defconfig
++++ b/arch/arm/configs/multi_v7_defconfig
+@@ -475,7 +475,6 @@ CONFIG_GPIO_TPS6586X=y
+ CONFIG_GPIO_TPS65910=y
+ CONFIG_GPIO_TWL4030=y
+ CONFIG_GPIO_MXC=y
+-CONFIG_POWER_AVS=y
+ CONFIG_ROCKCHIP_IODOMAIN=y
+ CONFIG_POWER_RESET_AS3722=y
+ CONFIG_POWER_RESET_GPIO=y
+diff --git a/arch/arm64/configs/defconfig b/arch/arm64/configs/defconfig
+index 838301650a79..1146f2904bff 100644
+--- a/arch/arm64/configs/defconfig
++++ b/arch/arm64/configs/defconfig
+@@ -523,7 +523,6 @@ CONFIG_GPIO_PCA953X_IRQ=y
+ CONFIG_GPIO_BD9571MWV=m
+ CONFIG_GPIO_MAX77620=y
+ CONFIG_GPIO_SL28CPLD=m
+-CONFIG_POWER_AVS=y
+ CONFIG_QCOM_CPR=y
+ CONFIG_ROCKCHIP_IODOMAIN=y
+ CONFIG_POWER_RESET_MSM=y

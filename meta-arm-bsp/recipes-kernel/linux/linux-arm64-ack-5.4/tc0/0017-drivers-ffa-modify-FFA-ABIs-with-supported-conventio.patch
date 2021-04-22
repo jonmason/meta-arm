@@ -1,0 +1,87 @@
+From e4bc772637c8aaf4dc6fa64c6d3e3df237ee5e3d Mon Sep 17 00:00:00 2001
+From: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+Date: Mon, 12 Apr 2021 10:44:13 +0100
+Subject: [PATCH 2/2] drivers/ffa: modify FFA ABIs with supported convention
+
+SPMC (hafnium) only supports 64-bit variant of FFA_RXTX_MAP and
+32-bit variant of FFA_MEM_SHARE.
+
+Signed-off-by: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+Change-Id: I2fbddb7b9bf061b529d4e1f2e93172b1aab73492
+Upstream-Status: Inappropriate [will not be submitted as its only required for ACK 5.4]
+---
+ drivers/firmware/ffa/arm_ffa.c | 8 ++++----
+ include/linux/arm_ffa.h        | 4 +++-
+ 2 files changed, 7 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/firmware/ffa/arm_ffa.c b/drivers/firmware/ffa/arm_ffa.c
+index 21838f8c4632..0524deac1ce7 100644
+--- a/drivers/firmware/ffa/arm_ffa.c
++++ b/drivers/firmware/ffa/arm_ffa.c
+@@ -7,7 +7,7 @@
+  * residing on other Secure Partitions or Virtual Machines managed by any FFA
+  * compliant firmware framework.
+  *
+- * Copyright (C) 2019, 2020 Arm Ltd.
++ * Copyright (C) 2019 - 2021 Arm Ltd.
+  */
+ #define DEBUG
+ 
+@@ -171,7 +171,7 @@ static int ffa_share_init_frag(phys_addr_t buffer, u32 buffer_size,
+ 	struct arm_smcccv1_2_return smccc_return;
+ 
+ 	smccc_return =
+-		arm_ffa_smccc(FFA_MEM_SHARE_64, total_len, fragment_len, buffer,
++		arm_ffa_smccc(FFA_MEM_SHARE_32, total_len, fragment_len, buffer,
+ 		buffer_size, 0, 0, 0);
+ 
+ 	while (smccc_return.arg0 != FFA_SUCCESS_32) {
+@@ -649,7 +649,7 @@ static int ffa_rxtx_map(uintptr_t tx_page, uintptr_t rx_page)
+ {
+ 	struct arm_smcccv1_2_return map_return;
+ 
+-	map_return = arm_ffa_smccc(FFA_RXTX_MAP_32, tx_page,
++	map_return = arm_ffa_smccc(FFA_RXTX_MAP_64, tx_page,
+ 					 rx_page, 1, 0, 0, 0, 0);
+ 
+ 	if (map_return.arg0 == FFA_ERROR_32) {
+@@ -716,7 +716,7 @@ static int ffa_probe(struct platform_device *pdev)
+ 	/* Initialize VM ID. */
+ 	ret = ffa_id_get(&vm_id);
+ 	if (ret) {
+-		pr_warn("%s: failed to obtain own FFA endpoint ID\n", __func__);
++		pr_err("%s: failed to obtain own FFA endpoint ID\n", __func__);
+ 		return ret;
+ 	}
+ 
+diff --git a/include/linux/arm_ffa.h b/include/linux/arm_ffa.h
+index d3c80b7f9e07..9a8b32e2c846 100644
+--- a/include/linux/arm_ffa.h
++++ b/include/linux/arm_ffa.h
+@@ -1,6 +1,6 @@
+ /* SPDX-License-Identifier: GPL-2.0 */
+ /*
+- * Copyright (C) 2019, 2020 Arm Ltd.
++ * Copyright (C) 2019 - 2021 Arm Ltd.
+  */
+ 
+ #ifndef __LINUX_ARM_FFA_H
+@@ -13,6 +13,7 @@
+ #define FFA_FEATURES_32              0x84000064
+ #define FFA_RX_RELEASE_32            0x84000065
+ #define FFA_RXTX_MAP_32              0x84000066
++#define FFA_RXTX_MAP_64              0xc4000066
+ 
+ #define FFA_PARTITION_INFO_GET_32    0x84000068
+ #define FFA_ID_GET_32                0x84000069
+@@ -25,6 +26,7 @@
+ #define FFA_MEM_OP_PAUSE_32          0x84000078
+ #define FFA_MEM_OP_RESUME_32         0x84000079
+ 
++#define FFA_MEM_SHARE_32             0x84000073
+ #define FFA_MEM_SHARE_64             0xC4000073
+ 
+ #define FFA_MEM_FRAG_RX_32			  0x8400007A
+-- 
+2.29.2
+

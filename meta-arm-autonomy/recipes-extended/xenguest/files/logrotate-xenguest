@@ -1,0 +1,6 @@
+/var/log/xenguest {
+    missingok
+    size 10k
+    copytruncate
+    rotate 2
+}

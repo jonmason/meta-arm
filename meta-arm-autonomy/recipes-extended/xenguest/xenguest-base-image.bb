@@ -47,12 +47,13 @@ XENGUEST_IMAGE_SRC_URI_DISK_FILES ??= ""
 # Add xen files
 # Any extrafiles files to be added to XENGUEST_IMAGE_SRC_URI_XEN_FILES should
 # be performed via XENGUEST_IMAGE_SRC_URI_XEN_FILES_append.
-# The dhcpd-params.cfg holds the dhcpd configuration for Dom0. And it is used
-# when XENGUEST_IMAGE_NETWORK_TYPE="nat". Any customizations to it should be
-# performed by replacing it via a xenguest-network.bbappend.
+# The kea-subnet4.json holds the kea dhcp4 subnet configuration for Dom0.
+# And it is used when XENGUEST_IMAGE_NETWORK_TYPE="nat".
+# Any customizations to it should be performed by replacing it
+# via a xenguest-network.bbappend.
 # The XENGUEST_IMAGE_NAT_PORT_FORWARD_SCRIPT file is only added if the
 # variable is set.
-XENGUEST_IMAGE_SRC_URI_XEN_FILES = "file://dhcpd-params.cfg \
+XENGUEST_IMAGE_SRC_URI_XEN_FILES = "file://kea-subnet4.json \
     ${@ "file://" + d.getVar('XENGUEST_IMAGE_NAT_PORT_FORWARD_SCRIPT') \
       if d.getVar('XENGUEST_IMAGE_NAT_PORT_FORWARD_SCRIPT') else "" } \
     "

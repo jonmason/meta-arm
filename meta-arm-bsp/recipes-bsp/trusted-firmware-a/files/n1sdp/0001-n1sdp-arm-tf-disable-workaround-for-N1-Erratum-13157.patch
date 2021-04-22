@@ -26,6 +26,7 @@ software running on N1 SDP, including those that do not require mitigation.
 This patch is meant for performance evaluation purposes ONLY and should not
 be used for software that requires a seccomp computing environment.
 
+Upstream-Status: Inappropriate
 Signed-off-by: James Yang <James.Yang@arm.com>
 ---
  plat/arm/board/n1sdp/platform.mk | 2 ++

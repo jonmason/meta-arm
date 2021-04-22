@@ -1,0 +1,139 @@
+# Use our custom Crops-derived image
+image: $CI_REGISTRY/$CI_PROJECT_NAMESPACE/yocto-builder:master
+
+  # First do a common bootstrap, and then build all the targets
+stages:
+  - bootstrap
+  - build
+
+# Common job fragment to get a worker ready
+.setup:
+  stage: build
+  variables:
+    KAS_WORK_DIR: $CI_PROJECT_DIR/work
+    SSTATE_DIR: $CI_BUILDS_DIR/persist/sstate
+    DL_DIR: $CI_BUILDS_DIR/persist/downloads
+    BB_LOGCONFIG: $CI_PROJECT_DIR/kas/logging.yml
+  before_script:
+    - echo KAS_WORK_DIR = $KAS_WORK_DIR
+    - echo SSTATE_DIR = $SSTATE_DIR
+    - echo DL_DIR = $DL_DIR
+    - mkdir --verbose --parents $KAS_WORK_DIR $SSTATE_DIR $DL_DIR
+
+# Generalised fragment to do a Kas build
+.build:
+  extends: .setup
+  script:
+  - KASFILES=$(kas/jobs-to-kas $CI_JOB_NAME)
+  - kas shell --update --force-checkout $KASFILES -c 'cat conf/*.conf'
+  - kas build $KASFILES
+  - ./kas/check-warnings $KAS_WORK_DIR/build/warnings.log
+
+
+#
+# First phase, bootstrap and machine coverage
+#
+
+# Build a number of native tools first to ensure the other builders don't race
+# over them
+n1sdp/bootstrap:
+  extends: .build
+  stage: bootstrap
+
+# What percentage of machines in the layer do we build
+machine-coverage:
+  stage: bootstrap
+  script:
+  - ./kas/check-machine-coverage
+  coverage: '/Coverage: \d+/'
+
+
+#
+# Second phase, the actual build jobs
+#
+
+corstone500:
+  extends: .build
+
+corstone700-fvp:
+  extends: .build
+
+corstone700-mps3:
+  extends: .build
+
+fvp-base:
+  extends: .build
+
+fvp-base-arm32:
+  extends: .build
+
+fvp-base-arm32/external-gcc-arm32:
+  extends: .build
+
+gem5-arm64:
+  extends: .build
+
+juno:
+  extends: .build
+
+juno/clang:
+  extends: .build
+
+musca-b1:
+  extends: .build
+
+musca-s1:
+  extends: .build
+
+n1sdp:
+  extends: .build
+
+n1sdp/armgcc:
+  extends: .build
+
+qemuarm64-secureboot:
+  extends: .build
+
+qemuarm64-secureboot/clang:
+  extends: .build
+
+qemuarm64-secureboot/clang/musl:
+  extends: .build
+
+qemuarm64-secureboot/musl:
+  extends: .build
+
+sgi575:
+  extends: .build
+
+tc0:
+  extends: .build
+
+
+#
+# Utility tasks, not executed automatically
+#
+
+# Report on disk usage
+usage:
+  extends: .setup
+  stage: bootstrap
+  when: manual
+  script:
+  - du -h -s $DL_DIR $SSTATE_DIR
+
+# Wipe out old sstate
+prune-sstate:
+  extends: .setup
+  stage: bootstrap
+  when: manual
+  script:
+  - find $SSTATE_DIR -type f -atime +30 -delete
+
+# Delete all sstate
+delete-sstate:
+  extends: .setup
+  stage: bootstrap
+  when: manual
+  script:
+  - rm -rf $SSTATE_DIR/*

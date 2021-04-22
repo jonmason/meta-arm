@@ -11,7 +11,7 @@ do_configure[noexec] = "1"
 do_compile() {
     # generate a dtb using gem5
     gem5.opt \
-        ${STAGING_DATADIR_NATIVE}/gem5/configs/example/arm/baremetal.py \
+        ${STAGING_DATADIR_NATIVE}/gem5/${GEM5_RUN_PROFILE} \
         --dtb-gen
 
     if [ ! -f m5out/system.dtb ]; then

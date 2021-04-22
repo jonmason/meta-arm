@@ -1,0 +1,79 @@
+From 6b7edfa39991079fc735a2afcba23454ae0205ed Mon Sep 17 00:00:00 2001
+From: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+Date: Mon, 12 Apr 2021 15:29:13 +0100
+Subject: [PATCH 2/2] core: arm: modify FFA ABIs with supported convention
+
+Use FFA_MEM_RETRIEVE_REQ_32 as SPMC at SEL2 (hafnium) only supports 32-bit variant
+Fix warnings in thread_spmc.c
+
+Change-Id: Ia3d206d24f7f12dca9332b40f45934e132a37f99
+Signed-off-by: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+Upstream-Status: Pending [Not submitted to upstream yet]
+---
+ core/arch/arm/kernel/thread_spmc.c | 13 ++++++++-----
+ 1 file changed, 8 insertions(+), 5 deletions(-)
+
+diff --git a/core/arch/arm/kernel/thread_spmc.c b/core/arch/arm/kernel/thread_spmc.c
+index 872221d6..f8a05412 100644
+--- a/core/arch/arm/kernel/thread_spmc.c
++++ b/core/arch/arm/kernel/thread_spmc.c
+@@ -1,7 +1,7 @@
+ // SPDX-License-Identifier: BSD-2-Clause
+ /*
+  * Copyright (c) 2020, Linaro Limited.
+- * Copyright (c) 2019, Arm Limited. All rights reserved.
++ * Copyright (c) 2019 - 2021, Arm Limited. All rights reserved.
+  */
+ 
+ #include <assert.h>
+@@ -128,8 +128,10 @@ static unsigned int rxtx_size;
+ static unsigned int rxtx_spinlock;
+ static bool tx_buf_is_mine;
+ 
++#ifdef CFG_CORE_SEL1_SPMC
+ static SLIST_HEAD(mem_frag_state_head, mem_frag_state) frag_state_head =
+ 	SLIST_HEAD_INITIALIZER(&frag_state_head);
++#endif
+ 
+ static uint32_t swap_src_dst(uint32_t src_dst)
+ {
+@@ -387,7 +389,8 @@ static void handle_partition_info_get(struct thread_smc_args *args)
+ 
+ 	cpu_spin_lock(&rxtx_spinlock);
+ 	if (rxtx_size && tx_buf_is_mine) {
+-		struct ffa_partition_info *fpi = tx_buf;
++		struct ffa_partition_info *fpi =
++			(struct ffa_partition_info *)tx_buf;
+ 
+ 		fpi->id = my_sp_id;
+ 		fpi->execution_context = CFG_TEE_CORE_NB_CORE;
+@@ -874,7 +877,7 @@ void thread_spmc_msg_recv(struct thread_smc_args *args)
+ 	case FFA_FEATURES:
+ 		handle_features(args);
+ 		break;
+-#if CFG_CORE_SEL1_SPMC
++#ifdef CFG_CORE_SEL1_SPMC
+ #ifdef ARM64
+ 	case FFA_RXTX_MAP_64:
+ #endif
+@@ -901,7 +904,7 @@ void thread_spmc_msg_recv(struct thread_smc_args *args)
+ 		else
+ 			handle_blocking_call(args);
+ 		break;
+-#if CFG_CORE_SEL1_SPMC
++#ifdef CFG_CORE_SEL1_SPMC
+ #ifdef ARM64
+ 	case FFA_MEM_SHARE_64:
+ #endif
+@@ -1266,7 +1269,7 @@ static struct mem_transaction_descr *spmc_retrieve_req(uint64_t cookie)
+ 	uint64_t size = sizeof(*retrieve_region) +
+ 		1 * sizeof(struct mem_access_descr);
+ 	struct thread_smc_args args = {
+-		.a0 = FFA_MEM_RETRIEVE_REQ_64,
++		.a0 = FFA_MEM_RETRIEVE_REQ_32,
+ 		.a1 =   size,  	// Total Length
+ 		.a2 =	size,	// Frag Length == Total length
+ 		.a3 =	0,				// Address, Using TX -> MBZ
+-- 
+2.29.2
+

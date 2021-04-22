@@ -18,6 +18,8 @@
 domid=$(xenstore_read "${XENBUS_PATH}/frontend-id")
 guestname=$(xenstore_read "/local/domain/${domid}/name")
 bridge=$(xenstore_read "${XENBUS_PATH}/bridge")
+mac=$(xenstore_read "$XENBUS_PATH/mac")
+kea_conf_file="/etc/kea/kea-dhcp4.conf"
 
 if [ ! -f /etc/xenguest/guests/${guestname}/params.cfg ]; then
     log debug "No /etc/xenguest/guests/${guestname}/params.cfg. Exiting."
@@ -36,63 +38,48 @@ get_subnet_prefix() {
 
 subnetprefix=$(get_subnet_prefix)
 
-dhcpd_remove_conf_entry()
+kea_remove_conf_entry()
 {
-    local tmpfile=$(mktemp)
+    log debug "kea_remove_conf_entry"
+    claim_lock "vif-nat-kea"
 
-    # Remove the the xenguest dhcpd config file inclusion in the dhcpd
-    # main config
-    grep -v "include \"${XENGUEST_DHCPD_CONF_FILE}\";" \
-            "${dhcpd_conf_file}" >"${tmpfile}"
-    if ! diff "${tmpfile}" "${dhcpd_conf_file}" >/dev/null
-    then
-        cp "${tmpfile}" "${dhcpd_conf_file}"
-    fi
-    rm ${tmpfile}
+    # Remove the the xenguest kea config file inclusion in the kea main config
+    sed -i "/${kea_guest_config//'/'/'\/'}/d" "${kea_conf_file}"
 
-    # Remove the generated the xenguest dhcpd file
-    rm ${XENGUEST_DHCPD_CONF_FILE}
+    # Remove interface entry 1st case: [ "dev1", "dev_to_remove" ]
+    sed -i "s/,\ \"$dev\"//" "${kea_conf_file}"
+    # Remove interface entry 2nd case: [ "dev_to_remove", "dev1" ]
+    sed -i "s/\"$dev\",\ //" "${kea_conf_file}"
+    # Remove interface entry 3rd case: [ "dev_to_remove" ]
+    sed -i "s/\[\ \"$dev\"\ \]/\[\ \]/" "${kea_conf_file}"
+
+    # Remove the generated the xenguest kea subnet conf file
+    rm ${XENGUEST_KEA_SUBNET_CONFIG}
+
+    keactrl reload
+
+    release_lock "vif-nat-kea"
 }
 
-# This function removes the dhcpd options added by the vif-nat script and
-# adds the user provided options under the ${XENGUEST_DHCPD_HOST_OPTIONS}
-# variable set in "/etc/xenguest/guests/${guestname}/files/dhcpd-params.cfg"
-# file.
-dhcpd_add_conf_entries()
+kea_add_conf_entries()
 {
-    # We need to remove the previous added entry from vif-nat script
-    dhcp_remove_entry
+    log debug "kea_add_conf_entries"
+    claim_lock "vif-nat-kea"
 
-    # Include the xenguest dhcpd config file in the dhcpd main config
-    echo >>"${dhcpd_conf_file}" "include \"${XENGUEST_DHCPD_CONF_FILE}\";"
+    # Include vif in the interfaces 1st case - no other entries:
+    search_for='\"interfaces\": \[ '
+    sed -i "/${search_for}\"*\"\ */ s/\ \]/,\ \"${dev}\"\ \]/g" "${kea_conf_file}"
+    sed -i "s/${search_for}]/${search_for}\"${dev}\"\ \]/g" "${kea_conf_file}"
 
-    # Generate the xenguest dhcpd file
-    echo -e "$(eval "echo -e \"$(cat ${XENGUEST_DHCPD_PARAMS_FILE})\"")" \
-            >> "${XENGUEST_DHCPD_CONF_FILE}"
+    # Include the xenguest kea subnet conf file in the kea main config
+    search_for='\"subnet4\": \['
+    sed -i "/$search_for/a $kea_guest_config" "${kea_conf_file}"
 
-    # Re-add the dhcpargs entries removed by dhcp_remove_entry call
-    dhcparg_add_entry
-}
+    # Generate the xenguest kea subnet conf file
+    echo -e "$(eval "echo -e \"$(cat ${XENGUEST_KEA_SUBNET_TEMPLATE})\"")" \
+            > "${XENGUEST_KEA_SUBNET_CONFIG}"
 
-dhcpd_online(){
-    log debug "dhcpd_online"
-    claim_lock "vif-nat-dhcp"
-    dhcpd_add_conf_entries
-    release_lock "vif-nat-dhcp"
-   "$dhcpd_init_file" restart || true
-}
-
-dhcpd_offline(){
-    log debug "dhcpd_offline"
-    claim_lock "vif-nat-dhcp"
-    dhcpd_remove_conf_entry
-    release_lock "vif-nat-dhcp"
-    "$dhcpd_init_file" restart || true # We need to ignore failure because
-                                       # ISC dhcpd 3 borks if there is nothing
-                                       # for it to do, which is the case if
-                                       # the outgoing interface is not
-                                       # configured to offer leases and there
-                                       # are no vifs.
+    release_lock "vif-nat-kea"
 }
 
 call_extra_hooks() {
@@ -111,24 +98,29 @@ call_extra_hooks() {
 
 case "${XENGUEST_NETWORK_TYPE}" in
     nat)
-        XENGUEST_DHCPD_PARAMS_FILE=${XENGUEST_DHCPD_PARAMS_FILE:-"/etc/xenguest/guests/${guestname}/files/dhcpd-params.cfg"}
-        if [ ! -f ${XENGUEST_DHCPD_PARAMS_FILE} ]; then
-            log debug "No ${XENGUEST_DHCPD_PARAMS_FILE} file. Aborting"
+        XENGUEST_KEA_SUBNET_TEMPLATE=${XENGUEST_KEA_SUBNET_TEMPLATE:-"/etc/xenguest/guests/${guestname}/files/kea-subnet4.json"}
+        if [ ! -f ${XENGUEST_KEA_SUBNET_TEMPLATE} ]; then
+            log debug "No ${XENGUEST_KEA_SUBNET_TEMPLATE} file. Aborting"
             return
         fi
 
-        XENGUEST_DHCPD_CONF_FILE="/etc/dhcp/dhcpd.dom$domid.conf"
+        XENGUEST_KEA_SUBNET_CONFIG="/etc/kea/kea-subnet4.dom$domid.json"
+        if [ ! -d "$(dirname ${XENGUEST_KEA_SUBNET_CONFIG})" ]; then
+            log debug "No kea configuration directory. Aborting"
+            return
+        fi
+        kea_guest_config="\ \ \ \ <?include \"${XENGUEST_KEA_SUBNET_CONFIG}\"?>"
 
         case "$command" in
             online)
-                dhcpd_online
+                kea_add_conf_entries
 
                 # Enable ip forwarding and NAT for the ${bridge} interface
                 sysctl -w net.ipv4.ip_forward=1
                 iptables_w -t nat -A POSTROUTING -o ${bridge} -j MASQUERADE -m comment --comment "dom${domid}"
                 ;;
             offline)
-                dhcpd_offline
+                kea_remove_conf_entry
 
                 # Remove the NAT iptables rules created for the dom${domid}
                 guest_ipt_rule=$(iptables_w -t nat -vL POSTROUTING -n --line-number | grep -w dom${domid} | awk '{print $1}' | tac)

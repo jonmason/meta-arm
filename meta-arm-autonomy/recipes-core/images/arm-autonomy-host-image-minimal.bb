@@ -2,7 +2,11 @@
 
 DESCRIPTION = "Arm Autonomy stack host minimal image"
 
-inherit core-image
+# When alternate-kernel DISTRO_FEATURE is present we will build
+# and install the alternate kernel
+inherit ${@bb.utils.filter('DISTRO_FEATURES', 'alternate-kernel', d)}
+
+inherit core-image features_check
 
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
@@ -10,12 +14,21 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 # The ARM_AUTONOMY_HOST_IMAGE_EXTERN_GUESTS variable can be used to include in the
 # image one or several xenguest images.
 # The list must be space separated and each entry must have the following
-# format: URL[;guestname=NAME]
+# format: URL[;params]
 #  - URL can be the full path to a file or a Yocto compatible SRC_URI url
-#  - guestname=NAME can be used to specify the name of the guest. If not
-#    specified the basename of the file (without .xenguest extension) is used.
+#  - params encompasses two values that can be optionally set:
+#    - guestname=NAME can be used to specify the name of the guest. If not
+#      specified the default value is the basename of the file
+#      (without .xenguest extension).
+#    - guestcount=NUM can be used to created NUM guests with the same config.
+#      All guests after the first will have numbers appended to the guestname,
+#      starting from 2. In the rootfs additional xenguest files will be
+#      symlinks to the original.
+#  params should be semicolon seperated, without a space, and can appear in
+#  any order.
+#
 #  Here are examples of values:
-#  /home/mydir/myguest.xenguest;guestname=guest1
+#  /home/mydir/myguest.xenguest;guestname=guest1;guestcount=3
 #  http://www.url.com/testguest.xenguest
 #
 #  If you are using the output of an other Yocto project, you should use the
@@ -50,12 +63,31 @@ EXTRA_IMAGEDEPENDS += "xen"
 # Build xen-devicetree to produce a xen ready devicetree
 EXTRA_IMAGEDEPENDS += "xen-devicetree"
 
-python __anonymous() {
-    if bb.utils.contains('DISTRO_FEATURES', 'arm-autonomy-host', False, True, d):
-        raise bb.parse.SkipRecipe("DISTRO_FEATURES does not contain 'arm-autonomy-host'")
+# Documentation for setting up a multiconfig build can be found in:
+# meta-arm-autonomy/documentation/arm-autonomy-multiconfig.md
 
-    if bb.utils.contains('DISTRO_FEATURES', 'xen', False, True, d):
-        raise bb.parse.SkipRecipe("DISTRO_FEATURES does not contain 'xen'")
+# In a multiconfig build this variable will hold a dependency string, which differs based
+# on whether the guest has initramfs or not.
+# It may have a space seperated list of dependency strings if mulitple guest types are
+# configured
+MC_DOIMAGE_MCDEPENDS ?= ""
+# Example value: mc:host:guest:core-image-minimal:do_image_complete
+
+# In a multiconfig build the host task 'do_image' has a dependency on multiconfig guest.
+# This ensures that the guest image file already exists when it is needed by the host
+DO_IMAGE_MCDEPENDS := "${@ '${MC_DOIMAGE_MCDEPENDS}' if d.getVar('BBMULTICONFIG') else ''}"
+
+# Apply mc dependency. Empty string if multiconfig not enabled
+do_image[mcdepends] += "${DO_IMAGE_MCDEPENDS}"
+
+REQUIRED_DISTRO_FEATURES += 'arm-autonomy-host'
+REQUIRED_DISTRO_FEATURES += 'xen'
+
+python __anonymous() {
+    import re
+    guestfile_pattern = re.compile(r"^([^;]+);")
+    guestname_pattern = re.compile(r";guestname=([^;]+);?")
+    guestcount_pattern = re.compile(r";guestcount=(\d+);?")
 
     # Check in ARM_AUTONOMY_HOST_IMAGE_EXTERN_GUESTS for extra guests and add them
     # to SRC_URI with xenguest parameter if not set
@@ -65,16 +97,19 @@ python __anonymous() {
             # If the user just specified a file instead of file://FILE, add
             # the file:// prefix
             if guest.startswith('/'):
-                guestfile = ''
-                guestname = ''
-                if ';guestname=' in guest:
-                    # user specified a guestname
-                    guestname = guest.split(';guestname=')[1]
-                    guestfile = guest.split(';guestname=')[0]
-                else:
-                    # no guestname so use the basename
-                    guestname = os.path.basename(guest)
-                    guestfile = guest
+                guestname = os.path.basename(guest)
+                guestfile = guest
+                guestcount = "1"
+                f = guestfile_pattern.search(guest)
+                n = guestname_pattern.search(guest)
+                c = guestcount_pattern.search(guest)
+
+                if f is not None:
+                    guestfile = f.group(1)
+                if n is not None:
+                    guestname = n.group(1)
+                if c is not None:
+                    guestcount = c.group(1)
                 # in case we have a link we need the destination
                 guestfile = os.path.realpath(guestfile)
 
@@ -83,7 +118,7 @@ python __anonymous() {
                     raise bb.parse.SkipRecipe("ARM_AUTONOMY_HOST_IMAGE_EXTERN_GUESTS entry does not exist: " + guest)
 
                 # In case the file is a symlink make sure we use the destination
-                d.appendVar('SRC_URI',  ' file://' + guestfile + ';guestname=' + guestname)
+                d.appendVar('SRC_URI',  ' file://' + guestfile + ';guestname=' + guestname + ';guestcount=' + guestcount)
             else:
                 # we have a Yocto URL
                 try:
@@ -106,14 +141,28 @@ python add_extern_guests () {
         _, _, path, _, _, parm = bb.fetch.decodeurl(entry)
         if 'guestname' in parm:
             if os.path.islink(path):
-                bb.fatal("Guest file is a symlink: " + path)
+                realpath = os.path.realpath(path)
+
+                if not os.path.exists(realpath):
+                    bb.fatal("ARM_AUTONOMY_HOST_IMAGE_EXTERN_GUESTS link does not resolve: " + path)
+
+                bb.note("Guest file is a symlink:\n " + path + "\nResolved to:\n " + realpath)
+                path = realpath
+
             bb.utils.mkdirhier(guestdir)
             dstname = parm['guestname']
             # Add file extension if not there
             if not dstname.endswith('.xenguest'):
                 dstname += '.xenguest'
+
             if not bb.utils.copyfile(path, guestdir + '/' + dstname):
                 bb.fatal("Fail to copy Guest file " + path)
+
+        if 'guestcount' in parm:
+            guestcount = int(parm['guestcount']) + 1
+
+            for i in range(2, guestcount):
+                os.symlink('./' + dstname, guestdir + '/' + dstname.replace('.xenguest', str(i) + '.xenguest'))
 }
 
 IMAGE_PREPROCESS_COMMAND += "add_extern_guests; "

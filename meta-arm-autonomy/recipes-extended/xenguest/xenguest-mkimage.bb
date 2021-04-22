@@ -17,6 +17,8 @@ S = "${WORKDIR}"
 # Can be built native also to produce xenguest images during Yocto build
 BBCLASSEXTEND = "native"
 
+inherit allarch
+
 do_configure[noexec] = "1"
 do_compile[noexec] = "1"
 
@@ -25,7 +27,7 @@ do_install() {
     install -m 755 xenguest-mkimage ${D}${bindir}/.
 }
 
-# We need bash and tar
-RDEPENDS_${PN} = "bash tar"
+# We need bash
+RDEPENDS_${PN} = "bash"
 FILES_${PN} = "${bindir}/xenguest-mkimage"
 

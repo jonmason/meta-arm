@@ -1,0 +1,44 @@
+Upstream-Status: Backport
+Signed-off-by: Ross Burton <ross.burton@arm.com>
+
+From f50962e3f56f0932662b2ffa10afe53339a335dd Mon Sep 17 00:00:00 2001
+From: Volodymyr Babchuk <volodymyr_babchuk@epam.com>
+Date: Fri, 16 Oct 2020 16:36:08 +0300
+Subject: [PATCH 3/3] ta_dev_kit.mk: make sure that libutils is linked second
+ time
+
+libgcc depends on __getauxval symbol from libuils. As, generally libutils
+is linked before libgcc, we will get "unresolved symbol" error. To resolve
+this dependency we need to link libutils second time - after libgcc.
+
+Signed-off-by: Volodymyr Babchuk <volodymyr_babchuk@epam.com>
+Reviewed-by: Jens Wiklander <jens.wiklander@linaro.org>
+Reviewed-by: Jerome Forissier <jerome@forissier.org>
+---
+ ta/mk/ta_dev_kit.mk | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/ta/mk/ta_dev_kit.mk b/ta/mk/ta_dev_kit.mk
+index e28be677..d0e66317 100644
+--- a/ta/mk/ta_dev_kit.mk
++++ b/ta/mk/ta_dev_kit.mk
+@@ -78,6 +78,16 @@ endif
+ libnames += dl
+ libdeps += $(ta-dev-kit-dir$(sm))/lib/libdl.a
+ 
++# libutils provides __getauxval symbol which is needed by libgcc 10.x. We can't
++# link libutils after libgcc, because libgcc will replace some symbols provided
++# by libutils, which will cause further linking issues.
++#
++# But if we place libutils before libgcc, linker will not be able to resolve
++# __getauxval. So we need to link with libutils twice: before and after libgcc.
++# Hence it included both in $(libnames) and in $(libnames-after-libgcc)
++libnames-after-libgcc += utils
++libdeps-after-libgcc += $(ta-dev-kit-dir$(sm))/lib/libutils.a
++
+ # Pass config variable (CFG_) from conf.mk on the command line
+ cppflags$(sm) += $(strip \
+ 	$(foreach var, $(filter CFG_%,$(.VARIABLES)), \
+-- 
+2.25.1
+

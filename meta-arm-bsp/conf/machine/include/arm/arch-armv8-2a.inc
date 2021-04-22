@@ -7,7 +7,6 @@ MACHINEOVERRIDES =. "${@bb.utils.contains('TUNE_FEATURES', 'armv8-2a', 'armv8-2a
 
 require conf/machine/include/arm/arch-armv8a.inc
 
-
 AVAILTUNES += "armv8-2a armv8-2a-crypto"
 ARMPKGARCH_tune-armv8-2a                    ?= "armv8-2a"
 ARMPKGARCH_tune-armv8-2a-crypto             ?= "armv8-2a"

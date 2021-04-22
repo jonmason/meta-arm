@@ -1,0 +1,30 @@
+From ab7c90b324371e8c0b49fb45b833d521eca3c06d Mon Sep 17 00:00:00 2001
+From: Ben Horgan <ben.horgan@arm.com>
+Date: Thu, 8 Apr 2021 09:49:13 +0000
+Subject: [PATCH 07/13] crypto: shim: Don't link against unrequired libraries
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Change-Id: Ia1b5476d8a8d1ede0023092ddd86f079db4beb7d
+Signed-off-by: Ben Horgan <ben.horgan@arm.com>
+---
+ deployments/crypto/shim/CMakeLists.txt | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/deployments/crypto/shim/CMakeLists.txt b/deployments/crypto/shim/CMakeLists.txt
+index 65cc215..b401d25 100644
+--- a/deployments/crypto/shim/CMakeLists.txt
++++ b/deployments/crypto/shim/CMakeLists.txt
+@@ -55,10 +55,6 @@ protobuf_generate_all(TGT "crypto-sp" NAMESPACE "protobuf" BASE_DIR "${TS_ROOT}/
+ include(../../../external/mbed-crypto/mbedcrypto.cmake)
+ target_link_libraries(crypto-sp PRIVATE mbedcrypto)
+ 
+-if(CMAKE_CROSSCOMPILING)
+-	target_link_libraries(crypto-sp PRIVATE stdc++ gcc m)
+-endif()
+-
+ #################################################################
+ 
+ target_compile_definitions(crypto-sp PRIVATE
+-- 
+2.29.2
+

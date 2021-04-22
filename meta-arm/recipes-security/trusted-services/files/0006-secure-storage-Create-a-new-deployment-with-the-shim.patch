@@ -1,0 +1,268 @@
+From 47bd3e42cc7e33cd2f41c98112ed159b23149023 Mon Sep 17 00:00:00 2001
+From: Davidson K <davidson.kumaresan@arm.com>
+Date: Tue, 9 Mar 2021 18:01:05 +0530
+Subject: [PATCH 06/13] secure-storage: Create a new deployment with the shim
+ environment
+
+The shim environment provides support for the trusted service to
+run as secure partition at S-EL0 and a shim layer at S-EL1 with
+Hafnium as SPMC running at S-EL2.
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Davidson K <davidson.kumaresan@arm.com>
+Change-Id: I6fd23a100b5b1ab8d80742ee2f3a81bfb7595a51
+Signed-off-by: Ben Horgan <ben.horgan@arm.com>
+---
+ .../secure-storage/shim/CMakeLists.txt        | 93 +++++++++++++++++++
+ .../secure-storage/shim/secure-storage.dts    | 33 +++++++
+ deployments/secure-storage/shim/sp.c          | 74 +++++++++++++++
+ deployments/secure-storage/shim/sp_def.h      | 16 ++++
+ 4 files changed, 216 insertions(+)
+ create mode 100644 deployments/secure-storage/shim/CMakeLists.txt
+ create mode 100644 deployments/secure-storage/shim/secure-storage.dts
+ create mode 100644 deployments/secure-storage/shim/sp.c
+ create mode 100644 deployments/secure-storage/shim/sp_def.h
+
+diff --git a/deployments/secure-storage/shim/CMakeLists.txt b/deployments/secure-storage/shim/CMakeLists.txt
+new file mode 100644
+index 0000000..bcc3486
+--- /dev/null
++++ b/deployments/secure-storage/shim/CMakeLists.txt
+@@ -0,0 +1,93 @@
++#-------------------------------------------------------------------------------
++# Copyright (c) 2021, Arm Limited and Contributors. All rights reserved.
++#
++# SPDX-License-Identifier: BSD-3-Clause
++#
++#-------------------------------------------------------------------------------
++cmake_minimum_required(VERSION 3.16)
++include(../../deployment.cmake REQUIRED)
++
++#-------------------------------------------------------------------------------
++#  The CMakeLists.txt for building the secure-storage deployment for hafnium
++#
++#  Builds the secure storage service provider for running in an SEL0 secure
++#  partition with the shim layer in SEL1 hosted by Hafnium in the role of SPM.
++#-------------------------------------------------------------------------------
++include(${TS_ROOT}/environments/shim/env.cmake)
++project(trusted-services LANGUAGES C ASM)
++add_executable(secure-storage)
++target_include_directories(secure-storage PRIVATE "${TOP_LEVEL_INCLUDE_DIRS}")
++set(SP_UUID "dc1eef48-b17a-4ccf-ac8b-dfcff7711b14")
++
++add_components(TARGET "secure-storage"
++	BASE_DIR ${TS_ROOT}
++	COMPONENTS
++		components/messaging/ffa/libsp
++		components/rpc/ffarpc/endpoint
++		components/rpc/common/interface
++		components/service/common/provider
++		components/service/secure_storage/provider/secure_flash_store
++		components/service/secure_storage/provider/secure_flash_store/flash_fs
++		components/service/secure_storage/provider/secure_flash_store/flash
++		protocols/rpc/common/packed-c
++		protocols/service/secure_storage/packed-c
++		environments/shim
++)
++
++target_sources(secure-storage PRIVATE
++	sp.c
++)
++
++target_compile_definitions(secure-storage PRIVATE
++	ARM64=1
++	LOG_LEVEL=30
++	SECURE_STORAGE=1
++)
++
++target_include_directories(secure-storage PRIVATE
++	${TS_ROOT}/deployments/secure-storage/shim
++)
++
++if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
++	target_compile_options(secure-storage PRIVATE
++		-fdiagnostics-show-option
++		-fpic
++		-gdwarf-2
++		-mstrict-align
++		-O0
++		-std=gnu99
++                -ffreestanding
++                -mgeneral-regs-only
++	)
++
++	# Options for GCC that control linking
++	target_link_options(secure-storage PRIVATE
++		-fno-lto
++		-nostdlib
++		-pie
++		-zmax-page-size=4096
++	)
++	# Options directly for LD, these are not understood by GCC
++	target_link_options(secure-storage PRIVATE
++		-Wl,--as-needed
++		-Wl,--sort-section=alignment
++		-T${CMAKE_BINARY_DIR}/secure-storage.ld
++		-Wl,-Map=secure-storage.map
++	)
++endif()
++
++compiler_generate_stripped_elf(TARGET secure-storage NAME "${SP_UUID}.stripped.elf" RES STRIPPED_ELF)
++compiler_generate_binary_output(TARGET secure-storage RES STRIPPED_ELF)
++
++######################################## install
++if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
++	set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install CACHE PATH "location to install build output to." FORCE)
++endif()
++install(TARGETS secure-storage
++			PUBLIC_HEADER DESTINATION ${TS_ENV}/include
++			RUNTIME DESTINATION ${TS_ENV}/bin
++		)
++install(FILES ${STRIPPED_ELF} DESTINATION ${TS_ENV}/bin)
++
++set(EXPORT_SP_NAME "secure-storage")
++set(EXPORT_SP_UUID ${SP_UUID})
+diff --git a/deployments/secure-storage/shim/secure-storage.dts b/deployments/secure-storage/shim/secure-storage.dts
+new file mode 100644
+index 0000000..5df3153
+--- /dev/null
++++ b/deployments/secure-storage/shim/secure-storage.dts
+@@ -0,0 +1,33 @@
++/*
++ * Copyright (c) 2021, Arm Limited. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ * This file is a Partition Manifest (PM) for the secure-storage
++ * Secure Partition (SP)
++ */
++
++
++/dts-v1/;
++
++/ {
++	compatible = "arm,ffa-manifest-1.0";
++
++	/* Properties */
++	description = "secure-storage";
++	ffa-version = <0x00010000>; /* 31:16 - Major, 15:0 - Minor */
++	uuid = <0xdc1eef48 0x4ccfb17a 0xcfdf8bac 0x141b71f7>;
++	id = <2>;
++	execution-ctx-count = <1>;
++	exception-level = <2>; /* S-EL1 */
++	execution-state = <0>; /* AARCH64 */
++	load-address = <0xfee00000>;
++	entrypoint-offset = <0x00001000>;
++	xlat-granule = <0>; /* 4KiB */
++	boot-order = <0>;
++	messaging-method = <0>; /* Direct messaging only */
++	run-time-model = <1>; /* Run to completion */
++
++	/* Boot protocol */
++	gp-register-num = <0x0>;
++};
+diff --git a/deployments/secure-storage/shim/sp.c b/deployments/secure-storage/shim/sp.c
+new file mode 100644
+index 0000000..2baec88
+--- /dev/null
++++ b/deployments/secure-storage/shim/sp.c
+@@ -0,0 +1,74 @@
++/*
++ * Copyright (c) 2021, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <ffa_api.h>
++#include <components/rpc/common/endpoint/call_ep.h>
++#include <components/rpc/ffarpc/endpoint/ffarpc_call_ep.h>
++#include <components/service/secure_storage/provider/secure_flash_store/sfs_provider.h>
++#include <components/service/common/provider/service_provider.h>
++#include <sp_api.h>
++#include <sp_def.h>
++#include <stdlib.h>
++#include <sp_rxtx.h>
++#include <trace.h>
++#include <malloc.h>
++
++uint16_t own_id = 0;
++static uint8_t tx_buffer[4096] __aligned(4096);
++static uint8_t rx_buffer[4096] __aligned(4096);
++
++uint8_t sp_heap[SP_HEAP_SIZE] __aligned(16);
++
++void sp_main(struct ffa_init_info *init_info)
++{
++	ffa_result ffa_res;
++	sp_result sp_res;
++	struct call_ep *sfs_ep;
++	struct ffa_call_ep ffa_call_ep;
++	struct ffa_direct_msg req_msg;
++	struct sfs_provider sfs_provider;
++
++	/* Beginning of boot phase */
++	(void) init_info;
++
++	malloc_add_pool(sp_heap, SP_HEAP_SIZE);
++
++	ffa_res = ffa_id_get(&own_id);
++	if (ffa_res != FFA_OK) {
++		EMSG("id get error: %d", ffa_res);
++	}
++
++	sp_res = sp_rxtx_buffer_map(tx_buffer, rx_buffer, sizeof(rx_buffer));
++	if (sp_res != SP_RESULT_OK) {
++		EMSG("rxtx map error: %d", sp_res);
++	}
++
++	sfs_ep = sfs_provider_init(&sfs_provider);
++	ffa_call_ep_init(&ffa_call_ep, sfs_ep);
++
++	/* End of boot phase */
++	ffa_msg_wait(&req_msg);
++
++	while (1) {
++		if (req_msg.function_id == FFA_MSG_SEND_DIRECT_REQ_32) {
++			struct ffa_direct_msg resp_msg;
++			ffa_call_ep_receive(&ffa_call_ep, &req_msg, &resp_msg);
++
++			ffa_msg_send_direct_resp(req_msg.destination_id,
++					req_msg.source_id, resp_msg.args[0], resp_msg.args[1],
++					resp_msg.args[2], resp_msg.args[3], resp_msg.args[4],
++					&req_msg);
++		} else {
++			EMSG("Received unexpected request");
++			break;
++		}
++	}
++}
++
++void sp_interrupt_handler(uint32_t interrupt_id)
++{
++	(void)interrupt_id;
++}
+diff --git a/deployments/secure-storage/shim/sp_def.h b/deployments/secure-storage/shim/sp_def.h
+new file mode 100644
+index 0000000..aaf045d
+--- /dev/null
++++ b/deployments/secure-storage/shim/sp_def.h
+@@ -0,0 +1,16 @@
++/*
++ * Copyright (c) 2021, Arm Limited. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#ifndef SP_DEF_H
++#define SP_DEF_H
++
++/* Memory reserved for stacks */
++#define SP_STACKS_SIZE			ULL(0xa000)
++
++/* Memory for heap */
++#define SP_HEAP_SIZE                   (300 * 1024)
++
++#endif /* SP_DEF_H */
+-- 
+2.29.2
+

@@ -1,0 +1,89 @@
+Upstream-Status: Pending [https://github.com/jenswi-linaro/optee_os/commit/269e226eea2b2f26a6f844b7d25bc2b2a9b26315]
+Signed-off-by: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+
+From 269e226eea2b2f26a6f844b7d25bc2b2a9b26315 Mon Sep 17 00:00:00 2001
+From: Jens Wiklander <jens.wiklander@linaro.org>
+Date: Tue, 4 Feb 2020 17:30:55 +0100
+Subject: [PATCH 2/3] core: add thread_smccc()
+
+Adds the assembly function thread_smccc() which loads the first 8
+registers with the argument and executes an SMC or HVC instruction as
+appropriate. The result in the first 8 registers is then saved in the
+argument struct.
+
+Change-Id: Ie14154fb38de5ced3cfdebdb0bf19e48caaf2279
+Signed-off-by: Jens Wiklander <jens.wiklander@linaro.org>
+---
+ core/arch/arm/include/kernel/thread.h |  1 +
+ core/arch/arm/kernel/thread_a32.S     | 16 ++++++++++++++++
+ core/arch/arm/kernel/thread_a64.S     | 15 +++++++++++++++
+ 3 files changed, 32 insertions(+)
+
+diff --git a/core/arch/arm/include/kernel/thread.h b/core/arch/arm/include/kernel/thread.h
+index b9c0ba4b..4f0520e9 100644
+--- a/core/arch/arm/include/kernel/thread.h
++++ b/core/arch/arm/include/kernel/thread.h
+@@ -704,6 +704,7 @@ uint32_t thread_rpc_cmd(uint32_t cmd, size_t num_params,
+ 
+ unsigned long thread_smc(unsigned long func_id, unsigned long a1,
+ 			 unsigned long a2, unsigned long a3);
++void thread_smccc(struct thread_smc_args *arg_res);
+ 
+ /**
+  * Allocate data for payload buffers.
+diff --git a/core/arch/arm/kernel/thread_a32.S b/core/arch/arm/kernel/thread_a32.S
+index 199e90a9..75d85c32 100644
+--- a/core/arch/arm/kernel/thread_a32.S
++++ b/core/arch/arm/kernel/thread_a32.S
+@@ -210,6 +210,22 @@ FUNC thread_smc , :
+ 	bx	lr
+ END_FUNC thread_smc
+ 
++/* void thread_smccc(struct thread_smc_args *arg_res) */
++FUNC thread_smccc , :
++	push	{r4-r7}
++	push	{r0, lr}
++	ldm	r0, {r0-r7}
++#ifdef CFG_CORE_SEL2_SPMC
++	hvc	#0
++#else
++	smc	#0
++#endif
++	pop	{r12, lr}
++	stm	r12, {r0-r7}
++	pop	{r4-r7}
++	bx	lr
++END_FUNC thread_smccc
++
+ FUNC thread_init_vbar , :
+ 	/* Set vector (VBAR) */
+ 	write_vbar r0
+diff --git a/core/arch/arm/kernel/thread_a64.S b/core/arch/arm/kernel/thread_a64.S
+index 9ce31eb2..3e0f5115 100644
+--- a/core/arch/arm/kernel/thread_a64.S
++++ b/core/arch/arm/kernel/thread_a64.S
+@@ -65,6 +65,21 @@ FUNC thread_smc , :
+ 	ret
+ END_FUNC thread_smc
+ 
++/* void thread_smccc(struct thread_smc_args *arg_res) */
++FUNC thread_smccc , :
++	push	x0, xzr
++	mov	x8, x0
++	load_xregs x8, 0, 0, 7
++#ifdef CFG_CORE_SEL2_SPMC
++	hvc	#0
++#else
++	smc	#0
++#endif
++	pop	x8, xzr
++	store_xregs x8, 0, 0, 7
++	ret
++END_FUNC thread_smccc
++
+ FUNC thread_init_vbar , :
+ 	msr	vbar_el1, x0
+ 	ret
+-- 
+2.26.2
+

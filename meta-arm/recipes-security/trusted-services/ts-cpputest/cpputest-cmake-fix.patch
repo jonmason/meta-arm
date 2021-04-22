@@ -1,0 +1,59 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index b1900bb..d9ca865 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -116,8 +116,13 @@ if(PkgHelpers_AVAILABLE)
+     ${CMAKE_CURRENT_BINARY_DIR}/CppUTestConfig.cmake
+     INSTALL_DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+     PATH_VARS INCLUDE_DIR CMAKE_CURRENT_BINARY_DIR)
+-  export(TARGETS CppUTest CppUTestExt
++  if(TARGET CppUTestExt)
++    export(TARGETS CppUTest
+     FILE "${CMAKE_CURRENT_BINARY_DIR}/CppUTestTargets.cmake")
++  else()
++    export(TARGETS CppUTest
++    FILE "${CMAKE_CURRENT_BINARY_DIR}/CppUTestTargets.cmake")
++  endif()
+   write_basic_package_version_file(
+     ${CMAKE_CURRENT_BINARY_DIR}/CppUTestConfigVersion.cmake
+     VERSION ${CppUTest_version_major}.${CppUTest_version_minor}
+diff --git a/cmake/Modules/CppUTestConfigurationOptions.cmake b/cmake/Modules/CppUTestConfigurationOptions.cmake
+index 634482c..a00b5eb 100644
+--- a/cmake/Modules/CppUTestConfigurationOptions.cmake
++++ b/cmake/Modules/CppUTestConfigurationOptions.cmake
+@@ -1,19 +1,19 @@
+ if (MSVC)
+-    set(CPP_PLATFORM VisualCpp)
++    set(CPP_PLATFORM VisualCpp CACHE STRING "CppUTest platform.")
+     include_directories(${CppUTestRootDirectory}/include/Platforms/${CPP_PLATFORM})
+     option(STDC_WANT_SECURE_LIB "Use MSVC safe functions" ON)
+     if(STDC_WANT_SECURE_LIB)
+       ADD_DEFINITIONS(-DSTDC_WANT_SECURE_LIB)
+     endif(STDC_WANT_SECURE_LIB)
+ elseif (STD_C)
+-    set(CPP_PLATFORM Gcc)
++    set(CPP_PLATFORM Gcc CACHE STRING "CppUTest platform.")
+ else (MSVC)
+     set(STD_CPP False)
+     set(MEMORY_LEAK_DETECTION False)
+     set(CPPUTEST_CXX_FLAGS "${CPPUTEST_CXX_FLAGS} -nostdinc")
+     set(CPPUTEST_LD_FLAGS "${CPPUTEST_LD_FLAGS} -nostdinc")
+     set(CPPUTEST_STD_C_LIB_DISABLED 1)
+-    set(CPP_PLATFORM GccNoStdC)
++    set(CPP_PLATFORM GccNoStdC CACHE STRING "CppUTest platform.")
+ endif (MSVC)
+ 
+ include("${CppUTestRootDirectory}/cmake/Modules/CppUTestWarningFlags.cmake")
+diff --git a/src/CppUTest/CMakeLists.txt b/src/CppUTest/CMakeLists.txt
+index 736777f..d9a592f 100644
+--- a/src/CppUTest/CMakeLists.txt
++++ b/src/CppUTest/CMakeLists.txt
+@@ -50,7 +50,7 @@ set(CppUTest_headers
+ 
+ add_library(CppUTest STATIC ${CppUTest_src} ${CppUTest_headers})
+ if (WIN32)
+-    target_link_libraries(CppUTest winmm.lib)
++    target_link_libraries(CppUTest winmm)
+ endif (WIN32)
+ install(FILES ${CppUTest_headers} DESTINATION include/CppUTest)
+ install(TARGETS CppUTest

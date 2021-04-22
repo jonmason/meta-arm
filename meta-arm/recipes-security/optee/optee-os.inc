@@ -2,11 +2,13 @@ SUMMARY = "OP-TEE Trusted OS"
 DESCRIPTION = "Open Portable Trusted Execution Environment - Trusted side of the TEE"
 HOMEPAGE = "https://www.op-tee.org/"
 
-LICENSE = "BSD"
-LIC_FILES_CHKSUM = "file://${S}/LICENSE;md5=c1f21c4f72f372ef38a5a4aee55ec173"
+LICENSE = "BSD-2-Clause"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=c1f21c4f72f372ef38a5a4aee55ec173"
 
 inherit deploy python3native
 require optee.inc
+
+CVE_PRODUCT = "linaro:op-tee op-tee:op-tee_os"
 
 DEPENDS = "python3-pycryptodome-native python3-pycryptodomex-native python3-pyelftools-native"
 
@@ -17,25 +19,13 @@ SRC_URI = "git://github.com/OP-TEE/optee_os.git"
 S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
 
-OPTEEMACHINE ?= "${MACHINE}"
-OPTEEMACHINE_aarch64_qemuall ?= "vexpress-qemu_armv8a"
-OPTEE_ARCH = "null"
-OPTEE_ARCH_armv7a = "arm32"
-OPTEE_ARCH_aarch64 = "arm64"
-OPTEE_CORE = "${@d.getVar('OPTEE_ARCH').upper()}"
-OPTEE_COMPILER = "${@d.getVar('TOOLCHAIN') or 'gcc'}"
-
-
-EXTRA_OEMAKE = " \
+EXTRA_OEMAKE += " \
     PLATFORM=${OPTEEMACHINE} \
     CFG_${OPTEE_CORE}_core=y \
     CROSS_COMPILE_core=${HOST_PREFIX} \
     CROSS_COMPILE_ta_${OPTEE_ARCH}=${HOST_PREFIX} \
     NOWERROR=1 \
-    V=1 \
     ta-targets=ta_${OPTEE_ARCH} \
-    LIBGCC_LOCATE_CFLAGS=--sysroot=${STAGING_DIR_HOST} \
-    COMPILER=${OPTEE_COMPILER} \
     O=${B} \
 "
 
@@ -48,8 +38,7 @@ LD[unexport] = "1"
 do_configure[noexec] = "1"
 
 do_compile() {
-    cd ${S}
-    oe_runmake all CFG_TEE_TA_LOG_LEVEL=0
+    oe_runmake -C ${S} all CFG_TEE_TA_LOG_LEVEL=0
 }
 do_compile[cleandirs] = "${B}"
 

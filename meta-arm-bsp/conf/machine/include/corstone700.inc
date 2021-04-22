@@ -8,14 +8,13 @@ TFA_PLATFORM = "corstone700"
 
 SERIAL_CONSOLES ?= "115200;ttyAMA0"
 
-PREFERRED_PROVIDER_virtual/kernel_corstone700 = "linux-stable"
-PREFERRED_VERSION_linux-stable ?= "5.6%"
+PREFERRED_PROVIDER_virtual/kernel_corstone700 = "linux-yocto"
+PREFERRED_VERSION_linux-yocto ?= "5.6%"
 
 PREFERRED_PROVIDER_virtual/trusted-firmware-a ?= "trusted-firmware-a"
 PREFERRED_VERSION_trusted-firmware-a ?= "2.3%"
 
-PREFERRED_PROVIDER_virtual/control-processor-firmware ?= "scp-firmware"
-PREFERRED_VERSION_control-processor-firmware ?= "2.6.0"
+PREFERRED_PROVIDER_virtual/control-processor-firmware ?= "boot-firmware"
 
 EXTRA_IMAGEDEPENDS += " \
                       virtual/trusted-firmware-a          \
