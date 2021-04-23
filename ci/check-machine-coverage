@@ -13,11 +13,11 @@ if metaarm.name != "meta-arm":
 machines = metaarm.glob("meta-*/conf/machine/*.conf")
 machines = set(p.stem for p in machines)
 
-# All kas files
-kas = metaarm.glob("kas/*.yml")
-kas = set(p.stem for p in kas)
+# All ci files
+ci = metaarm.glob("ci/*.yml")
+ci = set(p.stem for p in ci)
 
-missing = machines - kas
+missing = machines - ci
 print(f"The following machines are missing: {', '.join(sorted(missing))}.")
 
 covered = len(machines) - len(missing)

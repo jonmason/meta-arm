@@ -8,8 +8,8 @@ set -e -u
 # Read Job namne from $1 and split on /
 IFS=/ read -r -a PARTS<<<$1
 
-# Prefix each part with kas/
-PARTS=("${PARTS[@]/#/kas/}")
+# Prefix each part with ci/
+PARTS=("${PARTS[@]/#/ci/}")
 
 # Suffix each part with .yml
 PARTS=("${PARTS[@]/%/.yml}")
