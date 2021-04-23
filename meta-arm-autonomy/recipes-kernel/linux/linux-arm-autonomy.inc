@@ -44,8 +44,6 @@ python() {
        and oe.utils.any_distro_features(d, "arm-autonomy-host arm-autonomy-guest"):
         if LooseVersion(kernelVersion) < '5.9':
            d.appendVar('SRC_URI', ' file://files/0001-arm-arm64-xen-Fix-to-convert-percpu-address-to-gfn-c.patch' )
-        if '5.10' <= LooseVersion(kernelVersion) < '5.12':
-           d.appendVar('SRC_URI', ' file://files/0001-xen-evtchn-Change-irq_info-lock-to-raw_spinlock_t.patch' )
 
     if kernelVersion and LooseVersion(kernelVersion) < '5.10':
         if oe.utils.any_distro_features(d, "arm-autonomy-host arm-autonomy-guest"):
