@@ -15,7 +15,7 @@ stages:
     KAS_REPO_REF_DIR: $CI_BUILDS_DIR/persist/repos
     SSTATE_DIR: $CI_BUILDS_DIR/persist/sstate
     DL_DIR: $CI_BUILDS_DIR/persist/downloads
-    BB_LOGCONFIG: $CI_PROJECT_DIR/kas/logging.yml
+    BB_LOGCONFIG: $CI_PROJECT_DIR/ci/logging.yml
   before_script:
     - echo KAS_WORK_DIR = $KAS_WORK_DIR
     - echo SSTATE_DIR = $SSTATE_DIR
@@ -26,10 +26,10 @@ stages:
 .build:
   extends: .setup
   script:
-  - KASFILES=$(kas/jobs-to-kas $CI_JOB_NAME)
+  - KASFILES=$(ci/jobs-to-kas $CI_JOB_NAME)
   - kas shell --update --force-checkout $KASFILES -c 'cat conf/*.conf'
   - kas build $KASFILES
-  - ./kas/check-warnings $KAS_WORK_DIR/build/warnings.log
+  - ./ci/check-warnings $KAS_WORK_DIR/build/warnings.log
 
 
 #
@@ -39,7 +39,7 @@ update-repos:
   extends: .setup
   stage: prep
   script:
-  - flock --verbose --timeout 60 $KAS_REPO_REF_DIR ./kas/update-repos
+  - flock --verbose --timeout 60 $KAS_REPO_REF_DIR ./ci/update-repos
 
 
 #
@@ -56,7 +56,7 @@ n1sdp/bootstrap:
 machine-coverage:
   stage: bootstrap
   script:
-  - ./kas/check-machine-coverage
+  - ./ci/check-machine-coverage
   coverage: '/Coverage: \d+/'
 
 
