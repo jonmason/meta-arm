@@ -130,7 +130,9 @@ prune-sstate:
   stage: prep
   when: manual
   script:
+  - du -h -s $SSTATE_DIR
   - find $SSTATE_DIR -type f -atime +30 -delete
+  - du -h -s $SSTATE_DIR
 
 # Report on disk usage
 usage:
