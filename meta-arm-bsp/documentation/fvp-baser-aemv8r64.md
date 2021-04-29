@@ -17,10 +17,16 @@ Fast Models Fixed Virtual Platforms (FVP) Reference Guide:
 https://developer.arm.com/docs/100966/latest
 
 ## BSP Support
-The fvp-baser-aemv8r64 Yocto MACHINE supports the following BSP components:
+The fvp-baser-aemv8r64 Yocto MACHINE supports the following BSP components,
+where either a standard or Real-Time Linux kernel (PREEMPT\_RT) can be built
+and run:
 
  - boot-wrapper-aarch64
- - Kernel: linux-yocto-5.10
+ - Linux kernel: linux-yocto-5.10
+ - Linux kernel with PREEMPT\_RT support: linux-yocto-rt-5.10
+
+Note that the Real-Time Linux kernel (PREEMPT\_RT) does not use the real-time
+architectural extensions of the Armv8-R feature set.
 
 ## Quick start: Howto Build and Run
 
@@ -32,17 +38,25 @@ Install the kas setup tool for bitbake based projects:
 https://kas.readthedocs.io/en/latest/userguide.html#dependencies-installation
 
 ### Fetch sources
-Fetch meta-arm repository:
+Fetch the meta-arm repository into a build directory:
 ```
-mkdir -p ~/fvp-baser-aemv8r64-bsp
-cd ~/fvp-baser-aemv8r64-bsp
+mkdir -p ~/fvp-baser-aemv8r64-build
+cd ~/fvp-baser-aemv8r64-build
 git clone https://git.yoctoproject.org/git/meta-arm
 ```
 
 ### Build
+
+Building with the standard Linux kernel:
 ```
-cd ~/fvp-baser-aemv8r64-bsp
+cd ~/fvp-baser-aemv8r64-build
 kas build meta-arm/kas/fvp-baser-aemv8r64-bsp.yml
+```
+
+Building with the Real-Time Linux kernel (PREEMPT\_RT):
+```
+cd ~/fvp-baser-aemv8r64-build
+kas build meta-arm/kas/fvp-baser-aemv8r64-rt-bsp.yml
 ```
 
 ### Run
