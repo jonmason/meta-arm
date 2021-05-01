@@ -15,11 +15,12 @@ stages:
     SSTATE_DIR: $CI_BUILDS_DIR/persist/sstate
     DL_DIR: $CI_BUILDS_DIR/persist/downloads
     BB_LOGCONFIG: $CI_PROJECT_DIR/ci/logging.yml
+    TOOLCHAIN_DIR: $CI_BUILDS_DIR/persist/toolchains
   before_script:
     - echo KAS_WORK_DIR = $KAS_WORK_DIR
     - echo SSTATE_DIR = $SSTATE_DIR
     - echo DL_DIR = $DL_DIR
-    - mkdir --verbose --parents $KAS_WORK_DIR $KAS_REPO_REF_DIR $SSTATE_DIR $DL_DIR
+    - mkdir --verbose --parents $KAS_WORK_DIR $KAS_REPO_REF_DIR $SSTATE_DIR $DL_DIR $TOOLCHAIN_DIR
 
 # Generalised fragment to do a Kas build
 .build:
@@ -39,6 +40,12 @@ update-repos:
   stage: prep
   script:
   - flock --verbose --timeout 60 $KAS_REPO_REF_DIR ./ci/update-repos
+
+get-binary-toolchains:
+  extends: .setup
+  stage: prep
+  script:
+    - ./ci/get-binary-toolchains $DL_DIR $TOOLCHAIN_DIR
 
 
 #
@@ -78,7 +85,7 @@ fvp-base:
 fvp-base-arm32:
   extends: .build
 
-fvp-base-arm32/external-gcc-arm32:
+fvp-base-arm32/external-gccarm:
   extends: .build
 
 fvp-baser-aemv8r64:
@@ -174,6 +181,13 @@ delete-sstate:
   script:
   - rm -rf $SSTATE_DIR/*
 
+delete-toolchains:
+  extends: .setup
+  stage: prep
+  when: manual
+  script:
+  - rm -rf $TOOLCHAIN_DIR/*
+
 # Wipe out old sstate
 prune-sstate:
   extends: .setup
@@ -190,4 +204,4 @@ usage:
   stage: prep
   when: manual
   script:
-  - du -h -s $DL_DIR $SSTATE_DIR $KAS_REPO_REF_DIR
+  - du -h -s $DL_DIR $SSTATE_DIR $KAS_REPO_REF_DIR $TOOLCHAIN_DIR
