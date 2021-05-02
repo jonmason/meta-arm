@@ -1,3 +1,15 @@
+From c72967164b63ea16c7c0276a306b66797998b62a Mon Sep 17 00:00:00 2001
+From: Jon Mason <jdmason@kudzu.us>
+Date: Sat, 1 May 2021 17:18:37 -0400
+Subject: [PATCH] Change USB_CONN_GPIO to 'y' by default and regenerate the
+ defconfig via `make savedefconfig`.
+
+Upstream-Status: Inappropriate [not needed in newer kernels]
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+---
+ arch/arm64/configs/defconfig | 65 +++++++++++++-----------------------
+ 1 file changed, 24 insertions(+), 41 deletions(-)
+
 diff --git a/arch/arm64/configs/defconfig b/arch/arm64/configs/defconfig
 index 6d84761d1285..8a2f7e075ba9 100644
 --- a/arch/arm64/configs/defconfig
