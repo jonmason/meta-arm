@@ -4,10 +4,10 @@ HOMEPAGE = "https://github.com/ARM-software/SCP-firmware"
 
 LICENSE = "BSD-3-Clause & Apache-2.0"
 LIC_FILES_CHKSUM = "file://license.md;beginline=5;md5=9db9e3d2fb8d9300a6c3d15101b19731 \
-                    file://cmsis/LICENSE.txt;md5=e3fc50a88d0a364313df4b21ef20c29e"
+                    file://contrib/cmsis/git/LICENSE.txt;md5=e3fc50a88d0a364313df4b21ef20c29e"
 
 SRC_URI = "gitsm://github.com/ARM-software/SCP-firmware.git;protocol=https"
-SRCREV  = "2c4f3af270024b85e1b38fd963050c58f6e9b865"
+SRCREV  = "043de77f220a0b4b0ec3aa367bd515a9e9df2a29"
 
 PROVIDES += "virtual/control-processor-firmware"
 

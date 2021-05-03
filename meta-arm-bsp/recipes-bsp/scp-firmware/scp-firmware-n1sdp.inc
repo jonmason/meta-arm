@@ -3,17 +3,11 @@
 SCP_PLATFORM  = "n1sdp"
 SCP_LOG_LEVEL = "INFO"
 
-LIC_FILES_CHKSUM = "file://license.md;beginline=5;md5=9db9e3d2fb8d9300a6c3d15101b19731 \
-                    file://contrib/cmsis/git/LICENSE.txt;md5=e3fc50a88d0a364313df4b21ef20c29e"
-
 FILESEXTRAPATHS_prepend := "${THISDIR}/files/:"
 
 SRC_URI_append = " \
    file://enabling-coresight-debug-non-secure-access.patch \
    "
-
-SRCREV  = "6c15afb1b37d0728482c598b063cd69bfc733e93"
-PV = "2.7.0+git${SRCPV}"
 
 COMPATIBLE_MACHINE_n1sdp = "n1sdp"
 
