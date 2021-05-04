@@ -33,6 +33,9 @@ SRC_URI = "https://developer.arm.com/-/media/Files/downloads/compiler/${ARMCLANG
 SRC_URI[md5sum] = "d41d8cd98f00b204e9800998ecf8427e"
 SRC_URI[sha256sum] = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
+UPSTREAM_CHECK_URI = "https://developer.arm.com/tools-and-software/embedded/arm-compiler/downloads/"
+UPSTREAM_CHECK_REGEX = "Download Arm Compiler.*,(?P<pver>[\d\.]+)"
+
 S = "${WORKDIR}/${ARMCLANG_VERSION}"
 
 do_install() {
