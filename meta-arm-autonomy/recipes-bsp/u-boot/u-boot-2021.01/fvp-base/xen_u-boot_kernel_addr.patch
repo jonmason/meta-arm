@@ -1,4 +1,4 @@
-Upstream Status: Inappropriate [meta-arm-autonomy specifc u-boot config]
+Upstream-Status: Inappropriate [meta-arm-autonomy specific u-boot config]
 Signed-off-by: Nathan Dunne <nathan.dunne@arm.com>
 
 diff --git a/include/configs/vexpress_aemv8a.h b/include/configs/vexpress_aemv8a.h
