@@ -1,3 +1,5 @@
+INHIBIT_DEFAULT_DEPS = "1"
+
 FILES_${PN} = "${datadir} ${bindir}"
 
 BINNAME = "${@d.getVar("BPN").strip("gcc-")}"
