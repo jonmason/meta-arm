@@ -68,7 +68,7 @@ index 0000000000..cf1e8d5cae
 +CONFIG_BOOTDELAY=1
 +CONFIG_SYS_TEXT_BASE=0x88000000
 +CONFIG_USE_BOOTARGS=y
-+CONFIG_BOOTARGS="console=ttyAMA0 earlycon=pl011,0x1c090000 debug user_debug=31 systemd.log_target=null root=/dev/vda2 rw androidboot.hardware=fvpbase rootwait loglevel=9"
++CONFIG_BOOTARGS="console=ttyAMA0 earlycon=pl011,0x1c090000 debug user_debug=31 systemd.log_target=null root=/dev/vda1 rw androidboot.hardware=fvpbase rootwait loglevel=9"
 +# CONFIG_DISPLAY_CPUINFO is not set
 +# CONFIG_DISPLAY_BOARDINFO is not set
 +CONFIG_HUSH_PARSER=y

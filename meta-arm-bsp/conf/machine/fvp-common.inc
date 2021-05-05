@@ -7,24 +7,8 @@
 
 MACHINE_FEATURES = "optee"
 
-IMAGE_CLASSES += "image_types_disk_img"
-IMAGE_FSTYPES += "disk.img"
-
-# Disk image configuration
-# We don't use the first partition
-DISK_IMG_PARTITION1_SIZE = "128"
-DISK_IMG_PARTITION1_FSTYPE = ""
-DISK_IMG_PARTITION1_CONTENT = ""
-
-# Second partition is used for rootfs
-DISK_IMG_PARTITION2_SIZE = "2048"
-DISK_IMG_PARTITION2_FSTYPE = "ext4"
-DISK_IMG_PARTITION2_CONTENT = "rootfs"
-
-# Empty third partition (8G - 2048M - 128M)
-DISK_IMG_PARTITION3_SIZE = "6016"
-DISK_IMG_PARTITION3_FSTYPE = ""
-DISK_IMG_PARTITION3_CONTENT = ""
+IMAGE_FSTYPES += "wic"
+WKS_FILE ?= "fvp-base.wks"
 
 SERIAL_CONSOLES = "115200;ttyAMA0"
 
