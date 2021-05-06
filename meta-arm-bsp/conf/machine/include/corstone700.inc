@@ -13,6 +13,8 @@ PREFERRED_VERSION_linux-yocto ?= "5.6%"
 
 PREFERRED_VERSION_trusted-firmware-a ?= "2.4%"
 
+PREFERRED_VERSION_gcc-arm-none-eabi-native ?= "9-2020-q2-update"
+
 PREFERRED_PROVIDER_virtual/control-processor-firmware ?= "boot-firmware"
 
 EXTRA_IMAGEDEPENDS += " \
