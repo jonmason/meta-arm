@@ -17,19 +17,19 @@ LIC_FILES_CHKSUM = "file://license.rst;md5=07f368487da347f3c7bd0fc3085f3afa \
 
 SRC_URI  = "git://git.trustedfirmware.org/TF-M/trusted-firmware-m.git;protocol=https;branch=master;name=tfm;destsuffix=${S} \
             git://git.trustedfirmware.org/TF-M/tf-m-tests.git;protocol=https;branch=master;name=tfm-tests;destsuffix=${S}/../tf-m-tests \
-            git://github.com/ARMmbed/mbedtls.git;protocol=https;branch=development;name=mbedtls;destsuffix=${S}/../mbedtls \
-            git://github.com/JuulLabs-OSS/mcuboot.git;protocol=https;name=mcuboot;destsuffix=${S}/../mcuboot \
+            git://github.com/ARMmbed/mbedtls.git;protocol=https;branch=master;name=mbedtls;destsuffix=${S}/../mbedtls \
+            git://github.com/mcu-tools/mcuboot.git;protocol=https;branch=v1.7-branch;name=mcuboot;destsuffix=${S}/../mcuboot \
             "
 
 # The required dependencies are documented in tf-m/config/config_default.cmake
-# TF-Mv1.2.0
-SRCREV_tfm = "c78be620c0fee08888956646b8f02fd03ab88567"
-# mbedtls 2.24
-SRCREV_mbedtls = "523f0554b6cdc7ace5d360885c3f5bbcc73ec0e8"
-# master as of 20210212
-SRCREV_tfm-tests = "ccda809801e529250b47c9ac470cf94daef1bb1b"
-# 1.7.0
-SRCREV_mcuboot = "a8e12dae381080e898cea0c6f7408009b0163f9f"
+# TF-Mv1.3.0
+SRCREV_tfm = "aa7d90a23b045e50c26ef66b11250842b665f54b"
+# mbedtls 2.26
+SRCREV_mbedtls = "e483a77c85e1f9c1dd2eb1c5a8f552d2617fe400"
+# tf-m-tests v1.3.0
+SRCREV_tfm-tests = "e7430d13b388a106c9f4cfb534e7340ce1482575"
+# 1.7.2
+SRCREV_mcuboot = "4aa516e7281fc6f9a2dce0b0efda9acc580fa254"
 
 UPSTREAM_CHECK_GITTAGREGEX = "^TF-Mv(?P<pver>\d+(\.\d+)+)$"
 
