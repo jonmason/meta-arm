@@ -1,0 +1,160 @@
+#! /usr/bin/env python3
+
+import json
+import os
+import sys
+import subprocess
+import pathlib
+
+import logging
+logger = logging.getLogger("RunFVP")
+
+# TODO: option to switch between telnet and netcat
+connect_command = "telnet localhost %port"
+
+terminal_map = {
+    "tmux": f"tmux new-window -n \"%title\" \"{connect_command}\"",
+    "xterm": f"xterm -title \"%title\" -e {connect_command}",
+    "none": ""
+    # TODO more terminals
+}
+
+def get_image_directory(machine=None):
+    """
+    Get the DEPLOY_DIR_IMAGE for the specified machine
+    (or the configured machine if not set).
+    """
+    import bb.tinfoil
+
+    if machine:
+        os.environ["MACHINE"] = machine
+
+    with bb.tinfoil.Tinfoil() as tinfoil:
+        tinfoil.prepare(config_only=True)
+        image_dir = tinfoil.config_data.getVar("DEPLOY_DIR_IMAGE")
+        logger.debug(f"Got DEPLOY_DIR_IMAGE {image_dir}")
+        return pathlib.Path(image_dir)
+
+
+def runfvp(args):
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Run images in a FVP")
+    parser.add_argument("config", nargs="?", help="Machine name or path to .fvpconf file")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-t", "--terminals", choices=terminal_map.keys(), default="xterm", help="Automatically start terminals")
+    group.add_argument("-c", "--console", action="store_true", help="Attach the first uart to stdin/stdout")
+    parser.add_argument("-C", "--parameter", action="append", default=[], help="Extra configuration parameters for FVP")
+    parser.add_argument("--verbose", action="store_true", help="Output verbose logging")
+    # TODO option for telnet vs netcat
+
+    args = parser.parse_args()
+    logging.basicConfig(level=args.verbose and logging.DEBUG or logging.WARNING)
+    logger.debug(f"Parsed arguments are {vars(args)}")
+
+    # If we're hooking up the console, don't start any terminals
+    if args.console:
+        args.terminals = "none"
+
+    if args.config and os.path.exists(args.config):
+        config_file = args.config
+    else:
+        image_dir = get_image_directory(args.config)
+        # All .fvpconf configuration files
+        configs = image_dir.glob("*.fvpconf")
+        # Just the files
+        configs = [p for p in configs if p.is_file() and not p.is_symlink()]
+        if not configs:
+            print(f"Cannot find any .fvpconf in {image_dir}")
+            sys.exit(1)
+        # Sorted by modification time
+        configs = sorted(configs, key=lambda p: p.stat().st_mtime)
+        config_file = configs[-1]
+
+    logger.debug(f"Loading {config_file}")
+    with open(config_file) as f:
+        config = json.load(f)
+
+    # Ensure that all expected keys are present
+    def sanitise(key, value):
+        if key not in config or config[key] is None:
+            config[key] = value
+    sanitise("fvp-bindir", "")
+    sanitise("exe", "")
+    sanitise("parameters", {})
+    sanitise("data", {})
+    sanitise("applications", {})
+    sanitise("terminals", {})
+    sanitise("args", [])
+    sanitise("console", "")
+
+    if not config["exe"]:
+        logger.error("Required value FVP_EXE not set in machine configuration")
+        sys.exit(1)
+
+    cli = []
+    if config["fvp-bindir"]:
+        cli.append(os.path.join(config["fvp-bindir"], config["exe"]))
+    else:
+        cli.append(config["exe"])
+
+    for param, value in config["parameters"].items():
+        cli.extend(["--parameter", f"{param}={value}"])
+
+    for value in config["data"]:
+        cli.extend(["--data", value])
+
+    for param, value in config["applications"].items():
+        cli.extend(["--application", f"{param}={value}"])
+
+    for terminal, name in config["terminals"].items():
+        # If terminals are enabled and this terminal has been named
+        if args.terminals != "none" and name:
+            # TODO if raw mode
+            # cli.extend(["--parameter", f"{terminal}.mode=raw"])
+            # TODO put name into terminal title
+            cli.extend(["--parameter", f"{terminal}.terminal_command={terminal_map[args.terminals]}"])
+        else:
+            # Disable terminal
+            cli.extend(["--parameter", f"{terminal}.start_telnet=0"])
+
+    cli.extend(config["args"])
+
+    # Finally add the user's extra arguments
+    for param in args.parameter:
+        cli.extend(["--parameter", param])
+
+    logger.debug(f"Constructed FVP call: {cli}")
+    if args.console:
+        expected_terminal = config["console"]
+        if not expected_terminal:
+            logger.error("--console used but FVP_CONSOLE not set in machine configuration")
+            sys.exit(1)
+
+        fvp_process = subprocess.Popen(cli, bufsize=1, universal_newlines=True, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+        import selectors, re
+        selector = selectors.DefaultSelector()
+        selector.register(fvp_process.stdout, selectors.EVENT_READ)
+        output = ""
+        looking = True
+        while fvp_process.poll() is None:
+            # TODO some sort of timeout for 'input never appeared'
+            events = selector.select(timeout=10)
+            for key, mask in events:
+                line = key.fileobj.readline()
+                output += line
+                if looking:
+                    m = re.match(fr"^{expected_terminal}: Listening.+port ([0-9]+)$", line)
+                    if m:
+                        port = m.group(1)
+                        subprocess.run(["telnet", "localhost", port])
+                        looking = False
+        if fvp_process.returncode:
+            logger.error(f"{fvp_process.args[0]} quit with code {fvp_process.returncode}:")
+            logger.error(output)
+    else:
+        subprocess.run(cli)
+
+if __name__ == "__main__":
+    runfvp(sys.argv)
