@@ -3,4 +3,4 @@ header:
 
 local_conf_header:
   libc: |
-    GCCVERSION = "arm-10.2"
+    GCCVERSION = "arm-9.2"
