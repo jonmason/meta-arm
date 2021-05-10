@@ -5,7 +5,7 @@ distro: poky
 
 defaults:
   repos:
-    refspec: hardknott
+    refspec: master
 
 repos:
   meta-arm:
