@@ -22,14 +22,11 @@ LIC_FILES_CHKSUM = "file://license_terms/license_agreement.txt;md5=40cd57dbb1f9d
                     file://license_terms/supplementary_terms.txt;md5=17a2efdbd320ceda48a3521747e02dd9 \
                     file://license_terms/third_party_licenses.txt;md5=6273fa29eb26c0093e1a7deaef7bafec "
 
-PROVIDES = "virtual/armcompiler"
-
 ARMCLANG_VERSION = "DS500-BN-00026-r5p0-18rel0"
 
 COMPATIBLE_HOST = "x86_64.*-linux"
 
 SRC_URI = "https://developer.arm.com/-/media/Files/downloads/compiler/${ARMCLANG_VERSION}.tgz;subdir=${ARMCLANG_VERSION}"
-
 SRC_URI[md5sum] = "d41d8cd98f00b204e9800998ecf8427e"
 SRC_URI[sha256sum] = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
