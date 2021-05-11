@@ -59,14 +59,19 @@ do_install() {
      for FW in ${FW_TARGETS}; do
         for TYPE in ${FW_INSTALL}; do
            install -D "${B}/product/${SCP_PLATFORM}/${FW}_${TYPE}/${SCP_BUILD_STR}/bin/${FW}_${TYPE}.bin" "${D}/firmware/"
+           install -D "${B}/product/${SCP_PLATFORM}/${FW}_${TYPE}/${SCP_BUILD_STR}/bin/${FW}_${TYPE}.elf" "${D}/firmware/"
         done
      done
 }
 
 FILES_${PN} = "/firmware"
 SYSROOT_DIRS += "/firmware"
+
+FILES_${PN}-dbg += "/firmware/*.elf"
 # Skip QA check for relocations in .text of elf binaries
-INSANE_SKIP_${PN} = "textrel"
+INSANE_SKIP_${PN}-dbg = "arch textrel"
+INHIBIT_PACKAGE_DEBUG_SPLIT = "1"
+INHIBIT_PACKAGE_STRIP = "1"
 
 do_deploy() {
     # Copy the images to deploy directory
