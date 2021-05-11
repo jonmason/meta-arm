@@ -223,8 +223,10 @@ do_install() {
 
 FILES_${PN} = "/firmware"
 SYSROOT_DIRS += "/firmware"
+
+FILES_${PN}-dbg = "/firmware/*.elf"
 # Skip QA check for relocations in .text of elf binaries
-INSANE_SKIP_${PN} = "textrel"
+INSANE_SKIP_${PN}-dbg = "textrel"
 
 do_deploy() {
     cp -rf ${D}/firmware/* ${DEPLOYDIR}/
