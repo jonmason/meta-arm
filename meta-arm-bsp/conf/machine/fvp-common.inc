@@ -16,7 +16,7 @@ PREFERRED_PROVIDER_virtual/kernel ?= "linux-yocto"
 PREFERRED_VERSION_linux-yocto ?= "5.10%"
 
 PREFERRED_VERSION_u-boot ?= "2021.04"
-PREFERRED_VERSION_trusted-firmware-a ?= "2.4%"
+PREFERRED_VERSION_trusted-firmware-a ?= "2.5%"
 
 EXTRA_IMAGEDEPENDS += "virtual/trusted-firmware-a u-boot"
 
