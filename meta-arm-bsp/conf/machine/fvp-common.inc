@@ -15,7 +15,7 @@ SERIAL_CONSOLES = "115200;ttyAMA0"
 PREFERRED_PROVIDER_virtual/kernel ?= "linux-yocto"
 PREFERRED_VERSION_linux-yocto ?= "5.10%"
 
-PREFERRED_VERSION_u-boot ?= "2021.01"
+PREFERRED_VERSION_u-boot ?= "2021.04"
 PREFERRED_VERSION_trusted-firmware-a ?= "2.4%"
 
 EXTRA_IMAGEDEPENDS += "virtual/trusted-firmware-a u-boot"
