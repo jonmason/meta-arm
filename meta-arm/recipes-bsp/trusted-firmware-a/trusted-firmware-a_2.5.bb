@@ -6,7 +6,7 @@ SRCREV_FORMAT = "tfa"
 # TF-A v2.5
 SRCREV_tfa = "1e13c500a0351ac4b55d09a63f7008e2438550f8"
 
-LIC_FILES_CHKSUM += "file://docs/license.rst;md5=189505435dbcdcc8caa63c46fe93fa89"
+LIC_FILES_CHKSUM += "file://docs/license.rst;md5=713afe122abbe07f067f939ca3c480c5"
 
 # mbed TLS v2.26.0
 SRC_URI_MBEDTLS = "git://github.com/ARMmbed/mbedtls.git;name=mbedtls;protocol=https;destsuffix=git/mbedtls;branch=master"

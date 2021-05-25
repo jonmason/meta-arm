@@ -1,5 +1,5 @@
 DESCRIPTION = "Trusted Firmware-A"
-LICENSE = "BSD-3-Clause"
+LICENSE = "BSD-3-Clause & MIT"
 
 PROVIDES = "virtual/trusted-firmware-a"
 
