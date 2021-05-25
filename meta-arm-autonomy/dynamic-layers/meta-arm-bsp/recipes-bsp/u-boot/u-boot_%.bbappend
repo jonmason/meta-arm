@@ -1,6 +1,6 @@
 # Machine specific u-boot
 
-FILESEXTRAPATHS_prepend := "${THISDIR}/${BP}:"
+FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
 #
 # FVP BASE
