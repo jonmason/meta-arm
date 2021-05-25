@@ -34,7 +34,6 @@ local_conf_header:
     PARALLEL_MAKE = "-j16"
     INHERIT += "rm_work"
     PACKAGECONFIG_append_pn-perf = " coresight"
-    ERROR_QA = "${WARN_QA}"
   ptest: |
     DISTRO_FEATURES_remove = "ptest"
 
