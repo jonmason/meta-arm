@@ -32,8 +32,11 @@ Quick start: Howto Build and Run
 --------------------------------
 
 ### Host environment setup
+The following instructions have been tested on hosts running Ubuntu 18.04 and
+Ubuntu 20.04.
+
 Install the required packages for the build host:
-https://www.yoctoproject.org/docs/latest/mega-manual/mega-manual.html#required-packages-for-the-build-host
+https://docs.yoctoproject.org/3.3.1/singleindex.html#required-packages-for-the-build-host
 
 Install the kas setup tool for bitbake based projects:
 
@@ -41,6 +44,8 @@ Install the kas setup tool for bitbake based projects:
 
 For more details on kas, see https://kas.readthedocs.io/.
 
+**Note:** The host machine should have at least 50 GBytes of free disk space
+for the next steps to work correctly.
 
 ### Fetch sources
 Fetch the meta-arm repository into a build directory:
@@ -49,13 +54,40 @@ Fetch the meta-arm repository into a build directory:
     cd ~/fvp-baser-aemv8r64-build
     git clone https://git.yoctoproject.org/git/meta-arm
 
-
 ### Build
 Building with the standard Linux kernel:
 
     cd ~/fvp-baser-aemv8r64-build
     kas build meta-arm/kas/fvp-baser-aemv8r64-bsp.yml
 
+### Networking
+To enable networking on the FVP via a host network interface, you will need to
+install the following package(s):
+
+**Ubuntu 18.04:**
+
+    sudo apt-get install libvirt-bin
+
+**Ubuntu 20.04:**
+
+    sudo apt-get install libvirt-dev libvirt-daemon qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils
+
+Once that is installed for your OS version, setup tap0 using the following
+commands:
+
+    sudo virsh net-start default
+    sudo ip tuntap add dev tap0 mode tap user $(whoami)
+    sudo ifconfig tap0 0.0.0.0 promisc up
+    sudo brctl addif virbr0 tap0
+
+
+To clean up the tap0 interface on the host use the following commands:
+
+    sudo brctl delif virbr0 tap0
+    sudo ip link set virbr0 down
+    sudo brctl delbr virbr0
+    sudo virsh net-destroy default
+    sudo ip link delete tap0
 
 ### Run
 To Run the Fixed Virtual Platform simulation tool you must download "Armv8-R
@@ -90,7 +122,6 @@ To run an image after the build is done:
         -C gic_distributor.GITS_BASER0-type=1 \
         -C gic_distributor.ITS-count=1 \
         -C gic_distributor.ITS-hardware-collection-count=1 \
-        -C gic_distributor.direct-lpi-support=1 \
         -C gic_distributor.has-two-security-states=0 \
         -C pctl.startup=0.0.0.* \
         -C bp.virtio_net.enabled=1 \
@@ -117,25 +148,3 @@ Devices not supported or not functional
 ---------------------------------------
 
 - Only one CPU since SMP is not functional in boot-wrapper-aarch64 yet
-
-
-Networking
-----------
-
-To enable networking on the FVP via a host network interface, set up tap0 using
-the following commands (Ubuntu 18.04 Host):
-
-    sudo apt-get install libvirt-bin
-    sudo virsh net-start default
-    sudo ip tuntap add dev tap0 mode tap user $(whoami)
-    sudo ifconfig tap0 0.0.0.0 promisc up
-    sudo brctl addif virbr0 tap0
-
-
-To clean up the tap0 interface on the host use the following commands:
-
-    sudo brctl delif virbr0 tap0
-    sudo ip link set virbr0 down
-    sudo brctl delbr virbr0
-    sudo virsh net-destroy default
-    sudo ip link delete tap0
