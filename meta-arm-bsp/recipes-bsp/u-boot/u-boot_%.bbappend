@@ -5,7 +5,7 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 #
 # FVP BASE
 #
-SRC_URI_append_fvp-base = " file://u-boot_vexpress_fvp.patch"
+SRC_URI_append_fvp-base = " file://bootargs.cfg"
 
 #
 # FVP BASE ARM32
