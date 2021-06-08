@@ -1,7 +1,6 @@
 require gem5-source_20.inc
 
-SRC_URI += "file://0001-dev-arm-SMMUv3-enable-interrupt-interface.patch \
-            file://0002-arch-arm-Fix-atomics-permission-checks-in-TLB.patch"
+SRC_URI += "file://0001-dev-arm-SMMUv3-enable-interrupt-interface.patch"
 
 BPN = "gem5-aarch64-native"
 
