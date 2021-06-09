@@ -17,6 +17,9 @@ case "${XENGUEST_NETWORK_TYPE:=}" in
         echo "vif = ['script=vif-bridge,bridge=${BRIDGE_NAME}']" >> "${guestcfgfile:?}"
         log info "Network type is bridge: ${BRIDGE_NAME}"
         ;;
+    none)
+        log info "Network type is none"
+        ;;
     *)
         log error "XENGUEST_NETWORK_TYPE=$XENGUEST_NETWORK_TYPE invalid"
         ;;
