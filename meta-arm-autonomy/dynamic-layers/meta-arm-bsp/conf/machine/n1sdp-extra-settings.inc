@@ -84,3 +84,7 @@ IMAGE_EFI_BOOT_FILES += "\
 ${@ d.getVar('GRUB_CFG_EXTRA_FILE',d) or '' \
 if bb.utils.contains('DISTRO_FEATURES', 'alternate-kernel', True, False, d) and \
 d.getVar('PREFERRED_PROVIDER_alternate/kernel') else ''}"
+
+# Additionnal kernel modules are necessary for n1sdp to be able to mount FAT
+# filesystems using CP437.
+MACHINE_ESSENTIAL_EXTRA_RDEPENDS_append = " kernel-module-nls-cp437 kernel-module-nls-iso8859-1"
