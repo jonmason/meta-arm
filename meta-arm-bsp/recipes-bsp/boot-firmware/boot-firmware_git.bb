@@ -5,7 +5,8 @@ LICENSE = "BSD-3-Clause & Apache-2.0"
 LIC_FILES_CHKSUM = "file://license.md;md5=e44b2531cd6ffe9dece394dbe988d9a0 \
                     file://cmsis/LICENSE.txt;md5=e3fc50a88d0a364313df4b21ef20c29e"
 
-SRC_URI = "gitsm://git.linaro.org/landing-teams/working/arm/boot-firmware.git;protocol=https"
+SRC_URI = "gitsm://git.linaro.org/landing-teams/working/arm/boot-firmware.git;protocol=https \
+           file://gen-module-race.patch"
 SRCREV = "af7eeb1bb8c5a85a5e5a76d48acc6fe864d715a9"
 PV = "2020.02.10+git${SRCPV}"
 
