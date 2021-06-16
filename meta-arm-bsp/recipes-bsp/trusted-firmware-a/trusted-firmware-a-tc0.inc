@@ -1,11 +1,5 @@
 # TC0 specific TFA configuration
 
-# Intermediate SHA with 2.4 baseline version, required for Theodul DSU
-# --- This SRC_URI will be removed once below SRCREV_tfa gets merged to TF-A master
-SRC_URI = "git://git.trustedfirmware.org/TF-A/trusted-firmware-a.git;protocol=https;branch=integration;name=tfa"
-SRCREV_tfa = "9bc3007d3bb9363dbd5f6655d2b17d599e22bac4"
-PV = "2.4+git${SRCPV}"
-
 DEPENDS += "scp-firmware"
 
 COMPATIBLE_MACHINE = "tc0"
