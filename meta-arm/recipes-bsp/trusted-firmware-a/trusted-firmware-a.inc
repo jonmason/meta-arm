@@ -100,7 +100,8 @@ EXTRA_OEMAKE += "LD=${@remove_options_tail(d.getVar('LD'))}"
 
 EXTRA_OEMAKE += "CC=${@remove_options_tail(d.getVar('CC'))}"
 
-EXTRA_OEMAKE += "V=1"
+# Verbose builds, no -Werror
+EXTRA_OEMAKE += "V=1 E=0"
 
 # Add platform parameter
 EXTRA_OEMAKE += "BUILD_BASE=${B} PLAT=${TFA_PLATFORM}"
