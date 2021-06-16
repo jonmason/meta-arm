@@ -55,11 +55,6 @@ LIC_FILES_CHKSUM_append = "${@bb.utils.contains('TFA_MBEDTLS', '1', ' ${LIC_FILE
 # add mbed TLS to version
 SRCREV_FORMAT_append = "${@bb.utils.contains('TFA_MBEDTLS', '1', '_mbedtls', '', d)}"
 
-SRC_URI_append = " \
-    file://0002-pmf.h-made-PMF_STOTE_ENABLE-pass-Wtautological.patch  \
-    file://0003-xlat-tables-v2-remove-tautological-assert.patch \
-    "
-
 # U-boot support (set TFA_UBOOT to 1 to activate)
 # When U-Boot support is activated BL33 is activated with u-boot.bin file
 TFA_UBOOT ?= "0"
