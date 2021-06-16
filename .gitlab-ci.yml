@@ -72,6 +72,14 @@ machine-coverage:
 # Build stage, the actual build jobs
 #
 
+# Validate layers are Yocto Project Compatible
+check-layers:
+  extends: .setup
+  coverage: '/Coverage: \d+/'
+  script:
+  - kas shell --update --force-checkout ci/base.yml:ci/meta-python.yml --command \
+    "$CI_PROJECT_DIR/ci/check-layers.py $CI_PROJECT_DIR/ci/check-layers.yml $CI_PROJECT_DIR $KAS_WORK_DIR"
+
 corstone500:
   extends: .build
 
