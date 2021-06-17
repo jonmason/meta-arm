@@ -1,0 +1,25 @@
+require fvp-common.inc
+
+# These need to be set
+MODEL ?= "unset"
+MODEL_CODE ?= "unset"
+PV ?= "unset"
+
+SUMMARY = "Arm Fixed Virtual Platform - ${MODEL} Ecosystem Reference Design"
+HOMEPAGE = "https://developer.arm.com/tools-and-software/open-source-software/arm-platforms-software/arm-ecosystem-fvps"
+
+SRC_URI = "https://developer.arm.com/-/media/Arm%20Developer%20Community/Downloads/OSS/FVP/${MODEL}/${MODEL_CODE}_${PV}.tgz;subdir=${BP}"
+
+LIC_FILES_CHKSUM = "file://license_terms/license_agreement.txt;md5=1a33828e132ba71861c11688dbb0bd16 \
+                    file://license_terms/third_party_licenses.txt;md5=47473b1e04b70938cf0a7ffea8ea4cc3"
+
+do_install() {
+    mkdir --parents ${D}${FVPDIR} ${D}${bindir}
+
+    ${S}/${MODEL_CODE}.sh \
+        --i-agree-to-the-contained-eula \
+        --no-interactive \
+        --destination ${D}${FVPDIR}
+
+    fvp_link_binaries
+}
