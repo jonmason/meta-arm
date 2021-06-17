@@ -154,7 +154,7 @@ def runfvp(args):
             logger.error(f"{fvp_process.args[0]} quit with code {fvp_process.returncode}:")
             logger.error(output)
     else:
-        subprocess.run(cli)
+        sys.exit(subprocess.run(cli).returncode)
 
 if __name__ == "__main__":
     runfvp(sys.argv)
