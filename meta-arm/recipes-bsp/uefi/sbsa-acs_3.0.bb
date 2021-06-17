@@ -10,7 +10,6 @@ SRC_URI += "git://github.com/ARM-software/sbsa-acs;destsuffix=edk2/ShellPkg/Appl
             file://shell.patch \
             file://0001-pal_uefi-Fix-enum-conversion.patch \
             file://use_bfd_linker.patch \
-            file://0001-Fix-VLA-parameter-warning.patch \
             "
 
 SRCREV_acs = "1b3a37214fe6809e07e471f79d1ef856461bc803"
