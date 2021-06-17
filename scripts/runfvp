@@ -46,9 +46,18 @@ def runfvp(args):
     group.add_argument("-c", "--console", action="store_true", help="Attach the first uart to stdin/stdout")
     parser.add_argument("-C", "--parameter", action="append", default=[], help="Extra configuration parameters for FVP")
     parser.add_argument("--verbose", action="store_true", help="Output verbose logging")
+    parser.usage = f"{parser.format_usage().strip()} -- [ arguments passed to FVP ]"
     # TODO option for telnet vs netcat
 
-    args = parser.parse_args()
+    try:
+        i = sys.argv.index("--")
+        arguments = sys.argv[1:i]
+        fvp_args = sys.argv[i+1:]
+    except ValueError:
+        arguments = sys.argv[1:]
+        fvp_args = []
+
+    args = parser.parse_args(args=arguments)
     logging.basicConfig(level=args.verbose and logging.DEBUG or logging.WARNING)
     logger.debug(f"Parsed arguments are {vars(args)}")
 
@@ -120,9 +129,12 @@ def runfvp(args):
 
     cli.extend(config["args"])
 
-    # Finally add the user's extra arguments
+    # Add any explicit --parameter calls
     for param in args.parameter:
         cli.extend(["--parameter", param])
+
+    # Finally add the user's extra arguments
+    cli.extend(fvp_args)
 
     logger.debug(f"Constructed FVP call: {cli}")
     if args.console:
