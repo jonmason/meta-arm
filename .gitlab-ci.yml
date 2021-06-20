@@ -145,6 +145,11 @@ juno/clang:
 
 microbit-v1:
   extends: .build
+  artifacts:
+    paths:
+            #      - $IMAGE_DIR/$CI_JOB_NAME/*
+      - work/build/tmp-newlib/deploy/images/microbit-v1/*
+    expire_in: 1 day
 
 musca-b1:
   extends: .build
@@ -160,6 +165,11 @@ n1sdp/armgcc:
 
 qemu-cortex-a53:
   extends: .build
+  artifacts:
+    paths:
+            #      - $IMAGE_DIR/$CI_JOB_NAME/*
+      - work/build/tmp-newlib/deploy/images/qemu-cortex-a53/*
+    expire_in: 1 day
 
 qemuarm:
   extends:
@@ -239,6 +249,16 @@ qemuarmv5/testimage:
   needs:
     - job: qemuarmv5
 
+# Zephyr tests
+#microbit-v1/zephyr-testimage:
+#  extends: .test
+#  needs:
+#    - job: microbit-v1
+
+qemu-cortex-a53/zephyr-testimage:
+  extends: .test
+  needs:
+    - job: qemu-cortex-a53
 
 #
 # Utility tasks, not executed automatically

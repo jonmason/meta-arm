@@ -7,4 +7,4 @@ header:
 machine: qemu-cortex-a53
 
 target:
-  - zephyr-philosophers
+  - zephyr-kernel-test-xip
