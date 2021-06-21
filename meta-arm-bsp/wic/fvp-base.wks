@@ -1,0 +1,6 @@
+# For fvp-base* machines we just need to populate the rootfs partition
+# but to keep backwards compatibility with disk.img,
+# we need to create first partition empty
+
+part --label empty --source empty --ondisk sda --size="1M" --system-id 8e --align 1024
+part / --source rootfs --ondisk sda --fstype=ext4 --label root --size="2048"

@@ -8,7 +8,9 @@
 MACHINE_FEATURES = "optee"
 
 IMAGE_CLASSES += "image_types_disk_img"
-IMAGE_FSTYPES += "disk.img"
+IMAGE_FSTYPES += "disk.img wic"
+
+WKS_FILE ?= "fvp-base.wks"
 
 # Disk image configuration
 # We don't use the first partition
