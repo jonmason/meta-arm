@@ -30,6 +30,7 @@ local_conf_header:
     PACKAGE_CLASSES = "package_ipk"
     LICENSE_FLAGS_WHITELIST += "armcompiler"
     PACKAGECONFIG_remove_pn-qemu-system-native = "gtk+ sdl"
+    EXTRA_IMAGE_FEATURES_append = " debug-tweaks"
     BB_NUMBER_THREADS = "16"
     PARALLEL_MAKE = "-j16"
     INHERIT += "rm_work"
