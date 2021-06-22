@@ -1,0 +1,32 @@
+From 2fb7e756c005fe60b440943cfe0cbd39a82c79ac Mon Sep 17 00:00:00 2001
+From: Anders Dellien <anders.dellien@arm.com>
+Date: Tue, 15 Jun 2021 15:38:55 +0100
+Subject: [PATCH 2/2] cmd: part: Correct error handling
+
+As 'part_get_info_by_name' now returns more status codes than just
+-1 to indicate failure, we need to update the return value check.
+
+Signed-off-by: Anders Dellien <anders.dellien@arm.com>
+Change-Id: Id972be70e9ed12fecaf97793b12d23ccc57007e7
+
+Upstream-Status: Pending [https://lists.denx.de/pipermail/u-boot/2021-June/452573.html]
+---
+ cmd/part.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/cmd/part.c b/cmd/part.c
+index 3395c17b89..e0463b5a54 100644
+--- a/cmd/part.c
++++ b/cmd/part.c
+@@ -140,7 +140,7 @@ static int do_part_info(int argc, char *const argv[], enum cmd_part_info param)
+ 			return 1;
+ 	} else {
+ 		part = part_get_info_by_name(desc, argv[2], &info);
+-		if (part == -1)
++		if (part < 0)
+ 			return 1;
+ 	}
+ 
+-- 
+2.17.1
+
