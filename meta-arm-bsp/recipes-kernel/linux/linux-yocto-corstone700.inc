@@ -1,4 +1,4 @@
-FILESEXTRAPATHS_prepend := "${THISDIR}/files/corstone700:"
+FILESEXTRAPATHS_prepend := "${THISDIR}:${THISDIR}/files:"
 
 COMPATIBLE_MACHINE = "${MACHINE}"
 
