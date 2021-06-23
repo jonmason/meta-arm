@@ -13,5 +13,5 @@ SRC_URI_append_qemuarm64-sbsa = " \
     file://defconfig.patch \
     "
 
-FILESEXTRAPATHS_prepend_qemuarm64-secureboot = "${ARMFILESPATHS}"
-SRC_URI_append_qemuarm64-secureboot = " file://zone_dma_revert.patch"
+LINUX_VERSION_qemuarm64-secureboot = "5.10.21"
+SRCREV_machine_qemuarm64-secureboot = "012f78dadb7186c479343b77e97df2925caf681e"
