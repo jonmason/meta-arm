@@ -1,5 +1,7 @@
 inherit cross-canadian
 
+require license.inc
+
 PN = "external-arm-sdk-toolchain-${TARGET_ARCH}"
 BPN = "external-arm-sdk-toolchain"
 PV = "${EAT_VER_MAIN}"
@@ -10,9 +12,6 @@ INHIBIT_SYSROOT_STRIP = "1"
 INHIBIT_DEFAULT_DEPS = "1"
 EXCLUDE_FROM_SHLIBS = "1"
 
-EAT_LICENSE ??= ""
-
-LICENSE = "${EAT_LICENSE}"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
 # Skip packaging QA checks for prebuilt binaries
