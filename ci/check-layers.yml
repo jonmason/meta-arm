@@ -3,5 +3,11 @@ layers:
   - meta-arm-bsp
   - meta-arm-toolchain
   - meta-gem5
+  - meta-arm-autonomy
 dependencies:
   - meta-openembedded/meta-oe
+  - meta-openembedded/meta-networking
+  - meta-openembedded/meta-python
+  - meta-openembedded/meta-filesystems
+  - poky/meta-poky
+  - meta-virtualization

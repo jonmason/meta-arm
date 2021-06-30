@@ -1,0 +1,18 @@
+header:
+  version: 9
+
+repos:
+  meta-openembedded:
+    url: https://git.openembedded.org/meta-openembedded
+    layers:
+      meta-oe:
+      meta-networking:
+      meta-python:
+      meta-filesystem:
+
+  meta-virtualization:
+    url: https://git.yoctoproject.org/git/meta-virtualization
+
+  meta-arm:
+    layers:
+      meta-arm-autonomy:
