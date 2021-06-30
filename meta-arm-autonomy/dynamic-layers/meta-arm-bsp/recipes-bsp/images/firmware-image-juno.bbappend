@@ -1,6 +1,6 @@
 # Use OVERRIDES to minimize the usage of
 # ${@bb.utils.contains('DISTRO_FEATURES', 'autonomy-host', ...
-OVERRIDES_append = "${@bb.utils.contains('DISTRO_FEATURES', 'arm-autonomy-host', ':autonomy-host', '', d)}"
+OVERRIDES_append = "${ARM_AUTONOMY_HOST_OVERRIDES}"
 
 FILESEXTRAPATHS_prepend_autonomy-host := "${THISDIR}/${PN}:"
 

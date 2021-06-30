@@ -1,6 +1,0 @@
-define KMACHINE n1sdp
-define KTYPE preempt-rt
-define KARCH arm64
-
-kconf non-hardware ktypes/developer/developer.cfg
-kconf non-hardware ktypes/preempt-rt/preempt-rt.cfg

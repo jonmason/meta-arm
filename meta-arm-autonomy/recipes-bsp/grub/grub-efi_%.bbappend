@@ -1,1 +1,3 @@
-GRUB_BUILDIN += "${@bb.utils.contains('DISTRO_FEATURES', 'arm-autonomy-host', 'xen_boot', '', d)}"
+OVERRIDES_append = "${ARM_AUTONOMY_HOST_OVERRIDES}"
+
+GRUB_BUILDIN_append_autonomy-host = " xen_boot"

@@ -1,5 +1,7 @@
 # This files is added when DISTRO_FEATURES contains arm-autonomy-host
 
+ARM_AUTONOMY_HOST_OVERRIDES = ":autonomy-host"
+
 # We need to have xen and ipv4 activated
 DISTRO_FEATURES_append = " xen ipv4"
 DISTRO_FEATURES_NATIVE_append = " arm-autonomy-host"
