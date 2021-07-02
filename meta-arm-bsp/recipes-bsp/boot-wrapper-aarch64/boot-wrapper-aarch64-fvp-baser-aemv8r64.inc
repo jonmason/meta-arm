@@ -10,3 +10,5 @@ BOOT_WRAPPER_AARCH64_CMDLINE = "\
 earlycon console=ttyAMA0 loglevel=8 rootfstype=ext4 root=/dev/vda1 rw"
 
 EXTRA_OECONF_remove = "--enable-psci"
+
+TUNE_CCARGS = ""
