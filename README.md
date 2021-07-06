@@ -1,23 +1,30 @@
 Introduction
 ------------
-This repository contains Arm layers for OpenEmbedded
+This repository contains the Arm layers for OpenEmbedded.
 
-meta-arm:
-	This layer provides support for general recipes for the Arm
-	architecture.  Anything that's not needed explicitly for BSPs, the IOTA
-	distribution, or destined to be upstreamed belongs here.
+* meta-arm
 
-meta-arm-bsp:
-	This layer provides support for Arm reference platforms
+  This layer contains general recipes for the Arm architecture, such as firmware, FVPs, and Arm-specific integration.
 
-meta-arm-iota:
-	This layer provides support for Arm's IOTA Linux Distribution
+* meta-arm-bsp
 
-meta-arm-toolchain:
-	This layer provides support for Arm's GNU-A toolset releases
+  This layer contains machines for Arm reference platforms, for example FVP Base, N1SDP, and Juno.
 
-meta-arm-autonomy:
-    This layer provides a reference stack for autonomous systems.
+* meta-arm-toolchain
+
+  This layer contains recipes for Arm's binary toolchains (GCC and Clang for -A and -M), and a recipe to build Arm's GCC.
+
+* meta-arm-autonomy
+
+  This layer is the distribution for a reference stack for autonomous systems.
+
+* meta-gem5
+
+  This layer contains recipes and machines for gem5, a system-level and processor simulator.
+
+* meta-atp
+
+  This layer contains recipes for the Adaptive Traffic Generation integration into meta-gem5.
 
 Contributing
 ------------
