@@ -7,20 +7,12 @@ diff --git a/ShellPkg/ShellPkg.dsc b/ShellPkg/ShellPkg.dsc
 index c42bc9464a..ea21f07a31 100644
 --- a/ShellPkg/ShellPkg.dsc
 +++ b/ShellPkg/ShellPkg.dsc
-@@ -20,6 +20,8 @@
-   SKUID_IDENTIFIER               = DEFAULT
- 
+@@ -24,2 +24,4 @@
  [LibraryClasses.common]
 +  SbsaValLib|ShellPkg/Application/sbsa-acs/val/SbsaValLib.inf
 +  SbsaPalLib|ShellPkg/Application/sbsa-acs/platform/pal_uefi/SbsaPalLib.inf
    UefiApplicationEntryPoint|MdePkg/Library/UefiApplicationEntryPoint/UefiApplicationEntryPoint.inf
-   UefiDriverEntryPoint|MdePkg/Library/UefiDriverEntryPoint/UefiDriverEntryPoint.inf
-   UefiBootServicesTableLib|MdePkg/Library/UefiBootServicesTableLib/UefiBootServicesTableLib.inf
-@@ -83,6 +85,7 @@
-   # Build all the libraries when building this package.
-   # This helps developers test changes and how they affect the package.
+@@ -88,2 +90,3 @@
    #
-+  ShellPkg/Application/sbsa-acs/uefi_app/SbsaAvs.inf 
++  ShellPkg/Application/sbsa-acs/uefi_app/SbsaAvs.inf
    ShellPkg/Library/UefiShellLib/UefiShellLib.inf
-   ShellPkg/Library/UefiShellAcpiViewCommandLib/UefiShellAcpiViewCommandLib.inf
-   ShellPkg/Library/UefiShellCommandLib/UefiShellCommandLib.inf

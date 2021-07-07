@@ -1,4 +1,4 @@
-require recipes-bsp/uefi/edk2-firmware_202102.bb
+require recipes-bsp/uefi/edk2-firmware_202105.bb
 
 PROVIDES:remove = "virtual/uefi-firmware"
 
