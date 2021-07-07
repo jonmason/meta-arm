@@ -1,0 +1,14 @@
+The install script has an explicit check that the current host is x86-64, which
+means we can't build armcompiler for x86-64 targets on arm64. Pad the
+replacement host with whitespace so that the installer offset doesn't change.
+
+Upstream-Status: Inappropriate
+Signed-off-by: Ross Burton <ross.burton@arm.com>
+
+--- a/install_x86_64.sh.orig	2021-07-06 14:11:47.632155370 +0100
++++ b/install_x86_64.sh	2021-07-06 14:11:58.393163350 +0100
+@@ -470,3 +470,3 @@
+ fi
+-host=`/bin/uname -m`
++host=x86_64         
+ echo --- Host target check...[${host}]
