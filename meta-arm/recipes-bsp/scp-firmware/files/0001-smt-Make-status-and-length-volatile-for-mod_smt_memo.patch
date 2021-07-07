@@ -1,0 +1,47 @@
+From d13b4f81287ef957365c3fe68c3d8e17427cb364 Mon Sep 17 00:00:00 2001
+From: Nicola Mazzucato <nicola.mazzucato@arm.com>
+Date: Wed, 12 May 2021 15:20:58 +0100
+Subject: [PATCH] smt: Make status and length volatile for mod_smt_memory
+
+There is an intermittent error on TF-A side when reading the mailbox.
+The error is due to the mailbox message length not matching the expectation:
+    ASSERT: drivers/arm/css/scmi/scmi_pwr_dmn_proto.c:48
+
+This is due to a race between SCP writing the data and TF-A reading them.
+
+Effectively, the compiler seems to perform some minor optimisations with the
+local mod_smt_memory resulting in the expected writing sequence to be altered.
+This is seen in smt_respond().
+
+To remove such optimisations, force the length and status to be volatile.
+With this patch the sequence of writing into smt is restored and the error
+in TF-A disappears.
+
+Change-Id: I0127b9aa3cd1b54643ffdb2ca5ddce9fc9569bea
+Signed-off-by: Nicola Mazzucato <nicola.mazzucato@arm.com>
+Signed-off-by: Damodar Santhapuri <damodar.santhapuri@arm.com>
+Upstream-Status: Backport
+---
+ module/smt/include/internal/smt.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/module/smt/include/internal/smt.h b/module/smt/include/internal/smt.h
+index 1a615a36..d9f3f423 100644
+--- a/module/smt/include/internal/smt.h
++++ b/module/smt/include/internal/smt.h
+@@ -12,10 +12,10 @@
+ 
+ struct mod_smt_memory {
+     uint32_t reserved0;
+-    uint32_t status;
++    volatile uint32_t status;
+     uint64_t reserved1;
+     uint32_t flags;
+-    uint32_t length; /* message_header + payload */
++    volatile uint32_t length; /* message_header + payload */
+     uint32_t message_header;
+     uint32_t payload[];
+ };
+-- 
+2.17.1
+
