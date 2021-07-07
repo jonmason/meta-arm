@@ -1,0 +1,20 @@
+header:
+  version: 9
+  includes:
+    - base.yml
+
+# Target is arm64 and SDK is x86-64 to ensure that we exercise both
+# architectures
+
+machine: qemuarm64
+local_conf_header:
+  toolchains: |
+    SDKMACHINE = "x86_64"
+
+# No target armcompiler as currently there is no arm64 build
+target:
+  - nativesdk-armcompiler
+  - gcc-aarch64-none-elf
+  - nativesdk-gcc-aarch64-none-elf
+  - gcc-arm-none-eabi
+  - nativesdk-gcc-arm-none-eabi

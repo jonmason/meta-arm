@@ -101,6 +101,9 @@ check-layers:
   - kas shell --update --force-checkout ci/base.yml:ci/meta-arm-autonomy.yml:ci/meta-python.yml --command \
     "$CI_PROJECT_DIR/ci/check-layers.py $CI_PROJECT_DIR/ci/check-layers.yml $CI_PROJECT_DIR $KAS_WORK_DIR"
 
+toolchains:
+  extends: .build
+
 corstone500:
   extends: .build
 
