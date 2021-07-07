@@ -6,11 +6,6 @@ ARM_AUTONOMY_HOST_OVERRIDES = ":autonomy-host"
 DISTRO_FEATURES_append = " xen ipv4"
 DISTRO_FEATURES_NATIVE_append = " arm-autonomy-host"
 
-# Since meta-virtualization master branch bumped to 4.15+stable we need to
-# force the 4.14+stable selection until we validate the new version
-PREFERRED_VERSION_xen = "4.14+stable%"
-PREFERRED_VERSION_xen-tools = "4.14+stable%"
-
 # Don't include kernels in standard images when building arm-autonomy-host
 # If the kernel image is needed in the rootfs the following should be set from
 # a bbappend: RDEPENDS_${KERNEL_PACKAGE_NAME}-base = "${KERNEL_PACKAGE_NAME}-image"
