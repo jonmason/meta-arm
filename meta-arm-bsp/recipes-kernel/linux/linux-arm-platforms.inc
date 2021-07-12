@@ -31,7 +31,6 @@ COMPATIBLE_MACHINE_corstone500 = "corstone500"
 COMPATIBLE_MACHINE_fvp-base = "fvp-base"
 KMACHINE_fvp-base = "fvp"
 FILESEXTRAPATHS_prepend_fvp-base := "${ARMBSPFILESPATHS}"
-SRC_URI_append_fvp-base = " file://fvp-base-dts.patch"
 
 #
 # FVP BASE ARM32 KMACHINE
