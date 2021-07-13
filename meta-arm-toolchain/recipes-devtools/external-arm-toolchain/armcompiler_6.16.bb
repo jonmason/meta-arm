@@ -15,6 +15,9 @@ HOMEPAGE = "https://developer.arm.com/tools-and-software/embedded/arm-compiler/d
 
 LICENSE = "Armcompiler-License-agreement & Armcompiler-Redistributables & \
            Armcompiler-Supplementary-terms & Armcompiler-Third-party-licenses"
+
+# The Arm Compiler is under a EULA, read this at the homepage above and if you
+# agree add 'armcompiler' to your LICENSE_FLAGS_WHITELIST.
 LICENSE_FLAGS = "armcompiler"
 
 LIC_FILES_CHKSUM = "file://license_terms/license_agreement.txt;md5=19faf912b534478d28f60dfa24659c17 \
