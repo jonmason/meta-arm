@@ -132,9 +132,12 @@ musca-s1:
 n1sdp:
   extends: .build
 
+# This job currently fails when building gcc-runtime:
+# cc1: error: switch '-mcpu=armv8.2-a' conflicts with '-march=armv8-a' switch [-Werror]
+# Mark as manual so it doesn't get executed automatically
 n1sdp/armgcc:
   extends: .build
-  allow_failure: true
+  when: manual
 
 qemuarm:
   extends:
