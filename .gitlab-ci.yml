@@ -10,6 +10,7 @@ stages:
 # Common job fragment to get a worker ready
 .setup:
   stage: build
+  interruptible: true
   variables:
     KAS_WORK_DIR: $CI_PROJECT_DIR/work
     KAS_REPO_REF_DIR: $CI_BUILDS_DIR/persist/repos
@@ -84,6 +85,7 @@ n1sdp/bootstrap:
 # What percentage of machines in the layer do we build
 machine-coverage:
   stage: bootstrap
+  interruptible: true
   script:
   - ./ci/check-machine-coverage
   coverage: '/Coverage: \d+/'
