@@ -79,19 +79,12 @@ SRC_URI_append_tc0 = " \
     file://defconfig \
     file://0001-drm-Add-component-aware-simple-encoder.patch \
     file://0002-drm-arm-komeda-add-RENDER-capability-to-the-device-n.patch \
-    file://0003-mailbox-arm_mhuv2-add-device-tree-binding-documentat.patch \
-    file://0004-mailbox-arm_mhuv2-add-arm-mhuv2-driver.patch \
-    file://0005-mailbox-arm_mhuv2-add-doorbell-transport-protocol-op.patch \
-    file://0006-mailbox-arm_mhuv2-add-multi-word-transport-protocol-.patch \
-    file://0007-firmware-arm_scmi-Add-fast_switch_possible-api.patch \
-    file://0008-cpufreq-arm_scmi-Set-fast_switch_possible-conditiona.patch \
-    file://0009-driver-firmware-Initial-version-of-ffa-driver-based-.patch \
-    file://0010-tee-add-support-for-session-s-client-UUID-generation.patch \
-    file://0011-tee-optee-Add-support-for-session-login-client-UUID-.patch \
-    file://0012-driver-optee-Support-for-ffa-transport.patch \
-    file://0013-tee-optee-fix-mem-handle-removal-in-ffa_shm_unregist.patch \
-    file://0014-arm64-Add-support-for-asymmetric-AArch32-EL0-configu.patch \
-    file://0015-arm64-smp-Prevent-hotplugging-the-last-AArch32-able-.patch \
+    file://0003-Adapt-ION-interface-to-match-Android.patch \
+    file://0004-dt-bindings-mailbox-arm-mhuv2-Add-bindings.patch \
+    file://0005-mailbox-arm_mhuv2-Add-driver.patch \
+    file://0006-mailbox-arm_mhuv2-Fix-sparse-warnings.patch \
+    file://0007-mailbox-arm_mhuv2-make-remove-callback-return-void.patch \
+    file://0008-mailbox-arm_mhuv2-Skip-calling-kfree-with-invalid-po.patch \
     "
 
 #

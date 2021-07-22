@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 #
-# Copyright (c) 2020 Arm Limited
+# Copyright (c) 2021 Arm Limited
 #
 
 DESCRIPTION = "Linux Android Common Kernel"
 SECTION = "kernel"
 LICENSE = "GPLv2"
-LIC_FILES_CHKSUM = "file://${S}/COPYING;md5=bbea815ee2795b2f4230826c0c6b8814"
+LIC_FILES_CHKSUM = "file://${S}/COPYING;md5=6bc538ed5bd9a7fc9398086aedcd7e46"
 
 require recipes-kernel/linux/linux-yocto.inc
 

@@ -1,7 +1,7 @@
-From 7863ac1515009547bae3a66e0808e72b3bdcf8c8 Mon Sep 17 00:00:00 2001
+From 9080fb7fc011445d4d6ee164d02d86ff6df0822a Mon Sep 17 00:00:00 2001
 From: Tushar Khandelwal <tushar.khandelwal@arm.com>
 Date: Tue, 16 Jun 2020 12:39:06 +0000
-Subject: [PATCH 1/9] drm: Add component-aware simple encoder
+Subject: [PATCH 01/10] drm: Add component-aware simple encoder
 
 This is a simple DRM encoder that gets its connector timings information
 from a OF subnode in the device tree and exposes that as a "discovered"
@@ -12,6 +12,7 @@ and the display output is configured outside the kernel.
 Signed-off-by: Tushar Khandelwal <tushar.khandelwal@arm.com>
 
 Upstream-Status: Backport [https://git.linaro.org/landing-teams/working/arm/kernel-release.git/commit/?h=latest-armlt&id=15283f7be4b1e586702551e85b4caf06531ac2fc]
+Signed-off-by: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
 ---
  drivers/gpu/drm/Kconfig               |  11 +
  drivers/gpu/drm/Makefile              |   2 +
@@ -20,10 +21,10 @@ Upstream-Status: Backport [https://git.linaro.org/landing-teams/working/arm/kern
  create mode 100644 drivers/gpu/drm/drm_virtual_encoder.c
 
 diff --git a/drivers/gpu/drm/Kconfig b/drivers/gpu/drm/Kconfig
-index e67c194c2aca..c95279cd9341 100644
+index ca868271f4c4..6ae8ba3ca7b3 100644
 --- a/drivers/gpu/drm/Kconfig
 +++ b/drivers/gpu/drm/Kconfig
-@@ -265,6 +265,17 @@ config DRM_VKMS
+@@ -300,6 +300,17 @@ config DRM_VKMS
  
  	  If M is selected the module will be called vkms.
  
@@ -38,14 +39,14 @@ index e67c194c2aca..c95279cd9341 100644
 +         drm_vencoder.
 +
 +
- config DRM_ATI_PCIGART
-         bool
+ source "drivers/gpu/drm/exynos/Kconfig"
  
+ source "drivers/gpu/drm/rockchip/Kconfig"
 diff --git a/drivers/gpu/drm/Makefile b/drivers/gpu/drm/Makefile
-index 82ff826b33cc..d2ab6fc64932 100644
+index 81569009f884..a3429152c613 100644
 --- a/drivers/gpu/drm/Makefile
 +++ b/drivers/gpu/drm/Makefile
-@@ -53,6 +53,8 @@ drm_kms_helper-$(CONFIG_DRM_DP_CEC) += drm_dp_cec.o
+@@ -56,6 +56,8 @@ drm_kms_helper-$(CONFIG_DRM_DP_CEC) += drm_dp_cec.o
  
  obj-$(CONFIG_DRM_KMS_HELPER) += drm_kms_helper.o
  obj-$(CONFIG_DRM_DEBUG_SELFTEST) += selftests/
@@ -56,7 +57,7 @@ index 82ff826b33cc..d2ab6fc64932 100644
  obj-$(CONFIG_DRM_MIPI_DBI) += drm_mipi_dbi.o
 diff --git a/drivers/gpu/drm/drm_virtual_encoder.c b/drivers/gpu/drm/drm_virtual_encoder.c
 new file mode 100644
-index 000000000000..4fd2098df286
+index 000000000000..2f65c6b47d00
 --- /dev/null
 +++ b/drivers/gpu/drm/drm_virtual_encoder.c
 @@ -0,0 +1,299 @@
@@ -250,7 +251,7 @@ index 000000000000..4fd2098df286
 +		crtcs = drm_of_find_possible_crtcs(drm, dev->of_node);
 +		bridge = of_drm_find_bridge(dev->of_node);
 +		if (bridge) {
-+			ret = drm_bridge_attach(encoder, bridge, NULL);
++			ret = drm_bridge_attach(encoder, bridge, NULL, 0);
 +			if (ret) {
 +				DRM_ERROR("Failed to initialize bridge\n");
 +				return ret;

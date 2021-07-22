@@ -1,0 +1,33 @@
+From b98c6070320ad31318a028482f026d6a5eddce5b Mon Sep 17 00:00:00 2001
+From: Anders Dellien <anders.dellien@arm.com>
+Date: Fri, 29 Jan 2021 09:44:38 +0000
+Subject: [PATCH 03/10] Adapt ION interface to match Android
+
+Change-Id: I62b69cc357868f725170899c862530b8f3069666
+Signed-off-by: Anders Dellien <anders.dellien@arm.com>
+
+Upstream-Status: Inappropriate [Product specific configuration]
+Signed-off-by: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+---
+ include/uapi/linux/ion.h | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/include/uapi/linux/ion.h b/include/uapi/linux/ion.h
+index 371e44662755..7022ea223736 100644
+--- a/include/uapi/linux/ion.h
++++ b/include/uapi/linux/ion.h
+@@ -24,7 +24,10 @@
+  */
+ enum ion_heap_type {
+ 	ION_HEAP_TYPE_SYSTEM = 0,
+-	ION_HEAP_TYPE_DMA = 2,
++       ION_HEAP_TYPE_SYSTEM_CONTIG = 1,
++       ION_HEAP_TYPE_CARVEOUT = 2,
++       ION_HEAP_TYPE_CHUNK = 3,
++       ION_HEAP_TYPE_DMA = 4,
+ 	/* reserved range for future standard heap types */
+ 	ION_HEAP_TYPE_CUSTOM = 16,
+ 	ION_HEAP_TYPE_MAX = 31,
+-- 
+2.17.1
+
