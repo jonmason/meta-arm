@@ -85,6 +85,19 @@ SRC_URI_append_tc0 = " \
     file://0006-mailbox-arm_mhuv2-Fix-sparse-warnings.patch \
     file://0007-mailbox-arm_mhuv2-make-remove-callback-return-void.patch \
     file://0008-mailbox-arm_mhuv2-Skip-calling-kfree-with-invalid-po.patch \
+    file://0009-arm64-smccc-Add-support-for-SMCCCv1.2-extended-input.patch \
+    file://0010-firmware-arm_ffa-Add-initial-FFA-bus-support-for-dev.patch \
+    file://0011-firmware-arm_ffa-Add-initial-Arm-FFA-driver-support.patch \
+    file://0012-firmware-arm_ffa-Add-support-for-SMCCC-as-transport-.patch \
+    file://0013-firmware-arm_ffa-Setup-in-kernel-users-of-FFA-partit.patch \
+    file://0014-firmware-arm_ffa-Add-support-for-MEM_-interfaces.patch \
+    file://0015-tee-add-sec_world_id-to-struct-tee_shm.patch \
+    file://0016-optee-simplify-optee_release.patch \
+    file://0017-optee-sync-OP-TEE-headers.patch \
+    file://0018-optee-refactor-driver-with-internal-callbacks.patch \
+    file://0019-optee-add-a-FF-A-memory-pool.patch \
+    file://0020-optee-add-FF-A-support.patch \
+    file://0021-drivers-optee-hack-for-UUID-endianess-issue.patch \
     "
 
 #

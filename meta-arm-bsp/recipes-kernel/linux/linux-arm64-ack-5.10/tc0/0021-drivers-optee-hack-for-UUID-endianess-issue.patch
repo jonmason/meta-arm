@@ -1,0 +1,58 @@
+From 831d01e34ff2065c585da91c8923ea44146097cd Mon Sep 17 00:00:00 2001
+From: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+Date: Thu, 27 May 2021 13:40:33 +0100
+Subject: [PATCH 13/14] drivers: optee: hack for UUID endianess issue
+
+Signed-off-by: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+Signed-off-by: Sudeep Holla <sudeep.holla@arm.com>
+Change-Id: Id5c42e4fe491a448f746b9d132dae20c85666554
+
+Upstream-Status: Inappropriate [will not be submitted as its only a workaround]
+---
+ drivers/firmware/arm_ffa/driver.c | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+
+diff --git a/drivers/firmware/arm_ffa/driver.c b/drivers/firmware/arm_ffa/driver.c
+index 056a3fca14d1..82c84fe10be2 100644
+--- a/drivers/firmware/arm_ffa/driver.c
++++ b/drivers/firmware/arm_ffa/driver.c
+@@ -275,8 +275,18 @@ ffa_partition_probe(const uuid_t *uuid, struct ffa_partition_info **buffer)
+ 	struct ffa_partition_info *pbuf;
+ 
+ 	export_uuid((u8 *)uuid0_4, uuid);
++
++#if 0
+ 	count = __ffa_partition_info_get(uuid0_4[0], uuid0_4[1], uuid0_4[2],
+ 					 uuid0_4[3], NULL, 0);
++#else
++	/* hack for optee UUID endianess issue */
++	count = __ffa_partition_info_get(be32_to_cpup(&uuid0_4[0]),
++					 be32_to_cpup(&uuid0_4[1]),
++					 be32_to_cpup(&uuid0_4[2]),
++					 be32_to_cpup(&uuid0_4[3]), NULL, 0);
++#endif
++
+ 	if (count <= 0)
+ 		return count;
+ 
+@@ -284,8 +294,17 @@ ffa_partition_probe(const uuid_t *uuid, struct ffa_partition_info **buffer)
+ 	if (!pbuf)
+ 		return -ENOMEM;
+ 
++#if 0
+ 	count = __ffa_partition_info_get(uuid0_4[0], uuid0_4[1], uuid0_4[2],
+ 					 uuid0_4[3], pbuf, count);
++#else
++	/* hack for optee UUID endianess issue */
++	count = __ffa_partition_info_get(be32_to_cpup(&uuid0_4[0]),
++					 be32_to_cpup(&uuid0_4[1]),
++					 be32_to_cpup(&uuid0_4[2]),
++					 be32_to_cpup(&uuid0_4[3]),
++					 pbuf, count);
++#endif
+ 	if (count <= 0)
+ 		kfree(pbuf);
+ 
+-- 
+2.29.2
+
