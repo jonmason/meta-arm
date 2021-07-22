@@ -8,7 +8,7 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 inherit deploy python3native
 
 SRC_URI = "gitsm://git.trustedfirmware.org/hafnium/hafnium.git;protocol=https"
-SRCREV = "410a3acaf669c12d41fb4c57fcaf3ecee6fdba61"
+SRCREV = "3a149eb219467c0d9336467ea1fb9d3fb65da94b"
 S = "${WORKDIR}/git"
 
 COMPATIBLE_MACHINE ?= "invalid"
