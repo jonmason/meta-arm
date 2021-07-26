@@ -4,6 +4,7 @@ header:
 local_conf_header:
   testimage: |
     IMAGE_CLASSES += "testimage"
+    TESTIMAGE_AUTO = "1"
   slirp: |
     TEST_RUNQEMUPARAMS = "slirp"
     TEST_SERVER_IP = "127.0.0.1"
