@@ -1,0 +1,10 @@
+header:
+  version: 9
+
+target:
+  - binutils-cross-aarch64
+  - clang-cross-aarch64
+  - clang-native
+  - python3-native
+  - opkg-native
+  - rpm-native

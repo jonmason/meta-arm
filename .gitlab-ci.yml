@@ -60,6 +60,10 @@ n1sdp/bootstrap:
   extends: .build
   stage: bootstrap
 
+n1sdp/clang/clang-bootstrap:
+  extends: .build
+  stage: bootstrap
+
 # What percentage of machines in the layer do we build
 machine-coverage:
   stage: bootstrap
@@ -68,6 +72,9 @@ machine-coverage:
   - ./ci/check-machine-coverage
   coverage: '/Coverage: \d+/'
 
+toolchains:
+  extends: .build
+  stage: bootstrap
 
 #
 # Build stage, the actual build jobs
@@ -80,9 +87,6 @@ check-layers:
   script:
   - kas shell --update --force-checkout ci/base.yml:ci/meta-arm-autonomy.yml:ci/meta-python.yml --command \
     "$CI_PROJECT_DIR/ci/check-layers.py $CI_PROJECT_DIR/ci/check-layers.yml $CI_PROJECT_DIR $KAS_WORK_DIR"
-
-toolchains:
-  extends: .build
 
 corstone500:
   extends: .build
