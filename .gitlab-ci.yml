@@ -5,7 +5,6 @@ stages:
   - prep
   - bootstrap
   - build
-  - test
 
 # Common job fragment to get a worker ready
 .setup:
@@ -34,26 +33,6 @@ stages:
     - kas shell --update --force-checkout $KASFILES -c 'cat conf/*.conf'
     - kas build $KASFILES
     - ./ci/check-warnings $KAS_WORK_DIR/build/warnings.log
-
-.build_artifacts:
-  artifacts:
-    paths:
-      - $IMAGE_DIR/*
-    expire_in: 1 day
-
-.test:
-  extends: .setup
-  stage: test
-  # Unique before_script here to avoid the rm from the one in .setup
-  before_script:
-    - mkdir --verbose --parents $KAS_WORK_DIR $KAS_REPO_REF_DIR $SSTATE_DIR $DL_DIR $TOOLCHAIN_DIR
-  script:
-    - KASFILES=$(./ci/jobs-to-kas $CI_JOB_NAME)
-    # These are needed to avoid warnings about file permissions from the artifacts
-    - sudo chown -R builder $KAS_WORK_DIR
-    - sudo chgrp -R builder $KAS_WORK_DIR
-    - kas build $KASFILES -c testimage
-
 
 #
 # Prep stage, update repositories once
@@ -159,83 +138,32 @@ n1sdp/armgcc:
 qemu-cortex-a53:
   extends: .build
 
-qemuarm:
-  extends:
-    - .build
-    - .build_artifacts
+qemuarm/testimage:
+  extends: .build
 
 qemuarm64-sbsa:
-  extends:
-    - .build
-    - .build_artifacts
+  extends: .build
 
-qemuarm64-secureboot:
-  extends:
-    - .build
-    - .build_artifacts
+qemuarm64-secureboot/testimage:
+  extends: .build
 
-qemuarm64-secureboot/clang:
-  extends:
-    - .build
-    - .build_artifacts
+qemuarm64-secureboot/clang/testimage:
+  extends: .build
 
-qemuarm64-secureboot/clang/musl:
-  extends:
-    - .build
-    - .build_artifacts
+qemuarm64-secureboot/clang/musl/testimage:
+  extends: .build
 
-qemuarm64-secureboot/musl:
-  extends:
-    - .build
-    - .build_artifacts
+qemuarm64-secureboot/musl/testimage:
+  extends: .build
 
-qemuarmv5:
-  extends:
-    - .build
-    - .build_artifacts
+qemuarmv5/testimage:
+  extends: .build
 
 sgi575:
   extends: .build
 
 tc0:
   extends: .build
-
-
-#
-# Third phase, the test jobs
-#
-
-# QEMU based machines can use testimage, others will need something else (i.e., LAVA)
-
-qemuarm/testimage:
-  extends: .test
-  needs:
-    - job: qemuarm
-
-qemuarm64-secureboot/testimage:
-  extends: .test
-  needs:
-    - job: qemuarm64-secureboot
-
-qemuarm64-secureboot/clang/testimage:
-  extends: .test
-  needs:
-    - job: qemuarm64-secureboot/clang
-
-qemuarm64-secureboot/clang/musl/testimage:
-  extends: .test
-  needs:
-    - job: qemuarm64-secureboot/clang/musl
-
-qemuarm64-secureboot/musl/testimage:
-  extends: .test
-  needs:
-    - job: qemuarm64-secureboot/musl
-
-qemuarmv5/testimage:
-  extends: .test
-  needs:
-    - job: qemuarmv5
 
 
 #
