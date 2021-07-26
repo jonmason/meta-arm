@@ -148,6 +148,9 @@ qemu-cortex-a53:
 qemuarm/testimage:
   extends: .build
 
+qemuarm/clang/testimage:
+  extends: .build
+
 qemuarm64-sbsa:
   extends: .build
 
