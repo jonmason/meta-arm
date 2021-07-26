@@ -185,6 +185,14 @@
                 serial3 = "/uart@9c0c0000";
         };
 
+        pmu {
+                compatible = "arm,armv8-pmuv3";
+                interrupts = <0 60 4>,
+                             <0 61 4>,
+                             <0 62 4>,
+                             <0 63 4>;
+        };
+
         chosen {
                 bootargs = "earlycon console=ttyAMA0 loglevel=8 rootfstype=ext4 root=/dev/vda1 rw";
                 stdout-path = "serial0";
