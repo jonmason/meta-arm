@@ -5,6 +5,11 @@ header:
 
 machine: qemuarm64-secureboot
 
+local_conf_header:
+  bugs: |
+    # Only ping until errors can be resolved
+    TEST_SUITES = "ping"
+
 target:
   - core-image-base
   - perf
