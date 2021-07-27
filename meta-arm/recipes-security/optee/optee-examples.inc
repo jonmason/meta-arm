@@ -12,7 +12,8 @@ inherit python3native
 require optee.inc
 
 SRC_URI = "git://github.com/linaro-swg/optee_examples.git \
-           file://0001-make-Pass-ldflags-during-link.patch \
+           file://0001-plugins-Honour-default-cross-compiler-environment-se.patch \
+           file://0002-Makefile-Enable-plugins-installation-in-rootfs.patch \
           "
 
 EXTRA_OEMAKE += "TA_DEV_KIT_DIR=${TA_DEV_KIT_DIR} \
@@ -32,11 +33,15 @@ do_compile[cleandirs] = "${B}"
 do_install () {
     mkdir -p ${D}${nonarch_base_libdir}/optee_armtz
     mkdir -p ${D}${bindir}
+    mkdir -p ${D}${libdir}/tee-supplicant/plugins
     install -D -p -m0755 ${B}/ca/* ${D}${bindir}
     install -D -p -m0444 ${B}/ta/* ${D}${nonarch_base_libdir}/optee_armtz
+    install -D -p -m0444 ${B}/plugins/* ${D}${libdir}/tee-supplicant/plugins
 }
 
-FILES_${PN} += "${nonarch_base_libdir}/optee_armtz/"
+FILES_${PN} += "${nonarch_base_libdir}/optee_armtz/ \
+                ${libdir}/tee-supplicant/plugins/ \
+               "
 
 # Imports machine specific configs from staging to build
 PACKAGE_ARCH = "${MACHINE_ARCH}"

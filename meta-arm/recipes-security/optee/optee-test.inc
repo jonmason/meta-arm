@@ -8,17 +8,9 @@ LIC_FILES_CHKSUM = "file://${S}/LICENSE.md;md5=daa2bcccc666345ab8940aab1315a4fa"
 inherit python3native ptest
 require optee.inc
 
-# Linking fails on musl due to C++/threads
-# https://github.com/OP-TEE/optee_test/issues/458#issuecomment-720540834
-# When upgraded we should be able to remove this limitation
-COMPATIBLE_HOST_libc-musl = 'null'
-
 DEPENDS = "optee-client optee-os python3-pycryptodome-native"
 
 SRC_URI = "git://github.com/OP-TEE/optee_test.git \
-           file://0001-host-xtest-Adjust-order-of-including-compiler.h.patch \
-           file://0002-make-remove-Wno-unsafe-loop-for-clang.patch \ 
-           file://0003-make-remove-Wmissing-noreturn-for-clang.patch \
            file://run-ptest \
           "
 
@@ -36,6 +28,7 @@ do_compile() {
     # Top level makefile doesn't seem to handle parallel make gracefully
     oe_runmake xtest
     oe_runmake ta
+    oe_runmake test_plugin
 }
 do_compile[cleandirs] = "${B}"
 
@@ -46,9 +39,13 @@ do_install () {
     # default TEEC_LOAD_PATH is /lib
     mkdir -p ${D}${nonarch_base_libdir}/optee_armtz/
     install -D -p -m0444 ${B}/ta/*/*.ta ${D}${nonarch_base_libdir}/optee_armtz/
+    mkdir -p ${D}${libdir}/tee-supplicant/plugins
+    install -D -p -m0444 ${B}/supp_plugin/*.plugin ${D}${libdir}/tee-supplicant/plugins/
 }
 
-FILES_${PN} += "${nonarch_base_libdir}/optee_armtz/"
+FILES_${PN} += "${nonarch_base_libdir}/optee_armtz/ \
+                ${libdir}/tee-supplicant/plugins/ \
+               "
 
 # Imports machine specific configs from staging to build
 PACKAGE_ARCH = "${MACHINE_ARCH}"
