@@ -7,7 +7,8 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 inherit deploy python3native
 
-SRC_URI = "gitsm://git.trustedfirmware.org/hafnium/hafnium.git;protocol=https"
+SRC_URI = "gitsm://git.trustedfirmware.org/hafnium/hafnium.git;protocol=https \
+           file://pkg-config-native.patch"
 SRCREV = "3a149eb219467c0d9336467ea1fb9d3fb65da94b"
 S = "${WORKDIR}/git"
 
@@ -27,7 +28,7 @@ HAFNIUM_BUILD_DIR_PLAT = "out/${HAFNIUM_PROJECT}/${HAFNIUM_PLATFORM}_clang"
 # default to hafnium
 HAFNIUM_INSTALL_TARGET ?= "hafnium"
 
-DEPENDS = "bison-native bc-native"
+DEPENDS = "bison-native bc-native openssl-native"
 
 # set project to build
 EXTRA_OEMAKE += "PROJECT=${HAFNIUM_PROJECT}"

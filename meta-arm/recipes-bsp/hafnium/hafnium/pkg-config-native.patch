@@ -1,0 +1,29 @@
+Use pkg-config-native to find the libssl headers. The bulk of this patch is
+actually a backport from mainline Linux, but pkg-config changed to
+pkg-config-native.
+
+Upstream-Status: Inappropriate
+Signed-off-by: Ross Burton <ross.burton@arm.com>
+
+diff --git a/scripts/Makefile b/scripts/Makefile
+index 9adb6d247818..5fe371c7d7f5 100644
+--- a/third_party/linux/scripts/Makefile
++++ b/third_party/linux/scripts/Makefile
+@@ -21,10 +21,15 @@ hostprogs-$(CONFIG_MODULE_SIG_FORMAT) += sign-file
+ hostprogs-$(CONFIG_SYSTEM_TRUSTED_KEYRING) += extract-cert
+ hostprogs-$(CONFIG_SYSTEM_EXTRA_CERTIFICATE) += insert-sys-cert
+ 
++CRYPTO_CFLAGS = $(shell pkg-config-native --cflags libcrypto)
++CRYPTO_LIBS = $(shell pkg-config-native --libs libcrypto)
++
+ HOSTCFLAGS_sortextable.o = -I$(srctree)/tools/include
+ HOSTCFLAGS_asn1_compiler.o = -I$(srctree)/include
+-HOSTLDLIBS_sign-file = -lcrypto
+-HOSTLDLIBS_extract-cert = -lcrypto
++HOSTCFLAGS_sign-file.o = $(CRYPTO_CFLAGS)
++HOSTLDLIBS_sign-file = $(CRYPTO_LIBS)
++HOSTCFLAGS_extract-cert.o = $(CRYPTO_CFLAGS)
++HOSTLDLIBS_extract-cert = $(CRYPTO_LIBS)
+ 
+ always		:= $(hostprogs-y) $(hostprogs-m)
+ 
