@@ -1,5 +1,10 @@
 # TC0 specific TFA configuration
 
+# Intermediate SHA with 2.5 baseline version
+SRCREV_tfa = "a52c52477aa797e6a261215e9b3536533590b334"
+PV = "2.5+git${SRCPV}"
+LIC_FILES_CHKSUM = "file://docs/license.rst;md5=b2c740efedc159745b9b31f88ff03dde"
+
 DEPENDS += "scp-firmware"
 
 COMPATIBLE_MACHINE = "tc0"
