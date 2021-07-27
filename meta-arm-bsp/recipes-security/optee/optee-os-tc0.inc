@@ -6,7 +6,10 @@ SRCREV = "49dbb9ef65643c4322cf3f848910fa880d1c02f6"
 PV = "3.14.0+git${SRCPV}"
 
 FILESEXTRAPATHS_prepend_tc0 := "${THISDIR}/files/optee-os/tc0:"
-SRC_URI_append = "file://sp_layout.json"
+SRC_URI_append = " \
+    file://sp_layout.json \
+    file://0001-WIP-Enable-managed-exit.patch \
+    "
 
 COMPATIBLE_MACHINE = "tc0"
 
