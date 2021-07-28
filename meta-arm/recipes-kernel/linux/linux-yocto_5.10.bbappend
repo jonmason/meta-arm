@@ -4,6 +4,7 @@ COMPATIBLE_MACHINE_generic-arm64 = "generic-arm64"
 FILESEXTRAPATHS_prepend_generic-arm64 = "${ARMFILESPATHS}"
 SRC_URI_append_generic-arm64 = " \
     file://defconfig.patch \
+    file://tcpci.cfg \
     "
 
 FILESEXTRAPATHS_prepend_qemuarm64-sbsa = "${ARMFILESPATHS}"
