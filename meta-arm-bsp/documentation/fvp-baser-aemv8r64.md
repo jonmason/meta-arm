@@ -50,6 +50,22 @@ Install the kas setup tool for bitbake based projects:
 
 For more details on kas, see https://kas.readthedocs.io/.
 
+To build the images for fvp-base machine, you also need to:
+
+ - download the ``FVP_Base_AEMv8R_11.15_14.tgz`` image AEM V8-R FVP Installer
+  (Linux) package from Arm's website:
+  https://silver.arm.com/download/download.tm?pv=4858045&p=4029857. You need
+   to have an account and be logged in to be able to download it
+ - set absolute path to the ``FVP_Base_AEMv8R_11.15_14.tgz`` downloaded
+   package in ``FVP_BASE_R_AEM_TARBALL_URI``
+ - accept EULA in ``FVP_BASE_R_ARM_EULA_ACCEPT``
+
+
+The variables should be set like so:
+
+    FVP_BASE_R_AEM_TARBALL_URI="file:///absolute/path/to/FVP_Base_AEMv8R_11.15_14.tgz"
+    FVP_BASE_R_ARM_EULA_ACCEPT="True"
+
 **Note:** The host machine should have at least 50 GBytes of free disk space
 for the next steps to work correctly.
 
@@ -101,49 +117,40 @@ To clean up the tap0 interface on the host use the following commands:
     sudo ip link delete tap0
 
 ### Run
-To Run the Fixed Virtual Platform simulation tool you must download "Armv8-R
-AEM FVP" from Arm developer (This might require the user to register) from this
-address:
-https://developer.arm.com/tools-and-software/simulation-models/fixed-virtual-platforms/arm-ecosystem-models
-and install it on your host PC.
+To run an image after the build is done with the standard Linux kernel:
 
-To run an image after the build is done:
+    kas shell --keep-config-unchanged \
+       meta-arm/kas/fvp-baser-aemv8r64-bsp.yml \
+           --command "../meta-arm/scripts/runfvp \
+                --console \
+                -- \
+                    --parameter 'bp.smsc_91c111.enabled=1' \
+                    --parameter 'bp.hostbridge.interfaceName=tap0'"
 
-    export YOCTO_DEPLOY_IMGS_DIR="~/fvp-baser-aemv8r64-bsp/build/tmp/deploy/images/fvp-baser-aemv8r64/"
-    cd <path-to-AEMv8R_base_pkg>/models/Linux64_GCC-6.4/
-    ./FVP_BaseR_AEMv8R \
-        -C bp.dram_metadata.init_value=0 \
-        -C bp.dram_metadata.is_enabled=true \
-        -C bp.dram_size=8 \
-        -C bp.exclusive_monitor.monitor_access_level=1 \
-        -C bp.pl011_uart0.unbuffered_output=1 \
-        -C bp.pl011_uart0.untimed_fifos=true \
-        -C bp.refcounter.non_arch_start_at_default=1 \
-        -C bp.smsc_91c111.enabled=0 \
-        -C bp.ve_sysregs.mmbSiteDefault=0 \
-        -C cache_state_modelled=true \
-        -C cluster0.gicv3.cpuintf-mmap-access-level=2 \
-        -C cluster0.gicv3.SRE-enable-action-on-mmap=2 \
-        -C cluster0.gicv3.SRE-EL2-enable-RAO=1 \
-        -C cluster0.gicv3.extended-interrupt-range-support=1 \
-        -C cluster0.has_aarch64=1 \
-        -C cluster0.NUM_CORES=4 \
-        -C cluster0.stage12_tlb_size=512 \
-        -C gic_distributor.GICD_CTLR-DS-1-means-secure-only=1 \
-        -C gic_distributor.GITS_BASER0-type=1 \
-        -C gic_distributor.ITS-count=1 \
-        -C gic_distributor.ITS-hardware-collection-count=1 \
-        -C gic_distributor.has-two-security-states=0 \
-        -C pctl.startup=0.0.0.* \
-        -C bp.virtio_net.enabled=1 \
-        -C cache_state_modelled=0 \
-        -C bp.vis.rate_limit-enable=0 \
-        -C bp.virtio_net.hostbridge.interfaceName=tap0 \
-        -a cluster0*=${YOCTO_DEPLOY_IMGS_DIR}/linux-system.axf \
-        -C bp.virtioblockdevice.image_path=${YOCTO_DEPLOY_IMGS_DIR}/core-image-minimal-fvp-baser-aemv8r64.wic
+To run an image after the build is done with the Real-Time Linux kernel
+(PREEMPT\_RT):
+
+    kas shell --keep-config-unchanged \
+       meta-arm/kas/fvp-baser-aemv8r64-rt-bsp.yml \
+           --command "../meta-arm/scripts/runfvp \
+                --console \
+                -- \
+                    --parameter 'bp.smsc_91c111.enabled=1' \
+                    --parameter 'bp.hostbridge.interfaceName=tap0'"
 
 **Note:** The terminal console login is `root` without password.
 
+To finish the fvp emulation, you need to close the telnet session and stop the
+runfvp script:
+
+1. To close the telnet session:
+
+ - Escape to telnet console with ``ctrl+]``.
+ - Run ``quit`` to close the session.
+
+2. To stop the runfvp:
+
+ - Type ``ctrl+c`` and wait for kas process to finish.
 
 Devices supported in the kernel
 -------------------------------
