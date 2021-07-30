@@ -152,10 +152,28 @@ runfvp script:
 
  - Type ``ctrl+c`` and wait for kas process to finish.
 
+### File sharing between host and fvp
+It is possible to share a directory between the host machine and the fvp using
+the virtio P9 device component included in the kernel. To do so, create a
+directory to be mounted from the host machine:
+
+    mkdir /path/to/host-mount-dir
+
+Then, add the following parameter containing the path to the directory when
+launching the model:
+
+    --parameter 'bp.virtiop9device.root_path=/path/to/host-mount-dir'
+
+Once you are logged into the fvp, the host directory can be mounted in a
+directory on the model using the following command:
+
+    mount -t 9p -o trans=virtio,version=9p2000.L FM /path/to/fvp-mount-dir
+
 Devices supported in the kernel
 -------------------------------
 
 - serial
+- virtio 9p
 - virtio disk
 - virtio network
 - watchdog
