@@ -26,7 +26,7 @@ env:
 
 local_conf_header:
   base: |
-    CONF_VERSION = "1"
+    CONF_VERSION = "2"
     PACKAGE_CLASSES = "package_ipk"
     LICENSE_FLAGS_WHITELIST += "armcompiler"
     PACKAGECONFIG_remove_pn-qemu-system-native = "gtk+ sdl"

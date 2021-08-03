@@ -27,7 +27,7 @@ env:
 
 local_conf_header:
   base: |
-    CONF_VERSION = "1"
+    CONF_VERSION = "2"
     PACKAGE_CLASSES = "package_ipk"
     PACKAGECONFIG_remove_pn-qemu-system-native = "gtk+ sdl"
     EXTRA_IMAGE_FEATURES_append = " debug-tweaks"
