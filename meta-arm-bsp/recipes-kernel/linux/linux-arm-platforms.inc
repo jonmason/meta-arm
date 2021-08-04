@@ -51,6 +51,10 @@ COMPATIBLE_MACHINE_juno = "juno"
 KMACHINE_juno = "juno"
 KBUILD_DEFCONFIG_juno = "defconfig"
 KCONFIG_MODE_juno = "--alldefconfig"
+#FIXME - temporarily pin kernel version to allow for juno patches to apply
+KBRANCH_juno = "v5.4/standard/base"
+KERNEL_VERSION_SANITY_SKIP_juno = "1"
+SRCREV_machine_juno = "dd8a64a523fb714a98328441e0de72cde115a6fc"
 SRC_URI_append_juno = " \
     file://0001-mailbox-add-support-for-doorbell-signal-mode-control.patch \
     file://0002-dt-bindings-mailbox-add-bindings-to-support-ARM-MHU-.patch \
