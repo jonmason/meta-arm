@@ -6,7 +6,7 @@ XENGUEST_MANAGER_VOLUME_DEVICE ?= "/dev/vda2"
 
 # We need to extend the wks search path to be able to find the wks file set in
 # ARM_AUTONOMY_WKS_FILE.
-WKS_SEARCH_PATH_prepend := "${ARM_AUTONOMY_ARM_BSP_DYNAMIC_DIR}/wic:"
+WKS_SEARCH_PATH:prepend := "${ARM_AUTONOMY_ARM_BSP_DYNAMIC_DIR}/wic:"
 
 ARM_AUTONOMY_WKS_FILE ?= "arm-autonomy-fvp-base-disk.wks.in"
 # set wks file only if INITRAMFS_IMAGE_BUNDLE is not set

@@ -21,12 +21,12 @@ fvp_link_binaries() {
     rm -f ${D}${bindir}/*.so
 }
 
-FILES_${PN} = "${bindir} ${FVPDIR}"
+FILES:${PN} = "${bindir} ${FVPDIR}"
 
 # Prebuilt binaries are already stripped
-INSANE_SKIP_${PN} += "already-stripped"
+INSANE_SKIP:${PN} += "already-stripped"
 # FVP can optionally have a GUI, but we can use the host libraries in native/nativesdk
-INSANE_SKIP_${PN} += "file-rdeps"
+INSANE_SKIP:${PN} += "file-rdeps"
 
 # FVP brings its own standard library so don't let it be used as a shlib provider
 PRIVATE_LIBS = "libgcc_s.so.1 libstdc++.so.6"

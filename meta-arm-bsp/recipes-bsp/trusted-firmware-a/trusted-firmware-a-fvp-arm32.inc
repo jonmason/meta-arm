@@ -5,7 +5,7 @@ TFA_PLATFORM = "fvp"
 TFA_UBOOT = "1"
 TFA_BUILD_TARGET = "dtbs bl1 bl32 fip"
 
-EXTRA_OEMAKE_append = " \
+EXTRA_OEMAKE:append = " \
     ARCH=aarch32 \
     AARCH32_SP=sp_min \
     "

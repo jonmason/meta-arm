@@ -2,7 +2,7 @@
 
 # We need to extent the wks search path to be able to find the wks file set in
 # ARM_AUTONOMY_WKS_FILE.
-WKS_SEARCH_PATH_prepend := "${ARM_AUTONOMY_ARM_BSP_DYNAMIC_DIR}/wic:"
+WKS_SEARCH_PATH:prepend := "${ARM_AUTONOMY_ARM_BSP_DYNAMIC_DIR}/wic:"
 
 ARM_AUTONOMY_WKS_FILE ?= "arm-autonomy-n1sdp-efidisk.wks.in"
 WKS_FILE = "${ARM_AUTONOMY_WKS_FILE}"
@@ -58,7 +58,7 @@ ${@bb.utils.contains('DISTRO_FEATURES', 'alternate-kernel', \
 KERNEL_PACKAGE_NAME_alternate/kernel ?= "kernel-rt"
 # When alternate-kernel DISTRO_FEATURE is present we set the kernel-rt by
 # default
-KERNEL_PACKAGE_NAME_pn-linux-yocto-rt = "\
+KERNEL_PACKAGE_NAME:pn-linux-yocto-rt = "\
 ${@ d.getVar('KERNEL_PACKAGE_NAME_alternate/kernel') \
 if bb.utils.contains('DISTRO_FEATURES', 'alternate-kernel', True, False, d) \
 else 'kernel' }"
@@ -87,4 +87,4 @@ d.getVar('PREFERRED_PROVIDER_alternate/kernel') else ''}"
 
 # Additionnal kernel modules are necessary for n1sdp to be able to mount FAT
 # filesystems using CP437.
-MACHINE_ESSENTIAL_EXTRA_RDEPENDS_append = " kernel-module-nls-cp437 kernel-module-nls-iso8859-1"
+MACHINE_ESSENTIAL_EXTRA_RDEPENDS:append = " kernel-module-nls-cp437 kernel-module-nls-iso8859-1"

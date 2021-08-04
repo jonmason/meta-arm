@@ -45,8 +45,8 @@ do_install() {
     done
 }
 
-FILES_${PN} = "${datadir}/gem5/* ${bindir}/*"
-INSANE_SKIP_${PN} += "already-stripped"
-RDEPENDS_${PN} += "python3-native hdf5-native protobuf-native libpng-native"
+FILES:${PN} = "${datadir}/gem5/* ${bindir}/*"
+INSANE_SKIP:${PN} += "already-stripped"
+RDEPENDS:${PN} += "python3-native hdf5-native protobuf-native libpng-native"
 
 addtask addto_recipe_sysroot before do_build

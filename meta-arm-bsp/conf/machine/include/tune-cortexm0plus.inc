@@ -9,6 +9,6 @@ TUNE_CCARGS .= "${@bb.utils.contains('TUNE_FEATURES', 'cortexm0-plus', ' -mcpu=c
 require conf/machine/include/arm/arch-armv6m.inc
 
 AVAILTUNES                            += "cortexm0-plus"
-ARMPKGARCH_tune-cortexm0-plus          = "cortexm0-plus"
-TUNE_FEATURES_tune-cortexm0-plus       = "${TUNE_FEATURES_tune-armv6m} cortexm0-plus"
-PACKAGE_EXTRA_ARCHS_tune-cortexm0-plus = "${PACKAGE_EXTRA_ARCHS_tune-armv6m} cortexm0-plus"
+ARMPKGARCH:tune-cortexm0-plus          = "cortexm0-plus"
+TUNE_FEATURES:tune-cortexm0-plus       = "${TUNE_FEATURES:tune-armv6m} cortexm0-plus"
+PACKAGE_EXTRA_ARCHS:tune-cortexm0-plus = "${PACKAGE_EXTRA_ARCHS:tune-armv6m} cortexm0-plus"

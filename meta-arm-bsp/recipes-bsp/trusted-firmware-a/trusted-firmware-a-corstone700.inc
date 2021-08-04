@@ -7,7 +7,7 @@ TFA_UBOOT = "1"
 TFA_BUILD_TARGET = "all fip"
 TFA_INSTALL_TARGET = "fip.bin"
 
-EXTRA_OEMAKE_append = " \
+EXTRA_OEMAKE:append = " \
                         ARCH=aarch32 \
                         TARGET_PLATFORM=${TFA_TARGET_PLATFORM} \
                         AARCH32_SP=sp_min \

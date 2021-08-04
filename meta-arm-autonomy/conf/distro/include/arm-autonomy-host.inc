@@ -3,13 +3,13 @@
 ARM_AUTONOMY_HOST_OVERRIDES = ":autonomy-host"
 
 # We need to have xen and ipv4 activated
-DISTRO_FEATURES_append = " xen ipv4"
-DISTRO_FEATURES_NATIVE_append = " arm-autonomy-host"
+DISTRO_FEATURES:append = " xen ipv4"
+DISTRO_FEATURES_NATIVE:append = " arm-autonomy-host"
 
 # Don't include kernels in standard images when building arm-autonomy-host
 # If the kernel image is needed in the rootfs the following should be set from
-# a bbappend: RDEPENDS_${KERNEL_PACKAGE_NAME}-base = "${KERNEL_PACKAGE_NAME}-image"
-RDEPENDS_${KERNEL_PACKAGE_NAME}-base ?= ""
+# a bbappend: RDEPENDS:${KERNEL_PACKAGE_NAME}-base = "${KERNEL_PACKAGE_NAME}-image"
+RDEPENDS:${KERNEL_PACKAGE_NAME}-base ?= ""
 
 # Require extra machine specific settings from meta-arm-bsp dynamic-layers only
 # if meta-arm-bsp is in the bblayers.conf

@@ -1,11 +1,11 @@
 # Add arm-autonomy specific features to the kernel
 
-FILESEXTRAPATHS_prepend := "${THISDIR}:"
+FILESEXTRAPATHS:prepend := "${THISDIR}:"
 
 #
 # arm-autonomy kmeta
 #
-SRC_URI_append = " file://arm-autonomy-kmeta;type=kmeta;name=arm-autonomy-kmeta;destsuffix=arm-autonomy-kmeta"
+SRC_URI:append = " file://arm-autonomy-kmeta;type=kmeta;name=arm-autonomy-kmeta;destsuffix=arm-autonomy-kmeta"
 
 # Add common Xen (host and guest) configs and patches
 KERNEL_FEATURES += "${@bb.utils.contains_any('DISTRO_FEATURES', \
@@ -27,8 +27,8 @@ KERNEL_FEATURES += "${@bb.utils.contains('DISTRO_FEATURES', \
 
 
 # Add support for arm64-autonomy-guest machine
-COMPATIBLE_MACHINE_arm64-autonomy-guest = "arm64-autonomy-guest"
-KMACHINE_arm64-autonomy-guest = "arm64-autonomy-guest"
+COMPATIBLE_MACHINE:arm64-autonomy-guest = "arm64-autonomy-guest"
+KMACHINE:arm64-autonomy-guest = "arm64-autonomy-guest"
 
 # Add Minimal Kernel Configs for Docker runtime
 KERNEL_FEATURES += "${@bb.utils.contains('DISTRO_FEATURES', \

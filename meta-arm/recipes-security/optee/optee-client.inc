@@ -21,9 +21,9 @@ EXTRA_OECMAKE = " \
     -DBUILD_SHARED_LIBS=ON \
     -DCFG_TEE_FS_PARENT_PATH='${localstatedir}/lib/tee' \
 "
-EXTRA_OECMAKE_append_toolchain-clang = " -DCFG_WERROR=0"
+EXTRA_OECMAKE:append:toolchain-clang = " -DCFG_WERROR=0"
 
-do_install_append() {
+do_install:append() {
     install -D -p -m0644 ${WORKDIR}/tee-supplicant.service ${D}${systemd_system_unitdir}/tee-supplicant.service
     install -D -p -m0755 ${WORKDIR}/tee-supplicant.sh ${D}${sysconfdir}/init.d/tee-supplicant
 
@@ -33,8 +33,8 @@ do_install_append() {
               ${D}${sysconfdir}/init.d/tee-supplicant
 }
 
-SYSTEMD_SERVICE_${PN} = "tee-supplicant.service"
+SYSTEMD_SERVICE:${PN} = "tee-supplicant.service"
 
 INITSCRIPT_PACKAGES = "${PN}"
-INITSCRIPT_NAME_${PN} = "tee-supplicant"
-INITSCRIPT_PARAMS_${PN} = "start 10 1 2 3 4 5 . stop 90 0 6 ."
+INITSCRIPT_NAME:${PN} = "tee-supplicant"
+INITSCRIPT_PARAMS:${PN} = "start 10 1 2 3 4 5 . stop 90 0 6 ."

@@ -29,14 +29,14 @@ local_conf_header:
     CONF_VERSION = "2"
     PACKAGE_CLASSES = "package_ipk"
     LICENSE_FLAGS_WHITELIST += "armcompiler"
-    PACKAGECONFIG_remove_pn-qemu-system-native = "gtk+ sdl"
-    EXTRA_IMAGE_FEATURES_append = " debug-tweaks"
+    PACKAGECONFIG:remove:pn-qemu-system-native = "gtk+ sdl"
+    EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
     BB_NUMBER_THREADS = "16"
     PARALLEL_MAKE = "-j16"
     INHERIT += "rm_work"
-    PACKAGECONFIG_append_pn-perf = " coresight"
+    PACKAGECONFIG:append:pn-perf = " coresight"
   noptest: |
-    DISTRO_FEATURES_remove = "ptest"
+    DISTRO_FEATURES:remove = "ptest"
 
 machine: unset
 

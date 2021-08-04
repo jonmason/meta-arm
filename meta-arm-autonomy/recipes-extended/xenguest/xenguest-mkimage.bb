@@ -31,6 +31,6 @@ do_install() {
 }
 
 # We need bash
-RDEPENDS_${PN} = "bash"
-FILES_${PN} = "${bindir}/xenguest-mkimage"
+RDEPENDS:${PN} = "bash"
+FILES:${PN} = "${bindir}/xenguest-mkimage"
 

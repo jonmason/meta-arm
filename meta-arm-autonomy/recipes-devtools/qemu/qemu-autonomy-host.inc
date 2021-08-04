@@ -2,7 +2,7 @@
 QEMU_TARGETS = "i386"
 
 PACKAGECONFIG[noaudio] = "--audio-drv-list='',,"
-PACKAGECONFIG_append = " noaudio"
-PACKAGECONFIG_remove = "fdt sdl kvm"
+PACKAGECONFIG:append = " noaudio"
+PACKAGECONFIG:remove = "fdt sdl kvm"
 
 require recipes-devtools/qemu/qemu-package-split.inc

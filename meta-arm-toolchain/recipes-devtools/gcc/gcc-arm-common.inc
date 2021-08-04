@@ -9,7 +9,7 @@
 # copy the file for target build in recipe-specific sysroot, in external-arm
 # toolchain mode and if the required file does not exist already.
 
-do_install_prepend_class-target () {
+do_install:prepend:class-target () {
 	if [ "${TCMODE}" = "external-arm" -a ! -f ${STAGING_LIBDIR_NATIVE}/${TARGET_SYS}/gcc/${TARGET_SYS}/${BINV}/include/unwind.h ]; then
 		install -d ${STAGING_LIBDIR_NATIVE}/${TARGET_SYS}/gcc/${TARGET_SYS}/${BINV}/include/
 		install ${STAGING_LIBDIR}/gcc/${TARGET_SYS}/${EAT_VER_GCC}/include/unwind.h ${STAGING_LIBDIR_NATIVE}/${TARGET_SYS}/gcc/${TARGET_SYS}/${BINV}/include/
@@ -20,7 +20,7 @@ do_install_prepend_class-target () {
 # gcc installs additional aliases as ${TARGET_SYS}-${EAT_TARGET_SYS}-gcc, etc.
 # Since those are not packaged and not too useful, let's remove them to avoid
 # QA issues
-do_install_append () {
+do_install:append () {
 	for f in g++ gcc gcc-ar gcc-ranlib gcc-nm; do
 		rm -f ${D}${bindir}/${TARGET_SYS}-${EAT_TARGET_SYS}-$f
 	done

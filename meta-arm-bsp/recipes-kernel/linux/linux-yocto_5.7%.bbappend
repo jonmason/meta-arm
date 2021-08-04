@@ -1,5 +1,5 @@
-FILESEXTRAPATHS_prepend := "${THISDIR}/linux-yocto-5.7:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/linux-yocto-5.7:"
 
-SRC_URI_append = " file://coresight-traceid.patch \
+SRC_URI:append = " file://coresight-traceid.patch \
                    file://defconfig.patch \
                  "

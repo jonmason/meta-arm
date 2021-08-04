@@ -3,9 +3,9 @@
 # configuration by adding network network interface configuration file under
 # interfaces.d directory.
 
-OVERRIDES_append = "${ARM_AUTONOMY_HOST_OVERRIDES}"
+OVERRIDES:append = "${ARM_AUTONOMY_HOST_OVERRIDES}"
 
-do_install_append_autonomy-host() {
+do_install:append:autonomy-host() {
     # Add scan of interfaces.d to interfaces file
     cp -f ${WORKDIR}/interfaces ${WORKDIR}/interfaces.subdir
     echo "source-directory ${sysconfdir}/network/interfaces.d/" \

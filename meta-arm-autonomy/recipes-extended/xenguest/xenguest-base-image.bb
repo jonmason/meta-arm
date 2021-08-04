@@ -46,7 +46,7 @@ XENGUEST_IMAGE_SRC_URI_DISK_FILES ??= ""
 
 # Add xen files
 # Any extrafiles files to be added to XENGUEST_IMAGE_SRC_URI_XEN_FILES should
-# be performed via XENGUEST_IMAGE_SRC_URI_XEN_FILES_append.
+# be performed via XENGUEST_IMAGE_SRC_URI_XEN_FILES:append.
 # The kea-subnet4.json holds the kea dhcp4 subnet configuration for Dom0.
 # And it is used when XENGUEST_IMAGE_NETWORK_TYPE="nat".
 # Any customizations to it should be performed by replacing it

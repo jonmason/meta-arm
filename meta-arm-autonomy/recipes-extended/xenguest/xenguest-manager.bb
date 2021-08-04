@@ -56,8 +56,8 @@ do_install() {
 }
 
 # Things that we need on the target
-RDEPENDS_${PN} += "bash xenguest-mkimage lvm2 xen-tools parted e2fsprogs \
+RDEPENDS:${PN} += "bash xenguest-mkimage lvm2 xen-tools parted e2fsprogs \
                    dosfstools logrotate"
 
-FILES_${PN} += "${bindir}/xenguest-manager \
+FILES:${PN} += "${bindir}/xenguest-manager \
                ${sysconfdir}/xenguest"

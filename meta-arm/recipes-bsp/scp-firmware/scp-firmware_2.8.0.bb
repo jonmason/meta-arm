@@ -67,12 +67,12 @@ do_install() {
      done
 }
 
-FILES_${PN} = "/firmware"
+FILES:${PN} = "/firmware"
 SYSROOT_DIRS += "/firmware"
 
-FILES_${PN}-dbg += "/firmware/*.elf"
+FILES:${PN}-dbg += "/firmware/*.elf"
 # Skip QA check for relocations in .text of elf binaries
-INSANE_SKIP_${PN}-dbg = "arch textrel"
+INSANE_SKIP:${PN}-dbg = "arch textrel"
 INHIBIT_PACKAGE_DEBUG_SPLIT = "1"
 INHIBIT_PACKAGE_STRIP = "1"
 

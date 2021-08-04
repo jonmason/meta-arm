@@ -18,4 +18,4 @@ do_install() {
 }
 
 DEPENDS = "atp-uapi cppunit"
-RDEPENDS_${PN} = "atp-uapi"
+RDEPENDS:${PN} = "atp-uapi"

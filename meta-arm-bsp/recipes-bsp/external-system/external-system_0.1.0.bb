@@ -34,7 +34,7 @@ do_install() {
     install -D -p -m 0644 ${B}/product/${PRODUCT}/firmware/release/bin/firmware.bin ${D}/firmware/es_flashfw.bin
 }
 
-FILES_${PN} = "/firmware"
+FILES:${PN} = "/firmware"
 SYSROOT_DIRS += "/firmware"
 
 inherit deploy

@@ -8,4 +8,4 @@ machine: qemuarmv5
 local_conf_header:
   bugs: |
     # Remove parselogs until errors can be resolved
-    TEST_SUITES_remove = "parselogs"
+    TEST_SUITES:remove = "parselogs"

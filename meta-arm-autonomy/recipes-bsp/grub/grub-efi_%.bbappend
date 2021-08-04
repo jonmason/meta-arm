@@ -1,3 +1,3 @@
-OVERRIDES_append = "${ARM_AUTONOMY_HOST_OVERRIDES}"
+OVERRIDES:append = "${ARM_AUTONOMY_HOST_OVERRIDES}"
 
-GRUB_BUILDIN_append_autonomy-host = " xen_boot"
+GRUB_BUILDIN:append:autonomy-host = " xen_boot"

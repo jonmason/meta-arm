@@ -43,7 +43,7 @@ do_install () {
     install -D -p -m0444 ${B}/supp_plugin/*.plugin ${D}${libdir}/tee-supplicant/plugins/
 }
 
-FILES_${PN} += "${nonarch_base_libdir}/optee_armtz/ \
+FILES:${PN} += "${nonarch_base_libdir}/optee_armtz/ \
                 ${libdir}/tee-supplicant/plugins/ \
                "
 

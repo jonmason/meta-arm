@@ -67,7 +67,7 @@ do_install() {
 
 do_install[vardeps] += "ARM_AUTONOMY_HOST_IMAGE_EXTERN_GUESTS"
 
-FILES_${PN} += "${XENGUEST_MANAGER_GUEST_DIR}"
+FILES:${PN} += "${XENGUEST_MANAGER_GUEST_DIR}"
 
 # In a multiconfig build this variable will hold a dependency string, which
 # differs based on whether the guest has initramfs or not.  It may have a space

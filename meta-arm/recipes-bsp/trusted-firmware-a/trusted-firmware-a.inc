@@ -48,12 +48,12 @@ SRC_URI_MBEDTLS ??= ""
 # This should be set to MBEDTLS LIC FILES checksum
 LIC_FILES_CHKSUM_MBEDTLS ??= ""
 # add MBEDTLS to our sources if activated
-SRC_URI_append = " ${@bb.utils.contains('TFA_MBEDTLS', '1', '${SRC_URI_MBEDTLS}', '', d)}"
+SRC_URI:append = " ${@bb.utils.contains('TFA_MBEDTLS', '1', '${SRC_URI_MBEDTLS}', '', d)}"
 # Update license variables
-LICENSE_append = "${@bb.utils.contains('TFA_MBEDTLS', '1', ' & Apache-2.0', '', d)}"
-LIC_FILES_CHKSUM_append = "${@bb.utils.contains('TFA_MBEDTLS', '1', ' ${LIC_FILES_CHKSUM_MBEDTLS}', '', d)}"
+LICENSE:append = "${@bb.utils.contains('TFA_MBEDTLS', '1', ' & Apache-2.0', '', d)}"
+LIC_FILES_CHKSUM:append = "${@bb.utils.contains('TFA_MBEDTLS', '1', ' ${LIC_FILES_CHKSUM_MBEDTLS}', '', d)}"
 # add mbed TLS to version
-SRCREV_FORMAT_append = "${@bb.utils.contains('TFA_MBEDTLS', '1', '_mbedtls', '', d)}"
+SRCREV_FORMAT:append = "${@bb.utils.contains('TFA_MBEDTLS', '1', '_mbedtls', '', d)}"
 
 # U-boot support (set TFA_UBOOT to 1 to activate)
 # When U-Boot support is activated BL33 is activated with u-boot.bin file
@@ -82,12 +82,12 @@ LD[unexport] = "1"
 do_configure[noexec] = "1"
 
 # Baremetal, just need a compiler
-DEPENDS_remove = "virtual/${TARGET_PREFIX}compilerlibs virtual/libc"
+DEPENDS:remove = "virtual/${TARGET_PREFIX}compilerlibs virtual/libc"
 
 # We need dtc for dtbs compilation
 # We need openssl for fiptool
 DEPENDS = "dtc-native openssl-native"
-DEPENDS_append_toolchain-clang = " compiler-rt"
+DEPENDS:append:toolchain-clang = " compiler-rt"
 
 # CC and LD introduce arguments which conflict with those otherwise provided by
 # this recipe. The heads of these variables excluding those arguments
@@ -217,12 +217,12 @@ do_install() {
     done
 }
 
-FILES_${PN} = "/firmware"
+FILES:${PN} = "/firmware"
 SYSROOT_DIRS += "/firmware"
 
-FILES_${PN}-dbg = "/firmware/*.elf"
+FILES:${PN}-dbg = "/firmware/*.elf"
 # Skip QA check for relocations in .text of elf binaries
-INSANE_SKIP_${PN}-dbg = "textrel"
+INSANE_SKIP:${PN}-dbg = "textrel"
 
 do_deploy() {
     cp -rf ${D}/firmware/* ${DEPLOYDIR}/

@@ -2,7 +2,7 @@
 # an alternate kernel (set via PREFERRED_PROVIDER_alternate/kernel).
 #
 # It is mandatory to also set the KERNEL_PACKAGE_NAME for the alternate kernel
-# recipe via KERNEL_PACKAGE_NAME_pn-${PREFERRED_PROVIDER_alternate/kernel} and
+# recipe via KERNEL_PACKAGE_NAME:pn-${PREFERRED_PROVIDER_alternate/kernel} and
 # its value needs to be different from "kernel" since this is the default set
 # for PREFERRED_PROVIDER_virtual/kernel.
 #
@@ -16,11 +16,11 @@ PREFERRED_PROVIDER_alternate/kernel ??= ""
 python () {
     alternate_kernel = d.getVar('PREFERRED_PROVIDER_alternate/kernel')
     if alternate_kernel:
-        alternate_kernel_pkg_name = d.getVar('KERNEL_PACKAGE_NAME_pn-%s' % alternate_kernel)
+        alternate_kernel_pkg_name = d.getVar('KERNEL_PACKAGE_NAME:pn-%s' % alternate_kernel)
         if alternate_kernel_pkg_name:
             d.appendVar('EXTRA_IMAGEDEPENDS', ' ' + alternate_kernel)
             d.appendVar('IMAGE_INSTALL', ' kernel-modules')
             d.appendVar('IMAGE_INSTALL', ' ' + alternate_kernel_pkg_name + '-modules')
         else:
-            raise bb.parse.SkipRecipe("No KERNEL_PACKAGE_NAME_pn-%s set" % alternate_kernel )
+            raise bb.parse.SkipRecipe("No KERNEL_PACKAGE_NAME:pn-%s set" % alternate_kernel )
 }

@@ -16,7 +16,7 @@ DESCRIPTION = "Add entries in DTB for Xen and Dom0"
 # customizable parameters
 # kernel size is passed to xen via xen.dtb so we need to add
 # 'virtual/kernel:do_deploy' as a dependency
-XEN_DEVICETREE_DEPEND_append = " virtual/kernel:do_deploy"
+XEN_DEVICETREE_DEPEND:append = " virtual/kernel:do_deploy"
 XEN_DEVICETREE_DTBS ?= "${KERNEL_DEVICETREE}"
 XEN_DEVICETREE_XEN_BOOTARGS ?= "noreboot dom0_mem=${XEN_DEVICETREE_DOM0_MEM}"
 XEN_DEVICETREE_DOM0_MEM ?= "1024M,max:1024M"

@@ -1,7 +1,7 @@
 COMPATIBLE_MACHINE = "fvp-baser-aemv8r64"
 
-FILESEXTRAPATHS_prepend := "${THISDIR}/files/${MACHINE}:"
-SRC_URI_append = " \
+FILESEXTRAPATHS:prepend := "${THISDIR}/files/${MACHINE}:"
+SRC_URI:append = " \
     file://0001-Decouple-V2M_SYS-config-by-auto-detect-dtb-node.patch \
     file://0002-arch64-Introduce-EL2-boot-code-for-v8-r64.patch \
     file://0003-Allow-enable-psci-to-choose-between-smc-and-hvc.patch \

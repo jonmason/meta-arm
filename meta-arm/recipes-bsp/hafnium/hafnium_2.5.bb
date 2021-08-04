@@ -33,7 +33,7 @@ DEPENDS = "bison-native bc-native openssl-native"
 # set project to build
 EXTRA_OEMAKE += "PROJECT=${HAFNIUM_PROJECT}"
 
-do_compile_prepend() {
+do_compile:prepend() {
     # Hafnium expects 'python'. Create symlink python to python3
     real=$(which ${PYTHON})
     ln -snf $real $(dirname $real)/python
@@ -64,10 +64,10 @@ do_install() {
     done
 }
 
-FILES_${PN} = "/firmware"
+FILES:${PN} = "/firmware"
 SYSROOT_DIRS += "/firmware"
 # skip QA tests: {'ldflags'}
-INSANE_SKIP_${PN} = "ldflags"
+INSANE_SKIP:${PN} = "ldflags"
 
 do_deploy() {
     cp -rf ${D}/firmware/* ${DEPLOYDIR}/

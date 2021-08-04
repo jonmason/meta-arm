@@ -15,9 +15,9 @@ EXCLUDE_FROM_SHLIBS = "1"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
 # Skip packaging QA checks for prebuilt binaries
-INSANE_SKIP_gcc-cross-canadian-${TRANSLATED_TARGET_ARCH} = "dev-so staticdev file-rdeps libdir"
-INSANE_SKIP_gdb-cross-canadian-${TRANSLATED_TARGET_ARCH} = "dev-so file-rdeps"
-INSANE_SKIP_binutils-cross-canadian-${TRANSLATED_TARGET_ARCH} = "dev-so file-rdeps"
+INSANE_SKIP:gcc-cross-canadian-${TRANSLATED_TARGET_ARCH} = "dev-so staticdev file-rdeps libdir"
+INSANE_SKIP:gdb-cross-canadian-${TRANSLATED_TARGET_ARCH} = "dev-so file-rdeps"
+INSANE_SKIP:binutils-cross-canadian-${TRANSLATED_TARGET_ARCH} = "dev-so file-rdeps"
 
 # Skip file dependencies in RPM for prebuilt binaries
 SKIP_FILEDEPS = "1"
@@ -41,7 +41,7 @@ libexecdir = "${exec_prefix}/libexec"
 datadir = "${exec_prefix}/share"
 gcclibdir = "${libdir}/gcc"
 
-FILES_gcc-cross-canadian-${TRANSLATED_TARGET_ARCH} = "\
+FILES:gcc-cross-canadian-${TRANSLATED_TARGET_ARCH} = "\
 	${prefix}/${EAT_TARGET_SYS}/lib/libstdc++.* \
 	${prefix}/${EAT_TARGET_SYS}/lib/libgcc_s.* \
 	${prefix}/${EAT_TARGET_SYS}/lib/libsupc++.* \
@@ -54,12 +54,12 @@ FILES_gcc-cross-canadian-${TRANSLATED_TARGET_ARCH} = "\
 	${libexecdir}/* \
 "
 
-FILES_gdb-cross-canadian-${TRANSLATED_TARGET_ARCH} = "\
+FILES:gdb-cross-canadian-${TRANSLATED_TARGET_ARCH} = "\
 	${bindir}/${TARGET_PREFIX}gdb* \
 	${datadir}/gdb/* \
 "
 
-FILES_binutils-cross-canadian-${TRANSLATED_TARGET_ARCH} = "\
+FILES:binutils-cross-canadian-${TRANSLATED_TARGET_ARCH} = "\
 	${prefix}/${EAT_TARGET_SYS}/bin/ld* \
 	${prefix}/${EAT_TARGET_SYS}/bin/objcopy \
 	${prefix}/${EAT_TARGET_SYS}/bin/strip \
@@ -85,17 +85,17 @@ FILES_binutils-cross-canadian-${TRANSLATED_TARGET_ARCH} = "\
 	${bindir}/${TARGET_PREFIX}size \
 "
 
-DESCRIPTION_gcc-cross-canadian-${TRANSLATED_TARGET_ARCH} = "The GNU cc and gcc C compilers"
-DESCRIPTION_gdb-cross-canadian-${TRANSLATED_TARGET_ARCH} = "gdb - GNU debugger"
-DESCRIPTION_binutils-cross-canadian-${TRANSLATED_TARGET_ARCH} = "A GNU collection of binary utilities"
+DESCRIPTION:gcc-cross-canadian-${TRANSLATED_TARGET_ARCH} = "The GNU cc and gcc C compilers"
+DESCRIPTION:gdb-cross-canadian-${TRANSLATED_TARGET_ARCH} = "gdb - GNU debugger"
+DESCRIPTION:binutils-cross-canadian-${TRANSLATED_TARGET_ARCH} = "A GNU collection of binary utilities"
 
-LICENSE_gcc-cross-canadian-${TRANSLATED_TARGET_ARCH} = "${EAT_GCC_LICENSE}"
-LICENSE_gdb-cross-canadian-${TRANSLATED_TARGET_ARCH} = "${EAT_GDB_LICENSE}"
-LICENSE_binutils-cross-canadian-${TRANSLATED_TARGET_ARCH} = "${EAT_BFD_LICENSE}"
+LICENSE:gcc-cross-canadian-${TRANSLATED_TARGET_ARCH} = "${EAT_GCC_LICENSE}"
+LICENSE:gdb-cross-canadian-${TRANSLATED_TARGET_ARCH} = "${EAT_GDB_LICENSE}"
+LICENSE:binutils-cross-canadian-${TRANSLATED_TARGET_ARCH} = "${EAT_BFD_LICENSE}"
 
-PKGV_gcc-cross-canadian-${TRANSLATED_TARGET_ARCH} = "${EAT_VER_GCC}"
-PKGV_gdb-cross-canadian-${TRANSLATED_TARGET_ARCH} = "${EAT_VER_GDB}"
-PKGV_binutils-cross-canadian-${TRANSLATED_TARGET_ARCH} = "${EAT_VER_BFD}"
+PKGV:gcc-cross-canadian-${TRANSLATED_TARGET_ARCH} = "${EAT_VER_GCC}"
+PKGV:gdb-cross-canadian-${TRANSLATED_TARGET_ARCH} = "${EAT_VER_GDB}"
+PKGV:binutils-cross-canadian-${TRANSLATED_TARGET_ARCH} = "${EAT_VER_BFD}"
 
 do_install() {
 	install -d ${D}${prefix}/${EAT_TARGET_SYS}/bin

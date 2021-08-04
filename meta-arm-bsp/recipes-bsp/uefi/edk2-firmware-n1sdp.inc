@@ -1,6 +1,6 @@
-FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
-SRC_URI_append = " file://Add-mem-regions-to-support.patch;patchdir=${S}/edk2-platforms \
+SRC_URI:append = " file://Add-mem-regions-to-support.patch;patchdir=${S}/edk2-platforms \
                    file://Introduce-platform-DXE-driver.patch;patchdir=${S}/edk2-platforms \
                    file://Enable-N1SDP-platform-specific-configs.patch;patchdir=${S}/edk2-platforms \
                    file://Configuration-Manager-for-N1SDP.patch;patchdir=${S}/edk2-platforms "
@@ -19,7 +19,7 @@ COMPATIBLE_MACHINE = "n1sdp"
 EFIDIR             = "/EFI/BOOT"
 EFI_BOOT_IMAGE     = "bootaa64.efi"
 
-do_deploy_append() {
+do_deploy:append() {
     EFIPATH=$(echo "${EFIDIR}" | sed 's/\//\\/g')
     printf 'FS2:%s\%s\n' "$EFIPATH" "${EFI_BOOT_IMAGE}" > ${DEPLOYDIR}/startup.nsh
 }

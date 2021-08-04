@@ -1,3 +1,3 @@
-FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
-SRC_URI_append_qemuarm64-secureboot = " file://qemuarm64.cfg"
+SRC_URI:append:qemuarm64-secureboot = " file://qemuarm64.cfg"

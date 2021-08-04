@@ -7,7 +7,7 @@ TFA_UBOOT = "1"
 TFA_BUILD_TARGET = "all fip"
 TFA_INSTALL_TARGET = "bl1.bin fip.bin"
 
-EXTRA_OEMAKE_append = " \
+EXTRA_OEMAKE:append = " \
                     ARCH=aarch32 \
                     FVP_HW_CONFIG_DTS=fdts/a5ds.dts \
                     ARM_ARCH_MAJOR=7 \

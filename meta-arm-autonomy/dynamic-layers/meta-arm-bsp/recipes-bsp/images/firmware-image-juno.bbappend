@@ -1,14 +1,14 @@
 # Use OVERRIDES to minimize the usage of
 # ${@bb.utils.contains('DISTRO_FEATURES', 'autonomy-host', ...
-OVERRIDES_append = "${ARM_AUTONOMY_HOST_OVERRIDES}"
+OVERRIDES:append = "${ARM_AUTONOMY_HOST_OVERRIDES}"
 
-FILESEXTRAPATHS_prepend_autonomy-host := "${THISDIR}/${PN}:"
+FILESEXTRAPATHS:prepend:autonomy-host := "${THISDIR}/${PN}:"
 
-DEPENDS_append_autonomy-host = " dos2unix-native"
+DEPENDS:append:autonomy-host = " dos2unix-native"
 
-SRC_URI_append_autonomy-host = " file://add-xen-support.patch;patchdir=../"
+SRC_URI:append:autonomy-host = " file://add-xen-support.patch;patchdir=../"
 
-do_install_append_autonomy-host() {
+do_install:append:autonomy-host() {
     mv -v ${D}/${UNPACK_DIR}/SOFTWARE/uEnv.txt \
           ${D}/${UNPACK_DIR}/SOFTWARE/uenvfile
     for dir in $(ls ${D}/${UNPACK_DIR}/SITE1/)
@@ -22,7 +22,7 @@ DEPLOY_EXTRA_DEPS_autonomy-host = "xen:do_deploy xen-devicetree:do_deploy"
 
 do_deploy[depends] += "${DEPLOY_EXTRA_DEPS}"
 
-do_deploy_prepend_autonomy-host() {
+do_deploy:prepend:autonomy-host() {
     # To avoid dependency loop between firmware-image-juno:do_install,
     # xen:do_deploy and xen-devicetree:do_deploy when
     # INITRAMFS_IMAGE_BUNDLE = "1", we need to handle the xen and

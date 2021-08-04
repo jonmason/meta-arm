@@ -22,7 +22,7 @@ machine: gem5-arm64
 
 local_conf_header:
   meta-virt:
-    DISTRO_FEATURES_append = " virtualization xen"
+    DISTRO_FEATURES:append = " virtualization xen"
 
 target:
   - xen-image-minimal

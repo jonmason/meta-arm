@@ -71,7 +71,7 @@ inherit features_check
 
 REQUIRED_DISTRO_FEATURES = "docker"
 
-RDEPENDS_${PN} = "packagegroup-docker-runtime-minimal"
+RDEPENDS:${PN} = "packagegroup-docker-runtime-minimal"
 
 CONTAINER_IMAGE_FILES ??= ""
 CONTAINERS_INSTALL_DIR ??= "${datadir}/docker/images"
@@ -112,4 +112,4 @@ do_install() {
 
 do_install[vardeps] += "CONTAINER_IMAGE_FILES"
 
-FILES_${PN} += "${CONTAINERS_INSTALL_DIR}"
+FILES:${PN} += "${CONTAINERS_INSTALL_DIR}"

@@ -82,7 +82,7 @@ FORTRAN = ""
 JAVA = ""
 
 SSP ?= "--disable-libssp"
-SSP_mingw32 = "--enable-libssp"
+SSP:mingw32 = "--enable-libssp"
 
 EXTRA_OECONF_BASE = "\
     ${SSP} \
@@ -112,7 +112,7 @@ EXTRA_OECONF_INITIAL = "\
     --disable-libssp \
 "
 
-EXTRA_OECONF_append_aarchilp32 = " --with-abi=ilp32"
+EXTRA_OECONF:append_aarchilp32 = " --with-abi=ilp32"
 
 EXTRA_OECONF_PATHS = "\
     --with-gxx-include-dir=/not/exist{target_includedir}/c++/${BINV} \

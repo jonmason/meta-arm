@@ -8,7 +8,7 @@ DESCRIPTION = "The minimal set of packages required for running Docker"
 
 inherit packagegroup
 
-RDEPENDS_${PN} = "\
+RDEPENDS:${PN} = "\
     docker-ce \
     docker-ce-contrib \
     kernel-module-xt-nat \

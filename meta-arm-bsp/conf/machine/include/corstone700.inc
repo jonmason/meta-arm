@@ -8,7 +8,7 @@ TFA_PLATFORM = "corstone700"
 
 SERIAL_CONSOLES ?= "115200;ttyAMA0"
 
-PREFERRED_PROVIDER_virtual/kernel_corstone700 = "linux-yocto"
+PREFERRED_PROVIDER_virtual/kernel = "linux-yocto"
 PREFERRED_VERSION_linux-yocto ?= "5.6%"
 
 PREFERRED_VERSION_trusted-firmware-a ?= "2.5%"
@@ -24,7 +24,7 @@ EXTRA_IMAGEDEPENDS += " \
                       virtual/control-processor-firmware  \
                       "
 
-WKS_FILE_DEPENDS_append = " ${EXTRA_IMAGEDEPENDS}"
+WKS_FILE_DEPENDS:append = " ${EXTRA_IMAGEDEPENDS}"
 
 WKS_FILE ?= "arm-reference-image.corstone700.wks"
 

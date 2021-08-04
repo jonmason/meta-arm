@@ -12,7 +12,7 @@ CVE_PRODUCT = "linaro:op-tee op-tee:op-tee_os"
 
 DEPENDS = "python3-pycryptodome-native python3-pyelftools-native"
 
-DEPENDS_append_toolchain-clang = " compiler-rt"
+DEPENDS:append:toolchain-clang = " compiler-rt"
 
 SRC_URI = "git://github.com/OP-TEE/optee_os.git"
 
@@ -65,12 +65,12 @@ addtask deploy before do_build after do_install
 
 SYSROOT_DIRS += "${nonarch_base_libdir}/firmware"
 
-FILES_${PN} = "${nonarch_base_libdir}/firmware/"
-FILES_${PN}-dev = "${includedir}/optee/"
+FILES:${PN} = "${nonarch_base_libdir}/firmware/"
+FILES:${PN}-dev = "${includedir}/optee/"
 
 # note: "textrel" is not triggered on all archs
-INSANE_SKIP_${PN} = "textrel"
-INSANE_SKIP_${PN}-dev = "staticdev"
+INSANE_SKIP:${PN} = "textrel"
+INSANE_SKIP:${PN}-dev = "staticdev"
 
 INHIBIT_PACKAGE_STRIP = "1"
 

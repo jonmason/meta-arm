@@ -3,7 +3,7 @@
 SCP_PLATFORM  = "sgi575"
 SCP_LOG_LEVEL = "INFO"
 
-COMPATIBLE_MACHINE_sgi575 = "sgi575"
+COMPATIBLE_MACHINE:sgi575 = "sgi575"
 
 do_install() {
     install -d ${D}/firmware

@@ -31,13 +31,13 @@ PACKAGES =+ "${PN}-kea-dhcp4"
 # Prefix with a_ to make sure it is executed in runlevel 01 before others
 # run start script before ifupdown and run stop script after ifupdown
 INITSCRIPT_PACKAGES = "${PN} ${PN}-kea-dhcp4"
-INITSCRIPT_NAME_${PN} = "a_xenguest-network-bridge"
-INITSCRIPT_PARAMS_${PN} = "start 01 2 3 4 5 . stop 81 0 1 6 ."
+INITSCRIPT_NAME:${PN} = "a_xenguest-network-bridge"
+INITSCRIPT_PARAMS:${PN} = "start 01 2 3 4 5 . stop 81 0 1 6 ."
 
 # Kea configuration needs to be restored before kea init scripts:
 # Kea dhcp4 server is 30, so lets use 20, to have higher priority
-INITSCRIPT_NAME_${PN}-kea-dhcp4 = "kea-restore-default-config"
-INITSCRIPT_PARAMS_${PN}-kea-dhcp4 = "defaults 20"
+INITSCRIPT_NAME:${PN}-kea-dhcp4 = "kea-restore-default-config"
+INITSCRIPT_PARAMS:${PN}-kea-dhcp4 = "defaults 20"
 
 inherit allarch update-rc.d
 
@@ -77,7 +77,7 @@ do_install() {
         ${D}${sysconfdir}/kea/kea-dhcp4.conf.original
 }
 
-RDEPENDS_${PN} += "bridge-utils \
+RDEPENDS:${PN} += "bridge-utils \
                    iptables \
                    kea \
                    ${PN}-kea-dhcp4 \
@@ -87,10 +87,10 @@ RDEPENDS_${PN} += "bridge-utils \
                    kernel-module-xt-nat \
                    kernel-module-xt-masquerade \
                   "
-FILES_${PN} += "${sysconfdir}/network/interfaces.d/xenguest-network-bridge.cfg"
-FILES_${PN} += "${sysconfdir}/xenguest/init.pre/network-bridge.sh"
-FILES_${PN} += "${sysconfdir}/xen/scripts/vif-post.d/00-vif-xenguest.hook"
+FILES:${PN} += "${sysconfdir}/network/interfaces.d/xenguest-network-bridge.cfg"
+FILES:${PN} += "${sysconfdir}/xenguest/init.pre/network-bridge.sh"
+FILES:${PN} += "${sysconfdir}/xen/scripts/vif-post.d/00-vif-xenguest.hook"
 
-FILES_${PN}-kea-dhcp4 = "${sysconfdir}/kea/kea-dhcp4.conf.original"
-FILES_${PN}-kea-dhcp4 += "${sysconfdir}/init.d/${INITSCRIPT_NAME_${PN}-kea-dhcp4}"
-FILES_${PN}-kea-dhcp4 += "${sysconfdir}/xenguest/init.post/xenguest-network-init-post.sh"
+FILES:${PN}-kea-dhcp4 = "${sysconfdir}/kea/kea-dhcp4.conf.original"
+FILES:${PN}-kea-dhcp4 += "${sysconfdir}/init.d/${INITSCRIPT_NAME_${PN}-kea-dhcp4}"
+FILES:${PN}-kea-dhcp4 += "${sysconfdir}/xenguest/init.post/xenguest-network-init-post.sh"

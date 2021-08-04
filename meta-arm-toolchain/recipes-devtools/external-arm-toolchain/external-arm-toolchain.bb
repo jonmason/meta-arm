@@ -322,132 +322,132 @@ PACKAGES += "\
 	${PN}-staticdev \
 "
 
-INSANE_SKIP_${PN}-dbg = "staticdev"
-INSANE_SKIP_${PN}-utils += "ldflags"
-INSANE_SKIP_libstdc++ += "ldflags"
-INSANE_SKIP_libgfortran += "ldflags"
-INSANE_SKIP_libgcc += "ldflags dev-deps"
-INSANE_SKIP_libgcc-dev += "staticdev"
-INSANE_SKIP_libgfortran += "ldflags dev-deps"
-INSANE_SKIP_libstdc++ += "ldflags dev-deps"
-INSANE_SKIP_libatomic += "ldflags"
-INSANE_SKIP_libasan += "ldflags"
-INSANE_SKIP_libubsan += "ldflags"
-INSANE_SKIP_libssp += "ldflags"
-INSANE_SKIP_libgomp += "ldflags"
-INSANE_SKIP_libitm += "ldflags"
-INSANE_SKIP_gdbserver += "ldflags"
+INSANE_SKIP:${PN}-dbg = "staticdev"
+INSANE_SKIP:${PN}-utils += "ldflags"
+INSANE_SKIP:libstdc++ += "ldflags"
+INSANE_SKIP:libgfortran += "ldflags"
+INSANE_SKIP:libgcc += "ldflags dev-deps"
+INSANE_SKIP:libgcc-dev += "staticdev"
+INSANE_SKIP:libgfortran += "ldflags dev-deps"
+INSANE_SKIP:libstdc++ += "ldflags dev-deps"
+INSANE_SKIP:libatomic += "ldflags"
+INSANE_SKIP:libasan += "ldflags"
+INSANE_SKIP:libubsan += "ldflags"
+INSANE_SKIP:libssp += "ldflags"
+INSANE_SKIP:libgomp += "ldflags"
+INSANE_SKIP:libitm += "ldflags"
+INSANE_SKIP:gdbserver += "ldflags"
 
 # OE-core has literally listed 'glibc' in LIBC_DEPENDENCIES :/
-RPROVIDES_${PN} = "glibc rtld(GNU_HASH)"
+RPROVIDES:${PN} = "glibc rtld(GNU_HASH)"
 # Add runtime provides for the other libc* packages as well
-RPROVIDES_${PN}-dev = "glibc-dev"
-RPROVIDES_${PN}-doc = "glibc-doc"
-RPROVIDES_${PN}-dbg = "glibc-dbg"
-RPROVIDES_${PN}-pic = "glibc-pic"
-RPROVIDES_${PN}-utils = "glibc-utils"
-RPROVIDES_${PN}-mtrace = "glibc-mtrace libc-mtrace"
+RPROVIDES:${PN}-dev = "glibc-dev"
+RPROVIDES:${PN}-doc = "glibc-doc"
+RPROVIDES:${PN}-dbg = "glibc-dbg"
+RPROVIDES:${PN}-pic = "glibc-pic"
+RPROVIDES:${PN}-utils = "glibc-utils"
+RPROVIDES:${PN}-mtrace = "glibc-mtrace libc-mtrace"
 
-PKG_${PN} = "glibc"
-PKG_${PN}-dev = "glibc-dev"
-PKG_${PN}-doc = "glibc-doc"
-PKG_${PN}-dbg = "glibc-dbg"
-PKG_${PN}-pic = "glibc-pic"
-PKG_${PN}-utils = "glibc-utils"
-PKG_${PN}-mtrace = "glibc-mtrace"
-PKG_${PN}-gconv = "glibc-gconv"
-PKG_${PN}-extra-nss = "glibc-extra-nss"
-PKG_${PN}-thread-db = "glibc-thread-db"
-PKG_${PN}-pcprofile = "glibc-pcprofile"
-PKG_${PN}-staticdev = "glibc-staticdev"
+PKG:${PN} = "glibc"
+PKG:${PN}-dev = "glibc-dev"
+PKG:${PN}-doc = "glibc-doc"
+PKG:${PN}-dbg = "glibc-dbg"
+PKG:${PN}-pic = "glibc-pic"
+PKG:${PN}-utils = "glibc-utils"
+PKG:${PN}-mtrace = "glibc-mtrace"
+PKG:${PN}-gconv = "glibc-gconv"
+PKG:${PN}-extra-nss = "glibc-extra-nss"
+PKG:${PN}-thread-db = "glibc-thread-db"
+PKG:${PN}-pcprofile = "glibc-pcprofile"
+PKG:${PN}-staticdev = "glibc-staticdev"
 
 PKGV = "${EAT_VER_LIBC}"
-PKGV_${PN} = "${EAT_VER_LIBC}"
-PKGV_${PN}-dev = "${EAT_VER_LIBC}"
-PKGV_${PN}-doc = "${EAT_VER_LIBC}"
-PKGV_${PN}-dbg = "${EAT_VER_LIBC}"
-PKGV_${PN}-pic = "${EAT_VER_LIBC}"
-PKGV_${PN}-utils = "${EAT_VER_LIBC}"
-PKGV_${PN}-mtrace = "${EAT_VER_LIBC}"
-PKGV_${PN}-gconv = "${EAT_VER_LIBC}"
-PKGV_${PN}-extra-nss = "${EAT_VER_LIBC}"
-PKGV_${PN}-thread-db = "${EAT_VER_LIBC}"
-PKGV_${PN}-pcprofile = "${EAT_VER_LIBC}"
-PKGV_${PN}-staticdev = "${EAT_VER_LIBC}"
-PKGV_catchsegv = "${EAT_VER_LIBC}"
-PKGV_glibc-extra-nss = "${EAT_VER_LIBC}"
-PKGV_glibc-thread-db = "${EAT_VER_LIBC}"
+PKGV:${PN} = "${EAT_VER_LIBC}"
+PKGV:${PN}-dev = "${EAT_VER_LIBC}"
+PKGV:${PN}-doc = "${EAT_VER_LIBC}"
+PKGV:${PN}-dbg = "${EAT_VER_LIBC}"
+PKGV:${PN}-pic = "${EAT_VER_LIBC}"
+PKGV:${PN}-utils = "${EAT_VER_LIBC}"
+PKGV:${PN}-mtrace = "${EAT_VER_LIBC}"
+PKGV:${PN}-gconv = "${EAT_VER_LIBC}"
+PKGV:${PN}-extra-nss = "${EAT_VER_LIBC}"
+PKGV:${PN}-thread-db = "${EAT_VER_LIBC}"
+PKGV:${PN}-pcprofile = "${EAT_VER_LIBC}"
+PKGV:${PN}-staticdev = "${EAT_VER_LIBC}"
+PKGV:catchsegv = "${EAT_VER_LIBC}"
+PKGV:glibc-extra-nss = "${EAT_VER_LIBC}"
+PKGV:glibc-thread-db = "${EAT_VER_LIBC}"
 
-PKGV_libmemusage = "${EAT_VER_LIBC}"
-PKGV_libsegfault = "${EAT_VER_LIBC}"
-PKGV_libsotruss = "${EAT_VER_LIBC}"
-PKGV_sln = "${EAT_VER_LIBC}"
-PKGV_nscd = "${EAT_VER_LIBC}"
-PKGV_ldd = "${EAT_VER_LIBC}"
+PKGV:libmemusage = "${EAT_VER_LIBC}"
+PKGV:libsegfault = "${EAT_VER_LIBC}"
+PKGV:libsotruss = "${EAT_VER_LIBC}"
+PKGV:sln = "${EAT_VER_LIBC}"
+PKGV:nscd = "${EAT_VER_LIBC}"
+PKGV:ldd = "${EAT_VER_LIBC}"
 
-PKGV_libasan-dev = "${EAT_VER_GCC}"
-PKGV_libasan = "${EAT_VER_GCC}"
-PKGV_libasan-staticdev = "${EAT_VER_GCC}"
-PKGV_libatomic-dev = "${EAT_VER_GCC}"
-PKGV_libatomic = "${EAT_VER_GCC}"
-PKGV_libatomic-staticdev = "${EAT_VER_GCC}"
-PKGV_libg2c-dev = "${EAT_VER_GCC}"
-PKGV_libg2c = "${EAT_VER_GCC}"
-PKGV_libgcc-dev = "${EAT_VER_GCC}"
-PKGV_libgcc = "${EAT_VER_GCC}"
-PKGV_libgfortran-dbg = "${EAT_VER_GCC}"
-PKGV_libgfortran-dev = "${EAT_VER_GCC}"
-PKGV_libgfortran = "${EAT_VER_GCC}"
-PKGV_libgfortran-staticdev = "${EAT_VER_GCC}"
-PKGV_libgomp-dev = "${EAT_VER_GCC}"
-PKGV_libgomp = "${EAT_VER_GCC}"
-PKGV_libgomp-staticdev = "${EAT_VER_GCC}"
-PKGV_libitm-dev = "${EAT_VER_GCC}"
-PKGV_libitm = "${EAT_VER_GCC}"
-PKGV_libitm-staticdev = "${EAT_VER_GCC}"
-PKGV_liblsan-dev = "${EAT_VER_GCC}"
-PKGV_liblsan = "${EAT_VER_GCC}"
-PKGV_liblsan-staticdev = "${EAT_VER_GCC}"
-PKGV_libmudflap-dev = "${EAT_VER_GCC}"
-PKGV_libmudflap = "${EAT_VER_GCC}"
-PKGV_libmudflap-staticdev = "${EAT_VER_GCC}"
-PKGV_libquadmath-dev = "${EAT_VER_GCC}"
-PKGV_libquadmath = "${EAT_VER_GCC}"
-PKGV_libquadmath-staticdev = "${EAT_VER_GCC}"
-PKGV_libssp-dev = "${EAT_VER_GCC}"
-PKGV_libssp = "${EAT_VER_GCC}"
-PKGV_libssp-staticdev = "${EAT_VER_GCC}"
-PKGV_libstdc++-dbg = "${EAT_VER_GCC}"
-PKGV_libstdc++-dev = "${EAT_VER_GCC}"
-PKGV_libstdc++ = "${EAT_VER_GCC}"
-PKGV_libstdc++-precompile-dev = "${EAT_VER_GCC}"
-PKGV_libstdc++-staticdev = "${EAT_VER_GCC}"
-PKGV_libtsan-dev = "${EAT_VER_GCC}"
-PKGV_libtsan = "${EAT_VER_GCC}"
-PKGV_libtsan-staticdev = "${EAT_VER_GCC}"
-PKGV_libubsan-dev = "${EAT_VER_GCC}"
-PKGV_libubsan = "${EAT_VER_GCC}"
-PKGV_libubsan-staticdev = "${EAT_VER_GCC}"
+PKGV:libasan-dev = "${EAT_VER_GCC}"
+PKGV:libasan = "${EAT_VER_GCC}"
+PKGV:libasan-staticdev = "${EAT_VER_GCC}"
+PKGV:libatomic-dev = "${EAT_VER_GCC}"
+PKGV:libatomic = "${EAT_VER_GCC}"
+PKGV:libatomic-staticdev = "${EAT_VER_GCC}"
+PKGV:libg2c-dev = "${EAT_VER_GCC}"
+PKGV:libg2c = "${EAT_VER_GCC}"
+PKGV:libgcc-dev = "${EAT_VER_GCC}"
+PKGV:libgcc = "${EAT_VER_GCC}"
+PKGV:libgfortran-dbg = "${EAT_VER_GCC}"
+PKGV:libgfortran-dev = "${EAT_VER_GCC}"
+PKGV:libgfortran = "${EAT_VER_GCC}"
+PKGV:libgfortran-staticdev = "${EAT_VER_GCC}"
+PKGV:libgomp-dev = "${EAT_VER_GCC}"
+PKGV:libgomp = "${EAT_VER_GCC}"
+PKGV:libgomp-staticdev = "${EAT_VER_GCC}"
+PKGV:libitm-dev = "${EAT_VER_GCC}"
+PKGV:libitm = "${EAT_VER_GCC}"
+PKGV:libitm-staticdev = "${EAT_VER_GCC}"
+PKGV:liblsan-dev = "${EAT_VER_GCC}"
+PKGV:liblsan = "${EAT_VER_GCC}"
+PKGV:liblsan-staticdev = "${EAT_VER_GCC}"
+PKGV:libmudflap-dev = "${EAT_VER_GCC}"
+PKGV:libmudflap = "${EAT_VER_GCC}"
+PKGV:libmudflap-staticdev = "${EAT_VER_GCC}"
+PKGV:libquadmath-dev = "${EAT_VER_GCC}"
+PKGV:libquadmath = "${EAT_VER_GCC}"
+PKGV:libquadmath-staticdev = "${EAT_VER_GCC}"
+PKGV:libssp-dev = "${EAT_VER_GCC}"
+PKGV:libssp = "${EAT_VER_GCC}"
+PKGV:libssp-staticdev = "${EAT_VER_GCC}"
+PKGV:libstdc++-dbg = "${EAT_VER_GCC}"
+PKGV:libstdc++-dev = "${EAT_VER_GCC}"
+PKGV:libstdc++ = "${EAT_VER_GCC}"
+PKGV:libstdc++-precompile-dev = "${EAT_VER_GCC}"
+PKGV:libstdc++-staticdev = "${EAT_VER_GCC}"
+PKGV:libtsan-dev = "${EAT_VER_GCC}"
+PKGV:libtsan = "${EAT_VER_GCC}"
+PKGV:libtsan-staticdev = "${EAT_VER_GCC}"
+PKGV:libubsan-dev = "${EAT_VER_GCC}"
+PKGV:libubsan = "${EAT_VER_GCC}"
+PKGV:libubsan-staticdev = "${EAT_VER_GCC}"
 
-PKGV_linux-libc-headers-dev = "${EAT_VER_KERNEL}"
-PKGV_linux-libc-headers = "${EAT_VER_KERNEL}"
+PKGV:linux-libc-headers-dev = "${EAT_VER_KERNEL}"
+PKGV:linux-libc-headers = "${EAT_VER_KERNEL}"
 
-PKGV_gdbserver = "${EAT_VER_GDBSERVER}"
+PKGV:gdbserver = "${EAT_VER_GDBSERVER}"
 
-ALLOW_EMPTY_${PN}-mtrace = "1"
-FILES_${PN}-mtrace = "${bindir}/mtrace"
+ALLOW_EMPTY:${PN}-mtrace = "1"
+FILES:${PN}-mtrace = "${bindir}/mtrace"
 
-FILES_libgcov-staticdev = "${libdir}/gcc/${TARGET_SYS}/${BINV}/libgcov.a"
+FILES:libgcov-staticdev = "${libdir}/gcc/${TARGET_SYS}/${BINV}/libgcov.a"
 
-FILES_libsegfault = "${base_libdir}/libSegFault*"
+FILES:libsegfault = "${base_libdir}/libSegFault*"
 
-FILES_catchsegv = "${bindir}/catchsegv"
-RDEPENDS_catchsegv = "libsegfault"
+FILES:catchsegv = "${bindir}/catchsegv"
+RDEPENDS:catchsegv = "libsegfault"
 
 # From libgfortran.inc:
 
-FILES_libgfortran = "${libdir}/libgfortran.so.*"
-FILES_libgfortran-dev = "\
+FILES:libgfortran = "${libdir}/libgfortran.so.*"
+FILES:libgfortran-dev = "\
     ${libdir}/libgfortran*.so \
     ${libdir}/libgfortran.spec \
     ${libdir}/libgfortran.la \
@@ -455,49 +455,49 @@ FILES_libgfortran-dev = "\
     ${libdir}/gcc/${TARGET_SYS}/${BINV}/libcaf_single* \
     ${libdir}/gcc/${TARGET_SYS}/${BINV}/finclude/ \
 "
-FILES_libgfortran-staticdev = "${libdir}/libgfortran.a"
+FILES:libgfortran-staticdev = "${libdir}/libgfortran.a"
 
 
 # From gcc-sanitizers.inc:
 
-FILES_libasan += "${libdir}/libasan.so.*"
-FILES_libasan-dev += "\
+FILES:libasan += "${libdir}/libasan.so.*"
+FILES:libasan-dev += "\
     ${libdir}/libasan_preinit.o \
     ${libdir}/libasan.so \
     ${libdir}/libasan.la \
 "
-FILES_libasan-staticdev += "${libdir}/libasan.a"
+FILES:libasan-staticdev += "${libdir}/libasan.a"
 
-FILES_libubsan += "${libdir}/libubsan.so.*"
-FILES_libubsan-dev += "\
+FILES:libubsan += "${libdir}/libubsan.so.*"
+FILES:libubsan-dev += "\
     ${libdir}/libubsan.so \
     ${libdir}/libubsan.la \
 "
-FILES_libubsan-staticdev += "${libdir}/libubsan.a"
+FILES:libubsan-staticdev += "${libdir}/libubsan.a"
 
-FILES_liblsan += "${libdir}/liblsan.so.*"
-FILES_liblsan-dev += "\
+FILES:liblsan += "${libdir}/liblsan.so.*"
+FILES:liblsan-dev += "\
     ${libdir}/liblsan.so \
     ${libdir}/liblsan.la \
     ${libdir}/liblsan_preinit.o \
 "
-FILES_liblsan-staticdev += "${libdir}/liblsan.a"
+FILES:liblsan-staticdev += "${libdir}/liblsan.a"
 
-FILES_libtsan += "${libdir}/libtsan.so.*"
-FILES_libtsan-dev += "\
+FILES:libtsan += "${libdir}/libtsan.so.*"
+FILES:libtsan-dev += "\
     ${libdir}/libtsan.so \
     ${libdir}/libtsan.la \
     ${libdir}/libtsan_*.o \
 "
-FILES_libtsan-staticdev += "${libdir}/libtsan.a"
+FILES:libtsan-staticdev += "${libdir}/libtsan.a"
 
-FILES_gcc-sanitizers = "${libdir}/*.spec ${libdir}/gcc/${TARGET_SYS}/${BINV}/include/sanitizer/*.h"
+FILES:gcc-sanitizers = "${libdir}/*.spec ${libdir}/gcc/${TARGET_SYS}/${BINV}/include/sanitizer/*.h"
 
 # From libgcc.inc:
 
-FILES_libgcc = "${base_libdir}/libgcc_s.so.1"
+FILES:libgcc = "${base_libdir}/libgcc_s.so.1"
 
-FILES_libgcc-dev = "\
+FILES:libgcc-dev = "\
     ${base_libdir}/libgcc*.so \
     ${@oe.utils.conditional('BASETARGET_SYS', '${TARGET_SYS}', '', '${libdir}/${BASETARGET_SYS}', d)} \
     ${libdir}/${TARGET_SYS}/${BINV}* \
@@ -505,8 +505,8 @@ FILES_libgcc-dev = "\
     ${libdir}/gcc/${TARGET_SYS}/${BINV}/include \
 "
 
-FILES_linux-libc-headers = ""
-FILES_linux-libc-headers-dev = "\
+FILES:linux-libc-headers = ""
+FILES:linux-libc-headers-dev = "\
 	${includedir}/asm* \
 	${includedir}/linux \
 	${includedir}/mtd \
@@ -515,7 +515,7 @@ FILES_linux-libc-headers-dev = "\
 	${includedir}/sound \
 	${includedir}/video \
 "
-FILES_${PN} += "\
+FILES:${PN} += "\
 	${libdir}/bin \
 	${libdir}/locale \
 	${libdir}/gconv/gconv-modules \
@@ -563,112 +563,112 @@ FILES_${PN} += "\
 	${base_libdir}/libpcprofile.so \
     "
 
-FILES_${PN}-dbg += "${base_libdir}/debug"
+FILES:${PN}-dbg += "${base_libdir}/debug"
 
 # From gcc-runtime.inc
 
 # include python debugging scripts
-FILES_gcc-runtime-dbg += "\
+FILES:gcc-runtime-dbg += "\
     ${libdir}/libstdc++.so.*-gdb.py \
     ${datadir}/gcc-${BINV}/python/libstdcxx \
 "
 
-FILES_libg2c = "${target_libdir}/libg2c.so.*"
-SUMMARY_libg2c = "Companion runtime library for g77"
-FILES_libg2c-dev = "\
+FILES:libg2c = "${target_libdir}/libg2c.so.*"
+SUMMARY:libg2c = "Companion runtime library for g77"
+FILES:libg2c-dev = "\
     ${libdir}/libg2c.so \
     ${libdir}/libg2c.a \
     ${libdir}/libfrtbegin.a \
 "
-SUMMARY_libg2c-dev = "Companion runtime library for g77 - development files"
+SUMMARY:libg2c-dev = "Companion runtime library for g77 - development files"
 
-FILES_libstdc++ = "${libdir}/libstdc++.so.*"
-SUMMARY_libstdc++ = "GNU standard C++ library"
-FILES_libstdc++-dev = "\
+FILES:libstdc++ = "${libdir}/libstdc++.so.*"
+SUMMARY:libstdc++ = "GNU standard C++ library"
+FILES:libstdc++-dev = "\
     /include/c++ \
     ${includedir}/c++/ \
     ${libdir}/libstdc++.so \
     ${libdir}/libstdc++*.la \
     ${libdir}/libsupc++.la \
 "
-SUMMARY_libstdc++-dev = "GNU standard C++ library - development files"
+SUMMARY:libstdc++-dev = "GNU standard C++ library - development files"
 
-FILES_libstdc++-staticdev = "\
+FILES:libstdc++-staticdev = "\
     ${libdir}/libstdc++*.a \
     ${libdir}/libsupc++.a \
 "
-SUMMARY_libstdc++-staticdev = "GNU standard C++ library - static development files"
+SUMMARY:libstdc++-staticdev = "GNU standard C++ library - static development files"
 
-FILES_libstdc++-precompile-dev = "${includedir}/c++/${TARGET_SYS}/bits/*.gch"
-SUMMARY_libstdc++-precompile-dev = "GNU standard C++ library - precompiled header files"
+FILES:libstdc++-precompile-dev = "${includedir}/c++/${TARGET_SYS}/bits/*.gch"
+SUMMARY:libstdc++-precompile-dev = "GNU standard C++ library - precompiled header files"
 
-FILES_libssp = "${libdir}/libssp.so.*"
-SUMMARY_libssp = "GNU stack smashing protection library"
-FILES_libssp-dev = "\
+FILES:libssp = "${libdir}/libssp.so.*"
+SUMMARY:libssp = "GNU stack smashing protection library"
+FILES:libssp-dev = "\
     ${libdir}/libssp*.so \
     ${libdir}/libssp*_nonshared.a \
     ${libdir}/libssp*.la \
     ${libdir}/gcc/${TARGET_SYS}/${BINV}/include/ssp \
 "
-SUMMARY_libssp-dev = "GNU stack smashing protection library - development files"
-FILES_libssp-staticdev = "${libdir}/libssp*.a"
-SUMMARY_libssp-staticdev = "GNU stack smashing protection library - static development files"
+SUMMARY:libssp-dev = "GNU stack smashing protection library - development files"
+FILES:libssp-staticdev = "${libdir}/libssp*.a"
+SUMMARY:libssp-staticdev = "GNU stack smashing protection library - static development files"
 
-FILES_libquadmath = "${libdir}/libquadmath*.so.*"
-SUMMARY_libquadmath = "GNU quad-precision math library"
-FILES_libquadmath-dev = "\
+FILES:libquadmath = "${libdir}/libquadmath*.so.*"
+SUMMARY:libquadmath = "GNU quad-precision math library"
+FILES:libquadmath-dev = "\
     ${libdir}/gcc/${TARGET_SYS}/${BINV}/include/quadmath* \
     ${libdir}/libquadmath*.so \
     ${libdir}/libquadmath.la \
 "
-SUMMARY_libquadmath-dev = "GNU quad-precision math library - development files"
-FILES_libquadmath-staticdev = "${libdir}/libquadmath.a"
-SUMMARY_libquadmath-staticdev = "GNU quad-precision math library - static development files"
+SUMMARY:libquadmath-dev = "GNU quad-precision math library - development files"
+FILES:libquadmath-staticdev = "${libdir}/libquadmath.a"
+SUMMARY:libquadmath-staticdev = "GNU quad-precision math library - static development files"
 
 # NOTE: mudflap has been removed as of gcc 4.9 and has been superseded by the address sanitiser
-FILES_libmudflap = "${libdir}/libmudflap*.so.*"
-SUMMARY_libmudflap = "Pointer debugging library for gcc"
-FILES_libmudflap-dev = "\
+FILES:libmudflap = "${libdir}/libmudflap*.so.*"
+SUMMARY:libmudflap = "Pointer debugging library for gcc"
+FILES:libmudflap-dev = "\
     ${libdir}/libmudflap*.so \
     ${libdir}/libmudflap.la \
 "
-SUMMARY_libmudflap-dev = "Pointer debugging library for gcc - development files"
-FILES_libmudflap-staticdev = "${libdir}/libmudflap.a"
-SUMMARY_libmudflap-staticdev = "Pointer debugging library for gcc - static development files"
+SUMMARY:libmudflap-dev = "Pointer debugging library for gcc - development files"
+FILES:libmudflap-staticdev = "${libdir}/libmudflap.a"
+SUMMARY:libmudflap-staticdev = "Pointer debugging library for gcc - static development files"
 
-FILES_libgomp = "${libdir}/libgomp*${SOLIBS}"
-SUMMARY_libgomp = "GNU OpenMP parallel programming library"
-FILES_libgomp-dev = "\
+FILES:libgomp = "${libdir}/libgomp*${SOLIBS}"
+SUMMARY:libgomp = "GNU OpenMP parallel programming library"
+FILES:libgomp-dev = "\
     ${libdir}/libgomp*${SOLIBSDEV} \
     ${libdir}/libgomp*.la \
     ${libdir}/libgomp.spec \
     ${libdir}/gcc/${TARGET_SYS}/${BINV}/include/omp.h \
     ${libdir}/gcc/${TARGET_SYS}/${BINV}/include/openacc.h \
 "
-SUMMARY_libgomp-dev = "GNU OpenMP parallel programming library - development files"
-FILES_libgomp-staticdev = "${libdir}/libgomp*.a"
-SUMMARY_libgomp-staticdev = "GNU OpenMP parallel programming library - static development files"
+SUMMARY:libgomp-dev = "GNU OpenMP parallel programming library - development files"
+FILES:libgomp-staticdev = "${libdir}/libgomp*.a"
+SUMMARY:libgomp-staticdev = "GNU OpenMP parallel programming library - static development files"
 
-FILES_libatomic = "${libdir}/libatomic.so.*"
-SUMMARY_libatomic = "GNU C++11 atomics support library"
-FILES_libatomic-dev = "\
+FILES:libatomic = "${libdir}/libatomic.so.*"
+SUMMARY:libatomic = "GNU C++11 atomics support library"
+FILES:libatomic-dev = "\
     ${libdir}/libatomic.so \
     ${libdir}/libatomic.la \
 "
-SUMMARY_libatomic-dev = "GNU C++11 atomics support library - development files"
-FILES_libatomic-staticdev = "${libdir}/libatomic.a"
-SUMMARY_libatomic-staticdev = "GNU C++11 atomics support library - static development files"
+SUMMARY:libatomic-dev = "GNU C++11 atomics support library - development files"
+FILES:libatomic-staticdev = "${libdir}/libatomic.a"
+SUMMARY:libatomic-staticdev = "GNU C++11 atomics support library - static development files"
 
-FILES_libitm = "${libdir}/libitm.so.*"
-SUMMARY_libitm = "GNU transactional memory support library"
-FILES_libitm-dev = "\
+FILES:libitm = "${libdir}/libitm.so.*"
+SUMMARY:libitm = "GNU transactional memory support library"
+FILES:libitm-dev = "\
     ${libdir}/libitm.so \
     ${libdir}/libitm.la \
     ${libdir}/libitm.spec \
 "
-SUMMARY_libitm-dev = "GNU transactional memory support library - development files"
-FILES_libitm-staticdev = "${libdir}/libitm.a"
-SUMMARY_libitm-staticdev = "GNU transactional memory support library - static development files"
+SUMMARY:libitm-dev = "GNU transactional memory support library - development files"
+FILES:libitm-staticdev = "${libdir}/libitm.a"
+SUMMARY:libitm-staticdev = "GNU transactional memory support library - static development files"
 
 EAT_VER_MAIN ??= ""
 

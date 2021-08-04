@@ -118,7 +118,7 @@ do_install() {
     install -m 0644 ${B}/bin/* ${D}/firmware/
 }
 
-FILES_${PN} = "/firmware"
+FILES:${PN} = "/firmware"
 SYSROOT_DIRS += "/firmware"
 
 addtask deploy after do_install

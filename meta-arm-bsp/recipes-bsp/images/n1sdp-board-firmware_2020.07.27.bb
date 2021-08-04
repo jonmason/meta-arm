@@ -24,7 +24,7 @@ do_install() {
     cp -Rp --no-preserve=ownership ${S}/* ${D}${INSTALL_DIR}
 }
 
-FILES_${PN} = "${INSTALL_DIR}"
+FILES:${PN} = "${INSTALL_DIR}"
 SYSROOT_DIRS += "${INSTALL_DIR}"
 
 do_deploy() {

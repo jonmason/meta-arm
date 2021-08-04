@@ -3,18 +3,18 @@
 SCP_PLATFORM  = "n1sdp"
 SCP_LOG_LEVEL = "INFO"
 
-FILESEXTRAPATHS_prepend := "${THISDIR}/files/:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/files/:"
 
-SRC_URI_append = " \
+SRC_URI:append = " \
    file://enabling-coresight-debug-non-secure-access.patch \
    "
 
-COMPATIBLE_MACHINE_n1sdp = "n1sdp"
+COMPATIBLE_MACHINE:n1sdp = "n1sdp"
 
 DEPENDS += "fiptool-native"
 DEPENDS += "virtual/trusted-firmware-a"
 
-do_install_append() {
+do_install:append() {
    fiptool \
        create \
        --scp-fw "${D}/firmware/scp_ramfw.bin" \

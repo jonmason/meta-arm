@@ -23,5 +23,5 @@ EXTRA_IMAGEDEPENDS += "virtual/trusted-firmware-a u-boot"
 # As this is a virtual target that will not be used in the real world there is
 # no need for real SSH keys.  Disable rng-tools (which takes too long to
 # initialise) and install the pre-generated keys.
-PACKAGECONFIG_remove_pn-openssh = "rng-tools"
+PACKAGECONFIG:remove:pn-openssh = "rng-tools"
 MACHINE_EXTRA_RRECOMMENDS += "ssh-pregen-hostkeys"

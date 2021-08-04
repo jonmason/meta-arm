@@ -50,10 +50,10 @@ do_install() {
         --out ${D}/firmware/spitoc.bin
 }
 
-FILES_${PN} = "/firmware"
+FILES:${PN} = "/firmware"
 SYSROOT_DIRS += "/firmware"
 # Skip QA check for relocations in .text of elf binaries
-INSANE_SKIP_${PN} = "textrel"
+INSANE_SKIP:${PN} = "textrel"
 
 do_deploy() {
     # Copy the images to deploy directory

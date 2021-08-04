@@ -29,10 +29,10 @@ local_conf_header:
   base: |
     CONF_VERSION = "2"
     PACKAGE_CLASSES = "package_ipk"
-    PACKAGECONFIG_remove_pn-qemu-system-native = "gtk+ sdl"
-    EXTRA_IMAGE_FEATURES_append = " debug-tweaks"
-    IMAGE_CLASSES_append = " ${@oe.utils.ifelse(d.getVar('FVP_BASE_R_AEM_TARBALL_URI'), 'fvpboot', '')}"
-    LICENSE_FLAGS_WHITELIST_append = " ${@oe.utils.vartrue('FVP_BASE_R_ARM_EULA_ACCEPT', 'Arm-FVP-EULA', '', d)}"
+    PACKAGECONFIG:remove:pn-qemu-system-native = "gtk+ sdl"
+    EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
+    IMAGE_CLASSES:append = " ${@oe.utils.ifelse(d.getVar('FVP_BASE_R_AEM_TARBALL_URI'), 'fvpboot', '')}"
+    LICENSE_FLAGS_WHITELIST:append = " ${@oe.utils.vartrue('FVP_BASE_R_ARM_EULA_ACCEPT', 'Arm-FVP-EULA', '', d)}"
 
 target:
   - core-image-minimal

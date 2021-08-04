@@ -25,7 +25,7 @@ INITSCRIPT_PARAMS = "start 30 2 3 4 5 ."
 INITSCRIPT_NAME = "import_containers.sh"
 
 S = "${WORKDIR}"
-do_install_append() {
+do_install:append() {
     install -d ${D}${sysconfdir}/init.d
     install -m 755 import_containers.sh ${D}${sysconfdir}/init.d
 

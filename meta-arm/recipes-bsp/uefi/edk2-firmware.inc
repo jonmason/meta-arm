@@ -38,7 +38,7 @@ EDK2_EXTRA_BUILD   = ""
 EDK2_BUILD_MODE ?= "${@bb.utils.contains('EDK2_BUILD_RELEASE', '1', 'RELEASE', 'DEBUG', d)}"
 
 # Baremetal, no need for a C library
-DEPENDS_remove = "virtual/${TARGET_PREFIX}compilerlibs virtual/libc"
+DEPENDS:remove = "virtual/${TARGET_PREFIX}compilerlibs virtual/libc"
 DEPENDS += "util-linux-native iasl-native"
 
 inherit deploy
@@ -63,9 +63,9 @@ export CONF_PATH           = "${S}/Conf"
 export BTOOLS_PATH = "${EDK_TOOLS_PATH}/BinWrappers/PosixLike"
 
 EDK_COMPILER ?= "GCC5"
-EDK_COMPILER_toolchain-clang = "CLANG38"
+EDK_COMPILER:toolchain-clang = "CLANG38"
 
-do_configure_prepend() {
+do_configure:prepend() {
     sed -i -e "s#-target ${HOST_ARCH}-linux-gnu*#-target ${HOST_SYS}#" ${S}/BaseTools/Conf/tools_def.template
 }
 
@@ -95,10 +95,10 @@ do_install() {
     install ${B}/Build/${EDK2_PLATFORM}/${EDK2_BUILD_MODE}_${EDK_COMPILER}/FV/${EDK2_BIN_NAME} ${D}/firmware/uefi.bin
 }
 
-FILES_${PN} = "/firmware"
+FILES:${PN} = "/firmware"
 SYSROOT_DIRS += "/firmware"
 # Skip QA check for relocations in .text of elf binaries
-INSANE_SKIP_${PN} = "textrel"
+INSANE_SKIP:${PN} = "textrel"
 
 do_deploy() {
     # Copy the images to deploy directory

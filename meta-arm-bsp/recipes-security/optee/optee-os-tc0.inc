@@ -5,8 +5,8 @@
 SRCREV = "49dbb9ef65643c4322cf3f848910fa880d1c02f6"
 PV = "3.14.0+git${SRCPV}"
 
-FILESEXTRAPATHS_prepend_tc0 := "${THISDIR}/files/optee-os/tc0:"
-SRC_URI_append = " \
+FILESEXTRAPATHS:prepend:tc0 := "${THISDIR}/files/optee-os/tc0:"
+SRC_URI:append = " \
     file://sp_layout.json \
     file://0001-WIP-Enable-managed-exit.patch \
     "
@@ -27,7 +27,7 @@ EXTRA_OEMAKE += " CFG_WITH_STATS=y"
 EXTRA_OEMAKE += " CFG_CORE_SEL2_SPMC=y"
 
 # Copy optee manifest file
-do_install_append() {
+do_install:append() {
     install -d ${D}${nonarch_base_libdir}/firmware/
     install -m 644 ${WORKDIR}/sp_layout.json ${D}${nonarch_base_libdir}/firmware/
     install -m 644 \

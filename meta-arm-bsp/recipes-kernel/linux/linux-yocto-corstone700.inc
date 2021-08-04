@@ -1,4 +1,4 @@
-FILESEXTRAPATHS_prepend := "${THISDIR}:${THISDIR}/files:"
+FILESEXTRAPATHS:prepend := "${THISDIR}:${THISDIR}/files:"
 
 COMPATIBLE_MACHINE = "${MACHINE}"
 
@@ -31,12 +31,12 @@ KERNEL_IMAGETYPE = "xipImage"
 
 KCONFIG_MODE = "--alldefconfig"
 
-SRC_URI_append = " ${SRC_URI_KMETA}"
+SRC_URI:append = " ${SRC_URI_KMETA}"
 
 KERNEL_EXTRA_FEATURES = "bsp/arm-platforms/corstone700-bsp.scc"
-KERNEL_FEATURES_append = " ${KERNEL_EXTRA_FEATURES}"
+KERNEL_FEATURES:append = " ${KERNEL_EXTRA_FEATURES}"
 
-KERNEL_FEATURES_append_corstone700-fvp = " \
+KERNEL_FEATURES:append:corstone700-fvp = " \
     ${@bb.utils.contains('MACHINE_FEATURES', \
                          'eth_lan91c111', \
                          'bsp/arm-platforms/corstone700/xip_dhcp_cmdline.cfg \
@@ -44,7 +44,7 @@ KERNEL_FEATURES_append_corstone700-fvp = " \
                          'bsp/arm-platforms/corstone700/xip_cmdline.cfg', \
                           d)}"
 
-KERNEL_FEATURES_append_corstone700-mps3 = " \
+KERNEL_FEATURES:append:corstone700-mps3 = " \
     ${@bb.utils.contains('MACHINE_FEATURES', \
                          'eth_lan9115', \
                          'bsp/arm-platforms/corstone700/xip_dhcp_cmdline.cfg \

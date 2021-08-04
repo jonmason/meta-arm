@@ -12,6 +12,6 @@ require conf/machine/include/arm/arch-armv8m-main.inc
 # optional.  So forcing below so that compiling works, but this should
 # be fixed in GCC
 AVAILTUNES                          += "cortexm35p"
-ARMPKGARCH_tune-cortexm35p           = "cortexm35p"
-TUNE_FEATURES_tune-cortexm35p        = "${TUNE_FEATURES_tune-armv8m-maine-vfpv5spd16} cortexm35p"
-PACKAGE_EXTRA_ARCHS_tune-cortexm35p  = "${PACKAGE_EXTRA_ARCHS_tune-armv8m-maine-vfpv5spd16} cortexm35pe-fpv5-spd16"
+ARMPKGARCH:tune-cortexm35p           = "cortexm35p"
+TUNE_FEATURES:tune-cortexm35p        = "${TUNE_FEATURES:tune-armv8m-maine-vfpv5spd16} cortexm35p"
+PACKAGE_EXTRA_ARCHS:tune-cortexm35p  = "${PACKAGE_EXTRA_ARCHS:tune-armv8m-maine-vfpv5spd16} cortexm35pe-fpv5-spd16"
