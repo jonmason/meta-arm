@@ -48,6 +48,10 @@ COMPATIBLE_MACHINE:juno = "juno"
 KMACHINE:juno = "juno"
 KBUILD_DEFCONFIG:juno = "defconfig"
 KCONFIG_MODE:juno = "--alldefconfig"
+#FIXME - temporarily pin kernel version to allow for juno patches to apply
+KBRANCH:juno = "v5.4/standard/base"
+KERNEL_VERSION_SANITY_SKIP:juno = "1"
+SRCREV_machine:juno = "dd8a64a523fb714a98328441e0de72cde115a6fc"
 FILESEXTRAPATHS:prepend:juno := "${ARMBSPFILESPATHS}"
 SRC_URI:append:juno = " \
     file://0001-mailbox-add-support-for-doorbell-signal-mode-control.patch \
