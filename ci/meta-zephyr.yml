@@ -1,7 +1,7 @@
 header:
   version: 9
   includes:
-    - meta-python.yml
+    - meta-openembedded.yml
 
 repos:
   meta-zephyr:

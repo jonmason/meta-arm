@@ -1,15 +1,9 @@
 header:
   version: 9
+  includes:
+    - meta-openembedded.yml
 
 repos:
-  meta-openembedded:
-    url: https://git.openembedded.org/meta-openembedded
-    layers:
-      meta-oe:
-      meta-networking:
-      meta-python:
-      meta-filesystem:
-
   meta-virtualization:
     url: https://git.yoctoproject.org/git/meta-virtualization
 

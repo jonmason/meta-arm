@@ -2,7 +2,7 @@ header:
   version: 9
   includes:
     - base.yml
-    - meta-python.yml
+    - meta-openembedded.yml
 
 machine: musca-s1
 
