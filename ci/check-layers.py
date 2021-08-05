@@ -28,6 +28,7 @@ if __name__ == "__main__":
     cli.extend([args.metaarm / layer for layer in layers])
     cli.append("--dependency")
     cli.extend([args.others / layer for layer in dependencies])
+    cli.append("--no-auto-dependency")
 
     passed = 0
     process = subprocess.Popen(cli, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
