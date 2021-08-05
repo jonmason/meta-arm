@@ -17,6 +17,8 @@ repos:
       meta-networking:
   meta-virtualization:
     url: git://git.yoctoproject.org/meta-virtualization
+    #FIXME - remove after master branch has overrides syntax conversion patch
+    refspec: master-next
 
 machine: gem5-arm64
 
