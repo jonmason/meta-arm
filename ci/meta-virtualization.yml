@@ -1,0 +1,9 @@
+header:
+  version: 9
+  includes:
+    - meta-openembedded.yml
+
+repos:
+  meta-virtualization:
+    url: git://git.yoctoproject.org/meta-virtualization
+    refspec: master-next

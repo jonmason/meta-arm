@@ -112,7 +112,7 @@ fvp-baser-aemv8r64:
 gem5-arm64:
   extends: .build
 
-gem5-arm64-xen:
+gem5-arm64/xen:
   extends: .build
 
 gem5-atp-arm64:
@@ -145,12 +145,6 @@ n1sdp/armgcc:
 qemu-cortex-a53:
   extends: .build
 
-qemuarm/testimage:
-  extends: .build
-
-qemuarm/clang/testimage:
-  extends: .build
-
 qemuarm64-sbsa:
   extends: .build
 
@@ -164,6 +158,18 @@ qemuarm64-secureboot/clang/musl/testimage:
   extends: .build
 
 qemuarm64-secureboot/musl/testimage:
+  extends: .build
+
+qemuarm64/xen:
+  extends: .build
+
+qemuarm/clang/testimage:
+  extends: .build
+
+qemuarm/testimage:
+  extends: .build
+
+qemuarm/xen:
   extends: .build
 
 qemuarmv5/testimage:
