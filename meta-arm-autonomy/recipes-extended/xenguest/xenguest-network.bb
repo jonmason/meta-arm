@@ -54,7 +54,7 @@ do_install() {
        > ${WORKDIR}/network-bridge.sh
     install -d -m 755 ${D}${sysconfdir}/init.d
     install -m 755 ${WORKDIR}/xenguest-network-bridge \
-        ${D}${sysconfdir}/init.d/${INITSCRIPT_NAME_${PN}}
+        ${D}${sysconfdir}/init.d/${INITSCRIPT_NAME:${PN}}
     install -d -m 755 ${D}${sysconfdir}/network/interfaces.d
     install -m 755 ${WORKDIR}/xenguest-network-bridge.cfg \
         ${D}${sysconfdir}/network/interfaces.d/.
@@ -92,5 +92,5 @@ FILES:${PN} += "${sysconfdir}/xenguest/init.pre/network-bridge.sh"
 FILES:${PN} += "${sysconfdir}/xen/scripts/vif-post.d/00-vif-xenguest.hook"
 
 FILES:${PN}-kea-dhcp4 = "${sysconfdir}/kea/kea-dhcp4.conf.original"
-FILES:${PN}-kea-dhcp4 += "${sysconfdir}/init.d/${INITSCRIPT_NAME_${PN}-kea-dhcp4}"
+FILES:${PN}-kea-dhcp4 += "${sysconfdir}/init.d/${INITSCRIPT_NAME:${PN}-kea-dhcp4}"
 FILES:${PN}-kea-dhcp4 += "${sysconfdir}/xenguest/init.post/xenguest-network-init-post.sh"
