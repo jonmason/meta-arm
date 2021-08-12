@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Pending Machine Upgrades Report</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css">
+  </head>
+  <body>
+    <section class="section">
+      <div class="content">
+        <h1 class="title">Pending Machine Upgrades Report</h1>
+        <p>Generated at {{ timestamp }}.</p>
+      </div>
+
+      <table class="table is-striped">
+        <thead>
+          <tr>
+            <th>Machine</th>
+            {% for recipe in recipes|sort %}
+            <th>{{ recipe }} ({{releases[recipe]|default("?")}})</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for machine, data in data|dictsort %}
+          <tr>
+            <th>{{ machine }}</th>
+            {% for recipe in recipes|sort %}
+              {% if recipe in data %}
+                {% set details = data[recipe] %}
+                {% set is_old = details.version is old(details.upstream) %}
+                <td class="{% if is_old %}has-text-weight-bold{% endif %}">
+                {{ details.recipe if details.recipe != recipe}}
+                {{ details.version }}
+                {{ "(patched)" if details.patched }}
+                </td>
+              {% else %}
+                <td>-</td>
+              {% endif %}
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </body>
+</html>

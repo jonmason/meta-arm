@@ -88,6 +88,14 @@ check-layers:
   - kas shell --update --force-checkout ci/base.yml:ci/meta-arm-autonomy.yml:ci/meta-openembedded.yml --command \
     "$CI_PROJECT_DIR/ci/check-layers.py $CI_PROJECT_DIR/ci/check-layers.yml $CI_PROJECT_DIR $KAS_WORK_DIR"
 
+pending-updates:
+  extends: .setup
+  artifacts:
+    paths:
+      - update-report.html
+  script:
+  - kas shell ci/qemuarm64.yml:ci/meta-openembedded.yml -c "$CI_PROJECT_DIR/scripts/machine-summary.py -t updates.html -o $CI_PROJECT_DIR/update-report.html $($CI_PROJECT_DIR/ci/listmachines.py meta-arm meta-arm-bsp)"
+
 corstone500:
   extends: .build
 
