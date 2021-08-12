@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import sys
+from listmachines import list_machines
 
 metaarm = Path.cwd()
 
@@ -9,9 +10,10 @@ if metaarm.name != "meta-arm":
     print("Not running inside meta-arm")
     sys.exit(1)
 
+# Find all layers
+layers = (p.name for p in metaarm.glob("meta-*") if p.is_dir())
 # All machine configurations
-machines = metaarm.glob("meta-*/conf/machine/*.conf")
-machines = set(p.stem for p in machines)
+machines = list_machines(layers)
 
 # All kas files
 kas = metaarm.glob("ci/*.yml")
