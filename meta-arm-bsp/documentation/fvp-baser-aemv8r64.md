@@ -27,7 +27,7 @@ The fvp-baser-aemv8r64 Yocto MACHINE supports the following BSP components,
 where either a standard or Real-Time Linux kernel (PREEMPT\_RT) can be built
 and run:
 
- - boot-wrapper-aarch64
+ - boot-wrapper-aarch64: provides PSCI support
  - Linux kernel: linux-yocto-5.10
  - Linux kernel with PREEMPT\_RT support: linux-yocto-rt-5.10
 
@@ -81,11 +81,15 @@ Fetch the meta-arm repository into a build directory:
 Building with the standard Linux kernel:
 
     cd ~/fvp-baser-aemv8r64-build
+    FVP_BASE_R_AEM_TARBALL_URI="file:///absolute/path/to/FVP_Base_AEMv8R_11.15_14.tgz" \
+    FVP_BASE_R_ARM_EULA_ACCEPT="True" \
     kas build meta-arm/kas/fvp-baser-aemv8r64-bsp.yml
 
 Building with the Real-Time Linux kernel (PREEMPT\_RT):
 
     cd ~/fvp-baser-aemv8r64-build
+    FVP_BASE_R_AEM_TARBALL_URI="file:///absolute/path/to/FVP_Base_AEMv8R_11.15_14.tgz" \
+    FVP_BASE_R_ARM_EULA_ACCEPT="True" \
     kas build meta-arm/kas/fvp-baser-aemv8r64-rt-bsp.yml
 
 ### Networking
@@ -121,7 +125,7 @@ To run an image after the build is done with the standard Linux kernel:
 
     kas shell --keep-config-unchanged \
        meta-arm/kas/fvp-baser-aemv8r64-bsp.yml \
-           --command "../meta-arm/scripts/runfvp \
+           --command "../layers/meta-arm/scripts/runfvp \
                 --console \
                 -- \
                     --parameter 'bp.smsc_91c111.enabled=1' \
@@ -132,7 +136,7 @@ To run an image after the build is done with the Real-Time Linux kernel
 
     kas shell --keep-config-unchanged \
        meta-arm/kas/fvp-baser-aemv8r64-rt-bsp.yml \
-           --command "../meta-arm/scripts/runfvp \
+           --command "../layers/meta-arm/scripts/runfvp \
                 --console \
                 -- \
                     --parameter 'bp.smsc_91c111.enabled=1' \
@@ -178,3 +182,10 @@ Devices supported in the kernel
 - virtio network
 - watchdog
 - rtc
+
+Known Issues and Limitations
+----------------------------
+
+- Only PSCI CPU\_ON and CPU\_OFF functions are supported
+- Booting Linux kernel from Secure EL2 is not supported on Armv8-R AArch64
+- Both VHE and non-VHE Linux-KVM are not supported on Armv8-R AArch64

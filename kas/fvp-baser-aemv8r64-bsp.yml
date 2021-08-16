@@ -10,6 +10,8 @@ defaults:
 
 repos:
   meta-arm:
+    url: https://git.yoctoproject.org/git/meta-arm
+    path: layers/meta-arm
     layers:
       meta-arm:
       meta-arm-bsp:
@@ -17,6 +19,8 @@ repos:
 
   poky:
     url: https://git.yoctoproject.org/git/poky
+    path: layers/poky
+    refspec: 1e2e9a84d6dd81d7f6dd69c0d119d0149d10ade1
     layers:
       meta:
       meta-poky:
