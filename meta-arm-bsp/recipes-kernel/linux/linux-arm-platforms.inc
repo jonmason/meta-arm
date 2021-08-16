@@ -76,13 +76,13 @@ KBUILD_DEFCONFIG:sgi575 = "defconfig"
 KCONFIG_MODE:sgi575 = "--alldefconfig"
 
 #
-# Total Compute KMACHINE
+# Total Compute TC0 KMACHINE
 #
 COMPATIBLE_MACHINE:tc0 = "tc0"
 KMACHINE:tc0 = "tc0"
 KCONFIG_MODE:tc0 = "--alldefconfig"
-FILESEXTRAPATHS:prepend:tc0 := "${ARMBSPFILESPATHS}"
-SRC_URI:append:tc0 = " \
+FILESEXTRAPATHS:prepend:tc0 := "${THISDIR}/linux-arm64-ack-5.10/tc:"
+SRC_URI:append:tc = " \
     file://defconfig \
     file://0001-drm-Add-component-aware-simple-encoder.patch \
     file://0002-drm-arm-komeda-add-RENDER-capability-to-the-device-n.patch \
@@ -105,6 +105,17 @@ SRC_URI:append:tc0 = " \
     file://0019-optee-add-a-FF-A-memory-pool.patch \
     file://0020-optee-add-FF-A-support.patch \
     file://0021-drivers-optee-hack-for-UUID-endianess-issue.patch \
+    "
+
+#
+# Total Compute TC1 KMACHINE
+#
+COMPATIBLE_MACHINE:tc1 = "tc1"
+KMACHINE:tc1 = "tc1"
+KCONFIG_MODE:tc1 = "--alldefconfig"
+FILESEXTRAPATHS:prepend:tc1 := "${THISDIR}/linux-arm64-ack-5.10/tc:"
+SRC_URI:append:tc1 = " \
+    file://0022-arm_ffa-add-support-for-FFA-v1.1.patch \
     "
 
 #

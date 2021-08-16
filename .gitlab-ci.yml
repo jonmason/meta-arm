@@ -189,6 +189,9 @@ sgi575:
 tc0:
   extends: .build
 
+tc1:
+  extends: .build
+
 
 #
 # Utility tasks, not executed automatically

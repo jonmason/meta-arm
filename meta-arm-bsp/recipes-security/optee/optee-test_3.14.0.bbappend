@@ -1,6 +1,6 @@
 # Machine specific configurations
 
 MACHINE_OPTEE_TEST_REQUIRE ?= ""
-MACHINE_OPTEE_TEST_REQUIRE:tc0 = "optee-test-tc0.inc"
+MACHINE_OPTEE_TEST_REQUIRE:tc = "optee-test-tc.inc"
 
 require ${MACHINE_OPTEE_TEST_REQUIRE}

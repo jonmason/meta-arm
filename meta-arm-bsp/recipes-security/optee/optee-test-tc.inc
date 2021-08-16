@@ -1,3 +1,3 @@
 # TC0 specific configuration
 
-COMPATIBLE_MACHINE = "tc0"
+COMPATIBLE_MACHINE = "(tc?)"

@@ -1,0 +1,27 @@
+From 31b4fb3fd52408d53ba5fd934f1506b01cda2e7a Mon Sep 17 00:00:00 2001
+From: Usama Arif <usama.arif@arm.com>
+Date: Wed, 11 Aug 2021 11:51:38 +0100
+Subject: [PATCH] plat-totalcompute: Update messaging-method for managed exit
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Usama Arif <usama.arif@arm.com>
+---
+ core/arch/arm/plat-totalcompute/fdts/optee_sp_manifest.dts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/arch/arm/plat-totalcompute/fdts/optee_sp_manifest.dts b/core/arch/arm/plat-totalcompute/fdts/optee_sp_manifest.dts
+index 04847c4d..2fb07862 100644
+--- a/core/arch/arm/plat-totalcompute/fdts/optee_sp_manifest.dts
++++ b/core/arch/arm/plat-totalcompute/fdts/optee_sp_manifest.dts
+@@ -23,7 +23,7 @@
+ 	entrypoint-offset = <0x1000>;
+ 	xlat-granule = <0>; /* 4KiB */
+ 	boot-order = <0>;
+-	messaging-method = <3>; /* Direct messaging and managed exit supported */
++	messaging-method = <11>; /* Direct messaging and managed exit supported */
+ 
+ 	device-regions {
+ 		compatible = "arm,ffa-manifest-device-regions";
+-- 
+2.17.1
+
