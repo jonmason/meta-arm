@@ -153,6 +153,9 @@ n1sdp/armgcc:
 qemu-cortex-a53:
   extends: .build
 
+qemu-cortex-r5:
+  extends: .build
+
 qemuarm64-sbsa:
   extends: .build
 

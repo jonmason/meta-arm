@@ -1,0 +1,10 @@
+header:
+  version: 9
+  includes:
+    - base.yml
+    - meta-zephyr.yml
+
+machine: qemu-cortex-r5
+
+target:
+  - zephyr-philosophers
