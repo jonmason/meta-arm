@@ -15,9 +15,9 @@ ARMBSPFILESPATHS := "${THISDIR}:${THISDIR}/files:"
 SRC_URI_KMETA = "file://arm-platforms-kmeta;type=kmeta;name=arm-platforms-kmeta;destsuffix=arm-platforms-kmeta"
 SRC_URI:append:fvp-base = " ${SRC_URI_KMETA}"
 SRC_URI:append:fvp-base-arm32 = " ${SRC_URI_KMETA}"
+SRC_URI:append:fvp-baser-aemv8r64 = " ${SRC_URI_KMETA}"
 SRC_URI:append:juno = " ${SRC_URI_KMETA}"
 SRC_URI:append:n1sdp = " ${SRC_URI_KMETA}"
-SRC_URI:append:fvp-baser-aemv8r64 = " ${SRC_URI_KMETA}"
 SRCREV:arm-platforms-kmeta = "6147e82375aa9df8f2a162d42ea6406c79c854c5"
 
 #
@@ -45,6 +45,13 @@ SRC_URI:append:fvp-base-arm32 = " file://fvp-base-arm32-dts.patch \
                                   file://0001-ARM-vexpress-enable-GICv3.patch"
 
 #
+# FVP BaseR AEMv8r64 Machine
+#
+COMPATIBLE_MACHINE:fvp-baser-aemv8r64 = "fvp-baser-aemv8r64"
+FILESEXTRAPATHS:prepend:fvp-baser-aemv8r64 := "${ARMBSPFILESPATHS}"
+SRC_URI:append:fvp-baser-aemv8r64 = " file://fvp-baser-aemv8r64.dts;subdir=git/arch/arm64/boot/dts/arm"
+
+#
 # Juno KMACHINE
 #
 COMPATIBLE_MACHINE:juno = "juno"
@@ -66,6 +73,34 @@ SRC_URI:append:juno = " \
     file://0007-arm64-defconfig-add-all-SCMI-related-configs.patch \
     file://0008-arm64-dts-juno-add-mhu-doorbell-support-and-scmi-dev.patch \
     "
+
+#
+# Musca B1/S2 can't run Linux
+#
+COMPATIBLE_MACHINE:musca-b1 = "(^$)"
+COMPATIBLE_MACHINE:musca-s1 = "(^$)"
+
+#
+# N1SDP KMACHINE
+#
+FILESEXTRAPATHS:prepend:n1sdp := "${THISDIR}/linux-yocto-5.10/n1sdp:"
+COMPATIBLE_MACHINE:n1sdp = "n1sdp"
+KBUILD_DEFCONFIG:n1sdp = "defconfig"
+KCONFIG_MODE:n1sdp = "--alldefconfig"
+FILESEXTRAPATHS:prepend:n1sdp := "${ARMBSPFILESPATHS}"
+SRC_URI:append:n1sdp = " \
+    file://0001-pci_quirk-add-acs-override-for-PCI-devices.patch \
+    file://0002-pcie-Add-quirk-for-the-Arm-Neoverse-N1SDP-platform.patch \
+    file://0003-n1sdp-update-n1sdp-pci-quirk-for-SR-IOV-support.patch \
+    file://0004-n1sdp-pcie-add-quirk-support-enabling-remote-chip-PC.patch \
+    file://0001-arm64-defconfig-drop-unused-BACKLIGHT_GENERIC-option.patch \
+    file://no-power-avs.patch \
+    file://enable-realtek-R8169.cfg \
+    file://enable-usb_conn_gpio.cfg \
+    "
+# Since we use the intree defconfig and the preempt-rt turns off some configs
+# do_kernel_configcheck will display warnings. So, lets disable it.
+KCONF_AUDIT_LEVEL:n1sdp:pn-linux-yocto-rt = "0"
 
 #
 # SGI575 KMACHINE
@@ -117,38 +152,3 @@ FILESEXTRAPATHS:prepend:tc1 := "${THISDIR}/linux-arm64-ack-5.10/tc:"
 SRC_URI:append:tc1 = " \
     file://0022-arm_ffa-add-support-for-FFA-v1.1.patch \
     "
-
-#
-# N1SDP KMACHINE
-#
-FILESEXTRAPATHS:prepend:n1sdp := "${THISDIR}/linux-yocto-5.10/n1sdp:"
-COMPATIBLE_MACHINE:n1sdp = "n1sdp"
-KBUILD_DEFCONFIG:n1sdp = "defconfig"
-KCONFIG_MODE:n1sdp = "--alldefconfig"
-FILESEXTRAPATHS:prepend:n1sdp := "${ARMBSPFILESPATHS}"
-SRC_URI:append:n1sdp = " \
-    file://0001-pci_quirk-add-acs-override-for-PCI-devices.patch \
-    file://0002-pcie-Add-quirk-for-the-Arm-Neoverse-N1SDP-platform.patch \
-    file://0003-n1sdp-update-n1sdp-pci-quirk-for-SR-IOV-support.patch \
-    file://0004-n1sdp-pcie-add-quirk-support-enabling-remote-chip-PC.patch \
-    file://0001-arm64-defconfig-drop-unused-BACKLIGHT_GENERIC-option.patch \
-    file://no-power-avs.patch \
-    file://enable-realtek-R8169.cfg \
-    file://enable-usb_conn_gpio.cfg \
-    "
-# Since we use the intree defconfig and the preempt-rt turns off some configs
-# do_kernel_configcheck will display warnings. So, lets disable it.
-KCONF_AUDIT_LEVEL:n1sdp:pn-linux-yocto-rt = "0"
-
-#
-# Musca B1/S2 can't run Linux
-#
-COMPATIBLE_MACHINE:musca-b1 = "(^$)"
-COMPATIBLE_MACHINE:musca-s1 = "(^$)"
-
-#
-# FVP BaseR AEMv8r64 Machine
-#
-COMPATIBLE_MACHINE:fvp-baser-aemv8r64 = "fvp-baser-aemv8r64"
-FILESEXTRAPATHS:prepend:fvp-baser-aemv8r64 := "${ARMBSPFILESPATHS}"
-SRC_URI:append:fvp-baser-aemv8r64 = " file://fvp-baser-aemv8r64.dts;subdir=git/arch/arm64/boot/dts/arm"
