@@ -1,6 +1,6 @@
 # Common configuration for all Corstone700 machines
 
-require conf/machine/include/tune-cortexa32.inc
+require conf/machine/include/arm/armv8a/tune-cortexa32.inc
 
 MACHINEOVERRIDES =. "corstone700:"
 
