@@ -12,6 +12,7 @@ repos:
   meta-arm:
     url: https://git.yoctoproject.org/git/meta-arm
     path: layers/meta-arm
+    refspec: ce6c4936e53ef9afb596baabafa893234d914c20
     layers:
       meta-arm:
       meta-arm-bsp:
