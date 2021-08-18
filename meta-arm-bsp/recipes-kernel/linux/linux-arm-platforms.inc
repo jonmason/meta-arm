@@ -193,6 +193,7 @@ SRC_URI:append:tc = " \
     file://0019-optee-add-a-FF-A-memory-pool.patch \
     file://0020-optee-add-FF-A-support.patch \
     file://0021-drivers-optee-hack-for-UUID-endianess-issue.patch \
+    file://0022-arm_ffa-add-support-for-FFA-v1.1.patch \
     "
 
 #
@@ -202,6 +203,3 @@ COMPATIBLE_MACHINE:tc1 = "tc1"
 KMACHINE:tc1 = "tc1"
 KCONFIG_MODE:tc1 = "--alldefconfig"
 FILESEXTRAPATHS:prepend:tc1 := "${THISDIR}/linux-arm64-ack-5.10/tc:"
-SRC_URI:append:tc1 = " \
-    file://0022-arm_ffa-add-support-for-FFA-v1.1.patch \
-    "

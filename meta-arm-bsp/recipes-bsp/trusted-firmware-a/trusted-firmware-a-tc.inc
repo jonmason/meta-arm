@@ -1,8 +1,7 @@
 # TC0 specific TFA configuration
 
 # Intermediate SHA with 2.5 baseline version
-SRCREV_tfa:tc0 = "a52c52477aa797e6a261215e9b3536533590b334"
-SRCREV_tfa:tc1 = "ae5cfc5fe01e2629ff3663a42fb2c585b4d3e7cc"
+SRCREV_tfa = "ae5cfc5fe01e2629ff3663a42fb2c585b4d3e7cc"
 PV = "2.5+git${SRCPV}"
 LIC_FILES_CHKSUM = "file://docs/license.rst;md5=b2c740efedc159745b9b31f88ff03dde"
 

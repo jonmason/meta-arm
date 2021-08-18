@@ -2,16 +2,13 @@
 
 # Intermediate SHA with 3.14 baseline version
 # This has TC0 platform support
-SRCREV:tc0 = "49dbb9ef65643c4322cf3f848910fa880d1c02f6"
-SRCREV:tc1 = "e4f34e786135079160697d88212591105a65fbce"
+SRCREV = "e4f34e786135079160697d88212591105a65fbce"
 PV = "3.14.0+git${SRCPV}"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files/optee-os/tc:"
 SRC_URI:append:tc = " \
     file://sp_layout.json \
     file://0001-WIP-Enable-managed-exit.patch \
-    "
-SRC_URI:append:tc1 = " \
     file://0002-plat-totalcompute-Update-messaging-method-for-manage.patch \
     file://0003-ffa-Update-function-ID-according-to-FFA-v1.1-spec.patch \
     "
