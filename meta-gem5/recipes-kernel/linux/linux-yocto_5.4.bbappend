@@ -1,5 +1,7 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}:${THISDIR}/files:"
 
+require ${@bb.utils.contains('DISTRO_FEATURES', 'virtualization', 'recipes-kernel/linux/linux-yocto_virtualization.inc', '', d)}
+
 COMPATIBLE_MACHINE:gem5-arm64 = "gem5-arm64"
 KMACHINE:gem5-arm64 = "gem5-arm64"
 SRC_URI:append:gem5-arm64 = " file://gem5-kmeta;type=kmeta;name=gem5-kmeta;destsuffix=gem5-kmeta \
