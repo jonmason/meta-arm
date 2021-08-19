@@ -4,7 +4,7 @@ header:
     - meta-virtualization.yml
 
 local_conf_header:
-  meta-virt:
+  meta-virt: |
     DISTRO_FEATURES:append = " virtualization xen"
 
 target:
