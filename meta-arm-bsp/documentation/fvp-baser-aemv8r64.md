@@ -189,3 +189,17 @@ Known Issues and Limitations
 - Only PSCI CPU\_ON and CPU\_OFF functions are supported
 - Booting Linux kernel from Secure EL2 is not supported on Armv8-R AArch64
 - Both VHE and non-VHE Linux-KVM are not supported on Armv8-R AArch64
+
+Changelog
+---------
+
+- Added support for file sharing with the host machine using Virtio P9
+- Added support for runfvp
+- Added performance event support (PMU) in the Linux device tree
+- Enabled SMP support via boot-wrapper-aarch64 providing the PSCI CPU_ON and
+  CPU_OFF functions.
+- Introduced armv8r64 compiler flags.
+- Added Linux PREEMPT\_RT support via linux-yocto-rt-5.10.
+- Introduced the fvp-baser-aemv8r64 machine and its BSP composed of
+  boot-wrapper-aarch64 and linux-yocto-5.10 supporting serial, virtio disk,
+  virtio network, watchdog and rtc.
