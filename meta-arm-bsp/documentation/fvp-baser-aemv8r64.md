@@ -81,15 +81,15 @@ Fetch the meta-arm repository into a build directory:
 Building with the standard Linux kernel:
 
     cd ~/fvp-baser-aemv8r64-build
-    FVP_BASE_R_AEM_TARBALL_URI="file:///absolute/path/to/FVP_Base_AEMv8R_11.15_14.tgz" \
-    FVP_BASE_R_ARM_EULA_ACCEPT="True" \
+    export FVP_BASE_R_AEM_TARBALL_URI="file:///absolute/path/to/FVP_Base_AEMv8R_11.15_14.tgz"
+    export FVP_BASE_R_ARM_EULA_ACCEPT="True"
     kas build meta-arm/kas/fvp-baser-aemv8r64-bsp.yml
 
 Building with the Real-Time Linux kernel (PREEMPT\_RT):
 
     cd ~/fvp-baser-aemv8r64-build
-    FVP_BASE_R_AEM_TARBALL_URI="file:///absolute/path/to/FVP_Base_AEMv8R_11.15_14.tgz" \
-    FVP_BASE_R_ARM_EULA_ACCEPT="True" \
+    export FVP_BASE_R_AEM_TARBALL_URI="file:///absolute/path/to/FVP_Base_AEMv8R_11.15_14.tgz"
+    export FVP_BASE_R_ARM_EULA_ACCEPT="True"
     kas build meta-arm/kas/fvp-baser-aemv8r64-rt-bsp.yml
 
 ### Networking
@@ -98,11 +98,11 @@ install the following package(s):
 
 **Ubuntu 18.04:**
 
-    sudo apt-get install libvirt-bin
+    sudo apt-get install libvirt-bin net-tools
 
 **Ubuntu 20.04:**
 
-    sudo apt-get install libvirt-dev libvirt-daemon qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils
+    sudo apt-get install libvirt-dev libvirt-daemon qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils net-tools
 
 Once that is installed for your OS version, setup tap0 using the following
 commands:
@@ -129,7 +129,7 @@ To run an image after the build is done with the standard Linux kernel:
                 --console \
                 -- \
                     --parameter 'bp.smsc_91c111.enabled=1' \
-                    --parameter 'bp.hostbridge.interfaceName=tap0'"
+                    --parameter 'bp.virtio_net.hostbridge.interfaceName=tap0'"
 
 To run an image after the build is done with the Real-Time Linux kernel
 (PREEMPT\_RT):
@@ -140,7 +140,7 @@ To run an image after the build is done with the Real-Time Linux kernel
                 --console \
                 -- \
                     --parameter 'bp.smsc_91c111.enabled=1' \
-                    --parameter 'bp.hostbridge.interfaceName=tap0'"
+                    --parameter 'bp.virtio_net.hostbridge.interfaceName=tap0'"
 
 **Note:** The terminal console login is `root` without password.
 
