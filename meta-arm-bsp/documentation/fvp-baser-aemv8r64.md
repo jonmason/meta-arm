@@ -187,8 +187,8 @@ Known Issues and Limitations
 ----------------------------
 
 - Only PSCI CPU\_ON and CPU\_OFF functions are supported
-- Booting Linux kernel from Secure EL2 is not supported on Armv8-R AArch64
-- Both VHE and non-VHE Linux-KVM are not supported on Armv8-R AArch64
+- Linux kernel does not support booting from secure EL2 on Armv8-R AArch64
+- Linux KVM does not support Armv8-R AArch64
 
 Changelog
 ---------
