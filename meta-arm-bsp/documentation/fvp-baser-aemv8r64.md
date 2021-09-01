@@ -190,16 +190,16 @@ Known Issues and Limitations
 - Linux kernel does not support booting from secure EL2 on Armv8-R AArch64
 - Linux KVM does not support Armv8-R AArch64
 
-Changelog
----------
+Change Log
+----------
 
-- Added support for file sharing with the host machine using Virtio P9
-- Added support for runfvp
-- Added performance event support (PMU) in the Linux device tree
 - Enabled SMP support via boot-wrapper-aarch64 providing the PSCI CPU_ON and
   CPU_OFF functions.
-- Introduced armv8r64 compiler flags.
+- Introduced Armv8-R64 compiler flags.
 - Added Linux PREEMPT\_RT support via linux-yocto-rt-5.10.
+- Added support for file sharing with the host machine using Virtio P9.
+- Added support for runfvp.
+- Added performance event support (PMU) in the Linux device tree.
 - Introduced the fvp-baser-aemv8r64 machine and its BSP composed of
   boot-wrapper-aarch64 and linux-yocto-5.10 supporting serial, virtio disk,
   virtio network, watchdog and rtc.
