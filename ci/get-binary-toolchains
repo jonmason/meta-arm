@@ -6,9 +6,10 @@ VER="10.2-2020.11"
 
 DOWNLOAD_DIR=$1
 TOOLCHAIN_DIR=$2
+TOOLCHAIN_LINK_DIR=$3
 
-# These should be already created by .bitlab-ci.yml, but do here if run outside of that env
-mkdir -p $DOWNLOAD_DIR $TOOLCHAIN_DIR
+# These should be already created by .gitlab-ci.yml, but do here if run outside of that env
+mkdir -p $DOWNLOAD_DIR $TOOLCHAIN_DIR $TOOLCHAIN_LINK_DIR
 
 if [ $HOST_ARCH = "aarch64" ]; then
 	#AArch64 Linux hosted cross compilers
@@ -32,21 +33,14 @@ else
 fi
 
 for i in arm aarch64 aarch64_be; do
-	if [ ! -f $DOWNLOAD_DIR/gcc-arm-$VER-$HOST_ARCH-$i-none-linux-gnu*.tar.xz ]; then
-		continue
-	fi
-
-	if [ -d $TOOLCHAIN_DIR/$i ]; then
-		echo "$TOOLCHAIN_DIR/$i EXISTS!"
-		MANIFEST=$(ls $TOOLCHAIN_DIR/$i | grep txt)
-		if [[ $MANIFEST != $VER-$HOST_ARCH-$i-none-linux-gnu*.txt ]]; then
-			echo "Removing old $MANIFEST for $VER-$HOST_ARCH-$i-*.txt toolchain"
-			rm -rf $TOOLCHAIN_DIR/$i
+	if [ ! -d $TOOLCHAIN_DIR/gcc-arm-$VER-$HOST_ARCH-$i-none-linux-gnu*/ ]; then
+		if [ ! -f $DOWNLOAD_DIR/gcc-arm-$VER-$HOST_ARCH-$i-none-linux-gnu*.tar.xz ]; then
+			continue
 		fi
+
+		tar -C $TOOLCHAIN_DIR -axvf $DOWNLOAD_DIR/gcc-arm-$VER-$HOST_ARCH-$i-none-linux-gnu*.tar.xz
 	fi
 
-	if [ ! -d $TOOLCHAIN_DIR/$i ]; then
-		tar -C $TOOLCHAIN_DIR -axvf $DOWNLOAD_DIR/gcc-arm-$VER-$HOST_ARCH-$i-none-linux-gnu*.tar.xz
-		mv $TOOLCHAIN_DIR/gcc-arm-$VER-$HOST_ARCH-$i-none-linux-gnu*/ $TOOLCHAIN_DIR/$i
-	fi
+	# Setup a link for the toolchain to use local to the building machine (e.g., not in a shared location)
+	ln -s $TOOLCHAIN_DIR/gcc-arm-$VER-$HOST_ARCH-$i-none-linux-gnu* $TOOLCHAIN_LINK_DIR/$i
 done
