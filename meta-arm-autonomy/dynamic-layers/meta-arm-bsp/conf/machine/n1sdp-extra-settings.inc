@@ -88,3 +88,7 @@ d.getVar('PREFERRED_PROVIDER_alternate/kernel') else ''}"
 # Additionnal kernel modules are necessary for n1sdp to be able to mount FAT
 # filesystems using CP437.
 MACHINE_ESSENTIAL_EXTRA_RDEPENDS:append = " kernel-module-nls-cp437 kernel-module-nls-iso8859-1"
+
+# '-mcpu=' and '-march=' conflicts for xen build
+# lets not set '-march=' and let xen to overwrite '-mcpu='
+TUNE_CCARGS:remove:pn-xen = "${TUNE_CCARGS_MARCH}${TUNE_CCARGS_MARCH_OPTS}"
