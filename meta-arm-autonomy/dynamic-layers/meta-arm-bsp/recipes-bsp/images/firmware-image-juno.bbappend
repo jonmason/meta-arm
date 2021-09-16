@@ -18,7 +18,7 @@ do_install:append:autonomy-host() {
 }
 
 DEPLOY_EXTRA_DEPS ??= ""
-DEPLOY_EXTRA_DEPS_autonomy-host = "xen:do_deploy xen-devicetree:do_deploy"
+DEPLOY_EXTRA_DEPS:autonomy-host = "xen:do_deploy xen-devicetree:do_deploy"
 
 do_deploy[depends] += "${DEPLOY_EXTRA_DEPS}"
 

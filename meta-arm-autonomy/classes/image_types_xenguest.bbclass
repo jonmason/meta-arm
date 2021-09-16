@@ -22,7 +22,7 @@ xenguest_image_add_kernel() {
 # Add rootfs file to the image
 xenguest_image_add_rootfs() {
     call_xenguest_mkimage partial \
-        --disk-add-file=${IMGDEPLOYDIR}/${IMAGE_LINK_NAME}.${IMAGE_TYPEDEP_xenguest}:rootfs.${IMAGE_TYPEDEP_xenguest}
+        --disk-add-file=${IMGDEPLOYDIR}/${IMAGE_LINK_NAME}.${IMAGE_TYPEDEP:xenguest}:rootfs.${IMAGE_TYPEDEP:xenguest}
 }
 
 # Pack xenguest image
@@ -57,7 +57,7 @@ do_bootimg_xenguest[depends] += "xenguest-base-image:do_deploy"
 do_bootimg_xenguest[depends] += "${PN}:do_rootfs"
 
 # This set in python anonymous after, just set a default value here
-IMAGE_TYPEDEP_xenguest ?= "tar"
+IMAGE_TYPEDEP:xenguest ?= "tar"
 
 # We must not be built at rootfs build time because we need the kernel
 IMAGE_TYPES_MASKED += "xenguest"
@@ -158,7 +158,7 @@ python __anonymous() {
             # do_bootimg_xenguest will need the tar file
             d.appendVarFlag('do_bootimg_xenguest', 'depends', ' %s:do_image_tar' % (d.getVar('PN')))
             # set our TYPEDEP to the proper compression
-            d.setVar('IMAGE_TYPEDEP_xenguest', 'tar' + (rootfs_file.split('.tar', 1)[1] or ''))
+            d.setVar('IMAGE_TYPEDEP:xenguest', 'tar' + (rootfs_file.split('.tar', 1)[1] or ''))
 
         if kernel_needed:
             # Tell do_bootimg_xenguest to call xenguest_image_add_kernel
