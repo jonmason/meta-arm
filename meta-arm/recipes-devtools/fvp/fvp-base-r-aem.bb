@@ -8,7 +8,7 @@ LIC_FILES_CHKSUM = "file://license_terms/license_agreement.txt;md5=1a33828e132ba
 # yourself from the homepage and set FVP_BASE_R_AEM_TARBALL_URI appropriately
 # (for example, file:///home/user/FVP_Base_AEMv8R_11.15_14.tgz).
 FVP_BASE_R_AEM_TARBALL_URI ?= ""
-PV = "11.15_14"
+PV = "11.15.14"
 
 SRC_URI = "${FVP_BASE_R_AEM_TARBALL_URI};subdir=${BP}"
 python() {
