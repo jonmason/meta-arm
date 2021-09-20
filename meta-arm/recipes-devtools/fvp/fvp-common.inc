@@ -31,6 +31,4 @@ INSANE_SKIP:${PN} += "file-rdeps"
 # FVP brings its own standard library so don't let it be used as a shlib provider
 PRIVATE_LIBS = "libgcc_s.so.1 libstdc++.so.6"
 
-INHIBIT_DEFAULT_DEPS = "1"
-
 BBCLASSEXTEND = "native nativesdk"
