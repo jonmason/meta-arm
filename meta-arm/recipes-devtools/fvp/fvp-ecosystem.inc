@@ -8,7 +8,7 @@ PV ?= "unset"
 SUMMARY = "Arm Fixed Virtual Platform - ${MODEL} Ecosystem Reference Design"
 HOMEPAGE = "https://developer.arm.com/tools-and-software/open-source-software/arm-platforms-software/arm-ecosystem-fvps"
 
-SRC_URI = "https://developer.arm.com/-/media/Arm%20Developer%20Community/Downloads/OSS/FVP/${MODEL}/${MODEL_CODE}_${PV}.tgz;subdir=${BP}"
+SRC_URI = "https://developer.arm.com/-/media/Arm%20Developer%20Community/Downloads/OSS/FVP/${MODEL}/${MODEL_CODE}_${PV_URL}.tgz;subdir=${BP}"
 
 LIC_FILES_CHKSUM = "file://license_terms/license_agreement.txt;md5=1a33828e132ba71861c11688dbb0bd16 \
                     file://license_terms/third_party_licenses.txt;md5=47473b1e04b70938cf0a7ffea8ea4cc3"
