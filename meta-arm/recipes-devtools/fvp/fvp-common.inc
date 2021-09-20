@@ -9,6 +9,12 @@ LICENSE = "Proprietary & Apache-2.0 & Python-2.0 & GPL-3.0-with-GCC-exception & 
 COMPATIBLE_HOST = '(x86_64|i.86).*-linux'
 FVP_ARCH = "Linux64_GCC-6.4"
 
+def get_real_pv(d):
+    # FVP versions are like 11.12_43
+    pv = d.getVar("PV")
+    return "%s.%s_%s" % tuple(pv.split("."))
+PV_URL = "${@get_real_pv(d)}"
+
 # The directory the FVP is installed into
 FVPDIR = "${libdir}/fvp/${BPN}"
 
