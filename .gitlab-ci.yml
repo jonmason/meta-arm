@@ -68,10 +68,6 @@ machine-coverage:
   - ./ci/check-machine-coverage
   coverage: '/Coverage: \d+/'
 
-toolchains:
-  extends: .build
-  stage: bootstrap
-
 #
 # Build stage, the actual build jobs
 #
@@ -189,6 +185,9 @@ tc0:
   extends: .build
 
 tc1:
+  extends: .build
+
+toolchains:
   extends: .build
 
 
