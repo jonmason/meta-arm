@@ -109,6 +109,9 @@ fvp-base-arm32/external-gccarm:
 fvp-baser-aemv8r64:
   extends: .build
 
+fvps:
+  extends: .build
+
 gem5-arm64:
   extends: .build
 
