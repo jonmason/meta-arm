@@ -6,5 +6,7 @@ LIC_FILES_CHKSUM = "file://license_terms/license_agreement.txt;md5=1a33828e132ba
 
 PV = "11.15.18"
 
-SRC_URI = "https://developer.arm.com/-/media/Files/downloads/ecosystem-models/FVP_Base_RevC-2xAEMvA_${PV_URL}.tgz;subdir=${BP}"
+SRC_URI = "https://developer.arm.com/-/media/Files/downloads/ecosystem-models/${MODEL_CODE}_${PV_URL}.tgz;subdir=${BP}"
 SRC_URI[sha256sum] = "05e474d6b8197c749c66968315fdb7059d398b279bef59787025a88219c71ae4"
+
+MODEL_CODE = "FVP_Base_RevC-2xAEMvA"
