@@ -1,7 +1,6 @@
-require fvp-common.inc
+require fvp-envelope.inc
 
 SUMMARY = "Arm Fixed Virtual Platform - Armv8-R Base Architecture Envelope Model FVP"
-HOMEPAGE = "https://developer.arm.com/tools-and-software/simulation-models/fixed-virtual-platforms/arm-ecosystem-models"
 LIC_FILES_CHKSUM = "file://license_terms/license_agreement.txt;md5=1a33828e132ba71861c11688dbb0bd16 \
                     file://license_terms/third_party_licenses.txt;md5=3db0c4947b7e3405c40b943672d8de2f"
 
@@ -15,12 +14,4 @@ SRC_URI = "${FVP_BASE_R_AEM_TARBALL_URI};subdir=${BP}"
 python() {
     if not d.getVar("FVP_BASE_R_AEM_TARBALL_URI"):
         raise bb.parse.SkipRecipe("FVP_BASE_R_AEM_TARBALL_URI not set")
-}
-
-do_install() {
-    mkdir --parents ${D}${FVPDIR} ${D}${bindir}
-
-    cp --archive --no-preserve=ownership ${S}/AEMv8R_base_pkg//* ${D}${FVPDIR}/
-
-    fvp_link_binaries
 }
