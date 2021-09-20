@@ -6,6 +6,10 @@ This repository contains the Arm layers for OpenEmbedded.
 
   This layer contains general recipes for the Arm architecture, such as firmware, FVPs, and Arm-specific integration.
 
+* meta-arm-autonomy
+
+  This layer is the distribution for a reference stack for autonomous systems.
+
 * meta-arm-bsp
 
   This layer contains machines for Arm reference platforms, for example FVP Base, N1SDP, and Juno.
@@ -14,17 +18,29 @@ This repository contains the Arm layers for OpenEmbedded.
 
   This layer contains recipes for Arm's binary toolchains (GCC and Clang for -A and -M), and a recipe to build Arm's GCC.
 
-* meta-arm-autonomy
+* meta-atp
 
-  This layer is the distribution for a reference stack for autonomous systems.
+  This layer contains recipes for the Adaptive Traffic Generation integration into meta-gem5.
 
 * meta-gem5
 
   This layer contains recipes and machines for gem5, a system-level and processor simulator.
 
-* meta-atp
 
-  This layer contains recipes for the Adaptive Traffic Generation integration into meta-gem5.
+Other Directories
+-----------------
+
+* ci
+
+  This directory contains gitlab continuous integration configuration files (KAS yaml files) as well as scripts needed for this
+
+* kas
+
+  This directory contains KAS yaml files to describe builds for systems not used in CI
+
+* scripts
+
+  This directory contains scripts used in running the CI tests
 
 Contributing
 ------------
