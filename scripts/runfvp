@@ -36,7 +36,7 @@ def get_image_directory(machine=None):
         return pathlib.Path(image_dir)
 
 
-def runfvp(args):
+def parse_args(arguments):
     import argparse
 
     parser = argparse.ArgumentParser(description="Run images in a FVP")
@@ -48,24 +48,28 @@ def runfvp(args):
     parser.usage = f"{parser.format_usage().strip()} -- [ arguments passed to FVP ]"
     # TODO option for telnet vs netcat
 
-    try:
-        i = sys.argv.index("--")
-        arguments = sys.argv[1:i]
-        fvp_args = sys.argv[i+1:]
-    except ValueError:
-        arguments = sys.argv[1:]
+    # If the arguments contains -- then everything after it should be passed to the FVP binary directly.
+    if "--" in arguments:
+        i = arguments.index("--")
+        fvp_args = arguments[i+1:]
+        arguments = arguments[:i]
+    else:
         fvp_args = []
 
     args = parser.parse_args(args=arguments)
     logging.basicConfig(level=args.verbose and logging.DEBUG or logging.WARNING)
-    logger.debug(f"Parsed arguments are {vars(args)}")
 
     # If we're hooking up the console, don't start any terminals
     if args.console:
         args.terminals = "none"
 
+    logger.debug(f"Parsed arguments: {vars(args)}")
+    logger.debug(f"FVP arguments: {fvp_args}")
+    return args, fvp_args
+
+def find_config(args):
     if args.config and os.path.exists(args.config):
-        config_file = args.config
+        return args.config
     else:
         image_dir = get_image_directory(args.config)
         # All .fvpconf configuration files
@@ -77,8 +81,10 @@ def runfvp(args):
             sys.exit(1)
         # Sorted by modification time
         configs = sorted(configs, key=lambda p: p.stat().st_mtime)
-        config_file = configs[-1]
+        return configs[-1]
 
+
+def load_config(config_file):
     logger.debug(f"Loading {config_file}")
     with open(config_file) as f:
         config = json.load(f)
@@ -100,6 +106,9 @@ def runfvp(args):
         logger.error("Required value FVP_EXE not set in machine configuration")
         sys.exit(1)
 
+    return config
+
+def parse_config(args, config):
     cli = []
     if config["fvp-bindir"]:
         cli.append(os.path.join(config["fvp-bindir"], config["exe"]))
@@ -128,10 +137,16 @@ def runfvp(args):
 
     cli.extend(config["args"])
 
-    # Finally add the user's extra arguments
-    cli.extend(fvp_args)
+    return cli
 
+def runfvp(cli_args):
+    args, fvp_args = parse_args(cli_args)
+    config_file = find_config(args)
+    config = load_config(config_file)
+    cli = parse_config(args, config)
+    cli.extend(fvp_args)
     logger.debug(f"Constructed FVP call: {cli}")
+
     if args.console:
         expected_terminal = config["console"]
         if not expected_terminal:
@@ -165,6 +180,6 @@ def runfvp(args):
 
 if __name__ == "__main__":
     try:
-        runfvp(sys.argv)
+        runfvp(sys.argv[1:])
     except KeyboardInterrupt:
         pass
