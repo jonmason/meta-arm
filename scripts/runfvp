@@ -19,6 +19,16 @@ terminal_map = {
     # TODO more terminals
 }
 
+def get_default_terminal():
+    import shutil
+    import shlex
+
+    for terminal in "xterm",:
+        command = shlex.split(terminal_map[terminal])[0]
+        if shutil.which(command):
+            return terminal
+    return "none"
+
 def get_image_directory(machine=None):
     """
     Get the DEPLOY_DIR_IMAGE for the specified machine
@@ -42,7 +52,7 @@ def parse_args(arguments):
     parser = argparse.ArgumentParser(description="Run images in a FVP")
     parser.add_argument("config", nargs="?", help="Machine name or path to .fvpconf file")
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("-t", "--terminals", choices=terminal_map.keys(), default="xterm", help="Automatically start terminals")
+    group.add_argument("-t", "--terminals", choices=terminal_map.keys(), default=get_default_terminal(), help="Automatically start terminals (default: %(default)s)")
     group.add_argument("-c", "--console", action="store_true", help="Attach the first uart to stdin/stdout")
     parser.add_argument("--verbose", action="store_true", help="Output verbose logging")
     parser.usage = f"{parser.format_usage().strip()} -- [ arguments passed to FVP ]"
