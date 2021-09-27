@@ -164,4 +164,7 @@ def runfvp(args):
         sys.exit(subprocess.run(cli).returncode)
 
 if __name__ == "__main__":
-    runfvp(sys.argv)
+    try:
+        runfvp(sys.argv)
+    except KeyboardInterrupt:
+        pass
