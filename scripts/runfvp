@@ -34,7 +34,11 @@ def get_image_directory(machine=None):
     Get the DEPLOY_DIR_IMAGE for the specified machine
     (or the configured machine if not set).
     """
-    import bb.tinfoil
+    try:
+        import bb.tinfoil
+    except ImportError:
+        logger.error("Cannot connect to BitBake, did you oe-init-build-env?")
+        sys.exit(1)
 
     if machine:
         os.environ["MACHINE"] = machine
