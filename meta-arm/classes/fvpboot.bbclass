@@ -74,7 +74,8 @@ python do_write_fvpboot_conf() {
 }
 
 def fvpboot_vars(d):
-    build_vars = ['DEPLOY_DIR_IMAGE', 'IMAGE_NAME', 'IMAGE_LINK_NAME',
-                  'COMPONENTS_DIR', 'BUILD_ARCH']
-    return build_vars + [k for k in d.keys() if k.startswith('FVP_')]
-do_write_fvpboot_conf[vardeps] += "${@' '.join(fvpboot_vars(d))}"
+    vars = ['DEPLOY_DIR_IMAGE', 'IMAGE_NAME', 'IMAGE_LINK_NAME', 'COMPONENTS_DIR', 'BUILD_ARCH']
+    vars.extend((k for k in d.keys() if k.startswith('FVP_')))
+    return " ".join(vars)
+
+do_write_fvpboot_conf[vardeps] += "${@fvpboot_vars(d)}"
