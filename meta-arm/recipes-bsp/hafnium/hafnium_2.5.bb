@@ -8,6 +8,7 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 inherit deploy python3native pkgconfig
 
 SRC_URI = "gitsm://git.trustedfirmware.org/hafnium/hafnium.git;protocol=https \
+           file://hashbang.patch \
            file://pkg-config-native.patch"
 SRCREV = "3a149eb219467c0d9336467ea1fb9d3fb65da94b"
 S = "${WORKDIR}/git"
@@ -32,12 +33,6 @@ DEPENDS = "bison-native bc-native openssl-native"
 
 # set project to build
 EXTRA_OEMAKE += "PROJECT=${HAFNIUM_PROJECT}"
-
-do_compile:prepend() {
-    # Hafnium expects 'python'. Create symlink python to python3
-    real=$(which ${PYTHON})
-    ln -snf $real $(dirname $real)/python
-}
 
 do_install() {
     install -d -m 755 ${D}/firmware

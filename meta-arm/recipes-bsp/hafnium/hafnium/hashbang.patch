@@ -1,0 +1,34 @@
+Update Clang hashbangs to call python3 instead of python, as that doesn't exist
+in our hosttools.
+
+Upstream-Status: Backport [partial, fixed upstream]
+Signed-off-by: Ross Burton <ross.burton@arm.com>
+
+diff --git a/linux-x64/clang/bin/clang b/prebuilts/linux-x64/clang/bin/clang
+index 081cb20a..ce9cc267 100755
+--- a/prebuilts/linux-x64/clang/bin/clang
++++ b/prebuilts/linux-x64/clang/bin/clang
+@@ -1 +1 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python3
+diff --git a/prebuilts/linux-x64/clang/bin/clang++ b/prebuilts/linux-x64/clang/bin/clang++
+index 081cb20a..ce9cc267 100755
+--- a/prebuilts/linux-x64/clang/bin/clang++
++++ b/prebuilts/linux-x64/clang/bin/clang++
+@@ -1 +1 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python3
+diff --git a/prebuilts/linux-x64/clang/bin/clang-tidy b/prebuilts/linux-x64/clang/bin/clang-tidy
+index 081cb20a..ce9cc267 100755
+--- a/prebuilts/linux-x64/clang/bin/clang-tidy
++++ b/prebuilts/linux-x64/clang/bin/clang-tidy
+@@ -1 +1 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python3
+diff --git a/prebuilts/linux-x64/clang/bin/scan-view b/prebuilts/linux-x64/clang/bin/scan-view
+index 6165432e..07effbca 100755
+--- a/prebuilts/linux-x64/clang/bin/scan-view
++++ b/prebuilts/linux-x64/clang/bin/scan-view
+@@ -1 +1 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python3
