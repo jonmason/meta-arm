@@ -5,7 +5,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=782b40c14bad5294672c500501edc103"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
-inherit deploy python3native
+inherit deploy python3native pkgconfig
 
 SRC_URI = "gitsm://git.trustedfirmware.org/hafnium/hafnium.git;protocol=https \
            file://pkg-config-native.patch"
