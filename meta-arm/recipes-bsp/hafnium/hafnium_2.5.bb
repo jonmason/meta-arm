@@ -47,10 +47,11 @@ do_install() {
     done
 }
 
-FILES:${PN} = "/firmware"
+FILES:${PN} = "/firmware/*.bin"
+FILES:${PN}-dbg = "/firmware/*.elf"
 SYSROOT_DIRS += "/firmware"
-# skip QA tests: {'ldflags'}
 INSANE_SKIP:${PN} = "ldflags"
+INSANE_SKIP:${PN}-dbg = "ldflags"
 
 do_deploy() {
     cp -rf ${D}/firmware/* ${DEPLOYDIR}/
