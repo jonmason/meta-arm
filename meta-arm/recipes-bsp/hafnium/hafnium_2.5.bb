@@ -12,6 +12,7 @@ SRC_URI = "gitsm://git.trustedfirmware.org/hafnium/hafnium.git;protocol=https \
            file://pkg-config-native.patch"
 SRCREV = "3a149eb219467c0d9336467ea1fb9d3fb65da94b"
 S = "${WORKDIR}/git"
+B = "${WORKDIR}/build"
 
 COMPATIBLE_MACHINE ?= "invalid"
 
@@ -20,10 +21,6 @@ HAFNIUM_PROJECT ?= "reference"
 
 # Platform must be set for each machine
 HAFNIUM_PLATFORM ?= "invalid"
-
-# hafnium build directory
-# Append _clang as the build rule in hafnium adds this to the platform name.
-HAFNIUM_BUILD_DIR_PLAT = "out/${HAFNIUM_PROJECT}/${HAFNIUM_PLATFORM}_clang"
 
 # do_deploy will install everything listed in this variable. It is set by
 # default to hafnium
@@ -34,20 +31,29 @@ DEPENDS = "bison-native bc-native openssl-native"
 # set project to build
 EXTRA_OEMAKE += "PROJECT=${HAFNIUM_PROJECT}"
 
+EXTRA_OEMAKE += "OUT_DIR=${B}"
+
+do_configure[cleandirs] += "${B}"
+
+do_compile() {
+    oe_runmake -C ${S}
+}
+
 do_install() {
+    cd ${B}/${HAFNIUM_PLATFORM}_clang
     install -d -m 755 ${D}/firmware
     for bldfile in ${HAFNIUM_INSTALL_TARGET}; do
         processed="0"
-        if [ -f ${S}/${HAFNIUM_BUILD_DIR_PLAT}/$bldfile.bin ]; then
+        if [ -f $bldfile.bin ]; then
             echo "Install $bldfile.bin"
-            install -m 0755 ${S}/${HAFNIUM_BUILD_DIR_PLAT}/$bldfile.bin \
+            install -m 0755 $bldfile.bin \
                 ${D}/firmware/$bldfile-${HAFNIUM_PLATFORM}.bin
             ln -sf $bldfile-${HAFNIUM_PLATFORM}.bin ${D}/firmware/$bldfile.bin
             processed="1"
         fi
-        if [ -f ${S}/${HAFNIUM_BUILD_DIR_PLAT}/$bldfile.elf ]; then
+        if [ -f $bldfile.elf ]; then
             echo "Install $bldfile.elf"
-            install -m 0755 ${S}/${HAFNIUM_BUILD_DIR_PLAT}/$bldfile.elf \
+            install -m 0755 $bldfile.elf \
                 ${D}/firmware/$bldfile-${HAFNIUM_PLATFORM}.elf
             ln -sf $bldfile-${HAFNIUM_PLATFORM}.elf ${D}/firmware/$bldfile.elf
             processed="1"
