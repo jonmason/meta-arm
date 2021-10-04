@@ -43,25 +43,7 @@ do_install() {
     cd ${B}/${HAFNIUM_PLATFORM}_clang
     install -d -m 755 ${D}/firmware
     for bldfile in ${HAFNIUM_INSTALL_TARGET}; do
-        processed="0"
-        if [ -f $bldfile.bin ]; then
-            echo "Install $bldfile.bin"
-            install -m 0755 $bldfile.bin \
-                ${D}/firmware/$bldfile-${HAFNIUM_PLATFORM}.bin
-            ln -sf $bldfile-${HAFNIUM_PLATFORM}.bin ${D}/firmware/$bldfile.bin
-            processed="1"
-        fi
-        if [ -f $bldfile.elf ]; then
-            echo "Install $bldfile.elf"
-            install -m 0755 $bldfile.elf \
-                ${D}/firmware/$bldfile-${HAFNIUM_PLATFORM}.elf
-            ln -sf $bldfile-${HAFNIUM_PLATFORM}.elf ${D}/firmware/$bldfile.elf
-            processed="1"
-        fi
-        if [ "$processed" = "0" ]; then
-            bberror "Unsupported HAFNIUM_INSTALL_TARGET target $bldfile"
-            exit 1
-        fi
+        install -m 0755 $bldfile.bin $bldfile.elf ${D}/firmware/
     done
 }
 
