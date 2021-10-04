@@ -1,0 +1,14 @@
+diff --git a/build/image/dtc.py b/build/image/dtc.py
+index d0778186..a5d831be 100755
+--- a/build/image/dtc.py
++++ b/build/image/dtc.py
+@@ -18,6 +18,9 @@ DTC_ROOT = os.path.join(HF_ROOT, "prebuilts", "linux-x64", "dtc")
+ DTC = os.path.join(DTC_ROOT, "dtc")
+ FDTOVERLAY = os.path.join(DTC_ROOT, "fdtoverlay")
+ 
++DTC =  "dtc"
++FDTOVERLAY = "fdtoverlay"
++
+ def cmd_compile(args):
+     exec_args = [
+             DTC,
