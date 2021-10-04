@@ -186,9 +186,13 @@ sgi575:
 
 tc0:
   extends: .build
+  tags:
+    - x86_64
 
 tc1:
   extends: .build
+  tags:
+    - x86_64
 
 toolchains:
   extends: .build

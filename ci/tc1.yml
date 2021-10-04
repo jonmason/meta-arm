@@ -4,3 +4,7 @@ header:
     - base.yml
 
 machine: tc1
+
+target:
+  - tc-artifacts-image
+  - perf
