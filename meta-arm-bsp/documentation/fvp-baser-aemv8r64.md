@@ -70,6 +70,13 @@ The variables should be set like so:
 for the next steps to work correctly.
 
 ### Fetch sources
+To fetch and build the ongoing development of the software stack follow the
+instructions on this document.
+
+To fetch and build the version 1 (single core) find instructions at https://community.arm.com/developer/tools-software/oss-platforms/w/docs/633/release-1-single-core
+
+To fetch and build the version 2 (linux smp) find instructions at https://community.arm.com/developer/tools-software/oss-platforms/w/docs/634/release-2---smp
+
 Fetch the meta-arm repository into a build directory:
 
     mkdir -p ~/fvp-baser-aemv8r64-build
