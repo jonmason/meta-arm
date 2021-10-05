@@ -28,8 +28,8 @@ where either a standard or Real-Time Linux kernel (PREEMPT\_RT) can be built
 and run:
 
  - boot-wrapper-aarch64: provides PSCI support
- - Linux kernel: linux-yocto-5.10
- - Linux kernel with PREEMPT\_RT support: linux-yocto-rt-5.10
+ - Linux kernel: linux-yocto-5.14
+ - Linux kernel with PREEMPT\_RT support: linux-yocto-rt-5.14
 
 Note that the Real-Time Linux kernel (PREEMPT\_RT) does not use the real-time
 architectural extensions of the Armv8-R feature set.
@@ -200,6 +200,8 @@ Known Issues and Limitations
 Change Log
 ----------
 
+- Updated Linux kernel version from 5.10 to 5.14 for both standard and
+Real-Time (PREEMPT\_RT) builds.
 - Enabled SMP support via boot-wrapper-aarch64 providing the PSCI CPU_ON and
   CPU_OFF functions.
 - Introduced Armv8-R64 compiler flags.
