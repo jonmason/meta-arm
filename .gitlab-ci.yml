@@ -1,6 +1,6 @@
 image: ghcr.io/siemens/kas/kas
 
-  # First do a common bootstrap, and then build all the targets
+# First do a common bootstrap, and then build all the targets
 stages:
   - prep
   - bootstrap
@@ -44,7 +44,7 @@ update-repos:
   extends: .setup
   stage: prep
   script:
-  - flock --verbose --timeout 60 $KAS_REPO_REF_DIR ./ci/update-repos
+    - flock --verbose --timeout 60 $KAS_REPO_REF_DIR ./ci/update-repos
 
 #
 # Bootstrap stage, bootstrap and machine coverage
@@ -65,7 +65,7 @@ machine-coverage:
   stage: bootstrap
   interruptible: true
   script:
-  - ./ci/check-machine-coverage
+    - ./ci/check-machine-coverage
   coverage: '/Coverage: \d+/'
 
 #
@@ -77,8 +77,8 @@ check-layers:
   extends: .setup
   coverage: '/Coverage: \d+/'
   script:
-  - kas shell --update --force-checkout ci/base.yml:ci/meta-arm-autonomy.yml:ci/meta-openembedded.yml --command \
-    "$CI_PROJECT_DIR/ci/check-layers.py $CI_PROJECT_DIR/ci/check-layers.yml $CI_PROJECT_DIR $KAS_WORK_DIR"
+    - kas shell --update --force-checkout ci/base.yml:ci/meta-arm-autonomy.yml:ci/meta-openembedded.yml --command \
+      "$CI_PROJECT_DIR/ci/check-layers.py $CI_PROJECT_DIR/ci/check-layers.yml $CI_PROJECT_DIR $KAS_WORK_DIR"
 
 pending-updates:
   extends: .setup
@@ -86,7 +86,7 @@ pending-updates:
     paths:
       - update-report.html
   script:
-  - kas shell ci/qemuarm64.yml:ci/meta-openembedded.yml -c "$CI_PROJECT_DIR/scripts/machine-summary.py -t updates.html -o $CI_PROJECT_DIR/update-report.html $($CI_PROJECT_DIR/ci/listmachines.py meta-arm meta-arm-bsp)"
+    - kas shell ci/qemuarm64.yml:ci/meta-openembedded.yml -c "$CI_PROJECT_DIR/scripts/machine-summary.py -t updates.html -o $CI_PROJECT_DIR/update-report.html $($CI_PROJECT_DIR/ci/listmachines.py meta-arm meta-arm-bsp)"
 
 corstone500:
   extends: .build
@@ -197,7 +197,6 @@ tc1:
 toolchains:
   extends: .build
 
-
 #
 # Utility tasks, not executed automatically
 #
@@ -207,14 +206,14 @@ delete-dl-dir:
   stage: prep
   when: manual
   script:
-  - rm -rf $DL_DIR/*
+    - rm -rf $DL_DIR/*
 
 delete-repo-dir:
   extends: .setup
   stage: prep
   when: manual
   script:
-  - rm -rf $KAS_REPO_REF_DIR/*
+    - rm -rf $KAS_REPO_REF_DIR/*
 
 # Delete all sstate
 delete-sstate:
@@ -222,14 +221,14 @@ delete-sstate:
   stage: prep
   when: manual
   script:
-  - rm -rf $SSTATE_DIR/*
+    - rm -rf $SSTATE_DIR/*
 
 delete-toolchains:
   extends: .setup
   stage: prep
   when: manual
   script:
-  - rm -rf $TOOLCHAIN_DIR/*
+    - rm -rf $TOOLCHAIN_DIR/*
 
 # Wipe out old sstate
 prune-sstate:
@@ -237,9 +236,9 @@ prune-sstate:
   stage: prep
   when: manual
   script:
-  - du -h -s $SSTATE_DIR
-  - find $SSTATE_DIR -type f -atime +30 -delete
-  - du -h -s $SSTATE_DIR
+    - du -h -s $SSTATE_DIR
+    - find $SSTATE_DIR -type f -atime +30 -delete
+    - du -h -s $SSTATE_DIR
 
 # Report on disk usage
 usage:
@@ -247,4 +246,4 @@ usage:
   stage: prep
   when: manual
   script:
-  - du -h -s $DL_DIR $SSTATE_DIR $KAS_REPO_REF_DIR $TOOLCHAIN_DIR
+    - du -h -s $DL_DIR $SSTATE_DIR $KAS_REPO_REF_DIR $TOOLCHAIN_DIR
