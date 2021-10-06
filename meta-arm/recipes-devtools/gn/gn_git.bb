@@ -13,6 +13,11 @@ B = "${WORKDIR}/build"
 
 # TODO: os map like meson. mingw32 -> mingw
 
+# Currently fails to build with clang, eg:
+# https://errors.yoctoproject.org/Errors/Details/610602/
+# https://errors.yoctoproject.org/Errors/Details/610486/
+TOOLCHAIN = "gcc"
+
 do_configure[cleandirs] += "${B}"
 do_configure() {
     python3 ${S}/build/gen.py \
