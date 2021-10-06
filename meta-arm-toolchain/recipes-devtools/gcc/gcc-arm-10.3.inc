@@ -1,8 +1,8 @@
 require recipes-devtools/gcc/gcc-common.inc
 
 # Third digit in PV should be incremented after a minor release
-GCC_VERSION = "10.3"
-PV = "arm-${GCC_VERSION}"
+ARM_GCC_VERSION = "10.3"
+PV = "arm-${ARM_GCC_VERSION}"
 CVE_VERSION = "10.3"
 
 # BINV should be incremented to a revision after a minor gcc release
@@ -13,7 +13,7 @@ MMYY = "21.07"
 RELEASE = "20${MMYY}"
 PR = "r${RELEASE}"
 
-FILESEXTRAPATHS =. "${FILE_DIRNAME}/gcc-arm-${GCC_VERSION}:${FILE_DIRNAME}/gcc-arm-${GCC_VERSION}/backport:"
+FILESEXTRAPATHS =. "${FILE_DIRNAME}/gcc-arm-${ARM_GCC_VERSION}:${FILE_DIRNAME}/gcc-arm-${ARM_GCC_VERSION}/backport:"
 
 DEPENDS =+ "mpfr gmp libmpc zlib flex-native"
 NATIVEDEPS = "mpfr-native gmp-native libmpc-native zlib-native flex-native"
@@ -28,7 +28,7 @@ LIC_FILES_CHKSUM = "\
     file://COPYING.RUNTIME;md5=fe60d87048567d4fe8c8a0ed2448bcc8 \
 "
 
-BASEURI ?= "https://developer.arm.com/-/media/Files/downloads/gnu-a/${GCC_VERSION}-${RELEASE}/srcrel/gcc-arm-src-snapshot-${GCC_VERSION}-${RELEASE}.tar.xz"
+BASEURI ?= "https://developer.arm.com/-/media/Files/downloads/gnu-a/${ARM_GCC_VERSION}-${RELEASE}/srcrel/gcc-arm-src-snapshot-${ARM_GCC_VERSION}-${RELEASE}.tar.xz"
 SRC_URI = "\
            ${BASEURI} \
            file://0001-gcc-4.3.1-ARCH_FLAGS_FOR_TARGET.patch \
@@ -72,7 +72,7 @@ SRC_URI = "\
 "
 SRC_URI[md5sum] = "5f582fd50eee0e40475b93d2d7a18979"
 
-S = "${TMPDIR}/work-shared/gcc-${PV}-${PR}/gcc-arm-src-snapshot-${GCC_VERSION}-${RELEASE}"
+S = "${TMPDIR}/work-shared/gcc-${PV}-${PR}/gcc-arm-src-snapshot-${ARM_GCC_VERSION}-${RELEASE}"
 
 # For dev release snapshotting
 #S = "${TMPDIR}/work-shared/gcc-${PV}-${PR}/gcc-${RELEASE}"
