@@ -11,17 +11,25 @@ PV = "0+git${SRCPV}"
 S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
 
-# TODO: os map like meson. mingw32 -> mingw
-
 # Currently fails to build with clang, eg:
 # https://errors.yoctoproject.org/Errors/Details/610602/
 # https://errors.yoctoproject.org/Errors/Details/610486/
 TOOLCHAIN = "gcc"
 
+# Map from our _OS strings to the GN's platform values.
+def gn_platform(variable, d):
+    os = d.getVar(variable)
+    if "linux" in os:
+        return "linux"
+    elif "mingw" in os:
+        return "mingw"
+    else:
+        return os
+
 do_configure[cleandirs] += "${B}"
 do_configure() {
     python3 ${S}/build/gen.py \
-        --platform=${TARGET_OS} \
+        --platform=${@gn_platform("TARGET_OS", d)} \
         --out-path=${B} \
         --no-strip
 }
