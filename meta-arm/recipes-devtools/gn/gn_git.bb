@@ -22,7 +22,6 @@ do_configure[cleandirs] += "${B}"
 do_configure() {
     python3 ${S}/build/gen.py \
         --platform=${TARGET_OS} \
-        --host=${HOST_OS} \
         --out-path=${B} \
         --no-strip
 }
@@ -36,4 +35,4 @@ do_install() {
     install ${B}/gn ${D}${bindir}
 }
 
-BBCLASSEXTEND = "native nativesdk"
+BBCLASSEXTEND = "native"
