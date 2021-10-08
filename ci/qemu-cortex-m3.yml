@@ -5,12 +5,12 @@ header:
     - meta-zephyr.yml
 
 local_conf_header:
+  tclibc: |
+    TCLIBC = "newlib"
   nonbuilding_tests: |
-    ZEPHYRTESTS:remove = "common"
-  failing_tests: |
-    ZEPHYRTESTS:remove = "context early_sleep sleep"
+    ZEPHYRTESTS:remove = "common context pending poll sleep"
 
-machine: microbit-v1
+machine: qemu-cortex-m3
 
 target:
   - zephyr-kernel-test-all

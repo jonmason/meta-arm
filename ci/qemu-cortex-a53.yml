@@ -4,7 +4,11 @@ header:
     - base.yml
     - meta-zephyr.yml
 
+local_conf_header:
+  nonbuilding_tests: |
+    ZEPHYRTESTS:remove += "common device poll queue sleep"
+
 machine: qemu-cortex-a53
 
 target:
-  - zephyr-philosophers
+  - zephyr-kernel-test-all
