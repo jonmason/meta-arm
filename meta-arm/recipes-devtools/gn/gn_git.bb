@@ -45,3 +45,5 @@ do_install() {
 }
 
 BBCLASSEXTEND = "native"
+
+COMPATIBLE_HOST = "^(?!riscv32).*"
