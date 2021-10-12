@@ -41,7 +41,7 @@ local_conf_header:
     BB_HASHSERVE_UPSTREAM = "typhoon.yocto.io:8687"
     BB_HASHSERVE = "auto"
     BB_SIGNATURE_HANDLER = "OEEquivHash"
-    SSTATE_MIRRORS = "file://.* https://sstate.yoctoproject.org/dev/PATH;downloadfilename=PATH"
+    SSTATE_MIRRORS = "file://.* http://sstate.yoctoproject.org/dev/PATH;downloadfilename=PATH"
 
 machine: unset
 
