@@ -29,7 +29,7 @@ First you must download the Yocto layers needed:
  - all other layers you might want to use
 
 For each of the downloaded layer make sure you checkout the release of Yocto
-you want to use (for example hardknott using `git checkout hardknott`).
+you want to use (for example honister using `git checkout honister`).
 
 Please follow [Yocto documentation](https://www.yoctoproject.org/docs/latest/brief-yoctoprojectqs/brief-yoctoprojectqs.html)
 in order to have the required dependencies.
