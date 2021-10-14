@@ -99,44 +99,13 @@ Building with the Real-Time Linux kernel (PREEMPT\_RT):
     export FVP_BASE_R_ARM_EULA_ACCEPT="True"
     kas build meta-arm/kas/fvp-baser-aemv8r64-rt-bsp.yml
 
-### Networking
-To enable networking on the FVP via a host network interface, you will need to
-install the following package(s):
-
-**Ubuntu 18.04:**
-
-    sudo apt-get install libvirt-bin net-tools
-
-**Ubuntu 20.04:**
-
-    sudo apt-get install libvirt-dev libvirt-daemon qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils net-tools
-
-Once that is installed for your OS version, setup tap0 using the following
-commands:
-
-    sudo virsh net-start default
-    sudo ip tuntap add dev tap0 mode tap user $(whoami)
-    sudo ifconfig tap0 0.0.0.0 promisc up
-    sudo brctl addif virbr0 tap0
-
-To clean up the tap0 interface on the host use the following commands:
-
-    sudo brctl delif virbr0 tap0
-    sudo ip link set virbr0 down
-    sudo brctl delbr virbr0
-    sudo virsh net-destroy default
-    sudo ip link delete tap0
-
 ### Run
 To run an image after the build is done with the standard Linux kernel:
 
     kas shell --keep-config-unchanged \
        meta-arm/kas/fvp-baser-aemv8r64-bsp.yml \
            --command "../layers/meta-arm/scripts/runfvp \
-                --console \
-                -- \
-                    --parameter 'bp.smsc_91c111.enabled=1' \
-                    --parameter 'bp.virtio_net.hostbridge.interfaceName=tap0'"
+           --console "
 
 To run an image after the build is done with the Real-Time Linux kernel
 (PREEMPT\_RT):
@@ -144,10 +113,7 @@ To run an image after the build is done with the Real-Time Linux kernel
     kas shell --keep-config-unchanged \
        meta-arm/kas/fvp-baser-aemv8r64-rt-bsp.yml \
            --command "../layers/meta-arm/scripts/runfvp \
-                --console \
-                -- \
-                    --parameter 'bp.smsc_91c111.enabled=1' \
-                    --parameter 'bp.virtio_net.hostbridge.interfaceName=tap0'"
+           --console "
 
 **Note:** The terminal console login is `root` without password.
 
@@ -200,8 +166,10 @@ Known Issues and Limitations
 Change Log
 ----------
 
+- Added virtio_net User Networking mode by default and removed instructions
+  about tap networking setup.
 - Updated Linux kernel version from 5.10 to 5.14 for both standard and
-Real-Time (PREEMPT\_RT) builds.
+  Real-Time (PREEMPT\_RT) builds.
 - Enabled SMP support via boot-wrapper-aarch64 providing the PSCI CPU_ON and
   CPU_OFF functions.
 - Introduced Armv8-R64 compiler flags.
