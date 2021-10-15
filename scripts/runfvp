@@ -1,7 +1,9 @@
 #! /usr/bin/env python3
 
+import asyncio
 import json
 import os
+import re
 import sys
 import subprocess
 import pathlib
@@ -153,6 +155,34 @@ def parse_config(args, config):
 
     return cli
 
+async def start_fvp(cli, console_cb):
+    try:
+        fvp_process = await asyncio.create_subprocess_exec(*cli, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+        async for line in fvp_process.stdout:
+            line = line.strip().decode("utf-8", errors="replace")
+            if console_cb:
+                logger.debug(f"FVP output: {line}")
+            else:
+                print(line)
+
+            # Look for serial connections opening
+            if console_cb:
+                m = re.match(fr"^(\S+): Listening for serial connection on port (\d+)$", line)
+                if m:
+                    terminal = m.group(1)
+                    port = int(m.group(2))
+                    logger.debug(f"Console for {terminal} started on port {port}")
+                    # When we can assume Py3.7+, this can be create_task
+                    asyncio.ensure_future(console_cb(terminal, port))
+    finally:
+        # If we get cancelled or throw an exception, kill the FVP
+        logger.debug(f"Killing FVP PID {fvp_process.pid}")
+        fvp_process.terminate()
+
+    if await fvp_process.wait() != 0:
+        logger.info(f"{cli[0]} quit with code {fvp_process.returncode}")
+
 def runfvp(cli_args):
     args, fvp_args = parse_args(cli_args)
     config_file = find_config(args)
@@ -166,31 +196,24 @@ def runfvp(cli_args):
         if not expected_terminal:
             logger.error("--console used but FVP_CONSOLE not set in machine configuration")
             sys.exit(1)
-
-        fvp_process = subprocess.Popen(cli, bufsize=1, universal_newlines=True, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-
-        import selectors, re
-        selector = selectors.DefaultSelector()
-        selector.register(fvp_process.stdout, selectors.EVENT_READ)
-        output = ""
-        looking = True
-        while fvp_process.poll() is None:
-            # TODO some sort of timeout for 'input never appeared'
-            events = selector.select(timeout=10)
-            for key, mask in events:
-                line = key.fileobj.readline()
-                output += line
-                if looking:
-                    m = re.match(fr"^{expected_terminal}: Listening.+port ([0-9]+)$", line)
-                    if m:
-                        port = m.group(1)
-                        subprocess.run(["telnet", "localhost", port])
-                        looking = False
-        if fvp_process.returncode:
-            logger.error(f"{fvp_process.args[0]} quit with code {fvp_process.returncode}:")
-            logger.error(output)
     else:
-        sys.exit(subprocess.run(cli).returncode)
+        expected_terminal = None
+
+    async def console_started(name, port):
+        if name == expected_terminal:
+            telnet = await asyncio.create_subprocess_exec("telnet", "localhost", str(port), stdin=sys.stdin, stdout=sys.stdout)
+            await telnet.wait()
+            logger.debug(f"Telnet quit, cancelling tasks")
+            for t in asyncio.all_tasks():
+                logger.debug(f"Cancelling {t}")
+                t.cancel()
+
+    try:
+        # When we can assume Py3.7+, this can simply be asyncio.run()
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(asyncio.gather(start_fvp(cli, console_cb=console_started)))
+    except asyncio.CancelledError:
+        pass
 
 if __name__ == "__main__":
     try:
