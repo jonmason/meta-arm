@@ -25,3 +25,5 @@ EXTRA_IMAGEDEPENDS += "virtual/trusted-firmware-a u-boot"
 # initialise) and install the pre-generated keys.
 PACKAGECONFIG:remove:pn-openssh = "rng-tools"
 MACHINE_EXTRA_RRECOMMENDS += "ssh-pregen-hostkeys"
+
+TEST_TARGET = "OEFVPTarget"
