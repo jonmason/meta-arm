@@ -28,7 +28,7 @@ inherit scons native
 # google protobuf
 # pkgconfig
 # hdf5
-DEPENDS += "python3-six-native protobuf-native hdf5-native pkgconfig-native \
+DEPENDS += "m4-native python3-six-native protobuf-native hdf5-native pkgconfig-native \
     boost-native libpng-native"
 
 EXTRA_OESCONS = "${GEM5_SCONS_ARGS}"
