@@ -1,0 +1,34 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From b5ec956659c3e419fd2e95431d9359db497e4afb Mon Sep 17 00:00:00 2001
+From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+Date: Thu, 22 Jul 2021 18:11:33 +0100
+Subject: [PATCH 16/16] arm: corstone1000: adding PSCI device tree node
+
+At this level of development PSCI is needed to initialize the SMCCC.
+
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+---
+ arch/arm/dts/corstone1000-mps3.dts | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/arch/arm/dts/corstone1000-mps3.dts b/arch/arm/dts/corstone1000-mps3.dts
+index d93915dbb7..a3726f1e1f 100644
+--- a/arch/arm/dts/corstone1000-mps3.dts
++++ b/arch/arm/dts/corstone1000-mps3.dts
+@@ -30,6 +30,11 @@
+ 		dr_mode = "host";
+ 	};
+ 
++	psci {
++		compatible = "arm,psci-1.0", "arm,psci-0.2";
++		method = "smc";
++	};
++
+ };
+ 
+ &refclk {
+-- 
+2.33.0
+

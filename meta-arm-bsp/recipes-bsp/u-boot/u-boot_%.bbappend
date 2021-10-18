@@ -3,7 +3,7 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 #
 # Corstone1000 64-bit machines
 #
-
+CORSTONE1000_DEVICE_TREE:corstone1000-mps3 = "corstone1000-mps3"
 CORSTONE1000_DEVICE_TREE:corstone1000-fvp = "corstone1000-fvp"
 EXTRA_OEMAKE:append:corstone1000 = ' DEVICE_TREE=${CORSTONE1000_DEVICE_TREE}'
 
@@ -24,6 +24,9 @@ SRC_URI:append:corstone1000 = " \
       file://0012-arm-corstone1000-enable-uefi-secure-boot.patch \
       file://0013-arm-corstone1000-enable-handlers-for-uefi-variables.patch \
       file://0014-arm-corstone1000-enable-efi-capsule-options.patch \
+      file://0015-arm-dts-add-initial-devicetree-corstone1000-mps3.patch \
+      file://0016-arm-corstone1000-adding-PSCI-device-tree-node.patch \
+      file://0017-arm-corstone1000-amend-kernel-bootargs-with-ip-dhcp-.patch \
       "
 
 #
