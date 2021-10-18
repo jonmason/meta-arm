@@ -102,6 +102,9 @@ corstone700-mps3:
 corstone1000-fvp:
   extends: .build
 
+corstone1000-mps3:
+  extends: .build
+
 fvp-base:
   extends: .build
   parallel:
