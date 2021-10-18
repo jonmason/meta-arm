@@ -217,6 +217,9 @@ def runfvp(cli_args):
 
 if __name__ == "__main__":
     try:
+        # Set the process group so that it's possible to kill runfvp and
+        # everything it spawns easily.
+        os.setpgid(0, 0)
         runfvp(sys.argv[1:])
     except KeyboardInterrupt:
         pass
