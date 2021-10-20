@@ -69,8 +69,8 @@ python() {
 
 PACKAGECONFIG ??= "cc-gnuarm"
 # What compiler to use
-PACKAGECONFIG[cc-gnuarm] = "-DTFM_TOOLCHAIN_FILE=toolchain_GNUARM.cmake,,gcc-arm-none-eabi-native"
-PACKAGECONFIG[cc-armclang] = "-DTFM_TOOLCHAIN_FILE=toolchain_ARMCLANG.cmake,,armcompiler-native"
+PACKAGECONFIG[cc-gnuarm] = "-DTFM_TOOLCHAIN_FILE=${S}/toolchain_GNUARM.cmake,,gcc-arm-none-eabi-native"
+PACKAGECONFIG[cc-armclang] = "-DTFM_TOOLCHAIN_FILE=${S}/toolchain_ARMCLANG.cmake,,armcompiler-native"
 # Whether to integrate the test suite
 PACKAGECONFIG[test-secure] = "-DTEST_S=ON,-DTEST_S=OFF"
 PACKAGECONFIG[test-nonsecure] = "-DTEST_NS=ON,-DTEST_NS=OFF"
