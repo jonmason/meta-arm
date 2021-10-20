@@ -101,7 +101,7 @@ do_patch[postfuncs] += "apply_local_patches"
 
 do_configure[cleandirs] = "${B}"
 do_configure() {
-    cmake -G"Unix Makefiles" -S ${S} -B ${B} ${EXTRA_OECMAKE}
+    cmake -G"Unix Makefiles" -S ${S} -B ${B} ${EXTRA_OECMAKE} ${PACKAGECONFIG_CONFARGS}
 }
 
 # Invoke install here as there's no point in splitting compile from install: the
