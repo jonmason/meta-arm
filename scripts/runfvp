@@ -4,6 +4,7 @@ import asyncio
 import json
 import os
 import re
+import signal
 import sys
 import subprocess
 import pathlib
@@ -220,6 +221,9 @@ if __name__ == "__main__":
         # Set the process group so that it's possible to kill runfvp and
         # everything it spawns easily.
         os.setpgid(0, 0)
+        if sys.stdin.isatty():
+            signal.signal(signal.SIGTTOU, signal.SIG_IGN)
+            os.tcsetpgrp(sys.stdin.fileno(), os.getpgrp())
         runfvp(sys.argv[1:])
     except KeyboardInterrupt:
         pass
