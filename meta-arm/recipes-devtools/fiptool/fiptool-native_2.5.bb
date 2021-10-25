@@ -6,10 +6,10 @@ DESCRIPTION = "fiptool - Trusted Firmware tool for packaging"
 LICENSE = "BSD-3-Clause"
 
 SRC_URI = "git://git.trustedfirmware.org/TF-A/trusted-firmware-a.git;destsuffix=fiptool-${PV};protocol=https;"
-LIC_FILES_CHKSUM = "file://docs/license.rst;md5=189505435dbcdcc8caa63c46fe93fa89"
+LIC_FILES_CHKSUM = "file://docs/license.rst;md5=713afe122abbe07f067f939ca3c480c5"
 
-# Use fiptool from TF-A v2.3
-SRCREV = "ecd27ad85f1eba29f6bf92c39dc002c85b07dad5"
+# Use fiptool from TF-A v2.5
+SRCREV = "c158878249f1bd930906ebd744b90d3f2a8265f1"
 
 DEPENDS += "openssl-native"
 
@@ -24,6 +24,5 @@ do_compile () {
 }
 
 do_install () {
-    install -d ${D}${bindir}/
-    install -m 0755 tools/fiptool/fiptool ${D}${bindir}
+    install -D -p -m 0755 tools/fiptool/fiptool ${D}${bindir}/fiptool
 }
