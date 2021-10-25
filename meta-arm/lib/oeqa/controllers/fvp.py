@@ -75,13 +75,14 @@ class OEFVPTarget(oeqa.core.target.ssh.OESSHTarget):
     def stop(self, **kwargs):
         loop = asyncio.get_event_loop()
 
-        # Kill the process group so that the telnet and FVP die too
-        gid = os.getpgid(self.fvp.pid)
-
         try:
+            # Kill the process group so that the telnet and FVP die too
+            gid = os.getpgid(self.fvp.pid)
             self.logger.debug(f"Sending SIGTERM to {gid}")
             os.killpg(gid, signal.SIGTERM)
             loop.run_until_complete(asyncio.wait_for(self.fvp.wait(), 10))
         except TimeoutError:
             self.logger.debug(f"Timed out, sending SIGKILL to {gid}")
             os.killpg(gid, signal.SIGKILL)
+        except ProcessLookupError:
+            return
