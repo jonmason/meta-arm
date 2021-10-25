@@ -7,7 +7,8 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 inherit deploy
 
-SRC_URI = "git://git.trustedfirmware.org/TF-A/trusted-firmware-a.git;protocol=https;name=tfa"
+SRC_URI = "git://git.trustedfirmware.org/TF-A/trusted-firmware-a.git;protocol=https;name=tfa \
+           file://ssl.patch"
 UPSTREAM_CHECK_GITTAGREGEX = "^v(?P<pver>\d+(\.\d+)+)$"
 
 COMPATIBLE_MACHINE ?= "invalid"
@@ -140,6 +141,8 @@ EXTRA_OEMAKE += "${@bb.utils.contains('SEL2_SPMC', '1', 'ARM_SPMC_MANIFEST_DTS=$
 
 # Tell the tools where the native OpenSSL is located
 EXTRA_OEMAKE += "OPENSSL_DIR=${STAGING_DIR_NATIVE}/${prefix_native}"
+# Use the correct native compiler
+EXTRA_OEMAKE += "HOSTCC='${BUILD_CC}'"
 
 # Runtime variables
 EXTRA_OEMAKE += "RUNTIME_SYSROOT=${STAGING_DIR_HOST}"
@@ -148,21 +151,10 @@ BUILD_DIR = "${B}/${TFA_PLATFORM}"
 BUILD_DIR .= "${@'/${TFA_BOARD}' if d.getVar('TFA_BOARD') else ''}"
 BUILD_DIR .= "/${@'debug' if d.getVar("TFA_DEBUG") == '1' else 'release'}"
 
-# The following hack is needed to fit properly in yocto build environment
-# TFA is forcing the host compiler and its flags in the Makefile using :=
-# assignment for GCC and CFLAGS.
 do_compile() {
-    cd ${S}
-
-    # These changes are needed to have the native tools compiling and executing properly
-    sed -i '/^LDLIBS/ s,$, \$\{BUILD_LDFLAGS},' ${S}/tools/fiptool/Makefile
-    sed -i '/^INCLUDE_PATHS/ s,$, \$\{BUILD_CFLAGS},' ${S}/tools/fiptool/Makefile
-    # This can be removed when only TF-A 2.4 onwards is supported
-    sed -i 's^OPENSSL_DIR.*=.*$^OPENSSL_DIR = ${STAGING_DIR_NATIVE}/${prefix_native}^' ${S}/tools/*/Makefile
-
     # Currently there are races if you build all the targets at once in parallel
     for T in ${TFA_BUILD_TARGET}; do
-        oe_runmake $T
+        oe_runmake -C ${S} $T
     done
 }
 do_compile[cleandirs] = "${B}"
