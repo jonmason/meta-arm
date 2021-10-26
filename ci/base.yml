@@ -5,7 +5,7 @@ distro: poky
 
 defaults:
   repos:
-    refspec: honister
+    refspec: master
 
 repos:
   meta-arm:
