@@ -19,6 +19,10 @@ inherit native
 EXTRA_OEMAKE = "V=1 HOSTCC='${BUILD_CC}' OPENSSL_DIR=${STAGING_DIR_NATIVE}/${prefix_native}"
 
 do_compile () {
+    # This is still needed to have the native fiptool executing properly by
+    # setting the RPATH
+    sed -i '/^LDLIBS/ s,$, \$\{BUILD_LDFLAGS},' ${S}/tools/fiptool/Makefile
+
     oe_runmake fiptool
 }
 
