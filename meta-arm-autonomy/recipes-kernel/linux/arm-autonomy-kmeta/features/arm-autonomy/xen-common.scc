@@ -1,3 +1,0 @@
-define KFEATURE_DESCRIPTION "Common XEN (Host and Guest) configs and patches on autonomy systems"
-
-kconf non-hardware xen-common.cfg

@@ -1,6 +1,0 @@
-include ktypes/standard/standard.scc
-include features/input/input.scc
-include features/net/net.scc
-include cfg/timer/no_hz.scc
-
-kconf hardware arm64-autonomy-guest.cfg

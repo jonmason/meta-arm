@@ -1,5 +1,0 @@
-define KMACHINE arm64-autonomy-guest
-define KTYPE standard
-define KARCH arm64
-
-include arm64-autonomy-guest.scc
