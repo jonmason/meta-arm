@@ -1,0 +1,38 @@
+Upstream-Status: Accepted [merged with kernel 5.15]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From 5f4dee73a4bc25a7781a5406b49439bc640981c2 Mon Sep 17 00:00:00 2001
+From: Tong Tiangen <tongtiangen@huawei.com>
+Date: Fri, 11 Jun 2021 09:40:55 +0800
+Subject: [PATCH 10/23] usb: isp1760: Fix meaningless check in isp1763_run()
+
+Remove attribution to retval before check, which make it completely
+meaningless, and does't check what it was supposed: the return
+value of the timed function to set up configuration flag.
+
+Fixes: 60d789f3bfbb ("usb: isp1760: add support for isp1763")
+Tested-by: Rui Miguel Silva <rui.silva@linaro.org>
+Reviewed-by: Rui Miguel Silva <rui.silva@linaro.org>
+Signed-off-by: Tong Tiangen <tongtiangen@huawei.com>
+Link: https://lore.kernel.org/r/20210611014055.68551-1-tongtiangen@huawei.com
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+---
+ drivers/usb/isp1760/isp1760-hcd.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drivers/usb/isp1760/isp1760-hcd.c b/drivers/usb/isp1760/isp1760-hcd.c
+index 016a54ea76f4..27168b4a4ef2 100644
+--- a/drivers/usb/isp1760/isp1760-hcd.c
++++ b/drivers/usb/isp1760/isp1760-hcd.c
+@@ -1648,7 +1648,6 @@ static int isp1763_run(struct usb_hcd *hcd)
+ 	down_write(&ehci_cf_port_reset_rwsem);
+ 	retval = isp1760_hcd_set_and_wait(hcd, FLAG_CF, 250 * 1000);
+ 	up_write(&ehci_cf_port_reset_rwsem);
+-	retval = 0;
+ 	if (retval)
+ 		return retval;
+ 
+-- 
+2.33.0
+

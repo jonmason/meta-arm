@@ -1,0 +1,72 @@
+Upstream-Status: Accepted [merged with kernel 5.14.9]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From 8f238acb1dada56dc6898a6ce2551feed0e6e8c2 Mon Sep 17 00:00:00 2001
+From: Rui Miguel Silva <rui.silva@linaro.org>
+Date: Wed, 25 Aug 2021 00:36:55 +0100
+Subject: [PATCH 22/23] usb: isp1760: use the right irq status bit
+
+Instead of using the fields enum values to check interrupts
+trigged, use the correct bit values.
+
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+---
+ drivers/usb/isp1760/isp1760-udc.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/usb/isp1760/isp1760-udc.c b/drivers/usb/isp1760/isp1760-udc.c
+index a78da59d6417..5cafd23345ca 100644
+--- a/drivers/usb/isp1760/isp1760-udc.c
++++ b/drivers/usb/isp1760/isp1760-udc.c
+@@ -1363,7 +1363,7 @@ static irqreturn_t isp1760_udc_irq(int irq, void *dev)
+ 
+ 	status = isp1760_udc_irq_get_status(udc);
+ 
+-	if (status & DC_IEVBUS) {
++	if (status & ISP176x_DC_IEVBUS) {
+ 		dev_dbg(udc->isp->dev, "%s(VBUS)\n", __func__);
+ 		/* The VBUS interrupt is only triggered when VBUS appears. */
+ 		spin_lock(&udc->lock);
+@@ -1371,7 +1371,7 @@ static irqreturn_t isp1760_udc_irq(int irq, void *dev)
+ 		spin_unlock(&udc->lock);
+ 	}
+ 
+-	if (status & DC_IEBRST) {
++	if (status & ISP176x_DC_IEBRST) {
+ 		dev_dbg(udc->isp->dev, "%s(BRST)\n", __func__);
+ 
+ 		isp1760_udc_reset(udc);
+@@ -1391,18 +1391,18 @@ static irqreturn_t isp1760_udc_irq(int irq, void *dev)
+ 		}
+ 	}
+ 
+-	if (status & DC_IEP0SETUP) {
++	if (status & ISP176x_DC_IEP0SETUP) {
+ 		dev_dbg(udc->isp->dev, "%s(EP0SETUP)\n", __func__);
+ 
+ 		isp1760_ep0_setup(udc);
+ 	}
+ 
+-	if (status & DC_IERESM) {
++	if (status & ISP176x_DC_IERESM) {
+ 		dev_dbg(udc->isp->dev, "%s(RESM)\n", __func__);
+ 		isp1760_udc_resume(udc);
+ 	}
+ 
+-	if (status & DC_IESUSP) {
++	if (status & ISP176x_DC_IESUSP) {
+ 		dev_dbg(udc->isp->dev, "%s(SUSP)\n", __func__);
+ 
+ 		spin_lock(&udc->lock);
+@@ -1413,7 +1413,7 @@ static irqreturn_t isp1760_udc_irq(int irq, void *dev)
+ 		spin_unlock(&udc->lock);
+ 	}
+ 
+-	if (status & DC_IEHS_STA) {
++	if (status & ISP176x_DC_IEHS_STA) {
+ 		dev_dbg(udc->isp->dev, "%s(HS_STA)\n", __func__);
+ 		udc->gadget.speed = USB_SPEED_HIGH;
+ 	}
+-- 
+2.33.0
+

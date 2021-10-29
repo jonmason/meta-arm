@@ -1,0 +1,55 @@
+Upstream-Status: Accepted [merged with kernel 5.15]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From 8472896f39cfab2d8fec9ca746070aaf02609169 Mon Sep 17 00:00:00 2001
+From: Rui Miguel Silva <rui.silva@linaro.org>
+Date: Thu, 19 Aug 2021 19:09:25 +0100
+Subject: [PATCH 14/23] usb: isp1760: ignore return value for bus change
+ pattern
+
+We do not care about the return value of that read between the
+scratch register write and read, we really just want to make sure that
+the pattern in the bus get changed to make sure we are testing
+correctly the scratch pattern.
+
+Clang-analyzer complains about the never read scratch variable:
+>> drivers/usb/isp1760/isp1760-hcd.c:735:2: warning: Value stored to 'scratch' is never read [clang-analyzer-deadcode.DeadStores]
+    scratch = isp1760_hcd_read(hcd, HC_CHIP_ID_HIGH);
+
+Just ignore the return value of that CHIP_ID_HIGH read, add more
+information to the comment above why we are doing this. And as at it,
+just do a small format change in the error message bellow.
+
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+Link: https://lore.kernel.org/r/20210819180929.1327349-2-rui.silva@linaro.org
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+---
+ drivers/usb/isp1760/isp1760-hcd.c | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/usb/isp1760/isp1760-hcd.c b/drivers/usb/isp1760/isp1760-hcd.c
+index 825be736be33..2a21fe5aa7a8 100644
+--- a/drivers/usb/isp1760/isp1760-hcd.c
++++ b/drivers/usb/isp1760/isp1760-hcd.c
+@@ -731,11 +731,15 @@ static int isp1760_hc_setup(struct usb_hcd *hcd)
+ 
+ 	isp1760_hcd_write(hcd, HC_SCRATCH, pattern);
+ 
+-	/* Change bus pattern */
+-	scratch = isp1760_hcd_read(hcd, HC_CHIP_ID_HIGH);
++	/*
++	 * we do not care about the read value here we just want to
++	 * change bus pattern.
++	 */
++	isp1760_hcd_read(hcd, HC_CHIP_ID_HIGH);
+ 	scratch = isp1760_hcd_read(hcd, HC_SCRATCH);
+ 	if (scratch != pattern) {
+-		dev_err(hcd->self.controller, "Scratch test failed. 0x%08x\n", scratch);
++		dev_err(hcd->self.controller, "Scratch test failed. 0x%08x\n",
++			scratch);
+ 		return -ENODEV;
+ 	}
+ 
+-- 
+2.33.0
+

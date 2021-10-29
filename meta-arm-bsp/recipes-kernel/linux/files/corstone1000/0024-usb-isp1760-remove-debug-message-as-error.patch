@@ -1,0 +1,32 @@
+Upstream-Status: Accepted [merged with kernel 5.15]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From 7de14c88272c05d86fce83a5cead36832ce3a424 Mon Sep 17 00:00:00 2001
+From: Rui Miguel Silva <rui.silva@linaro.org>
+Date: Tue, 27 Jul 2021 11:05:14 +0100
+Subject: [PATCH 11/23] usb: isp1760: remove debug message as error
+
+Remove debug message leftover from the boot error buffer.
+
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+Link: https://lore.kernel.org/r/20210727100516.4190681-2-rui.silva@linaro.org
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+---
+ drivers/usb/isp1760/isp1760-hcd.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drivers/usb/isp1760/isp1760-hcd.c b/drivers/usb/isp1760/isp1760-hcd.c
+index 27168b4a4ef2..a745c4c2b773 100644
+--- a/drivers/usb/isp1760/isp1760-hcd.c
++++ b/drivers/usb/isp1760/isp1760-hcd.c
+@@ -733,7 +733,6 @@ static int isp1760_hc_setup(struct usb_hcd *hcd)
+ 
+ 	/* Change bus pattern */
+ 	scratch = isp1760_hcd_read(hcd, HC_CHIP_ID_HIGH);
+-	dev_err(hcd->self.controller, "Scratch test 0x%08x\n", scratch);
+ 	scratch = isp1760_hcd_read(hcd, HC_SCRATCH);
+ 	if (scratch != pattern) {
+ 		dev_err(hcd->self.controller, "Scratch test failed. 0x%08x\n", scratch);
+-- 
+2.33.0
+

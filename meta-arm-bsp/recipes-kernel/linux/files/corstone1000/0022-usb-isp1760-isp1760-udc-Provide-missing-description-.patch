@@ -1,0 +1,41 @@
+Upstream-Status: Accepted [merged with kernel 5.15]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From 8268acfe1cc967dbe9fbb05b5f07a19675a81cff Mon Sep 17 00:00:00 2001
+From: Lee Jones <lee.jones@linaro.org>
+Date: Wed, 26 May 2021 14:00:19 +0100
+Subject: [PATCH 09/23] usb: isp1760: isp1760-udc: Provide missing description
+ for 'udc' param
+
+Fixes the following W=1 kernel build warning(s):
+
+ drivers/usb/isp1760/isp1760-udc.c:150: warning: Function parameter or member 'udc' not described in 'isp1760_udc_select_ep'
+
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: Rui Miguel Silva <rui.silva@linaro.org>
+Cc: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Cc: linux-usb@vger.kernel.org
+Reviewed-by: Rui Miguel Silva <rui.silva@linaro.org>
+Signed-off-by: Lee Jones <lee.jones@linaro.org>
+Link: https://lore.kernel.org/r/20210526130037.856068-7-lee.jones@linaro.org
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+---
+ drivers/usb/isp1760/isp1760-udc.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/usb/isp1760/isp1760-udc.c b/drivers/usb/isp1760/isp1760-udc.c
+index 3e05e3605435..a78da59d6417 100644
+--- a/drivers/usb/isp1760/isp1760-udc.c
++++ b/drivers/usb/isp1760/isp1760-udc.c
+@@ -137,6 +137,7 @@ static void __isp1760_udc_select_ep(struct isp1760_udc *udc,
+ /**
+  * isp1760_udc_select_ep - Select an endpoint for register access
+  * @ep: The endpoint
++ * @udc: Reference to the device controller
+  *
+  * The ISP1761 endpoint registers are banked. This function selects the target
+  * endpoint for banked register access. The selection remains valid until the
+-- 
+2.33.0
+

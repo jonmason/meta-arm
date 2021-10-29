@@ -1,0 +1,40 @@
+Upstream-Status: Accepted [merged with kernel 5.15]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From 8e58b7710d6634ed46ae26fedb8459f84f08fd51 Mon Sep 17 00:00:00 2001
+From: Rui Miguel Silva <rui.silva@linaro.org>
+Date: Thu, 19 Aug 2021 19:09:26 +0100
+Subject: [PATCH 15/23] usb: isp1760: check maxpacketsize before using it
+
+When checking if we need one more packet on a bulk pipe we may, even
+though not probable at all, get there with a zero maxpacketsize.
+In that case for sure no packet, no even a one more, will be
+allocated.
+
+This will clean the clang-analyzer warning:
+drivers/usb/isp1760/isp1760-hcd.c:1856:38: warning: Division by zero [clang-analyzer-core.DivideZero]
+                                && !(urb->transfer_buffer_length %
+
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+Link: https://lore.kernel.org/r/20210819180929.1327349-3-rui.silva@linaro.org
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+---
+ drivers/usb/isp1760/isp1760-hcd.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/usb/isp1760/isp1760-hcd.c b/drivers/usb/isp1760/isp1760-hcd.c
+index 2a21fe5aa7a8..5c947a1eae49 100644
+--- a/drivers/usb/isp1760/isp1760-hcd.c
++++ b/drivers/usb/isp1760/isp1760-hcd.c
+@@ -1854,7 +1854,7 @@ static void packetize_urb(struct usb_hcd *hcd,
+ 				packet_type = OUT_PID;
+ 			else
+ 				packet_type = IN_PID;
+-		} else if (usb_pipebulk(urb->pipe)
++		} else if (usb_pipebulk(urb->pipe) && maxpacketsize
+ 				&& (urb->transfer_flags & URB_ZERO_PACKET)
+ 				&& !(urb->transfer_buffer_length %
+ 							maxpacketsize)) {
+-- 
+2.33.0
+

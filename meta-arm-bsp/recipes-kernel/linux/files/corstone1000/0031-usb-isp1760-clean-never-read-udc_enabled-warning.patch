@@ -1,0 +1,52 @@
+Upstream-Status: Accepted [merged with kernel 5.15]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From de940244e8987a76d73fb2b0057ecd494cbfeefd Mon Sep 17 00:00:00 2001
+From: Rui Miguel Silva <rui.silva@linaro.org>
+Date: Thu, 19 Aug 2021 19:09:29 +0100
+Subject: [PATCH 18/23] usb: isp1760: clean never read udc_enabled warning
+
+When CONFIG_USB_ISP1761_UDC is not enabled the udc_enabled variable is
+never used since it is short circuited before in the logic operations.
+
+This would trigger the following warning by clang analyzer:
+
+drivers/usb/isp1760/isp1760-core.c:490:2: warning: Value stored to 'udc_enabled' is never read [clang-analyzer-deadcode.DeadStores]
+        udc_enabled = ((devflags & ISP1760_FLAG_ISP1763) ||
+        ^
+drivers/usb/isp1760/isp1760-core.c:490:2: note: Value stored to 'udc_enabled' is never read
+
+Just swap the other of the operands in the logic operations.
+
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+Link: https://lore.kernel.org/r/20210819180929.1327349-6-rui.silva@linaro.org
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+---
+ drivers/usb/isp1760/isp1760-core.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/usb/isp1760/isp1760-core.c b/drivers/usb/isp1760/isp1760-core.c
+index ff07e2890692..cb70f9d63cdd 100644
+--- a/drivers/usb/isp1760/isp1760-core.c
++++ b/drivers/usb/isp1760/isp1760-core.c
+@@ -491,7 +491,7 @@ int isp1760_register(struct resource *mem, int irq, unsigned long irqflags,
+ 		       (devflags & ISP1760_FLAG_ISP1761));
+ 
+ 	if ((!IS_ENABLED(CONFIG_USB_ISP1760_HCD) || usb_disabled()) &&
+-	    (!IS_ENABLED(CONFIG_USB_ISP1761_UDC) || !udc_enabled))
++	    (!udc_enabled || !IS_ENABLED(CONFIG_USB_ISP1761_UDC)))
+ 		return -ENODEV;
+ 
+ 	isp = devm_kzalloc(dev, sizeof(*isp), GFP_KERNEL);
+@@ -571,7 +571,7 @@ int isp1760_register(struct resource *mem, int irq, unsigned long irqflags,
+ 			return ret;
+ 	}
+ 
+-	if (IS_ENABLED(CONFIG_USB_ISP1761_UDC) && udc_enabled) {
++	if (udc_enabled && IS_ENABLED(CONFIG_USB_ISP1761_UDC)) {
+ 		ret = isp1760_udc_register(isp, irq, irqflags);
+ 		if (ret < 0) {
+ 			isp1760_hcd_unregister(hcd);
+-- 
+2.33.0
+

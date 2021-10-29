@@ -1,0 +1,38 @@
+Upstream-Status: Accepted [merged with kernel 5.14.9]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From fc22c0fb49d7858b3c7b8bd2a8e041263280e230 Mon Sep 17 00:00:00 2001
+From: Rui Miguel Silva <rui.silva@linaro.org>
+Date: Wed, 25 Aug 2021 00:10:02 +0100
+Subject: [PATCH 20/23] usb: isp1760: fix qtd fill length
+
+When trying to send bulks bigger than the biggest block size
+we need to split them over several qtd. Fix this limiting the
+maximum qtd size to largest block size.
+
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+---
+ drivers/usb/isp1760/isp1760-hcd.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/usb/isp1760/isp1760-hcd.c b/drivers/usb/isp1760/isp1760-hcd.c
+index b3a55c5d2155..fba21122bb00 100644
+--- a/drivers/usb/isp1760/isp1760-hcd.c
++++ b/drivers/usb/isp1760/isp1760-hcd.c
+@@ -1829,9 +1829,11 @@ static void packetize_urb(struct usb_hcd *hcd,
+ 			goto cleanup;
+ 
+ 		if (len > mem->blocks_size[ISP176x_BLOCK_NUM - 1])
+-			len = mem->blocks_size[ISP176x_BLOCK_NUM - 1];
++			this_qtd_len = mem->blocks_size[ISP176x_BLOCK_NUM - 1];
++		else
++			this_qtd_len = len;
+ 
+-		this_qtd_len = qtd_fill(qtd, buf, len);
++		this_qtd_len = qtd_fill(qtd, buf, this_qtd_len);
+ 		list_add_tail(&qtd->qtd_list, head);
+ 
+ 		len -= this_qtd_len;
+-- 
+2.33.0
+

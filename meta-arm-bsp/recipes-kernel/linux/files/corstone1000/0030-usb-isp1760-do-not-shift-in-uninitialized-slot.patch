@@ -1,0 +1,61 @@
+Upstream-Status: Accepted [merged with kernel 5.15]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From 7d1d3882fd9da1ee42fe3ad3a5ffd41fb8204380 Mon Sep 17 00:00:00 2001
+From: Rui Miguel Silva <rui.silva@linaro.org>
+Date: Thu, 19 Aug 2021 19:09:28 +0100
+Subject: [PATCH 17/23] usb: isp1760: do not shift in uninitialized slot
+
+Even though it is not expected, and would trigger a WARN_ON, killing a
+transfer in a uninitialized slot this sequence is warned by clang
+analyzer, twice:
+
+drivers/usb/isp1760/isp1760-hcd.c:1976:18: warning: The result of the left shift is undefined because the right operand is negative [clang-analyzer-core.UndefinedBinaryOperatorResult]
+                skip_map |= (1 << qh->slot);
+drivers/usb/isp1760/isp1760-hcd.c:1983:18: warning: The result of the left shift is undefined because the right operand is negative [clang-analyzer-core.UndefinedBinaryOperatorResult]
+                skip_map |= (1 << qh->slot);
+
+Only set skip map if slot is active.
+
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+Link: https://lore.kernel.org/r/20210819180929.1327349-5-rui.silva@linaro.org
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+---
+ drivers/usb/isp1760/isp1760-hcd.c | 18 +++++++++++-------
+ 1 file changed, 11 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/usb/isp1760/isp1760-hcd.c b/drivers/usb/isp1760/isp1760-hcd.c
+index aed2714ce0cf..bf8ab3fe2e5a 100644
+--- a/drivers/usb/isp1760/isp1760-hcd.c
++++ b/drivers/usb/isp1760/isp1760-hcd.c
+@@ -1974,16 +1974,20 @@ static void kill_transfer(struct usb_hcd *hcd, struct urb *urb,
+ 	/* We need to forcefully reclaim the slot since some transfers never
+ 	   return, e.g. interrupt transfers and NAKed bulk transfers. */
+ 	if (usb_pipecontrol(urb->pipe) || usb_pipebulk(urb->pipe)) {
+-		skip_map = isp1760_hcd_read(hcd, HC_ATL_PTD_SKIPMAP);
+-		skip_map |= (1 << qh->slot);
+-		isp1760_hcd_write(hcd, HC_ATL_PTD_SKIPMAP, skip_map);
+-		ndelay(100);
++		if (qh->slot != -1) {
++			skip_map = isp1760_hcd_read(hcd, HC_ATL_PTD_SKIPMAP);
++			skip_map |= (1 << qh->slot);
++			isp1760_hcd_write(hcd, HC_ATL_PTD_SKIPMAP, skip_map);
++			ndelay(100);
++		}
+ 		priv->atl_slots[qh->slot].qh = NULL;
+ 		priv->atl_slots[qh->slot].qtd = NULL;
+ 	} else {
+-		skip_map = isp1760_hcd_read(hcd, HC_INT_PTD_SKIPMAP);
+-		skip_map |= (1 << qh->slot);
+-		isp1760_hcd_write(hcd, HC_INT_PTD_SKIPMAP, skip_map);
++		if (qh->slot != -1) {
++			skip_map = isp1760_hcd_read(hcd, HC_INT_PTD_SKIPMAP);
++			skip_map |= (1 << qh->slot);
++			isp1760_hcd_write(hcd, HC_INT_PTD_SKIPMAP, skip_map);
++		}
+ 		priv->int_slots[qh->slot].qh = NULL;
+ 		priv->int_slots[qh->slot].qtd = NULL;
+ 	}
+-- 
+2.33.0
+

@@ -1,0 +1,64 @@
+Upstream-Status: Accepted [merged with kernel 5.14.9]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From 03e28d5233d50fb2a27fa02d032e77974d03eb2b Mon Sep 17 00:00:00 2001
+From: Rui Miguel Silva <rui.silva@linaro.org>
+Date: Thu, 13 May 2021 09:47:11 +0100
+Subject: [PATCH 03/23] usb: isp1760: use relaxed primitives
+
+Use io relaxed access memory primitives to satisfy strict type
+checking (__force).
+
+This will fix some existing sparse warnings:
+sparse: warning: cast to restricted __le32
+
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+Link: https://lore.kernel.org/r/20210513084717.2487366-4-rui.silva@linaro.org
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+---
+ drivers/usb/isp1760/isp1760-hcd.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/usb/isp1760/isp1760-hcd.c b/drivers/usb/isp1760/isp1760-hcd.c
+index 20d142140574..2cc0555e029d 100644
+--- a/drivers/usb/isp1760/isp1760-hcd.c
++++ b/drivers/usb/isp1760/isp1760-hcd.c
+@@ -246,7 +246,7 @@ static void bank_reads8(void __iomem *src_base, u32 src_offset, u32 bank_addr,
+ 
+ 	if (src_offset < PAYLOAD_OFFSET) {
+ 		while (bytes >= 4) {
+-			*dst = le32_to_cpu(__raw_readl(src));
++			*dst = readl_relaxed(src);
+ 			bytes -= 4;
+ 			src++;
+ 			dst++;
+@@ -267,7 +267,7 @@ static void bank_reads8(void __iomem *src_base, u32 src_offset, u32 bank_addr,
+ 	 * allocated.
+ 	 */
+ 	if (src_offset < PAYLOAD_OFFSET)
+-		val = le32_to_cpu(__raw_readl(src));
++		val = readl_relaxed(src);
+ 	else
+ 		val = __raw_readl(src);
+ 
+@@ -301,7 +301,7 @@ static void mem_writes8(void __iomem *dst_base, u32 dst_offset,
+ 
+ 	if (dst_offset < PAYLOAD_OFFSET) {
+ 		while (bytes >= 4) {
+-			__raw_writel(cpu_to_le32(*src), dst);
++			writel_relaxed(*src, dst);
+ 			bytes -= 4;
+ 			src++;
+ 			dst++;
+@@ -322,7 +322,7 @@ static void mem_writes8(void __iomem *dst_base, u32 dst_offset,
+ 	 */
+ 
+ 	if (dst_offset < PAYLOAD_OFFSET)
+-		__raw_writel(cpu_to_le32(*src), dst);
++		writel_relaxed(*src, dst);
+ 	else
+ 		__raw_writel(*src, dst);
+ }
+-- 
+2.33.0
+
