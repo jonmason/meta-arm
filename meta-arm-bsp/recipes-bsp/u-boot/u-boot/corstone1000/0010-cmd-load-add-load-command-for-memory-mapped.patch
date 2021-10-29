@@ -1,10 +1,10 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
-
-From 5278fb64beabeddd6c80229e5165f91ed1e95376 Mon Sep 17 00:00:00 2001
+From 53641a3776dc6c96716c81d9ca522ddf4756a07f Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Thu, 24 Jun 2021 09:25:00 +0100
-Subject: [PATCH 10/16] cmd: load: add load command for memory mapped
+Subject: [PATCH] cmd: load: add load command for memory mapped
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
 
 cp.b is used a lot as a way to load binaries to memory and execute
 them, however we may need to integrate this with the efi subsystem to
@@ -19,6 +19,7 @@ with this a kernel with CONFIG_EFI_STUB enabled will be loaded and
 then subsequently booted with bootefi command.
 
 Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+
 ---
  cmd/Kconfig                      |  6 ++++
  cmd/bootefi.c                    | 12 ++++++++
@@ -28,7 +29,7 @@ Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
  5 files changed, 79 insertions(+)
 
 diff --git a/cmd/Kconfig b/cmd/Kconfig
-index a9fb4eead2..56fa0ceade 100644
+index 3a857b3f6e2e..a33b2a2a123b 100644
 --- a/cmd/Kconfig
 +++ b/cmd/Kconfig
 @@ -1048,6 +1048,12 @@ config CMD_LOADB
@@ -45,7 +46,7 @@ index a9fb4eead2..56fa0ceade 100644
  	bool "loads"
  	default y
 diff --git a/cmd/bootefi.c b/cmd/bootefi.c
-index cba81ffe75..9e1b91c89e 100644
+index 83eab0bd7f18..698698a7d257 100644
 --- a/cmd/bootefi.c
 +++ b/cmd/bootefi.c
 @@ -34,6 +34,18 @@ static struct efi_device_path *bootefi_device_path;
@@ -68,7 +69,7 @@ index cba81ffe75..9e1b91c89e 100644
   * efi_clear_bootdev() - clear boot device
   */
 diff --git a/cmd/load.c b/cmd/load.c
-index b7894d7db0..4de197681c 100644
+index 381ed1b3e25b..fea81a4e027a 100644
 --- a/cmd/load.c
 +++ b/cmd/load.c
 @@ -1020,6 +1020,45 @@ static ulong load_serial_ymodem(ulong offset, int mode)
@@ -132,23 +133,23 @@ index b7894d7db0..4de197681c 100644
 +);
 +#endif /* CONFIG_CMD_LOADM */
 diff --git a/include/efi_loader.h b/include/efi_loader.h
-index b81180cfda..fc4f1ec67a 100644
+index c440962fe522..611aae64a9ba 100644
 --- a/include/efi_loader.h
 +++ b/include/efi_loader.h
-@@ -485,6 +485,8 @@ void efi_save_gd(void);
- void efi_restore_gd(void);
+@@ -577,6 +577,8 @@ efi_status_t efi_load_pe(struct efi_loaded_image_obj *handle,
+ void efi_save_gd(void);
  /* Call this to relocate the runtime section to an address space */
  void efi_runtime_relocate(ulong offset, struct efi_mem_desc *map);
 +/* Call this to get image parameters */
 +void efi_get_image_parameters(void **img_addr, size_t *img_size);
- /* Call this to set the current device name */
- void efi_set_bootdev(const char *dev, const char *devnr, const char *path,
- 		     void *buffer, size_t buffer_size);
+ /* Add a new object to the object list. */
+ void efi_add_handle(efi_handle_t obj);
+ /* Create handle */
 diff --git a/lib/efi_loader/efi_device_path.c b/lib/efi_loader/efi_device_path.c
-index 76c2f82fe6..a610b6ff0e 100644
+index cbdb466da41c..537f7b8c5f9a 100644
 --- a/lib/efi_loader/efi_device_path.c
 +++ b/lib/efi_loader/efi_device_path.c
-@@ -1170,6 +1170,8 @@ efi_status_t efi_dp_from_name(const char *dev, const char *devnr,
+@@ -1176,6 +1176,8 @@ efi_status_t efi_dp_from_name(const char *dev, const char *devnr,
  {
  	struct blk_desc *desc = NULL;
  	struct disk_partition fs_partition;
@@ -157,7 +158,7 @@ index 76c2f82fe6..a610b6ff0e 100644
  	int part = 0;
  	char *filename;
  	char *s;
-@@ -1185,6 +1187,14 @@ efi_status_t efi_dp_from_name(const char *dev, const char *devnr,
+@@ -1191,6 +1193,14 @@ efi_status_t efi_dp_from_name(const char *dev, const char *devnr,
  	} else if (!strcmp(dev, "Uart")) {
  		if (device)
  			*device = efi_dp_from_uart();
@@ -172,6 +173,3 @@ index 76c2f82fe6..a610b6ff0e 100644
  	} else {
  		part = blk_get_device_part_str(dev, devnr, &desc, &fs_partition,
  					       1);
--- 
-2.33.0
-

@@ -1,4 +1,4 @@
-From 6ae7b384eef45dd9f70e5e53c32cb14c56733013 Mon Sep 17 00:00:00 2001
+From 44db30dcf57035f130246d5c76a34f205822347f Mon Sep 17 00:00:00 2001
 From: Anders Dellien <anders.dellien@arm.com>
 Date: Thu, 23 Jul 2020 17:32:55 +0100
 Subject: [PATCH] Add vexpress_aemv8a_aarch32 variant
@@ -30,10 +30,10 @@ Signed-off-by: Anders Dellien <anders.dellien@arm.com>
  create mode 100644 configs/vexpress_aemv8a_aarch32_defconfig
 
 diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
-index 3307f2b3fc..0389e04cfb 100644
+index b5bd3284cd1c..b3aae233a1ac 100644
 --- a/arch/arm/Kconfig
 +++ b/arch/arm/Kconfig
-@@ -1184,6 +1184,11 @@ config TARGET_VEXPRESS64_BASE_FVP
+@@ -1170,6 +1170,11 @@ config TARGET_VEXPRESS64_BASE_FVP
  	select PL01X_SERIAL
  	select SEMIHOSTING
  
@@ -46,7 +46,7 @@ index 3307f2b3fc..0389e04cfb 100644
  	bool "Support Versatile Express Juno Development Platform"
  	select ARM64
 diff --git a/board/armltd/vexpress64/Kconfig b/board/armltd/vexpress64/Kconfig
-index 1d13f542e6..dad181c93c 100644
+index 1d13f542e677..dad181c93c3d 100644
 --- a/board/armltd/vexpress64/Kconfig
 +++ b/board/armltd/vexpress64/Kconfig
 @@ -1,4 +1,4 @@
@@ -57,7 +57,7 @@ index 1d13f542e6..dad181c93c 100644
  	default "vexpress64"
 diff --git a/configs/vexpress_aemv8a_aarch32_defconfig b/configs/vexpress_aemv8a_aarch32_defconfig
 new file mode 100644
-index 0000000000..0726e0d0db
+index 000000000000..0726e0d0db5a
 --- /dev/null
 +++ b/configs/vexpress_aemv8a_aarch32_defconfig
 @@ -0,0 +1,40 @@
@@ -102,7 +102,7 @@ index 0000000000..0726e0d0db
 +CONFIG_DM_SERIAL=y
 +CONFIG_PL01X_SERIAL=y
 diff --git a/include/configs/vexpress_aemv8a.h b/include/configs/vexpress_aemv8a.h
-index 7318fb6c58..f223811134 100644
+index 54b5967a89dc..48b75c10d979 100644
 --- a/include/configs/vexpress_aemv8a.h
 +++ b/include/configs/vexpress_aemv8a.h
 @@ -9,8 +9,15 @@
@@ -132,9 +132,9 @@ index 7318fb6c58..f223811134 100644
  #define GICD_BASE			(0x2f000000)
  #define GICC_BASE			(0x2c000000)
  #elif CONFIG_TARGET_VEXPRESS64_JUNO
-@@ -164,7 +172,8 @@
- #endif
- 
+@@ -174,7 +182,8 @@
+ 				"fdt_addr_r=0x80000000\0" \
+ 				BOOTENV
  
 -#elif CONFIG_TARGET_VEXPRESS64_BASE_FVP
 +#elif defined(CONFIG_TARGET_VEXPRESS64_BASE_FVP) || \
@@ -142,7 +142,7 @@ index 7318fb6c58..f223811134 100644
  #define CONFIG_EXTRA_ENV_SETTINGS	\
  				"kernel_name=Image\0"		\
  				"kernel_addr=0x80080000\0"	\
-@@ -173,7 +182,9 @@
+@@ -183,7 +192,9 @@
  				"fdtfile=devtree.dtb\0"		\
  				"fdt_addr=0x83000000\0"		\
  				"boot_name=boot.img\0"		\
@@ -153,7 +153,7 @@ index 7318fb6c58..f223811134 100644
  
  #ifndef CONFIG_BOOTCOMMAND
  #define CONFIG_BOOTCOMMAND	"if smhload ${boot_name} ${boot_addr}; then " \
-@@ -183,15 +194,13 @@
+@@ -193,15 +204,13 @@
  				"  bootm ${boot_addr} ${boot_addr} " \
  				"  ${fdt_addr}; " \
  				"else; " \
@@ -171,5 +171,5 @@ index 7318fb6c58..f223811134 100644
  #endif
  #endif
 -- 
-2.17.1
+2.20.1
 

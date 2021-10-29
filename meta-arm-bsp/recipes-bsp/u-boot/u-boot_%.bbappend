@@ -1,5 +1,3 @@
-# Machine specific u-boot
-
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
 #
@@ -37,3 +35,8 @@ SRC_URI:append:fvp-base = " file://bootargs.cfg"
 # FVP BASE ARM32
 #
 SRC_URI:append:fvp-base-arm32 = " file://0001-Add-vexpress_aemv8a_aarch32-variant.patch"
+
+#
+# TC0 and TC1 MACHINES
+#
+SRC_URI:append:tc = " file://bootargs.cfg"

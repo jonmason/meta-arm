@@ -1,22 +1,23 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
-
-From 663bfde59a56d65c031526f75f0e08126f02d845 Mon Sep 17 00:00:00 2001
+From c23a5b3c07e20586ab2d3fc0ea7bda3be633e936 Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Tue, 27 Jul 2021 23:34:57 +0100
-Subject: [PATCH 05/16] corstone1000: enable isp1763 and usb stack
+Subject: [PATCH] corstone1000: enable isp1763 and usb stack
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
 
 MPS3 board have a ISP1763 usb controller, add the correspondent mmio
 area and enable it to be used for mass storage access for example.
 
 Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+
 ---
  board/armltd/corstone1000/corstone1000.c |  8 ++++++++
- configs/corstone1000_defconfig           | 19 +++++++++----------
- 2 files changed, 17 insertions(+), 10 deletions(-)
+ configs/corstone1000_defconfig           | 18 ++++++++----------
+ 2 files changed, 16 insertions(+), 10 deletions(-)
 
 diff --git a/board/armltd/corstone1000/corstone1000.c b/board/armltd/corstone1000/corstone1000.c
-index ab98fa87fb..a51f5ddfa0 100644
+index ab98fa87fbcd..a51f5ddfa002 100644
 --- a/board/armltd/corstone1000/corstone1000.c
 +++ b/board/armltd/corstone1000/corstone1000.c
 @@ -46,6 +46,14 @@ static struct mm_region corstone1000_mem_map[] = {
@@ -35,7 +36,7 @@ index ab98fa87fb..a51f5ddfa0 100644
  		/* OCVM */
  		.virt = 0x80000000UL,
 diff --git a/configs/corstone1000_defconfig b/configs/corstone1000_defconfig
-index 54c746d829..fed2b16c93 100644
+index 54c746d829cb..8c0329611ba8 100644
 --- a/configs/corstone1000_defconfig
 +++ b/configs/corstone1000_defconfig
 @@ -1,13 +1,12 @@
@@ -68,7 +69,7 @@ index 54c746d829..fed2b16c93 100644
  # CONFIG_CMD_ITEST is not set
  # CONFIG_CMD_SETEXPR is not set
  CONFIG_CMD_DHCP=y
-@@ -29,12 +27,13 @@ CONFIG_CMD_DHCP=y
+@@ -29,12 +27,12 @@ CONFIG_CMD_DHCP=y
  CONFIG_CMD_MII=y
  CONFIG_CMD_PING=y
  CONFIG_CMD_CACHE=y
@@ -84,9 +85,5 @@ index 54c746d829..fed2b16c93 100644
  CONFIG_DM_SERIAL=y
 -CONFIG_OF_LIBFDT=y
 +CONFIG_USB=y
-+CONFIG_DM_USB=y
 +CONFIG_USB_ISP1760=y
 +CONFIG_USB_STORAGE=y
--- 
-2.33.0
-
