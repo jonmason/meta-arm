@@ -1,0 +1,49 @@
+header:
+  version: 9
+
+distro: poky-tiny
+
+defaults:
+  repos:
+    refspec: master
+
+repos:
+  meta-arm:
+    layers:
+      meta-arm:
+      meta-arm-bsp:
+      meta-arm-toolchain:
+
+  poky:
+    url: https://git.yoctoproject.org/git/poky
+    refspec: honister
+    layers:
+      meta:
+      meta-poky:
+      meta-yocto-bsp:
+
+  meta-openembedded:
+    url: https://git.openembedded.org/meta-openembedded
+    refspec: f16efc00b7fcdbfa8c53e35c1fcebed5c06d975e
+    layers:
+      meta-oe:
+      meta-python:
+
+  meta-arm-image:
+     url: https://git.gitlab.arm.com/arm-reference-solutions/meta-arm-image.git
+     refspec: main
+
+local_conf_header:
+  base: |
+    CONF_VERSION = "2"
+    PACKAGE_CLASSES = "package_ipk"
+    LICENSE_FLAGS_WHITELIST += "armcompiler"
+    BB_NUMBER_THREADS ?= "16"
+    PARALLEL_MAKE ?= "-j16"
+    INHERIT += "rm_work"
+    PACKAGECONFIG:append:pn-perf = " coresight"
+
+machine: unset
+
+target:
+  - corstone1000-image
