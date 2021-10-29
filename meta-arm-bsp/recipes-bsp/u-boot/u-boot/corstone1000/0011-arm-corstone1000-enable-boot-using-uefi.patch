@@ -1,0 +1,61 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From 283cae5b37eced831080a50d76006359662fb6bf Mon Sep 17 00:00:00 2001
+From: Rui Miguel Silva <rui.silva@linaro.org>
+Date: Wed, 23 Jun 2021 00:45:38 +0100
+Subject: [PATCH 11/16] arm: corstone1000: enable boot using uefi
+
+In a way to prepare future use of uefi features, enable booting using
+the bootefi binary loading.
+
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+Signed-off-by: Rui Miguel Silva <rui.silva@arm.com>
+---
+ configs/corstone1000_defconfig | 7 +++++++
+ include/configs/corstone1000.h | 6 +++---
+ 2 files changed, 10 insertions(+), 3 deletions(-)
+
+diff --git a/configs/corstone1000_defconfig b/configs/corstone1000_defconfig
+index af1c5ecd89..aa664029fc 100644
+--- a/configs/corstone1000_defconfig
++++ b/configs/corstone1000_defconfig
+@@ -2,6 +2,7 @@ CONFIG_ARM=y
+ CONFIG_TARGET_CORSTONE1000=y
+ CONFIG_SYS_TEXT_BASE=0x80000000
+ CONFIG_SYS_MALLOC_F_LEN=0x2000
++CONFIG_SYS_LOAD_ADDR=0x82100000
+ CONFIG_NR_DRAM_BANKS=1
+ CONFIG_IDENT_STRING=" corstone1000 aarch64 "
+ CONFIG_FIT=y
+@@ -14,6 +15,12 @@ CONFIG_HUSH_PARSER=y
+ CONFIG_SYS_PROMPT="corstone1000# "
+ # CONFIG_CMD_CONSOLE is not set
+ CONFIG_CMD_BOOTZ=y
++CONFIG_CMD_BOOTM=y
++CONFIG_CMD_LOADM=y
++CONFIG_CMD_BOOTEFI=y
++CONFIG_EFI_LOADER=y
++CONFIG_CMD_BOOTEFI_HELLO_COMPILE=y
++CONFIG_CMD_BOOTEFI_HELLO=y
+ # CONFIG_CMD_XIMG is not set
+ # CONFIG_CMD_EDITENV is not set
+ # CONFIG_CMD_ENV_EXISTS is not set
+diff --git a/include/configs/corstone1000.h b/include/configs/corstone1000.h
+index 389ac45a58..5e22e075ad 100644
+--- a/include/configs/corstone1000.h
++++ b/include/configs/corstone1000.h
+@@ -70,7 +70,7 @@
+ 				"fdt_high=0xffffffff\0"
+ 
+ #define CONFIG_BOOTCOMMAND					\
+-				"echo Copying Kernel to memory ... ;" \
+-                                "cp.b $kernel_addr $kernel_addr_r 0xc00000;" \
+-                                "booti $kernel_addr_r - $fdtcontroladdr; "
++				"echo Loading Kernel to memory ... ;" \
++				"loadm $kernel_addr $kernel_addr_r 0xc00000;" \
++				"bootefi $kernel_addr_r $fdtcontroladdr;"
+ #endif
+-- 
+2.33.0
+

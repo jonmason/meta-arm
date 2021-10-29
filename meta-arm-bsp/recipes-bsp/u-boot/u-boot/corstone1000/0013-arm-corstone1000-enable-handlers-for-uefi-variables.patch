@@ -1,0 +1,47 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From de37d61d1414cb6408390412cf77d7a88f8964e1 Mon Sep 17 00:00:00 2001
+From: Rui Miguel Silva <rui.silva@linaro.org>
+Date: Tue, 14 Sep 2021 22:00:47 +0100
+Subject: [PATCH 13/16] arm: corstone1000: enable handlers for uefi variables
+
+Enable the setenv/printenv -e option to handle uefi
+variables and the efidebug command.
+
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+---
+ configs/corstone1000_defconfig | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/configs/corstone1000_defconfig b/configs/corstone1000_defconfig
+index a8651287ed..b17e2df47b 100644
+--- a/configs/corstone1000_defconfig
++++ b/configs/corstone1000_defconfig
+@@ -24,6 +24,7 @@ CONFIG_CMD_BOOTEFI_HELLO=y
+ # CONFIG_CMD_XIMG is not set
+ # CONFIG_CMD_EDITENV is not set
+ # CONFIG_CMD_ENV_EXISTS is not set
++CONFIG_CMD_NVEDIT_EFI=y
+ # CONFIG_CMD_LOADS is not set
+ CONFIG_CMD_USB=y
+ # CONFIG_CMD_ITEST is not set
+@@ -33,6 +34,7 @@ CONFIG_CMD_DHCP=y
+ CONFIG_CMD_MII=y
+ CONFIG_CMD_PING=y
+ CONFIG_CMD_CACHE=y
++CONFIG_CMD_EFIDEBUG=y
+ CONFIG_CMD_FAT=y
+ CONFIG_OF_CONTROL=y
+ CONFIG_REGMAP=y
+@@ -43,6 +45,7 @@ CONFIG_USB=y
+ CONFIG_DM_USB=y
+ CONFIG_USB_ISP1760=y
+ CONFIG_USB_STORAGE=y
++# CONFIG_HEXDUMP is not set
+ CONFIG_EFI_SECURE_BOOT=y
+ CONFIG_DM_RTC=y
+ CONFIG_CMD_RTC=y
+-- 
+2.33.0
+

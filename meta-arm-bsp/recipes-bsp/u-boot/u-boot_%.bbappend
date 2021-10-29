@@ -21,6 +21,11 @@ SRC_URI:append:corstone1000 = " \
       file://0007-arm-corstone1000-sharing-PSCI-DTS-node-between-FVP-a.patch \
       file://0008-arm-corstone1000-Emulated-RTC-Support.patch \
       file://0009-arm-corstone1000-execute-uboot-from-DDR.patch \
+      file://0010-cmd-load-add-load-command-for-memory-mapped.patch \
+      file://0011-arm-corstone1000-enable-boot-using-uefi.patch \
+      file://0012-arm-corstone1000-enable-uefi-secure-boot.patch \
+      file://0013-arm-corstone1000-enable-handlers-for-uefi-variables.patch \
+      file://0014-arm-corstone1000-enable-efi-capsule-options.patch \
       "
 
 #

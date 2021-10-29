@@ -1,0 +1,36 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From fe0acf22a0c30f7d3eb1a8c66fb423b4146d35ab Mon Sep 17 00:00:00 2001
+From: Rui Miguel Silva <rui.silva@linaro.org>
+Date: Tue, 14 Sep 2021 22:07:15 +0100
+Subject: [PATCH 14/16] arm: dipha: enable efi capsule options
+
+Enable the set of efi capsule config options to enable the
+variables.
+
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+---
+ configs/corstone1000_defconfig | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/configs/corstone1000_defconfig b/configs/corstone1000_defconfig
+index b17e2df47b..cfe80cf5f4 100644
+--- a/configs/corstone1000_defconfig
++++ b/configs/corstone1000_defconfig
+@@ -46,6 +46,12 @@ CONFIG_DM_USB=y
+ CONFIG_USB_ISP1760=y
+ CONFIG_USB_STORAGE=y
+ # CONFIG_HEXDUMP is not set
++CONFIG_EFI_RUNTIME_UPDATE_CAPSULE=y
++CONFIG_EFI_CAPSULE_ON_DISK=y
++CONFIG_EFI_CAPSULE_ON_DISK_EARLY=y
++CONFIG_EFI_CAPSULE_AUTHENTICATE=y
++CONFIG_EFI_CAPSULE_FIRMWARE_FIT=y
++CONFIG_EFI_CAPSULE_FIRMWARE_RAW=y
+ CONFIG_EFI_SECURE_BOOT=y
+ CONFIG_DM_RTC=y
+ CONFIG_CMD_RTC=y
+-- 
+2.33.0
+
