@@ -1,0 +1,201 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From bf95f27e300e962140a5dec45c2b1727c0829511 Mon Sep 17 00:00:00 2001
+From: "Arpita S.K" <Arpita.S.K@arm.com>
+Date: Wed, 13 Oct 2021 14:49:26 +0530
+Subject: [PATCH] plat/arm: corstone1000: made changes to accommodate 3MB for
+ optee
+
+* These changes are required to accommodate 3MB for OP-TEE and this
+is required for SP's part of optee
+* Added size macro's for better readability of the code
+* Moved uboot execution memory from CVM to DDR
+
+Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
+---
+ include/plat/common/common_def.h              | 25 ++++++++
+ .../common/corstone1000_bl2_mem_params_desc.c |  7 +--
+ .../common/include/platform_def.h             | 59 +++++++++++--------
+ 3 files changed, 64 insertions(+), 27 deletions(-)
+
+diff --git a/include/plat/common/common_def.h b/include/plat/common/common_def.h
+index 14ae603b9b..5bb58692ef 100644
+--- a/include/plat/common/common_def.h
++++ b/include/plat/common/common_def.h
+@@ -12,6 +12,31 @@
+ #include <lib/utils_def.h>
+ #include <lib/xlat_tables/xlat_tables_defs.h>
+ 
++#define SZ_1K                          0x00000400
++#define SZ_2K                          0x00000800
++#define SZ_4K                          0x00001000
++#define SZ_8K                          0x00002000
++#define SZ_16K                         0x00004000
++#define SZ_32K                         0x00008000
++#define SZ_64K                         0x00010000
++#define SZ_128K                                0x00020000
++#define SZ_256K                                0x00040000
++#define SZ_512K                                0x00080000
++
++#define SZ_1M                          0x00100000
++#define SZ_2M                          0x00200000
++#define SZ_4M                          0x00400000
++#define SZ_8M                          0x00800000
++#define SZ_16M                         0x01000000
++#define SZ_32M                         0x02000000
++#define SZ_64M                         0x04000000
++#define SZ_128M                                0x08000000
++#define SZ_256M                                0x10000000
++#define SZ_512M                                0x20000000
++
++#define SZ_1G                          0x40000000
++#define SZ_2G                          0x80000000
++
+ /******************************************************************************
+  * Required platform porting definitions that are expected to be common to
+  * all platforms
+diff --git a/plat/arm/board/corstone1000/common/corstone1000_bl2_mem_params_desc.c b/plat/arm/board/corstone1000/common/corstone1000_bl2_mem_params_desc.c
+index 7baa82d31b..6e90936a14 100644
+--- a/plat/arm/board/corstone1000/common/corstone1000_bl2_mem_params_desc.c
++++ b/plat/arm/board/corstone1000/common/corstone1000_bl2_mem_params_desc.c
+@@ -71,13 +71,12 @@ static bl_mem_params_node_t bl2_mem_params_descs[] = {
+ 		.image_id = BL33_IMAGE_ID,
+ 		SET_STATIC_PARAM_HEAD(ep_info, PARAM_EP,
+ 			VERSION_2, entry_point_info_t, NON_SECURE | EXECUTABLE),
+-		.ep_info.pc = PLAT_ARM_NS_IMAGE_BASE,
++		.ep_info.pc = BL33_BASE,
+ 
+ 		SET_STATIC_PARAM_HEAD(image_info, PARAM_EP,
+ 			VERSION_2, image_info_t, 0),
+-		.image_info.image_base = PLAT_ARM_NS_IMAGE_BASE,
+-		.image_info.image_max_size = ARM_DRAM1_BASE + ARM_DRAM1_SIZE
+-			- PLAT_ARM_NS_IMAGE_BASE,
++		.image_info.image_base = BL33_BASE,
++		.image_info.image_max_size = BL33_LIMIT - BL33_BASE,
+ 
+ 		.next_handoff_image_id = INVALID_IMAGE_ID,
+ 	},
+diff --git a/plat/arm/board/corstone1000/common/include/platform_def.h b/plat/arm/board/corstone1000/common/include/platform_def.h
+index e36bb626ee..a0ac0fe758 100644
+--- a/plat/arm/board/corstone1000/common/include/platform_def.h
++++ b/plat/arm/board/corstone1000/common/include/platform_def.h
+@@ -119,7 +119,7 @@
+  *
+  * <ARM_NS_SHARED_RAM_BASE> = <ARM_TRUSTED_SRAM_BASE> + 1 MB
+  *
+- *         partition size: 3 MB
++ *         partition size: 512 KB
+  *
+  *         content:
+  *
+@@ -128,13 +128,13 @@
+ 
+ /* DDR memory */
+ #define ARM_DRAM1_BASE			UL(0x80000000)
+-#define ARM_DRAM1_SIZE			UL(0x80000000)
++#define ARM_DRAM1_SIZE                 (SZ_2G) /* 2GB*/
+ #define ARM_DRAM1_END				(ARM_DRAM1_BASE +	\
+ 						ARM_DRAM1_SIZE - 1)
+ 
+ /* DRAM1 and DRAM2 are the same for corstone1000 */
+-#define ARM_DRAM2_BASE			ARM_DRAM1_BASE
+-#define ARM_DRAM2_SIZE			ARM_DRAM1_SIZE
++#define ARM_DRAM2_BASE                         ARM_DRAM1_BASE
++#define ARM_DRAM2_SIZE                         ARM_DRAM1_SIZE
+ #define ARM_DRAM2_END				ARM_DRAM1_END
+ 
+ #define ARM_NS_DRAM1_BASE			ARM_DRAM1_BASE
+@@ -144,23 +144,31 @@
+ 
+ /* The first 8 KB of Trusted SRAM are used as shared memory */
+ #define ARM_TRUSTED_SRAM_BASE			UL(0x02000000)
+-#define ARM_SHARED_RAM_SIZE			UL(0x00002000)  /* 8 KB */
++#define ARM_SHARED_RAM_SIZE                    (SZ_8K)  /* 8 KB */
+ #define ARM_SHARED_RAM_BASE			ARM_TRUSTED_SRAM_BASE
+ 
+ /* The remaining Trusted SRAM is used to load the BL images */
++#define TOTAL_SRAM_SIZE                                (SZ_4M) /* 4 MB */
+ 
+-#define PLAT_ARM_TRUSTED_SRAM_SIZE		UL(0x00100000)  /* 1 MB */
++/* Last 512KB of CVM is allocated for shared RAM
++ * as an example openAMP */
++#define ARM_NS_SHARED_RAM_SIZE                 (512 * SZ_1K)
+ 
+-#define PLAT_ARM_MAX_BL2_SIZE			UL(0x0002d000)  /* 180 KB */
++#define PLAT_ARM_TRUSTED_SRAM_SIZE             (TOTAL_SRAM_SIZE - \
++                                                ARM_NS_SHARED_RAM_SIZE - \
++                                                ARM_SHARED_RAM_SIZE)
+ 
+-#define PLAT_ARM_MAX_BL31_SIZE		UL(0x00023000)  /* 140 KB */
++#define PLAT_ARM_MAX_BL2_SIZE                  (180 * SZ_1K)  /* 180 KB */
+ 
+-#define ARM_BL_RAM_BASE			(ARM_SHARED_RAM_BASE +	\
+-						ARM_SHARED_RAM_SIZE)
+-#define ARM_BL_RAM_SIZE			(PLAT_ARM_TRUSTED_SRAM_SIZE -	\
+-						ARM_SHARED_RAM_SIZE)
++#define PLAT_ARM_MAX_BL31_SIZE                  (140 * SZ_1K)  /* 140 KB */
++
++#define ARM_BL_RAM_BASE                                (ARM_SHARED_RAM_BASE +  \
++                                                        ARM_SHARED_RAM_SIZE)
++#define ARM_BL_RAM_SIZE                                (PLAT_ARM_TRUSTED_SRAM_SIZE - \
++                                                        ARM_SHARED_RAM_SIZE)
++
++#define BL2_SIGNATURE_SIZE                     (SZ_4K)  /* 4 KB */
+ 
+-#define BL2_SIGNATURE_SIZE			UL(0x00001000)  /* 4 KB */
+ #define BL2_SIGNATURE_BASE			(BL2_LIMIT - \
+ 						PLAT_ARM_MAX_BL2_SIZE)
+ #define BL2_BASE				(BL2_LIMIT - \
+@@ -175,14 +183,15 @@
+ 
+ #define CORSTONE1000_TOS_FW_CONFIG_BASE		(BL31_BASE - \
+ 						CORSTONE1000_TOS_FW_CONFIG_SIZE)
+-#define CORSTONE1000_TOS_FW_CONFIG_SIZE		UL(0x00002000)  /* 8 KB */
++#define CORSTONE1000_TOS_FW_CONFIG_SIZE              (SZ_8K)  /* 8 KB */
+ #define CORSTONE1000_TOS_FW_CONFIG_LIMIT		BL31_BASE
+ 
+ #define BL32_BASE				ARM_BL_RAM_BASE
+-#define PLAT_ARM_MAX_BL32_SIZE		(CORSTONE1000_TOS_FW_CONFIG_BASE - \
+-						BL32_BASE)     /* 688 KB */
+-#define BL32_LIMIT				(BL32_BASE + \
+-						PLAT_ARM_MAX_BL32_SIZE)
++#define PLAT_ARM_MAX_BL32_SIZE                 (CORSTONE1000_TOS_FW_CONFIG_BASE - \
++                                                BL32_BASE)
++
++#define BL32_LIMIT                             (BL32_BASE + \
++                                                PLAT_ARM_MAX_BL32_SIZE)
+ 
+ /* SPD_spmd settings */
+ 
+@@ -191,10 +200,14 @@
+ 
+ /* NS memory */
+ 
+-/* The last 3 MB of the SRAM is allocated to the non secure area */
+-#define ARM_NS_SHARED_RAM_BASE		(ARM_TRUSTED_SRAM_BASE + \
+-						PLAT_ARM_TRUSTED_SRAM_SIZE)
+-#define ARM_NS_SHARED_RAM_SIZE		UL(0x00300000)  /* 3 MB */
++/* The last 512KB of the SRAM is allocated as shared memory */
++#define ARM_NS_SHARED_RAM_BASE         (ARM_TRUSTED_SRAM_BASE + TOTAL_SRAM_SIZE - \
++                                        (PLAT_ARM_MAX_BL31_SIZE + \
++                                         PLAT_ARM_MAX_BL32_SIZE))
++
++#define BL33_BASE                      ARM_DRAM1_BASE
++#define PLAT_ARM_MAX_BL33_SIZE         (12 * SZ_1M) /* 12 MB*/
++#define BL33_LIMIT                     (ARM_DRAM1_BASE + PLAT_ARM_MAX_BL33_SIZE)
+ 
+ /* end of the definition of SRAM memory layout */
+ 
+@@ -204,7 +217,7 @@
+ #define PLAT_ARM_FIP_MAX_SIZE			UL(0x1ff000)  /* 1.996 MB */
+ 
+ #define PLAT_ARM_NVM_BASE			V2M_FLASH0_BASE
+-#define PLAT_ARM_NVM_SIZE			UL(0x02000000)  /* 32 MB */
++#define PLAT_ARM_NVM_SIZE			(SZ_32M)  /* 32 MB */
+ 
+ #define PLAT_ARM_FLASH_IMAGE_BASE		PLAT_ARM_FIP_BASE
+ #define PLAT_ARM_FLASH_IMAGE_MAX_SIZE		PLAT_ARM_FIP_MAX_SIZE
+-- 
+2.33.0
+
