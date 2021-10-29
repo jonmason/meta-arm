@@ -7,10 +7,22 @@ TFA_PLATFORM = "corstone1000"
 PREFERRED_VERSION_trusted-firmware-a ?= "2.5%"
 EXTRA_IMAGEDEPENDS += "virtual/trusted-firmware-a"
 
+TFA_BL2_BINARY = "bl2-corstone1000.bin"
+TFA_FIP_BINARY = "fip-corstone1000.bin"
+
 # TF-M
 PREFERRED_VERSION_trusted-firmware-m ?= "1.4%"
 TFM_PLATFORM = "arm/corstone1000"
 EXTRA_IMAGEDEPENDS += "virtual/trusted-firmware-m"
+
+# TF-M settings for signing host images
+TFA_BL2_RE_IMAGE_LOAD_ADDRESS = "0x62353000"
+TFA_BL2_RE_SIGN_BIN_SIZE = "0x2d000"
+TFA_FIP_RE_IMAGE_LOAD_ADDRESS = "0x68130000"
+TFA_FIP_RE_SIGN_BIN_SIZE = "0x00200000"
+RE_LAYOUT_WRAPPER_VERSION = "0.0.7"
+TFM_SIGN_PRIVATE_KEY = "${S}/bl2/ext/mcuboot/root-RSA-3072_1.pem"
+RE_IMAGE_OFFSET = "0x1000"
 
 # u-boot
 PREFERRED_VERSION_u-boot ?= "2021.07"
