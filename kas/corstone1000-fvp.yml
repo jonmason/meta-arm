@@ -1,0 +1,16 @@
+header:
+  version: 9
+  includes:
+    - corstone1000-base.yml
+
+repos:
+  run-scripts:
+     url: https://git.gitlab.arm.com/arm-reference-solutions/model-scripts.git
+     refspec: CORSTONE-1000-2021.10.26
+     layers:
+      .: 'excluded'
+
+machine: corstone1000-fvp
+
+target:
+  - corstone1000-image

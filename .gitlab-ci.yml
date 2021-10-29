@@ -109,6 +109,9 @@ corstone700-fvp:
 corstone700-mps3:
   extends: .build
 
+corstone1000-fvp:
+  extends: .build
+
 fvp-base/testimage:
   extends: .build
   tags:
