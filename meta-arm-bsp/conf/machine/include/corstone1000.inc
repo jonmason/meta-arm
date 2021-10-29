@@ -2,6 +2,11 @@ require conf/machine/include/arm/armv8a/tune-cortexa35.inc
 
 MACHINEOVERRIDES =. "corstone1000:"
 
+# TF-A
+TFA_PLATFORM = "corstone1000"
+PREFERRED_VERSION_trusted-firmware-a ?= "2.5%"
+EXTRA_IMAGEDEPENDS += "virtual/trusted-firmware-a"
+
 # TF-M
 PREFERRED_VERSION_trusted-firmware-m ?= "1.4%"
 TFM_PLATFORM = "arm/corstone1000"
