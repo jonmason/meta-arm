@@ -1,0 +1,41 @@
+Upstream-Status: Accepted [merged with kernel 5.14]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From ba684a31d3626c86cd9097e12d6ed57d224d077d Mon Sep 17 00:00:00 2001
+From: Sudeep Holla <sudeep.holla@arm.com>
+Date: Tue, 22 Jun 2021 17:22:02 +0100
+Subject: [PATCH] firmware: arm_ffa: Fix the comment style
+
+clang produces the following warning:
+
+    drivers/firmware/arm_ffa/driver.c:123: warning: expecting
+    prototype for FF(). Prototype was for FFA_PAGE_SIZE() instead
+
+    This comment starts with '/**', but isn't a kernel-doc comment.
+    Refer Documentation/doc-guide/kernel-doc.rst
+
+Fix the same by removing the kernel-doc style comment here.
+
+Link: https://lore.kernel.org/r/20210622162202.3485866-1-sudeep.holla@arm.com
+Reported-by: kernel test robot <lkp@intel.com>
+Signed-off-by: Sudeep Holla <sudeep.holla@arm.com>
+---
+ drivers/firmware/arm_ffa/driver.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/firmware/arm_ffa/driver.c b/drivers/firmware/arm_ffa/driver.c
+index b1edb4b2e94a..88b822575ac4 100644
+--- a/drivers/firmware/arm_ffa/driver.c
++++ b/drivers/firmware/arm_ffa/driver.c
+@@ -120,7 +120,7 @@
+ #define PACK_TARGET_INFO(s, r)		\
+ 	(FIELD_PREP(SENDER_ID_MASK, (s)) | FIELD_PREP(RECEIVER_ID_MASK, (r)))
+ 
+-/**
++/*
+  * FF-A specification mentions explicitly about '4K pages'. This should
+  * not be confused with the kernel PAGE_SIZE, which is the translation
+  * granule kernel is configured and may be one among 4K, 16K and 64K.
+-- 
+2.17.1
+

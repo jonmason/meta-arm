@@ -1,0 +1,69 @@
+Upstream-Status: Accepted [merged with kernel 5.14]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From 67c6bb56b649590a3f59c2a92331aa4e83d4534c Mon Sep 17 00:00:00 2001
+From: Ard Biesheuvel <ardb@kernel.org>
+Date: Wed, 6 Jan 2021 10:34:49 +0000
+Subject: [PATCH] firmware: smccc: Add SMCCC TRNG function call IDs
+
+The ARM architected TRNG firmware interface, described in ARM spec
+DEN0098, define an ARM SMCCC based interface to a true random number
+generator, provided by firmware.
+
+Add the definitions of the SMCCC functions as defined by the spec.
+
+Signed-off-by: Ard Biesheuvel <ardb@kernel.org>
+Signed-off-by: Andre Przywara <andre.przywara@arm.com>
+Reviewed-by: Linus Walleij <linus.walleij@linaro.org>
+Reviewed-by: Sudeep Holla <sudeep.holla@arm.com>
+Link: https://lore.kernel.org/r/20210106103453.152275-2-andre.przywara@arm.com
+Signed-off-by: Will Deacon <will@kernel.org>
+---
+ include/linux/arm-smccc.h | 31 +++++++++++++++++++++++++++++++
+ 1 file changed, 31 insertions(+)
+
+diff --git a/include/linux/arm-smccc.h b/include/linux/arm-smccc.h
+index f860645f6512..62c54234576c 100644
+--- a/include/linux/arm-smccc.h
++++ b/include/linux/arm-smccc.h
+@@ -102,6 +102,37 @@
+ 			   ARM_SMCCC_OWNER_STANDARD_HYP,	\
+ 			   0x21)
+ 
++/* TRNG entropy source calls (defined by ARM DEN0098) */
++#define ARM_SMCCC_TRNG_VERSION					\
++	ARM_SMCCC_CALL_VAL(ARM_SMCCC_FAST_CALL,			\
++			   ARM_SMCCC_SMC_32,			\
++			   ARM_SMCCC_OWNER_STANDARD,		\
++			   0x50)
++
++#define ARM_SMCCC_TRNG_FEATURES					\
++	ARM_SMCCC_CALL_VAL(ARM_SMCCC_FAST_CALL,			\
++			   ARM_SMCCC_SMC_32,			\
++			   ARM_SMCCC_OWNER_STANDARD,		\
++			   0x51)
++
++#define ARM_SMCCC_TRNG_GET_UUID					\
++	ARM_SMCCC_CALL_VAL(ARM_SMCCC_FAST_CALL,			\
++			   ARM_SMCCC_SMC_32,			\
++			   ARM_SMCCC_OWNER_STANDARD,		\
++			   0x52)
++
++#define ARM_SMCCC_TRNG_RND32					\
++	ARM_SMCCC_CALL_VAL(ARM_SMCCC_FAST_CALL,			\
++			   ARM_SMCCC_SMC_32,			\
++			   ARM_SMCCC_OWNER_STANDARD,		\
++			   0x53)
++
++#define ARM_SMCCC_TRNG_RND64					\
++	ARM_SMCCC_CALL_VAL(ARM_SMCCC_FAST_CALL,			\
++			   ARM_SMCCC_SMC_64,			\
++			   ARM_SMCCC_OWNER_STANDARD,		\
++			   0x53)
++
+ /*
+  * Return codes defined in ARM DEN 0070A
+  * ARM DEN 0070A is now merged/consolidated into ARM DEN 0028 C
+-- 
+2.17.1
+

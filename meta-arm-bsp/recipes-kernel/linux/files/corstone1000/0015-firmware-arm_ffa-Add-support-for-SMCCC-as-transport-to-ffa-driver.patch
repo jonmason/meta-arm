@@ -1,0 +1,119 @@
+Upstream-Status: Accepted [merged with kernel 5.14]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From 714be77e976a4b013b935b3223b2ef68856084d0 Mon Sep 17 00:00:00 2001
+From: Sudeep Holla <sudeep.holla@arm.com>
+Date: Fri, 21 May 2021 16:10:31 +0100
+Subject: [PATCH] firmware: arm_ffa: Add support for SMCCC as transport to FFA
+ driver
+
+There are requests to keep the transport separate in order to allow
+other possible transports like virtio. So let us keep the SMCCC transport
+specific routines abstracted.
+
+It is kept simple for now. Once we add another transport, we can develop
+better abstraction.
+
+Link: https://lore.kernel.org/r/20210521151033.181846-4-sudeep.holla@arm.com
+Tested-by: Jens Wiklander <jens.wiklander@linaro.org>
+Reviewed-by: Jens Wiklander <jens.wiklander@linaro.org>
+Signed-off-by: Sudeep Holla <sudeep.holla@arm.com>
+---
+ drivers/firmware/arm_ffa/Kconfig  |  5 ++++
+ drivers/firmware/arm_ffa/Makefile |  3 ++-
+ drivers/firmware/arm_ffa/common.h |  4 ++++
+ drivers/firmware/arm_ffa/smccc.c  | 39 +++++++++++++++++++++++++++++++
+ 4 files changed, 50 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/firmware/arm_ffa/smccc.c
+
+diff --git a/drivers/firmware/arm_ffa/Kconfig b/drivers/firmware/arm_ffa/Kconfig
+index 261a3660650a..5e3ae5cf82e8 100644
+--- a/drivers/firmware/arm_ffa/Kconfig
++++ b/drivers/firmware/arm_ffa/Kconfig
+@@ -14,3 +14,8 @@ config ARM_FFA_TRANSPORT
+ 
+ 	  This driver provides interface for all the client drivers making
+ 	  use of the features offered by ARM FF-A.
++
++config ARM_FFA_SMCCC
++	bool
++	default ARM_FFA_TRANSPORT
++	depends on ARM64 && HAVE_ARM_SMCCC_DISCOVERY
+diff --git a/drivers/firmware/arm_ffa/Makefile b/drivers/firmware/arm_ffa/Makefile
+index 82d0d35c5324..9d9f37523200 100644
+--- a/drivers/firmware/arm_ffa/Makefile
++++ b/drivers/firmware/arm_ffa/Makefile
+@@ -1,5 +1,6 @@
+ # SPDX-License-Identifier: GPL-2.0-only
+ ffa-bus-y = bus.o
+ ffa-driver-y = driver.o
+-ffa-module-objs := $(ffa-bus-y) $(ffa-driver-y)
++ffa-transport-$(CONFIG_ARM_FFA_SMCCC) += smccc.o
++ffa-module-objs := $(ffa-bus-y) $(ffa-driver-y) $(ffa-transport-y)
+ obj-$(CONFIG_ARM_FFA_TRANSPORT) = ffa-module.o
+diff --git a/drivers/firmware/arm_ffa/common.h b/drivers/firmware/arm_ffa/common.h
+index 2d3a32f67d5d..f24754a59f47 100644
+--- a/drivers/firmware/arm_ffa/common.h
++++ b/drivers/firmware/arm_ffa/common.h
+@@ -16,9 +16,13 @@ typedef void (ffa_fn)(ffa_value_t, ffa_value_t *);
+ int arm_ffa_bus_init(void);
+ void arm_ffa_bus_exit(void);
+ 
++#ifdef CONFIG_ARM_FFA_SMCCC
++int __init ffa_transport_init(ffa_fn **invoke_ffa_fn);
++#else
+ static inline int __init ffa_transport_init(ffa_fn **invoke_ffa_fn)
+ {
+ 	return -EOPNOTSUPP;
+ }
++#endif
+ 
+ #endif /* _FFA_COMMON_H */
+diff --git a/drivers/firmware/arm_ffa/smccc.c b/drivers/firmware/arm_ffa/smccc.c
+new file mode 100644
+index 000000000000..4d85bfff0a4e
+--- /dev/null
++++ b/drivers/firmware/arm_ffa/smccc.c
+@@ -0,0 +1,39 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright (C) 2021 ARM Ltd.
++ */
++
++#include <linux/printk.h>
++
++#include "common.h"
++
++static void __arm_ffa_fn_smc(ffa_value_t args, ffa_value_t *res)
++{
++	arm_smccc_1_2_smc(&args, res);
++}
++
++static void __arm_ffa_fn_hvc(ffa_value_t args, ffa_value_t *res)
++{
++	arm_smccc_1_2_hvc(&args, res);
++}
++
++int __init ffa_transport_init(ffa_fn **invoke_ffa_fn)
++{
++	enum arm_smccc_conduit conduit;
++
++	if (arm_smccc_get_version() < ARM_SMCCC_VERSION_1_2)
++		return -EOPNOTSUPP;
++
++	conduit = arm_smccc_1_1_get_conduit();
++	if (conduit == SMCCC_CONDUIT_NONE) {
++		pr_err("%s: invalid SMCCC conduit\n", __func__);
++		return -EOPNOTSUPP;
++	}
++
++	if (conduit == SMCCC_CONDUIT_SMC)
++		*invoke_ffa_fn = __arm_ffa_fn_smc;
++	else
++		*invoke_ffa_fn = __arm_ffa_fn_hvc;
++
++	return 0;
++}
+-- 
+2.17.1
+

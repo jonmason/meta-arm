@@ -101,6 +101,18 @@ SRC_URI:append:corstone1000 = " \
            file://0007-usb-isp1760-add-support-for-isp1763.patch \
            file://0008-dt-bindings-usb-nxp-isp1760-add-bindings.patch \
            file://0009-usb-isp1763-add-peripheral-mode.patch \
+           file://0010-firmware-smccc-Add-SMCCC-TRNG-function-call-IDs.patch \
+           file://0011-firmware-smccc-Introduce-SMCCC-TRNG-framework.patch \
+           file://0012-arm64-smccc-Add-support-for-SMCCCv1.2-extended-input-output-registers.patch \
+           file://0013-firmware-arm_ffa-Add-initial-FFA-bus-support-for-device-enumeration.patch \
+           file://0014-firmware-arm_ffa-Add-initial-Arm-FFA-driver-support.patch \
+           file://0015-firmware-arm_ffa-Add-support-for-SMCCC-as-transport-to-ffa-driver.patch \
+           file://0016-firmware-arm_ffa-Setup-in-kernel-users-of-FFA-partitions.patch \
+           file://0017-firmware-arm_ffa-Add-support-for-MEM_-interfaces.patch \
+           file://0018-firmware-arm_ffa-Ensure-drivers-provide-a-probe-function.patch \
+           file://0019-firmware-arm_ffa-Simplify-probe-function.patch \
+           file://0020-firmware-arm_ffa-Fix-the-comment-style.patch \
+           file://0021-firmware-arm_ffa-Fix-a-possible-ffa_linux_errmap-buffer-overflow.patch \
            file://0022-usb-isp1760-isp1760-udc-Provide-missing-description-.patch \
            file://0023-usb-isp1760-Fix-meaningless-check-in-isp1763_run.patch \
            file://0024-usb-isp1760-remove-debug-message-as-error.patch \

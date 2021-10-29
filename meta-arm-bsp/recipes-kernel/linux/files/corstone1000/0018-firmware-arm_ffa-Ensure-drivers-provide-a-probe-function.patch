@@ -1,0 +1,40 @@
+Upstream-Status: Accepted [merged with kernel 5.14]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From 92743071464fca5acbbe812d9a0d88de3eaaad36 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Uwe=20Kleine-K=C3=B6nig?= <u.kleine-koenig@pengutronix.de>
+Date: Mon, 21 Jun 2021 22:16:51 +0200
+Subject: [PATCH] firmware: arm_ffa: Ensure drivers provide a probe function
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The bus probe callback calls the driver callback without further
+checking. Better be safe than sorry and refuse registration of a driver
+without a probe function to prevent a NULL pointer exception.
+
+Link: https://lore.kernel.org/r/20210621201652.127611-1-u.kleine-koenig@pengutronix.de
+Fixes: e781858488b9 ("firmware: arm_ffa: Add initial FFA bus support for device enumeration")
+Signed-off-by: Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
+Signed-off-by: Sudeep Holla <sudeep.holla@arm.com>
+---
+ drivers/firmware/arm_ffa/bus.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/firmware/arm_ffa/bus.c b/drivers/firmware/arm_ffa/bus.c
+index 83166e02b191..d2cc24319626 100644
+--- a/drivers/firmware/arm_ffa/bus.c
++++ b/drivers/firmware/arm_ffa/bus.c
+@@ -99,6 +99,9 @@ int ffa_driver_register(struct ffa_driver *driver, struct module *owner,
+ {
+ 	int ret;
+ 
++	if (!driver->probe)
++		return -EINVAL;
++
+ 	driver->driver.bus = &ffa_bus_type;
+ 	driver->driver.name = driver->name;
+ 	driver->driver.owner = owner;
+-- 
+2.17.1
+
