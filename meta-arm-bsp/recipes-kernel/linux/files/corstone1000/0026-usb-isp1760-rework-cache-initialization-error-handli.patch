@@ -1,0 +1,55 @@
+Upstream-Status: Accepted [merged with kernel 5.15]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From cbbdb3fe0d974d655c87c3e6ba2990d5496b9f82 Mon Sep 17 00:00:00 2001
+From: Rui Miguel Silva <rui.silva@linaro.org>
+Date: Tue, 27 Jul 2021 11:05:16 +0100
+Subject: [PATCH 13/23] usb: isp1760: rework cache initialization error
+ handling
+
+If we fail to create qtd cache we were not destroying the
+urb_listitem, rework the error handling logic to cope with that.
+
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+Link: https://lore.kernel.org/r/20210727100516.4190681-4-rui.silva@linaro.org
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+---
+ drivers/usb/isp1760/isp1760-hcd.c | 16 +++++++++++-----
+ 1 file changed, 11 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/usb/isp1760/isp1760-hcd.c b/drivers/usb/isp1760/isp1760-hcd.c
+index a018394d54f8..825be736be33 100644
+--- a/drivers/usb/isp1760/isp1760-hcd.c
++++ b/drivers/usb/isp1760/isp1760-hcd.c
+@@ -2527,17 +2527,23 @@ int __init isp1760_init_kmem_once(void)
+ 			SLAB_MEM_SPREAD, NULL);
+ 
+ 	if (!qtd_cachep)
+-		return -ENOMEM;
++		goto destroy_urb_listitem;
+ 
+ 	qh_cachep = kmem_cache_create("isp1760_qh", sizeof(struct isp1760_qh),
+ 			0, SLAB_TEMPORARY | SLAB_MEM_SPREAD, NULL);
+ 
+-	if (!qh_cachep) {
+-		kmem_cache_destroy(qtd_cachep);
+-		return -ENOMEM;
+-	}
++	if (!qh_cachep)
++		goto destroy_qtd;
+ 
+ 	return 0;
++
++destroy_qtd:
++	kmem_cache_destroy(qtd_cachep);
++
++destroy_urb_listitem:
++	kmem_cache_destroy(urb_listitem_cachep);
++
++	return -ENOMEM;
+ }
+ 
+ void isp1760_deinit_kmem_cache(void)
+-- 
+2.33.0
+

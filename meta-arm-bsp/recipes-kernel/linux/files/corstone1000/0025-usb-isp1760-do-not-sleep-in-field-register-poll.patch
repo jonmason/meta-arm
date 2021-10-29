@@ -1,0 +1,58 @@
+Upstream-Status: Accepted [merged with kernel 5.14.9]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From 41f673183862a183d4ea0522c045fabfbd1b28c8 Mon Sep 17 00:00:00 2001
+From: Rui Miguel Silva <rui.silva@linaro.org>
+Date: Tue, 27 Jul 2021 11:05:15 +0100
+Subject: [PATCH 12/23] usb: isp1760: do not sleep in field register poll
+
+When polling for a setup or clear of a register field we were sleeping
+in atomic context but using a very tight sleep interval.
+
+Since the use cases for this poll mechanism are only in setup and
+stop paths, and in practice this poll is not used most of the times
+but needs to be there to comply to hardware setup times, remove the
+sleep time and make the poll loop tighter.
+
+Reported-by: Dan Carpenter <dan.carpenter@oracle.com>
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+Link: https://lore.kernel.org/r/20210727100516.4190681-3-rui.silva@linaro.org
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+---
+ drivers/usb/isp1760/isp1760-hcd.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/usb/isp1760/isp1760-hcd.c b/drivers/usb/isp1760/isp1760-hcd.c
+index a745c4c2b773..a018394d54f8 100644
+--- a/drivers/usb/isp1760/isp1760-hcd.c
++++ b/drivers/usb/isp1760/isp1760-hcd.c
+@@ -250,7 +250,7 @@ static int isp1760_hcd_set_and_wait(struct usb_hcd *hcd, u32 field,
+ 	isp1760_hcd_set(hcd, field);
+ 
+ 	return regmap_field_read_poll_timeout(priv->fields[field], val,
+-					      val, 10, timeout_us);
++					      val, 0, timeout_us);
+ }
+ 
+ static int isp1760_hcd_set_and_wait_swap(struct usb_hcd *hcd, u32 field,
+@@ -262,7 +262,7 @@ static int isp1760_hcd_set_and_wait_swap(struct usb_hcd *hcd, u32 field,
+ 	isp1760_hcd_set(hcd, field);
+ 
+ 	return regmap_field_read_poll_timeout(priv->fields[field], val,
+-					      !val, 10, timeout_us);
++					      !val, 0, timeout_us);
+ }
+ 
+ static int isp1760_hcd_clear_and_wait(struct usb_hcd *hcd, u32 field,
+@@ -274,7 +274,7 @@ static int isp1760_hcd_clear_and_wait(struct usb_hcd *hcd, u32 field,
+ 	isp1760_hcd_clear(hcd, field);
+ 
+ 	return regmap_field_read_poll_timeout(priv->fields[field], val,
+-					      !val, 10, timeout_us);
++					      !val, 0, timeout_us);
+ }
+ 
+ static bool isp1760_hcd_is_set(struct usb_hcd *hcd, u32 field)
+-- 
+2.33.0
+

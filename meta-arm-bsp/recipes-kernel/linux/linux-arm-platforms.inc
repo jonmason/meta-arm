@@ -82,6 +82,74 @@ KERNEL_FEATURES:append:corstone700-mps3 = " \
                           d)}"
 
 #
+# Corstone1000 KMACHINE
+#
+FILESEXTRAPATHS:prepend:corstone1000 := "${ARMBSPFILESPATHS}"
+COMPATIBLE_MACHINE:corstone1000 = "${MACHINE}"
+KCONFIG_MODE:corstone1000 = "--alldefconfig"
+KMACHINE:corstone1000 = "corstone1000"
+LINUX_KERNEL_TYPE:corstone1000 = "standard"
+#disabling the rootfs cpio file compression so it is not compressed twice when bundled with the kernel
+KERNEL_EXTRA_ARGS:corstone1000 += "CONFIG_INITRAMFS_COMPRESSION_NONE=y"
+SRC_URI:append:corstone1000 = " \
+           file://0001-usb-isp1760-fix-strict-typechecking.patch \
+           file://0002-usb-isp1760-move-to-regmap-for-register-access.patch \
+           file://0003-usb-isp1760-use-relaxed-primitives.patch \
+           file://0004-usb-isp1760-remove-platform-data-struct-and-code.patch \
+           file://0005-usb-isp1760-hcd-refactor-mempool-config-and-setup.patch \
+           file://0006-usb-isp1760-use-dr_mode-binding.patch \
+           file://0007-usb-isp1760-add-support-for-isp1763.patch \
+           file://0008-dt-bindings-usb-nxp-isp1760-add-bindings.patch \
+           file://0009-usb-isp1763-add-peripheral-mode.patch \
+           file://0022-usb-isp1760-isp1760-udc-Provide-missing-description-.patch \
+           file://0023-usb-isp1760-Fix-meaningless-check-in-isp1763_run.patch \
+           file://0024-usb-isp1760-remove-debug-message-as-error.patch \
+           file://0025-usb-isp1760-do-not-sleep-in-field-register-poll.patch \
+           file://0026-usb-isp1760-rework-cache-initialization-error-handli.patch \
+           file://0027-usb-isp1760-ignore-return-value-for-bus-change-patte.patch \
+           file://0028-usb-isp1760-check-maxpacketsize-before-using-it.patch \
+           file://0029-usb-isp1760-do-not-reset-retval.patch \
+           file://0030-usb-isp1760-do-not-shift-in-uninitialized-slot.patch \
+           file://0031-usb-isp1760-clean-never-read-udc_enabled-warning.patch \
+           file://0032-usb-isp1760-fix-memory-pool-initialization.patch \
+           file://0033-usb-isp1760-fix-qtd-fill-length.patch \
+           file://0034-usb-isp1760-write-to-status-and-address-register.patch \
+           file://0035-usb-isp1760-use-the-right-irq-status-bit.patch \
+           file://0036-usb-isp1760-otg-control-register-access.patch \
+           file://defconfig  \
+        "
+
+SRC_URI:append:corstone1000 = " ${@bb.utils.contains('MACHINE_FEATURES', \
+                                                            'corstone1000_kernel_debug', \
+                                                            'file://corstone1000_kernel_debug.cfg', \
+                                                            '', \
+                                                             d)}"
+
+# Default kernel features not needed for corstone1000
+# otherwise the extra kernel modules will increase the rootfs size
+# corstone1000 has limited flash memory constraints
+KERNEL_EXTRA_FEATURES:corstone1000 = ""
+KERNEL_FEATURES:corstone1000 = ""
+# No need to include the kernel image in the rootfs
+# So, let's delete the package doing that and uninstalling the initial
+# kernel binary.
+# The kernel binary needed is the initramfs bundle
+
+FILES:kernel-image-image:corstone1000=""
+
+# Uninstalling the initial kernel binary
+
+do_install:append:corstone1000() {
+    if [ -e "${D}/${KERNEL_IMAGEDEST}/$imageType-${KERNEL_VERSION}" ]; then
+        rm ${D}/${KERNEL_IMAGEDEST}/$imageType-${KERNEL_VERSION}
+    fi
+
+    if [ -e "${D}/${KERNEL_IMAGEDEST}/$imageType" ]; then
+        rm ${D}/${KERNEL_IMAGEDEST}/$imageType
+    fi
+}
+
+#
 # FVP BASE KMACHINE
 #
 COMPATIBLE_MACHINE:fvp-base = "fvp-base"

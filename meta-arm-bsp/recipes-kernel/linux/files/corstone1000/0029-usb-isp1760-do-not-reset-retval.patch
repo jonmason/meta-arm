@@ -1,0 +1,36 @@
+Upstream-Status: Accepted [merged with kernel 5.15]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From 5e4cd1b6556302fe6a457e525c256cbef3563543 Mon Sep 17 00:00:00 2001
+From: Rui Miguel Silva <rui.silva@linaro.org>
+Date: Thu, 19 Aug 2021 19:09:27 +0100
+Subject: [PATCH 16/23] usb: isp1760: do not reset retval
+
+We do not really need to reset retval before get used bellow.
+This will avoid the clang-analyzer warning:
+
+drivers/usb/isp1760/isp1760-hcd.c:1919:2: warning: Value stored to 'retval' is never read [clang-analyzer-deadcode.DeadStores]
+        retval = 0;
+
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+Link: https://lore.kernel.org/r/20210819180929.1327349-4-rui.silva@linaro.org
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+---
+ drivers/usb/isp1760/isp1760-hcd.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drivers/usb/isp1760/isp1760-hcd.c b/drivers/usb/isp1760/isp1760-hcd.c
+index 5c947a1eae49..aed2714ce0cf 100644
+--- a/drivers/usb/isp1760/isp1760-hcd.c
++++ b/drivers/usb/isp1760/isp1760-hcd.c
+@@ -1919,7 +1919,6 @@ static int isp1760_urb_enqueue(struct usb_hcd *hcd, struct urb *urb,
+ 	if (list_empty(&new_qtds))
+ 		return -ENOMEM;
+ 
+-	retval = 0;
+ 	spin_lock_irqsave(&priv->lock, spinflags);
+ 
+ 	if (!test_bit(HCD_FLAG_HW_ACCESSIBLE, &hcd->flags)) {
+-- 
+2.33.0
+

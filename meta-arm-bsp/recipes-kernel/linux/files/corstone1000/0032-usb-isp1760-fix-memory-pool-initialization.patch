@@ -1,0 +1,36 @@
+Upstream-Status: Accepted [merged with kernel 5.14.9]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From d36713c344e0c963178e417911d2cd867597d2f0 Mon Sep 17 00:00:00 2001
+From: Rui Miguel Silva <rui.silva@linaro.org>
+Date: Fri, 27 Aug 2021 01:27:40 +0100
+Subject: [PATCH 19/23] usb: isp1760: fix memory pool initialization
+
+The loops to setup the memory pool were skipping some
+blocks, that was not visible on the ISP1763 because it has
+fewer blocks than the ISP1761. But won testing on that IP
+from the family that would be an issue.
+
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+---
+ drivers/usb/isp1760/isp1760-hcd.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/usb/isp1760/isp1760-hcd.c b/drivers/usb/isp1760/isp1760-hcd.c
+index bf8ab3fe2e5a..b3a55c5d2155 100644
+--- a/drivers/usb/isp1760/isp1760-hcd.c
++++ b/drivers/usb/isp1760/isp1760-hcd.c
+@@ -588,8 +588,8 @@ static void init_memory(struct isp1760_hcd *priv)
+ 
+ 	payload_addr = PAYLOAD_OFFSET;
+ 
+-	for (i = 0, curr = 0; i < ARRAY_SIZE(mem->blocks); i++) {
+-		for (j = 0; j < mem->blocks[i]; j++, curr++) {
++	for (i = 0, curr = 0; i < ARRAY_SIZE(mem->blocks); i++, curr += j) {
++		for (j = 0; j < mem->blocks[i]; j++) {
+ 			priv->memory_pool[curr + j].start = payload_addr;
+ 			priv->memory_pool[curr + j].size = mem->blocks_size[i];
+ 			priv->memory_pool[curr + j].free = 1;
+-- 
+2.33.0
+

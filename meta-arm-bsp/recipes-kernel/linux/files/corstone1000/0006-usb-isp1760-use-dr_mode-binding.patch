@@ -1,0 +1,78 @@
+Upstream-Status: Accepted [merged with kernel 5.14.9]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From 3eb96e04be9918afa54b64fac943de86a9798bda Mon Sep 17 00:00:00 2001
+From: Rui Miguel Silva <rui.silva@linaro.org>
+Date: Thu, 13 May 2021 09:47:14 +0100
+Subject: [PATCH 06/23] usb: isp1760: use dr_mode binding
+
+There is already a binding to describe the dual role mode (dr_mode),
+use that instead of defining a new one (port1-otg).
+
+Update driver code and devicetree files that use that port1-otg
+binding.
+
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+Link: https://lore.kernel.org/r/20210513084717.2487366-7-rui.silva@linaro.org
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+---
+ drivers/usb/isp1760/isp1760-core.c | 3 +--
+ drivers/usb/isp1760/isp1760-core.h | 2 +-
+ drivers/usb/isp1760/isp1760-if.c   | 5 +++--
+ 3 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/usb/isp1760/isp1760-core.c b/drivers/usb/isp1760/isp1760-core.c
+index 35a7667e411c..0aeeb12d3bfe 100644
+--- a/drivers/usb/isp1760/isp1760-core.c
++++ b/drivers/usb/isp1760/isp1760-core.c
+@@ -73,10 +73,9 @@ static void isp1760_init_core(struct isp1760_device *isp)
+ 	 * on ISP1761.
+ 	 *
+ 	 * TODO: Really support OTG. For now we configure port 1 in device mode
+-	 * when OTG is requested.
+ 	 */
+ 	if ((isp->devflags & ISP1760_FLAG_ISP1761) &&
+-	    (isp->devflags & ISP1760_FLAG_OTG_EN)) {
++	    (isp->devflags & ISP1760_FLAG_PERIPHERAL_EN)) {
+ 		isp1760_field_set(hcd->fields, HW_DM_PULLDOWN);
+ 		isp1760_field_set(hcd->fields, HW_DP_PULLDOWN);
+ 		isp1760_field_set(hcd->fields, HW_OTG_DISABLE);
+diff --git a/drivers/usb/isp1760/isp1760-core.h b/drivers/usb/isp1760/isp1760-core.h
+index 8fec6395f19f..7a6755d68d41 100644
+--- a/drivers/usb/isp1760/isp1760-core.h
++++ b/drivers/usb/isp1760/isp1760-core.h
+@@ -28,7 +28,7 @@ struct gpio_desc;
+  * a sane default configuration.
+  */
+ #define ISP1760_FLAG_BUS_WIDTH_16	0x00000002 /* 16-bit data bus width */
+-#define ISP1760_FLAG_OTG_EN		0x00000004 /* Port 1 supports OTG */
++#define ISP1760_FLAG_PERIPHERAL_EN	0x00000004 /* Port 1 supports Peripheral mode*/
+ #define ISP1760_FLAG_ANALOG_OC		0x00000008 /* Analog overcurrent */
+ #define ISP1760_FLAG_DACK_POL_HIGH	0x00000010 /* DACK active high */
+ #define ISP1760_FLAG_DREQ_POL_HIGH	0x00000020 /* DREQ active high */
+diff --git a/drivers/usb/isp1760/isp1760-if.c b/drivers/usb/isp1760/isp1760-if.c
+index fb6701608cd8..cb3e4d782315 100644
+--- a/drivers/usb/isp1760/isp1760-if.c
++++ b/drivers/usb/isp1760/isp1760-if.c
+@@ -17,6 +17,7 @@
+ #include <linux/platform_device.h>
+ #include <linux/slab.h>
+ #include <linux/usb/hcd.h>
++#include <linux/usb/otg.h>
+ 
+ #include "isp1760-core.h"
+ #include "isp1760-regs.h"
+@@ -213,8 +214,8 @@ static int isp1760_plat_probe(struct platform_device *pdev)
+ 		if (bus_width == 16)
+ 			devflags |= ISP1760_FLAG_BUS_WIDTH_16;
+ 
+-		if (of_property_read_bool(dp, "port1-otg"))
+-			devflags |= ISP1760_FLAG_OTG_EN;
++		if (usb_get_dr_mode(&pdev->dev) == USB_DR_MODE_PERIPHERAL)
++			devflags |= ISP1760_FLAG_PERIPHERAL_EN;
+ 
+ 		if (of_property_read_bool(dp, "analog-oc"))
+ 			devflags |= ISP1760_FLAG_ANALOG_OC;
+-- 
+2.33.0
+
