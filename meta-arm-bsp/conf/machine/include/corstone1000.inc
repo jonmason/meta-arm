@@ -2,6 +2,11 @@ require conf/machine/include/arm/armv8a/tune-cortexa35.inc
 
 MACHINEOVERRIDES =. "corstone1000:"
 
+# TF-M
+PREFERRED_VERSION_trusted-firmware-m ?= "1.4%"
+TFM_PLATFORM = "arm/corstone1000"
+EXTRA_IMAGEDEPENDS += "virtual/trusted-firmware-m"
+
 # Linux kernel
 PREFERRED_PROVIDER_virtual/kernel:forcevariable = "linux-yocto"
 PREFERRED_VERSION_linux-yocto = "5.10%"
