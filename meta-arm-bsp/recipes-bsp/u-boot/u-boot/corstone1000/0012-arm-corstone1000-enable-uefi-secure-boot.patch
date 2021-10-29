@@ -1,0 +1,32 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From e49597b8d9058d8c5b925339b0041fd7096c622d Mon Sep 17 00:00:00 2001
+From: Rui Miguel Silva <rui.silva@linaro.org>
+Date: Tue, 14 Sep 2021 10:46:49 +0100
+Subject: [PATCH 12/16] arm: corstone1000: enable uefi secure boot
+
+To make it possible to have a secure way to execute UEFI images
+enable UEFI secure boot support and by inherit the
+cryptographic functionalities.
+
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+---
+ configs/corstone1000_defconfig | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/configs/corstone1000_defconfig b/configs/corstone1000_defconfig
+index aa664029fc..a8651287ed 100644
+--- a/configs/corstone1000_defconfig
++++ b/configs/corstone1000_defconfig
+@@ -43,6 +43,7 @@ CONFIG_USB=y
+ CONFIG_DM_USB=y
+ CONFIG_USB_ISP1760=y
+ CONFIG_USB_STORAGE=y
++CONFIG_EFI_SECURE_BOOT=y
+ CONFIG_DM_RTC=y
+ CONFIG_CMD_RTC=y
+ CONFIG_EFI_GET_TIME=y
+-- 
+2.33.0
+
