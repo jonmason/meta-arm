@@ -24,6 +24,11 @@ UBOOT_BOOTARGS = "earlycon=pl011,0x1a510000 console=ttyAMA0 loglevel=9"
 UBOOT_ARCH = "arm"
 UBOOT_EXTLINUX = "0"
 
+# optee
+EXTRA_IMAGEDEPENDS += "optee-os"
+OPTEE_ARCH = "arm64"
+OPTEE_BINARY = "tee-pager_v2.bin"
+
 # Linux kernel
 PREFERRED_PROVIDER_virtual/kernel:forcevariable = "linux-yocto"
 PREFERRED_VERSION_linux-yocto = "5.10%"
