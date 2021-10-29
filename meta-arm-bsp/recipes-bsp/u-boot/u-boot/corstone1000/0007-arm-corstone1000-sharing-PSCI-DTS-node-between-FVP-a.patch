@@ -1,0 +1,34 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From b50c1457fcd05cddf633bff074fc5edecff22e7e Mon Sep 17 00:00:00 2001
+From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+Date: Wed, 25 Aug 2021 16:50:40 +0100
+Subject: [PATCH 07/16] arm: corstone1000: sharing PSCI DTS node between FVP
+ and MPS3
+
+At this level of development PSCI is needed to initialize the SMCCC.
+
+SMCCC is needed by FF-A and it is relevant to the MPS3 and FVP.
+
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+---
+ arch/arm/dts/corstone1000.dtsi | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/arch/arm/dts/corstone1000.dtsi b/arch/arm/dts/corstone1000.dtsi
+index b863193fb6..da1725e01f 100644
+--- a/arch/arm/dts/corstone1000.dtsi
++++ b/arch/arm/dts/corstone1000.dtsi
+@@ -149,4 +149,8 @@
+ 		      <0x1A010314 0x4>;
+ 		reg-names = "rstreg", "streg";
+ 	};
++	psci {
++		compatible = "arm,psci-1.0", "arm,psci-0.2";
++		method = "smc";
++	};
+ };
+-- 
+2.33.0
+

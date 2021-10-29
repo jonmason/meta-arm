@@ -1,0 +1,59 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From 1a034bd9397f96939d58a86e9cf8cd9c206db647 Mon Sep 17 00:00:00 2001
+From: Rui Miguel Silva <rui.silva@linaro.org>
+Date: Tue, 22 Jun 2021 17:00:24 +0100
+Subject: [PATCH 02/16] arm: corstone1000: enable devicetree in defconfig
+
+Add support and setup the default device tree for corstone1000.
+
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+Signed-off-by: Rui Miguel Silva <rui.silva@arm.com>
+---
+ configs/corstone1000_defconfig |  3 ++-
+ include/configs/corstone1000.h | 10 +++-------
+ 2 files changed, 5 insertions(+), 8 deletions(-)
+
+diff --git a/configs/corstone1000_defconfig b/configs/corstone1000_defconfig
+index bc983e6555..54c746d829 100644
+--- a/configs/corstone1000_defconfig
++++ b/configs/corstone1000_defconfig
+@@ -6,7 +6,8 @@ CONFIG_SYS_MALLOC_F_LEN=0x2000
+ CONFIG_NR_DRAM_BANKS=1
+ CONFIG_IDENT_STRING=" corstone1000 aarch64 "
+ CONFIG_BOOTDELAY=3
+-CONFIG_OF_BOARD=y
++CONFIG_OF_CONTROL=y
++CONFIG_DEFAULT_DEVICE_TREE="corstone1000-mps3"
+ CONFIG_USE_BOOTARGS=y
+ CONFIG_BOOTARGS="console=ttyAMA0 loglevel=9"
+ # CONFIG_DISPLAY_CPUINFO is not set
+diff --git a/include/configs/corstone1000.h b/include/configs/corstone1000.h
+index 1fe909463f..389ac45a58 100644
+--- a/include/configs/corstone1000.h
++++ b/include/configs/corstone1000.h
+@@ -64,17 +64,13 @@
+ #define CONFIG_SYS_MAXARGS		64	/* max command args */
+ 
+ #define CONFIG_EXTRA_ENV_SETTINGS					\
+-				"fdt_addr=0x08330000\0"		\
+ 				"fdt_addr_r=0x82000000\0"		\
+-				"kernel_addr=0x08430000\0"		\
++				"kernel_addr=0x08330000\0"		\
+ 				"kernel_addr_r=0x82100000\0"		\
+ 				"fdt_high=0xffffffff\0"
+ 
+ #define CONFIG_BOOTCOMMAND					\
+-				"echo Copying devicetree to memory ... ;" \
+-				"cp.b $fdt_addr $fdt_addr_r 0x100000;" \
+ 				"echo Copying Kernel to memory ... ;" \
+-				"cp.b $kernel_addr $kernel_addr_r 0xa00000;" \
+-				"bootm $kernel_addr_r - $fdt_addr_r; "
+-
++                                "cp.b $kernel_addr $kernel_addr_r 0xc00000;" \
++                                "booti $kernel_addr_r - $fdtcontroladdr; "
+ #endif
+-- 
+2.33.0
+

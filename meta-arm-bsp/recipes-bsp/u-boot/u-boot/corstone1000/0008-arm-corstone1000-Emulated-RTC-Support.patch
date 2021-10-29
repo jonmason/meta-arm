@@ -1,0 +1,32 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From 9a045bf04210bf9a00803fc47016e1af59d31e8f Mon Sep 17 00:00:00 2001
+From: "Arpita S.K" <Arpita.S.K@arm.com>
+Date: Mon, 11 Oct 2021 11:45:41 +0530
+Subject: [PATCH 08/16] arm: corstone1000: Emulated RTC Support
+
+This patch adds the options that should be
+enabled to turn on emulated RTC support.
+
+Signed-off-by: Arpita S.K <Arpita.S.K@arm.com>
+---
+ configs/corstone1000_defconfig | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/configs/corstone1000_defconfig b/configs/corstone1000_defconfig
+index c7f291efb6..dbe3c9e3f3 100644
+--- a/configs/corstone1000_defconfig
++++ b/configs/corstone1000_defconfig
+@@ -36,3 +36,8 @@ CONFIG_USB=y
+ CONFIG_DM_USB=y
+ CONFIG_USB_ISP1760=y
+ CONFIG_USB_STORAGE=y
++CONFIG_DM_RTC=y
++CONFIG_CMD_RTC=y
++CONFIG_EFI_GET_TIME=y
++CONFIG_EFI_SET_TIME=y
++CONFIG_RTC_EMULATION=y
+-- 
+2.33.0
+

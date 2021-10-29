@@ -7,6 +7,18 @@ PREFERRED_VERSION_trusted-firmware-m ?= "1.4%"
 TFM_PLATFORM = "arm/corstone1000"
 EXTRA_IMAGEDEPENDS += "virtual/trusted-firmware-m"
 
+# u-boot
+PREFERRED_VERSION_u-boot ?= "2021.07"
+EXTRA_IMAGEDEPENDS += "u-boot"
+
+UBOOT_CONFIG ??= "EFI"
+UBOOT_CONFIG[EFI] = "corstone1000_defconfig"
+UBOOT_ENTRYPOINT  = "0x80000000"
+UBOOT_LOADADDRESS = "0x80000000"
+UBOOT_BOOTARGS = "earlycon=pl011,0x1a510000 console=ttyAMA0 loglevel=9"
+UBOOT_ARCH = "arm"
+UBOOT_EXTLINUX = "0"
+
 # Linux kernel
 PREFERRED_PROVIDER_virtual/kernel:forcevariable = "linux-yocto"
 PREFERRED_VERSION_linux-yocto = "5.10%"
