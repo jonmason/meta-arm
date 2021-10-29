@@ -1,0 +1,330 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From 3feb071c77bb6297165c7b671b5c92d6ba306238 Mon Sep 17 00:00:00 2001
+From: Rui Miguel Silva <rui.silva@linaro.org>
+Date: Fri, 4 Jun 2021 10:58:24 +0100
+Subject: [PATCH 01/16] arm: add corstone1000 platform
+
+Add support for new corstone1000 platform.
+
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+Signed-off-by: Rui Miguel Silva <rui.silva@arm.com>
+---
+ arch/arm/Kconfig                |  9 ++++
+ board/armltd/corstone1000/Kconfig     | 12 +++++
+ board/armltd/corstone1000/MAINTAINERS |  6 +++
+ board/armltd/corstone1000/Makefile    |  7 +++
+ board/armltd/corstone1000/corstone1000.c    | 92 +++++++++++++++++++++++++++++++++
+ configs/corstone1000_defconfig        | 39 ++++++++++++++
+ include/configs/corstone1000.h        | 80 ++++++++++++++++++++++++++++
+ 7 files changed, 245 insertions(+)
+ create mode 100644 board/armltd/corstone1000/Kconfig
+ create mode 100644 board/armltd/corstone1000/MAINTAINERS
+ create mode 100644 board/armltd/corstone1000/Makefile
+ create mode 100644 board/armltd/corstone1000/corstone1000.c
+ create mode 100644 configs/corstone1000_defconfig
+ create mode 100644 include/configs/corstone1000.h
+
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+index 0448787b8b..25d2a707be 100644
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -1173,6 +1173,13 @@ config TARGET_VEXPRESS64_JUNO
+ 	select USB
+ 	select DM_USB
+ 
++config TARGET_CORSTONE1000
++	bool "Support Corstone1000 Platform"
++	select ARM64
++	select PL01X_SERIAL
++	select DM
++	select OF_BOARD
++
+ config TARGET_TOTAL_COMPUTE
+ 	bool "Support Total Compute Platform"
+ 	select ARM64
+@@ -1985,6 +1992,8 @@ source "arch/arm/mach-nexell/Kconfig"
+ 
+ source "board/armltd/total_compute/Kconfig"
+ 
++source "board/armltd/corstone1000/Kconfig"
++
+ source "board/bosch/shc/Kconfig"
+ source "board/bosch/guardian/Kconfig"
+ source "board/CarMediaLab/flea3/Kconfig"
+diff --git a/board/armltd/corstone1000/Kconfig b/board/armltd/corstone1000/Kconfig
+new file mode 100644
+index 000000000000..90e6b7af59cb
+--- /dev/null
++++ b/board/armltd/corstone1000/Kconfig
+@@ -0,0 +1,12 @@
++if TARGET_CORSTONE1000
++
++config SYS_BOARD
++	default "corstone1000"
++
++config SYS_VENDOR
++	default "armltd"
++
++config SYS_CONFIG_NAME
++	default "corstone1000"
++
++endif
+diff --git a/board/armltd/corstone1000/MAINTAINERS b/board/armltd/corstone1000/MAINTAINERS
+new file mode 100644
+index 000000000000..601cff17b666
+--- /dev/null
++++ b/board/armltd/corstone1000/MAINTAINERS
+@@ -0,0 +1,6 @@
++CORSTONE1000 BOARD
++M:	Rui Miguel Silva <rui.silva@linaro.org>
++S:	Maintained
++F:	board/armltd/corstone1000/
++F:	include/configs/corstone1000.h
++F:	configs/corstone1000_defconfig
+diff --git a/board/armltd/corstone1000/Makefile b/board/armltd/corstone1000/Makefile
+new file mode 100644
+index 000000000000..7bad6f57f1ce
+--- /dev/null
++++ b/board/armltd/corstone1000/Makefile
+@@ -0,0 +1,7 @@
++# SPDX-License-Identifier: GPL-2.0+
++#
++# (C) Copyright 2021 Arm Limited
++# (C) Copyright 2021 Linaro
++# Rui Miguel Silva <rui.silva@linaro.org>
++
++obj-y	:= corstone1000.o
+diff --git a/board/armltd/corstone1000/corstone1000.c b/board/armltd/corstone1000/corstone1000.c
+new file mode 100644
+index 000000000000..fe986ceba1c5
+--- /dev/null
++++ b/board/armltd/corstone1000/corstone1000.c
+@@ -0,0 +1,92 @@
++// SPDX-License-Identifier: GPL-2.0+
++/*
++ * (C) Copyright 2021 ARM Limited
++ * (C) Copyright 2021 Linaro
++ * Rui Miguel Silva <rui.silva@linaro.org>
++ */
++
++#include <common.h>
++#include <dm.h>
++#include <dm/platform_data/serial_pl01x.h>
++#include <asm/armv8/mmu.h>
++#include <asm/global_data.h>
++
++
++static const struct pl01x_serial_plat serial_plat = {
++	.base = V2M_UART0,
++	.type = TYPE_PL011,
++	.clock = CONFIG_PL011_CLOCK,
++};
++
++U_BOOT_DRVINFO(corstone1000_serials) = {
++	.name = "serial_pl01x",
++	.plat = &serial_plat,
++};
++
++static struct mm_region corstone1000_mem_map[] = {
++	{
++		/* CVM */
++		.virt = 0x02000000UL,
++		.phys = 0x02000000UL,
++		.size = 0x02000000UL,
++		.attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) |
++			 PTE_BLOCK_INNER_SHARE
++	}, {
++		/* QSPI */
++		.virt = 0x08000000UL,
++		.phys = 0x08000000UL,
++		.size = 0x08000000UL,
++		.attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) |
++			 PTE_BLOCK_INNER_SHARE
++	}, {
++		/* Host Peripherals */
++		.virt = 0x1A000000UL,
++		.phys = 0x1A000000UL,
++		.size = 0x26000000UL,
++		.attrs = PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
++			 PTE_BLOCK_NON_SHARE |
++			 PTE_BLOCK_PXN | PTE_BLOCK_UXN
++	}, {
++		/* OCVM */
++		.virt = 0x80000000UL,
++		.phys = 0x80000000UL,
++		.size = 0x80000000UL,
++		.attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) |
++			 PTE_BLOCK_INNER_SHARE
++	}, {
++		/* List terminator */
++		0,
++	}
++};
++
++struct mm_region *mem_map = corstone1000_mem_map;
++
++int board_init(void)
++{
++	return 0;
++}
++
++int dram_init(void)
++{
++	gd->ram_size = PHYS_SDRAM_1_SIZE;
++
++	return 0;
++}
++
++int dram_init_banksize(void)
++{
++	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
++	gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
++
++#ifdef PHYS_SDRAM_2
++	gd->bd->bi_dram[1].start = PHYS_SDRAM_2;
++	gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE;
++#endif
++
++
++	return 0;
++}
++
++void reset_cpu(ulong addr)
++{
++}
+diff --git a/configs/corstone1000_defconfig b/configs/corstone1000_defconfig
+new file mode 100644
+index 000000000000..47d4bf3771e0
+--- /dev/null
++++ b/configs/corstone1000_defconfig
+@@ -0,0 +1,39 @@
++CONFIG_ARM=y
++CONFIG_ARM64=y
++CONFIG_TARGET_CORSTONE1000=y
++CONFIG_SYS_TEXT_BASE=0x02100000
++CONFIG_SYS_MALLOC_F_LEN=0x2000
++CONFIG_NR_DRAM_BANKS=1
++CONFIG_IDENT_STRING=" corstone1000 aarch64 "
++CONFIG_BOOTDELAY=3
++CONFIG_OF_BOARD=y
++CONFIG_USE_BOOTARGS=y
++CONFIG_BOOTARGS="console=ttyAMA0 loglevel=9"
++# CONFIG_DISPLAY_CPUINFO is not set
++# CONFIG_DISPLAY_BOARDINFO is not set
++CONFIG_HUSH_PARSER=y
++CONFIG_SYS_PROMPT="corstone1000# "
++# CONFIG_CMD_CONSOLE is not set
++CONFIG_CMD_BOOTZ=y
++CONFIG_CMD_BOOTM=y
++# CONFIG_CMD_XIMG is not set
++# CONFIG_CMD_EDITENV is not set
++# CONFIG_CMD_ENV_EXISTS is not set
++# CONFIG_CMD_ARMFLASH=y
++# CONFIG_CMD_LOADS is not set
++# CONFIG_CMD_ITEST is not set
++# CONFIG_CMD_SETEXPR is not set
++CONFIG_CMD_DHCP=y
++# CONFIG_CMD_NFS is not set
++CONFIG_CMD_MII=y
++CONFIG_CMD_PING=y
++CONFIG_CMD_CACHE=y
++CONFIG_FIT=y
++# CONFIG_CMD_MISC is not set
++CONFIG_CMD_FAT=y
++CONFIG_DM=y
++# CONFIG_MMC is not set
++# CONFIG_MTD_NOR_FLASH=y
++CONFIG_DM_ETH=y
++CONFIG_DM_SERIAL=y
++CONFIG_OF_LIBFDT=y
+diff --git a/include/configs/corstone1000.h b/include/configs/corstone1000.h
+new file mode 100644
+index 000000000000..c8e630c5d857
+--- /dev/null
++++ b/include/configs/corstone1000.h
+@@ -0,0 +1,80 @@
++/* SPDX-License-Identifier: GPL-2.0+ */
++/*
++ * (C) Copyright 2020 ARM Limited
++ * (C) Copyright 2020 Linaro
++ * Rui Miguel Silva <rui.silva@linaro.org>
++ * Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
++ *
++ * Configuration for Corstone1000. Parts were derived from other ARM
++ * configurations.
++ */
++
++#ifndef __CORSTONE1000_H
++#define __CORSTONE1000_H
++
++#define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_SDRAM_BASE + 0x03f00000)
++#define CONFIG_SKIP_LOWLEVEL_INIT
++
++#define CONFIG_SYS_HZ		1000
++
++#define V2M_SRAM0		0x02000000
++#define V2M_QSPI		0x08000000
++
++#define V2M_DEBUG		0x10000000
++#define V2M_BASE_PERIPH		0x1A000000
++
++#define V2M_BASE		0x80000000
++
++#define V2M_PERIPH_OFFSET(x)	(x << 16)
++
++#define V2M_SYSID		(V2M_BASE_PERIPH)
++#define V2M_SYSCTL		(V2M_BASE_PERIPH + V2M_PERIPH_OFFSET(1))
++
++#define V2M_COUNTER_CTL		(V2M_BASE_PERIPH + V2M_PERIPH_OFFSET(32))
++#define V2M_COUNTER_READ	(V2M_BASE_PERIPH + V2M_PERIPH_OFFSET(33))
++
++#define V2M_TIMER_CTL		(V2M_BASE_PERIPH + V2M_PERIPH_OFFSET(34))
++#define V2M_TIMER_BASE0		(V2M_BASE_PERIPH + V2M_PERIPH_OFFSET(35))
++
++#define V2M_UART0		(V2M_BASE_PERIPH + V2M_PERIPH_OFFSET(81))
++#define V2M_UART1		(V2M_BASE_PERIPH + V2M_PERIPH_OFFSET(82))
++
++#define CONFIG_PL011_CLOCK	50000000
++
++/* Physical Memory Map */
++#define PHYS_SDRAM_1		(V2M_BASE)
++#define PHYS_SDRAM_2		(V2M_QSPI)
++
++/* Top 16MB reserved for secure world use (maybe not needed) */
++#define DRAM_SEC_SIZE		0x01000000
++#define PHYS_SDRAM_1_SIZE	0x80000000 - DRAM_SEC_SIZE
++
++#define PHYS_SDRAM_2_SIZE	0x02000000
++
++/* Size of malloc() pool */
++#define CONFIG_SYS_MALLOC_LEN	(CONFIG_ENV_SIZE + (8 << 20))
++
++/* Miscellaneous configurable options */
++#define CONFIG_SYS_LOAD_ADDR	(V2M_BASE + 0x10000000)
++
++#define CONFIG_SYS_SDRAM_BASE	PHYS_SDRAM_1
++
++/* Monitor Command Prompt */
++#define CONFIG_SYS_CBSIZE		512	/* Console I/O Buffer Size */
++#define CONFIG_SYS_MAXARGS		64	/* max command args */
++
++#define CONFIG_EXTRA_ENV_SETTINGS					\
++				"fdt_addr=0x08330000\0"		\
++				"fdt_addr_r=0x82000000\0"		\
++				"kernel_addr=0x08430000\0"		\
++				"kernel_addr_r=0x82100000\0"		\
++				"fdt_high=0xffffffff\0"
++
++#define CONFIG_BOOTCOMMAND					\
++				"echo Copying devicetree to memory ... ;" \
++				"cp.b $fdt_addr $fdt_addr_r 0x100000;" \
++				"echo Copying Kernel to memory ... ;" \
++				"cp.b $kernel_addr $kernel_addr_r 0xa00000;" \
++				"bootm $kernel_addr_r - $fdt_addr_r; "
++
++#endif
+-- 
+2.33.0
+

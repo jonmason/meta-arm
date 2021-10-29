@@ -1,0 +1,31 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From b720b166364407ceb05385f5e72cb238195622ad Mon Sep 17 00:00:00 2001
+From: Vishnu Banavath <vishnu.banavath@arm.com>
+Date: Wed, 1 Sep 2021 18:33:32 +0100
+Subject: [PATCH 09/16] arm: corstone1000: execute uboot from DDR
+
+Previously uboot was executing from CVM. With the addition of
+secure partitions in optee, uboot has been moved to DDR.
+
+Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
+---
+ configs/corstone1000_defconfig | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/configs/corstone1000_defconfig b/configs/corstone1000_defconfig
+index dbe3c9e3f3..af1c5ecd89 100644
+--- a/configs/corstone1000_defconfig
++++ b/configs/corstone1000_defconfig
+@@ -1,6 +1,6 @@
+ CONFIG_ARM=y
+ CONFIG_TARGET_CORSTONE1000=y
+-CONFIG_SYS_TEXT_BASE=0x02100000
++CONFIG_SYS_TEXT_BASE=0x80000000
+ CONFIG_SYS_MALLOC_F_LEN=0x2000
+ CONFIG_NR_DRAM_BANKS=1
+ CONFIG_IDENT_STRING=" corstone1000 aarch64 "
+-- 
+2.33.0
+
