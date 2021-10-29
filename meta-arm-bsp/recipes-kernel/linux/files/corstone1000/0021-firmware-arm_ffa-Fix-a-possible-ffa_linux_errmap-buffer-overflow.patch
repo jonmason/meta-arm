@@ -1,0 +1,46 @@
+Upstream-Status: Accepted [merged with kernel 5.14]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From dd925db6f07556061c11ab1fbfa4a0145ae6b438 Mon Sep 17 00:00:00 2001
+From: Sudeep Holla <sudeep.holla@arm.com>
+Date: Wed, 7 Jul 2021 14:47:39 +0100
+Subject: [PATCH] firmware: arm_ffa: Fix a possible ffa_linux_errmap buffer
+ overflow
+
+The ffa_linux_errmap buffer access index is supposed to range from 0-8
+but it ranges from 1-9 instead. It reads one element out of bounds. It
+also changes the success into -EINVAL though ffa_to_linux_errno is never
+used in case of success, it is expected to work for success case too.
+
+It is slightly confusing code as the negative of the error code
+is used as index to the buffer. Fix it by negating it at the start and
+make it more readable.
+
+Link: https://lore.kernel.org/r/20210707134739.1869481-1-sudeep.holla@arm.com
+Reported-by: kernel test robot <lkp@intel.com>
+Reported-by: Dan Carpenter <dan.carpenter@oracle.com>
+Signed-off-by: Sudeep Holla <sudeep.holla@arm.com>
+---
+ drivers/firmware/arm_ffa/driver.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/firmware/arm_ffa/driver.c b/drivers/firmware/arm_ffa/driver.c
+index 88b822575ac4..c9fb56afbcb4 100644
+--- a/drivers/firmware/arm_ffa/driver.c
++++ b/drivers/firmware/arm_ffa/driver.c
+@@ -149,8 +149,10 @@ static const int ffa_linux_errmap[] = {
+ 
+ static inline int ffa_to_linux_errno(int errno)
+ {
+-	if (errno < FFA_RET_SUCCESS && errno >= -ARRAY_SIZE(ffa_linux_errmap))
+-		return ffa_linux_errmap[-errno];
++	int err_idx = -errno;
++
++	if (err_idx >= 0 && err_idx < ARRAY_SIZE(ffa_linux_errmap))
++		return ffa_linux_errmap[err_idx];
+ 	return -EINVAL;
+ }
+ 
+-- 
+2.17.1
+
