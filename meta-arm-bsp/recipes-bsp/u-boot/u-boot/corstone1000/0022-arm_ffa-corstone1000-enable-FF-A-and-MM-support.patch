@@ -1,0 +1,112 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+
+From a0841a2072215b1912d95224de204c7a013650f0 Mon Sep 17 00:00:00 2001
+From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+Date: Tue, 2 Nov 2021 16:44:39 +0000
+Subject: [PATCH 5/5] arm_ffa: corstone1000: enable FF-A and MM support
+
+This commit allows corstone1000 platform to perform
+MM communication between u-boot and the secure world
+using FF-A transport.
+
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+---
+ arch/arm/dts/corstone1000-fvp.dts  |  4 ++++
+ arch/arm/dts/corstone1000-mps3.dts |  4 ++++
+ arch/arm/dts/corstone1000.dtsi     |  7 +++++++
+ configs/corstone1000_defconfig     |  5 +++++
+ include/configs/corstone1000.h     | 14 ++++++++++++++
+ 5 files changed, 34 insertions(+)
+
+diff --git a/arch/arm/dts/corstone1000-fvp.dts b/arch/arm/dts/corstone1000-fvp.dts
+index 2188ca5e0e..92da15df4e 100644
+--- a/arch/arm/dts/corstone1000-fvp.dts
++++ b/arch/arm/dts/corstone1000-fvp.dts
+@@ -26,3 +26,7 @@
+ &refclk {
+        clock-frequency = <50000000>;
+ };
++
++&arm_ffa {
++	status = "okay";
++};
+diff --git a/arch/arm/dts/corstone1000-mps3.dts b/arch/arm/dts/corstone1000-mps3.dts
+index a3726f1e1f..6842395405 100644
+--- a/arch/arm/dts/corstone1000-mps3.dts
++++ b/arch/arm/dts/corstone1000-mps3.dts
+@@ -40,3 +40,7 @@
+ &refclk {
+ 	clock-frequency = <50000000>;
+ };
++
++&arm_ffa {
++	status = "okay";
++};
+diff --git a/arch/arm/dts/corstone1000.dtsi b/arch/arm/dts/corstone1000.dtsi
+index da1725e01f..97dfac9ae7 100644
+--- a/arch/arm/dts/corstone1000.dtsi
++++ b/arch/arm/dts/corstone1000.dtsi
+@@ -153,4 +153,11 @@
+ 		compatible = "arm,psci-1.0", "arm,psci-0.2";
+ 		method = "smc";
+ 	};
++
++	arm_ffa: arm_ffa {
++		compatible = "arm,ffa";
++		method = "smc";
++		status = "disabled";
++	};
++
+ };
+diff --git a/configs/corstone1000_defconfig b/configs/corstone1000_defconfig
+index 7574553e83..abd52af8fc 100644
+--- a/configs/corstone1000_defconfig
++++ b/configs/corstone1000_defconfig
+@@ -9,6 +9,7 @@ CONFIG_FIT=y
+ CONFIG_BOOTDELAY=3
+ CONFIG_USE_BOOTARGS=y
+ CONFIG_BOOTARGS="console=ttyAMA0 loglevel=9 ip=dhcp earlyprintk"
++CONFIG_LOGLEVEL=7
+ # CONFIG_DISPLAY_CPUINFO is not set
+ # CONFIG_DISPLAY_BOARDINFO is not set
+ CONFIG_HUSH_PARSER=y
+@@ -45,6 +46,10 @@ CONFIG_USB=y
+ CONFIG_DM_USB=y
+ CONFIG_USB_ISP1760=y
+ CONFIG_USB_STORAGE=y
++CONFIG_ARM_FFA_TRANSPORT=y
++CONFIG_EFI_MM_COMM_TEE=y
++# CONFIG_OPTEE is not set
++# CONFIG_GENERATE_SMBIOS_TABLE is not set
+ # CONFIG_HEXDUMP is not set
+ CONFIG_EFI_RUNTIME_UPDATE_CAPSULE=y
+ CONFIG_EFI_CAPSULE_ON_DISK=y
+diff --git a/include/configs/corstone1000.h b/include/configs/corstone1000.h
+index 5e22e075ad..7b644fb52b 100644
+--- a/include/configs/corstone1000.h
++++ b/include/configs/corstone1000.h
+@@ -12,6 +12,20 @@
+ #ifndef __CORSTONE1000_H
+ #define __CORSTONE1000_H
+ 
++#include <linux/sizes.h>
++
++/* MM SP UUID binary data (little-endian format) */
++#define MM_SP_UUID_DATA	\
++	0xed, 0x32, 0xd5, 0x33,	\
++	0x99, 0xe6, 0x42, 0x09,	\
++	0x9c, 0xc0, 0x2d, 0x72,	\
++	0xcd, 0xd9, 0x98, 0xa7
++
++#define FFA_SHARED_MM_BUFFER_SIZE		SZ_4K /* 4 KB */
++
++/* shared buffer physical address used for communication between u-boot and the MM SP */
++#define FFA_SHARED_MM_BUFFER_ADDR		(0x023F8000)
++
+ #define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_SDRAM_BASE + 0x03f00000)
+ #define CONFIG_SKIP_LOWLEVEL_INIT
+ 
+-- 
+2.17.1
+

@@ -29,7 +29,12 @@ SRC_URI:append:corstone1000 = " \
       file://0015-arm-dts-add-initial-devicetree-corstone1000-mps3.patch \
       file://0016-arm-corstone1000-adding-PSCI-device-tree-node.patch \
       file://0017-arm-corstone1000-amend-kernel-bootargs-with-ip-dhcp-.patch \
-      "
+      file://0018-arm_ffa-introducing-Arm-FF-A-low-level-driver.patch \
+      file://0019-arm_ffa-introducing-armffa-command.patch \
+      file://0020-arm_ffa-introducing-test-module-for-UCLASS_FFA.patch \
+      file://0021-arm_ffa-introducing-MM-communication-with-FF-A.patch \
+      file://0022-arm_ffa-corstone1000-enable-FF-A-and-MM-support.patch \
+     "
 
 #
 # FVP BASE
