@@ -1,4 +1,4 @@
-From 98619983895e1bc2e33c3cf933b9699b8276d63a Mon Sep 17 00:00:00 2001
+From be832406f95d4d057871a30097d2b1223b356414 Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Wed, 23 Jun 2021 00:45:38 +0100
 Subject: [PATCH] arm: corstone1000: enable boot using uefi

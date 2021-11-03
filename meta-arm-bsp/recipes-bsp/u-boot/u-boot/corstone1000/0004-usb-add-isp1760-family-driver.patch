@@ -1,4 +1,4 @@
-From ed07f24d76951a10b6be5ec964ed6dd9ef2cb0bf Mon Sep 17 00:00:00 2001
+From d2c4f00c05cc3c5ac25f46d69403de21de4e993d Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Mon, 28 Jun 2021 23:31:25 +0100
 Subject: [PATCH] usb: add isp1760 family driver
@@ -15,7 +15,7 @@ Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
  Makefile                            |    1 +
  drivers/usb/Kconfig                 |    2 +
  drivers/usb/common/Makefile         |    1 +
- drivers/usb/isp1760/Kconfig         |   13 +
+ drivers/usb/isp1760/Kconfig         |   12 +
  drivers/usb/isp1760/Makefile        |    6 +
  drivers/usb/isp1760/isp1760-core.c  |  378 ++++
  drivers/usb/isp1760/isp1760-core.h  |   96 +
@@ -25,7 +25,7 @@ Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
  drivers/usb/isp1760/isp1760-regs.h  |  292 +++
  drivers/usb/isp1760/isp1760-uboot.c |   64 +
  drivers/usb/isp1760/isp1760-uboot.h |   27 +
- 13 files changed, 3663 insertions(+)
+ 13 files changed, 3662 insertions(+)
  create mode 100644 drivers/usb/isp1760/Kconfig
  create mode 100644 drivers/usb/isp1760/Makefile
  create mode 100644 drivers/usb/isp1760/isp1760-core.c
@@ -76,15 +76,14 @@ index dc05cb0a5077..f08b064d2493 100644
  obj-$(CONFIG_USB_EHCI_FSL) += fsl-dt-fixup.o fsl-errata.o
 diff --git a/drivers/usb/isp1760/Kconfig b/drivers/usb/isp1760/Kconfig
 new file mode 100644
-index 000000000000..e76fb5e4ccf5
+index 000000000000..9657dcfd8045
 --- /dev/null
 +++ b/drivers/usb/isp1760/Kconfig
-@@ -0,0 +1,13 @@
+@@ -0,0 +1,12 @@
 +# SPDX-License-Identifier: GPL-2.0
 +
 +config USB_ISP1760
 +	tristate "NXP ISP 1760/1761/1763 support"
-+	depends on DM_USB
 +	select USB_HOST
 +	help
 +	  Say Y or M here if your system as an ISP1760/1761/1763 USB host

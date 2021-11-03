@@ -1,4 +1,4 @@
-From 4aaf08f3dc34300c537f703f5bd9aeea3a28260f Mon Sep 17 00:00:00 2001
+From ae0e151a224ad01870be570d6e8587e3e1c6dde9 Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Tue, 14 Sep 2021 10:46:49 +0100
 Subject: [PATCH] arm: corstone1000: enable uefi secure boot

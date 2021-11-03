@@ -1,4 +1,4 @@
-From 022b70e5f1ca6b5f2e6edbc7c150902989d3b586 Mon Sep 17 00:00:00 2001
+From 546a7151f29b5cec9de1b653594e004c7de259dd Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Mon, 28 Jun 2021 23:20:55 +0100
 Subject: [PATCH] usb: common: move urb code to common

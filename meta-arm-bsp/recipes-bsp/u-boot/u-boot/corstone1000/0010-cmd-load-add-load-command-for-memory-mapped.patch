@@ -1,4 +1,4 @@
-From 53641a3776dc6c96716c81d9ca522ddf4756a07f Mon Sep 17 00:00:00 2001
+From 4a22ea96d4352a87e39e8a9a74ccf8bb052f6293 Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Thu, 24 Jun 2021 09:25:00 +0100
 Subject: [PATCH] cmd: load: add load command for memory mapped

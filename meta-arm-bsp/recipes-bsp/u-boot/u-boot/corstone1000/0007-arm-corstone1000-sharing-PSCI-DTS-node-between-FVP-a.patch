@@ -1,4 +1,4 @@
-From 845570f406ccc1919449d79a07bc166e54fedf58 Mon Sep 17 00:00:00 2001
+From a18f97b17c84006d7b73b40490f0cd135cce2361 Mon Sep 17 00:00:00 2001
 From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 Date: Wed, 25 Aug 2021 16:50:40 +0100
 Subject: [PATCH] arm: corstone1000: sharing PSCI DTS node between FVP

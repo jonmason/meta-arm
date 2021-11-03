@@ -1,4 +1,4 @@
-From 708229c83e1453ba796fbfa598ba70a1335fe1e1 Mon Sep 17 00:00:00 2001
+From 1ebe573020c9730f4a3f009328fc3d1f7f350b55 Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Tue, 14 Sep 2021 22:07:15 +0100
 Subject: [PATCH] arm: dipha: enable efi capsule options

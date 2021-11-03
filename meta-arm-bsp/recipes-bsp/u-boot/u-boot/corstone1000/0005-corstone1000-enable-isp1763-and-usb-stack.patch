@@ -1,4 +1,4 @@
-From c23a5b3c07e20586ab2d3fc0ea7bda3be633e936 Mon Sep 17 00:00:00 2001
+From 41d82f4dc4473803d1447a0eac524112bed032d1 Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Tue, 27 Jul 2021 23:34:57 +0100
 Subject: [PATCH] corstone1000: enable isp1763 and usb stack

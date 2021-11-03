@@ -1,4 +1,4 @@
-From 293595471c5fb2b266d97e372dbf5f9279350272 Mon Sep 17 00:00:00 2001
+From 9c2c00f9aeb727c12096e6065cc2bab994bffa4f Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Tue, 22 Jun 2021 17:00:24 +0100
 Subject: [PATCH] arm: corstone1000: enable devicetree in defconfig

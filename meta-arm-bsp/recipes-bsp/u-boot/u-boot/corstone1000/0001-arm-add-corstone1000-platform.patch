@@ -1,4 +1,4 @@
-From 3a2ea6e1214b4f74dc99ae80637ea7bad451f6a4 Mon Sep 17 00:00:00 2001
+From 90608c0ac1636136f51b504805bdc81c7b22a0c4 Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Fri, 4 Jun 2021 10:58:24 +0100
 Subject: [PATCH] arm: add corstone1000 platform

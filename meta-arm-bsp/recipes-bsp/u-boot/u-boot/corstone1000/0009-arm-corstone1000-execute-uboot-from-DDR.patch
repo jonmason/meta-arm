@@ -1,4 +1,4 @@
-From 380efa943bc1b2b6b7d79b3dffb37a751c5fb4c1 Mon Sep 17 00:00:00 2001
+From cf14e676dc61b91609ddc940663cdc876ec126fe Mon Sep 17 00:00:00 2001
 From: Vishnu Banavath <vishnu.banavath@arm.com>
 Date: Wed, 1 Sep 2021 18:33:32 +0100
 Subject: [PATCH] arm: corstone1000: execute uboot from DDR

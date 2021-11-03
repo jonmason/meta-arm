@@ -1,4 +1,4 @@
-From d365d3ecea5aed0620b953eb74024a5e5f5636c2 Mon Sep 17 00:00:00 2001
+From 36ed6e56242b342af38072b0ac3d26d4800a4db1 Mon Sep 17 00:00:00 2001
 From: "Arpita S.K" <Arpita.S.K@arm.com>
 Date: Mon, 11 Oct 2021 11:45:41 +0530
 Subject: [PATCH] arm: corstone1000: Emulated RTC Support

@@ -1,4 +1,4 @@
-From 47d4157afbc401577b606e9faeb70ec888b7cee5 Mon Sep 17 00:00:00 2001
+From b1fba083c3bd3b7ee7a3ba7fcef8e9c2ac2e49af Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Tue, 14 Sep 2021 22:00:47 +0100
 Subject: [PATCH] arm: corstone1000: enable handlers for uefi variables
