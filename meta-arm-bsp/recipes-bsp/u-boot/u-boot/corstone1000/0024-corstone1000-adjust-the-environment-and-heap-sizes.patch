@@ -1,0 +1,34 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+
+From 1617ecbbf163c921468fee224c92a8f79b43e2fb Mon Sep 17 00:00:00 2001
+From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+Date: Thu, 11 Nov 2021 16:34:54 +0000
+Subject: [PATCH 7/7] corstone1000: adjust the environment and heap sizes
+
+env size set to 64 KB
+heap size 64 KB + 32 MB
+
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+---
+ include/configs/corstone1000.h | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/include/configs/corstone1000.h b/include/configs/corstone1000.h
+index 7f8a8ee254..7d63dd4ad9 100644
+--- a/include/configs/corstone1000.h
++++ b/include/configs/corstone1000.h
+@@ -75,8 +75,9 @@
+ /* Default load address for the source command */
+ #define CONFIG_SYS_LOAD_ADDR   (V2M_BASE + 0x10000000)
+ 
++#define CONFIG_ENV_SECT_SIZE		SZ_64K
+ /* Size of malloc() pool */
+-#define CONFIG_SYS_MALLOC_LEN	(CONFIG_ENV_SIZE + (8 << 20))
++#define CONFIG_SYS_MALLOC_LEN	(CONFIG_ENV_SECT_SIZE + SZ_32M)
+ 
+ #define CONFIG_SYS_SDRAM_BASE	PHYS_SDRAM_1
+ 
+-- 
+2.17.1
+
