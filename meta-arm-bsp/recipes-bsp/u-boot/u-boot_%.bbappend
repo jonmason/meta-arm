@@ -34,6 +34,7 @@ SRC_URI:append:corstone1000 = " \
       file://0020-arm_ffa-introducing-test-module-for-UCLASS_FFA.patch \
       file://0021-arm_ffa-introducing-MM-communication-with-FF-A.patch \
       file://0022-arm_ffa-corstone1000-enable-FF-A-and-MM-support.patch \
+      file://0023-efi-corstone1000-introduce-EFI-capsule-update.patch \
      "
 
 #
