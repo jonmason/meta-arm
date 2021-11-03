@@ -2,7 +2,7 @@
 
 COMPATIBLE_MACHINE = "(corstone1000)"
 
-SRC_URI = "git://git.trustedfirmware.org/TF-A/trusted-firmware-a.git;protocol=https;name=tfa"
+SRC_URI = "git://git.trustedfirmware.org/TF-A/trusted-firmware-a.git;protocol=https;name=tfa;branch=master"
 
 # TF-A master branch with all Corstone1000 patches merged
 SRCREV_tfa = "459b24451a0829460783ce8dfa15561e36d901d8"

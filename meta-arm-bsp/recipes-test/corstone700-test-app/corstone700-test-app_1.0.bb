@@ -4,7 +4,7 @@ HOMEPAGE = "https://git.linaro.org/landing-teams/working/arm/test-apps.git"
 LICENSE = "BSD-3-Clause"
 LIC_FILES_CHKSUM = "file://license.md;md5=e44b2531cd6ffe9dece394dbe988d9a0"
 
-SRC_URI = "git://git.linaro.org/landing-teams/working/arm/test-apps.git;protocol=https"
+SRC_URI = "git://git.linaro.org/landing-teams/working/arm/test-apps.git;protocol=https;branch=master"
 SRCREV = "ecd93a275d11cf08f670a97783110bd698250963"
 PV .= "~git${SRCPV}"
 

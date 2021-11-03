@@ -16,7 +16,7 @@ PE = "1"
 # repo during parse
 SRCREV = "36fec02b1f90b92cf51ec531564f9284eae27ab4"
 
-SRC_URI = "git://git.denx.de/u-boot.git \
+SRC_URI = "git://git.denx.de/u-boot.git;branch=master \
           "
 
 S = "${WORKDIR}/git"

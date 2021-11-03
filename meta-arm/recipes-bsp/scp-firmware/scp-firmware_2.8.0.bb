@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://license.md;beginline=5;md5=9db9e3d2fb8d9300a6c3d15101
                     file://contrib/cmsis/git/LICENSE.txt;md5=e3fc50a88d0a364313df4b21ef20c29e"
 
 SRC_URI = "\
-    gitsm://github.com/ARM-software/SCP-firmware.git;protocol=https \
+    gitsm://github.com/ARM-software/SCP-firmware.git;protocol=https;branch=master \
     file://0001-smt-Make-status-and-length-volatile-for-mod_smt_memo.patch \
 "
 SRCREV  = "043de77f220a0b4b0ec3aa367bd515a9e9df2a29"

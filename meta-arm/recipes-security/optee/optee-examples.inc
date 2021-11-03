@@ -11,7 +11,7 @@ inherit python3native
 
 require optee.inc
 
-SRC_URI = "git://github.com/linaro-swg/optee_examples.git \
+SRC_URI = "git://github.com/linaro-swg/optee_examples.git;branch=master;protocol=https \
            file://0001-plugins-Honour-default-cross-compiler-environment-se.patch \
            file://0002-Makefile-Enable-plugins-installation-in-rootfs.patch \
           "

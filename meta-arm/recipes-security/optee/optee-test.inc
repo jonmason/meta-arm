@@ -10,7 +10,7 @@ require optee.inc
 
 DEPENDS = "optee-client optee-os python3-pycryptodome-native"
 
-SRC_URI = "git://github.com/OP-TEE/optee_test.git \
+SRC_URI = "git://github.com/OP-TEE/optee_test.git;branch=master;protocol=https \
            file://run-ptest \
           "
 

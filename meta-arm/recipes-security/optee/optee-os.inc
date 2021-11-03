@@ -14,7 +14,7 @@ DEPENDS = "python3-pycryptodome-native python3-pyelftools-native"
 
 DEPENDS:append:toolchain-clang = " compiler-rt"
 
-SRC_URI = "git://github.com/OP-TEE/optee_os.git"
+SRC_URI = "git://github.com/OP-TEE/optee_os.git;branch=master;protocol=https"
 
 S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
