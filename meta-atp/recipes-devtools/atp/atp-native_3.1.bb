@@ -4,7 +4,8 @@ inherit pkgconfig native
 SUMMARY = "AMBA ATP Engine: synthetic traffic interface modelling framework"
 
 S = "${WORKDIR}/git"
-SRC_URI = "${ATP_SRC}"
+SRC_URI = "${ATP_SRC} \
+           file://no-werror.patch"
 
 EXTRA_OEMAKE += "EXTRA_CXX_FLAGS='${CXXFLAGS}' EXTRA_LD_FLAGS='${LDFLAGS}'"
 
