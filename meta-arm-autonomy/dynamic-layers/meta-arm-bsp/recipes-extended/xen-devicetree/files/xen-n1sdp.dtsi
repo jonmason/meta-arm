@@ -38,4 +38,14 @@
             /delete-property/ iommu-map;
         };
     };
+
+    /*
+     * Delete module node for Dom0, #size-cells and #address-cells because Grub2
+     * is responsible to create them
+     */
+    chosen {
+        /delete-property/ #size-cells;
+        /delete-property/ #address-cells;
+        /delete-node/ module@0;
+    };
 };
