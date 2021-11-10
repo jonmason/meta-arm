@@ -19,6 +19,7 @@ SRC_URI  = "git://git.trustedfirmware.org/TF-M/trusted-firmware-m.git;protocol=h
             git://git.trustedfirmware.org/TF-M/tf-m-tests.git;protocol=https;branch=master;name=tfm-tests;destsuffix=${S}/../tf-m-tests \
             git://github.com/ARMmbed/mbedtls.git;protocol=https;branch=master;name=mbedtls;destsuffix=${S}/../mbedtls \
             git://github.com/mcu-tools/mcuboot.git;protocol=https;branch=main;name=mcuboot;destsuffix=${S}/../mcuboot \
+            file://cbor2.patch;patchdir=${S}/../mcuboot \
             "
 
 # The required dependencies are documented in tf-m/config/config_default.cmake
@@ -52,7 +53,7 @@ DEPENDS += "cmake-native \
             python3-click-native \
             python3-cryptography-native \
             python3-pyasn1-native \
-            python3-cbor-native"
+            python3-cbor2-native"
 
 S = "${WORKDIR}/git/tfm"
 B = "${WORKDIR}/build"
