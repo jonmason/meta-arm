@@ -4,9 +4,7 @@ COMPATIBLE_MACHINE = "(corstone1000)"
 
 TFM_DEBUG = "1"
 
-INSANE_SKIP:${PN} = "arch"
-
-## Default is the FVP ##
+# Default is the FVP
 TFM_PLATFORM_IS_FVP ?= "TRUE"
 EXTRA_OECMAKE += "-DPLATFORM_IS_FVP=${TFM_PLATFORM_IS_FVP}"
 
