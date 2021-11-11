@@ -2,6 +2,7 @@ UPSTREAM_CHECK_GITTAGREGEX = "^(?P<pver>\d+(\.\d+)+)$"
 
 COMPATIBLE_MACHINE ?= "invalid"
 COMPATIBLE_MACHINE:qemuarm64 ?= "qemuarm64"
+COMPATIBLE_MACHINE:qemu-generic-arm64 ?= "qemu-generic-arm64"
 # Please add supported machines below or set it in .bbappend or .conf
 
 OPTEEMACHINE ?= "${MACHINE}"

@@ -171,7 +171,7 @@ qemu-cortex-m3/testimage-zephyr:
 qemu-cortex-r5:
   extends: .build
 
-qemuarm64-sbsa:
+qemu-generic-arm64/testimage:
   extends: .build
 
 qemuarm64-secureboot/testimage:
