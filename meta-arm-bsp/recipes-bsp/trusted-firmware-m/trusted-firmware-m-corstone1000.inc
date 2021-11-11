@@ -13,9 +13,8 @@ INSANE_SKIP:${PN} = "arch"
 TFM_PLATFORM_IS_FVP ?= "TRUE"
 EXTRA_OECMAKE += "-DPLATFORM_IS_FVP=${TFM_PLATFORM_IS_FVP}"
 
+SRCBRANCH_tfm = "master"
 SRCREV_tfm = "ccd82e35f539c0d7261b2935d6d30c550cfc6736"
-
-SRCREV_FORMAT = "tfm_mcuboot_tfm-tests_mbedtls"
 
 # The install task signs the TF-A BL2 and FIP binaries.
 # So they need to be copied to the sysroot. Hence the dependencies below:
