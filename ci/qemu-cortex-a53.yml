@@ -6,7 +6,7 @@ header:
 
 local_conf_header:
   nonbuilding_tests: |
-    ZEPHYRTESTS:remove += "common device poll queue sleep"
+    ZEPHYRTESTS:remove = "common device poll queue sleep"
 
 machine: qemu-cortex-a53
 
