@@ -4,9 +4,6 @@ COMPATIBLE_MACHINE = "(corstone1000)"
 
 TFM_DEBUG = "1"
 
-PACKAGECONFIG[test-secure] = "-DTEST_S=OFF,-DTEST_S=OFF"
-PACKAGECONFIG[test-nonsecure] = "-DTEST_NS=OFF,-DTEST_NS=OFF"
-
 INSANE_SKIP:${PN} = "arch"
 
 ## Default is the FVP ##
