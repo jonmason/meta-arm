@@ -15,20 +15,21 @@ LIC_FILES_CHKSUM = "file://license.rst;md5=07f368487da347f3c7bd0fc3085f3afa \
                     file://../mbedtls/LICENSE;md5=3b83ef96387f14655fc854ddc3c6bd57 \
                     file://../mcuboot/LICENSE;md5=b6ee33f1d12a5e6ee3de1e82fb51eeb8"
 
-SRC_URI  = "git://git.trustedfirmware.org/TF-M/trusted-firmware-m.git;protocol=https;branch=master;name=tfm;destsuffix=${S} \
-            git://git.trustedfirmware.org/TF-M/tf-m-tests.git;protocol=https;branch=master;name=tfm-tests;destsuffix=${S}/../tf-m-tests \
+SRC_URI  = "git://git.trustedfirmware.org/TF-M/trusted-firmware-m.git;protocol=https;branch=${SRCBRANCH_tfm};name=tfm;destsuffix=${S} \
+            git://git.trustedfirmware.org/TF-M/tf-m-tests.git;protocol=https;branch=TF-Mv1.4.x;name=tfm-tests;destsuffix=${S}/../tf-m-tests \
             git://github.com/ARMmbed/mbedtls.git;protocol=https;branch=master;name=mbedtls;destsuffix=${S}/../mbedtls \
             git://github.com/mcu-tools/mcuboot.git;protocol=https;branch=main;name=mcuboot;destsuffix=${S}/../mcuboot \
             file://cbor2.patch;patchdir=${S}/../mcuboot \
             "
 
 # The required dependencies are documented in tf-m/config/config_default.cmake
-# TF-Mv1.4.0
-SRCREV_tfm = "7ef9178adad866d48e3af42d8a3129dfab792ed8"
+# TF-Mv1.4.1
+SRCBRANCH_tfm = "TF-Mv1.4.x"
+SRCREV_tfm = "dd1fe44448db0f1750794cd9cf5596033f90f6f9"
 # mbedtls-3.0.0
 SRCREV_mbedtls = "8df2f8e7b9c7bb9390ac74bb7bace27edca81a2b"
-# TF-Mv1.4.0
-SRCREV_tfm-tests = "e1a8c9fb8394b1f6ea66d2611c070915b0d4b573"
+# TF-Mv1.4.1
+SRCREV_tfm-tests = "60faad2ead1b967ec8e73accd793d3ed0e5c56bd"
 # TF-Mv1.4-integ
 SRCREV_mcuboot = "4f8091318b4026d14af9e5a7036825bff62fb612"
 
