@@ -1,5 +1,5 @@
 SUMMARY = "Linux aarch64 boot wrapper with FDT support"
-LICENSE = "BSD"
+LICENSE = "BSD-3-Clause"
 
 LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=bb63326febfb5fb909226c8e7ebcef5c"
 
