@@ -2,7 +2,7 @@ require gem5-source_20.inc
 
 SUMMARY = "m5term allows users to connect to gem5's simulated console"
 HOMEPAGE = "https://www.gem5.org/documentation/general_docs/fullsystem/m5term"
-LICENSE = "BSD"
+LICENSE = "BSD-3-Clause"
 
 inherit native
 

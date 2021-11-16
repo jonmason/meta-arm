@@ -1,7 +1,7 @@
 # Build instructions for gem5 custom bootloader
 
 SUMMARY = "Gem5 AARCH64 boot loader"
-LICENSE = "BSD"
+LICENSE = "BSD-3-Clause"
 
 inherit deploy
 
