@@ -4,8 +4,8 @@ COMPATIBLE_MACHINE = "(corstone1000)"
 
 TFM_DEBUG = "1"
 
-# Default is the FVP
-TFM_PLATFORM_IS_FVP ?= "TRUE"
+## Default is the MPS3 board
+TFM_PLATFORM_IS_FVP ?= "FALSE"
 EXTRA_OECMAKE += "-DPLATFORM_IS_FVP=${TFM_PLATFORM_IS_FVP}"
 
 SRCBRANCH_tfm = "master"
