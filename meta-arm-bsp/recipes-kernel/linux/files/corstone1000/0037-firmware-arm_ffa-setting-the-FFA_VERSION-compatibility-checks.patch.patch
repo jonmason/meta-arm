@@ -1,0 +1,101 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+
+From 045c5da54595303c8bfec54fa5bbae10fdf9f5f5 Mon Sep 17 00:00:00 2001
+From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+Date: Wed, 25 Aug 2021 11:24:35 +0100
+Subject: [PATCH 1/3] firmware: arm_ffa: setting the FFA_VERSION compatibility
+ checks
+
+This commit aligns the FF-A versions checks according to the
+FF-A specification v1.0.
+
+The compatibility of the version number (x.y) of the caller with
+the version number (a.b) of the callee can be defined as:
+
+    If x == a and y <= b, then the versions are compatible.
+    Otherwise, versions are incompatible.
+
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+---
+ drivers/firmware/arm_ffa/driver.c | 41 ++++++++++++++++++++++---------
+ 1 file changed, 30 insertions(+), 11 deletions(-)
+
+diff --git a/drivers/firmware/arm_ffa/driver.c b/drivers/firmware/arm_ffa/driver.c
+index c9fb56afbcb4..0044c928d9f2 100644
+--- a/drivers/firmware/arm_ffa/driver.c
++++ b/drivers/firmware/arm_ffa/driver.c
+@@ -105,13 +105,14 @@
+ 
+ #define MAJOR_VERSION_MASK	GENMASK(30, 16)
+ #define MINOR_VERSION_MASK	GENMASK(15, 0)
+-#define MAJOR_VERSION(x)	((u16)(FIELD_GET(MAJOR_VERSION_MASK, (x))))
+-#define MINOR_VERSION(x)	((u16)(FIELD_GET(MINOR_VERSION_MASK, (x))))
++#define GET_FFA_MAJOR_VERSION(x)	((u16)(FIELD_GET(MAJOR_VERSION_MASK, (x))))
++#define GET_FFA_MINOR_VERSION(x)	((u16)(FIELD_GET(MINOR_VERSION_MASK, (x))))
+ #define PACK_VERSION_INFO(major, minor)			\
+ 	(FIELD_PREP(MAJOR_VERSION_MASK, (major)) |	\
+ 	 FIELD_PREP(MINOR_VERSION_MASK, (minor)))
+-#define FFA_VERSION_1_0		PACK_VERSION_INFO(1, 0)
+-#define FFA_MIN_VERSION		FFA_VERSION_1_0
++#define FFA_MAJOR_VERSION		(1)
++#define FFA_MINOR_VERSION		(0)
++#define FFA_VERSION_1_0		PACK_VERSION_INFO(FFA_MAJOR_VERSION, FFA_MINOR_VERSION)
+ 
+ #define SENDER_ID_MASK		GENMASK(31, 16)
+ #define RECEIVER_ID_MASK	GENMASK(15, 0)
+@@ -170,26 +171,44 @@ static struct ffa_drv_info *drv_info;
+ static int ffa_version_check(u32 *version)
+ {
+ 	ffa_value_t ver;
++	u16 major, minor;
+ 
+ 	invoke_ffa_fn((ffa_value_t){
+ 		      .a0 = FFA_VERSION, .a1 = FFA_DRIVER_VERSION,
+ 		      }, &ver);
+ 
++
+ 	if (ver.a0 == FFA_RET_NOT_SUPPORTED) {
+-		pr_info("FFA_VERSION returned not supported\n");
++		pr_err("A Firmware Framework implementation does not exist\n");
+ 		return -EOPNOTSUPP;
+ 	}
+ 
+-	if (ver.a0 < FFA_MIN_VERSION || ver.a0 > FFA_DRIVER_VERSION) {
+-		pr_err("Incompatible version %d.%d found\n",
+-		       MAJOR_VERSION(ver.a0), MINOR_VERSION(ver.a0));
+-		return -EINVAL;
++	major = GET_FFA_MAJOR_VERSION(ver.a0);
++	minor = GET_FFA_MINOR_VERSION(ver.a0);
++
++	if ((major != FFA_MAJOR_VERSION) || (minor < FFA_MINOR_VERSION)) {
++		pr_err("Versions are incompatible\n"
++		"FF-A driver version: %d.%d\n"
++		"FF-A framework version: %d.%d\n",
++				FFA_MAJOR_VERSION,
++				FFA_MINOR_VERSION,
++				major,
++				minor);
++		return -EPROTONOSUPPORT;
+ 	}
+ 
++	pr_info("Versions are compatible\n"
++	"FF-A driver version: %d.%d\n"
++	"FF-A framework version: %d.%d\n",
++					FFA_MAJOR_VERSION,
++					FFA_MINOR_VERSION,
++					major,
++					minor);
++
+ 	*version = ver.a0;
+-	pr_info("Version %d.%d found\n", MAJOR_VERSION(ver.a0),
+-		MINOR_VERSION(ver.a0));
++
+ 	return 0;
++
+ }
+ 
+ static int ffa_rx_release(void)
+-- 
+2.17.1
+

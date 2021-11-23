@@ -128,6 +128,7 @@ SRC_URI:append:corstone1000 = " \
            file://0034-usb-isp1760-write-to-status-and-address-register.patch \
            file://0035-usb-isp1760-use-the-right-irq-status-bit.patch \
            file://0036-usb-isp1760-otg-control-register-access.patch \
+           file://0037-firmware-arm_ffa-setting-the-FFA_VERSION-compatibility-checks.patch.patch \
            file://defconfig  \
         "
 
