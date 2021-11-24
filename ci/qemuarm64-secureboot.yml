@@ -14,3 +14,4 @@ target:
   - core-image-base
   - perf
   - optee-examples
+  - optee-test
