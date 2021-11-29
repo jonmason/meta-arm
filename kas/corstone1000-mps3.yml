@@ -1,0 +1,6 @@
+header:
+  version: 9
+  includes:
+    - corstone1000-base.yml
+
+machine: corstone1000-mps3
