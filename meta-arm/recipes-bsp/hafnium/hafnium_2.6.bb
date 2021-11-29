@@ -18,12 +18,14 @@ S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
 
 COMPATIBLE_MACHINE ?= "invalid"
+COMPATIBLE_MACHINE:qemuarm64 = "qemuarm64"
 
 # Default build 'reference'
 HAFNIUM_PROJECT ?= "reference"
 
 # Platform must be set for each machine
 HAFNIUM_PLATFORM ?= "invalid"
+HAFNIUM_PLATFORM:qemuarm64 = "qemu_aarch64"
 
 # do_deploy will install everything listed in this variable. It is set by
 # default to hafnium
