@@ -8,7 +8,8 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/files/optee-os/corstone1000:"
 
 SRC_URI:append = " \
                   file://0001-plat-corstone1000-add-corstone1000-platform.patch \
-                  file://0002-plat-corstone1000-reserve-3MB-CVM-memory-for-optee.patch"
+                  file://0002-plat-corstone1000-reserve-3MB-CVM-memory-for-optee.patch \
+                  file://0003-plat-corstone1000-add-a-rule-in-Makefile-to-SP_MAKEF.patch"
 
 COMPATIBLE_MACHINE = "corstone1000"
 
