@@ -11,11 +11,11 @@ diff --git a/build/linux/linux.gni b/build/linux/linux.gni
 index 65cc9df..19adbfb 100644
 --- a/build/linux/linux.gni
 +++ b/build/linux/linux.gni
-@@ -69,6 +70,7 @@ template("linux_kernel") {
-     "GCC_TOOLCHAIN_DIR=" + rebase_path("//prebuilts/linux-x64/gcc/bin"),
-     "ARCH=arm64",
+@@ -60,6 +60,7 @@ template("linux_kernel") {
+     "LLVM=1",
+     "LLVM_IAS=1",
      "CROSS_COMPILE=aarch64-linux-gnu-",
 +    "HOSTLDFLAGS=" + getenv("BUILD_LDFLAGS"),
- 
+
      # Build out-of-tree in `target_out_dir`.
      "O=" + rebase_path(target_out_dir),
