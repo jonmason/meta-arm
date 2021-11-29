@@ -14,7 +14,10 @@ DEPENDS = "python3-pycryptodome-native python3-pycryptodomex-native python3-pyel
 
 DEPENDS:append:toolchain-clang = " compiler-rt"
 
-SRC_URI = "git://github.com/OP-TEE/optee_os.git;branch=master;protocol=https"
+# spdevkit isn't yet merged to master
+SRC_URI = "git://git.trustedfirmware.org/OP-TEE/optee_os.git;protocol=https;branch=psa-development"
+SRCREV = "f9de2c9520ed97b89760cc4c99424aae440b63f4"
+PV = "3.10+git${SRCPV}"
 
 S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
