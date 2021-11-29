@@ -1,0 +1,61 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
+
+From 576b12ed88bd17338e28a62d0ea35aa49cf88170 Mon Sep 17 00:00:00 2001
+From: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
+Date: Wed, 17 Nov 2021 15:31:09 +0000
+Subject: [PATCH 23/25] Update mm-comm-buffer region in dts file
+
+---
+ .../opteesp/default_smm-gateway.dts.in        | 35 ++++++++++---------
+ 1 file changed, 18 insertions(+), 17 deletions(-)
+
+diff --git a/deployments/smm-gateway/opteesp/default_smm-gateway.dts.in b/deployments/smm-gateway/opteesp/default_smm-gateway.dts.in
+index 0ad7878..183c38a 100644
+--- a/deployments/smm-gateway/opteesp/default_smm-gateway.dts.in
++++ b/deployments/smm-gateway/opteesp/default_smm-gateway.dts.in
+@@ -7,23 +7,24 @@
+ @DTS_TAG@
+ 
+ @DTS_NODE@ {
+-	compatible = "arm,ffa-manifest-1.0";
+-	ffa-version = <0x00010000>; /* 31:16 - Major, 15:0 - Minor */
+-	uuid = <@EXPORT_SP_UUID_DT@>;
+-	description = "SMM Gateway";
+-	execution-ctx-count = <1>;
+-	exception-level = <1>; /* S-EL0 */
+-	execution-state = <0>; /* AArch64 */
+-	xlat-granule = <0>; /* 4KiB */
+-	messaging-method = <0>; /* Direct messaging only */
+-
+-	memory-regions {
+-		compatible = "arm,ffa-manifest-memory-regions";
+-
+-		mm-comm-buffer {
+-			base-address = <@MM_COMM_BUFFER_ADDRESS@>;
+-			pages-count = <@MM_COMM_BUFFER_PAGE_COUNT@>;
+-			attributes = <0xb>;  /* ns access-read-write */
++	smm-gateway{
++		compatible = "arm,ffa-manifest-1.0";
++		ffa-version = <0x00010000>; /* 31:16 - Major, 15:0 - Minor */
++		uuid = <@EXPORT_SP_UUID_DT@>;
++		description = "SMM Gateway";
++		execution-ctx-count = <1>;
++		exception-level = <1>; /* S-EL0 */
++		execution-state = <0>; /* AArch64 */
++		xlat-granule = <0>; /* 4KiB */
++		messaging-method = <0>; /* Direct messaging only */
++		device-regions {
++          compatible = "arm,ffa-manifest-device-regions";
++          mm-comm-buffer {
++              /* Armv8 A Foundation Platform values */
++              base-address = <0x00000000 0x02000000>;
++              pages-count = <1>;
++              attributes = <0x3>; /* read-write */
++              };
+ 		};
+ 	};
+ };
+-- 
+2.17.1
+
