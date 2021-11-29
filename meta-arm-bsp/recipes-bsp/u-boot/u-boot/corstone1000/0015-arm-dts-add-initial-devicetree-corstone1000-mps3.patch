@@ -1,0 +1,64 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
+From a3b3ff8fc2d4e52748989aa61f155fc92a63261a Mon Sep 17 00:00:00 2001
+From: Rui Miguel Silva <rui.silva@linaro.org>
+Date: Tue, 22 Jun 2021 11:35:10 +0100
+Subject: [PATCH 15/16] arm: dts: add initial devicetree corstone1000 mps3
+
+Corstone1000 is a platform enabled on MPS3 FPGA Arm board. It is a cortex-a35
+with with 8MB of CVM and 32MB of QSPI, with the peripherals USB,
+ethernet and others available on the MPS3 board.
+
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+---
+ arch/arm/dts/corstone1000-mps3.dts | 37 ++++++++++++++++++++++++++++++
+ 1 file changed, 37 insertions(+)
+ create mode 100644 arch/arm/dts/corstone1000-mps3.dts
+
+diff --git a/arch/arm/dts/corstone1000-mps3.dts b/arch/arm/dts/corstone1000-mps3.dts
+new file mode 100644
+index 0000000000..d93915dbb7
+--- /dev/null
++++ b/arch/arm/dts/corstone1000-mps3.dts
+@@ -0,0 +1,37 @@
++/*
++ * Copyright (c) 2021, Arm Limited. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++/dts-v1/;
++
++#include "corstone1000.dtsi"
++
++/ {
++	model = "corstone1000-mps3";
++
++	ethernet: eth@4010000 {
++		compatible = "smsc,lan9220", "smsc,lan9115";
++		reg = <0x40100000 0x10000>;
++		phy-mode = "mii";
++		interrupt-parent = <&gic>;
++		interrupts = <GIC_SPI 116 IRQ_TYPE_LEVEL_HIGH>;
++		reg-io-width = <2>;
++		smsc,irq-push-pull;
++	};
++
++	usb: usb@40200000 {
++		compatible = "nxp,usb-isp1763";
++		reg = <0x40200000 0x100000>;
++		interrupts-parent = <&gic>;
++		interrupts = <GIC_SPI 114 IRQ_TYPE_LEVEL_HIGH>;
++		bus-width = <16>;
++		dr_mode = "host";
++	};
++
++};
++
++&refclk {
++	clock-frequency = <50000000>;
++};
+-- 
+2.33.0
+
