@@ -4,8 +4,6 @@ HOMEPAGE = "https://github.com/tianocore/edk2"
 
 LICENSE = "BSD-2-Clause-Patent"
 
-PROVIDES += "virtual/uefi-firmware"
-
 # EDK2
 LIC_FILES_CHKSUM = "file://License.txt;md5=2b415520383f7964e96700ae12b4570a"
 # EDK2 Platforms
