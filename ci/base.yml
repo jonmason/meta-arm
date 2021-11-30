@@ -37,6 +37,8 @@ local_conf_header:
     PACKAGECONFIG:append:pn-perf = " coresight"
   noptest: |
     DISTRO_FEATURES:remove = "ptest"
+  kvm: |
+    QEMU_USE_KVM = "0"
 
 machine: unset
 
