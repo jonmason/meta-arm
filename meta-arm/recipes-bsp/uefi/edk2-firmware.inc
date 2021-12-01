@@ -23,9 +23,9 @@ SRCREV_FORMAT         = "edk2_edk2-platforms"
 UPSTREAM_CHECK_GITTAGREGEX = "^edk2-stable(?P<pver>\d+)$"
 
 EDK2_BUILD_RELEASE = ""
-EDK2_PLATFORM      = ""
+EDK2_PLATFORM      = "unset"
 # build --platform
-EDK2_PLATFORM_DSC  = ""
+EDK2_PLATFORM_DSC  = "unset"
 EDK2_BIN_NAME      = ""
 # build --arch
 EDK2_ARCH          = ""
