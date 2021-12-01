@@ -25,7 +25,7 @@ UPSTREAM_CHECK_GITTAGREGEX = "^edk2-stable(?P<pver>\d+)$"
 COMPATIBLE_MACHINE ?= "invalid"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
-EDK2_BUILD_RELEASE = ""
+EDK2_BUILD_RELEASE = "1"
 EDK2_PLATFORM      = "unset"
 # build --platform
 EDK2_PLATFORM_DSC  = "unset"
