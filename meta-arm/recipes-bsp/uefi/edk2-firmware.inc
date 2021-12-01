@@ -28,7 +28,13 @@ EDK2_PLATFORM      = "unset"
 EDK2_PLATFORM_DSC  = "unset"
 EDK2_BIN_NAME      = ""
 # build --arch
-EDK2_ARCH          = ""
+EDK2_ARCH         ?= "unset"
+EDK2_ARCH:arm      = "ARM"
+EDK2_ARCH:aarch64  = "AARCH64"
+EDK2_ARCH:x86      = "IA32"
+EDK2_ARCH:x86-64   = "X64"
+EDK2_ARCH:riscv64  = "RISCV64"
+
 # Extra arguments passed to build
 EDK2_EXTRA_BUILD   = ""
 

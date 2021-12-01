@@ -3,7 +3,6 @@ EDK2_BUILD_RELEASE = "0"
 EDK2_PLATFORM      = "n1sdp"
 EDK2_PLATFORM_DSC  = "Platform/ARM/N1Sdp/N1SdpPlatform.dsc"
 EDK2_BIN_NAME      = "BL33_AP_UEFI.fd"
-EDK2_ARCH          = "AARCH64"
 
 COMPATIBLE_MACHINE = "n1sdp"
 

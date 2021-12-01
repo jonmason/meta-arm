@@ -14,7 +14,6 @@ SRCREV_acs = "1b3a37214fe6809e07e471f79d1ef856461bc803"
 SRCREV_libc = "61687168fe02ac4d933a36c9145fdd242ac424d1"
 
 COMPATIBLE_HOST = "aarch64.*-linux"
-EDK2_ARCH = "AARCH64"
 EDK2_PLATFORM = "Shell"
 EDK2_PLATFORM_DSC = "ShellPkg/ShellPkg.dsc"
 EDK2_EXTRA_BUILD = "--module ShellPkg/Application/sbsa-acs/uefi_app/SbsaAvs.inf"

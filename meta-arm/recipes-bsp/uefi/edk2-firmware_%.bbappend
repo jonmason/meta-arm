@@ -4,7 +4,6 @@ COMPATIBLE_MACHINE:qemu-generic-arm64 = "qemu-generic-arm64"
 DEPENDS:append:qemu-generic-arm64 = " virtual/trusted-firmware-a coreutils-native"
 
 EDK2_BUILD_RELEASE:aarch64:qemuall = "1"
-EDK2_ARCH:aarch64:qemuall          = "AARCH64"
 
 EDK2_PLATFORM:qemu-generic-arm64      = "SbsaQemu"
 EDK2_PLATFORM_DSC:qemu-generic-arm64  = "Platform/Qemu/SbsaQemu/SbsaQemu.dsc"
