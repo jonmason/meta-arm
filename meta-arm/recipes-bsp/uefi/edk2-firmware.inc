@@ -22,6 +22,9 @@ SRC_URI = "\
 SRCREV_FORMAT         = "edk2_edk2-platforms"
 UPSTREAM_CHECK_GITTAGREGEX = "^edk2-stable(?P<pver>\d+)$"
 
+COMPATIBLE_MACHINE ?= "invalid"
+PACKAGE_ARCH = "${MACHINE_ARCH}"
+
 EDK2_BUILD_RELEASE = ""
 EDK2_PLATFORM      = "unset"
 # build --platform
@@ -49,8 +52,6 @@ inherit deploy
 
 S = "${WORKDIR}/edk2"
 B = "${WORKDIR}/build"
-
-PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 LDFLAGS[unexport] = "1"
 
