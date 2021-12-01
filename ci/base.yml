@@ -38,7 +38,7 @@ local_conf_header:
   noptest: |
     DISTRO_FEATURES:remove = "ptest"
   kvm: |
-    QEMU_USE_KVM = "0"
+    QEMU_USE_KVM = ""
 
 machine: unset
 
