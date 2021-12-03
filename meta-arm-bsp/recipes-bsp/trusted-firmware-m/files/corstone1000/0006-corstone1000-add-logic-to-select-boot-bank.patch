@@ -1,0 +1,266 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+
+From 7ec8812451a4e25ca0790f84c7a0ee1f260f864c Mon Sep 17 00:00:00 2001
+From: Satish Kumar <satish.kumar01@arm.com>
+Date: Mon, 11 Oct 2021 20:12:46 +0100
+Subject: [PATCH 06/15] corstone1000: add logic to select boot bank
+
+Bl1 selects the boot bank depending upon the firmware update state
+of the system. When in the trial state, new images are being tried,
+BL1 select trial/update image bank for a pre-determined number of
+times. If in all attempts, the trial bank fails to boot, BL1 falls
+back to the previous active bank. For any reason, if previous active
+bank also fails to boot for that pre-determined number of times,
+the BL1 simply goes into an assert halt state. Idealy a recovery
+mechanism should boot but this is currently out-of-scope for the
+project.
+
+BL2 logic simply tries to boot from the bank selected by the BL1.
+
+It is expected that the fail boots are detected by secure enclave,
+and in those cases, reset of the system is triggered.
+
+Change-Id: I773752f789bf8b402436c61134ac79bb405553b5
+Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+---
+ .../target/arm/corstone1000/CMakeLists.txt    |   2 +
+ .../arm/corstone1000/bl1/bl1_boot_hal.c       |   6 +-
+ .../target/arm/corstone1000/bl2_boot_hal.c    |   8 +-
+ .../corstone1000/fw_update_agent/fwu_agent.c  | 102 ++++++++++++++++++
+ .../corstone1000/fw_update_agent/fwu_agent.h  |   5 +-
+ 5 files changed, 117 insertions(+), 6 deletions(-)
+
+diff --git a/platform/ext/target/arm/corstone1000/CMakeLists.txt b/platform/ext/target/arm/corstone1000/CMakeLists.txt
+index 81623f16ff..a2191c835f 100644
+--- a/platform/ext/target/arm/corstone1000/CMakeLists.txt
++++ b/platform/ext/target/arm/corstone1000/CMakeLists.txt
+@@ -109,6 +109,7 @@ target_sources(platform_bl2
+         Native_Driver/uart_pl011_drv.c
+         fip_parser/fip_parser.c
+         bl2_boot_hal.c
++        fw_update_agent/fwu_agent.c
+ )
+ 
+ if (PLATFORM_IS_FVP)
+@@ -155,6 +156,7 @@ target_include_directories(platform_bl2
+         ${MCUBOOT_PATH}/boot/bootutil/include # for fault_injection_hardening.h only
+         ${CMAKE_BINARY_DIR}/bl2/ext/mcuboot # for mcuboot_config.h only
+         $<BUILD_INTERFACE:${BL2_SOURCE}/ext/mcuboot/include>
++        fw_update_agent
+ )
+ 
+ #========================= BL1 component =======================================#
+diff --git a/platform/ext/target/arm/corstone1000/bl1/bl1_boot_hal.c b/platform/ext/target/arm/corstone1000/bl1/bl1_boot_hal.c
+index 54042495d7..2af5b8c846 100644
+--- a/platform/ext/target/arm/corstone1000/bl1/bl1_boot_hal.c
++++ b/platform/ext/target/arm/corstone1000/bl1/bl1_boot_hal.c
+@@ -587,7 +587,7 @@ extern void add_bank_offset_to_image_offset(uint32_t bank_offset);
+ int32_t boot_platform_init(void)
+ {
+     int32_t result;
+-    uint32_t bank_offset = BANK_0_PARTITION_OFFSET;
++    uint32_t bank_offset;
+ 
+ #if !(PLATFORM_IS_FVP)
+     setup_mpu();
+@@ -596,7 +596,6 @@ int32_t boot_platform_init(void)
+ #if !(PLATFORM_IS_FVP)
+     setup_host_firewall();
+ #endif
+-    add_bank_offset_to_image_offset(bank_offset);
+ 
+     result = FLASH_DEV_NAME.Initialize(NULL);
+     if (result != ARM_DRIVER_OK) {
+@@ -630,6 +629,9 @@ int32_t boot_platform_init(void)
+         }
+     }
+ 
++    bl1_get_boot_bank(&bank_offset);
++    add_bank_offset_to_image_offset(bank_offset);
++
+     return 0;
+ }
+ 
+diff --git a/platform/ext/target/arm/corstone1000/bl2_boot_hal.c b/platform/ext/target/arm/corstone1000/bl2_boot_hal.c
+index 75d2cb60d8..4f5b48a2e0 100644
+--- a/platform/ext/target/arm/corstone1000/bl2_boot_hal.c
++++ b/platform/ext/target/arm/corstone1000/bl2_boot_hal.c
+@@ -18,6 +18,7 @@
+ #include <string.h>
+ #include "tfm_plat_otp.h"
+ #include "tfm_plat_provisioning.h"
++#include "fwu_agent.h"
+ 
+ #ifdef PLATFORM_PSA_ADAC_SECURE_DEBUG
+ #include "psa_adac_platform.h"
+@@ -112,15 +113,13 @@ int32_t boot_platform_init(void)
+ {
+     int32_t result;
+     enum tfm_plat_err_t plat_err;
+-    uint32_t bank_offset = BANK_0_PARTITION_OFFSET;
++    uint32_t bank_offset;
+ 
+     result = fill_bl2_flash_map_by_parsing_fips(BANK_0_PARTITION_OFFSET);
+     if (result) {
+         return 1;
+     }
+ 
+-    add_bank_offset_to_image_offset(bank_offset);
+-
+     result = FLASH_DEV_NAME.Initialize(NULL);
+     if (result != ARM_DRIVER_OK) {
+         return 1;
+@@ -154,6 +153,9 @@ int32_t boot_platform_init(void)
+     }
+ #endif
+ 
++    bl2_get_boot_bank(&bank_offset);
++    add_bank_offset_to_image_offset(bank_offset);
++
+     return 0;
+ }
+ 
+diff --git a/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c b/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c
+index 7fa64db0f7..23a15ee71b 100644
+--- a/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c
++++ b/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c
+@@ -75,8 +75,12 @@ struct fwu_private_metadata {
+        /* boot_index: the bank from which system is booted from */
+        uint32_t boot_index;
+ 
++       /* counter: tracking number of boot attempted so far */
++       uint32_t boot_attempted;
++
+ } __packed;
+ 
++#define MAX_BOOT_ATTEMPTS_PER_BANK 3
+ 
+ struct fwu_metadata _metadata;
+ 
+@@ -315,6 +319,7 @@ enum fwu_agent_error_t fwu_metadata_provision(void)
+     memset(&priv_metadata, 0, sizeof(struct fwu_private_metadata));
+ 
+     priv_metadata.boot_index = BANK_0;
++    priv_metadata.boot_attempted = 0;
+ 
+     ret = private_metadata_write(&priv_metadata);
+     if (ret) {
+@@ -532,3 +537,100 @@ out:
+     return ret;
+ }
+ 
++void bl1_get_boot_bank(uint32_t *bank_offset)
++{
++    struct fwu_private_metadata priv_metadata;
++    enum fwu_agent_state_t current_state;
++    uint32_t boot_attempted;
++    uint32_t boot_index;
++
++    FWU_LOG_MSG("%s: enter\n\r", __func__);
++
++    if (fwu_metadata_init()) {
++        FWU_ASSERT(0);
++    }
++
++    if (private_metadata_read(&priv_metadata)) {
++        FWU_ASSERT(0);
++    }
++
++    if (metadata_read(&_metadata)) {
++        FWU_ASSERT(0);
++    }
++
++    current_state = get_fwu_agent_state(&_metadata, &priv_metadata);
++
++    if (current_state == FWU_AGENT_STATE_REGULAR) {
++        boot_index = _metadata.active_index;
++        FWU_ASSERT(boot_index == priv_metadata.boot_index);
++        boot_attempted = 0;
++    } else if (current_state == FWU_AGENT_STATE_TRIAL) {
++        boot_attempted = (++priv_metadata.boot_attempted);
++        FWU_LOG_MSG("%s: attempting boot number = %u\n\r",
++                                        __func__, boot_attempted);
++        if (boot_attempted <= MAX_BOOT_ATTEMPTS_PER_BANK) {
++            boot_index = _metadata.active_index;
++            FWU_LOG_MSG("%s: booting from trial bank: %u\n\r",
++                                        __func__, boot_index);
++        } else if (boot_attempted <= (2 * MAX_BOOT_ATTEMPTS_PER_BANK)) {
++            boot_index = _metadata.previous_active_index;
++            FWU_LOG_MSG("%s: gave up booting from trial bank\n\r", __func__);
++            FWU_LOG_MSG("%s: booting from previous active bank: %u\n\r",
++                                        __func__, boot_index);
++        } else {
++            FWU_LOG_MSG("%s: cannot boot system from any bank, halting...\n\r", __func__);
++            FWU_ASSERT(0);
++        }
++    } else {
++        FWU_ASSERT(0);
++    }
++
++    priv_metadata.boot_index = boot_index;
++    if (private_metadata_write(&priv_metadata)) {
++        FWU_ASSERT(0);
++    }
++
++    if (boot_index == BANK_0) {
++        *bank_offset = BANK_0_PARTITION_OFFSET;
++    } else if (boot_index == BANK_1) {
++        *bank_offset = BANK_1_PARTITION_OFFSET;
++    } else {
++        FWU_ASSERT(0);
++    }
++
++    FWU_LOG_MSG("%s: exit: booting from bank = %u, offset = %x\n\r", __func__,
++                        boot_index, *bank_offset);
++
++    return;
++}
++
++void bl2_get_boot_bank(uint32_t *bank_offset)
++{
++    uint32_t boot_index;
++    struct fwu_private_metadata priv_metadata;
++    FWU_LOG_MSG("%s: enter\n\r", __func__);
++
++    if (fwu_metadata_init()) {
++        FWU_ASSERT(0);
++    }
++
++    if (private_metadata_read(&priv_metadata)) {
++        FWU_ASSERT(0);
++    }
++
++    boot_index = priv_metadata.boot_index;
++
++    if (boot_index == BANK_0) {
++        *bank_offset = BANK_0_PARTITION_OFFSET;
++    } else if (boot_index == BANK_1) {
++        *bank_offset = BANK_1_PARTITION_OFFSET;
++    } else {
++        FWU_ASSERT(0);
++    }
++
++    FWU_LOG_MSG("%s: exit: booting from bank = %u, offset = %x\n\r", __func__,
++                        boot_index, *bank_offset);
++
++    return;
++}
++
+diff --git a/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.h b/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.h
+index f5ab877ef1..389381c326 100644
+--- a/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.h
++++ b/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.h
+@@ -38,5 +38,8 @@ enum fwu_agent_error_t fwu_metadata_init(void);
+  */
+ enum fwu_agent_error_t corstone1000_fwu_flash_image(void);
+ 
+-#endif /* FWU_AGENT_H */
+ 
++void bl1_get_boot_bank(uint32_t *bank_offset);
++void bl2_get_boot_bank(uint32_t *bank_offset);
++
++#endif /* FWU_AGENT_H */
+-- 
+2.17.1
+

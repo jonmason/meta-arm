@@ -1,0 +1,119 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+
+From 9b2b4e284d36d0433f5aa0af6f13e7eda5c783c0 Mon Sep 17 00:00:00 2001
+From: Satish Kumar <satish.kumar01@arm.com>
+Date: Thu, 14 Oct 2021 05:08:04 +0100
+Subject: [PATCH 08/15] corstone1000: impelment accept image logic
+
+Until all new images in the update/trial bank is accepted,
+the firmware update state of the system remains in the trial
+state. The state changes automatically to regular state when
+all new images in the trial bank is accepted.
+
+This commit adds the logic to accept one of the image type.
+
+Change-Id: I1f18d77b185f2e5dd26d6e02bed792689019b7b8
+Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+---
+ .../corstone1000/fw_update_agent/fwu_agent.c  | 70 +++++++++++++++++++
+ .../services/src/tfm_platform_system.c        |  2 +-
+ 2 files changed, 71 insertions(+), 1 deletion(-)
+
+diff --git a/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c b/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c
+index 23a15ee71b..a70638e993 100644
+--- a/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c
++++ b/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c
+@@ -537,6 +537,76 @@ out:
+     return ret;
+ }
+ 
++static enum fwu_agent_error_t accept_full_capsule(
++          struct fwu_metadata* metadata,
++          struct fwu_private_metadata* priv_metadata)
++{
++    uint32_t active_index = metadata->active_index;
++    enum fwu_agent_error_t ret;
++
++    FWU_LOG_MSG("%s: enter\n\r", __func__);
++
++    for (int i = 0; i < NR_OF_IMAGES_IN_FW_BANK; i++) {
++        metadata->img_entry[i].img_props[active_index].accepted =
++                                                            IMAGE_ACCEPTED;
++    }
++
++    priv_metadata->boot_attempted = 0;
++
++    ret = private_metadata_write(priv_metadata);
++    if (ret) {
++        return ret;
++    }
++
++    ret = metadata_write(metadata);
++    if (ret) {
++        return ret;
++    }
++
++    FWU_LOG_MSG("%s: exit: fwu state is changed to regular\n\r", __func__);
++    return FWU_AGENT_SUCCESS;
++}
++
++static enum fwu_agent_error_t fwu_accept_image(struct efi_guid* guid,
++        struct fwu_metadata *metadata,
++        struct fwu_private_metadata *priv_metadata)
++{
++    enum fwu_agent_state_t current_state;
++    int image_index;
++    uint32_t image_bank_offset;
++    enum fwu_agent_error_t ret;
++
++    FWU_LOG_MSG("%s: enter\n\r", __func__);
++
++    /* it is expected to receive this call only when
++       in trial state */
++    current_state = get_fwu_agent_state(metadata, priv_metadata);
++    if (current_state != FWU_AGENT_STATE_TRIAL) {
++        return FWU_AGENT_ERROR;
++    }
++
++    /* booted from previous_active_bank, not expected
++     * to receive this call in this state, rather host should
++     * call corstone1000_fwu_select_previous */
++    if (metadata->active_index != priv_metadata->boot_index) {
++        return FWU_AGENT_ERROR;
++    }
++
++    image_index = get_image_info_in_bank(guid, &image_bank_offset);
++    switch(image_index) {
++        case IMAGE_ALL:
++            ret = accept_full_capsule(metadata, priv_metadata);
++            break;
++        default:
++            FWU_LOG_MSG("%s: sent image not recognized\n\r", __func__);
++            ret = FWU_AGENT_ERROR;
++            break;
++    }
++
++    FWU_LOG_MSG("%s: exit: ret = %d\n\r", __func__, ret);
++    return ret;
++}
++
+ void bl1_get_boot_bank(uint32_t *bank_offset)
+ {
+     struct fwu_private_metadata priv_metadata;
+diff --git a/platform/ext/target/arm/corstone1000/services/src/tfm_platform_system.c b/platform/ext/target/arm/corstone1000/services/src/tfm_platform_system.c
+index f9629a1688..16ad975c32 100644
+--- a/platform/ext/target/arm/corstone1000/services/src/tfm_platform_system.c
++++ b/platform/ext/target/arm/corstone1000/services/src/tfm_platform_system.c
+@@ -21,7 +21,7 @@ enum tfm_platform_err_t tfm_platform_hal_ioctl(tfm_platform_ioctl_req_t request,
+                                                psa_outvec *out_vec)
+ {
+     int32_t ret = TFM_PLATFORM_ERR_SUCCESS;
+-    const corstone1000_ioctl_in_params_t *in_params =
++    corstone1000_ioctl_in_params_t *in_params =
+                                     (corstone1000_ioctl_in_params_t *)in_vec->base;
+     corstone1000_ioctl_out_params_t *out_params = (corstone1000_ioctl_out_params_t *)out_vec->base;
+ 
+-- 
+2.17.1
+

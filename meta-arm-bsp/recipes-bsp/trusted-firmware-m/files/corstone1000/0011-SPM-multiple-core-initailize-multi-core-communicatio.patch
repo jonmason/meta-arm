@@ -1,0 +1,39 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+
+From 35ab33099d7b091630ec677cbad57abd60105f91 Mon Sep 17 00:00:00 2001
+From: Satish Kumar <satish.kumar01@arm.com>
+Date: Sun, 14 Nov 2021 11:49:11 +0000
+Subject: [PATCH 11/15] SPM: multiple core: initailize multi-core communication
+ before the non-secure core is out of rest
+
+Tf-m should be ready to receive the communication before non-secure
+has been taken out of rest.
+
+Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+Change-Id: I0b609fffbed0fc2f09b521389fd50f4e992ad00d
+---
+ secure_fw/spm/cmsis_psa/tfm_multi_core.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/secure_fw/spm/cmsis_psa/tfm_multi_core.c b/secure_fw/spm/cmsis_psa/tfm_multi_core.c
+index f830a6f5f7..946d1a60eb 100644
+--- a/secure_fw/spm/cmsis_psa/tfm_multi_core.c
++++ b/secure_fw/spm/cmsis_psa/tfm_multi_core.c
+@@ -25,11 +25,11 @@ void tfm_nspm_thread_entry(void)
+     SPMLOG_DBGMSG("Enabling non-secure core...");
+ #endif
+ 
++    tfm_inter_core_comm_init();
++
+     tfm_hal_boot_ns_cpu(tfm_spm_hal_get_ns_VTOR());
+     tfm_hal_wait_for_ns_cpu_ready();
+ 
+-    tfm_inter_core_comm_init();
+-
+     /*
+      * TODO
+      * The infinite-loop can be replaced with platform-specific low-power sleep
+-- 
+2.17.1
+

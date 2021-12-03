@@ -1,0 +1,80 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+
+From c33289422948ccb0bd6985512e5d0fc6936c0cd1 Mon Sep 17 00:00:00 2001
+From: Satish Kumar <satish.kumar01@arm.com>
+Date: Thu, 18 Nov 2021 12:49:10 +0000
+Subject: [PATCH 15/15] corstone1000: secure host watchdog interrupt handler
+
+With this commit, the host secure watchdog interrupt 1
+(WS1) will be handled by the secure enclave. The commit
+implements and enables the SECURE_WATCHDOG_WS1_IRQHandler
+in NVIC controller. The host can now trigger a reboot
+using the secure watchdog.
+
+Change-Id: Ied82cc04496f5daf678ad1cdc7bcf6d3a7879186
+Signed-off-by: Emekcan Aras <emekcan.aras@arm.com>
+---
+ .../arm/corstone1000/Native_Driver/watchdog.c   | 17 +++++++++++++++++
+ .../arm/corstone1000/Native_Driver/watchdog.h   |  9 +++++++++
+ .../target/arm/corstone1000/tfm_hal_platform.c  |  2 ++
+ 3 files changed, 28 insertions(+)
+
+diff --git a/platform/ext/target/arm/corstone1000/Native_Driver/watchdog.c b/platform/ext/target/arm/corstone1000/Native_Driver/watchdog.c
+index d375af3afb..d7faa3067d 100644
+--- a/platform/ext/target/arm/corstone1000/Native_Driver/watchdog.c
++++ b/platform/ext/target/arm/corstone1000/Native_Driver/watchdog.c
+@@ -79,3 +79,20 @@ int corstone1000_watchdog_init()
+     
+     return ARM_DRIVER_OK;
+ }
++
++/* Secure Host Watchdog WS1 Handler 
++ * efi_reset_system from the host triggers "Secure 
++ * watchdog WS1 interrupt" to reset the system. Host 
++ * cannot access this interrupt by design, so SE 
++ * resets the system using this handler
++ * */ 
++void SECURE_WATCHDOG_WS1_IRQHandler(void){
++    NVIC_SystemReset();
++}
++
++/*Enable Secure Watchdog WS1 Interrupt
++ * in NVIC controller (asserted by host)*/
++void corstone1000_host_watchdog_handler_init(){
++    NVIC_EnableIRQ(SECURE_WATCHDOG_WS1_IRQn);
++}
++
+diff --git a/platform/ext/target/arm/corstone1000/Native_Driver/watchdog.h b/platform/ext/target/arm/corstone1000/Native_Driver/watchdog.h
+index fd1b7cf124..cd9bed3f63 100644
+--- a/platform/ext/target/arm/corstone1000/Native_Driver/watchdog.h
++++ b/platform/ext/target/arm/corstone1000/Native_Driver/watchdog.h
+@@ -29,4 +29,13 @@ int corstone1000_watchdog_init();
+  */
+ int corstone1000_watchdog_reset_timer();
+ 
++/**
++ *  \brief Initializes Interrupt Handler for
++ *   Secure Host Watchdog (WS1).
++ *
++ *  \returns  VOID
++ */
++void corstone1000_host_watchdog_handler_init();
++
++
+ #endif /* watchdog_h */
+diff --git a/platform/ext/target/arm/corstone1000/tfm_hal_platform.c b/platform/ext/target/arm/corstone1000/tfm_hal_platform.c
+index 7faa71eb63..e3c6b78950 100644
+--- a/platform/ext/target/arm/corstone1000/tfm_hal_platform.c
++++ b/platform/ext/target/arm/corstone1000/tfm_hal_platform.c
+@@ -24,5 +24,7 @@ enum tfm_hal_status_t tfm_hal_platform_init(void)
+         return TFM_HAL_ERROR_GENERIC;
+     }
+ 
++    corstone1000_host_watchdog_handler_init();
++
+     return TFM_HAL_SUCCESS;
+ }
+-- 
+2.17.1
+

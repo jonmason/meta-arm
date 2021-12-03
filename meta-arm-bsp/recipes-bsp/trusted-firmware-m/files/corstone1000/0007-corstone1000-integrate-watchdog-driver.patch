@@ -1,0 +1,645 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+
+From d8c6e41ee040d19748915d2c598df1c4b90a93a8 Mon Sep 17 00:00:00 2001
+From: Harry Moulton <harry.moulton@arm.com>
+Date: Tue, 5 Oct 2021 12:40:57 +0100
+Subject: [PATCH 07/15] corstone1000: integrate watchdog driver
+
+This change integrates and enables the watchdog timer driver
+inside the BL1, BL2 and TF-M. SoC and SE watchdogs are enabled,
+meaning the system should get reset if software becomes
+unresponsive.
+
+Signed-off-by: Harry Moulton <harry.moulton@arm.com>
+Change-Id: Iab957a58025aac98140bb71289a269443529e8ed
+---
+ .../target/arm/corstone1000/CMakeLists.txt    |   4 +
+ .../Native_Driver/arm_watchdog_drv.c          | 190 ++++++++++++++++++
+ .../Native_Driver/arm_watchdog_drv.h          | 179 +++++++++++++++++
+ .../arm/corstone1000/Native_Driver/watchdog.c |  81 ++++++++
+ .../arm/corstone1000/Native_Driver/watchdog.h |  32 +++
+ .../arm/corstone1000/bl1/CMakeLists.txt       |   2 +
+ .../arm/corstone1000/bl1/bl1_boot_hal.c       |   6 +
+ .../target/arm/corstone1000/bl2_boot_hal.c    |   6 +
+ .../arm/corstone1000/tfm_hal_platform.c       |   5 +
+ 9 files changed, 505 insertions(+)
+ create mode 100644 platform/ext/target/arm/corstone1000/Native_Driver/arm_watchdog_drv.c
+ create mode 100644 platform/ext/target/arm/corstone1000/Native_Driver/arm_watchdog_drv.h
+ create mode 100644 platform/ext/target/arm/corstone1000/Native_Driver/watchdog.c
+ create mode 100644 platform/ext/target/arm/corstone1000/Native_Driver/watchdog.h
+
+diff --git a/platform/ext/target/arm/corstone1000/CMakeLists.txt b/platform/ext/target/arm/corstone1000/CMakeLists.txt
+index a2191c835f..cb66bd48d6 100644
+--- a/platform/ext/target/arm/corstone1000/CMakeLists.txt
++++ b/platform/ext/target/arm/corstone1000/CMakeLists.txt
+@@ -62,6 +62,8 @@ target_sources(platform_s
+         Device/Source/system_core_init.c
+         Native_Driver/uart_pl011_drv.c
+         Native_Driver/mhu_v2_x.c
++        Native_Driver/watchdog.c
++        Native_Driver/arm_watchdog_drv.c
+         spm_hal.c
+         tfm_hal_multi_core.c
+         tfm_hal_isolation.c
+@@ -107,6 +109,8 @@ target_sources(platform_bl2
+         Device/Source/device_definition.c
+         Device/Source/system_core_init.c
+         Native_Driver/uart_pl011_drv.c
++        Native_Driver/watchdog.c
++        Native_Driver/arm_watchdog_drv.c
+         fip_parser/fip_parser.c
+         bl2_boot_hal.c
+         fw_update_agent/fwu_agent.c
+diff --git a/platform/ext/target/arm/corstone1000/Native_Driver/arm_watchdog_drv.c b/platform/ext/target/arm/corstone1000/Native_Driver/arm_watchdog_drv.c
+new file mode 100644
+index 0000000000..b6323c99a5
+--- /dev/null
++++ b/platform/ext/target/arm/corstone1000/Native_Driver/arm_watchdog_drv.c
+@@ -0,0 +1,190 @@
++/*
++ * Copyright (c) 2016-2020 Arm Limited
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include "arm_watchdog_drv.h"
++
++/* Watchdog control definitions */
++#define ARM_WATCHDOG_CTRL_INTEN        (0x1UL << 0)
++#define ARM_WATCHDOG_CTRL_RESEN        (0x1UL << 1)
++#define ARM_WATCHDOG_INTCLR            1UL
++#define ARM_WATCHDOG_RAWINTSTAT        1UL
++#define ARM_WATCHDOG_MASKINTSTAT       1UL
++#define ARM_WATCHDOG_UNLOCK_VALUE      0x1ACCE551
++#define ARM_WATCHDOG_LOCK_VALUE        0x00000001
++#define ARM_WATCHDOG_INTEGTESTEN       1UL
++#define ARM_WATCHDOG_INTEGTESTOUTSET   1UL
++#define ARM_WATCHDOG_MAX_VALUE         0xFFFFFFFF
++
++/* Watchdog state definitions */
++#define ARM_WATCHDOG_INITIALIZED  (1ul << 0)
++#define ARM_WATCHDOG_ENABLED      (1ul << 1)
++
++/* ARM watchdog memory mapped register access structure */
++struct arm_watchdog_t {
++    volatile uint32_t  load;          /* Offset: 0x000 (R/W) Load register */
++    volatile uint32_t  value;         /* Offset: 0x004 (R/ ) Value register */
++    volatile uint32_t  ctrl;          /* Offset: 0x008 (R/W) Control register */
++    volatile uint32_t  intclr;        /* Offset: 0x00C ( /W) Clear interrupt
++                                       *                     register */
++    volatile uint32_t  rawintstat;    /* Offset: 0x010 (R/ ) Raw interrupt
++                                       *                     status register */
++    volatile uint32_t  maskintstat;   /* Offset: 0x014 (R/ ) Interrupt status
++                                       *                     register */
++    volatile uint32_t  reserved0[762];
++    volatile uint32_t  lock;          /* Offset: 0xC00 (R/W) Lock register */
++    volatile uint32_t  reserved1[191];
++    volatile uint32_t  itcr;          /* Offset: 0xF00 (R/W) Integration test
++                                       *                     control register */
++    volatile uint32_t  itop;          /* Offset: 0xF04 ( /W) Integration Test
++                                       *                     output set
++                                       *                     register */
++};
++
++void arm_watchdog_init(struct arm_watchdog_dev_t* dev, uint32_t timeout)
++{
++    /*
++     * The init function leaves the watchdog in a clean state:
++     *  - initialized;
++     *  - disabled;
++     *  - locked.
++     */
++    if (arm_watchdog_is_enabled(dev)) {
++        arm_watchdog_unlock(dev);
++        (void)arm_watchdog_disable(dev);
++    }
++    arm_watchdog_lock(dev);
++
++    if (timeout == 0)
++        dev->data->timeout = ARM_WATCHDOG_MAX_VALUE;
++    else
++        dev->data->timeout = timeout;
++
++    dev->data->state = ARM_WATCHDOG_INITIALIZED;
++}
++
++enum arm_watchdog_error_t arm_watchdog_feed(struct arm_watchdog_dev_t* dev)
++{
++    struct arm_watchdog_t* p_wdog = (struct arm_watchdog_t*)dev->cfg->base;
++
++    if (!arm_watchdog_is_enabled(dev))
++        return ARM_WATCHDOG_ERR_NOT_ENAB;
++
++    if (arm_watchdog_is_locked(dev))
++        return ARM_WATCHDOG_ERR_LOCKED;
++
++    p_wdog->load = dev->data->timeout;
++
++    return ARM_WATCHDOG_ERR_NONE;
++}
++
++enum arm_watchdog_error_t
++arm_watchdog_clear_interrupt_and_refresh_counter(struct arm_watchdog_dev_t* dev)
++{
++    struct arm_watchdog_t* p_wdog = (struct arm_watchdog_t*)dev->cfg->base;
++
++    if (!arm_watchdog_is_enabled(dev))
++        return ARM_WATCHDOG_ERR_NOT_ENAB;
++
++    if (arm_watchdog_is_locked(dev))
++        return ARM_WATCHDOG_ERR_LOCKED;
++
++    p_wdog->intclr = ARM_WATCHDOG_INTCLR;
++
++    return ARM_WATCHDOG_ERR_NONE;
++}
++
++enum arm_watchdog_error_t arm_watchdog_enable(struct arm_watchdog_dev_t* dev)
++{
++    struct arm_watchdog_t* p_wdog = (struct arm_watchdog_t*)dev->cfg->base;
++
++    if (!arm_watchdog_is_initialized(dev))
++        return ARM_WATCHDOG_ERR_NOT_INIT;
++
++    if (arm_watchdog_is_locked(dev))
++        return ARM_WATCHDOG_ERR_LOCKED;
++
++    p_wdog->load = dev->data->timeout;
++
++    /* Starts the watchdog counter */
++    p_wdog->ctrl = (ARM_WATCHDOG_CTRL_RESEN | ARM_WATCHDOG_CTRL_INTEN);
++    dev->data->state |= ARM_WATCHDOG_ENABLED;
++
++    return ARM_WATCHDOG_ERR_NONE;
++}
++
++uint32_t arm_watchdog_is_enabled(struct arm_watchdog_dev_t* dev)
++{
++    return (dev->data->state & ARM_WATCHDOG_ENABLED);
++}
++
++enum arm_watchdog_error_t arm_watchdog_disable(struct arm_watchdog_dev_t* dev)
++{
++    struct arm_watchdog_t* p_wdog = (struct arm_watchdog_t*)dev->cfg->base;
++
++    if (!arm_watchdog_is_enabled(dev))
++        return ARM_WATCHDOG_ERR_NOT_ENAB;
++
++    if (arm_watchdog_is_locked(dev))
++        return ARM_WATCHDOG_ERR_LOCKED;
++
++    /* Stops the watchdog */
++    p_wdog->ctrl &= ~(ARM_WATCHDOG_CTRL_RESEN | ARM_WATCHDOG_CTRL_INTEN);
++    dev->data->state &= ~ARM_WATCHDOG_ENABLED;
++
++    return ARM_WATCHDOG_ERR_NONE;
++}
++
++void arm_watchdog_lock(struct arm_watchdog_dev_t* dev)
++{
++    struct arm_watchdog_t* p_wdog = (struct arm_watchdog_t*)dev->cfg->base;
++
++    /* Prevents writing to all of the registers */
++    p_wdog->lock = ARM_WATCHDOG_LOCK_VALUE;
++}
++
++uint32_t arm_watchdog_is_locked(struct arm_watchdog_dev_t* dev)
++{
++    struct arm_watchdog_t* p_wdog = (struct arm_watchdog_t*)dev->cfg->base;
++
++    /* The lock register can only return 0 or 1 when read */
++    return p_wdog->lock;
++}
++
++void arm_watchdog_unlock(struct arm_watchdog_dev_t* dev)
++{
++    struct arm_watchdog_t* p_wdog = (struct arm_watchdog_t*)dev->cfg->base;
++
++    p_wdog->lock = ARM_WATCHDOG_UNLOCK_VALUE;
++}
++
++inline uint32_t arm_watchdog_is_initialized(struct arm_watchdog_dev_t* dev)
++{
++    return (dev->data->state & ARM_WATCHDOG_INITIALIZED);
++}
++
++uint32_t arm_watchdog_get_remaining_time(struct arm_watchdog_dev_t* dev)
++{
++    struct arm_watchdog_t* p_wdog = (struct arm_watchdog_t*)dev->cfg->base;
++
++    if (!arm_watchdog_is_enabled(dev))
++        return 0;
++
++    if (arm_watchdog_is_locked(dev))
++        return 0;
++
++    return p_wdog->value;
++}
++
+diff --git a/platform/ext/target/arm/corstone1000/Native_Driver/arm_watchdog_drv.h b/platform/ext/target/arm/corstone1000/Native_Driver/arm_watchdog_drv.h
+new file mode 100644
+index 0000000000..3b163625f5
+--- /dev/null
++++ b/platform/ext/target/arm/corstone1000/Native_Driver/arm_watchdog_drv.h
+@@ -0,0 +1,179 @@
++/*
++ * Copyright (c) 2016-2020 ARM Limited
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++/**
++ * \file arm_watchdog_drv.h
++ * \brief Generic driver for ARM watchdogs.
++ */
++
++#ifndef __ARM_WATCHDOG_DRV_H__
++#define __ARM_WATCHDOG_DRV_H__
++
++#include <stdint.h>
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++enum arm_watchdog_error_t {
++    ARM_WATCHDOG_ERR_NONE = 0,  /*!< No error */
++    ARM_WATCHDOG_ERR_NOT_INIT,  /*!< Watchdog is not initialized */
++    ARM_WATCHDOG_ERR_NOT_ENAB,  /*!< Watchdog is not enabled */
++    ARM_WATCHDOG_ERR_LOCKED     /*!< Watchdog is locked */
++};
++
++/* ARM watchdog device configuration structure */
++struct arm_watchdog_dev_cfg_t {
++    const uint32_t base;  /*!< Watchdog base address */
++};
++
++/* ARM watchdog device data structure */
++struct arm_watchdog_dev_data_t {
++    uint32_t state;    /*!< Indicates if the watchdog
++                            is initialized and enabled */
++    uint32_t timeout;  /*!< Timeout to reset in cycles */
++};
++
++/* ARM watchdog device structure */
++struct arm_watchdog_dev_t {
++    const struct arm_watchdog_dev_cfg_t* const cfg;  /*!< Watchdog
++                                                          configuration */
++    struct arm_watchdog_dev_data_t* const data;      /*!< Watchdog data */
++};
++
++/**
++ * \brief Initializes a watchdog hardware.
++ *
++ * \param[in] dev      Watchdog to be initialized \ref arm_watchdog_dev_t
++ * \param[in] timeout  Timeout in cycles - 0 assings timeout to max value.
++ *
++ * \note This function doesn't check if dev is NULL.
++ *       This function leaves the watchdog locked. Before any further
++ *       operations, it needs to be unlocked and locked again.
++ */
++void arm_watchdog_init(struct arm_watchdog_dev_t* dev, uint32_t timeout);
++
++/**
++ * \brief Feeds the watchdog to not cause a reset.
++ *
++ * \param[in] dev  Watchdog to be fed \ref arm_watchdog_dev_t
++ *
++ * \return Returns error code as specified in \ref arm_watchdog_error_t
++ *
++ * \note This function doesn't check if dev is NULL.
++ */
++enum arm_watchdog_error_t arm_watchdog_feed(struct arm_watchdog_dev_t* dev);
++
++/**
++ * \brief Clear the interrupt and load timeout value to the load register.
++ *
++ * \param[in] dev   Watchdog to be fed \ref arm_watchdog_dev_t
++ *
++ * \return Returns error code as specified in \ref arm_watchdog_error_t
++ *
++ * \note This function doesn't check if dev is NULL.
++ */
++enum arm_watchdog_error_t
++arm_watchdog_clear_interrupt_and_refresh_counter(
++    struct arm_watchdog_dev_t* dev);
++
++/**
++ * \brief Enables the watchdog.
++ *
++ * \param[in] dev  Watchdog to be enabled \ref arm_watchdog_dev_t
++ *
++ * \return Returns error code as specified in \ref arm_watchdog_error_t
++ *
++ * \note This function doesn't check if dev is NULL.
++ */
++enum arm_watchdog_error_t arm_watchdog_enable(struct arm_watchdog_dev_t* dev);
++
++/**
++ * \brief Checks if the watchdog is enabled
++ *
++ * \param[in] dev Watchdog to be checked \ref arm_watchdog_dev_t
++ *
++ * \return 1 if watchdog is enabled, 0 otherwise.
++ *
++ * \note This function doesn't check if dev is NULL.
++ */
++uint32_t arm_watchdog_is_enabled(struct arm_watchdog_dev_t* dev);
++
++/**
++ * \brief Disables the watchdog.
++ *
++ * \param[in] dev  Watchdog to be disabled \ref arm_watchdog_dev_t
++ *
++ * \return 1 if watchdog is enabled, 0 otherwise.
++ *
++ * \note This function doesn't check if dev is NULL.
++ */
++enum arm_watchdog_error_t arm_watchdog_disable(struct arm_watchdog_dev_t* dev);
++
++/**
++ * \brief Locks the registers to not be written again.
++ *
++ * \param[in] dev  Watchdog to be locked \ref arm_watchdog_dev_t
++ *
++ * \note This function doesn't check if dev is NULL.
++ */
++void arm_watchdog_lock(struct arm_watchdog_dev_t* dev);
++
++/**
++ * \brief Checks if the watchdog registers are locked
++ *
++ * \param[in] dev Watchdog to be checked \ref arm_watchdog_dev_t
++ *
++ * \return 1 if the registers are locked, 0 otherwise
++ *
++ * \note This function doesn't check if dev is NULL.
++ */
++uint32_t arm_watchdog_is_locked(struct arm_watchdog_dev_t* dev);
++
++/**
++ * \brief Unlocks the registers to configure the watchdog again.
++ *
++ * \param[in] dev  Watchdog to be unlocked \ref arm_watchdog_dev_t
++ *
++ * \note This function doesn't check if dev is NULL.
++ */
++void arm_watchdog_unlock(struct arm_watchdog_dev_t* dev);
++
++/**
++ * \brief Gets if watchdog driver is initialized
++ *
++ * \param[in] dev  Watchdog to be initialized \ref arm_watchdog_dev_t
++ *
++ * \returns 1 if watchdog driver is initialized. Otherwise 0.
++ */
++uint32_t arm_watchdog_is_initialized(struct arm_watchdog_dev_t* dev);
++
++/**
++ * \brief Provides watchdog remaining time before reset.
++ *
++ * \param[in] dev  Watchdog to get the remaining time \ref arm_watchdog_dev_t
++ *
++ * \return 0 if watchdog is disabled.
++ *
++ * \note This function doesn't check if dev is NULL.
++ */
++uint32_t arm_watchdog_get_remaining_time(struct arm_watchdog_dev_t* dev);
++
++#ifdef __cplusplus
++}
++#endif
++#endif /* __ARM_WATCHDOG_DRV_H__ */
++
+diff --git a/platform/ext/target/arm/corstone1000/Native_Driver/watchdog.c b/platform/ext/target/arm/corstone1000/Native_Driver/watchdog.c
+new file mode 100644
+index 0000000000..d375af3afb
+--- /dev/null
++++ b/platform/ext/target/arm/corstone1000/Native_Driver/watchdog.c
+@@ -0,0 +1,81 @@
++/*
++ * Copyright (c) 2019-2021, Arm Limited. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ */
++
++#include "watchdog.h"
++
++#include "arm_watchdog_drv.h"
++#include "platform_base_address.h"
++#include "Driver_Common.h"
++#include "cmsis.h"
++#include <stdio.h>
++
++/* SoC watchdog config */
++struct arm_watchdog_dev_cfg_t SOC_WD_DEV_CFG = {CORSTONE1000_SOC_WATCHDOG_BASE};
++struct arm_watchdog_dev_data_t SOC_WD_DEV_DATA;
++struct arm_watchdog_dev_t SOC_WD_DEV = {&SOC_WD_DEV_CFG, &SOC_WD_DEV_DATA};
++#define SOC_WD_TIMEOUT 0x00030000
++
++/* SE watchdog config */
++struct arm_watchdog_dev_cfg_t SE_WD_DEV_CFG = {CORSTONE1000_WATCHDOG_TIMER_BASE};
++struct arm_watchdog_dev_data_t SE_WD_DEV_DATA;
++struct arm_watchdog_dev_t SE_WD_DEV = {&SE_WD_DEV_CFG, &SE_WD_DEV_DATA};
++#define SE_WD_TIMEOUT 0x0FFFFFFF
++#define SE_WD_IRQn SE_WATCHDOG_TIMER_IRQn
++
++
++/* SoC watchdog */
++void NMI_Handler(void)
++{
++    /* Unlock, clear and lock the watchdog timer */
++    arm_watchdog_unlock(&SOC_WD_DEV);
++    arm_watchdog_clear_interrupt_and_refresh_counter(&SOC_WD_DEV);
++    arm_watchdog_lock(&SOC_WD_DEV);
++}
++
++/* SE watchdog */
++void SE_WATCHDOG_TIMER_IRQHandler(void)
++{
++    /* Unlock, clear and lock the watchdog timer */
++    arm_watchdog_unlock(&SE_WD_DEV);
++    arm_watchdog_clear_interrupt_and_refresh_counter(&SE_WD_DEV);
++    arm_watchdog_lock(&SE_WD_DEV);
++}
++
++int corstone1000_watchdog_init()
++{
++    __disable_irq();
++
++    /* SoC Watchdog setup */
++    arm_watchdog_init(&SOC_WD_DEV, SOC_WD_TIMEOUT);
++    arm_watchdog_unlock(&SOC_WD_DEV);
++    arm_watchdog_enable(&SOC_WD_DEV);
++    arm_watchdog_lock(&SOC_WD_DEV);
++
++    if (!arm_watchdog_is_initialized(&SOC_WD_DEV))
++        return ARM_DRIVER_ERROR_UNSUPPORTED;
++
++    if (!arm_watchdog_is_enabled(&SOC_WD_DEV))
++        return ARM_DRIVER_ERROR_UNSUPPORTED;
++
++    /* SE Watchdog setup */
++    arm_watchdog_init(&SE_WD_DEV, SE_WD_TIMEOUT);
++    arm_watchdog_unlock(&SE_WD_DEV);
++    arm_watchdog_enable(&SE_WD_DEV);
++    arm_watchdog_lock(&SE_WD_DEV);
++
++    NVIC_EnableIRQ(SE_WD_IRQn);
++
++    if (!arm_watchdog_is_initialized(&SE_WD_DEV))
++        return ARM_DRIVER_ERROR_UNSUPPORTED;
++
++    if (!arm_watchdog_is_enabled(&SE_WD_DEV))
++        return ARM_DRIVER_ERROR_UNSUPPORTED;
++
++    __enable_irq();
++    
++    return ARM_DRIVER_OK;
++}
+diff --git a/platform/ext/target/arm/corstone1000/Native_Driver/watchdog.h b/platform/ext/target/arm/corstone1000/Native_Driver/watchdog.h
+new file mode 100644
+index 0000000000..fd1b7cf124
+--- /dev/null
++++ b/platform/ext/target/arm/corstone1000/Native_Driver/watchdog.h
+@@ -0,0 +1,32 @@
++/*
++ * Copyright (c) 2019-2021, Arm Limited. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ */
++
++#ifndef WATCHDOG_H
++#define WATCHDOG_H
++
++#include <stddef.h>
++#include <stdint.h>
++
++#include "Driver_Common.h"
++#include "arm_watchdog_drv.h"
++#include "platform_base_address.h"
++
++/**
++ *  \brief Initializes Secure Enclave & SoC Watchdog.
++ *
++ *  \returns ARM Driver return code.
++ */
++int corstone1000_watchdog_init();
++
++/**
++ *  \brief Reset the Secure Enclave & SoC Watchdog's.
++ * 
++ *  \returns ARM Driver return code.
++ */
++int corstone1000_watchdog_reset_timer();
++
++#endif /* watchdog_h */
+diff --git a/platform/ext/target/arm/corstone1000/bl1/CMakeLists.txt b/platform/ext/target/arm/corstone1000/bl1/CMakeLists.txt
+index 92a78c1168..1737fbee91 100644
+--- a/platform/ext/target/arm/corstone1000/bl1/CMakeLists.txt
++++ b/platform/ext/target/arm/corstone1000/bl1/CMakeLists.txt
+@@ -239,6 +239,8 @@ target_sources(bl1_main
+         ../Native_Driver/firewall.c
+         ../Native_Driver/uart_pl011_drv.c
+         ../fw_update_agent/fwu_agent.c
++        ../Native_Driver/arm_watchdog_drv.c
++        ../Native_Driver/watchdog.c
+         bl1_boot_hal.c
+         bl1_flash_map.c
+         bl1_security_cnt.c
+diff --git a/platform/ext/target/arm/corstone1000/bl1/bl1_boot_hal.c b/platform/ext/target/arm/corstone1000/bl1/bl1_boot_hal.c
+index 2af5b8c846..edde6fb24e 100644
+--- a/platform/ext/target/arm/corstone1000/bl1/bl1_boot_hal.c
++++ b/platform/ext/target/arm/corstone1000/bl1/bl1_boot_hal.c
+@@ -14,6 +14,7 @@
+ #include "bootutil/fault_injection_hardening.h"
+ #include "bootutil/bootutil_log.h"
+ #include "firewall.h"
++#include "watchdog.h"
+ #include "mpu_config.h"
+ #include "tfm_plat_otp.h"
+ #include "tfm_plat_provisioning.h"
+@@ -589,6 +590,11 @@ int32_t boot_platform_init(void)
+     int32_t result;
+     uint32_t bank_offset;
+ 
++    result = corstone1000_watchdog_init();
++    if (result != ARM_DRIVER_OK) {
++        return 1;
++    }
++
+ #if !(PLATFORM_IS_FVP)
+     setup_mpu();
+ #endif
+diff --git a/platform/ext/target/arm/corstone1000/bl2_boot_hal.c b/platform/ext/target/arm/corstone1000/bl2_boot_hal.c
+index 4f5b48a2e0..5c6b78ffb3 100644
+--- a/platform/ext/target/arm/corstone1000/bl2_boot_hal.c
++++ b/platform/ext/target/arm/corstone1000/bl2_boot_hal.c
+@@ -15,6 +15,7 @@
+ #include "bootutil/bootutil_log.h"
+ #include "fip_parser.h"
+ #include "flash_map/flash_map.h"
++#include "watchdog.h"
+ #include <string.h>
+ #include "tfm_plat_otp.h"
+ #include "tfm_plat_provisioning.h"
+@@ -115,6 +116,11 @@ int32_t boot_platform_init(void)
+     enum tfm_plat_err_t plat_err;
+     uint32_t bank_offset;
+ 
++    result = corstone1000_watchdog_init();
++    if (result != ARM_DRIVER_OK) {
++        return 1;
++    }
++
+     result = fill_bl2_flash_map_by_parsing_fips(BANK_0_PARTITION_OFFSET);
+     if (result) {
+         return 1;
+diff --git a/platform/ext/target/arm/corstone1000/tfm_hal_platform.c b/platform/ext/target/arm/corstone1000/tfm_hal_platform.c
+index 0072b5b928..7faa71eb63 100644
+--- a/platform/ext/target/arm/corstone1000/tfm_hal_platform.c
++++ b/platform/ext/target/arm/corstone1000/tfm_hal_platform.c
+@@ -9,12 +9,17 @@
+ #include "tfm_hal_platform.h"
+ #include "uart_stdout.h"
+ #include "fwu_agent.h"
++#include "watchdog.h"
+ 
+ enum tfm_hal_status_t tfm_hal_platform_init(void)
+ {
+     __enable_irq();
+     stdio_init();
+ 
++    if (corstone1000_watchdog_init()) {
++        return TFM_HAL_ERROR_GENERIC;
++    }
++
+     if (fwu_metadata_init()) {
+         return TFM_HAL_ERROR_GENERIC;
+     }
+-- 
+2.17.1
+

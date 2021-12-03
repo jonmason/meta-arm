@@ -1,0 +1,136 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+
+From 0a4c27173e9ac31e6bfe424b6856c4dc612e247a Mon Sep 17 00:00:00 2001
+From: Satish Kumar <satish.kumar01@arm.com>
+Date: Tue, 16 Nov 2021 04:56:52 +0000
+Subject: [PATCH 10/15] corstone1000: implement corstone1000_fwu_host_ack
+
+The host uses the api 'corstone1000_fwu_host_ack' to acknowledge its
+successful boot to the secure enclave. Based on the fwu state of
+the system, the secure enalve decides where to move in the fwu state
+machine. If in regular state, there is nothing to be done. If in
+trial state and firmware update is a success, state moves to regular
+by accepting images in the trial/update bank. Finaly if in trial
+state and firmware update is a failure, state moves to regular by
+reverting to previous known state.
+
+Change-Id: I16657537909916bd19520eac3899501fdb14ecb4
+Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+---
+ .../corstone1000/fw_update_agent/fwu_agent.c  | 47 +++++++++++++++++++
+ .../corstone1000/fw_update_agent/fwu_agent.h  |  5 ++
+ .../services/src/tfm_platform_system.c        | 14 +++++-
+ 3 files changed, 64 insertions(+), 2 deletions(-)
+
+diff --git a/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c b/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c
+index 89f0a08eb5..5e87fd8d5e 100644
+--- a/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c
++++ b/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c
+@@ -762,3 +762,50 @@ void bl2_get_boot_bank(uint32_t *bank_offset)
+     return;
+ }
+ 
++enum fwu_agent_error_t corstone1000_fwu_host_ack(void)
++{
++    enum fwu_agent_error_t ret;
++    struct fwu_private_metadata priv_metadata;
++    enum fwu_agent_state_t current_state;
++
++    FWU_LOG_MSG("%s: enter\n\r", __func__);
++
++    if (!is_initialized) {
++        return FWU_AGENT_ERROR;
++    }
++
++    Select_Write_Mode_For_Shared_Flash();
++
++    if (metadata_read(&_metadata)) {
++        ret = FWU_AGENT_ERROR;
++        goto out;
++    }
++
++    if (private_metadata_read(&priv_metadata)) {
++        ret = FWU_AGENT_ERROR;
++        goto out;
++    }
++
++    current_state = get_fwu_agent_state(&_metadata, &priv_metadata);
++    if (current_state == FWU_AGENT_STATE_REGULAR) {
++        ret = FWU_AGENT_SUCCESS; /* nothing to be done */
++        goto out;
++    } else if (current_state != FWU_AGENT_STATE_TRIAL) {
++        FWU_ASSERT(0);
++    }
++
++    if (_metadata.active_index != priv_metadata.boot_index) {
++        /* firmware update failed, revert back to previous bank */
++        ret = fwu_select_previous(&_metadata, &priv_metadata);
++    } else {
++        /* firmware update successful */
++        ret = fwu_accept_image(&full_capsule_image_guid, &_metadata,
++                                &priv_metadata);
++    }
++
++out:
++    Select_XIP_Mode_For_Shared_Flash();
++
++    FWU_LOG_MSG("%s: exit: ret = %d\n\r", __func__, ret);
++    return ret;
++}
+diff --git a/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.h b/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.h
+index 389381c326..b8f7c676d7 100644
+--- a/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.h
++++ b/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.h
+@@ -38,6 +38,11 @@ enum fwu_agent_error_t fwu_metadata_init(void);
+  */
+ enum fwu_agent_error_t corstone1000_fwu_flash_image(void);
+ 
++/* host to secure enclave:
++ * host responds with this api to acknowledge its successful
++ * boot.
++ */
++enum fwu_agent_error_t corstone1000_fwu_host_ack(void);
+ 
+ void bl1_get_boot_bank(uint32_t *bank_offset);
+ void bl2_get_boot_bank(uint32_t *bank_offset);
+diff --git a/platform/ext/target/arm/corstone1000/services/src/tfm_platform_system.c b/platform/ext/target/arm/corstone1000/services/src/tfm_platform_system.c
+index 16ad975c32..068234dcda 100644
+--- a/platform/ext/target/arm/corstone1000/services/src/tfm_platform_system.c
++++ b/platform/ext/target/arm/corstone1000/services/src/tfm_platform_system.c
+@@ -21,20 +21,30 @@ enum tfm_platform_err_t tfm_platform_hal_ioctl(tfm_platform_ioctl_req_t request,
+                                                psa_outvec *out_vec)
+ {
+     int32_t ret = TFM_PLATFORM_ERR_SUCCESS;
++
+     corstone1000_ioctl_in_params_t *in_params =
+-                                    (corstone1000_ioctl_in_params_t *)in_vec->base;
+-    corstone1000_ioctl_out_params_t *out_params = (corstone1000_ioctl_out_params_t *)out_vec->base;
++                              (corstone1000_ioctl_in_params_t *)in_vec->base;
++
++    corstone1000_ioctl_out_params_t *out_params =
++                              (corstone1000_ioctl_out_params_t *)out_vec->base;
+ 
+     switch(in_params->ioctl_id) {
++
+         case IOCTL_CORSTONE1000_FWU_FLASH_IMAGES:
+             out_params->result = corstone1000_fwu_flash_image();
+             if (!out_params->result) {
+                 NVIC_SystemReset();
+             }
+             break;
++
++        case IOCTL_CORSTONE1000_FWU_HOST_ACK:
++            out_params->result = corstone1000_fwu_host_ack();
++            break;
++
+         default:
+             ret = TFM_PLATFORM_ERR_NOT_SUPPORTED;
+             break;
++
+     }
+ 
+     return ret;
+-- 
+2.17.1
+
