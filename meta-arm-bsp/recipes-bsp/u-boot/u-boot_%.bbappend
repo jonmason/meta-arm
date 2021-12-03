@@ -34,6 +34,9 @@ SRC_URI:append:corstone1000 = " \
       file://0022-arm_ffa-corstone1000-enable-FF-A-and-MM-support.patch \
       file://0023-efi-corstone1000-introduce-EFI-capsule-update.patch \
       file://0024-corstone1000-adjust-the-environment-and-heap-sizes.patch \
+      file://0025-corstone1000-Update-FFA-shared-buffer-address.patch \
+      file://0026-corstone1000-Disable-set-get-of-NV-variables.patch \
+      file://0027-corstone1000-Make-sure-shared-buffer-contents-are-no.patch \
      "
 
 #

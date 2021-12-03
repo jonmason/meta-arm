@@ -1,0 +1,58 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
+
+From 524c865ae37f9cb9278988120e508c5314c2cd73 Mon Sep 17 00:00:00 2001
+From: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
+Date: Wed, 17 Nov 2021 15:28:53 +0000
+Subject: [PATCH 07/10] corstone1000: Disable set/get of NV variables
+
+This is a temporary change which uses only the volatile memory
+for get and set variable calls.
+
+The non volatile storage access is via openAmp in se proxy which is still not 
+integrated to the system. So when an efi_set_variable_int() call is made for
+NV variables, mm_commmunicate results in failure. This change will direct
+PlatformLang and OsIndications to volatile memory which would be a
+temporary solution.
+
+Signed-off-by: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
+%% original patch: 0026-Disable-set-get-of-NV-variables.patch
+
+%% original patch: 0026-Disable-set-get-of-NV-variables.patch
+---
+ lib/efi_loader/efi_setup.c | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/lib/efi_loader/efi_setup.c b/lib/efi_loader/efi_setup.c
+index 9e3399a28c..fcf2eae9cd 100644
+--- a/lib/efi_loader/efi_setup.c
++++ b/lib/efi_loader/efi_setup.c
+@@ -83,7 +83,11 @@ static efi_status_t efi_init_platform_lang(void)
+ 
+ 	ret = efi_set_variable_int(L"PlatformLang",
+ 				   &efi_global_variable_guid,
+-				   EFI_VARIABLE_NON_VOLATILE |
++				   	/*
++					* This is a temporary change until NV memory is accessible 
++					* through OpenAmp. 
++					*/
++				   //EFI_VARIABLE_NON_VOLATILE | 
+ 				   EFI_VARIABLE_BOOTSERVICE_ACCESS |
+ 				   EFI_VARIABLE_RUNTIME_ACCESS,
+ 				   1 + strlen(lang), lang, false);
+@@ -210,7 +214,11 @@ static efi_status_t efi_clear_os_indications(void)
+ 		os_indications &=
+ 			~EFI_OS_INDICATIONS_FILE_CAPSULE_DELIVERY_SUPPORTED;
+ 	ret = efi_set_variable_int(L"OsIndications", &efi_global_variable_guid,
+-				   EFI_VARIABLE_NON_VOLATILE |
++				   	/*
++					* This is a temporary change until NV memory is accessible 
++					* through OpenAmp. 
++					*/
++				   //EFI_VARIABLE_NON_VOLATILE |
+ 				   EFI_VARIABLE_BOOTSERVICE_ACCESS |
+ 				   EFI_VARIABLE_RUNTIME_ACCESS,
+ 				   sizeof(os_indications), &os_indications,
+-- 
+2.17.1
+
