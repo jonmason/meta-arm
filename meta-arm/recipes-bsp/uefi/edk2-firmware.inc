@@ -58,7 +58,6 @@ LDFLAGS[unexport] = "1"
 do_configure[cleandirs] += "${B}"
 
 # Set variables as per envsetup
-export GCC5_AARCH64_PREFIX = "${STAGING_BINDIR_TOOLCHAIN}/${TARGET_PREFIX}"
 export PACKAGES_PATH       = "${S}:${S}/edk2-platforms"
 export WORKSPACE           = "${B}"
 export EDK_TOOLS_PATH      = "${S}/BaseTools"
@@ -68,7 +67,10 @@ export CONF_PATH           = "${S}/Conf"
 export BTOOLS_PATH = "${EDK_TOOLS_PATH}/BinWrappers/PosixLike"
 
 EDK_COMPILER ?= "GCC5"
+export GCC5_AARCH64_PREFIX = "${TARGET_PREFIX}"
+
 EDK_COMPILER:toolchain-clang = "CLANG38"
+export CLANG38_AARCH64_PREFIX = "${TARGET_PREFIX}"
 
 do_configure:prepend() {
     sed -i -e "s#-target ${HOST_ARCH}-linux-gnu*#-target ${HOST_SYS}#" ${S}/BaseTools/Conf/tools_def.template
