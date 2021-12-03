@@ -177,7 +177,8 @@ qemu-generic-arm64:
   extends: .build
   parallel:
     matrix:
-      - TESTING: testimage
+      - TOOLCHAINS: [gcc, clang]
+        TESTING: testimage
 
 qemuarm64-secureboot:
   extends: .build
