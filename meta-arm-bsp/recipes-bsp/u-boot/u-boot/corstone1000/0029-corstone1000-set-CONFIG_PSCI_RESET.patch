@@ -1,0 +1,27 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Emekcan Aras <Emekcan.Aras@arm.com>
+
+From 8b85cddde48f31266349277980a65d25dfae302e Mon Sep 17 00:00:00 2001
+From: Emekcan Aras <Emekcan.Aras@arm.com>
+Date: Wed, 17 Nov 2021 18:48:35 +0000
+Subject: [PATCH] corstone1000: set CONFIG_PSCI_RESET
+
+set CONFIG_PSCI_RESET to allow efi_reset_system API to use PSCI.
+Signed-off-by: Emekcan Aras <Emekcan.Aras@arm.com>
+---
+ configs/corstone1000_defconfig | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/configs/corstone1000_defconfig b/configs/corstone1000_defconfig
+index b59b75df3e..55f93b0a2c 100644
+--- a/configs/corstone1000_defconfig
++++ b/configs/corstone1000_defconfig
+@@ -64,3 +64,5 @@ CONFIG_CMD_RTC=y
+ CONFIG_EFI_GET_TIME=y
+ CONFIG_EFI_SET_TIME=y
+ CONFIG_RTC_EMULATION=y
++CONFIG_PSCI_RESET=y
++
+-- 
+2.25.1
+

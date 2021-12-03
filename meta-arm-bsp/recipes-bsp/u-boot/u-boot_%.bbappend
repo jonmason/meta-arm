@@ -38,7 +38,8 @@ SRC_URI:append:corstone1000 = " \
       file://0026-corstone1000-Disable-set-get-of-NV-variables.patch \
       file://0027-corstone1000-Make-sure-shared-buffer-contents-are-no.patch \
       file://0028-arm-corstone1000-fix-unrecognized-filesystem-type-error.patch \
-     "
+      file://0029-corstone1000-set-CONFIG_PSCI_RESET.patch \
+      "
 
 #
 # FVP BASE
