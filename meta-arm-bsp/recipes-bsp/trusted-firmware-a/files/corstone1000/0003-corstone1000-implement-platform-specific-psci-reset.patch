@@ -1,0 +1,60 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Emekcan Aras <Emekcan.Aras@arm.com>
+
+From 1b99c6dd614002a79e4dda96d630089775a1d233 Mon Sep 17 00:00:00 2001
+From: Emekcan Aras <Emekcan.Aras@arm.com>
+Date: Wed, 17 Nov 2021 18:45:32 +0000
+Subject: [PATCH] corstone1000: implement platform specific psci reset
+
+This implements platform specific psci reset for the corstone1000.
+Signed-off-by: Emekcan Aras <Emekcan.Aras@arm.com>
+---
+ .../corstone1000/common/corstone1000_pm.c     | 23 +++++++++++++++++--
+ 1 file changed, 21 insertions(+), 2 deletions(-)
+
+diff --git a/plat/arm/board/corstone1000/common/corstone1000_pm.c b/plat/arm/board/corstone1000/common/corstone1000_pm.c
+index 12b322e27..e95ab30b7 100644
+--- a/plat/arm/board/corstone1000/common/corstone1000_pm.c
++++ b/plat/arm/board/corstone1000/common/corstone1000_pm.c
+@@ -6,17 +6,36 @@
+ 
+ #include <lib/psci/psci.h>
+ #include <plat/arm/common/plat_arm.h>
+-
+ /*******************************************************************************
+  * Export the platform handlers via plat_arm_psci_pm_ops. The ARM Standard
+  * platform layer will take care of registering the handlers with PSCI.
+  ******************************************************************************/
++
++#define SECURE_WATCHDOG_ADDR_CTRL_REG     0x1A320000
++#define SECURE_WATCHDOG_ADDR_VAL_REG      0x1A320008
++#define SECURE_WATCHDOG_MASK_ENABLE       0x01
++#define SECURE_WATCHDOG_COUNTDOWN_VAL     0x1000
++
++static void __dead2 corstone1000_system_reset(void)
++{
++
++    uint32_t volatile * const watchdog_ctrl_reg = (int *) SECURE_WATCHDOG_ADDR_CTRL_REG;
++    uint32_t volatile * const watchdog_val_reg = (int *) SECURE_WATCHDOG_ADDR_VAL_REG;
++
++   *(watchdog_val_reg) = SECURE_WATCHDOG_COUNTDOWN_VAL;
++   *watchdog_ctrl_reg = SECURE_WATCHDOG_MASK_ENABLE;
++     while (1){
++        wfi();
++    }
++}
++
+ plat_psci_ops_t plat_arm_psci_pm_ops = {
+-	/* dummy struct */
++    .system_reset = corstone1000_system_reset,
+ 	.validate_ns_entrypoint = NULL
+ };
+ 
+ const plat_psci_ops_t *plat_arm_psci_override_pm_ops(plat_psci_ops_t *ops)
+ {
++    ops = &plat_arm_psci_pm_ops;
+ 	return ops;
+ }
+-- 
+2.25.1
+

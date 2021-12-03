@@ -14,6 +14,7 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/files/corstone1000:"
 SRC_URI:append = " \
                  file://0001-Rename-Diphda-to-corstone1000.patch \
                  file://0002-plat-arm-corstone1000-made-changes-to-accommodate-3M.patch \
+                 file://0003-corstone1000-implement-platform-specific-psci-reset.patch \
                  "
 
 TFA_DEBUG = "1"
