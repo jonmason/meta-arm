@@ -1,0 +1,33 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+
+From 5541d466ebf46f0a14fae3effbcc46bcc2dd8efc Mon Sep 17 00:00:00 2001
+From: Satish Kumar <satish.kumar01@arm.com>
+Date: Mon, 20 Sep 2021 06:01:54 +0100
+Subject: [PATCH 1/1] plat/arm: corstone1000: change base address of FIP in the flash
+
+More space in the flash is reserved up front for metadata
+parser and UEFI variables. That requires change in the flash
+base address of where images are present.
+
+Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+---
+ plat/arm/board/corstone1000/common/include/platform_def.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/plat/arm/board/corstone1000/common/include/platform_def.h b/plat/arm/board/corstone1000/common/include/platform_def.h
+index 97d7b2974..079b1c9d4 100644
+--- a/plat/arm/board/corstone1000/common/include/platform_def.h
++++ b/plat/arm/board/corstone1000/common/include/platform_def.h
+@@ -208,7 +208,7 @@
+ 
+ /* NOR Flash */
+ 
+-#define PLAT_ARM_FIP_BASE			UL(0x08131000)
++#define PLAT_ARM_FIP_BASE			UL(0x081EF000)
+ #define PLAT_ARM_FIP_MAX_SIZE			UL(0x1ff000)  /* 1.996 MB */
+ 
+ #define PLAT_ARM_NVM_BASE			V2M_FLASH0_BASE
+-- 
+2.17.1
+

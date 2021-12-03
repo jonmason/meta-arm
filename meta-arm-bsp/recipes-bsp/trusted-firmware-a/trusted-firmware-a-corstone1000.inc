@@ -15,6 +15,7 @@ SRC_URI:append = " \
                  file://0001-Rename-Diphda-to-corstone1000.patch \
                  file://0002-plat-arm-corstone1000-made-changes-to-accommodate-3M.patch \
                  file://0003-corstone1000-implement-platform-specific-psci-reset.patch \
+                 file://0004-plat-arm-corstone1000-change-base-address-of-FIP-in-the-fl.patch   \
                  "
 
 TFA_DEBUG = "1"
