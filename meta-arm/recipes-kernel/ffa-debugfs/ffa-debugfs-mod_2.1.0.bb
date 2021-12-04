@@ -27,3 +27,5 @@ do_install:append() {
   install -D -p -m 0755 ${B}/load_ffa_debugfs.sh ${D}/${bindir}/load_ffa_debugfs.sh
   install -m 0644 ${S}/arm_ffa_user.h ${D}/${includedir}/arm_ffa_user.h
 }
+
+COMPATIBLE_HOST = "(arm|aarch64).*-linux"
