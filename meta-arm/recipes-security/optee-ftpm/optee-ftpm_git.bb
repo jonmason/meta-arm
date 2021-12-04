@@ -3,8 +3,9 @@ DESCRIPTION = "TCG reference implementation of the TPM 2.0 Specification."
 HOMEPAGE = "https://github.com/microsoft/ms-tpm-20-ref/"
 
 COMPATIBLE_MACHINE ?= "invalid"
-COMPATIBLE_MACHINE:aarch64 = "(.*)"
+COMPATIBLE_MACHINE:qemuarm64 = "qemuarm64"
 COMPATIBLE_MACHINE:qemuarm64-secureboot = "qemuarm64"
+COMPATIBLE_MACHINE:qemu-generic-arm64 = "qemu-generic-arm64"
 
 #FIXME - doesn't currently work with clang
 TOOLCHAIN = "gcc"
