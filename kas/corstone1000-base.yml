@@ -31,7 +31,7 @@ repos:
 
   meta-arm-image:
      url: https://git.gitlab.arm.com/arm-reference-solutions/meta-arm-image.git
-     refspec: CORSTONE-1000-2021.10.26
+     refspec: 4512b434d5cde8881473c4caa724a26cd517a604
 
 local_conf_header:
   base: |
