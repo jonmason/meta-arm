@@ -1,0 +1,50 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+
+From 55d0c63bf6b097b6853e93355f5a1524df56f47b Mon Sep 17 00:00:00 2001
+From: Satish Kumar <satish.kumar01@arm.com>
+Date: Mon, 1 Nov 2021 08:03:42 +0000
+Subject: [PATCH 14/15] corstone1000: bug fix in openamp version
+
+Typing mistake in openamp version parameter, leads the cmake
+to fetch the head of the master branch.
+
+Also, the previous hash used for code version is deleted from the
+openamp github. New hash from the master branch is in use.
+
+Change-Id: Iee5980ba14f8bb9b964eb10c71ebb68664c1d441
+Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+---
+ platform/ext/target/arm/corstone1000/config.cmake               | 2 +-
+ .../arm/corstone1000/openamp/ext/libopenamp/CMakeLists.txt      | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/platform/ext/target/arm/corstone1000/config.cmake b/platform/ext/target/arm/corstone1000/config.cmake
+index d6f3ef7d21..2dab210e0a 100644
+--- a/platform/ext/target/arm/corstone1000/config.cmake
++++ b/platform/ext/target/arm/corstone1000/config.cmake
+@@ -32,7 +32,7 @@ set(LIBMETAL_SRC_PATH                   "DOWNLOAD"  CACHE PATH      "Path to Lib
+ set(LIBMETAL_VERSION                    "f252f0e007fbfb8b3a52b1d5901250ddac96baad"  CACHE STRING    "The version of libmetal to use")
+ 
+ set(LIBOPENAMP_SRC_PATH                 "DOWNLOAD"  CACHE PATH      "Path to Libopenamp (or DOWNLOAD to fetch automatically")
+-set(OPENAMP_VERSION                     "33037b04e0732e58fc0fa36afc244999ef632e10"  CACHE STRING    "The version of openamp to use")
++set(OPENAMP_VERSION                     "347397decaa43372fc4d00f965640ebde042966d"  CACHE STRING    "The version of openamp to use")
+ 
+ if (${PLATFORM_IS_FVP})
+     set(PLATFORM_PSA_ADAC_SECURE_DEBUG      FALSE        CACHE BOOL      "Whether to use psa-adac secure debug.")
+diff --git a/platform/ext/target/arm/corstone1000/openamp/ext/libopenamp/CMakeLists.txt b/platform/ext/target/arm/corstone1000/openamp/ext/libopenamp/CMakeLists.txt
+index d91dc7d845..9b1602a04f 100644
+--- a/platform/ext/target/arm/corstone1000/openamp/ext/libopenamp/CMakeLists.txt
++++ b/platform/ext/target/arm/corstone1000/openamp/ext/libopenamp/CMakeLists.txt
+@@ -16,7 +16,7 @@ endif()
+ if ("${LIBOPENAMP_SRC_PATH}" STREQUAL "DOWNLOAD")
+     FetchContent_Declare(libopenamp
+         GIT_REPOSITORY https://github.com/OpenAMP/open-amp.git
+-        GIT_TAG ${OEPNAMP_VERSION}
++        GIT_TAG ${OPENAMP_VERSION}
+     )
+ 
+     FetchContent_GetProperties(libopenamp)
+-- 
+2.17.1
+

@@ -1,0 +1,106 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+
+From c1ae09844562f33ddf07b8f5ca6b7d98ccbaf24c Mon Sep 17 00:00:00 2001
+From: Satish Kumar <satish.kumar01@arm.com>
+Date: Sat, 2 Oct 2021 18:48:31 +0100
+Subject: [PATCH 04/15] corstone1000: add firmware update (fwu) agent into TF-M
+
+The commit links the firmware-update (fwu) agent into the
+TF-M.
+
+The commit also configures the secure enclave firewall to
+access DRAM, where uefi capsule will be written by ota client
+for fwu agent to parse.
+
+Change-Id: I89617a9b515d6aa5cc4f383b5a75a4beef73cc33
+Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+---
+ .../ext/target/arm/corstone1000/CMakeLists.txt  |  1 +
+ .../Device/Include/platform_base_address.h      |  1 +
+ .../target/arm/corstone1000/bl1/bl1_boot_hal.c  | 17 +++++++++++++++++
+ .../target/arm/corstone1000/tfm_hal_platform.c  |  5 +++++
+ 4 files changed, 24 insertions(+)
+
+diff --git a/platform/ext/target/arm/corstone1000/CMakeLists.txt b/platform/ext/target/arm/corstone1000/CMakeLists.txt
+index f34035d361..81623f16ff 100644
+--- a/platform/ext/target/arm/corstone1000/CMakeLists.txt
++++ b/platform/ext/target/arm/corstone1000/CMakeLists.txt
+@@ -69,6 +69,7 @@ target_sources(platform_s
+         ${CMAKE_SOURCE_DIR}/platform/ext/common/tfm_hal_nvic.c
+         $<$<BOOL:TFM_PARTITION_PLATFORM>:${CMAKE_CURRENT_SOURCE_DIR}/services/src/tfm_platform_system.c>
+         fw_update_agent/uefi_capsule_parser.c
++        fw_update_agent/fwu_agent.c
+ )
+ 
+ if (PLATFORM_IS_FVP)
+diff --git a/platform/ext/target/arm/corstone1000/Device/Include/platform_base_address.h b/platform/ext/target/arm/corstone1000/Device/Include/platform_base_address.h
+index 5f37caa09c..e86ddcfbc9 100644
+--- a/platform/ext/target/arm/corstone1000/Device/Include/platform_base_address.h
++++ b/platform/ext/target/arm/corstone1000/Device/Include/platform_base_address.h
+@@ -75,5 +75,6 @@
+ #define CORSTONE1000_HOST_FPGA_SCC_REGISTERS       (0x80000000U) /* FPGA SCC Registers                */
+ #define CORSTONE1000_HOST_SE_SECURE_FLASH_BASE_FVP (0x80010000U) /* SE Flash                          */
+ #define CORSTONE1000_HOST_AXI_QSPI_CTRL_REG_BASE   (0x80050000U) /* AXI QSPI Controller               */
++#define CORSTONE1000_HOST_DRAM_UEFI_CAPSULE        (0xA0000000U) /* 1.5 GB DDR                        */
+ 
+ #endif  /* __PLATFORM_BASE_ADDRESS_H__ */
+diff --git a/platform/ext/target/arm/corstone1000/bl1/bl1_boot_hal.c b/platform/ext/target/arm/corstone1000/bl1/bl1_boot_hal.c
+index 5e5e5c9e68..54042495d7 100644
+--- a/platform/ext/target/arm/corstone1000/bl1/bl1_boot_hal.c
++++ b/platform/ext/target/arm/corstone1000/bl1/bl1_boot_hal.c
+@@ -47,6 +47,7 @@ REGION_DECLARE(Image$$, ARM_LIB_HEAP, $$ZI$$Limit)[];
+ #define HOST_AXI_QSPI_CTRL_REG_BASE_SE_SECURE_FLASH    0x60010000
+ 
+ #define HOST_DRAM_BASE                  0x80000000
++#define HOST_DRAM_UEFI_CAPSULE          0x80000000
+ 
+ #define SE_MID                          0
+ 
+@@ -249,6 +250,22 @@ static void setup_se_firewall(void)
+     fc_enable_mpe(RGN_MPE0);
+     fc_enable_regions();
+ 
++    /* DDR/DRAM/UEFI_CAPSULE: 32MB */
++    fc_select_region(6);
++    fc_disable_regions();
++    fc_disable_mpe(RGN_MPE0);
++    fc_prog_rgn(RGN_SIZE_32MB, CORSTONE1000_HOST_DRAM_UEFI_CAPSULE);
++    fc_prog_rgn_upper_addr(HOST_DRAM_UEFI_CAPSULE);
++    fc_enable_addr_trans();
++    fc_init_mpl(RGN_MPE0);
++    mpl_rights = (RGN_MPL_SECURE_READ_MASK |
++                  RGN_MPL_SECURE_WRITE_MASK);
++
++    fc_enable_mpl(RGN_MPE0, mpl_rights);
++    fc_prog_mid(RGN_MPE0, SE_MID);
++    fc_enable_mpe(RGN_MPE0);
++    fc_enable_regions();
++
+ 
+     fc_pe_enable();
+ }
+diff --git a/platform/ext/target/arm/corstone1000/tfm_hal_platform.c b/platform/ext/target/arm/corstone1000/tfm_hal_platform.c
+index 71472ea08c..0072b5b928 100644
+--- a/platform/ext/target/arm/corstone1000/tfm_hal_platform.c
++++ b/platform/ext/target/arm/corstone1000/tfm_hal_platform.c
+@@ -8,11 +8,16 @@
+ #include "cmsis.h"
+ #include "tfm_hal_platform.h"
+ #include "uart_stdout.h"
++#include "fwu_agent.h"
+ 
+ enum tfm_hal_status_t tfm_hal_platform_init(void)
+ {
+     __enable_irq();
+     stdio_init();
+ 
++    if (fwu_metadata_init()) {
++        return TFM_HAL_ERROR_GENERIC;
++    }
++
+     return TFM_HAL_SUCCESS;
+ }
+-- 
+2.17.1
+

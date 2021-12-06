@@ -1,0 +1,33 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+
+From beb8a8d92537b9574717f0a9a914642c15b439b1 Mon Sep 17 00:00:00 2001
+From: Satish Kumar <satish.kumar01@arm.com>
+Date: Wed, 29 Sep 2021 04:58:59 +0100
+Subject: [PATCH 01/15] corstone1000: disable secure debug temporarily
+
+Until ARM-DS is ready to use psa-adac secure debug protocol,
+disable the secure debug in the platform. At present, the
+secure debug integration is tested with the PyOCD based
+scripts.
+
+Change-Id: I3dd0f20e5714a2db69425607d9404172ce52129e
+Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+---
+ platform/ext/target/arm/corstone1000/config.cmake | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/platform/ext/target/arm/corstone1000/config.cmake b/platform/ext/target/arm/corstone1000/config.cmake
+index dc12d27f9c..203e6b79a6 100644
+--- a/platform/ext/target/arm/corstone1000/config.cmake
++++ b/platform/ext/target/arm/corstone1000/config.cmake
+@@ -37,5 +37,5 @@ set(OPENAMP_VERSION                     "33037b04e0732e58fc0fa36afc244999ef632e1
+ if (${PLATFORM_IS_FVP})
+     set(PLATFORM_PSA_ADAC_SECURE_DEBUG      FALSE        CACHE BOOL      "Whether to use psa-adac secure debug.")
+ else()
+-    set(PLATFORM_PSA_ADAC_SECURE_DEBUG      TRUE        CACHE BOOL      "Whether to use psa-adac secure debug.")
++    set(PLATFORM_PSA_ADAC_SECURE_DEBUG      FALSE        CACHE BOOL      "Whether to use psa-adac secure debug.")
+ endif()
+-- 
+2.17.1
+
