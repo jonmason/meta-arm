@@ -3,12 +3,6 @@
 SCP_PLATFORM  = "n1sdp"
 SCP_LOG_LEVEL = "INFO"
 
-FILESEXTRAPATHS:prepend := "${THISDIR}/files/:"
-
-SRC_URI:append = " \
-   file://enabling-coresight-debug-non-secure-access.patch \
-   "
-
 COMPATIBLE_MACHINE:n1sdp = "n1sdp"
 
 DEPENDS += "fiptool-native"
