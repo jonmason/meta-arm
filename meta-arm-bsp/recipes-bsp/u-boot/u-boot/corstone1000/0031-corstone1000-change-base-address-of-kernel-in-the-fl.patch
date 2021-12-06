@@ -1,0 +1,47 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+
+From 1e76c4b70c8539c56b4b9ae6b8fd415d811a1812 Mon Sep 17 00:00:00 2001
+From: Satish Kumar <satish.kumar01@arm.com>
+Date: Wed, 1 Dec 2021 19:04:59 +0000
+Subject: [PATCH] corstone1000: change base address of kernel in the flash
+
+More space in the flash is reserved up front for metadata
+parser and UEFI variables. That requires change in the flash
+base address of where images are present.
+
+Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+---
+ include/configs/corstone1000.h | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/include/configs/corstone1000.h b/include/configs/corstone1000.h
+index bb3b099806..baa0720fb5 100644
+--- a/include/configs/corstone1000.h
++++ b/include/configs/corstone1000.h
+@@ -94,16 +94,16 @@
+     func(USB, usb, 0)
+ #include <config_distro_bootcmd.h>
+ #define CONFIG_EXTRA_ENV_SETTINGS				\
+-                BOOTENV                         \
+-                "usb_pgood_delay=250\0"         \
++				BOOTENV                         \
++				"usb_pgood_delay=250\0"         \
+ 				"fdt_addr_r=0x82000000\0"		\
+-				"kernel_addr=0x08330000\0"		\
++				"kernel_addr=0x083EE000\0"		\
+ 				"kernel_addr_r=0x88200000\0"	\
+ 				"fdt_high=0xffffffff\0"
+-#define CONFIG_BOOTCOMMAND					            \
++#define CONFIG_BOOTCOMMAND					\
+ 				"echo Loading Kernel to memory ... ;"   \
+ 				"loadm $kernel_addr $kernel_addr_r 0xc00000;" \
+-                "usb start; usb reset;" \
+-                "run distro_bootcmd;" \
++				"usb start; usb reset;" \
++				"run distro_bootcmd;" \
+ 				"bootefi $kernel_addr_r $fdtcontroladdr;"
+ #endif
+-- 
+2.17.1
+
