@@ -43,6 +43,7 @@ SRC_URI:append:corstone1000 = " \
       file://0029-corstone1000-set-CONFIG_PSCI_RESET.patch \
       file://0030-arm-bsp-u-boot-corstone1000-Implement-autoboot-script.patch \
       file://0031-corstone1000-change-base-address-of-kernel-in-the-fl.patch \
+      file://0032-arm-corstone1000-identify-which-bank-to-load-kernel.patch \
       "
 
 #

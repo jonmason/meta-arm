@@ -1,0 +1,66 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+
+From abc455d29aa9c983c6af2fa75870a7ee95da2496 Mon Sep 17 00:00:00 2001
+From: Satish Kumar <satish.kumar01@arm.com>
+Date: Wed, 1 Dec 2021 19:17:57 +0000
+Subject: [PATCH] arm: corstone1000: identify which bank to load kernel from
+
+Secure enclave, based on the firmware update state of the
+system, decides the boot bank. In this commit, u-boot
+identifies the selected boot bank and loads the kernel
+from it.
+
+Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+---
+ configs/corstone1000_defconfig |  2 +-
+ include/configs/corstone1000.h | 18 ++++++++++++++----
+ 2 files changed, 15 insertions(+), 5 deletions(-)
+
+diff --git a/configs/corstone1000_defconfig b/configs/corstone1000_defconfig
+index 0b9ead461b..3c00e13ceb 100644
+--- a/configs/corstone1000_defconfig
++++ b/configs/corstone1000_defconfig
+@@ -29,7 +29,7 @@ CONFIG_CMD_BOOTEFI_HELLO=y
+ CONFIG_CMD_NVEDIT_EFI=y
+ # CONFIG_CMD_LOADS is not set
+ CONFIG_CMD_USB=y
+-# CONFIG_CMD_ITEST is not set
++CONFIG_CMD_ITEST=y
+ # CONFIG_CMD_SETEXPR is not set
+ CONFIG_CMD_DHCP=y
+ # CONFIG_CMD_NFS is not set
+diff --git a/include/configs/corstone1000.h b/include/configs/corstone1000.h
+index baa0720fb5..7c6f66c891 100644
+--- a/include/configs/corstone1000.h
++++ b/include/configs/corstone1000.h
+@@ -97,12 +97,22 @@
+ 				BOOTENV                         \
+ 				"usb_pgood_delay=250\0"         \
+ 				"fdt_addr_r=0x82000000\0"		\
+-				"kernel_addr=0x083EE000\0"		\
+-				"kernel_addr_r=0x88200000\0"	\
++				"boot_bank_flag=0x08002000\0"		\
++				"kernel_addr_bank_0=0x083EE000\0"			\
++				"kernel_addr_bank_1=0x0936E000\0"			\
++				"retrieve_kernel_load_addr="				\
++					"if itest.l *${boot_bank_flag} == 0; then "	\
++					    "setenv kernel_addr $kernel_addr_bank_0;"	\
++					"else "						\
++					    "setenv kernel_addr $kernel_addr_bank_1;"	\
++					"fi;"						\
++					"\0"							\
++				"kernel_addr_r=0x88200000\0"				\
+ 				"fdt_high=0xffffffff\0"
+ #define CONFIG_BOOTCOMMAND					\
+-				"echo Loading Kernel to memory ... ;"   \
+-				"loadm $kernel_addr $kernel_addr_r 0xc00000;" \
++				"run retrieve_kernel_load_addr;" \
++				"echo Loading kernel from $kernel_addr to memory ... ;" \
++				"loadm $kernel_addr $kernel_addr_r 0xc00000;"		\
+ 				"usb start; usb reset;" \
+ 				"run distro_bootcmd;" \
+ 				"bootefi $kernel_addr_r $fdtcontroladdr;"
+-- 
+2.17.1
+
