@@ -1,0 +1,64 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Emekcan Aras <Emekcan.Aras@arm.com>
+
+From e51542907203c46bdbbd78aa1c76058204fd75f1 Mon Sep 17 00:00:00 2001
+From: Emekcan Aras <Emekcan.Aras@arm.com>
+Date: Thu, 25 Nov 2021 16:54:57 +0000
+Subject: [PATCH] arm-bsp/u-boot: corstone1000: Implement autoboot
+ storage device selection
+
+This commit implements distro_bootcmd in config_bootcommand in u-boot.
+This command traverses all the USB devices connected to the board and
+finds a usb device that has bootable image to boot from it. If it cannot
+find a usb device with the bootable image, it will boot the system using
+the existing flash.
+
+Signed-off-by: Emekcan Aras <emekcan.aras@arm.com>
+---
+ configs/corstone1000_defconfig |  2 +-
+ include/configs/corstone1000.h | 15 ++++++++++-----
+ 2 files changed, 11 insertions(+), 6 deletions(-)
+
+diff --git a/configs/corstone1000_defconfig b/configs/corstone1000_defconfig
+index 10b7c3ea18..0b9ead461b 100644
+--- a/configs/corstone1000_defconfig
++++ b/configs/corstone1000_defconfig
+@@ -66,4 +66,4 @@ CONFIG_EFI_GET_TIME=y
+ CONFIG_EFI_SET_TIME=y
+ CONFIG_RTC_EMULATION=y
+ CONFIG_PSCI_RESET=y
+-
++CONFIG_DISTRO_DEFAULTS=y
+diff --git a/include/configs/corstone1000.h b/include/configs/corstone1000.h
+index b0932f9f33..d029059a81 100644
+--- a/include/configs/corstone1000.h
++++ b/include/configs/corstone1000.h
+@@ -85,15 +85,20 @@
+ #define CONFIG_SYS_CBSIZE		512	/* Console I/O Buffer Size */
+ #define CONFIG_SYS_MAXARGS		64	/* max command args */
+ 
+-#define CONFIG_EXTRA_ENV_SETTINGS					\
++#define BOOT_TARGET_DEVICES(func) \
++    func(USB, usb, 0)
++#include <config_distro_bootcmd.h>
++#define CONFIG_EXTRA_ENV_SETTINGS				\
++                BOOTENV                         \
+                 "usb_pgood_delay=250\0"         \
+ 				"fdt_addr_r=0x82000000\0"		\
+ 				"kernel_addr=0x08330000\0"		\
+-				"kernel_addr_r=0x82100000\0"		\
++				"kernel_addr_r=0x88200000\0"	\
+ 				"fdt_high=0xffffffff\0"
+-
+-#define CONFIG_BOOTCOMMAND					\
+-				"echo Loading Kernel to memory ... ;" \
++#define CONFIG_BOOTCOMMAND					            \
++				"echo Loading Kernel to memory ... ;"   \
+ 				"loadm $kernel_addr $kernel_addr_r 0xc00000;" \
++                "usb start; usb reset;" \
++                "run distro_bootcmd;" \
+ 				"bootefi $kernel_addr_r $fdtcontroladdr;"
+ #endif
+-- 
+2.25.1
+
