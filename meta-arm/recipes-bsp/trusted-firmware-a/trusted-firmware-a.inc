@@ -9,6 +9,8 @@ SRC_URI = "git://git.trustedfirmware.org/TF-A/trusted-firmware-a.git;protocol=ht
            file://ssl.patch"
 UPSTREAM_CHECK_GITTAGREGEX = "^v(?P<pver>\d+(\.\d+)+)$"
 
+SRCREV_FORMAT = "tfa"
+
 COMPATIBLE_MACHINE ?= "invalid"
 
 # Platform must be set for each machine

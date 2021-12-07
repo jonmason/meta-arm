@@ -1,8 +1,5 @@
 require trusted-firmware-a.inc
 
-# Use TF-A for version
-SRCREV_FORMAT = "tfa"
-
 # TF-A v2.5
 SRCREV_tfa = "1e13c500a0351ac4b55d09a63f7008e2438550f8"
 
