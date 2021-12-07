@@ -4,9 +4,9 @@ COMPATIBLE_MACHINE = "(corstone1000)"
 
 SRC_URI = "git://git.trustedfirmware.org/TF-A/trusted-firmware-a.git;protocol=https;name=tfa;branch=master"
 
-# TF-A master branch with all Corstone1000 patches merged
+# TF-A master branch post 2.5 with all Corstone1000 patches merged
 SRCREV_tfa = "459b24451a0829460783ce8dfa15561e36d901d8"
-PV .= "+git${SRCREV_tfa}"
+PV = "2.5+git${SRCPV}"
 
 LIC_FILES_CHKSUM="file://docs/license.rst;md5=b2c740efedc159745b9b31f88ff03dde file://mbedtls/LICENSE;md5=3b83ef96387f14655fc854ddc3c6bd57"
 
