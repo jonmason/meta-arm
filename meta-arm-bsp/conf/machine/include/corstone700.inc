@@ -11,8 +11,6 @@ SERIAL_CONSOLES ?= "115200;ttyAMA0"
 PREFERRED_PROVIDER_virtual/kernel = "linux-yocto"
 PREFERRED_VERSION_linux-yocto ?= "5.6%"
 
-PREFERRED_VERSION_trusted-firmware-a ?= "2.5%"
-
 PREFERRED_VERSION_gcc-arm-none-eabi-native ?= "9-2020-q2-update"
 
 PREFERRED_PROVIDER_virtual/control-processor-firmware ?= "boot-firmware"
