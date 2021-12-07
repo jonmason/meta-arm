@@ -5,7 +5,7 @@ EDK2_BIN_NAME:qemuarm64-secureboot      = "QEMU_EFI.fd"
 
 
 COMPATIBLE_MACHINE:qemu-generic-arm64   = "qemu-generic-arm64"
-DEPENDS:append:qemu-generic-arm64       = " virtual/trusted-firmware-a coreutils-native"
+DEPENDS:append:qemu-generic-arm64       = " trusted-firmware-a coreutils-native"
 EDK2_PLATFORM:qemu-generic-arm64        = "SbsaQemu"
 EDK2_PLATFORM_DSC:qemu-generic-arm64    = "Platform/Qemu/SbsaQemu/SbsaQemu.dsc"
 EDK2_BIN_NAME:qemu-generic-arm64        = "SBSA_FLASH0.fd"

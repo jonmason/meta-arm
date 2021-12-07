@@ -34,7 +34,7 @@ SRCREV_mcuboot = "29099e1d17f93ae1d09fe945ad191b703aacd3d8"
 
 # The install task signs the TF-A BL2 and FIP binaries.
 # So they need to be copied to the sysroot. Hence the dependencies below:
-do_prepare_recipe_sysroot[depends]+= "virtual/trusted-firmware-a:do_populate_sysroot"
+do_prepare_recipe_sysroot[depends]+= "trusted-firmware-a:do_populate_sysroot"
 
 # adding host images signing support
 require trusted-firmware-m-sign-host-images.inc

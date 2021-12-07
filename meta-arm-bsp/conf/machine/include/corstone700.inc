@@ -18,7 +18,7 @@ PREFERRED_VERSION_gcc-arm-none-eabi-native ?= "9-2020-q2-update"
 PREFERRED_PROVIDER_virtual/control-processor-firmware ?= "boot-firmware"
 
 EXTRA_IMAGEDEPENDS += " \
-                      virtual/trusted-firmware-a          \
+                      trusted-firmware-a          \
                       external-system                     \
                       u-boot                              \
                       virtual/control-processor-firmware  \

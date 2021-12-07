@@ -21,7 +21,6 @@ UBOOT_SIGN_KEYNAME = "dev_key"
 UBOOT_SIGN_KEYDIR = "${DEPLOY_DIR_IMAGE}/keys"
 FIT_GENERATE_KEYS = "1"
 
-PREFERRED_PROVIDER_virtual/trusted-firmware-a ?= "trusted-firmware-a"
 PREFERRED_VERSION_trusted-firmware-a ?= "2.5%"
 
 PREFERRED_PROVIDER_virtual/kernel ?= "linux-arm64-ack"

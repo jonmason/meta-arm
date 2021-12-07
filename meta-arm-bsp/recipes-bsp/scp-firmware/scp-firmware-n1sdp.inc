@@ -6,7 +6,7 @@ SCP_LOG_LEVEL = "INFO"
 COMPATIBLE_MACHINE:n1sdp = "n1sdp"
 
 DEPENDS += "fiptool-native"
-DEPENDS += "virtual/trusted-firmware-a"
+DEPENDS += "trusted-firmware-a"
 
 do_install:append() {
    fiptool \

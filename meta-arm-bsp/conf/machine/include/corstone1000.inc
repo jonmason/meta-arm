@@ -5,7 +5,7 @@ MACHINEOVERRIDES =. "corstone1000:"
 # TF-A
 TFA_PLATFORM = "corstone1000"
 PREFERRED_VERSION_trusted-firmware-a ?= "2.5%"
-EXTRA_IMAGEDEPENDS += "virtual/trusted-firmware-a"
+EXTRA_IMAGEDEPENDS += "trusted-firmware-a"
 
 TFA_BL2_BINARY = "bl2-corstone1000.bin"
 TFA_FIP_BINARY = "fip-corstone1000.bin"

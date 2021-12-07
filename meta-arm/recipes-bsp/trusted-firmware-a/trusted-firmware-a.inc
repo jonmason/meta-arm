@@ -1,8 +1,6 @@
 DESCRIPTION = "Trusted Firmware-A"
 LICENSE = "BSD-3-Clause & MIT"
 
-PROVIDES = "virtual/trusted-firmware-a"
-
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 inherit deploy

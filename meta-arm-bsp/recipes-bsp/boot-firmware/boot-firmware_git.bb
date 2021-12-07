@@ -12,7 +12,7 @@ PV = "2020.02.10+git${SRCPV}"
 
 PROVIDES += "virtual/control-processor-firmware"
 
-DEPENDS = "virtual/arm-none-eabi-gcc-native virtual/trusted-firmware-a"
+DEPENDS = "virtual/arm-none-eabi-gcc-native trusted-firmware-a"
 
 inherit deploy
 
