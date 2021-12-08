@@ -1,4 +1,4 @@
-COMPATIBLE_MACHINE:qemuarm64 = "qemuarm64"
+COMPATIBLE_MACHINE:qemuarm64-secureboot = "qemuarm64-secureboot"
 COMPATIBLE_MACHINE:qemu-generic-arm64 = "qemu-generic-arm64"
 
 TFA_PLATFORM:qemuarm64-secureboot = "qemu"
