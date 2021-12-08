@@ -17,6 +17,21 @@
         execution-state = <0>; /* AArch64 */
         xlat-granule = <0>; /* 4KiB */
         messaging-method = <0>; /* Direct messaging only */
+	device-regions {
+		compatible = "arm,ffa-manifest-device-regions";
+		mhu-sender {
+			/* Armv8 A Foundation Platform values */
+			base-address = <0x00000000 0x1b820000>;
+			pages-count = <16>;
+			attributes = <0x3>; /* read-write */
+		};
+		mhu-receiver {
+			/* Armv8 A Foundation Platform values */
+			base-address = <0x00000000 0x1b830000>;
+			pages-count = <16>;
+			attributes = <0x3>; /* read-write */
+		};
+	};
     };
     smm-gateway{
         compatible = "arm,ffa-manifest-1.0";
