@@ -18,6 +18,7 @@ SRC_URI:append = " \
                   file://0005-Configure-NV-storage-macro.patch \
                   file://0006-Use-device-region.patch \
                   file://0007-Add-openamp-to-SE-proxy-deployment.patch \
+                  file://0008-Implement-mhu-driver-and-the-OpenAmp-conversion-laye.patch \
 		  "
 
 SRCREV_ts = "882a2db4f9181fc6ddb505b82262f82e5a0c2fd5"
@@ -34,11 +35,9 @@ SRCREV_openamp = "347397decaa43372fc4d00f965640ebde042966d"
 SRC_URI_LIBMETAL = "git://github.com/OpenAMP/libmetal.git;name=libmetal;protocol=https;branch=main;destsuffix=git/libmetal"
 SRCREV_libmetal = "f252f0e007fbfb8b3a52b1d5901250ddac96baad"
 
-TS_PLATFORM = "arm/fvp/fvp_base_revc-2xaemv8a"
+TS_PLATFORM = "arm/corstone1000"
 TS_ENVIRONMENT = "opteesp"
 SP_PACKAGING_METHOD = "embedded"
-
-EXTRA_OEMAKE += "TS_PLATFORM=${TS_PLATFORM}"
 
 # Secure Enclave proxy secure partition
 TS_DEPLOYMENTS += "'deployments/se-proxy/${TS_ENVIRONMENT}'"
