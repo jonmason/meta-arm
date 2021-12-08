@@ -56,6 +56,7 @@ do_configure() {
           -DCMAKE_INSTALL_PREFIX=${D}/firmware/sp \
           -DSP_DEV_KIT_DIR=${SP_DEV_KIT_DIR} \
           -DSP_PACKAGING_METHOD=${SP_PACKAGING_METHOD} \
+	  -DTS_PLATFORM="${TS_PLATFORM}" \
           -S ${S}/$TS_DEPLOYMENT -B "${B}/$TS_DEPLOYMENT"
     done
 }
