@@ -10,3 +10,8 @@ SRC_URI_MBEDTLS = "git://github.com/ARMmbed/mbedtls.git;name=mbedtls;protocol=ht
 SRCREV_mbedtls = "e483a77c85e1f9c1dd2eb1c5a8f552d2617fe400"
 
 LIC_FILES_CHKSUM_MBEDTLS = "file://mbedtls/LICENSE;md5=3b83ef96387f14655fc854ddc3c6bd57"
+
+# code bloats with clang and results in error below now
+# | aarch64-yoe-linux-musl-ld: region `PMUSRAM' overflowed by 3928 bytes
+# this needs fixing until then use gcc
+TOOLCHAIN = "gcc"
