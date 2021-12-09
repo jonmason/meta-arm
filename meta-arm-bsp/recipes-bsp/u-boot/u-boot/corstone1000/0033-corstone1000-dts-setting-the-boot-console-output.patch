@@ -1,0 +1,33 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+
+From d26f38e9b677ddbfa4e92e250058630ecd275908 Mon Sep 17 00:00:00 2001
+From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+Date: Mon, 6 Dec 2021 14:46:06 +0000
+Subject: [PATCH] corstone1000: dts: setting the boot console output
+
+Setting stdout-path in the chosen node.
+
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+---
+ arch/arm/dts/corstone1000.dtsi | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm/dts/corstone1000.dtsi b/arch/arm/dts/corstone1000.dtsi
+index 0ea3a19698..88fb1576b9 100644
+--- a/arch/arm/dts/corstone1000.dtsi
++++ b/arch/arm/dts/corstone1000.dtsi
+@@ -12,7 +12,9 @@
+ 	#address-cells = <1>;
+ 	#size-cells = <1>;
+ 
+-	chosen { };
++	chosen {
++		stdout-path = "/uart@1a510000:115200n8";
++	};
+ 
+ 	cpus {
+ 		#address-cells = <1>;
+-- 
+2.17.1
+
