@@ -19,7 +19,8 @@ SRC_URI:append = " \
                   file://0006-Use-device-region.patch \
                   file://0007-Add-openamp-to-SE-proxy-deployment.patch \
                   file://0008-Implement-mhu-driver-and-the-OpenAmp-conversion-laye.patch \
-		  "
+                  file://0009-Add-openamp-rpc-caller.patch \
+                  "
 
 SRCREV_ts = "882a2db4f9181fc6ddb505b82262f82e5a0c2fd5"
 
