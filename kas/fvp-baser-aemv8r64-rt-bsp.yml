@@ -1,7 +1,7 @@
 header:
   version: 9
   includes:
-    - fvp-baser-aemv8r64-bsp.yml
+    - kas/fvp-baser-aemv8r64-bsp.yml
 
 local_conf_header:
   base-rt: |
