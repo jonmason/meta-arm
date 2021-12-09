@@ -15,6 +15,7 @@ do_install:append() {
        --soc-fw "${RECIPE_SYSROOT}/firmware/bl31.bin" \
        "scp_fw.bin"
 
+   # This UUID is FIP_UUID_MCP_BL2 in SCP-Firmware.
    fiptool \
        create \
        --blob uuid=54464222-a4cf-4bf8-b1b6-cee7dade539e,file="${D}/firmware/mcp_ramfw.bin" \
