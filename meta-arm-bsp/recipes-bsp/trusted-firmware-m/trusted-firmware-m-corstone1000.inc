@@ -12,7 +12,7 @@ SRCBRANCH_tfm = "master"
 SRCREV_tfm = "dc605e057470bb0eb0e92c2aafb443300a90c43f"
 SRCREV_mcuboot = "29099e1d17f93ae1d09fe945ad191b703aacd3d8"
 
-PV = "1.5+git${SRCPV}"
+PV = "1.5+git${SRCREV_tfm}"
 
 # The install task signs the TF-A BL2 and FIP binaries.
 # So they need to be copied to the sysroot. Hence the dependencies below:
