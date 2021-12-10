@@ -1,7 +1,7 @@
 header:
-  version: 9
+  version: 11
   includes:
-    - gem5-arm64.yml
+    - ci/gem5-arm64.yml
 
 repos:
   meta-arm:

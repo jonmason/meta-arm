@@ -1,8 +1,8 @@
 header:
-  version: 9
+  version: 11
   includes:
-    - base.yml
-    - meta-zephyr.yml
+    - ci/base.yml
+    - ci/meta-zephyr.yml
 
 local_conf_header:
   tclibc: |

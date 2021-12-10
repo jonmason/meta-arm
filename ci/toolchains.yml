@@ -1,7 +1,7 @@
 header:
-  version: 9
+  version: 11
   includes:
-    - base.yml
+    - ci/base.yml
 
 # Target is arm64 and SDK is x86-64 to ensure that we exercise both
 # architectures

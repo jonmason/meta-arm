@@ -1,9 +1,9 @@
 # Simple target to build the FVPs that are publically available
 
 header:
-  version: 9
+  version: 11
   includes:
-    - base.yml
+    - ci/base.yml
 
 machine: qemuarm64
 

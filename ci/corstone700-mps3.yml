@@ -1,6 +1,6 @@
 header:
-  version: 9
+  version: 11
   includes:
-    - corstone700-fvp.yml
+    - ci/corstone700-fvp.yml
 
 machine: corstone700-mps3

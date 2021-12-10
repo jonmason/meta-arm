@@ -1,7 +1,7 @@
 header:
-  version: 9
+  version: 11
   includes:
-    - generic-arm64.yml
+    - ci/generic-arm64.yml
 
 local_conf_header:
   failing_tests: |

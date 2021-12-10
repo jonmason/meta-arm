@@ -1,7 +1,7 @@
 header:
-  version: 9
+  version: 11
   includes:
-    - meta-openembedded.yml
+    - ci/meta-openembedded.yml
 
 repos:
   meta-zephyr:

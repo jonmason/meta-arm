@@ -1,7 +1,7 @@
 header:
-  version: 9
+  version: 11
   includes:
-    - meta-virtualization.yml
+    - ci/meta-virtualization.yml
 
 local_conf_header:
   meta-virt: |

@@ -1,6 +1,6 @@
 header:
-  version: 9
+  version: 11
   includes:
-    - base.yml
+    - ci/base.yml
 
 machine: n1sdp

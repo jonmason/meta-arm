@@ -1,8 +1,8 @@
 header:
-  version: 9
+  version: 11
   includes:
-    - base.yml
-    - meta-openembedded.yml
+    - ci/base.yml
+    - ci/meta-openembedded.yml
 
 repos:
   meta-arm:
