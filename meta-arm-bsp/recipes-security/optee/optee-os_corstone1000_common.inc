@@ -11,7 +11,8 @@ SRC_URI:append = " \
                   file://0002-plat-corstone1000-reserve-3MB-CVM-memory-for-optee.patch \
                   file://0003-plat-corstone1000-add-a-rule-in-Makefile-to-SP_MAKEF.patch \
 		  file://0004-plat-corstone1000-increase-OPTEE-core-heap-size.patch \
-		  "
+                  file://0005-Fix-add-missing-error-check-during-SP-init.patch \
+                   "
 
 COMPATIBLE_MACHINE = "corstone1000"
 
