@@ -14,6 +14,7 @@ SP_MKFILE_PATH += "${TS_INSTALL_PREFIX}/lib/make/smm-gateway.mk"
 
 EXTRA_OEMAKE += "'CFG_SP_MKFILE_PATH=${SP_MKFILE_PATH}'"
 
-SRC_URI:append = " file://sp_manifest_combined_se.dts;subdir=${S}"
-EMBED_DTB_SOURCE_FILE = "${S}/sp_manifest_combined_se.dts"
 EXTRA_OEMAKE += "CFG_EMBED_DTB_SOURCE_FILE=${EMBED_DTB_SOURCE_FILE}"
+
+SRC_URI:append = " file://sp_manifest_combined_se.dts;"
+EMBED_DTB_SOURCE_FILE = "${WORKDIR}/sp_manifest_combined_se.dts"
