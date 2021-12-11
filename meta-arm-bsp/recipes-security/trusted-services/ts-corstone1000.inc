@@ -23,6 +23,7 @@ SRC_URI:append = " \
                   file://0010-add-psa-client-definitions-for-ff-m.patch \
                   file://0011-Add-common-service-component-to-ipc-support.patch \
                   file://0012-Add-secure-storage-ipc-backend.patch \
+                  file://0013-Use-secure-storage-ipc-and-openamp-for-se_proxy.patch \
                   "
 
 SRCREV_ts = "882a2db4f9181fc6ddb505b82262f82e5a0c2fd5"
