@@ -31,8 +31,6 @@ SRC_URI:append = " \
                   file://0018-Support-FFARPC-call-requests-with-no-shared-buffer.patch \
                   "
 
-SRCREV_ts = "a365a04f937b9b76ebb2e0eeade226f208cbc0d2"
-
 SRC_URI_MBED = "git://github.com/ARMmbed/mbed-crypto.git;protocol=https;branch=development;name=mbed;destsuffix=git/mbedcrypto"
 SRCREV_mbed = "cf4a40ba0a3086cabb5a8227245191161fd26383"
 
