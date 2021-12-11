@@ -21,6 +21,7 @@ SRC_URI:append = " \
                   file://0008-Implement-mhu-driver-and-the-OpenAmp-conversion-laye.patch \
                   file://0009-Add-openamp-rpc-caller.patch \
                   file://0010-add-psa-client-definitions-for-ff-m.patch \
+                  file://0011-Add-common-service-component-to-ipc-support.patch \
                   "
 
 SRCREV_ts = "882a2db4f9181fc6ddb505b82262f82e5a0c2fd5"
