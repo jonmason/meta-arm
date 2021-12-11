@@ -31,6 +31,12 @@
 			pages-count = <16>;
 			attributes = <0x3>; /* read-write */
 		};
+		openamp-virtio {
+			/* Armv8 A Foundation Platform values */
+			base-address = <0x00000000 0x88000000>;
+			pages-count = <256>;
+			attributes = <0x3>; /* read-write */
+		};
 	};
     };
     smm-gateway{
