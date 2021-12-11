@@ -1,7 +1,7 @@
 Upstream-Status: Pending [Not submitted to upstream yet]
 Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
 
-From ee503eec06c928344a72faaca70ad0d448ff8175 Mon Sep 17 00:00:00 2001
+From 318f0dda8d258f0184a4d8650045e02be02afce2 Mon Sep 17 00:00:00 2001
 From: Vishnu Banavath <vishnu.banavath@arm.com>
 Date: Fri, 3 Dec 2021 19:19:24 +0000
 Subject: [PATCH] Add secure storage ipc backend
@@ -10,6 +10,8 @@ Add secure storage ipc ff-m implementation which may use
 openamp as rpc to communicate with other processor.
 
 Signed-off-by: Rui Miguel Silva <rui.silva@arm.com>
+
+%% original patch: 0012-Add-secure-storage-ipc-backend.patch
 
 diff --git a/components/service/common/psa_ipc/service_psa_ipc.c b/components/service/common/psa_ipc/service_psa_ipc.c
 index e8093c2..95a07c1 100644
@@ -498,10 +500,10 @@ index 0000000..e8c1e8f
 +
 +#endif /* SECURE_STORAGE_IPC_H */
 diff --git a/deployments/se-proxy/opteesp/CMakeLists.txt b/deployments/se-proxy/opteesp/CMakeLists.txt
-index 3b5dd1d..87fdd58 100644
+index e0e0e12..663177b 100644
 --- a/deployments/se-proxy/opteesp/CMakeLists.txt
 +++ b/deployments/se-proxy/opteesp/CMakeLists.txt
-@@ -70,6 +70,7 @@ add_components(TARGET "se-proxy"
+@@ -73,6 +73,7 @@ add_components(TARGET "se-proxy"
  		"components/service/crypto/factory/full"
  		"components/service/secure_storage/include"
  		"components/service/secure_storage/frontend/secure_storage_provider"
@@ -510,5 +512,5 @@ index 3b5dd1d..87fdd58 100644
  		"components/service/attestation/provider"
  		"components/service/attestation/provider/serializer/packed-c"
 -- 
-2.17.1
+2.25.1
 

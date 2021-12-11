@@ -1,7 +1,7 @@
 Upstream-Status: Pending [Not submitted to upstream yet]
 Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 
-From 0bdafbd98ffd25a09822a560435ee9719e9bc0e4 Mon Sep 17 00:00:00 2001
+From 37559c70443fe85e246f1f652045f0cd3c78012b Mon Sep 17 00:00:00 2001
 From: Vishnu Banavath <vishnu.banavath@arm.com>
 Date: Sat, 13 Nov 2021 07:47:44 +0000
 Subject: [PATCH] tools/cmake/common: applying lowercase project convention
@@ -12,6 +12,8 @@ Host build paths should not be lowercased. Otherwise, builds
 with uppercase paths will break.
 
 Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+
+%% original patch: 0001-tools-cmake-common-applying-lowercase-project-convention.patch
 
 diff --git a/tools/cmake/common/AddPlatform.cmake b/tools/cmake/common/AddPlatform.cmake
 index ae34c6e..31bcd8c 100644
@@ -29,5 +31,5 @@ index ae34c6e..31bcd8c 100644
  
  	unset(TGT CACHE)
 -- 
-2.17.1
+2.25.1
 

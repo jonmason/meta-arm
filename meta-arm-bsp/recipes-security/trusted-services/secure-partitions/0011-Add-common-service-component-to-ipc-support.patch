@@ -1,7 +1,7 @@
 Upstream-Status: Pending [Not submitted to upstream yet]
 Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
 
-From 13c7fa7bcc93f82cbc1e8a6f561b33133777a3a9 Mon Sep 17 00:00:00 2001
+From f08ec4e601e70669aafeb712d7c521cc07fd0c77 Mon Sep 17 00:00:00 2001
 From: Vishnu Banavath <vishnu.banavath@arm.com>
 Date: Fri, 3 Dec 2021 19:13:03 +0000
 Subject: [PATCH] Add common service component to ipc support
@@ -10,6 +10,8 @@ Add support for inter processor communication for PSA
 including, the openamp client side structures lib.
 
 Signed-off-by: Rui Miguel Silva <rui.silva@arm.com>
+
+%% original patch: 0011-Add-common-service-component-to-ipc-support.patch
 
 diff --git a/components/service/common/psa_ipc/component.cmake b/components/service/common/psa_ipc/component.cmake
 new file mode 100644
@@ -135,7 +137,7 @@ index 0000000..e8093c2
 +}
 diff --git a/components/service/common/psa_ipc/service_psa_ipc_openamp_lib.h b/components/service/common/psa_ipc/service_psa_ipc_openamp_lib.h
 new file mode 100644
-index 0000000..c637dfa
+index 0000000..33ea966
 --- /dev/null
 +++ b/components/service/common/psa_ipc/service_psa_ipc_openamp_lib.h
 @@ -0,0 +1,131 @@
@@ -271,10 +273,10 @@ index 0000000..c637dfa
 +
 +
 diff --git a/deployments/se-proxy/opteesp/CMakeLists.txt b/deployments/se-proxy/opteesp/CMakeLists.txt
-index b8b01c4..3b5dd1d 100644
+index 1511bba..e0e0e12 100644
 --- a/deployments/se-proxy/opteesp/CMakeLists.txt
 +++ b/deployments/se-proxy/opteesp/CMakeLists.txt
-@@ -51,6 +51,7 @@ add_components(TARGET "se-proxy"
+@@ -54,6 +54,7 @@ add_components(TARGET "se-proxy"
  		"components/service/common/include"
  		"components/service/common/serializer/protobuf"
  		"components/service/common/client"
@@ -283,5 +285,5 @@ index b8b01c4..3b5dd1d 100644
  		"components/service/discovery/provider"
  		"components/service/discovery/provider/serializer/packed-c"
 -- 
-2.17.1
+2.25.1
 

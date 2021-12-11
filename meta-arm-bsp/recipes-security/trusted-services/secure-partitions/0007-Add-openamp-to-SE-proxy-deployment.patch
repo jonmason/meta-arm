@@ -1,7 +1,7 @@
 Upstream-Status: Pending [Not submitted to upstream yet]
 Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
 
-From afaab8162d5e5a22c0a89aebd46ca6480151d19e Mon Sep 17 00:00:00 2001
+From 8e25c9b4617dcbb5800b25ace93371d9bcd68e61 Mon Sep 17 00:00:00 2001
 From: Vishnu Banavath <vishnu.banavath@arm.com>
 Date: Fri, 3 Dec 2021 16:36:51 +0000
 Subject: [PATCH] Add openamp to SE proxy deployment
@@ -14,11 +14,13 @@ and build it.
 Signed-off-by: Rui Miguel Silva <rui.silva@arm.com>
 Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
 
+%% original patch: 0007-Add-openamp-to-SE-proxy-deployment.patch
+
 diff --git a/deployments/se-proxy/opteesp/CMakeLists.txt b/deployments/se-proxy/opteesp/CMakeLists.txt
-index 2fb4bcc..8591826 100644
+index 4e2069a..248bd7e 100644
 --- a/deployments/se-proxy/opteesp/CMakeLists.txt
 +++ b/deployments/se-proxy/opteesp/CMakeLists.txt
-@@ -86,6 +86,7 @@ add_components(TARGET "se-proxy"
+@@ -89,6 +89,7 @@ add_components(TARGET "se-proxy"
  target_sources(se-proxy PRIVATE
  	se_proxy_sp.c
  	service_proxy_factory.c
@@ -26,15 +28,7 @@ index 2fb4bcc..8591826 100644
  )
  
  #-------------------------------------------------------------------------------
-@@ -95,7 +96,6 @@ target_sources(se-proxy PRIVATE
- # temporarily force platform - with this change, the build interface to
- # an external builder such as a Yocto recipe is unchanged.  Should remove
- # once the build interface is published.
--set(TS_PLATFORM "arm/fvp/fvp_base_revc-2xaemv8a" CACHE STRING "Overridden" FORCE)
- 
- add_platform(TARGET "se-proxy")
- 
-@@ -110,6 +110,19 @@ include(../../../external/nanopb/nanopb.cmake)
+@@ -108,6 +109,19 @@ include(../../../external/nanopb/nanopb.cmake)
  target_link_libraries(se-proxy PRIVATE nanopb::protobuf-nanopb-static)
  protobuf_generate_all(TGT "se-proxy" NAMESPACE "protobuf" BASE_DIR "${TS_ROOT}/protocols")
  
@@ -255,5 +249,5 @@ index 0000000..aae13ba
 +set_property(TARGET openamp PROPERTY IMPORTED_LOCATION "${OPENAMP_INSTALL_PATH}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}open_amp${CMAKE_STATIC_LIBRARY_SUFFIX}")
 +set_property(TARGET openamp PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${OPENAMP_INSTALL_PATH}/include")
 -- 
-2.17.1
+2.25.1
 
