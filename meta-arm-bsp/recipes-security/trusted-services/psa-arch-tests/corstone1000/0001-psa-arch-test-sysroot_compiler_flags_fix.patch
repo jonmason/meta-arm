@@ -1,0 +1,68 @@
+Upstream-Status: Inappropriate [Not for upstreaming in the original repo]
+Signed-off-by: Emekcan Aras <Emekcan.Aras@arm.com>
+
+From 340ef6788d2803543b15235bf16a79cbc02235bd Mon Sep 17 00:00:00 2001
+From: Emekcan Aras <Emekcan.Aras@arm.com>
+Date: Mon, 6 Dec 2021 10:21:59 +0000
+
+[PATCH] arm-bsp/psa-arch-test: Integrate psa-arch-test
+
+Signed-off-by: Emekcan Aras <emekcan.aras@arm.com>
+---
+ deployments/libts/libts-import.cmake         | 4 +++-
+ external/MbedTLS/MbedTLS.cmake               | 1 +
+ external/psa_arch_tests/psa_arch_tests.cmake | 1 +
+ 3 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/deployments/libts/libts-import.cmake b/deployments/libts/libts-import.cmake
+index 792ba86..e3793e8 100644
+--- a/deployments/libts/libts-import.cmake
++++ b/deployments/libts/libts-import.cmake
+@@ -19,7 +19,6 @@ if(NOT DEFINED PROCESSOR_COUNT)
+ 	ProcessorCount(PROCESSOR_COUNT)
+ 	set(PROCESSOR_COUNT ${PROCESSOR_COUNT} CACHE STRING "Number of cores to use for parallel builds.")
+ endif()
+-
+ set(LIBTS_INSTALL_PATH "${CMAKE_CURRENT_BINARY_DIR}/libts_install" CACHE PATH "libts installation directory")
+ set(LIBTS_PACKAGE_PATH "${LIBTS_INSTALL_PATH}/lib/cmake" CACHE PATH "libts CMake package directory")
+ set(LIBTS_SOURCE_DIR "${TS_ROOT}/deployments/libts/${TS_ENV}" CACHE PATH "libts source directory")
+@@ -27,9 +26,12 @@ set(LIBTS_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/_deps/libts-build" CACHE PATH
+ 
+ file(MAKE_DIRECTORY ${LIBTS_BINARY_DIR})
+ 
++set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --sysroot=${SYSROOT_YOCTO}")
++
+ #Configure the library
+ execute_process(COMMAND
+ 	${CMAKE_COMMAND}
++		-DCMAKE_SYSROOT=${SYSROOT_YOCTO}
+ 		-DCMAKE_INSTALL_PREFIX=${LIBTS_INSTALL_PATH}
+ 		-GUnix\ Makefiles
+ 		${LIBTS_SOURCE_DIR}
+diff --git a/external/MbedTLS/MbedTLS.cmake b/external/MbedTLS/MbedTLS.cmake
+index 3cbaed1..8c53f88 100644
+--- a/external/MbedTLS/MbedTLS.cmake
++++ b/external/MbedTLS/MbedTLS.cmake
+@@ -59,6 +59,7 @@ set(PSA_CRYPTO_API_INCLUDE "${MBEDTLS_INSTALL_PATH}/include" CACHE STRING "PSA C
+ #Configure the library
+ execute_process(COMMAND
+ 	${CMAKE_COMMAND}
++		-DCMAKE_SYSROOT=${SYSROOT_YOCTO}
+ 		-DENABLE_PROGRAMS=OFF
+ 		-DENABLE_TESTING=OFF
+ 		-DUNSAFE_BUILD=ON
+diff --git a/external/psa_arch_tests/psa_arch_tests.cmake b/external/psa_arch_tests/psa_arch_tests.cmake
+index e6ab73f..af00cfc 100644
+--- a/external/psa_arch_tests/psa_arch_tests.cmake
++++ b/external/psa_arch_tests/psa_arch_tests.cmake
+@@ -52,6 +52,7 @@ string(REPLACE ";" " " PSA_ARCH_TEST_EXTERNAL_DEFS "${PSA_ARCH_TEST_EXTERNAL_DEF
+ # Configure the psa-arch-test library
+ execute_process(COMMAND
+ 	${CMAKE_COMMAND}
++			-DCMAKE_SYSROOT=${SYSROOT_YOCTO}
+ 			-DTOOLCHAIN=INHERIT
+ 			-DCMAKE_TOOLCHAIN_FILE=${TS_EXTERNAL_LIB_TOOLCHAIN_FILE}
+ 			-DPSA_INCLUDE_PATHS=${PSA_ARCH_TESTS_EXTERNAL_INCLUDE_PATHS}
+-- 
+2.25.1
+
