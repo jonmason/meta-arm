@@ -24,9 +24,14 @@ SRC_URI:append = " \
                   file://0011-Add-common-service-component-to-ipc-support.patch \
                   file://0012-Add-secure-storage-ipc-backend.patch \
                   file://0013-Use-secure-storage-ipc-and-openamp-for-se_proxy.patch \
+                  file://0014-Add-uefi-variable-append-write-support.patch \
+                  file://0015-Add-UEFI-variable-support-for-QueryVariableInfo.patch \
+                  file://0016-Add-uefi-test-deployment.patch \
+                  file://0017-Fix-interface-ID-parameter-setting-in-sp-ffarpc_call.patch \
+                  file://0018-Support-FFARPC-call-requests-with-no-shared-buffer.patch \
                   "
 
-SRCREV_ts = "882a2db4f9181fc6ddb505b82262f82e5a0c2fd5"
+SRCREV_ts = "a365a04f937b9b76ebb2e0eeade226f208cbc0d2"
 
 SRC_URI_MBED = "git://github.com/ARMmbed/mbed-crypto.git;protocol=https;branch=development;name=mbed;destsuffix=git/mbedcrypto"
 SRCREV_mbed = "cf4a40ba0a3086cabb5a8227245191161fd26383"

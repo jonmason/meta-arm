@@ -1,13 +1,15 @@
 Upstream-Status: Pending [Not submitted to upstream yet]
 Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
 
-From 5b7b59bf35f38f04bc6adb46f88b73edffb74ffd Mon Sep 17 00:00:00 2001
+From 57b6e8dab4de03998023404910e3a30c16860bec Mon Sep 17 00:00:00 2001
 From: Vishnu Banavath <vishnu.banavath@arm.com>
 Date: Fri, 3 Dec 2021 19:00:54 +0000
 Subject: [PATCH] Add openamp rpc caller
 
 Signed-off-by: Rui Miguel Silva <rui.silva@arm.com>
 Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
+
+%% original patch: 0009-Add-openamp-rpc-caller.patch
 
 diff --git a/components/rpc/common/caller/rpc_caller.c b/components/rpc/common/caller/rpc_caller.c
 index 2dceabe..20d889c 100644
@@ -1145,10 +1147,10 @@ index 0000000..915128f
 +
 +#endif
 diff --git a/deployments/se-proxy/opteesp/CMakeLists.txt b/deployments/se-proxy/opteesp/CMakeLists.txt
-index 8591826..b8b01c4 100644
+index 248bd7e..1511bba 100644
 --- a/deployments/se-proxy/opteesp/CMakeLists.txt
 +++ b/deployments/se-proxy/opteesp/CMakeLists.txt
-@@ -72,6 +72,7 @@ add_components(TARGET "se-proxy"
+@@ -75,6 +75,7 @@ add_components(TARGET "se-proxy"
  		"components/service/attestation/include"
  		"components/service/attestation/provider"
  		"components/service/attestation/provider/serializer/packed-c"
@@ -1174,5 +1176,5 @@ index f351a59..55d49b3 100644
  	};
  };
 -- 
-2.17.1
+2.25.1
 

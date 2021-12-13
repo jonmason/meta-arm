@@ -1,14 +1,12 @@
 Upstream-Status: Pending [Not submitted to upstream yet]
 Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
 
-From 95a00456f887f4be3b528ace9cd4cfd3403c935b Mon Sep 17 00:00:00 2001
+From 634b8e09e9c072b41dfe92e4ca08a685cac9e998 Mon Sep 17 00:00:00 2001
 From: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
 Date: Wed, 17 Nov 2021 15:32:04 +0000
-Subject: [PATCH 24/25] Configure NV storage macro
+Subject: [PATCH] Configure NV storage macro
 
----
- deployments/smm-gateway/smm_gateway.c | 2 ++
- 1 file changed, 2 insertions(+)
+%% original patch: 0005-Configure-NV-storage-macro.patch
 
 diff --git a/deployments/smm-gateway/smm_gateway.c b/deployments/smm-gateway/smm_gateway.c
 index 4884a04..7828b3a 100644
@@ -24,5 +22,5 @@ index 4884a04..7828b3a 100644
  #ifndef SMM_GATEWAY_NV_STORE_SN
  #define SMM_GATEWAY_NV_STORE_SN		"sn:ffa:751bf801-3dde-4768-a514-0f10aeed1790:0"
 -- 
-2.17.1
+2.25.1
 

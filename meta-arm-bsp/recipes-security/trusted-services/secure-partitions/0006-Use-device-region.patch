@@ -1,14 +1,12 @@
 Upstream-Status: Pending [Not submitted to upstream yet]
 Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
 
-From 7320daabc82dc787f2fe017eb176df2ec8e804a0 Mon Sep 17 00:00:00 2001
+From 6bb7e118c15c97d4554a0a7f6d3fc8e9792ca65c Mon Sep 17 00:00:00 2001
 From: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
 Date: Wed, 17 Nov 2021 15:32:46 +0000
-Subject: [PATCH 25/25] Use device region
+Subject: [PATCH] Use device region
 
----
- deployments/smm-gateway/opteesp/smm_gateway_sp.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+%% original patch: 0006-Use-device-region.patch
 
 diff --git a/deployments/smm-gateway/opteesp/smm_gateway_sp.c b/deployments/smm-gateway/opteesp/smm_gateway_sp.c
 index 6f13885..0bc0902 100644
@@ -51,5 +49,5 @@ index 6f13885..0bc0902 100644
  
  	/* Attach SMM variable service to MM communication layer */
 -- 
-2.17.1
+2.25.1
 
