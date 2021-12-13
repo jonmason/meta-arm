@@ -49,6 +49,7 @@ SRC_URI:append:corstone1000 = " \
       file://0035-Fix-GetVariable-to-handle-0-data-size.patch \
       file://0036-efi_capsule-corstone1000-pass-interface-and-buffer-event-ids-in-w4.patch \
       file://0037-efi_boottime-corstone1000-pass-interface-and-kernel-event-ids-in-w4.patch \
+      file://0038-efi_loader-remove-guid-check-from-corstone1000-confi.patch \
       "
 
 #
