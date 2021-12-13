@@ -11,7 +11,7 @@ TFA_BL2_BINARY = "bl2-corstone1000.bin"
 TFA_FIP_BINARY = "fip-corstone1000.bin"
 
 # TF-M
-PREFERRED_VERSION_trusted-firmware-m ?= "1.4%"
+PREFERRED_VERSION_trusted-firmware-m ?= "1.5%"
 TFM_PLATFORM = "arm/corstone1000"
 EXTRA_IMAGEDEPENDS += "virtual/trusted-firmware-m"
 
