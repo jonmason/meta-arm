@@ -21,7 +21,4 @@ LD[unexport] = "1"
 SECURITY_LDFLAGS = ""
 TARGET_LDFLAGS = "-Wl,--build-id=none -Wl,--hash-style=both"
 
-EXTRA_OEMAKE += "HOST_PREFIX=${HOST_PREFIX}"
-EXTRA_OEMAKE += "CROSS_COMPILE64=${HOST_PREFIX}"
-
 do_configure[cleandirs] = "${B}"
