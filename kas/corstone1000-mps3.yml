@@ -1,6 +1,6 @@
 header:
-  version: 9
+  version: 11
   includes:
-    - corstone1000-base.yml
+    - kas/corstone1000-base.yml
 
 machine: corstone1000-mps3
