@@ -13,8 +13,9 @@ SRC_URI += "git://github.com/ARM-software/sbsa-acs;destsuffix=edk2/ShellPkg/Appl
 SRCREV_acs = "1b3a37214fe6809e07e471f79d1ef856461bc803"
 SRCREV_libc = "61687168fe02ac4d933a36c9145fdd242ac424d1"
 
-COMPATIBLE_MACHINE = ""
 COMPATIBLE_HOST = "aarch64.*-linux"
+COMPATIBLE_MACHINE = ""
+PACKAGE_ARCH = "${TUNE_PKGARCH}"
 
 EDK2_PLATFORM = "Shell"
 EDK2_PLATFORM_DSC = "ShellPkg/ShellPkg.dsc"
