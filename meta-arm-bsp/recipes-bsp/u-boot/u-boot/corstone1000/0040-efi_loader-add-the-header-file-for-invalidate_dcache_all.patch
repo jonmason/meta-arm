@@ -1,0 +1,32 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+
+From 42676bed67b8f0b87e7b3bc1a7f43afc6f7ba505 Mon Sep 17 00:00:00 2001
+From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+Date: Sat, 11 Dec 2021 21:18:59 +0000
+Subject: [PATCH] efi_loader: add the header file for invalidate_dcache_all
+ function
+
+The invalidate_dcache_all function has been implicitly declared.
+This commit fixes that.
+
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+---
+ lib/efi_loader/efi_variable_tee.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/lib/efi_loader/efi_variable_tee.c b/lib/efi_loader/efi_variable_tee.c
+index b7de80cd39..bebe2325b8 100644
+--- a/lib/efi_loader/efi_variable_tee.c
++++ b/lib/efi_loader/efi_variable_tee.c
+@@ -22,6 +22,7 @@
+ #if (IS_ENABLED(CONFIG_ARM_FFA_TRANSPORT))
+ 
+ #include <arm_ffa_helper.h>
++#include <cpu_func.h>
+ #include <mapmem.h>
+ 
+ /* MM return codes */
+-- 
+2.17.1
+
