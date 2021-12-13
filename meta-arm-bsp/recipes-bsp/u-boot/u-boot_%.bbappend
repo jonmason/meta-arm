@@ -46,6 +46,7 @@ SRC_URI:append:corstone1000 = " \
       file://0032-arm-corstone1000-identify-which-bank-to-load-kernel.patch \
       file://0033-corstone1000-dts-setting-the-boot-console-output.patch \
       file://0034-corstone1000-dts-remove-the-use-of-fdt_addr_r.patch \
+      file://0035-Fix-GetVariable-to-handle-0-data-size.patch \
       "
 
 #
