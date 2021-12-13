@@ -47,6 +47,8 @@ SRC_URI:append:corstone1000 = " \
       file://0033-corstone1000-dts-setting-the-boot-console-output.patch \
       file://0034-corstone1000-dts-remove-the-use-of-fdt_addr_r.patch \
       file://0035-Fix-GetVariable-to-handle-0-data-size.patch \
+      file://0036-efi_capsule-corstone1000-pass-interface-and-buffer-event-ids-in-w4.patch \
+      file://0037-efi_boottime-corstone1000-pass-interface-and-kernel-event-ids-in-w4.patch \
       "
 
 #
