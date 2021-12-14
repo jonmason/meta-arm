@@ -1,0 +1,49 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Emekcan Aras <Emekcan.Aras@arm.com>
+
+From 4a1f2fd2c3c3f8e00364d3b1a8c76a61e41a483f Mon Sep 17 00:00:00 2001
+From: Emekcan Aras <Emekcan.Aras@arm.com>
+Date: Sat, 11 Dec 2021 09:32:44 +0000
+Subject: [PATCH] arm-bsp/psa-arch-test: Fixing psa-arch-tests cmake
+
+Signed-off-by: Emekcan Aras <emekcan.aras@arm.com>
+---
+ external/psa_arch_tests/psa_arch_tests.cmake | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/external/psa_arch_tests/psa_arch_tests.cmake b/external/psa_arch_tests/psa_arch_tests.cmake
+index af00cfc..e4b4f6b 100644
+--- a/external/psa_arch_tests/psa_arch_tests.cmake
++++ b/external/psa_arch_tests/psa_arch_tests.cmake
+@@ -25,15 +25,13 @@ find_program(GIT_COMMAND "git")
+ if (NOT GIT_COMMAND)
+ 	message(FATAL_ERROR "Please install git")
+ endif()
+-
++if ("${PSA_ARCH_TESTS_PATH}" STREQUAL "DOWNLOAD")
+ # Fetching psa-arch-tests
+ FetchContent_Declare(
+ 	psa-arch-tests
+ 	GIT_REPOSITORY ${PSA_ARCH_TESTS_URL}
+ 	GIT_TAG ${PSA_ARCH_TESTS_REFSPEC}
+ 	GIT_SHALLOW TRUE
+-	PATCH_COMMAND git stash
+-		COMMAND git apply ${CMAKE_CURRENT_LIST_DIR}/modify_attest_config.patch
+ )
+ 
+ # FetchContent_GetProperties exports psa-arch-tests_SOURCE_DIR and psa-arch-tests_BINARY_DIR variables
+@@ -42,7 +40,10 @@ if(NOT psa-arch-tests_POPULATED)
+ 	message(STATUS "Fetching psa-arch-tests")
+ 	FetchContent_Populate(psa-arch-tests)
+ endif()
+-
++else()
++    set(psa-arch-tests_SOURCE_DIR "${TS_ROOT}/../psa-arch-tests")
++    set(psa-arch-tests_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}")
++endif()
+ # Ensure list of include paths is separated correctly
+ string(REPLACE ";" "\\;" PSA_ARCH_TESTS_EXTERNAL_INCLUDE_PATHS "${PSA_ARCH_TESTS_EXTERNAL_INCLUDE_PATHS}")
+ 
+-- 
+2.25.1
+
