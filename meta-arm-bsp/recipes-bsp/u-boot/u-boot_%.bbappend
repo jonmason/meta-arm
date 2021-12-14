@@ -51,6 +51,9 @@ SRC_URI:append:corstone1000 = " \
       file://0037-efi_loader-remove-guid-check-from-corstone1000-confi.patch \
       file://0038-arm_ffa-removing-the-cast-when-using-binary-OR-on-FIELD_PREP.patch \
       file://0039-efi_loader-add-the-header-file-for-invalidate_dcache_all.patch \
+      file://0040-Return-proper-error-code-when-rx-buffer-is-larger.patch \
+      file://0041-Use-correct-buffer-size.patch \
+      file://0042-Update-comm_buf-when-EFI_BUFFER_TOO_SMALL.patch \
       "
 
 #
