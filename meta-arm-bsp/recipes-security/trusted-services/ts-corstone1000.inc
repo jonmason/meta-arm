@@ -30,6 +30,7 @@ SRC_URI:append = " \
                   file://0017-Fix-interface-ID-parameter-setting-in-sp-ffarpc_call.patch \
                   file://0018-Support-FFARPC-call-requests-with-no-shared-buffer.patch \
                   file://0019-Run-psa-arch-test.patch \
+                  file://0020-Use-address-instead-of-pointers.patch \
                   "
 
 SRC_URI_MBED = "git://github.com/ARMmbed/mbed-crypto.git;protocol=https;branch=development;name=mbed;destsuffix=git/mbedcrypto"
