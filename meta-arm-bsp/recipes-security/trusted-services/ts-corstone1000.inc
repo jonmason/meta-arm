@@ -32,6 +32,7 @@ SRC_URI:append = " \
                   file://0019-Run-psa-arch-test.patch \
                   file://0020-Use-address-instead-of-pointers.patch \
                   file://0021-Add-psa-ipc-attestation-to-se-proxy.patch \
+                  file://0022-Setup-its-backend-as-openamp-rpc-using-secure-storag.patch \
                   "
 
 SRC_URI_MBED = "git://github.com/ARMmbed/mbed-crypto.git;protocol=https;branch=development;name=mbed;destsuffix=git/mbedcrypto"
