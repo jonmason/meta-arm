@@ -35,6 +35,7 @@ SRC_URI:append = " \
                   file://0022-Setup-its-backend-as-openamp-rpc-using-secure-storag.patch \
                   file://0023-add-psa-ipc-crypto-backend.patch \
                   file://0024-Increase-SMM-gateway-UEFI-variable-macro-value.patch \
+                  file://0025-Add-stub-capsule-update-service-components.patch \
                   "
 
 SRC_URI_MBED = "git://github.com/ARMmbed/mbed-crypto.git;protocol=https;branch=development;name=mbed;destsuffix=git/mbedcrypto"
