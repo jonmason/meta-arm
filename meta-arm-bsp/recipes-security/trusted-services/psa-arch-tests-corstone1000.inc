@@ -9,6 +9,8 @@ COMPATIBLE_MACHINE = "corstone1000"
 
 SRC_URI:append = "\
     file://0001-psa-arch-test-sysroot_compiler_flags_fix.patch \
+    file://0002-arm-bsp-psa-arch-test-Fixing-psa-arch-tests-cmake.patch \
+    file://0003-corstone1000-port-crypto-config.patch;patchdir=../psa-arch-tests \
     "
 
 FILES:${PN} += "${libdir}/libts.so*  ${libdir}/deployments  ${bindir}/psa-*"
