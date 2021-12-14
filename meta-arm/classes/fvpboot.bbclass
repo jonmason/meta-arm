@@ -25,7 +25,7 @@ EXTRA_IMAGEDEPENDS += "${FVP_PROVIDER}"
 
 inherit image-artifact-names
 
-addtask do_write_fvpboot_conf after do_rootfs before do_image
+IMAGE_POSTPROCESS_COMMAND += "do_write_fvpboot_conf;"
 python do_write_fvpboot_conf() {
     # Note that currently this JSON file is in development and the format may
     # change at any point, so it should always be used with a matching runfvp.
