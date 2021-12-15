@@ -16,22 +16,22 @@ LIC_FILES_CHKSUM = "file://license.rst;md5=07f368487da347f3c7bd0fc3085f3afa \
                     file://../mcuboot/LICENSE;md5=b6ee33f1d12a5e6ee3de1e82fb51eeb8"
 
 SRC_URI  = "git://git.trustedfirmware.org/TF-M/trusted-firmware-m.git;protocol=https;branch=${SRCBRANCH_tfm};name=tfm;destsuffix=${S} \
-            git://git.trustedfirmware.org/TF-M/tf-m-tests.git;protocol=https;branch=TF-Mv1.4.x;name=tfm-tests;destsuffix=${S}/../tf-m-tests \
+            git://git.trustedfirmware.org/TF-M/tf-m-tests.git;protocol=https;branch=release/1.5.x;name=tfm-tests;destsuffix=${S}/../tf-m-tests \
             git://github.com/ARMmbed/mbedtls.git;protocol=https;branch=master;name=mbedtls;destsuffix=${S}/../mbedtls \
             git://github.com/mcu-tools/mcuboot.git;protocol=https;branch=main;name=mcuboot;destsuffix=${S}/../mcuboot \
             file://cbor2.patch;patchdir=${S}/../mcuboot \
             "
 
 # The required dependencies are documented in tf-m/config/config_default.cmake
-# TF-Mv1.4.1
-SRCBRANCH_tfm = "TF-Mv1.4.x"
-SRCREV_tfm = "dd1fe44448db0f1750794cd9cf5596033f90f6f9"
+# TF-Mv1.5.0
+SRCBRANCH_tfm = "release/1.5.x"
+SRCREV_tfm = "6fb14a14140f94150f959c88e3b880f48372da06"
 # mbedtls-3.0.0
 SRCREV_mbedtls = "8df2f8e7b9c7bb9390ac74bb7bace27edca81a2b"
-# TF-Mv1.4.1
-SRCREV_tfm-tests = "60faad2ead1b967ec8e73accd793d3ed0e5c56bd"
-# TF-Mv1.4-integ
-SRCREV_mcuboot = "4f8091318b4026d14af9e5a7036825bff62fb612"
+# TF-Mv1.5.0
+SRCREV_tfm-tests = "6131778527cf60d9b5b7ea73700a30c0fdb9ff66"
+# v1.8.0
+SRCREV_mcuboot = "29099e1d17f93ae1d09fe945ad191b703aacd3d8"
 
 UPSTREAM_CHECK_GITTAGREGEX = "^TF-Mv(?P<pver>\d+(\.\d+)+)$"
 
