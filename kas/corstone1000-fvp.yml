@@ -6,7 +6,7 @@ header:
 repos:
   run-scripts:
      url: https://git.gitlab.arm.com/arm-reference-solutions/model-scripts.git
-     refspec: CORSTONE-1000-2021.10.26
+     refspec: 7ad7b6f33bbdb7ae10c7ecfd56820c03a71e9bdf
      layers:
       .: 'excluded'
 
