@@ -2,9 +2,11 @@ header:
   version: 11
   includes:
     - ci/base.yml
-    - ci/meta-openembedded.yml
+    - ci/meta-zephyr.yml
+
 
 machine: musca-s1
 
 target:
   - trusted-firmware-m
+  - zephyr-philosophers
