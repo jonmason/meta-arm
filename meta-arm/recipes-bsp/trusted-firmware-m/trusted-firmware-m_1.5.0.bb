@@ -48,6 +48,7 @@ INHIBIT_DEFAULT_DEPS = "1"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 DEPENDS += "cmake-native \
+            ninja-native \
             python3-intelhex-native \
             python3-jinja2-native \
             python3-pyyaml-native \
@@ -88,6 +89,8 @@ EXTRA_OECMAKE += "-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
 
 EXTRA_OECMAKE += "-DMBEDCRYPTO_PATH=${S}/../mbedtls -DTFM_TEST_REPO_PATH=${S}/../tf-m-tests -DMCUBOOT_PATH=${S}/../mcuboot"
 
+export CMAKE_BUILD_PARALLEL_LEVEL = "${@oe.utils.parallel_make(d, False)}"
+
 # Let the Makefile handle setting up the CFLAGS and LDFLAGS as it is a standalone application
 CFLAGS[unexport] = "1"
 LDFLAGS[unexport] = "1"
@@ -103,7 +106,7 @@ do_patch[postfuncs] += "apply_local_patches"
 
 do_configure[cleandirs] = "${B}"
 do_configure() {
-    cmake -G"Unix Makefiles" -S ${S} -B ${B} ${EXTRA_OECMAKE} ${PACKAGECONFIG_CONFARGS}
+    cmake -GNinja -S ${S} -B ${B} ${EXTRA_OECMAKE} ${PACKAGECONFIG_CONFARGS}
 }
 
 # Invoke install here as there's no point in splitting compile from install: the
@@ -113,6 +116,7 @@ do_configure() {
 do_compile() {
     cmake --build ${B} -- install
 }
+do_compile[progress] = "outof:^\[(\d+)/(\d+)\]\s+"
 
 do_install() {
     # TODO install headers and static libraries when we know how they're used
