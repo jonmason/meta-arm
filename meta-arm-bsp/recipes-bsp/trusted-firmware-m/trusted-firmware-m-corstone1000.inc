@@ -10,9 +10,8 @@ EXTRA_OECMAKE += "-DPLATFORM_IS_FVP=${TFM_PLATFORM_IS_FVP}"
 
 SRCBRANCH_tfm = "master"
 SRCREV_tfm = "ca8c634a3dc15b42d41655a14e512b642320893a"
-SRCREV_mcuboot = "29099e1d17f93ae1d09fe945ad191b703aacd3d8"
 
-PV = "1.5+git${SRCREV_tfm}"
+PV = "1.5.0+git${SRCREV_tfm}"
 SRCREV_FORMAT = "tfm_mcuboot_tfm-tests_mbedtls"
 
 # The install task signs the TF-A BL2 and FIP binaries.
