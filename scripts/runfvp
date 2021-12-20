@@ -216,7 +216,8 @@ def runfvp(cli_args):
     try:
         # When we can assume Py3.7+, this can simply be asyncio.run()
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(asyncio.gather(start_fvp(cli, console_cb=console_started)))
+        console_cb = expected_terminal and console_started or None
+        loop.run_until_complete(asyncio.gather(start_fvp(cli, console_cb=console_cb)))
     except asyncio.CancelledError:
         pass
 
