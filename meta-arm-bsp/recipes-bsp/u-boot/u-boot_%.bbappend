@@ -56,6 +56,9 @@ SRC_URI:append:corstone1000 = " \
       file://0042-Update-comm_buf-when-EFI_BUFFER_TOO_SMALL.patch \
       file://0043-Disable-DHCP-PING-config-parameters.patch \
       file://0044-Revert-corstone1000-Disable-set-get-of-NV-variables.patch \
+      file://0045-corstone1000-defconfig-enable-CAPSULE_FIRMWARE_RAW-c.patch \
+      file://0046-efi_loader-populate-ESRT-table-if-EFI_ESRT-config-op.patch \
+      file://0047-efi_firmware-add-get_image_info-for-corstone1000.patch \
       "
 
 #
