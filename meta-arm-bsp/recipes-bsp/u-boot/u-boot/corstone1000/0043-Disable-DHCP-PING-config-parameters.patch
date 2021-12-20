@@ -1,0 +1,31 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
+
+From e6b420ce5d56fcc08aac2812ee5402686fa56fae Mon Sep 17 00:00:00 2001
+From: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
+Date: Thu, 16 Dec 2021 17:25:29 +0000
+Subject: [PATCH] Disable DHCP, PING config parameters
+
+Signed-off-by: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
+---
+ configs/corstone1000_defconfig | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/configs/corstone1000_defconfig b/configs/corstone1000_defconfig
+index 3c00e13ceb..e11ffbfc89 100644
+--- a/configs/corstone1000_defconfig
++++ b/configs/corstone1000_defconfig
+@@ -31,10 +31,8 @@ CONFIG_CMD_NVEDIT_EFI=y
+ CONFIG_CMD_USB=y
+ CONFIG_CMD_ITEST=y
+ # CONFIG_CMD_SETEXPR is not set
+-CONFIG_CMD_DHCP=y
+ # CONFIG_CMD_NFS is not set
+ CONFIG_CMD_MII=y
+-CONFIG_CMD_PING=y
+ CONFIG_CMD_CACHE=y
+ CONFIG_CMD_EFIDEBUG=y
+ CONFIG_CMD_FAT=y
+-- 
+2.17.1
+
