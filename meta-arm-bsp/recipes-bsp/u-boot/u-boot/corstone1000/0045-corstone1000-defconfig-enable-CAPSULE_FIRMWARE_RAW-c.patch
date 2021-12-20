@@ -1,0 +1,31 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
+
+From 4820222f24901fbed8e0a87487603c0e06dfff5a Mon Sep 17 00:00:00 2001
+From: Vishnu Banavath <vishnu.banavath@arm.com>
+Date: Fri, 17 Dec 2021 19:46:52 +0000
+Subject: [PATCH 1/3] corstone1000/defconfig: enable CAPSULE_FIRMWARE_RAW
+ config option
+
+This change is to enable CAPSULE_FIRMWARE_RAW config option as
+we use RAW image on corstone1000 target. Also, disable
+CONFIG_EFI_CAPSULE_FIRMWARE_FIT
+
+Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
+---
+ configs/corstone1000_defconfig | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/configs/corstone1000_defconfig b/configs/corstone1000_defconfig
+index e11ffbfc89..d576ee1b67 100644
+--- a/configs/corstone1000_defconfig
++++ b/configs/corstone1000_defconfig
+@@ -65,3 +65,5 @@ CONFIG_EFI_SET_TIME=y
+ CONFIG_RTC_EMULATION=y
+ CONFIG_PSCI_RESET=y
+ CONFIG_DISTRO_DEFAULTS=y
++CONFIG_EFI_CAPSULE_FIRMWARE_RAW=y
++# CONFIG_EFI_CAPSULE_FIRMWARE_FIT is not set
+-- 
+2.25.1
+
