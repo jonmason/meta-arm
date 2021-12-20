@@ -1,0 +1,48 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
+
+From 2a8d1b3fb89ae68d126e16f8346405df8fcc3ed6 Mon Sep 17 00:00:00 2001
+From: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
+Date: Thu, 16 Dec 2021 19:36:18 +0000
+Subject: [PATCH] Revert "corstone1000: Disable set/get of NV variables"
+
+This reverts commit 5c77e9883ea29472c353d63c66a7f8ffd6ea367f.
+
+Signed-off-by: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
+---
+ lib/efi_loader/efi_setup.c | 12 ++----------
+ 1 file changed, 2 insertions(+), 10 deletions(-)
+
+diff --git a/lib/efi_loader/efi_setup.c b/lib/efi_loader/efi_setup.c
+index fcf2eae9cd..9e3399a28c 100644
+--- a/lib/efi_loader/efi_setup.c
++++ b/lib/efi_loader/efi_setup.c
+@@ -83,11 +83,7 @@ static efi_status_t efi_init_platform_lang(void)
+ 
+ 	ret = efi_set_variable_int(L"PlatformLang",
+ 				   &efi_global_variable_guid,
+-				   	/*
+-					* This is a temporary change until NV memory is accessible 
+-					* through OpenAmp. 
+-					*/
+-				   //EFI_VARIABLE_NON_VOLATILE | 
++				   EFI_VARIABLE_NON_VOLATILE |
+ 				   EFI_VARIABLE_BOOTSERVICE_ACCESS |
+ 				   EFI_VARIABLE_RUNTIME_ACCESS,
+ 				   1 + strlen(lang), lang, false);
+@@ -214,11 +210,7 @@ static efi_status_t efi_clear_os_indications(void)
+ 		os_indications &=
+ 			~EFI_OS_INDICATIONS_FILE_CAPSULE_DELIVERY_SUPPORTED;
+ 	ret = efi_set_variable_int(L"OsIndications", &efi_global_variable_guid,
+-				   	/*
+-					* This is a temporary change until NV memory is accessible 
+-					* through OpenAmp. 
+-					*/
+-				   //EFI_VARIABLE_NON_VOLATILE |
++				   EFI_VARIABLE_NON_VOLATILE |
+ 				   EFI_VARIABLE_BOOTSERVICE_ACCESS |
+ 				   EFI_VARIABLE_RUNTIME_ACCESS,
+ 				   sizeof(os_indications), &os_indications,
+-- 
+2.17.1
+

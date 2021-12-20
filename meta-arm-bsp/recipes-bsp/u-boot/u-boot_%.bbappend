@@ -52,6 +52,8 @@ SRC_URI:append:corstone1000 = " \
       file://0040-Return-proper-error-code-when-rx-buffer-is-larger.patch \
       file://0041-Use-correct-buffer-size.patch \
       file://0042-Update-comm_buf-when-EFI_BUFFER_TOO_SMALL.patch \
+      file://0043-Disable-DHCP-PING-config-parameters.patch \
+      file://0044-Revert-corstone1000-Disable-set-get-of-NV-variables.patch \
       "
 
 #
