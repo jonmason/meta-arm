@@ -36,6 +36,8 @@ SRC_URI:append = " \
                   file://0023-add-psa-ipc-crypto-backend.patch \
                   file://0024-Increase-SMM-gateway-UEFI-variable-macro-value.patch \
                   file://0025-Add-stub-capsule-update-service-components.patch \
+                  file://0026-Add-logs-to-functions-in-SMM-gateway-SP.patch \
+                  file://0027-Configure-storage-size.patch \
                   "
 
 SRC_URI_MBED = "git://github.com/ARMmbed/mbed-crypto.git;protocol=https;branch=development;name=mbed;destsuffix=git/mbedcrypto"
