@@ -179,7 +179,10 @@ async def start_fvp(cli, console_cb):
     finally:
         # If we get cancelled or throw an exception, kill the FVP
         logger.debug(f"Killing FVP PID {fvp_process.pid}")
-        fvp_process.terminate()
+        try:
+            fvp_process.terminate()
+        except ProcessLookupError:
+            pass
 
     if await fvp_process.wait() != 0:
         logger.info(f"{cli[0]} quit with code {fvp_process.returncode}")
