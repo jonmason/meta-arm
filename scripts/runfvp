@@ -205,6 +205,7 @@ def runfvp(cli_args):
             telnet = await asyncio.create_subprocess_exec("telnet", "localhost", str(port), stdin=sys.stdin, stdout=sys.stdout)
             await telnet.wait()
             logger.debug(f"Telnet quit, cancelling tasks")
+            # TODO: this is 3.7+
             for t in asyncio.all_tasks():
                 logger.debug(f"Cancelling {t}")
                 t.cancel()
