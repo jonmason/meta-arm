@@ -169,7 +169,7 @@ async def start_fvp(cli, console_cb):
 
             # Look for serial connections opening
             if console_cb:
-                m = re.match(fr"^(\S+): Listening for serial connection on port (\d+)$", line)
+                m = re.match(r"^(\S+): Listening for serial connection on port (\d+)$", line)
                 if m:
                     terminal = m.group(1)
                     port = int(m.group(2))
