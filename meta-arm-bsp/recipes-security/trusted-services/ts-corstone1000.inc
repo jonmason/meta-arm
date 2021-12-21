@@ -40,6 +40,8 @@ SRC_URI:append = " \
                   file://0027-Configure-storage-size.patch \
                   file://0028-Revert-Add-uefi-variable-append-write-support.patch \
                   file://0029-Change-UID-of-variable-index-in-SMM.patch \
+                  file://0030-Add-missing-features-to-setVariable.patch \
+                  file://0031-Add-invalid-parameter-check-in-getNextVariableName.patch \
                   "
 
 SRC_URI_MBED = "git://github.com/ARMmbed/mbed-crypto.git;protocol=https;branch=development;name=mbed;destsuffix=git/mbedcrypto"
