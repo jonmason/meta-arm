@@ -90,6 +90,15 @@ pending-updates:
   script:
     - kas shell ci/qemuarm64.yml:ci/meta-openembedded.yml -c "$CI_PROJECT_DIR/scripts/machine-summary.py -t updates.html -o $CI_PROJECT_DIR/update-report.html $($CI_PROJECT_DIR/ci/listmachines.py meta-arm meta-arm-bsp)"
 
+metrics:
+  extends: .setup
+  artifacts:
+    reports:
+      metrics: metrics.txt
+  script:
+    - kas shell --update --force-checkout ci/base.yml --command \
+      "$CI_PROJECT_DIR/ci/patchreview $CI_PROJECT_DIR/meta-* --verbose --metrics $CI_PROJECT_DIR/metrics.txt"
+
 corstone500:
   extends: .build
 
