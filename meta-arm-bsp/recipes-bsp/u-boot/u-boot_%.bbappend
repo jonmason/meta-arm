@@ -57,6 +57,7 @@ SRC_URI:append:corstone1000 = " \
       file://0045-corstone1000-defconfig-enable-CAPSULE_FIRMWARE_RAW-c.patch \
       file://0046-efi_loader-populate-ESRT-table-if-EFI_ESRT-config-op.patch \
       file://0047-efi_firmware-add-get_image_info-for-corstone1000.patch \
+      file://0048-corstone1000-enable-ethernet-device.patch \
       "
 
 #
