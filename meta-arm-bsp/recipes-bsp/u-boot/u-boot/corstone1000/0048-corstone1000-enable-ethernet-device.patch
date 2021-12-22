@@ -1,0 +1,83 @@
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
+
+From 0f90466c2d435534ea19669515c6e0af389d430b Mon Sep 17 00:00:00 2001
+From: Vishnu Banavath <vishnu.banavath@arm.com>
+Date: Wed, 22 Dec 2021 11:31:28 +0000
+Subject: [PATCH] corstone1000: enable ethernet device
+
+This change is to enable ethernet device (SMC911x) and few
+other config options which are required by EDK-2 conformance test
+
+Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
+
+diff --git a/board/armltd/corstone1000/corstone1000.c b/board/armltd/corstone1000/corstone1000.c
+index a51f5ddfa0..113a8238c7 100644
+--- a/board/armltd/corstone1000/corstone1000.c
++++ b/board/armltd/corstone1000/corstone1000.c
+@@ -54,6 +54,14 @@ static struct mm_region corstone1000_mem_map[] = {
+                 .attrs = PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
+                          PTE_BLOCK_NON_SHARE |
+                          PTE_BLOCK_PXN | PTE_BLOCK_UXN
++	}, {
++                 /* ethernet */
++                .virt = 0x40100000UL,
++                .phys = 0x40100000UL,
++                .size = 0x00100000UL,
++                .attrs = PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
++                         PTE_BLOCK_NON_SHARE |
++                         PTE_BLOCK_PXN | PTE_BLOCK_UXN
+ 	}, {
+ 		/* OCVM */
+ 		.virt = 0x80000000UL,
+@@ -95,6 +103,23 @@ int dram_init_banksize(void)
+ 	return 0;
+ }
+ 
++/*
++ * Board specific ethernet initialization routine.
++ * */
++int board_eth_init(struct bd_info *bis)
++{
++	        int rc = 0;
++#ifndef CONFIG_DM_ETH
++#ifdef CONFIG_SMC91111
++	rc = smc91111_initialize(0, CONFIG_SMC91111_BASE);
++#endif
++#ifdef CONFIG_SMC911X
++	rc = smc911x_initialize(0, CONFIG_SMC911X_BASE);
++#endif
++#endif
++	return rc;
++}
++
+ void reset_cpu(ulong addr)
+ {
+ }
+diff --git a/configs/corstone1000_defconfig b/configs/corstone1000_defconfig
+index d576ee1b67..45904ec98d 100644
+--- a/configs/corstone1000_defconfig
++++ b/configs/corstone1000_defconfig
+@@ -67,3 +67,19 @@ CONFIG_PSCI_RESET=y
+ CONFIG_DISTRO_DEFAULTS=y
+ CONFIG_EFI_CAPSULE_FIRMWARE_RAW=y
+ # CONFIG_EFI_CAPSULE_FIRMWARE_FIT is not set
++CONFIG_CMD_DHCP=y
++CONFIG_SMC911X=y
++CONFIG_SMC911X_BASE=0x40100000
++CONFIG_DM_ETH=y
++CONFIG_PHY_SMSC=y
++CONFIG_CMD_BOOTEFI_SELFTEST=y
++CONFIG_CMD_TIME=y
++CONFIG_CMD_GETTIME=y
++CONFIG_NET_RANDOM_ETHADDR=y
++CONFIG_VERSION_VARIABLE=y
++CONFIG_PHYLIB=y
++CONFIG_PHY=y
++CONFIG_RAM=y
++CONFIG_ERRNO_STR=y
++CONFIG_CMD_EDITENV=y
++CONFIG_MISC=y
+-- 
+2.25.1
+
