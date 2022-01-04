@@ -101,11 +101,27 @@ do_generate_gpt() {
     dd if=/dev/zero of=$gpt_image bs=$gpt_size count=1
 
     # create the GPT layout
-    sgdisk -a 1 -U $location_uuid \
-           -n 1:$start_sector_1:+$num_sectors_fip -c 1:FIP_A -t 1:$fip_type_uuid -u 1:$FIP_A_uuid \
-           -n 2:$start_sector_2:+$num_sectors_fip -c 2:FIP_B -t 2:$fip_type_uuid -u 2:$FIP_B_uuid \
-           -n 3:$start_sector_3:+$num_sectors_metadata -c 3:FWU-Metadata -t 3:$metadata_type_uuid \
-           -n 4:$start_sector_4:+$num_sectors_metadata -c 4:Bkup-FWU-Metadata -t 4:$metadata_type_uuid $gpt_image
+    sgdisk $gpt_image \
+           --set-alignment 1 \
+           --disk-guid $location_uuid \
+           \
+           --new 1:$start_sector_1:+$num_sectors_fip \
+           --change-name 1:FIP_A \
+           --typecode 1:$fip_type_uuid \
+           --partition-guid 1:$FIP_A_uuid \
+           \
+           --new 2:$start_sector_2:+$num_sectors_fip \
+           --change-name 2:FIP_B \
+           --typecode 2:$fip_type_uuid \
+           --partition-guid 2:$FIP_B_uuid \
+           \
+           --new 3:$start_sector_3:+$num_sectors_metadata \
+           --change-name 3:FWU-Metadata \
+           --typecode 3:$metadata_type_uuid \
+           \
+           --new 4:$start_sector_4:+$num_sectors_metadata \
+           --change-name 4:Bkup-FWU-Metadata \
+           --typecode 4:$metadata_type_uuid
 
     # populate the GPT partitions
     dd if=$fip_bin of=$gpt_image bs=$sector_size seek=$start_sector_1 count=$num_sectors_fip conv=notrunc
