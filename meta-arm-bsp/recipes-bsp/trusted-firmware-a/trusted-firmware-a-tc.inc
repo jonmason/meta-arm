@@ -1,10 +1,5 @@
 # TC0 specific TFA configuration
 
-# Intermediate SHA with 2.5 baseline version
-SRCREV_tfa = "34a87d74d9fbbe8037431ea5101110a9f1cf30e1"
-PV = "2.5+git${SRCPV}"
-LIC_FILES_CHKSUM = "file://docs/license.rst;md5=b2c740efedc159745b9b31f88ff03dde"
-
 DEPENDS += "scp-firmware util-linux-native gptfdisk-native"
 
 SRC_URI:append = " \

@@ -27,8 +27,17 @@ index ccabced9e..f45457b9f 100644
 -# define PLAT_ARM_MAX_BL2_SIZE		0x14000
 +# define PLAT_ARM_MAX_BL2_SIZE		0x16000
  #endif
- 
+
  /*
+@@ -130,7 +130,7 @@
+  * calculated using the current BL31 PROGBITS debug size plus the sizes of
+  * BL2 and BL1-RW
+  */
+-#define PLAT_ARM_MAX_BL31_SIZE		0x3F000
++#define PLAT_ARM_MAX_BL31_SIZE		0x4F000
+
+ /*
+  * Size of cacheable stacks
 -- 
 2.17.1
 
