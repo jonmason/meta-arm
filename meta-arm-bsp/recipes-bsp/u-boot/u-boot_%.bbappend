@@ -62,6 +62,7 @@ SRC_URI:append:corstone1000 = " \
       file://0048-corstone1000-enable-ethernet-device.patch \
       file://0049-efi_loader-Fix-loaded-image-alignment.patch \
       file://0050-Comment-mm_communicate-failure-log.patch \
+      file://0051-efi_loader-send-bootcomplete-message-to-secure-encla.patch \
       "
 
 #
