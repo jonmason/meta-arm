@@ -21,17 +21,17 @@ LICENSE = "Armcompiler-License-agreement & Armcompiler-Redistributables & \
 LICENSE_FLAGS = "armcompiler"
 
 LIC_FILES_CHKSUM = "file://license_terms/license_agreement.txt;md5=19faf912b534478d28f60dfa24659c17 \
-                    file://license_terms/redistributables.txt;md5=e510e47f7f5be1356ea6218f5b1f6c55 \
-                    file://license_terms/supplementary_terms.txt;md5=17a2efdbd320ceda48a3521747e02dd9 \
-                    file://license_terms/third_party_licenses.txt;md5=c351a9bed613cf88d4fccd6f0a5e57af "
+                    file://license_terms/redistributables.txt;md5=c22d8d2388d8e592f4b135f87bb243da \
+                    file://license_terms/supplementary_terms.txt;md5=e2443a4a7c520e79ebb603c8ba509076 \
+                    file://license_terms/third_party_licenses.txt;md5=53b42e7d31259bdc174b9c03651ed1b7 "
 
-ARMCLANG_VERSION = "DS500-BN-00026-r5p0-18rel0"
+ARMCLANG_VERSION = "DS500-BN-00026-r5p0-19rel0"
 
 COMPATIBLE_HOST = "x86_64.*-linux"
 
 SRC_URI = "https://developer.arm.com/-/media/Files/downloads/compiler/${ARMCLANG_VERSION}.tgz;subdir=${ARMCLANG_VERSION} \
            file://no-uname.patch"
-SRC_URI[sha256sum] = "d9fb99e7550366f884c31f74953066da64301fb30601cb55278d738459c22557"
+SRC_URI[sha256sum] = "0ed2c3a2e416f07b892250fcbcca4b27353b046a030a433bf6dddc0db802885c"
 
 UPSTREAM_CHECK_URI = "https://developer.arm.com/tools-and-software/embedded/arm-compiler/downloads/"
 UPSTREAM_CHECK_REGEX = "Download Arm Compiler.*,(?P<pver>[\d\.]+)"

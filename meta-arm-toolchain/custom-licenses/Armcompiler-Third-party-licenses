@@ -1,9 +1,9 @@
 ===============================================================================
-This file lists the package level copyright and license information for third 
-party software included in this release of 'Arm Compiler 6'. Refer to the 
-License Agreement (End User License Agreement (EULA)) that accompanies this 
-release of 'Arm Compiler 6' for terms and conditions relating to your use of 
-such third party software.
+This file lists the package level copyright and license information for third
+party software included in this release of 'Arm Compiler for Embedded 6'. Refer
+to the License Agreement (End User License Agreement (EULA)) that accompanies
+this release of 'Arm Compiler for Embedded 6' for terms and conditions relating
+to your use of such third party software.
 
 The information is grouped into two sections. The first section lists out
 details of third party software projects, including names of the applicable
@@ -15,7 +15,7 @@ first section.
 SECTION 1: THIRD PARTY SOFTWARE PROJECTS
 ===============================================================================
 
-Name:         Clang #7ff9a93
+Name:         Clang #368af75
 Summary:      C/C++ language frontend for LLVM.
 Home-page:    https://clang.llvm.org/
 License(s):   'Apache License v2.0 with LLVM Exception' and portions with legacy 
@@ -25,7 +25,7 @@ Copyright(s): (For legacy licensed portions) Copyright (c) 2007-2019 University
               of Illinois at Urbana-Champaign. All rights reserved.
               (For portions modified by Arm Limited) Modifications Copyright (C) 
               Arm Limited (or its affiliates). All rights reserved.
-Source(s):    https://github.com/llvm/llvm-project/tree/7ff9a93/clang
+Source(s):    https://github.com/llvm/llvm-project/tree/368af75/clang
 ---------------------------------------------------------------------
 
 Name:         fdlibm (1993)
@@ -36,7 +36,7 @@ License(s):   Custom (MIT like). See later section for a copy of license text.
 Copyright(s): Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
 ---------------------------------------------------------------------
 
-Name:         libc++ #7ff9a93
+Name:         libc++ #368af75
 Summary:      The LLVM implementation of the C++ standard library.
 Home-page:    https://libcxx.llvm.org/
 License(s):   'Apache License v2.0 with LLVM Exception' and portions with legacy 
@@ -48,10 +48,10 @@ Copyright(s): (For legacy licensed portions) Copyright (c) 2009-2019 by the
               Copyright (c) 2009-2014 by the contributors listed in CREDITS.TXT.
               (For portions modified by Arm Limited) Modifications Copyright (C) 
               Arm Limited (or its affiliates). All rights reserved.
-Source(s):    https://github.com/llvm/llvm-project/tree/7ff9a93/libcxx
+Source(s):    https://github.com/llvm/llvm-project/tree/368af75/libcxx
 ---------------------------------------------------------------------
 
-Name:         libc++abi #7ff9a93
+Name:         libc++abi #368af75
 Summary:      C++ ABI runtime support library from the LLVM project.
 Home-page:    https://libcxxabi.llvm.org/
 License(s):   'Apache License v2.0 with LLVM Exception' and portions with legacy 
@@ -63,10 +63,10 @@ Copyright(s): (For legacy licensed portions) Copyright (c) 2009-2019 by the
               Copyright (c) 2009-2014 by the contributors listed in CREDITS.TXT.
               (For portions modified by Arm Limited) Modifications Copyright (C) 
               Arm Limited (or its affiliates). All rights reserved.
-Source(s):    https://github.com/llvm/llvm-project/tree/7ff9a93/libcxxabi
+Source(s):    https://github.com/llvm/llvm-project/tree/368af75/libcxxabi
 ---------------------------------------------------------------------
 
-Name:         libunwind #7ff9a93
+Name:         libunwind #368af75
 Summary:      C++ exception unwind library from the LLVM project. Library to 
               determine the call-chain of a program..
 Home-page:    https://github.com/llvm-mirror/libunwind
@@ -79,24 +79,28 @@ Copyright(s): (For legacy licensed portions) Copyright (c) 2009-2019 by the
               Copyright (c) 2009-2014 by the contributors listed in CREDITS.TXT.
               (For portions modified by Arm Limited) Modifications Copyright (C) 
               Arm Limited (or its affiliates). All rights reserved.
-Source(s):    https://github.com/llvm/llvm-project/tree/7ff9a93/libunwind        
+Source(s):    https://github.com/llvm/llvm-project/tree/368af75/libunwind
+Note:         The included license file refers to CREDITS.TXT in its Copyright
+              statement. However, the provider of libunwind, the LLVM project,
+              has not included the referenced CREDITS.TXT file in the
+              aforementioned source repository.
 ---------------------------------------------------------------------
 
-Name:         libxml2 v2.7.7
+Name:         libxml2 v2.9.9
 Summary:      XML C parsing library.
 Home-page:    http://www.xmlsoft.org/
-License(s):   a) X11 License (X11); AND b) MIT License (MIT). See later section 
+License(s):   a) X11 License (X11); AND b) MIT License (MIT). See later section
               for a copy of license text.
 Copyright(s): Copyright (C) 1998-2003 Daniel Veillard.  All Rights Reserved.
               Copyright (C) 2000 Bjorn Reese and Daniel Veillard.
               Copyright (C) 2000 Gary Pennington and Daniel Veillard.
               Copyright (C) 1998, 2000, 2001 Bjorn Reese and Daniel Stenberg.
               Copyright (C) 2001 Bjorn Reese <breese@users.sourceforge.net>
-              For full list, please refer to Source(s). 
+              For full list, please refer to Source(s).
 Source(s):    ftp://xmlsoft.org/libxml2/
 ---------------------------------------------------------------------
 
-Name:         LLVM #7ff9a93
+Name:         LLVM #368af75
 Summary:      The LLVM Project is a collection of modular and reusable compiler 
               and toolchain technologies. The LLVM Core libraries provide a 
               modern source- and target-independent optimizer, along with code 
@@ -115,12 +119,12 @@ Copyright(s): (For legacy licensed portions) Copyright (c) 2003-2019 University
               Copyright 2001-2004 Unicode, Inc.
               (For portions modified by Arm Limited) Modifications Copyright (C) 
               Arm Limited (or its affiliates). All rights reserved.
-Source(s):    https://github.com/llvm/llvm-project/tree/7ff9a93/llvm
+Source(s):    https://github.com/llvm/llvm-project/tree/368af75/llvm
 ---------------------------------------------------------------------
 
 Name:         glibc v2.12 (Linux OS only)
 Summary:      The GNU C Library. GNU C library (glibc) is dynamically linked to 
-              Arm Compiler for running on Linux Systems.
+              Arm Compiler for Embedded for running on Linux Systems.
 Home-page:    https://www.gnu.org/software/libc/
 License(s):   GNU Lesser General Public License v2.1 or later(LGPL-2.1-or-later)
               See later section for a copy of license text.
@@ -214,28 +218,15 @@ Copyright(s): Copyright (c) 2000, 2004-2007, 2009 Apple Inc. All rights reserved
 Source(s):    https://opensource.apple.com/source/Libc/Libc-1244.50.9/
 ---------------------------------------------------------------------
 
-Name:         libiconv v51.50.1 (Mac OS only)
+Name:         libiconv v1.15
 Summary:      iconv - Unicode character set conversion library.
 Home-page:    https://www.gnu.org/software/libiconv/
 License(s):   GNU Library General Public License v2 or later (LGPL-2.0-or-later)
               See later section for a copy of license text.
-Copyright(s): Copyright (C) 1999-2001 Free Software Foundation, Inc.
-              For full list, please refer to Source(s). 
-Source(s):    
-        https://opensource.apple.com/source/libiconv/libiconv-51.50.1/libiconv/
----------------------------------------------------------------------
-
-Name:         Boost 1.57
-Summary:      Boost C++ libraries
-Home-page:    https://www.boost.org/
-License(s):   Boost Software License 1.0 
-              See later section for a copy of license text.
-Copyright(s): Copyright 1997, 1998, 1999, 2000 University of Notre Dame.
-              Copyright 2002 Indiana University.
-              Copyright 2001 University of Notre Dame.
-              Copyright 2003 Jeremy Siek.
-              For full list, please refer to Source(s). 
-Source(s):    http://sourceforge.net/projects/boost/files/boost/1.57.0/
+Copyright(s): Copyright (C) 1999-2017 Free Software Foundation, Inc.
+              For full list, please refer to Source(s).
+Source(s):
+              https://ftp.gnu.org/gnu/libiconv/libiconv-1.15.tar.gz
 ===============================================================================
 
 SECTION 2: APPLICABLE LICENSES
@@ -3005,8 +2996,8 @@ California, except that body of California law concerning conflicts of law.
 
 Where You are located in the province of Quebec, Canada, the following clause
 applies:  The parties hereby confirm that they have requested that this License
-and all related documents be drafted in English. Les parties ont exig� que le
-pr�sent contrat et tous les documents connexes soient r�dig�s en anglais. 
+and all related documents be drafted in English. Les parties ont exigi?? que le
+pri??sent contrat et tous les documents connexes soient ri??digi??s en anglais. 
 
 EXHIBIT A. 
 
@@ -3916,32 +3907,5 @@ necessary.  Here is a sample; alter the names:
   Ty Coon, President of Vice
 
 That's all there is to it!
-==============================================================================
-
-13) License Text for 'Boost' (Boost Software License 1.0):
-
-Boost Software License - Version 1.0 - August 17th, 2003
-
-Permission is hereby granted, free of charge, to any person or organization
-obtaining a copy of the software and accompanying documentation covered by
-this license (the "Software") to use, reproduce, display, distribute,
-execute, and transmit the Software, and to prepare derivative works of the
-Software, and to permit third-parties to whom the Software is furnished to
-do so, all subject to the following:
-
-The copyright notices in the Software and this entire statement, including
-the above license grant, this restriction and the following disclaimer,
-must be included in all copies of the Software, in whole or in part, and
-all derivative works of the Software, unless such copies or derivative
-works are solely in the form of machine-executable object code generated by
-a source language processor.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. IN NO EVENT
-SHALL THE COPYRIGHT HOLDERS OR ANYONE DISTRIBUTING THE SOFTWARE BE LIABLE
-FOR ANY DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE,
-ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-==============================================================================
+================================================================================
 END OF FILE: third_party_licenses.txt
