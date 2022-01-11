@@ -98,6 +98,7 @@ do_compile() {
        --buildtarget ${EDK2_BUILD_MODE} \
        --tagname ${EDK_COMPILER} \
        --platform ${EDK2_PLATFORM_DSC} \
+       ${@oe.utils.parallel_make_argument(d, "-n %d")} \
        ${EDK2_EXTRA_BUILD}
 }
 
