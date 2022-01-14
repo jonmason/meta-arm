@@ -7,7 +7,8 @@ set -e -u
 
 LOGFILE=$1
 
-LINES=$(grep --invert-match "attempting MIRRORS if available" $LOGFILE | wc -l)
+LINES=$(grep --invert-match -e "attempting MIRRORS if available" -e "distutils-common-base.bbclass is deprecated" -e "distutils3.bbclass is deprecated" $LOGFILE | wc -l)
+
 if test "$LINES" -ne 0; then
     echo ==============================
     echo The build had warnings/errors:
