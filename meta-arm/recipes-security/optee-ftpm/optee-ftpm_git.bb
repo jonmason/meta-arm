@@ -60,6 +60,7 @@ do_compile() {
 do_install () {
     mkdir -p ${D}/lib/optee_armtz
     install -D -p -m 0644 ${S}/TAs/optee_ta/out/fTPM/${FTPM_UUID}.ta ${D}/lib/optee_armtz/
+    install -D -p -m 0644 ${S}/TAs/optee_ta/out/fTPM/${FTPM_UUID}.stripped.elf ${D}/lib/optee_armtz/
 }
 
 do_deploy () {
@@ -69,7 +70,10 @@ do_deploy () {
 
 addtask deploy before do_build after do_install
 
-FILES:${PN} += "${nonarch_base_libdir}/optee_armtz/${FTPM_UUID}.ta"
+FILES:${PN} += " \
+               ${nonarch_base_libdir}/optee_armtz/${FTPM_UUID}.ta \
+               ${nonarch_base_libdir}/optee_armtz/${FTPM_UUID}.stripped.elf \
+               "
 
 # Imports machine specific configs from staging to build
 PACKAGE_ARCH = "${MACHINE_ARCH}"
