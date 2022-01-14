@@ -1,0 +1,29 @@
+From c68ac212ec130811662bb60344793b1442be7d34 Mon Sep 17 00:00:00 2001
+From: Ben Horgan <ben.horgan@arm.com>
+Date: Thu, 16 Dec 2021 14:48:08 +0000
+Subject: [PATCH] plat-totalcompute: Specify managed-exit in the partition
+ manifest
+
+Upstream-Status: Not suitable (Update to 0001-WIP-Enable-managed-exit.patch)
+Signed-off-by: Ben Horgan <ben.horgan@arm.com>
+---
+ core/arch/arm/plat-totalcompute/fdts/optee_sp_manifest.dts | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/core/arch/arm/plat-totalcompute/fdts/optee_sp_manifest.dts b/core/arch/arm/plat-totalcompute/fdts/optee_sp_manifest.dts
+index 04847c4d..1bb4cea8 100644
+--- a/core/arch/arm/plat-totalcompute/fdts/optee_sp_manifest.dts
++++ b/core/arch/arm/plat-totalcompute/fdts/optee_sp_manifest.dts
+@@ -23,7 +23,8 @@
+ 	entrypoint-offset = <0x1000>;
+ 	xlat-granule = <0>; /* 4KiB */
+ 	boot-order = <0>;
+-	messaging-method = <3>; /* Direct messaging and managed exit supported */
++	messaging-method = <3>; /* Direct request/response supported */
++	managed-exit; /* Managed exit supported */
+ 
+ 	device-regions {
+ 		compatible = "arm,ffa-manifest-device-regions";
+-- 
+2.17.1
+

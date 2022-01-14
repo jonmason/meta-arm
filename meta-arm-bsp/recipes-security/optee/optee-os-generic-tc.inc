@@ -9,8 +9,8 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/files/optee-os/tc:"
 SRC_URI:append:tc = " \
     file://sp_layout.json \
     file://0001-WIP-Enable-managed-exit.patch \
-    file://0002-plat-totalcompute-Update-messaging-method-for-manage.patch \
     file://0003-ffa-Update-function-ID-according-to-FFA-v1.1-spec.patch \
+    file://0001-plat-totalcompute-Specify-managed-exit-in-the-partit.patch \
     "
 
 COMPATIBLE_MACHINE = "(tc?)"
