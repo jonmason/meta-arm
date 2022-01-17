@@ -9,7 +9,9 @@ TFM_PLATFORM_IS_FVP ?= "FALSE"
 EXTRA_OECMAKE += "-DPLATFORM_IS_FVP=${TFM_PLATFORM_IS_FVP}"
 
 SRCBRANCH_tfm = "master"
-SRCREV_tfm = "ca8c634a3dc15b42d41655a14e512b642320893a"
+SRCREV_tfm = "49a28600f9dd640638f667273ef15acb6d1a8e1c"
+SRCREV_mbedtls = "d65aeb37349ad1a50e0f6c9b694d4b5290d60e49"
+SRCREV_mcuboot = "29099e1d17f93ae1d09fe945ad191b703aacd3d8"
 
 PV = "1.5.0+git${SRCREV_tfm}"
 SRCREV_FORMAT = "tfm_mcuboot_tfm-tests_mbedtls"
@@ -22,9 +24,9 @@ do_prepare_recipe_sysroot[depends]+= "trusted-firmware-a:do_populate_sysroot"
 require trusted-firmware-m-sign-host-images.inc
 
 do_install() {
-  install -D -p -m 0644 ${B}/install/outputs/ARM/CORSTONE1000/tfm_s_signed.bin ${D}/firmware/tfm_s_signed.bin
-  install -D -p -m 0644 ${B}/install/outputs/ARM/CORSTONE1000/bl2_signed.bin ${D}/firmware/bl2_signed.bin
-  install -D -p -m 0644 ${B}/install/outputs/ARM/CORSTONE1000/bl1.bin ${D}/firmware/bl1.bin
+  install -D -p -m 0644 ${B}/install/outputs/tfm_s_signed.bin ${D}/firmware/tfm_s_signed.bin
+  install -D -p -m 0644 ${B}/install/outputs/bl2_signed.bin ${D}/firmware/bl2_signed.bin
+  install -D -p -m 0644 ${B}/install/outputs/bl1.bin ${D}/firmware/bl1.bin
 
   #
   # Signing TF-A BL2 and the FIP image
