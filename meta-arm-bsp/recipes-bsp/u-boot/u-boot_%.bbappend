@@ -61,6 +61,7 @@ SRC_URI:append:corstone1000 = " \
       file://0049-efi_loader-Fix-loaded-image-alignment.patch \
       file://0050-Comment-mm_communicate-failure-log.patch \
       file://0051-efi_loader-send-bootcomplete-message-to-secure-encla.patch \
+      file://0052-efi_loader-fix-null-pointer-exception-with-get_image.patch \
       "
 
 #
