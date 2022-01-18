@@ -18,3 +18,4 @@ target:
   - nativesdk-gcc-aarch64-none-elf
   - gcc-arm-none-eabi
   - nativesdk-gcc-arm-none-eabi
+  - nativesdk-androidclang
