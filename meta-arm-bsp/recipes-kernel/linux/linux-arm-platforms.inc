@@ -19,6 +19,7 @@ SRC_URI:append:fvp-base-arm32 = " ${SRC_URI_KMETA}"
 SRC_URI:append:fvp-baser-aemv8r64 = " ${SRC_URI_KMETA}"
 SRC_URI:append:juno = " ${SRC_URI_KMETA}"
 SRC_URI:append:n1sdp = " ${SRC_URI_KMETA}"
+SRC_URI:append:tc = " ${SRC_URI_KMETA}"
 SRCREV:arm-platforms-kmeta = "6147e82375aa9df8f2a162d42ea6406c79c854c5"
 
 #
@@ -245,42 +246,33 @@ KBUILD_DEFCONFIG:sgi575 = "defconfig"
 KCONFIG_MODE:sgi575 = "--alldefconfig"
 
 #
-# Total Compute TC0 KMACHINE
+# Total Compute (TC0/TC1) KMACHINE
 #
-COMPATIBLE_MACHINE:tc0 = "tc0"
-KMACHINE:tc0 = "tc0"
-KCONFIG_MODE:tc0 = "--alldefconfig"
-FILESEXTRAPATHS:prepend:tc0 := "${THISDIR}/linux-arm64-ack-5.10/tc:"
+COMPATIBLE_MACHINE:tc = "(tc0|tc1)"
+KCONFIG_MODE:tc = "--alldefconfig"
+FILESEXTRAPATHS:prepend:tc := "${ARMBSPFILESPATHS}:${THISDIR}/linux-arm64-ack-5.10/tc:"
 SRC_URI:append:tc = " \
-    file://defconfig \
+    file://gki_defconfig \
     file://0001-drm-Add-component-aware-simple-encoder.patch \
     file://0002-drm-arm-komeda-add-RENDER-capability-to-the-device-n.patch \
-    file://0003-Adapt-ION-interface-to-match-Android.patch \
-    file://0004-dt-bindings-mailbox-arm-mhuv2-Add-bindings.patch \
-    file://0005-mailbox-arm_mhuv2-Add-driver.patch \
-    file://0006-mailbox-arm_mhuv2-Fix-sparse-warnings.patch \
-    file://0007-mailbox-arm_mhuv2-make-remove-callback-return-void.patch \
-    file://0008-mailbox-arm_mhuv2-Skip-calling-kfree-with-invalid-po.patch \
-    file://0009-arm64-smccc-Add-support-for-SMCCCv1.2-extended-input.patch \
-    file://0010-firmware-arm_ffa-Add-initial-FFA-bus-support-for-dev.patch \
-    file://0011-firmware-arm_ffa-Add-initial-Arm-FFA-driver-support.patch \
-    file://0012-firmware-arm_ffa-Add-support-for-SMCCC-as-transport-.patch \
-    file://0013-firmware-arm_ffa-Setup-in-kernel-users-of-FFA-partit.patch \
-    file://0014-firmware-arm_ffa-Add-support-for-MEM_-interfaces.patch \
-    file://0015-tee-add-sec_world_id-to-struct-tee_shm.patch \
-    file://0016-optee-simplify-optee_release.patch \
-    file://0017-optee-sync-OP-TEE-headers.patch \
-    file://0018-optee-refactor-driver-with-internal-callbacks.patch \
-    file://0019-optee-add-a-FF-A-memory-pool.patch \
-    file://0020-optee-add-FF-A-support.patch \
-    file://0021-drivers-optee-hack-for-UUID-endianess-issue.patch \
-    file://0022-arm_ffa-add-support-for-FFA-v1.1.patch \
+    file://0003-dt-bindings-mailbox-arm-mhuv2-Add-bindings.patch \
+    file://0004-mailbox-arm_mhuv2-Add-driver.patch \
+    file://0005-mailbox-arm_mhuv2-Fix-sparse-warnings.patch \
+    file://0006-mailbox-arm_mhuv2-make-remove-callback-return-void.patch \
+    file://0007-mailbox-arm_mhuv2-Skip-calling-kfree-with-invalid-po.patch \
+    file://0008-arm64-smccc-Add-support-for-SMCCCv1.2-extended-input.patch \
+    file://0009-firmware-arm_ffa-Add-initial-FFA-bus-support-for-dev.patch \
+    file://0010-firmware-arm_ffa-Add-initial-Arm-FFA-driver-support.patch \
+    file://0011-firmware-arm_ffa-Add-support-for-SMCCC-as-transport-.patch \
+    file://0012-firmware-arm_ffa-Setup-in-kernel-users-of-FFA-partit.patch \
+    file://0013-firmware-arm_ffa-Add-support-for-MEM_-interfaces.patch \
+    file://0014-tee-add-sec_world_id-to-struct-tee_shm.patch \
+    file://0015-optee-simplify-optee_release.patch \
+    file://0016-optee-sync-OP-TEE-headers.patch \
+    file://0017-optee-refactor-driver-with-internal-callbacks.patch \
+    file://0018-optee-add-a-FF-A-memory-pool.patch \
+    file://0019-optee-add-FF-A-support.patch \
+    file://0020-drivers-optee-hack-for-UUID-endianess-issue.patch \
+    file://0021-arm_ffa-add-support-for-FFA-v1.1.patch \
     "
-
-#
-# Total Compute TC1 KMACHINE
-#
-COMPATIBLE_MACHINE:tc1 = "tc1"
-KMACHINE:tc1 = "tc1"
-KCONFIG_MODE:tc1 = "--alldefconfig"
-FILESEXTRAPATHS:prepend:tc1 := "${THISDIR}/linux-arm64-ack-5.10/tc:"
+KERNEL_FEATURES:append:tc = " bsp/arm-platforms/tc.scc"

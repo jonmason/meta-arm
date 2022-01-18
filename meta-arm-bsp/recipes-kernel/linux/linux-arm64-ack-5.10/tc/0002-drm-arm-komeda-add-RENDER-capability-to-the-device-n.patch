@@ -1,7 +1,7 @@
-From 7a0e6189c7b104a679bc7b91465425e2de909456 Mon Sep 17 00:00:00 2001
+From 1b2c200673b4a08324f3a6575b30bd16030ed586 Mon Sep 17 00:00:00 2001
 From: Tushar Khandelwal <tushar.khandelwal@arm.com>
 Date: Wed, 17 Jun 2020 10:49:26 +0000
-Subject: [PATCH 02/10] drm: arm: komeda: add RENDER capability to the device
+Subject: [PATCH 02/22] drm: arm: komeda: add RENDER capability to the device
  node
 
 this is required to make this driver work with android framework

@@ -1,7 +1,7 @@
-From 69f802594252a0745ba4e798012a0fb6524b6267 Mon Sep 17 00:00:00 2001
+From eafffa586795e3cb485310fbd287322c9c7dc3bb Mon Sep 17 00:00:00 2001
 From: Jens Wiklander <jens.wiklander@linaro.org>
 Date: Thu, 25 Mar 2021 15:08:52 +0100
-Subject: [PATCH 11/14] optee: add a FF-A memory pool
+Subject: [PATCH 18/22] optee: add a FF-A memory pool
 
 Adds a memory pool to be used when the driver uses FF-A [1] as transport
 layer.
@@ -127,5 +127,5 @@ index 28109d991c4b..34c5fd74a3ff 100644
  
  #endif
 -- 
-2.29.2
+2.17.1
 

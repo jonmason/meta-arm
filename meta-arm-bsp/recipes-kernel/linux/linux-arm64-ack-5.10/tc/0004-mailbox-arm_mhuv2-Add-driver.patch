@@ -1,7 +1,7 @@
-From 51f0bb9cf8e8fca22b040d89e7be802c5ea0cf16 Mon Sep 17 00:00:00 2001
+From eadd9235d084da8022df2d232c90590f2160e433 Mon Sep 17 00:00:00 2001
 From: Viresh Kumar <viresh.kumar@linaro.org>
 Date: Tue, 17 Nov 2020 15:32:06 +0530
-Subject: [PATCH 05/10] mailbox: arm_mhuv2: Add driver
+Subject: [PATCH 04/22] mailbox: arm_mhuv2: Add driver
 
 This adds driver for the ARM MHUv2 (Message Handling Unit) mailbox
 controller.
@@ -33,10 +33,10 @@ Signed-off-by: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
  create mode 100644 include/linux/mailbox/arm_mhuv2_message.h
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index db2a3dfb063d..389f356aed5d 100644
+index 354831907474..5234423c477a 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -10458,6 +10458,15 @@ F:	drivers/mailbox/
+@@ -10459,6 +10459,15 @@ F:	drivers/mailbox/
  F:	include/linux/mailbox_client.h
  F:	include/linux/mailbox_controller.h
  

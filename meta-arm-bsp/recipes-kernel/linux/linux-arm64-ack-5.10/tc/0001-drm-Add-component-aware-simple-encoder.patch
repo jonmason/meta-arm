@@ -1,7 +1,7 @@
-From 9080fb7fc011445d4d6ee164d02d86ff6df0822a Mon Sep 17 00:00:00 2001
+From 39e6b51150c36dd659b85de0c4339594da389da9 Mon Sep 17 00:00:00 2001
 From: Tushar Khandelwal <tushar.khandelwal@arm.com>
 Date: Tue, 16 Jun 2020 12:39:06 +0000
-Subject: [PATCH 01/10] drm: Add component-aware simple encoder
+Subject: [PATCH 01/22] drm: Add component-aware simple encoder
 
 This is a simple DRM encoder that gets its connector timings information
 from a OF subnode in the device tree and exposes that as a "discovered"

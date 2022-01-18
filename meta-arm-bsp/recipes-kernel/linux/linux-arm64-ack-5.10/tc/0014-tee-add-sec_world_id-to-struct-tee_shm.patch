@@ -1,7 +1,7 @@
-From 0f6e0009dc123faa5630bc02977674e182c5938c Mon Sep 17 00:00:00 2001
+From 812d2a649a9cc2a0004cbde2b3e411b46ec84af4 Mon Sep 17 00:00:00 2001
 From: Jens Wiklander <jens.wiklander@linaro.org>
 Date: Thu, 25 Mar 2021 15:08:44 +0100
-Subject: [PATCH 07/14] tee: add sec_world_id to struct tee_shm
+Subject: [PATCH 14/22] tee: add sec_world_id to struct tee_shm
 
 Adds sec_world_id to struct tee_shm which describes a shared memory
 object. sec_world_id can be used by a driver to store an id assigned by
@@ -40,5 +40,5 @@ index cdd049a724b1..93d836fded8b 100644
  
  /**
 -- 
-2.29.2
+2.17.1
 

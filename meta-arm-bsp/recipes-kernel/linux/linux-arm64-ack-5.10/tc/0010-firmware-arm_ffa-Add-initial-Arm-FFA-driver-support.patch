@@ -1,7 +1,7 @@
-From 09e109d71c11f6c990d272cf5cc2c5515f184705 Mon Sep 17 00:00:00 2001
+From b81111a9cdfc182fb0ee5f219ab16710cd9146cd Mon Sep 17 00:00:00 2001
 From: Sudeep Holla <sudeep.holla@arm.com>
 Date: Fri, 30 Apr 2021 11:24:39 +0100
-Subject: [PATCH 03/14] firmware: arm_ffa: Add initial Arm FFA driver support
+Subject: [PATCH 10/22] firmware: arm_ffa: Add initial Arm FFA driver support
 
 This just add a basic driver that sets up the transport(e.g. SMCCC),
 checks the FFA version implemented, get the partition ID for self and
@@ -411,5 +411,5 @@ index 000000000000..d74f03b773d2
 +MODULE_DESCRIPTION("Arm FF-A interface driver");
 +MODULE_LICENSE("GPL v2");
 -- 
-2.29.2
+2.17.1
 

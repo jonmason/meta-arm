@@ -1,7 +1,7 @@
-From 12e789c445956198f2c09798ecfc44fb2ff98b8e Mon Sep 17 00:00:00 2001
+From 95591bf20e67a2f9635b7823baf7975946a630c2 Mon Sep 17 00:00:00 2001
 From: Sudeep Holla <sudeep.holla@arm.com>
 Date: Fri, 30 Apr 2021 11:24:33 +0100
-Subject: [PATCH 02/14] firmware: arm_ffa: Add initial FFA bus support for
+Subject: [PATCH 09/22] firmware: arm_ffa: Add initial FFA bus support for
  device enumeration
 
 The Arm FF for Armv8-A specification has concept of endpoints or
@@ -416,5 +416,5 @@ index 000000000000..aaff89364541
 +
 +#endif /* _LINUX_ARM_FFA_H */
 -- 
-2.29.2
+2.17.1
 

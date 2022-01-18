@@ -1,0 +1,7 @@
+kconf hardware tc/base.cfg
+kconf non-hardware tc/dhcp.cfg
+kconf non-hardware tc/devtmpfs.cfg
+kconf non-hardware tc/gralloc.cfg
+kconf non-hardware tc/mali.cfg
+kconf non-hardware tc/tee.cfg
+kconf non-hardware tc/virtio.cfg

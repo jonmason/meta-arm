@@ -1,7 +1,7 @@
-From c325e66e1cbacc074051034ce7e40b3e0e987c99 Mon Sep 17 00:00:00 2001
+From 1e43bd55c951da0610230c4f28a8ebdd13b30733 Mon Sep 17 00:00:00 2001
 From: Jens Wiklander <jens.wiklander@linaro.org>
 Date: Wed, 20 Jan 2021 11:14:12 +0100
-Subject: [PATCH 09/14] optee: sync OP-TEE headers
+Subject: [PATCH 16/22] optee: sync OP-TEE headers
 
 Pulls in updates in the internal headers from OP-TEE OS [1]. A few
 defines has been shortened, hence the changes in rpc.c. Defines not used
@@ -24,7 +24,7 @@ Upstream-Status: Backport [https://git.kernel.org/pub/scm/linux/kernel/git/torva
  create mode 100644 drivers/tee/optee/optee_rpc_cmd.h
 
 diff --git a/drivers/tee/optee/optee_msg.h b/drivers/tee/optee/optee_msg.h
-index 7b2d919da2ac..1e1341a5eaf2 100644
+index c7ac7d02d6cc..5bef6a0165db 100644
 --- a/drivers/tee/optee/optee_msg.h
 +++ b/drivers/tee/optee/optee_msg.h
 @@ -1,6 +1,6 @@
@@ -36,7 +36,7 @@ index 7b2d919da2ac..1e1341a5eaf2 100644
  #ifndef _OPTEE_MSG_H
  #define _OPTEE_MSG_H
 @@ -12,11 +12,9 @@
-  * This file defines the OP-TEE message protocol used to communicate
+  * This file defines the OP-TEE message protocol (ABI) used to communicate
   * with an instance of OP-TEE running in secure world.
   *
 - * This file is divided into three sections.
@@ -59,7 +59,7 @@ index 7b2d919da2ac..1e1341a5eaf2 100644
   *
   * So, entries should be placed like members of this structure:
   *
-@@ -176,17 +174,9 @@ struct optee_msg_param {
+@@ -178,17 +176,9 @@ struct optee_msg_param {
   * @params: the parameters supplied to the OS Command
   *
   * All normal calls to Trusted OS uses this struct. If cmd requires further
@@ -79,7 +79,7 @@ index 7b2d919da2ac..1e1341a5eaf2 100644
   */
  struct optee_msg_arg {
  	u32 cmd;
-@@ -290,15 +280,12 @@ struct optee_msg_arg {
+@@ -292,15 +282,12 @@ struct optee_msg_arg {
   * OPTEE_MSG_CMD_REGISTER_SHM registers a shared memory reference. The
   * information is passed as:
   * [in] param[0].attr			OPTEE_MSG_ATTR_TYPE_TMEM_INPUT
@@ -97,7 +97,7 @@ index 7b2d919da2ac..1e1341a5eaf2 100644
   * memory reference. The information is passed as:
   * [in] param[0].attr			OPTEE_MSG_ATTR_TYPE_RMEM_INPUT
   * [in] param[0].u.rmem.shm_ref		holds shared memory reference
-@@ -313,131 +300,4 @@ struct optee_msg_arg {
+@@ -315,131 +302,4 @@ struct optee_msg_arg {
  #define OPTEE_MSG_CMD_UNREGISTER_SHM	5
  #define OPTEE_MSG_FUNCID_CALL_WITH_ARG	0x0004
  
@@ -640,5 +640,5 @@ index 6cbb3643c6c4..1849180b0278 100644
  		break;
  	default:
 -- 
-2.29.2
+2.17.1
 

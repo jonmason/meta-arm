@@ -1,7 +1,7 @@
-From 0c25ca5835725220605f3dbf6225dcf22923cc0f Mon Sep 17 00:00:00 2001
+From cb4f6a55b9c61a82a65edcd4b18c505d92480710 Mon Sep 17 00:00:00 2001
 From: Jens Wiklander <jens.wiklander@linaro.org>
 Date: Thu, 25 Mar 2021 15:08:46 +0100
-Subject: [PATCH 08/14] optee: simplify optee_release()
+Subject: [PATCH 15/22] optee: simplify optee_release()
 
 Simplifies optee_release() with a new helper function,
 optee_close_session_helper() which has been factored out from
@@ -19,10 +19,10 @@ Upstream-Status: Pending [Not submitted to upstream yet]
  3 files changed, 39 insertions(+), 48 deletions(-)
 
 diff --git a/drivers/tee/optee/call.c b/drivers/tee/optee/call.c
-index 780d7c4fd756..c0eca4d7d7f2 100644
+index 0790de29f0ca..1b339b743ff5 100644
 --- a/drivers/tee/optee/call.c
 +++ b/drivers/tee/optee/call.c
-@@ -283,12 +283,28 @@ int optee_open_session(struct tee_context *ctx,
+@@ -285,12 +285,28 @@ int optee_open_session(struct tee_context *ctx,
  	return rc;
  }
  
@@ -53,7 +53,7 @@ index 780d7c4fd756..c0eca4d7d7f2 100644
  	struct optee_session *sess;
  
  	/* Check that the session is valid and remove it from the list */
-@@ -301,16 +317,7 @@ int optee_close_session(struct tee_context *ctx, u32 session)
+@@ -303,16 +319,7 @@ int optee_close_session(struct tee_context *ctx, u32 session)
  		return -EINVAL;
  	kfree(sess);
  
@@ -175,5 +175,5 @@ index e25b216a14ef..2b63b796645e 100644
  int optee_invoke_func(struct tee_context *ctx, struct tee_ioctl_invoke_arg *arg,
  		      struct tee_param *param);
 -- 
-2.29.2
+2.17.1
 

@@ -1,7 +1,7 @@
-From a0e07a4d72dfe8892ebcfb29c0a1007c35eebd66 Mon Sep 17 00:00:00 2001
+From 107f39e7741bb77688df47ce3f56b25cceb301c3 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Uwe=20Kleine-K=C3=B6nig?= <u.kleine-koenig@pengutronix.de>
 Date: Tue, 2 Feb 2021 20:43:08 +0100
-Subject: [PATCH 07/10] mailbox: arm_mhuv2: make remove callback return void
+Subject: [PATCH 06/22] mailbox: arm_mhuv2: make remove callback return void
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

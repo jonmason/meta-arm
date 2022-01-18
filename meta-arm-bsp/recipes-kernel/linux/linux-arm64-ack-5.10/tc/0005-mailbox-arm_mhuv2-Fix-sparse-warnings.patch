@@ -1,7 +1,7 @@
-From f082677cb35ea843e749e1c9e5a9b9fba44c5d48 Mon Sep 17 00:00:00 2001
+From 1c75e7d566e29258e9daf7b1548f2d681efb4aea Mon Sep 17 00:00:00 2001
 From: Viresh Kumar <viresh.kumar@linaro.org>
 Date: Wed, 30 Dec 2020 10:12:04 +0530
-Subject: [PATCH 06/10] mailbox: arm_mhuv2: Fix sparse warnings
+Subject: [PATCH 05/22] mailbox: arm_mhuv2: Fix sparse warnings
 
 This patch fixes a bunch of sparse warnings in the newly added arm_mhuv2
 driver.

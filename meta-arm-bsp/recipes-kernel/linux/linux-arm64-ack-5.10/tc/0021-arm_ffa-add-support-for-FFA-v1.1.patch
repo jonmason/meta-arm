@@ -1,7 +1,7 @@
-From 90c09f49c4df35fa0e25dda5e9f15a2d30debce8 Mon Sep 17 00:00:00 2001
+From abb29275dc4965e015f7719951645acfa58bcab4 Mon Sep 17 00:00:00 2001
 From: Usama Arif <usama.arif@arm.com>
 Date: Wed, 11 Aug 2021 09:45:35 +0100
-Subject: [PATCH] arm_ffa: add support for FFA v1.1
+Subject: [PATCH 21/22] arm_ffa: add support for FFA v1.1
 
 Change-Id: I3d5a72981c6a66a0a034fd76d5e38eeb33318d20
 Signed-off-by: Usama Arif <usama.arif@arm.com>

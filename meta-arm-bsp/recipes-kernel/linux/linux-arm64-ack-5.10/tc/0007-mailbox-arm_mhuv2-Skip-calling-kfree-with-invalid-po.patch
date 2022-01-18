@@ -1,7 +1,7 @@
-From c55091b7738802c503b1ce4276ee85d601604506 Mon Sep 17 00:00:00 2001
+From 81d76e92b03a6f33acefd8aef168948c5f595205 Mon Sep 17 00:00:00 2001
 From: Viresh Kumar <viresh.kumar@linaro.org>
 Date: Mon, 22 Feb 2021 12:48:06 +0530
-Subject: [PATCH 08/10] mailbox: arm_mhuv2: Skip calling kfree() with invalid
+Subject: [PATCH 07/22] mailbox: arm_mhuv2: Skip calling kfree() with invalid
  pointer
 
 It is possible that 'data' passed to kfree() is set to a error value

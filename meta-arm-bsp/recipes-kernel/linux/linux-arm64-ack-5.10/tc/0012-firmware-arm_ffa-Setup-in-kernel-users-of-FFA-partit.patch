@@ -1,7 +1,7 @@
-From 4eff52bdae3113edf0256bfd1e986866f7282365 Mon Sep 17 00:00:00 2001
+From c3da0efebc33b357c9fcf4c748c14167594e5c01 Mon Sep 17 00:00:00 2001
 From: Sudeep Holla <sudeep.holla@arm.com>
 Date: Fri, 30 Apr 2021 11:24:48 +0100
-Subject: [PATCH 05/14] firmware: arm_ffa: Setup in-kernel users of FFA
+Subject: [PATCH 12/22] firmware: arm_ffa: Setup in-kernel users of FFA
  partitions
 
 Parse the FFA nodes from the device-tree and register all the partitions
@@ -394,5 +394,5 @@ index aaff89364541..b242fbbce4f0 100644
 +
  #endif /* _LINUX_ARM_FFA_H */
 -- 
-2.29.2
+2.17.1
 

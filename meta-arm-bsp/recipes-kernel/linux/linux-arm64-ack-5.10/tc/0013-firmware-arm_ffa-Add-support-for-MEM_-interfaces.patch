@@ -1,7 +1,7 @@
-From 6795f86f52751608a03cc6de0dda8e28a5c68cd1 Mon Sep 17 00:00:00 2001
+From f4b26dbe513b342f8774810f91d526f545a7202d Mon Sep 17 00:00:00 2001
 From: Sudeep Holla <sudeep.holla@arm.com>
 Date: Fri, 30 Apr 2021 11:24:51 +0100
-Subject: [PATCH 06/14] firmware: arm_ffa: Add support for MEM_* interfaces
+Subject: [PATCH 13/22] firmware: arm_ffa: Add support for MEM_* interfaces
 
 Most of the MEM_* APIs share the same parameters, so they can be
 generalised. Currently only MEM_SHARE is implemented and the user space
@@ -402,5 +402,5 @@ index b242fbbce4f0..6dc0f4e425b9 100644
  
  #endif /* _LINUX_ARM_FFA_H */
 -- 
-2.29.2
+2.17.1
 

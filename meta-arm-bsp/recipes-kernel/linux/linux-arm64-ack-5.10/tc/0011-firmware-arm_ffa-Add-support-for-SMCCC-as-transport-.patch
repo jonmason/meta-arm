@@ -1,7 +1,7 @@
-From a4e518ab87ffdff5bbfa629334dff4a37524e579 Mon Sep 17 00:00:00 2001
+From 22b6c0e78b031f97af093f4d2b26984c42cf4c22 Mon Sep 17 00:00:00 2001
 From: Sudeep Holla <sudeep.holla@arm.com>
 Date: Fri, 30 Apr 2021 11:24:43 +0100
-Subject: [PATCH 04/14] firmware: arm_ffa: Add support for SMCCC as transport
+Subject: [PATCH 11/22] firmware: arm_ffa: Add support for SMCCC as transport
  to FFA driver
 
 There are requests to keep the transport separate in order to allow
@@ -111,5 +111,5 @@ index 000000000000..22c34b788769
 +	return 0;
 +}
 -- 
-2.29.2
+2.17.1
 

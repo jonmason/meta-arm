@@ -1,7 +1,7 @@
-From 4cafac5cd54c7f5069a4d6e17bdbd8f94cd5fa0b Mon Sep 17 00:00:00 2001
+From cdda49168d42c897574388356555f8130c021bb5 Mon Sep 17 00:00:00 2001
 From: Viresh Kumar <viresh.kumar@linaro.org>
 Date: Tue, 17 Nov 2020 15:32:05 +0530
-Subject: [PATCH 04/10] dt-bindings: mailbox : arm,mhuv2: Add bindings
+Subject: [PATCH 03/22] dt-bindings: mailbox : arm,mhuv2: Add bindings
 
 This patch adds device tree binding for ARM Message Handling Unit (MHU)
 controller version 2.
