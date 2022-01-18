@@ -3,7 +3,7 @@ SUMMARY = "PSA arch test application"
 require secure-partitions.inc
 
 LIC_FILES_CHKSUM += "file://../psa-arch-tests/LICENSE.md;md5=2a944942e1496af1886903d274dedb13"
-SRC_URI_PSA = "git://github.com/ARM-software/psa-arch-tests.git;protocol=https;branch=master;name=psa;destsuffix=git/psa-arch-tests"
+SRC_URI_PSA = "git://github.com/ARM-software/psa-arch-tests.git;protocol=https;branch=main;name=psa;destsuffix=git/psa-arch-tests"
 SRC_URI:append = " ${SRC_URI_PSA}"
 
 SRCREV_FORMAT="ts_psa"
