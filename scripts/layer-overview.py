@@ -6,31 +6,24 @@ Print an overview of the layer to help writing release notes.
 Output includes sublayers, machines, recipes.
 """
 
+import argparse
+import sys
+
 # TODO:
 # - More human-readable output
 # - Diff mode, give two revisions and list the changes
-# - Support finding no sublayers, meaning the path is a single layer
 
-import argparse
-parser = argparse.ArgumentParser()
-parser.add_argument("repository")
-parser.add_argument("revision", nargs="?")
-args = parser.parse_args()
+def is_layer(path):
+    """
+    Determine if this path looks like a layer (is a directory and contains conf/layer.conf).
+    """
+    return path.is_dir() and (path / "conf" / "layer.conf").exists()
 
-if args.revision:
-    import gitpathlib
-    base = gitpathlib.GitPath(args.repository, args.revision)
-else:
-    import pathlib
-    base = pathlib.Path(args.repository)
 
-print("Sub-Layers")
-sublayers = sorted(p for p in base.glob("meta-*") if p.is_dir())
-for l in sublayers:
-    print(f" {l.name}")
-print()
-
-for layer in sublayers:
+def print_layer(layer):
+    """
+    Print a summary of the layer.
+    """
     print(layer.name)
 
     machines = sorted(p for p in layer.glob("conf/machine/*.conf"))
@@ -50,3 +43,32 @@ for layer in sublayers:
             else:
                 print(f"  {r.stem}")
         print()
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("repository")
+parser.add_argument("revision", nargs="?")
+args = parser.parse_args()
+
+if args.revision:
+    import gitpathlib
+    base = gitpathlib.GitPath(args.repository, args.revision)
+else:
+    import pathlib
+    base = pathlib.Path(args.repository)
+
+if is_layer(base):
+    print_layer(base)
+else:
+    sublayers = sorted(p for p in base.glob("meta-*") if is_layer(p))
+    if sublayers:
+        print("Sub-Layers")
+        for l in sublayers:
+            print(f" {l.name}")
+        print()
+
+        for layer in sublayers:
+            print_layer(layer)
+    else:
+        print(f"No layers found in {base}", file=sys.stderr)
+        sys.exit(1)
