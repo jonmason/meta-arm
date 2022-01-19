@@ -167,7 +167,26 @@ class TextOverview(Format):
     name = "overview.txt"
 
 class HtmlUpdates(Format):
-    name = "updates.html"
+    name = "report"
+
+    def render(self, context, output: pathlib.Path):
+        if output.exists() and not output.is_dir():
+            print(f"{output} is not a directory", file=sys.stderr)
+            sys.exit(1)
+
+        if not output.exists():
+            output.mkdir(parents=True)
+
+        with open(output / "index.html", "wt") as f:
+            f.write(self.get_template(f"report-index.html.jinja").render(context))
+
+        subcontext = context.copy()
+        del subcontext["data"]
+        for machine, subdata in context["data"].items():
+            subcontext["machine"] = machine
+            subcontext["data"] = subdata
+            with open(output / f"{machine}.html", "wt") as f:
+                f.write(self.get_template(f"report-details.html.jinja").render(subcontext))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="machine-summary")
