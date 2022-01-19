@@ -11,6 +11,7 @@ SRC_URI:append:tc = " \
     file://0001-WIP-Enable-managed-exit.patch \
     file://0003-ffa-Update-function-ID-according-to-FFA-v1.1-spec.patch \
     file://0001-plat-totalcompute-Specify-managed-exit-in-the-partit.patch \
+    file://0001-Fix-optee-UUID.patch \
     "
 
 COMPATIBLE_MACHINE = "(tc?)"

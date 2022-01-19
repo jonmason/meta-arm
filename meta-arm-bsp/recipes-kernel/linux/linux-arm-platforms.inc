@@ -272,7 +272,6 @@ SRC_URI:append:tc = " \
     file://0017-optee-refactor-driver-with-internal-callbacks.patch \
     file://0018-optee-add-a-FF-A-memory-pool.patch \
     file://0019-optee-add-FF-A-support.patch \
-    file://0020-drivers-optee-hack-for-UUID-endianess-issue.patch \
     file://0021-arm_ffa-add-support-for-FFA-v1.1.patch \
     "
 KERNEL_FEATURES:append:tc = " bsp/arm-platforms/tc.scc"
