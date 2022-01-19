@@ -3,27 +3,11 @@
 import argparse
 import datetime
 import os
+import pathlib
 import re
 import sys
 
 import jinja2
-
-def get_template(name):
-    template_dir = os.path.dirname(os.path.abspath(__file__))
-    env = jinja2.Environment(
-        loader=jinja2.FileSystemLoader(template_dir),
-        autoescape=jinja2.select_autoescape(),
-        trim_blocks=True,
-        lstrip_blocks=True
-    )
-    def is_old(version, upstream):
-        if "+git" in version:
-            # strip +git and see if this is a post-release snapshot
-            version = version.replace("+git", "")
-        return version != upstream
-    env.tests["old"] = is_old
-
-    return env.get_template(f"machine-summary-{name}.jinja")
 
 def trim_pv(pv):
     """
@@ -126,14 +110,60 @@ recipes = ("virtual/kernel",
            "gcc-aarch64-none-elf-native",
            "gcc-arm-none-eabi-native")
 
+
+class Format:
+    """
+    The name of this format
+    """
+    name = None
+    """
+    Registry of names to classes
+    """
+    registry = {}
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        assert cls.name
+        cls.registry[cls.name] = cls
+
+    @classmethod
+    def get_format(cls, name):
+        return cls.registry[name]()
+
+    def render(self, context, output: pathlib.Path):
+        # Default implementation for convenience
+        with open(output, "wt") as f:
+            f.write(self.get_template(f"machine-summary-{self.name}.jinja").render(context))
+
+    def get_template(self, name):
+        template_dir = os.path.dirname(os.path.abspath(__file__))
+        env = jinja2.Environment(
+            loader=jinja2.FileSystemLoader(template_dir),
+            autoescape=jinja2.select_autoescape(),
+            trim_blocks=True,
+            lstrip_blocks=True
+        )
+        def is_old(version, upstream):
+            if "+git" in version:
+                # strip +git and see if this is a post-release snapshot
+                version = version.replace("+git", "")
+            return version != upstream
+        env.tests["old"] = is_old
+
+        return env.get_template(name)
+
+class TextOverview(Format):
+    name = "overview.txt"
+
+class HtmlUpdates(Format):
+    name = "updates.html"
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="machine-summary")
     parser.add_argument("machines", nargs="+", help="machine names", metavar="MACHINE")
-    parser.add_argument("-t", "--template", required=True)
-    parser.add_argument("-o", "--output", required=True, type=argparse.FileType('w', encoding='UTF-8'))
+    parser.add_argument("-t", "--type", required=True, choices=Format.registry.keys())
+    parser.add_argument("-o", "--output", type=pathlib.Path, required=True)
     args = parser.parse_args()
-
-    template = get_template(args.template)
 
     context = {}
     # TODO: include git describe for meta-arm
@@ -141,4 +171,5 @@ if __name__ == "__main__":
     context["recipes"] = sorted(recipes)
     context["releases"], context["data"] = harvest_data(args.machines, recipes)
 
-    args.output.write(template.render(context))
+    formatter = Format.get_format(args.type)
+    formatter.render(context, args.output)
