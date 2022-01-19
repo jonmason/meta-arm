@@ -1,9 +1,10 @@
 #! /usr/bin/env python3
 
-import os
-import sys
 import argparse
 import datetime
+import os
+import re
+import sys
 
 import jinja2
 
@@ -42,8 +43,28 @@ def layer_path(layername, d):
             return path
     return None
 
+def extract_patch_info(src_uri, d):
+    """
+    Parse the specified patch entry from a SRC_URI and return (base name, layer name, status) tuple
+    """
+    import bb.fetch, bb.utils
+
+    info = {}
+    localpath = bb.fetch.decodeurl(src_uri)[2]
+    info["name"] = os.path.basename(localpath)
+    info["layer"] = bb.utils.get_file_layer(localpath, d)
+
+    status = "Unknown"
+    with open(localpath, errors="ignore") as f:
+        m = re.search(r"^[\t ]*Upstream[-_ ]Status:?[\t ]*(\w*)", f.read(), re.IGNORECASE | re.MULTILINE)
+        if m:
+            # TODO: validate
+            status = m.group(1)
+    info["status"] = status
+    return info
+
 def harvest_data(machines, recipes):
-    import bb.tinfoil, bb.utils
+    import bb.tinfoil
     with bb.tinfoil.Tinfoil() as tinfoil:
         tinfoil.prepare(config_only=True)
         corepath = layer_path("core", tinfoil.config_data)
@@ -83,7 +104,8 @@ def harvest_data(machines, recipes):
                 details = versions[machine][recipe] = {}
                 details["recipe"] = d.getVar("PN")
                 details["version"] = trim_pv(d.getVar("PV"))
-                details["patched"] = bool(oe.patch.src_patches(d))
+                details["patches"] = [extract_patch_info(p, d) for p in oe.patch.src_patches(d)]
+                details["patched"] = bool(details["patches"])
 
     # Now backfill the upstream versions
     for machine in versions:
