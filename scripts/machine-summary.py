@@ -15,6 +15,15 @@ def trim_pv(pv):
     """
     return "".join(pv.partition("+git")[:2])
 
+def needs_update(version, upstream):
+    """
+    Do a dumb comparison to determine if the version needs to be updated.
+    """
+    if "+git" in version:
+        # strip +git and see if this is a post-release snapshot
+        version = version.replace("+git", "")
+    return version != upstream
+
 def layer_path(layername, d):
     """
     Return the path to the specified layer, or None if the layer isn't present.
@@ -88,14 +97,16 @@ def harvest_data(machines, recipes):
                 details = versions[machine][recipe] = {}
                 details["recipe"] = d.getVar("PN")
                 details["version"] = trim_pv(d.getVar("PV"))
+                details["fullversion"] = d.getVar("PV")
                 details["patches"] = [extract_patch_info(p, d) for p in oe.patch.src_patches(d)]
                 details["patched"] = bool(details["patches"])
 
     # Now backfill the upstream versions
     for machine in versions:
         for recipe in versions[machine]:
-            versions[machine][recipe]["upstream"] = upstreams[recipe]
-
+            data = versions[machine][recipe]
+            data["upstream"] = upstreams[recipe]
+            data["needs_update"] = needs_update(data["version"], data["upstream"])
     return upstreams, versions
 
 # TODO can this be inferred from the list of recipes in the layer
