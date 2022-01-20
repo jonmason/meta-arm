@@ -1,7 +1,0 @@
-layers:
-  - meta-arm
-  - meta-arm-bsp
-  - meta-arm-toolchain
-  - meta-gem5
-dependencies:
-  - meta-openembedded/meta-oe

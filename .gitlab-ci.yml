@@ -77,10 +77,12 @@ machine-coverage:
 # Validate layers are Yocto Project Compatible
 check-layers:
   extends: .setup
-  coverage: '/Coverage: \d+/'
   script:
     - kas shell --update --force-checkout ci/base.yml:ci/meta-openembedded.yml --command \
-      "$CI_PROJECT_DIR/ci/check-layers.py $CI_PROJECT_DIR/ci/check-layers.yml $CI_PROJECT_DIR $KAS_WORK_DIR"
+      "yocto-check-layer-wrapper $CI_PROJECT_DIR/$LAYER --dependency $CI_PROJECT_DIR $KAS_WORK_DIR/meta-openembedded/meta-oe --no-auto-dependency"
+  parallel:
+    matrix:
+      - LAYER: [meta-arm, meta-arm-bsp, meta-arm-toolchain, meta-gem5]
 
 pending-updates:
   extends: .setup
