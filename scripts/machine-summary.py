@@ -142,9 +142,7 @@ class Format:
         return cls.registry[name]()
 
     def render(self, context, output: pathlib.Path):
-        # Default implementation for convenience
-        with open(output, "wt") as f:
-            f.write(self.get_template(f"machine-summary-{self.name}.jinja").render(context))
+        pass
 
     def get_template(self, name):
         template_dir = os.path.dirname(os.path.abspath(__file__))
@@ -159,6 +157,10 @@ class Format:
 
 class TextOverview(Format):
     name = "overview.txt"
+
+    def render(self, context, output: pathlib.Path):
+        with open(output, "wt") as f:
+            f.write(self.get_template(f"machine-summary-overview.txt.jinja").render(context))
 
 class HtmlUpdates(Format):
     name = "report"
