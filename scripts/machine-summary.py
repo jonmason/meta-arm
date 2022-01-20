@@ -154,12 +154,6 @@ class Format:
             trim_blocks=True,
             lstrip_blocks=True
         )
-        def is_old(version, upstream):
-            if "+git" in version:
-                # strip +git and see if this is a post-release snapshot
-                version = version.replace("+git", "")
-            return version != upstream
-        env.tests["old"] = is_old
 
         return env.get_template(name)
 
