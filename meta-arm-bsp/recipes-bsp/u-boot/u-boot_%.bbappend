@@ -77,4 +77,7 @@ SRC_URI:append:fvp-base-arm32 = " file://0001-Add-vexpress_aemv8a_aarch32-varian
 #
 # TC0 and TC1 MACHINES
 #
-SRC_URI:append:tc = " file://bootargs.cfg"
+SRC_URI:append:tc = " \
+        file://bootargs.cfg \
+        file://0001-arm-total_compute-increase-DRAM-to-8GB.patch \
+        "

@@ -1,0 +1,47 @@
+From bdb7de7cdef6ece51dfcee927d3ce0c97fc431f0 Mon Sep 17 00:00:00 2001
+From: Usama Arif <usama.arif@arm.com>
+Date: Tue, 12 Oct 2021 13:43:16 +0100
+Subject: [PATCH] arm: total_compute: increase DRAM to 8GB
+
+The extra 6GB start at 0x8080000000.
+
+Signed-off-by: Usama Arif <usama.arif@arm.com>
+
+Upstream-Status: Backport [https://github.com/u-boot/u-boot/commit/b20b16a794b073807ef8d6840772a92788b3e226]
+Signed-off-by: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+---
+ board/armltd/total_compute/total_compute.c | 3 +++
+ include/configs/total_compute.h            | 3 +++
+ 2 files changed, 6 insertions(+)
+
+diff --git a/board/armltd/total_compute/total_compute.c b/board/armltd/total_compute/total_compute.c
+index b7eaab0851..b7772f79a3 100644
+--- a/board/armltd/total_compute/total_compute.c
++++ b/board/armltd/total_compute/total_compute.c
+@@ -59,6 +59,9 @@ int dram_init_banksize(void)
+ 	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
+ 	gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
+ 
++	gd->bd->bi_dram[1].start = PHYS_SDRAM_2;
++	gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE;
++
+ 	return 0;
+ }
+ 
+diff --git a/include/configs/total_compute.h b/include/configs/total_compute.h
+index cc93f1930a..283268607a 100644
+--- a/include/configs/total_compute.h
++++ b/include/configs/total_compute.h
+@@ -34,6 +34,9 @@
+ #define PHYS_SDRAM_1_SIZE	0x80000000 - DRAM_SEC_SIZE
+ #define CONFIG_SYS_SDRAM_BASE	PHYS_SDRAM_1
+ 
++#define PHYS_SDRAM_2		0x8080000000
++#define PHYS_SDRAM_2_SIZE	0x180000000
++
+ #define CONFIG_ARM_PL180_MMCI_BASE		0x001c050000
+ #define CONFIG_SYS_MMC_MAX_BLK_COUNT		127
+ #define CONFIG_ARM_PL180_MMCI_CLOCK_FREQ	12000000
+-- 
+2.30.2
+
