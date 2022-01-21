@@ -39,13 +39,12 @@ class OEFVPTarget(oeqa.core.target.ssh.OESSHTarget):
         self.fvp = await asyncio.create_subprocess_exec(*cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE)
         self.logger.debug(f"Started runfvp PID {self.fvp.pid}")
 
-        async def wait_for_login():
-            bootlog = bytearray()
+        async def wait_for_login(bootlog):
             while True:
                 line = await self.fvp.stdout.read(1024)
                 if not line:
                     self.logger.debug("runfvp terminated")
-                    return False, bootlog
+                    return False
 
                 self.logger.debug(f"Read line [{line}]")
 
@@ -55,11 +54,11 @@ class OEFVPTarget(oeqa.core.target.ssh.OESSHTarget):
 
                 if b" login:" in bootlog:
                     self.logger.debug("Found login prompt")
-                    return True, bootlog
-            return False, bootlog
+                    return True
 
+        bootlog = bytearray()
         try:
-            found, bootlog = await asyncio.wait_for(wait_for_login(), self.boot_timeout)
+            found = await asyncio.wait_for(wait_for_login(bootlog), self.boot_timeout)
             if found:
                 return
         except asyncio.TimeoutError:
