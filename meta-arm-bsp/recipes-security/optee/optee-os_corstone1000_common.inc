@@ -1,6 +1,6 @@
 SRC_URI = "git://git.trustedfirmware.org/OP-TEE/optee_os.git;protocol=https;branch=psa-development"
 SRCREV = "f9de2c9520ed97b89760cc4c99424aae440b63f4"
-PV .= "+git${SRCREV}"
+PV .= "+git${SRCPV}"
 
 DEPENDS += "python3-pycryptodomex-native dtc-native"
 
@@ -10,7 +10,7 @@ SRC_URI:append = " \
                   file://0001-plat-corstone1000-add-corstone1000-platform.patch \
                   file://0002-plat-corstone1000-reserve-3MB-CVM-memory-for-optee.patch \
                   file://0003-plat-corstone1000-add-a-rule-in-Makefile-to-SP_MAKEF.patch \
-		  file://0004-plat-corstone1000-increase-OPTEE-core-heap-size.patch \
+                  file://0004-plat-corstone1000-increase-OPTEE-core-heap-size.patch \
                   file://0005-Fix-add-missing-error-check-during-SP-init.patch \
                    "
 
