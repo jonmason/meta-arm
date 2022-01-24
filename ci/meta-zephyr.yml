@@ -6,4 +6,5 @@ header:
 repos:
   meta-zephyr:
     url: https://git.yoctoproject.org/git/meta-zephyr
-    refspec: master
+    layers:
+      meta-zephyr-core:

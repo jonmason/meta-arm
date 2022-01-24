@@ -4,6 +4,11 @@ header:
     - ci/base.yml
     - ci/meta-zephyr.yml
 
+repos:
+  meta-zephyr:
+    layers:
+      meta-zephyr-bsp:
+
 local_conf_header:
   tclibc: |
     TCLIBC = "newlib"
