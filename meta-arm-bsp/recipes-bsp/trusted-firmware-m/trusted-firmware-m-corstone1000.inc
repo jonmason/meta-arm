@@ -13,8 +13,8 @@ SRCREV_tfm = "49a28600f9dd640638f667273ef15acb6d1a8e1c"
 SRCREV_mbedtls = "d65aeb37349ad1a50e0f6c9b694d4b5290d60e49"
 SRCREV_mcuboot = "29099e1d17f93ae1d09fe945ad191b703aacd3d8"
 
-PV = "1.5.0+git${SRCREV_tfm}"
-SRCREV_FORMAT = "tfm_mcuboot_tfm-tests_mbedtls"
+PV = "1.5.0+git${SRCPV}"
+SRCREV_FORMAT = "tfm"
 
 # The install task signs the TF-A BL2 and FIP binaries.
 # So they need to be copied to the sysroot. Hence the dependencies below:
