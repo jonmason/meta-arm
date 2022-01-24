@@ -109,12 +109,6 @@ metrics:
 corstone500:
   extends: .build
 
-corstone700-fvp:
-  extends: .build
-
-corstone700-mps3:
-  extends: .build
-
 corstone1000-fvp:
   extends: .build
 

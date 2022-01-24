@@ -2,7 +2,6 @@
 
 MACHINE_TFA_REQUIRE ?= ""
 MACHINE_TFA_REQUIRE:corstone500 = "trusted-firmware-a-corstone500.inc"
-MACHINE_TFA_REQUIRE:corstone700 = "trusted-firmware-a-corstone700.inc"
 MACHINE_TFA_REQUIRE:corstone1000 = "trusted-firmware-a-corstone1000.inc"
 MACHINE_TFA_REQUIRE:fvp-base = "trusted-firmware-a-fvp.inc"
 MACHINE_TFA_REQUIRE:fvp-base-arm32 = "trusted-firmware-a-fvp-arm32.inc"
