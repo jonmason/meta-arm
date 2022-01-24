@@ -8,7 +8,7 @@ SRC_URI:append = " ${SRC_URI_PSA}"
 
 SRCREV_FORMAT="ts_psa"
 SRCREV_psa = "6e1549dde62d12c92fc2df90ebbbe2d2d77cc76a"
-PV = "0.0+git${SRCREV_psa}"
+PV = "1.2+git${SRCPV}"
 
 PSA_APPLICATION_NAME = "psa-api-test"
 TS_ENVIRONMENT_LINUX = "arm-linux"
