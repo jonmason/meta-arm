@@ -24,6 +24,12 @@ def needs_update(version, upstream):
         version = version.replace("+git", "")
     return version != upstream
 
+def safe_patches(patches):
+    for info in patches:
+        if info["status"] in ("Denied", "Pending", "Unknown"):
+            return False
+    return True
+
 def layer_path(layername, d):
     """
     Return the path to the specified layer, or None if the layer isn't present.
@@ -100,6 +106,7 @@ def harvest_data(machines, recipes):
                 details["fullversion"] = d.getVar("PV")
                 details["patches"] = [extract_patch_info(p, d) for p in oe.patch.src_patches(d)]
                 details["patched"] = bool(details["patches"])
+                details["patches_safe"] = safe_patches(details["patches"])
 
     # Now backfill the upstream versions
     for machine in versions:
@@ -148,10 +155,14 @@ class Format:
         template_dir = os.path.dirname(os.path.abspath(__file__))
         env = jinja2.Environment(
             loader=jinja2.FileSystemLoader(template_dir),
+            extensions=['jinja2.ext.i18n'],
             autoescape=jinja2.select_autoescape(),
             trim_blocks=True,
             lstrip_blocks=True
         )
+
+        # We only need i18n for plurals
+        env.install_null_translations()
 
         return env.get_template(name)
 

@@ -26,7 +26,13 @@
             {% if details.patches or details.needs_update %}
             <br>
             {% if details.patches %}
-              <span class="tag is-info">Patched</span>
+              <span class="tag {{ "is-info" if details.patches_safe else "is-danger" }}">
+                {% trans count=details.patches|length %}
+                  {{ count }} Patch
+                {% pluralize %}
+                  {{ count }} Patches
+                {% endtrans %}
+              </span>
             {% endif %}
             {% if details.needs_update %}
               <span class="tag is-danger">Upgrade</span>
