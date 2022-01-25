@@ -6,9 +6,9 @@
   {% set status = status.split()[0] %}
   {% if status in ("Unknown", "Pending") %}
     {% set class = "is-danger" %}
-  {% elif status in ("Backport", "Accepted", "Inappropriate") %}
+  {% elif status in ("Backport", "Accepted", "Inappropriate", "Denied") %}
     {% set class = "is-success" %}
-  {% elif status in ("Submitted", "Denied") %}
+  {% elif status in ("Submitted",) %}
     {% set class = "is-info" %}
   {% else %}
     {% set class = "is-info" %}
