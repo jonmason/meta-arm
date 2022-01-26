@@ -30,16 +30,23 @@ def safe_patches(patches):
             return False
     return True
 
-def layer_path(layername, d):
+def layer_path(layername: str, d) -> pathlib.Path:
     """
     Return the path to the specified layer, or None if the layer isn't present.
     """
-    import re
+    if not hasattr(layer_path, "cache"):
+        # Don't use functools.lru_cache as we don't want d changing to invalidate the cache
+        layer_path.cache = {}
+
+    if layername in layer_path.cache:
+        return layer_path.cache[layername]
+
     bbpath = d.getVar("BBPATH").split(":")
     pattern = d.getVar('BBFILE_PATTERN_' + layername)
     for path in reversed(sorted(bbpath)):
         if re.match(pattern, path + "/"):
-            return path
+            layer_path.cache[layername] = pathlib.Path(path)
+            return layer_path.cache[layername]
     return None
 
 def extract_patch_info(src_uri, d):
