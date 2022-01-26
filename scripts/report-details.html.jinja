@@ -47,8 +47,11 @@
     <tbody>
       {% for pinfo in data.patches %}
       <tr>
-        <!-- TODO links to cgit -->
-        <td>{{ pinfo.name }}</td>
+        <td>
+          {% if pinfo.url %}<a href="{{pinfo.url}}">{% endif %}
+          {{ pinfo.name }}
+          {% if pinfo.url %}</a>{% endif %}
+        </td>
         <td>{{ pinfo.layer }}</td>
         <!-- TODO: tooltip with full status? -->
         <td class="has-text-centered">{{ make_patch_tag(pinfo.status)}}</td>

@@ -49,6 +49,19 @@ def layer_path(layername: str, d) -> pathlib.Path:
             return layer_path.cache[layername]
     return None
 
+def get_url_for_patch(layer: str, localpath: pathlib.Path, d) -> str:
+    relative = localpath.relative_to(layer_path(layer, d))
+
+    # TODO: use layerindexlib
+    # TODO: assumes default branch
+    if layer == "core":
+        return f"https://git.openembedded.org/openembedded-core/tree/meta/{relative}"
+    elif layer in ("meta-arm", "meta-arm-bsp", "arm-toolchain", "meta-atp", "meta-gem5"):
+        return f"https://git.yoctoproject.org/meta-arm/tree/{layer}/{relative}"
+    else:
+        print(f"WARNING: Don't know web URL for layer {layer}", file=sys.stderr)
+        return None
+
 def extract_patch_info(src_uri, d):
     """
     Parse the specified patch entry from a SRC_URI and return (base name, layer name, status) tuple
@@ -56,9 +69,10 @@ def extract_patch_info(src_uri, d):
     import bb.fetch, bb.utils
 
     info = {}
-    localpath = bb.fetch.decodeurl(src_uri)[2]
-    info["name"] = os.path.basename(localpath)
-    info["layer"] = bb.utils.get_file_layer(localpath, d)
+    localpath = pathlib.Path(bb.fetch.decodeurl(src_uri)[2])
+    info["name"] = localpath.name
+    info["layer"] = bb.utils.get_file_layer(str(localpath), d)
+    info["url"] = get_url_for_patch(info["layer"], localpath, d)
 
     status = "Unknown"
     with open(localpath, errors="ignore") as f:
