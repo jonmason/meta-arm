@@ -97,6 +97,10 @@ LDFLAGS[unexport] = "1"
 AS[unexport] = "1"
 LD[unexport] = "1"
 
+# python3-cryptography needs the legacy provider, so set OPENSSL_MODULES to the
+# right path until this is relocated automatically.
+export OPENSSL_MODULES="${STAGING_LIBDIR_NATIVE}/ossl-modules"
+
 # TF-M ships patches that it needs applied to mbedcrypto, so apply them
 # as part of do_patch.
 apply_local_patches() {
