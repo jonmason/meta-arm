@@ -63,8 +63,3 @@ SERIAL_CONSOLES ?= "115200;ttyAMA0"
 WKS_FILE_DEPENDS:append = " ${EXTRA_IMAGEDEPENDS}"
 
 WKS_FILE ?= "corstone1000-image.corstone1000.wks"
-
-# The latest python3-cryptography-native doesn't work
-# (cryptography.exceptions.InternalError: Unknown OpenSSL error) so use the
-# version before Rust was involved for now.
-PREFERRED_VERSION_python3-cryptography-native = "3.3.2"
