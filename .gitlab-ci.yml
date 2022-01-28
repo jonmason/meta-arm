@@ -1,4 +1,4 @@
-image: ghcr.io/siemens/kas/kas
+image: ghcr.io/siemens/kas/kas:latest-release
 
   # First do a common bootstrap, and then build all the targets
 stages:
