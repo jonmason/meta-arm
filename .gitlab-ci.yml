@@ -1,4 +1,5 @@
-image: ghcr.io/siemens/kas/kas
+# We need 2.6.3 as this is the latest container with an old enough distro
+image: ghcr.io/siemens/kas/kas:2.6.3
 
   # First do a common bootstrap, and then build all the targets
 stages:
