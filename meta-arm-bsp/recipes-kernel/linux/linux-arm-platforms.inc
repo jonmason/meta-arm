@@ -220,5 +220,7 @@ SRC_URI:append:tc = " \
     file://0018-optee-add-a-FF-A-memory-pool.patch \
     file://0019-optee-add-FF-A-support.patch \
     file://0021-arm_ffa-add-support-for-FFA-v1.1.patch \
+    file://0022-coresight-etm4x-Save-restore-TRFCR_EL1.patch \
+    file://0023-coresight-etm4x-Use-Trace-Filtering-controls-dynamic.patch \
     "
 KERNEL_FEATURES:append:tc = " bsp/arm-platforms/tc.scc"
