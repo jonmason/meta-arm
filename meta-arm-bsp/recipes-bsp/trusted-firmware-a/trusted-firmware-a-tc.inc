@@ -1,10 +1,18 @@
 # TC0 specific TFA configuration
 
+# Intermediate SHA with 2.6 baseline version
+SRCREV_tfa = "b06344a3f2c5a0fede3646627f37d1fce3d3d585"
+PV = "2.6+git${SRCPV}"
+
 DEPENDS += "scp-firmware util-linux-native gptfdisk-native"
 
 SRC_URI:append = " \
     file://0001-plat-tc-Increase-maximum-BL2-size.patch \
     file://generate_metadata.py \
+    "
+
+SRC_URI:remove = " \
+    file://ssl.patch \
     "
 
 COMPATIBLE_MACHINE = "(tc?)"
