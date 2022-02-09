@@ -27,3 +27,13 @@ do_install:append() {
 }
 
 COMPATIBLE_HOST = "(arm|aarch64).*-linux"
+
+# Kernel modules currently RDEPEND on the kernel, which is troublesome when you want to put a
+# kernel module into a initramfs without pulling the kernel into the initramfs, which would be
+# silly.  Until this is a recommends the easiest way to handle this is to remove the dependency
+# in this recipe.
+PACKAGESPLITFUNCS:append = " remove_kernel_dependency"
+python remove_kernel_dependency() {
+  key = "RDEPENDS:kernel-module-arm-ffa-user-" + d.getVar("KERNEL_VERSION")
+  d.delVar(key)
+}
