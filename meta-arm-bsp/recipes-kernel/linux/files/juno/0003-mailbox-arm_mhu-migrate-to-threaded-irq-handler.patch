@@ -3,7 +3,7 @@ From: Sudeep Holla <sudeep.holla@arm.com>
 Date: Tue, 2 May 2017 11:12:43 +0100
 Subject: [PATCH 3/8] mailbox: arm_mhu: migrate to threaded irq handler
 
-Upstream-Status: Submitted[https://patchwork.kernel.org/patch/10970345]
+Upstream-Status: Submitted [https://patchwork.kernel.org/patch/10970345]
 
 In preparation to introduce support for doorbells which require the
 interrupt handlers to be threaded, this patch moves the existing

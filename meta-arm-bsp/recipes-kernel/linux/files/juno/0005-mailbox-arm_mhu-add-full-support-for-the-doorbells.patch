@@ -3,7 +3,7 @@ From: Sudeep Holla <sudeep.holla@arm.com>
 Date: Tue, 2 May 2017 12:07:28 +0100
 Subject: [PATCH 5/8] mailbox: arm_mhu: add full support for the doorbells
 
-Upstream-Status: Submitted[https://patchwork.kernel.org/patch/10970349]
+Upstream-Status: Submitted [https://patchwork.kernel.org/patch/10970349]
 
 We now have the basic infrastructure and binding to support doorbells
 on ARM MHU controller.
