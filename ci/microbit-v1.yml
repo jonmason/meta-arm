@@ -5,10 +5,8 @@ header:
     - ci/meta-zephyr.yml
 
 local_conf_header:
-  nonbuilding_tests: |
-    ZEPHYRTESTS:remove = "common"
   failing_tests: |
-    ZEPHYRTESTS:remove = "context early_sleep sleep"
+    ZEPHYRTESTS:remove = "common"
 
 machine: microbit-v1
 

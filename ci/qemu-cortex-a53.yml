@@ -4,9 +4,7 @@ header:
     - ci/base.yml
     - ci/meta-zephyr.yml
 
-local_conf_header:
-  nonbuilding_tests: |
-    ZEPHYRTESTS:remove = "common device poll queue sleep"
+# FIXME - testimage fails all tests currently, but all the tests build
 
 machine: qemu-cortex-a53
 
