@@ -25,7 +25,6 @@ SRCREV:arm-platforms-kmeta = "6147e82375aa9df8f2a162d42ea6406c79c854c5"
 # Corstone-500 KMACHINE
 #
 COMPATIBLE_MACHINE:corstone500 = "corstone500"
-KMACHINE:corstone500 = "corstone500"
 KBUILD_DEFCONFIG:corstone500  = "multi_v7_defconfig"
 KCONFIG_MODE:corstone500 = "--alldefconfig"
 
@@ -119,7 +118,6 @@ SRC_URI:append:fvp-baser-aemv8r64 = " file://fvp-baser-aemv8r64.dts;subdir=git/a
 # Juno KMACHINE
 #
 COMPATIBLE_MACHINE:juno = "juno"
-KMACHINE:juno = "juno"
 KBUILD_DEFCONFIG:juno = "defconfig"
 KCONFIG_MODE:juno = "--alldefconfig"
 #FIXME - temporarily pin kernel version to allow for juno patches to apply
@@ -170,7 +168,6 @@ KCONF_AUDIT_LEVEL:n1sdp:pn-linux-yocto-rt = "0"
 # SGI575 KMACHINE
 #
 COMPATIBLE_MACHINE:sgi575 = "sgi575"
-KMACHINE:sgi575 = "sgi575"
 KBUILD_DEFCONFIG:sgi575 = "defconfig"
 KCONFIG_MODE:sgi575 = "--alldefconfig"
 
