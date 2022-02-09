@@ -120,21 +120,8 @@ SRC_URI:append:fvp-baser-aemv8r64 = " file://fvp-baser-aemv8r64.dts;subdir=git/a
 COMPATIBLE_MACHINE:juno = "juno"
 KBUILD_DEFCONFIG:juno = "defconfig"
 KCONFIG_MODE:juno = "--alldefconfig"
-#FIXME - temporarily pin kernel version to allow for juno patches to apply
-KBRANCH:juno = "v5.4/standard/base"
-KERNEL_VERSION_SANITY_SKIP:juno = "1"
-SRCREV_machine:juno = "dd8a64a523fb714a98328441e0de72cde115a6fc"
 FILESEXTRAPATHS:prepend:juno := "${ARMBSPFILESPATHS}"
-SRC_URI:append:juno = " \
-    file://0001-mailbox-add-support-for-doorbell-signal-mode-control.patch \
-    file://0002-dt-bindings-mailbox-add-bindings-to-support-ARM-MHU-.patch \
-    file://0003-mailbox-arm_mhu-migrate-to-threaded-irq-handler.patch \
-    file://0004-mailbox-arm_mhu-re-factor-data-structure-to-add-door.patch \
-    file://0005-mailbox-arm_mhu-add-full-support-for-the-doorbells.patch \
-    file://0006-mailbox-arm_mhu-add-support-to-read-and-record-mbox-.patch \
-    file://0007-arm64-defconfig-add-all-SCMI-related-configs.patch \
-    file://0008-arm64-dts-juno-add-mhu-doorbell-support-and-scmi-dev.patch \
-    "
+SRC_URI:append:juno = " file://juno-dts-mhu-doorbell.patch"
 
 #
 # Musca B1/S2 can't run Linux
