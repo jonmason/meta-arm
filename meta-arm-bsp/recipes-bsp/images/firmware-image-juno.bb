@@ -5,6 +5,7 @@ LICENSE = "BSD-3-Clause"
 SECTION = "firmware"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/BSD-3-Clause;md5=550794465ba0ec5312d6919e203a55f9"
 
+INHIBIT_DEFAULT_DEPS = "1"
 DEPENDS = "trusted-firmware-a virtual/kernel virtual/control-processor-firmware"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
