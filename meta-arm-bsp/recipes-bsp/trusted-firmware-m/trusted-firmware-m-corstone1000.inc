@@ -16,6 +16,20 @@ SRCREV_mcuboot = "29099e1d17f93ae1d09fe945ad191b703aacd3d8"
 PV = "1.5.0+git${SRCPV}"
 SRCREV_FORMAT = "tfm"
 
+# libmetal
+LICENSE += "& BSD-3-Clause"
+LIC_FILES_CHKSUM += "file://../libmetal/LICENSE.md;md5=fe0b8a4beea8f0813b606d15a3df3d3c"
+SRC_URI += "git://github.com/OpenAMP/libmetal.git;protocol=https;branch=main;name=libmetal;destsuffix=git/libmetal"
+SRCREV_libmetal = "f252f0e007fbfb8b3a52b1d5901250ddac96baad"
+EXTRA_OECMAKE += "-DLIBMETAL_SRC_PATH=${WORKDIR}/git/libmetal -DLIBMETAL_BIN_PATH=${B}/libmetal-build"
+
+# OpenAMP
+LICENSE += "& BSD-2-Clause & BSD-3-Clause"
+LIC_FILES_CHKSUM += "file://../openamp/LICENSE.md;md5=a8d8cf662ef6bf9936a1e1413585ecbf"
+SRC_URI += "git://github.com/OpenAMP/open-amp.git;protocol=https;branch=main;name=openamp;destsuffix=git/openamp"
+SRCREV_openamp = "347397decaa43372fc4d00f965640ebde042966d"
+EXTRA_OECMAKE += "-DLIBOPENAMP_SRC_PATH=${WORKDIR}/git/openamp -DLIBOPENAMP_BIN_PATH=${B}/libopenamp-build"
+
 # The install task signs the TF-A BL2 and FIP binaries.
 # So they need to be copied to the sysroot. Hence the dependencies below:
 do_prepare_recipe_sysroot[depends]+= "trusted-firmware-a:do_populate_sysroot"
