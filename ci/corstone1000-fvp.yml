@@ -1,12 +1,6 @@
 header:
   version: 11
   includes:
-    - ci/base.yml
-    - ci/meta-openembedded.yml
-
-local_conf_header:
-    custom-local-conf: |
-        INITRAMFS_IMAGE_BUNDLE = "0"
-        INITRAMFS_IMAGE:remove = "corstone1000-initramfs-image"
+    - ci/corstone1000-common.yml
 
 machine: corstone1000-fvp
