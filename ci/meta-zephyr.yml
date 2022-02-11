@@ -8,3 +8,6 @@ repos:
     url: https://git.yoctoproject.org/git/meta-zephyr
     layers:
       meta-zephyr-core:
+
+target:
+  - zephyr-kernel-test-all

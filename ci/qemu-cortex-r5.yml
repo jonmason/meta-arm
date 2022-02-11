@@ -9,6 +9,3 @@ local_conf_header:
     ZEPHYRTESTS:remove = "common poll sleep queue device"
 
 machine: qemu-cortex-r5
-
-target:
-  - zephyr-kernel-test-all

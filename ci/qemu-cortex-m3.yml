@@ -16,6 +16,3 @@ local_conf_header:
     ZEPHYRTESTS:remove = "context pending sleep"
 
 machine: qemu-cortex-m3
-
-target:
-  - zephyr-kernel-test-all

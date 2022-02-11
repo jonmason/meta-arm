@@ -9,6 +9,3 @@ local_conf_header:
     ZEPHYRTESTS:remove = "common"
 
 machine: microbit-v1
-
-target:
-  - zephyr-kernel-test-all
