@@ -40,9 +40,9 @@ local_conf_header:
     DISTRO_FEATURES:remove = "ptest"
   kvm: |
     QEMU_USE_KVM = ""
-
+  perf: |
+    CORE_IMAGE_EXTRA_INSTALL += "perf"
 machine: unset
 
 target:
   - core-image-base
-  - perf

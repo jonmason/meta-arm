@@ -13,5 +13,4 @@ machine: gem5-arm64
 
 target:
   - core-image-minimal
-  - perf
   - gem5-aarch64-native

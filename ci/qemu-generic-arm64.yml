@@ -11,5 +11,4 @@ machine: qemu-generic-arm64
 
 target:
   - core-image-base
-  - perf
   - sbsa-acs

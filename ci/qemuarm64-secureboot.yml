@@ -12,7 +12,6 @@ local_conf_header:
 
 target:
   - core-image-base
-  - perf
   - optee-examples
   - optee-test
   - optee-spdevkit
