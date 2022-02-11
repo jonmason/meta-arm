@@ -78,6 +78,9 @@ PACKAGECONFIG[cc-armclang] = "-DTFM_TOOLCHAIN_FILE=${S}/toolchain_ARMCLANG.cmake
 PACKAGECONFIG[test-secure] = "-DTEST_S=ON,-DTEST_S=OFF"
 PACKAGECONFIG[test-nonsecure] = "-DTEST_NS=ON,-DTEST_NS=OFF"
 
+# Don't let FetchContent download more sources during do_configure
+EXTRA_OECMAKE += "-DFETCHCONTENT_FULLY_DISCONNECTED=ON"
+
 # Add platform parameters
 EXTRA_OECMAKE += "-DTFM_PLATFORM=${TFM_PLATFORM}"
 
