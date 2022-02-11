@@ -21,8 +21,7 @@ GEM5_RUN_DISK ?= "*-${MACHINE}.ext4"
 GEM5_RUN_DTB ?= "${@os.path.basename(d.getVar('KERNEL_DEVICETREE'))}"
 
 # Linux command line to pass
-GEM5_RUN_CMDLINE ?= "--command-line='earlyprintk=pl011,0x1c090000 \
-        console=ttyAMA0 rw mem=512MB root=/dev/sda rootwait'"
+GEM5_RUN_CMDLINE ?= "earlyprintk=pl011,0x1c090000 console=ttyAMA0 rw mem=512MB root=/dev/sda rootwait"
 
 # Extra arguments to pass to gem5
 GEM5_RUN_EXTRA ?= "--mem-size=512MB -n 4 --machine-type=VExpress_GEM5_V2"
