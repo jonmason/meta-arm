@@ -2,15 +2,14 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/secure-partitions:"
 
 COMPATIBLE_MACHINE = "corstone1000"
 
-LIC_FILES_CHKSUM += "file://../mbedcrypto/LICENSE;md5=302d50a6369f5f22efdb674db908167a \
-                                             file://../nanopb/LICENSE.txt;md5=9db4b73a55a3994384112efcdb37c01f \
-                                             file://../openamp/LICENSE.md;md5=a8d8cf662ef6bf9936a1e1413585ecbf \
-					     file://../libmetal/LICENSE.md;md5=fe0b8a4beea8f0813b606d15a3df3d3c \
-                                             "
-
+LIC_FILES_CHKSUM += "file://../mbedtls/LICENSE;md5=3b83ef96387f14655fc854ddc3c6bd57 \
+                     file://../nanopb/LICENSE.txt;md5=9db4b73a55a3994384112efcdb37c01f \
+                     file://../openamp/LICENSE.md;md5=a8d8cf662ef6bf9936a1e1413585ecbf \
+		     file://../libmetal/LICENSE.md;md5=fe0b8a4beea8f0813b606d15a3df3d3c \
+		     "
 
 SRC_URI:append = " \
-                 ${SRC_URI_MBED} ${SRC_URI_NANOPB} ${SRC_URI_OPENAMP} ${SRC_URI_LIBMETAL} \
+                 ${SRC_URI_MBEDTLS} ${SRC_URI_NANOPB} ${SRC_URI_OPENAMP} ${SRC_URI_LIBMETAL} \
                   file://0001-tools-cmake-common-applying-lowercase-project-convention.patch \
                   file://0002-fix-EARLY_TA_PATHS-env-variable.patch \
                   file://0003-se-proxy-dts-add-se-proxy-as-child-node.patch \
@@ -45,8 +44,8 @@ SRC_URI:append = " \
                   file://0032-smm_gateway-add-checks-for-null-attributes.patch \
                   "
 
-SRC_URI_MBED = "git://github.com/ARMmbed/mbed-crypto.git;protocol=https;branch=development;name=mbed;destsuffix=git/mbedcrypto"
-SRCREV_mbed = "cf4a40ba0a3086cabb5a8227245191161fd26383"
+SRC_URI_MBEDTLS = "git://github.com/ARMmbed/mbedtls.git;protocol=https;branch=development;name=mbedtls;destsuffix=git/mbedtls"
+SRCREV_mbedtls = "d65aeb37349ad1a50e0f6c9b694d4b5290d60e49"
 
 SRC_URI_NANOPB = "git://github.com/nanopb/nanopb.git;name=nanopb;protocol=https;branch=master;destsuffix=git/nanopb"
 SRCREV_nanopb = "df0e92f474f9cca704fe2b31483f0b4d1b1715a4"
