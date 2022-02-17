@@ -75,6 +75,23 @@ SRC_URI:append:fvp-base = " file://bootargs.cfg"
 SRC_URI:append:fvp-base-arm32 = " file://0001-Add-vexpress_aemv8a_aarch32-variant.patch"
 
 #
+# FVP BASER
+#
+SRC_URI:append:fvp-baser-aemv8r64 = " \
+    file://0001-doc-Add-documentation-for-the-Arm-VExpress64-board-c.patch \
+    file://0002-vexpress64-Refactor-header-file-to-make-it-easier-to.patch \
+    file://0003-vexpress64-Clean-up-BASE_FVP-boot-configuration.patch \
+    file://0004-vexpress64-Enable-OF_CONTROL-and-OF_BOARD-for-VExpre.patch \
+    file://0005-vexpress64-Enable-VIRTIO_NET-network-driver.patch \
+    file://0006-armv8-Add-ARMv8-MPU-configuration-logic.patch \
+    file://0007-armv8-Allow-disabling-exception-vectors-on-non-SPL-b.patch \
+    file://0008-armv8-ARMV8_SWITCH_TO_EL1-improvements.patch \
+    file://0009-armv8-Make-disabling-HVC-configurable-when-switching.patch \
+    file://0010-vexpress64-Do-not-set-COUNTER_FREQUENCY.patch \
+    file://0011-vexpress64-Add-BASER_FVP-vexpress-board-variant.patch \
+    "
+
+#
 # TC0 and TC1 MACHINES
 #
 SRC_URI:append:tc = " \

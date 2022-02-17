@@ -1,0 +1,172 @@
+From f3a4efb6ca8780442d440ec9aeb8e2474e35aad6 Mon Sep 17 00:00:00 2001
+From: Peter Hoyes <Peter.Hoyes@arm.com>
+Date: Tue, 19 Oct 2021 15:39:52 +0100
+Subject: [PATCH 02/11] vexpress64: Refactor header file to make it easier to
+ add new FVPs
+
+Rename from vexpress_aemv8a.h -> vepxress_aemv8.h as new FVPs may not be
+v8-A. No change in behavior.
+
+This is towards future work to enable support for the FVP_BaseR.
+
+Issue-Id: SCM-3537
+Upstream-Status: Backport [https://source.denx.de/u-boot/u-boot/-/commit/17fe55fd6fe9d32270380f574b33ff0bc15bb47e]
+Signed-off-by: Peter Hoyes <Peter.Hoyes@arm.com>
+Change-Id: Ie992e69d1b51c6f8939b1bea22e35658e96df6c6
+---
+ board/armltd/vexpress64/Kconfig               |  2 +-
+ doc/README.semihosting                        |  2 +-
+ .../{vexpress_aemv8a.h => vexpress_aemv8.h}   | 48 ++++++++++---------
+ 3 files changed, 27 insertions(+), 25 deletions(-)
+ rename include/configs/{vexpress_aemv8a.h => vexpress_aemv8.h} (88%)
+
+diff --git a/board/armltd/vexpress64/Kconfig b/board/armltd/vexpress64/Kconfig
+index 1d13f542e6..4aab3f092e 100644
+--- a/board/armltd/vexpress64/Kconfig
++++ b/board/armltd/vexpress64/Kconfig
+@@ -7,7 +7,7 @@ config SYS_VENDOR
+ 	default "armltd"
+ 
+ config SYS_CONFIG_NAME
+-	default "vexpress_aemv8a"
++	default "vexpress_aemv8"
+ 
+ config JUNO_DTB_PART
+ 	string "NOR flash partition holding DTB"
+diff --git a/doc/README.semihosting b/doc/README.semihosting
+index c019999bed..f382d0131e 100644
+--- a/doc/README.semihosting
++++ b/doc/README.semihosting
+@@ -25,7 +25,7 @@ or turning on CONFIG_BASE_FVP for the more full featured model.
+ Rather than create a new armv8 board similar to armltd/vexpress64, add
+ semihosting calls to the existing one, enabled with CONFIG_SEMIHOSTING
+ and CONFIG_BASE_FVP both set. Also reuse the existing board config file
+-vexpress_aemv8a.h but differentiate the two models by the presence or
++vexpress_aemv8.h but differentiate the two models by the presence or
+ absence of CONFIG_BASE_FVP. This change is tested and works on both the
+ Foundation and Base fastmodel simulators.
+ 
+diff --git a/include/configs/vexpress_aemv8a.h b/include/configs/vexpress_aemv8.h
+similarity index 88%
+rename from include/configs/vexpress_aemv8a.h
+rename to include/configs/vexpress_aemv8.h
+index df22584d9a..49517a60b0 100644
+--- a/include/configs/vexpress_aemv8a.h
++++ b/include/configs/vexpress_aemv8.h
+@@ -4,36 +4,37 @@
+  *   configurations.
+  */
+ 
+-#ifndef __VEXPRESS_AEMV8A_H
+-#define __VEXPRESS_AEMV8A_H
++#ifndef __VEXPRESS_AEMV8_H
++#define __VEXPRESS_AEMV8_H
+ 
+ #define CONFIG_REMAKE_ELF
+ 
+ /* Link Definitions */
+-#ifdef CONFIG_TARGET_VEXPRESS64_BASE_FVP
++#ifdef CONFIG_TARGET_VEXPRESS64_JUNO
++#define CONFIG_SYS_INIT_SP_ADDR         (CONFIG_SYS_SDRAM_BASE + 0x7fff0)
++#else
+ /* ATF loads u-boot here for BASE_FVP model */
+ #define CONFIG_SYS_INIT_SP_ADDR         (CONFIG_SYS_SDRAM_BASE + 0x03f00000)
+-#elif CONFIG_TARGET_VEXPRESS64_JUNO
+-#define CONFIG_SYS_INIT_SP_ADDR         (CONFIG_SYS_SDRAM_BASE + 0x7fff0)
+ #endif
+ 
+ #define CONFIG_SYS_BOOTM_LEN (64 << 20)      /* Increase max gunzip size */
+ 
+ /* CS register bases for the original memory map. */
+-#define V2M_PA_CS0			0x00000000
+-#define V2M_PA_CS1			0x14000000
+-#define V2M_PA_CS2			0x18000000
+-#define V2M_PA_CS3			0x1c000000
+-#define V2M_PA_CS4			0x0c000000
+-#define V2M_PA_CS5			0x10000000
++#define V2M_BASE			0x80000000
++#define V2M_PA_BASE			0x00000000
++
++#define V2M_PA_CS0			(V2M_PA_BASE + 0x00000000)
++#define V2M_PA_CS1			(V2M_PA_BASE + 0x14000000)
++#define V2M_PA_CS2			(V2M_PA_BASE + 0x18000000)
++#define V2M_PA_CS3			(V2M_PA_BASE + 0x1c000000)
++#define V2M_PA_CS4			(V2M_PA_BASE + 0x0c000000)
++#define V2M_PA_CS5			(V2M_PA_BASE + 0x10000000)
+ 
+ #define V2M_PERIPH_OFFSET(x)		(x << 16)
+ #define V2M_SYSREGS			(V2M_PA_CS3 + V2M_PERIPH_OFFSET(1))
+ #define V2M_SYSCTL			(V2M_PA_CS3 + V2M_PERIPH_OFFSET(2))
+ #define V2M_SERIAL_BUS_PCI		(V2M_PA_CS3 + V2M_PERIPH_OFFSET(3))
+ 
+-#define V2M_BASE			0x80000000
+-
+ /* Common peripherals relative to CS7. */
+ #define V2M_AACI			(V2M_PA_CS3 + V2M_PERIPH_OFFSET(4))
+ #define V2M_MMCI			(V2M_PA_CS3 + V2M_PERIPH_OFFSET(5))
+@@ -72,23 +73,23 @@
+ 
+ /* Generic Interrupt Controller Definitions */
+ #ifdef CONFIG_GICV3
+-#define GICD_BASE			(0x2f000000)
+-#define GICR_BASE			(0x2f100000)
++#define GICD_BASE			(V2M_PA_BASE + 0x2f000000)
++#define GICR_BASE			(V2M_PA_BASE + 0x2f100000)
+ #else
+ 
+-#ifdef CONFIG_TARGET_VEXPRESS64_BASE_FVP
+-#define GICD_BASE			(0x2f000000)
+-#define GICC_BASE			(0x2c000000)
+-#elif CONFIG_TARGET_VEXPRESS64_JUNO
++#ifdef CONFIG_TARGET_VEXPRESS64_JUNO
+ #define GICD_BASE			(0x2C010000)
+ #define GICC_BASE			(0x2C02f000)
++#else
++#define GICD_BASE			(V2M_PA_BASE + 0x2f000000)
++#define GICC_BASE			(V2M_PA_BASE + 0x2c000000)
+ #endif
+ #endif /* !CONFIG_GICV3 */
+ 
+ #ifndef CONFIG_TARGET_VEXPRESS64_JUNO
+ /* The Vexpress64 simulators use SMSC91C111 */
+ #define CONFIG_SMC91111			1
+-#define CONFIG_SMC91111_BASE		(0x01A000000)
++#define CONFIG_SMC91111_BASE		(V2M_PA_BASE + 0x01A000000)
+ #endif
+ 
+ /* PL011 Serial Configuration */
+@@ -113,7 +114,7 @@
+ #ifdef CONFIG_TARGET_VEXPRESS64_JUNO
+ #define PHYS_SDRAM_2			(0x880000000)
+ #define PHYS_SDRAM_2_SIZE		0x180000000
+-#elif CONFIG_TARGET_VEXPRESS64_BASE_FVP && CONFIG_NR_DRAM_BANKS == 2
++#elif CONFIG_NR_DRAM_BANKS == 2
+ #define PHYS_SDRAM_2			(0x880000000)
+ #define PHYS_SDRAM_2_SIZE		0x80000000
+ #endif
+@@ -200,6 +201,7 @@
+ 				"  booti $kernel_addr - $fdt_addr; " \
+ 				"fi"
+ #endif
++
+ #endif
+ 
+ /* Monitor Command Prompt */
+@@ -213,7 +215,7 @@
+ /* Store environment at top of flash in the same location as blank.img */
+ /* in the Juno firmware. */
+ #else
+-#define CONFIG_SYS_FLASH_BASE		0x0C000000
++#define CONFIG_SYS_FLASH_BASE		(V2M_PA_BASE + 0x0C000000)
+ /* 256 x 256KiB sectors */
+ #define CONFIG_SYS_MAX_FLASH_SECT	256
+ /* Store environment at top of flash */
+@@ -230,4 +232,4 @@
+ #define CONFIG_SYS_FLASH_EMPTY_INFO	/* flinfo indicates empty blocks */
+ #define FLASH_MAX_SECTOR_SIZE		0x00040000
+ 
+-#endif /* __VEXPRESS_AEMV8A_H */
++#endif /* __VEXPRESS_AEMV8_H */
+-- 
+2.25.1
+

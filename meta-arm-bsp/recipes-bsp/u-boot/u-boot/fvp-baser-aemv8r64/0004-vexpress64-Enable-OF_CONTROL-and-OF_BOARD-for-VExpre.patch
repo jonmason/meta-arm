@@ -1,0 +1,110 @@
+From e709f0e8ffe76ecab9a50ce39338fe38cc9d920f Mon Sep 17 00:00:00 2001
+From: Peter Hoyes <Peter.Hoyes@arm.com>
+Date: Mon, 4 Oct 2021 14:03:35 +0100
+Subject: [PATCH 04/11] vexpress64: Enable OF_CONTROL and OF_BOARD for
+ VExpress64
+
+Capture x0 in lowlevel_init.S as potential fdt address. Modify
+board_fdt_blob_setup to use fdt address from either vexpress_aemv8.h
+or lowlevel_init.S.
+
+Issue-Id: SCM-3534
+Upstream-Status: Backport [https://source.denx.de/u-boot/u-boot/-/commit/2661397464e47d45cd25bbc5e6b9de7594b3268d]
+Signed-off-by: Peter Hoyes <Peter.Hoyes@arm.com>
+Change-Id: If60e2fbcbda23613f591752ddfabe66fb44623c5
+---
+ board/armltd/vexpress64/Makefile        |  5 +++++
+ board/armltd/vexpress64/lowlevel_init.S | 12 +++++++++++
+ board/armltd/vexpress64/vexpress64.c    | 27 +++++++++++++++++++++++++
+ 3 files changed, 44 insertions(+)
+ create mode 100644 board/armltd/vexpress64/lowlevel_init.S
+
+diff --git a/board/armltd/vexpress64/Makefile b/board/armltd/vexpress64/Makefile
+index 868dc4f629..5703e75967 100644
+--- a/board/armltd/vexpress64/Makefile
++++ b/board/armltd/vexpress64/Makefile
+@@ -5,3 +5,8 @@
+ 
+ obj-y	:= vexpress64.o
+ obj-$(CONFIG_TARGET_VEXPRESS64_JUNO)	+= pcie.o
++ifdef CONFIG_OF_BOARD
++ifndef CONFIG_TARGET_VEXPRESS64_JUNO
++obj-y += lowlevel_init.o
++endif
++endif
+diff --git a/board/armltd/vexpress64/lowlevel_init.S b/board/armltd/vexpress64/lowlevel_init.S
+new file mode 100644
+index 0000000000..3dcfb85d0e
+--- /dev/null
++++ b/board/armltd/vexpress64/lowlevel_init.S
+@@ -0,0 +1,12 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * (C) Copyright 2021 Arm Limited
++ */
++
++.global save_boot_params
++save_boot_params:
++
++	adr	x8, prior_stage_fdt_address
++	str	x0, [x8]
++
++	b	save_boot_params_ret
+diff --git a/board/armltd/vexpress64/vexpress64.c b/board/armltd/vexpress64/vexpress64.c
+index d2f307cca5..9a4d97afad 100644
+--- a/board/armltd/vexpress64/vexpress64.c
++++ b/board/armltd/vexpress64/vexpress64.c
+@@ -85,7 +85,15 @@ int dram_init_banksize(void)
+ 	return 0;
+ }
+ 
++/* Assigned in lowlevel_init.S
++ * Push the variable into the .data section so that it
++ * does not get cleared later.
++ */
++unsigned long __section(".data") prior_stage_fdt_address;
++
+ #ifdef CONFIG_OF_BOARD
++
++#ifdef CONFIG_TARGET_VEXPRESS64_JUNO
+ #define JUNO_FLASH_SEC_SIZE	(256 * 1024)
+ static phys_addr_t find_dtb_in_nor_flash(const char *partname)
+ {
+@@ -131,8 +139,11 @@ static phys_addr_t find_dtb_in_nor_flash(const char *partname)
+ 	return ~0;
+ }
+ 
++#endif
++
+ void *board_fdt_blob_setup(int *err)
+ {
++#ifdef CONFIG_TARGET_VEXPRESS64_JUNO
+ 	phys_addr_t fdt_rom_addr = find_dtb_in_nor_flash(CONFIG_JUNO_DTB_PART);
+ 
+ 	*err = 0;
+@@ -142,6 +153,22 @@ void *board_fdt_blob_setup(int *err)
+ 	}
+ 
+ 	return (void *)fdt_rom_addr;
++#endif
++
++#ifdef VEXPRESS_FDT_ADDR
++	if (fdt_magic(VEXPRESS_FDT_ADDR) == FDT_MAGIC) {
++		*err = 0;
++		return (void *)VEXPRESS_FDT_ADDR;
++	}
++#endif
++
++	if (fdt_magic(prior_stage_fdt_address) == FDT_MAGIC) {
++		*err = 0;
++		return (void *)prior_stage_fdt_address;
++	}
++
++	*err = -ENXIO;
++	return NULL;
+ }
+ #endif
+ 
+-- 
+2.25.1
+
