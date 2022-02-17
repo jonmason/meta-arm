@@ -67,4 +67,4 @@ do_deploy() {
 }
 addtask deploy after do_install
 
-FILES:${PN} = "/firmware/*"
+FILES:${PN} = "/firmware/sp/opteesp*"

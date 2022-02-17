@@ -9,7 +9,7 @@ LIC_FILES_CHKSUM += "file://../mbedtls/LICENSE;md5=3b83ef96387f14655fc854ddc3c6b
 		     "
 
 SRC_URI:append = " \
-                 ${SRC_URI_MBEDTLS} ${SRC_URI_NANOPB} ${SRC_URI_OPENAMP} ${SRC_URI_LIBMETAL} \
+                  ${SRC_URI_MBEDTLS} ${SRC_URI_NANOPB} ${SRC_URI_OPENAMP} ${SRC_URI_LIBMETAL} \
                   file://0001-tools-cmake-common-applying-lowercase-project-convention.patch \
                   file://0002-fix-EARLY_TA_PATHS-env-variable.patch \
                   file://0003-se-proxy-dts-add-se-proxy-as-child-node.patch \
@@ -56,6 +56,7 @@ SRCREV_openamp = "347397decaa43372fc4d00f965640ebde042966d"
 SRC_URI_LIBMETAL = "git://github.com/OpenAMP/libmetal.git;name=libmetal;protocol=https;branch=main;destsuffix=git/libmetal"
 SRCREV_libmetal = "f252f0e007fbfb8b3a52b1d5901250ddac96baad"
 
+TS_ENVIRONMENT_LINUX = "arm-linux"
 TS_PLATFORM = "arm/corstone1000"
 TS_ENVIRONMENT = "opteesp"
 SP_PACKAGING_METHOD = "embedded"
@@ -65,3 +66,39 @@ TS_DEPLOYMENTS += "'deployments/se-proxy/${TS_ENVIRONMENT}'"
 
 # smm-gateway secure partition
 TS_DEPLOYMENTS += "'deployments/smm-gateway/${TS_ENVIRONMENT}'"
+
+PSA_API_TESTS = "deployments/psa-api-test/protected_storage/${TS_ENVIRONMENT_LINUX}"
+PSA_API_TESTS += "deployments/psa-api-test/internal_trusted_storage/${TS_ENVIRONMENT_LINUX}"
+PSA_API_TESTS += "deployments/psa-api-test/initial_attestation/${TS_ENVIRONMENT_LINUX}"
+PSA_API_TESTS += "deployments/psa-api-test/crypto/${TS_ENVIRONMENT_LINUX}"
+
+
+do_configure:append() {
+    for PSA_API_TEST in ${PSA_API_TESTS}; do
+        cmake \
+	    -DSYSROOT_YOCTO=${RECIPE_SYSROOT} \
+	    -S ${S}/$PSA_API_TEST -B "${B}/$PSA_API_TEST"
+    done
+}
+
+do_compile:append() {
+    for PSA_API_TEST in ${PSA_API_TESTS}; do
+        cmake --build "${B}/$PSA_API_TEST"
+    done
+}
+
+do_install:append() {
+    for PSA_API_TEST in ${PSA_API_TESTS}; do
+        install -d -m 0755 ${D}${libdir}/${PSA_API_TEST}
+        install -d -m 0755 ${D}${includedir}/${PSA_API_TEST}
+        psafile_fullpath=`ls ${B}/${PSA_API_TEST}/psa-*`
+        psafile_filename="`basename -s .bin ${psafile_fullpath}`"
+        install -D -p -m 0755 ${psafile_fullpath} ${D}/${bindir}/${psafile_filename}
+   done
+   cp -rf ${B}/${PSA_API_TEST}/libts_install/arm-linux/lib/*.so* ${D}/${libdir}
+}
+
+FILES:${PN}-dev = "${includedir}/deployments/psa-api-test/"
+INSANE_SKIP:${PN}-psa-api-tests += "rpaths dev-so"
+PACKAGES += "${PN}-psa-api-tests"
+FILES:${PN}-psa-api-tests = "${libdir} ${bindir}"
