@@ -1,4 +1,4 @@
-From 5120127e5f767b44a087c741a3438cef1e22ed50 Mon Sep 17 00:00:00 2001
+From f5a31b4f4ea8daaa0d337d5a2322ddb1912083fc Mon Sep 17 00:00:00 2001
 From: Qi Feng <qi.feng@arm.com>
 Date: Wed, 26 May 2021 17:52:01 +0800
 Subject: [PATCH] Allow --enable-psci to choose between smc and hvc
@@ -28,38 +28,47 @@ To use hvc, use --enable-psci=hvc.
 [1]: https://developer.arm.com/documentation/ddi0600/latest/
 
 Issue-Id: SCM-2654
+Upstream-Status: Pending
 Signed-off-by: Qi Feng <qi.feng@arm.com>
 Change-Id: Ib8afabdad2d98bc37371d165bbb6f1f9b88bfc87
 
 Upstream-Status: Pending
 Signed-off-by: Huifeng Zhang <Huifeng.Zhang@arm.com>
 ---
- Makefile.am  |  2 +-
+ Makefile.am  | 10 +++++-----
  configure.ac | 14 +++++++++-----
- 2 files changed, 10 insertions(+), 6 deletions(-)
+ 2 files changed, 14 insertions(+), 10 deletions(-)
 
 diff --git a/Makefile.am b/Makefile.am
-index ef6b793..a9ddd16 100644
+index f941b07..88a27de 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -47,7 +47,7 @@ BOOTMETHOD	:= psci.o
- OFILES		+= psci.o
- PSCI_NODE	:= psci {				\
- 			compatible = \"arm,psci\";	\
+@@ -50,11 +50,11 @@ endif
+ if PSCI
+ ARCH_OBJ	+= psci.o
+ COMMON_OBJ	+= psci.o
+-PSCI_NODE	:= psci {				\
+-			compatible = \"arm,psci\";	\
 -			method = \"smc\";		\
-+			method = \"$(PSCI_METHOD)\";	\
- 			cpu_on = <$(PSCI_CPU_ON)>;	\
- 			cpu_off = <$(PSCI_CPU_OFF)>;	\
+-			cpu_on = <$(PSCI_CPU_ON)>;	\
+-			cpu_off = <$(PSCI_CPU_OFF)>;	\
++PSCI_NODE	:= psci {						\
++			compatible = \"arm,psci\";			\
++			method = \"$(PSCI_METHOD)\";			\
++			cpu_on = <$(PSCI_CPU_ON)>;			\
++			cpu_off = <$(PSCI_CPU_OFF)>;			\
  		   };
+ CPU_NODES	:= $(shell perl -I $(SCRIPT_DIR) $(SCRIPT_DIR)/addpsci.pl $(KERNEL_DTB))
+ else
 diff --git a/configure.ac b/configure.ac
-index 6914eb4..9aab4a1 100644
+index 9e3b722..53e51be 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -83,13 +83,17 @@ AS_IF([test "x$X_IMAGE" != "x"],
  # Allow a user to pass --enable-psci
  AC_ARG_ENABLE([psci],
- 	AS_HELP_STRING([--enable-psci], [enable the psci boot method]),
--	[USE_PSCI=$enableval])
+ 	AS_HELP_STRING([--disable-psci], [disable the psci boot method]),
+-	[USE_PSCI=$enableval], [USE_PSCI="yes"])
 -AM_CONDITIONAL([PSCI], [test "x$USE_PSCI" = "xyes"])
 -AS_IF([test "x$USE_PSCI" = "xyes"], [], [USE_PSCI=no])
 -
@@ -68,7 +77,7 @@ index 6914eb4..9aab4a1 100644
 +		yes|smc) USE_PSCI=smc ;;
 +		hvc) USE_PSCI=hvc ;;
 +		*) AC_MSG_ERROR([Bad value "${enableval}" for --enable-psci. Use "smc" or "hvc"]) ;;
-+	esac])
++	esac], [USE_PSCI="yes"])
 +AM_CONDITIONAL([PSCI], [test "x$USE_PSCI" = "xyes" -o "x$USE_PSCI" = "xsmc" -o "x$USE_PSCI" = "xhvc"])
 +
 +AS_IF([test "x$USE_PSCI" = "xno" -a "x$KERNEL_ES" = "x32"],
@@ -78,6 +87,3 @@ index 6914eb4..9aab4a1 100644
  
  # Allow a user to pass --with-initrd
  AC_ARG_WITH([initrd],
--- 
-2.32.0
-
