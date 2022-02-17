@@ -6,10 +6,11 @@ LIC_FILES_CHKSUM += "file://../mbedtls/LICENSE;md5=3b83ef96387f14655fc854ddc3c6b
                      file://../nanopb/LICENSE.txt;md5=9db4b73a55a3994384112efcdb37c01f \
                      file://../openamp/LICENSE.md;md5=a8d8cf662ef6bf9936a1e1413585ecbf \
 		     file://../libmetal/LICENSE.md;md5=fe0b8a4beea8f0813b606d15a3df3d3c \
+		     file://../psa-arch-tests/LICENSE.md;md5=2a944942e1496af1886903d274dedb13 \
 		     "
 
 SRC_URI:append = " \
-                  ${SRC_URI_MBEDTLS} ${SRC_URI_NANOPB} ${SRC_URI_OPENAMP} ${SRC_URI_LIBMETAL} \
+                  ${SRC_URI_MBEDTLS} ${SRC_URI_NANOPB} ${SRC_URI_OPENAMP} ${SRC_URI_LIBMETAL} ${SRC_URI_ARCH-TESTS}\
                   file://0001-tools-cmake-common-applying-lowercase-project-convention.patch \
                   file://0002-fix-EARLY_TA_PATHS-env-variable.patch \
                   file://0003-se-proxy-dts-add-se-proxy-as-child-node.patch \
@@ -42,6 +43,22 @@ SRC_URI:append = " \
                   file://0030-Add-missing-features-to-setVariable.patch \
                   file://0031-Add-invalid-parameter-check-in-getNextVariableName.patch \
                   file://0032-smm_gateway-add-checks-for-null-attributes.patch \
+		  file://0033-Enhance-mbedtls-fetch-process.patch \
+		  file://0034-Fix-format-specifier-in-logging_caller.patch \
+		  file://0035-Update-refspecs-for-mbedtls-and-psa-arch-tests-for-v.patch \
+		  file://0036-Separate-sign-verify-message-and-hash-operations.patch \
+		  file://0037-Add-defence-against-uninitialised-multi-part-transac.patch \
+		  file://0038-Integrate-AEAD-operation-support.patch \
+		  file://0039-Add-IV-generation-to-one-shot-cipher-operation.patch \
+		  file://0040-Fix-multi-part-termination-on-error.patch \
+		  file://0041-Abort-AEAD-operation-if-client-provided-buffer-is-to.patch \
+		  file://0042-Peg-to-updated-t_cose-version-fc3a4b2c.patch \
+		  file://0043-pass-sysroot_yocto.patch \
+		  file://0044-Fix-Crypto-interface-structure-aligned-with-tf-m-cha.patch \
+		  file://0045-Integrate-remaining-psa-ipc-client-APIs.patch \
+		  file://0046-Fix-update-psa_set_key_usage_flags-definition-to-the.patch \
+		  file://0047-Fixes-in-AEAD-for-psa-arch-test-54-and-58.patch \
+		  file://0003-corstone1000-port-crypto-config.patch;patchdir=../psa-arch-tests \
                   "
 
 SRC_URI_MBEDTLS = "git://github.com/ARMmbed/mbedtls.git;protocol=https;branch=development;name=mbedtls;destsuffix=git/mbedtls"
@@ -55,6 +72,9 @@ SRCREV_openamp = "347397decaa43372fc4d00f965640ebde042966d"
 
 SRC_URI_LIBMETAL = "git://github.com/OpenAMP/libmetal.git;name=libmetal;protocol=https;branch=main;destsuffix=git/libmetal"
 SRCREV_libmetal = "f252f0e007fbfb8b3a52b1d5901250ddac96baad"
+
+SRC_URI_ARCH-TESTS = "git://github.com/bensze01/psa-arch-tests.git;name=psa-arch-tests;protocol=https;nobranch=1;destsuffix=git/psa-arch-tests"
+SRCREV_psa-arch-tests = "fix-multipart-aead"
 
 TS_ENVIRONMENT_LINUX = "arm-linux"
 TS_PLATFORM = "arm/corstone1000"
