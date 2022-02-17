@@ -31,7 +31,7 @@ repos:
 
   meta-arm-image:
      url: https://git.gitlab.arm.com/arm-reference-solutions/meta-arm-image.git
-     refspec: aeb0571e8bc935f3f8b15c3b27ab4275e2069b5b
+     refspec: e6dc0edbc61d633b6cccb9188103455f6ae7a7ea
 
 local_conf_header:
   base: |
