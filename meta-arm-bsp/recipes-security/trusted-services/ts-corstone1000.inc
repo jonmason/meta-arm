@@ -1,4 +1,4 @@
-FILESEXTRAPATHS:prepend := "${THISDIR}/secure-partitions:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/secure-partitions/corstone1000:"
 
 COMPATIBLE_MACHINE = "corstone1000"
 
