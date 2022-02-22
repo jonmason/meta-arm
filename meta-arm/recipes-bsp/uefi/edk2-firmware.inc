@@ -17,6 +17,7 @@ SRC_URI = "\
     ${EDK2_SRC_URI};name=edk2;destsuffix=edk2;nobranch=1 \
     ${EDK2_PLATFORMS_SRC_URI};name=edk2-platforms;destsuffix=edk2/edk2-platforms;nobranch=1 \
     file://0001-Fix-VLA-parameter-warning.patch \
+    file://unaligned.patch \
 "
 
 SRCREV_FORMAT         = "edk2_edk2-platforms"
