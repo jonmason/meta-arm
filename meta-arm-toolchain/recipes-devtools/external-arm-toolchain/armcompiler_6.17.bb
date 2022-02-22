@@ -22,7 +22,7 @@ NO_GENERIC_LICENSE[Armcompiler-Supplementary-terms] = "license_terms/supplementa
 NO_GENERIC_LICENSE[Armcompiler-Third-party-licenses] = "license_terms/third_party_licenses.txt"
 
 # The Arm Compiler is under a EULA, read this at the homepage above and if you
-# agree add 'armcompiler' to your LICENSE_FLAGS_WHITELIST.
+# agree add 'armcompiler' to your LICENSE_FLAGS_ACCEPTED.
 LICENSE_FLAGS = "armcompiler"
 
 LIC_FILES_CHKSUM = "file://license_terms/license_agreement.txt;md5=19faf912b534478d28f60dfa24659c17 \
