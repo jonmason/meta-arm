@@ -19,11 +19,11 @@ GCCMULTILIB:forcevariable = "--disable-multilib"
 IMAGE_LINGUAS:forcevariable = ""
 
 # Blacklist toolchain recipes as a belt-and-suspenders way to use the external toolchain
-PNBLACKLIST[glibc] = "Using external toolchain"
-PNBLACKLIST[libgcc] = "Using external toolchain"
-PNBLACKLIST[gcc-cross] = "Using external toolchain"
-PNBLACKLIST[gcc-runtime] = "Using external toolchain"
-PNBLACKLIST[gcc-sanitizers] = "Using external toolchain"
+SKIP_RECIPE[glibc] = "Using external toolchain"
+SKIP_RECIPE[libgcc] = "Using external toolchain"
+SKIP_RECIPE[gcc-cross] = "Using external toolchain"
+SKIP_RECIPE[gcc-runtime] = "Using external toolchain"
+SKIP_RECIPE[gcc-sanitizers] = "Using external toolchain"
 
 PREFERRED_PROVIDER_linux-libc-headers = "external-arm-toolchain"
 PREFERRED_PROVIDER_linux-libc-headers-dev = "external-arm-toolchain"
