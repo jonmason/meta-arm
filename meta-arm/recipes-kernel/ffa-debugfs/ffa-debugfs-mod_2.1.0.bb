@@ -1,7 +1,7 @@
 SUMMARY = "FF-A Debugfs Linux kernel module"
 DESCRIPTION = "This out-of-tree kernel module exposes FF-A operations to user space \
 used for development purposes"
-LICENSE = "GPLv2"
+LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://arm_ffa_user.c;beginline=1;endline=1;md5=fcab174c20ea2e2bc0be64b493708266"
 
 SRC_URI = "git://git.gitlab.arm.com/linux-arm/linux-trusted-services.git;branch=main;protocol=https"

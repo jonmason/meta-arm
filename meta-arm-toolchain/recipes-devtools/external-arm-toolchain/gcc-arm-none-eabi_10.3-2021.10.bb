@@ -6,7 +6,7 @@ require arm-binary-toolchain.inc
 COMPATIBLE_HOST = "(x86_64|aarch64).*-linux"
 
 SUMMARY = "Baremetal GCC for ARM-R and ARM-M processors"
-LICENSE = "GPL-3.0-with-GCC-exception & GPLv3"
+LICENSE = "GPL-3.0-with-GCC-exception & GPL-3.0-only"
 
 LIC_FILES_CHKSUM = "file://share/doc/gcc-arm-none-eabi/license.txt;md5=c18349634b740b7b95f2c2159af888f5"
 

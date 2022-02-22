@@ -2,7 +2,7 @@
 
 SUMMARY = "A modular platform for computer-system architecture research"
 HOMEPAGE = "http://gem5.org"
-LICENSE = "BSD-3-Clause & MIT & LGPLv2.1"
+LICENSE = "BSD-3-Clause & MIT & LGPL-2.1-only"
 
 # Gem5 build and run parameter
 

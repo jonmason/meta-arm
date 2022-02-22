@@ -1,4 +1,4 @@
-LICENSE = "GPL-3.0-with-GCC-exception & GPLv3 & GPLv2 & LGPLv3 & LGPLv2.1 & LGPLv2"
+LICENSE = "GPL-3.0-with-GCC-exception & GPL-3.0-only & GPL-2.0-only & LGPL-3.0-only & LGPL-2.1-only & LGPL-2.0-only"
 
 EAT_BFD_LICENSE = "GPL-3.0"
 EAT_GCC_LICENSE = "GPL-3.0-with-GCC-exception & GPLv3"
@@ -73,7 +73,7 @@ LICENSE:libubsan-dev = "${EAT_GCC_LICENSE}"
 LICENSE:libubsan = "${EAT_GCC_LICENSE}"
 LICENSE:libubsan-staticdev = "${EAT_GCC_LICENSE}"
 
-LICENSE:linux-libc-headers-dev = "GPLv2"
-LICENSE:linux-libc-headers = "GPLv2"
+LICENSE:linux-libc-headers-dev = "GPL-2.0-only"
+LICENSE:linux-libc-headers = "GPL-2.0-only"
 
-LICENSE:gdbserver = "GPLv2 & GPLv3 & LGPLv2 & LGPLv3"
+LICENSE:gdbserver = "GPL-2.0-only & GPL-3.0-only & LGPL-2.0-only & LGPL-3.0-only"
