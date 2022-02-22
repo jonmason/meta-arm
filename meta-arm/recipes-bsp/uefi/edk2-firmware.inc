@@ -27,7 +27,8 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 EDK2_BUILD_RELEASE = "1"
 # Release builds don't work with clang yet:
-# https://bugzilla.tianocore.org/show_bug.cgi?id=3758
+# https://bugzilla.tianocore.org/show_bug.cgi?id=3758.
+# Can be removed in 202202 (c9b7c6e)
 EDK2_BUILD_RELEASE:toolchain-clang = "0"
 
 EDK2_PLATFORM      = "unset"
