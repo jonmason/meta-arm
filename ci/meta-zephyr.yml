@@ -8,6 +8,10 @@ repos:
     url: https://git.yoctoproject.org/git/meta-zephyr
     layers:
       meta-zephyr-core:
+    patches:
+      kirkstone:
+        repo: meta-arm
+        path: 0001-layer.conf-add-kirkstone-to-layer-compatible-lists.patch
 
 target:
   - zephyr-kernel-test-all
