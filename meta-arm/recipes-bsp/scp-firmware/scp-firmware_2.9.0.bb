@@ -19,6 +19,8 @@ SCP_LOG_LEVEL       ?= "WARN"
 
 INHIBIT_DEFAULT_DEPS = "1"
 DEPENDS = "virtual/arm-none-eabi-gcc-native"
+# For now we only build with GCC, so stop meta-clang trying to get involved
+TOOLCHAIN = "gcc"
 
 SCP_BUILD_STR = "${@bb.utils.contains('SCP_BUILD_RELEASE', '1', 'release', 'debug', d)}"
 
