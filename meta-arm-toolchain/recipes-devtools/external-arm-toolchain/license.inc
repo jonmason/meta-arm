@@ -1,9 +1,9 @@
 LICENSE = "GPL-3.0-with-GCC-exception & GPL-3.0-only & GPL-2.0-only & LGPL-3.0-only & LGPL-2.1-only & LGPL-2.0-only"
 
-EAT_BFD_LICENSE = "GPL-3.0"
-EAT_GCC_LICENSE = "GPL-3.0-with-GCC-exception & GPLv3"
-EAT_GDB_LICENSE = "GPL-3.0"
-EAT_LIBC_LICENSE = "GPLv2 & LGPLv2.1"
+EAT_BFD_LICENSE = "GPL-3.0-only"
+EAT_GCC_LICENSE = "GPL-3.0-with-GCC-exception & GPL-3.0-only"
+EAT_GDB_LICENSE = "GPL-3.0-only"
+EAT_LIBC_LICENSE = "GPL-2.0-only & LGPL-2.1-only"
 EAT_RLE_LICENSE = "GPL-3.0-with-GCC-exception"
 
 LICENSE:${PN} = "${EAT_LIBC_LICENSE}"
