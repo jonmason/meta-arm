@@ -1,0 +1,65 @@
+From 33a2173e13453ecc4f766f0e69302524401df1b0 Mon Sep 17 00:00:00 2001
+From: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+Date: Mon, 14 Feb 2022 08:28:46 +0000
+Subject: [PATCH 1/4] tc0: fix sensor data api call
+
+Signed-off-by: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
+Change-Id: I827abeeac8317e4dd466cc0c4d493cdc90e7e39d
+Upstream-Status: Pending [Not submitted to upstream yet]
+---
+ module/thermal_mgmt/src/mod_thermal_mgmt.c | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/module/thermal_mgmt/src/mod_thermal_mgmt.c b/module/thermal_mgmt/src/mod_thermal_mgmt.c
+index dbd45c74..6e2ff5ba 100644
+--- a/module/thermal_mgmt/src/mod_thermal_mgmt.c
++++ b/module/thermal_mgmt/src/mod_thermal_mgmt.c
+@@ -20,7 +20,7 @@
+ #include <fwk_mm.h>
+ #include <fwk_module.h>
+ #include <fwk_status.h>
+-#include <fwk_thread.h>
++#include <fwk_core.h>
+ 
+ #include <stdint.h>
+ #include <stdlib.h>
+@@ -372,7 +372,7 @@ static int read_temperature(void)
+         .id = mod_thermal_event_id_read_temp,
+     };
+ 
+-    return fwk_thread_put_event(&event);
++    return fwk_put_event(&event);
+ #else
+     int status;
+     uint64_t value;
+@@ -574,22 +574,22 @@ static int thermal_mgmt_process_event(
+     struct fwk_event *resp_event)
+ {
+     struct mod_sensor_event_params *params;
+-    uint64_t value;
++    struct mod_sensor_data ms_data;
+     int status;
+ 
+     if (fwk_id_is_equal(event->id, mod_thermal_event_id_read_temp)) {
+         /* Temperature-reading event */
+         status =
+-            mod_ctx.sensor_api->get_value(mod_ctx.config->sensor_id, &value);
++            mod_ctx.sensor_api->get_data(mod_ctx.config->sensor_id, &ms_data);
+         if (status == FWK_SUCCESS) {
+-            mod_ctx.cur_temp = (uint32_t)value;
++            mod_ctx.cur_temp = (uint32_t)ms_data.value;
+         }
+     } else if (fwk_id_is_equal(event->id, mod_sensor_event_id_read_request)) {
+         /* Response event from Sensor HAL */
+         params = (struct mod_sensor_event_params *)event->params;
+ 
+-        if (params->status == FWK_SUCCESS) {
+-            mod_ctx.cur_temp = (uint32_t)params->value;
++        if (params->sensor_data->status == FWK_SUCCESS) {
++            mod_ctx.cur_temp = (uint32_t)params->sensor_data->value;
+             status = FWK_SUCCESS;
+         } else {
+             status = FWK_E_DEVICE;
+-- 
+2.30.2
+
