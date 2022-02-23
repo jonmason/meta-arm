@@ -5,4 +5,3 @@ kconf non-hardware tc/gralloc.cfg
 kconf non-hardware tc/mali.cfg
 kconf non-hardware tc/tee.cfg
 kconf non-hardware tc/virtio.cfg
-kconf non-hardware tc/autofdo.cfg

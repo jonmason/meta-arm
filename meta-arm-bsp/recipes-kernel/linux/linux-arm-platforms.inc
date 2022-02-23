@@ -190,3 +190,4 @@ SRC_URI:append:tc = " \
     file://0023-coresight-etm4x-Use-Trace-Filtering-controls-dynamic.patch \
     "
 KERNEL_FEATURES:append:tc = " bsp/arm-platforms/tc.scc"
+KERNEL_FEATURES:append:tc1 = " bsp/arm-platforms/tc-autofdo.scc"
