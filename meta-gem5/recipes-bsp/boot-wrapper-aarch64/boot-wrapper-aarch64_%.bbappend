@@ -11,3 +11,6 @@ BOOT_WRAPPER_AARCH64_DEVICETREE:gem5-arm64 = "gem5-aarch64.dtb"
 DEPLOY_DEPEND_LIST ?= ""
 DEPLOY_DEPEND_LIST:gem5-arm64 = " gem5-aarch64-dtb:do_deploy"
 do_deploy[depends] += "${DEPLOY_DEPEND_LIST}"
+
+# The base recipe has been upgraded, so hold back at known working revision
+SRCREV = "8d5a765251d9113c3c0f9fa14de42a9e7486fe8a"
