@@ -1,0 +1,126 @@
+From 0b1b542cbc1d159e57eef0656133bb233451d23d Mon Sep 17 00:00:00 2001
+From: Peter Hoyes <Peter.Hoyes@arm.com>
+Date: Thu, 19 Aug 2021 16:53:09 +0100
+Subject: [PATCH 01/12] armv8: Disable pointer authentication traps for EL1
+
+The use of ARMv8.3 pointer authentication (PAuth) is governed by fields
+in HCR_EL2, which trigger a 'trap to EL2' if not enabled. The reset
+value of these fields is 'architecturally unknown' so we must ensure
+that the fields are enabled (to disable the traps) if we are entering
+the kernel at EL1.
+
+The APK field disables PAuth instruction traps and the API field
+disables PAuth register traps
+
+Add code to disable the traps in armv8_switch_to_el1_m. Prior to doing
+so, it checks fields in the ID_AA64ISAR1_EL1 register to ensure pointer
+authentication is supported by the hardware.
+
+The runtime checks require a second temporary register, so add this to
+the EL1 transition macro signature and update 2 call sites.
+
+Issue-Id: SCM-2443
+Signed-off-by: Peter Hoyes <Peter.Hoyes@arm.com>
+Upstream-Status: Backport [https://source.denx.de/u-boot/u-boot/-/commit/53b40e8d54fcdb834e10e6538084517524b8401b]
+Change-Id: I12159c327a2cca006b973a08fe414f73314e7eb1
+---
+ arch/arm/cpu/armv8/fsl-layerscape/spintable.S |  2 +-
+ arch/arm/cpu/armv8/transition.S               |  2 +-
+ arch/arm/include/asm/macro.h                  | 11 ++++++++--
+ arch/arm/include/asm/system.h                 | 21 +++++++++++++++++++
+ 4 files changed, 32 insertions(+), 4 deletions(-)
+
+diff --git a/arch/arm/cpu/armv8/fsl-layerscape/spintable.S b/arch/arm/cpu/armv8/fsl-layerscape/spintable.S
+index 363ded03e6..d6bd188459 100644
+--- a/arch/arm/cpu/armv8/fsl-layerscape/spintable.S
++++ b/arch/arm/cpu/armv8/fsl-layerscape/spintable.S
+@@ -93,7 +93,7 @@ __secondary_boot_func:
+ 4:
+ #ifdef CONFIG_ARMV8_SWITCH_TO_EL1
+ 	switch_el x7, _dead_loop, 0f, _dead_loop
+-0:	armv8_switch_to_el1_m x4, x6, x7
++0:	armv8_switch_to_el1_m x4, x6, x7, x9
+ #else
+ 	switch_el x7, 0f, _dead_loop, _dead_loop
+ 0:	armv8_switch_to_el2_m x4, x6, x7
+diff --git a/arch/arm/cpu/armv8/transition.S b/arch/arm/cpu/armv8/transition.S
+index a31af4ffc8..9dbdff3a4f 100644
+--- a/arch/arm/cpu/armv8/transition.S
++++ b/arch/arm/cpu/armv8/transition.S
+@@ -40,7 +40,7 @@ ENTRY(armv8_switch_to_el1)
+ 	 * now, jump to the address saved in x4.
+ 	 */
+ 	br x4
+-1:	armv8_switch_to_el1_m x4, x5, x6
++1:	armv8_switch_to_el1_m x4, x5, x6, x7
+ ENDPROC(armv8_switch_to_el1)
+ .popsection
+ 
+diff --git a/arch/arm/include/asm/macro.h b/arch/arm/include/asm/macro.h
+index bb33b4bc89..5ee72d0e78 100644
+--- a/arch/arm/include/asm/macro.h
++++ b/arch/arm/include/asm/macro.h
+@@ -238,7 +238,7 @@ lr	.req	x30
+  * For loading 64-bit OS, x0 is physical address to the FDT blob.
+  * They will be passed to the guest.
+  */
+-.macro armv8_switch_to_el1_m, ep, flag, tmp
++.macro armv8_switch_to_el1_m, ep, flag, tmp, tmp2
+ 	/* Initialize Generic Timers */
+ 	mrs	\tmp, cnthctl_el2
+ 	/* Enable EL1 access to timers */
+@@ -288,7 +288,14 @@ lr	.req	x30
+ 	b.eq	1f
+ 
+ 	/* Initialize HCR_EL2 */
+-	ldr	\tmp, =(HCR_EL2_RW_AARCH64 | HCR_EL2_HCD_DIS)
++	/* Only disable PAuth traps if PAuth is supported */
++	mrs	\tmp, id_aa64isar1_el1
++	ldr	\tmp2, =(ID_AA64ISAR1_EL1_GPI | ID_AA64ISAR1_EL1_GPA | \
++		      ID_AA64ISAR1_EL1_API | ID_AA64ISAR1_EL1_APA)
++	tst	\tmp, \tmp2
++	mov	\tmp2, #(HCR_EL2_RW_AARCH64 | HCR_EL2_HCD_DIS)
++	orr	\tmp, \tmp2, #(HCR_EL2_APK | HCR_EL2_API)
++	csel	\tmp, \tmp2, \tmp, eq
+ 	msr	hcr_el2, \tmp
+ 
+ 	/* Return to the EL1_SP1 mode from EL2 */
+diff --git a/arch/arm/include/asm/system.h b/arch/arm/include/asm/system.h
+index 11fceec4d2..77aa18909e 100644
+--- a/arch/arm/include/asm/system.h
++++ b/arch/arm/include/asm/system.h
+@@ -75,10 +75,31 @@
+ /*
+  * HCR_EL2 bits definitions
+  */
++#define HCR_EL2_API		(1 << 41) /* Trap pointer authentication
++				             instructions                     */
++#define HCR_EL2_APK		(1 << 40) /* Trap pointer authentication
++				             key access                       */
+ #define HCR_EL2_RW_AARCH64	(1 << 31) /* EL1 is AArch64                   */
+ #define HCR_EL2_RW_AARCH32	(0 << 31) /* Lower levels are AArch32         */
+ #define HCR_EL2_HCD_DIS		(1 << 29) /* Hypervisor Call disabled         */
+ 
++/*
++ * ID_AA64ISAR1_EL1 bits definitions
++ */
++#define ID_AA64ISAR1_EL1_GPI	(0xF << 28) /* Implementation-defined generic
++				               code auth algorithm            */
++#define ID_AA64ISAR1_EL1_GPA	(0xF << 24) /* QARMA generic code auth
++				               algorithm                      */
++#define ID_AA64ISAR1_EL1_API	(0xF << 8)  /* Implementation-defined address
++				               auth algorithm                 */
++#define ID_AA64ISAR1_EL1_APA	(0xF << 4)  /* QARMA address auth algorithm   */
++
++/*
++ * ID_AA64PFR0_EL1 bits definitions
++ */
++#define ID_AA64PFR0_EL1_EL3	(0xF << 12) /* EL3 implemented                */
++#define ID_AA64PFR0_EL1_EL2	(0xF << 8)  /* EL2 implemented                */
++
+ /*
+  * CPACR_EL1 bits definitions
+  */
+-- 
+2.25.1
+

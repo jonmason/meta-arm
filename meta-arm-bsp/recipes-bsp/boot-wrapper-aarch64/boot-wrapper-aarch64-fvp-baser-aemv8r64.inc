@@ -23,6 +23,9 @@ SRC_URI:append = " \
 BOOT_WRAPPER_AARCH64_CMDLINE = "\
 earlycon console=ttyAMA0 loglevel=8 rootfstype=ext4 root=/dev/vda1 rw"
 
-EXTRA_OECONF += "--enable-psci=hvc"
+EXTRA_OECONF += "--enable-psci=hvc --enable-keep-el"
 
 TUNE_CCARGS = ""
+
+BOOT_WRAPPER_AARCH64_KERNEL = "u-boot.bin"
+do_deploy[depends] += "u-boot:do_deploy"

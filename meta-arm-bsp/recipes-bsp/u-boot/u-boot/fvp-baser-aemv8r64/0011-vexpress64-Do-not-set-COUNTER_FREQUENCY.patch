@@ -1,0 +1,37 @@
+From 3362e6910fe3f4d431b4034299f1b8d79a45e693 Mon Sep 17 00:00:00 2001
+From: Peter Hoyes <Peter.Hoyes@arm.com>
+Date: Fri, 10 Dec 2021 15:09:09 +0000
+Subject: [PATCH 11/12] vexpress64: Do not set COUNTER_FREQUENCY
+
+VExpress boards normally run as a second-stage bootloader so should not
+need to modify CNTFRQ_EL0. On the BASER_FVP, U-Boot can modify it if
+running at EL2, but shouldn't because it might be different from the
+value being used by the first-stage bootloader (which might be
+providing PSCI services).
+
+Issue-Id: SCM-3728
+Upstream-Status: Inappropriate [other]
+  Temporary patch
+Signed-off-by: Peter Hoyes <Peter.Hoyes@arm.com>
+Change-Id: I137473d721e58e4c348b9641f5b9778178d3bb65
+---
+ include/configs/vexpress_aemv8.h | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/include/configs/vexpress_aemv8.h b/include/configs/vexpress_aemv8.h
+index 68422237dd..567a6dbf36 100644
+--- a/include/configs/vexpress_aemv8.h
++++ b/include/configs/vexpress_aemv8.h
+@@ -70,9 +70,6 @@
+ #define V2M_SYS_CFGCTRL			(V2M_SYSREGS + 0x0a4)
+ #define V2M_SYS_CFGSTAT			(V2M_SYSREGS + 0x0a8)
+ 
+-/* Generic Timer Definitions */
+-#define COUNTER_FREQUENCY		24000000	/* 24MHz */
+-
+ /* Generic Interrupt Controller Definitions */
+ #ifdef CONFIG_GICV3
+ #define GICD_BASE			(V2M_PA_BASE + 0x2f000000)
+-- 
+2.25.1
+

@@ -1,0 +1,275 @@
+From fdc36eaf590bfadfa184ccf589076e0b3420b859 Mon Sep 17 00:00:00 2001
+From: Peter Hoyes <Peter.Hoyes@arm.com>
+Date: Mon, 24 May 2021 11:47:53 +0100
+Subject: [PATCH 12/12] vexpress64: Add BASER_FVP vexpress board variant
+
+The BASER_FVP board variant is implemented on top of the BASE_FVP board
+config (which, in turn, is based on the Juno Versatile Express board
+config). They all share a similar memory map - for BASER_FVP the map is
+inverted from the BASE_FVP
+(https://developer.arm.com/documentation/100964/1114/Base-Platform/Base---memory/BaseR-Platform-memory-map)
+
+ * Create new TARGET_VEXPRESS64_BASER_FVP target, which uses the same
+   board config as BASE_FVP and JUNO
+ * Implement inverted memory map in vexpress_aemv8.h
+ * Create vexpress_aemv8r defconfig
+ * Provide MPU and MMU memory maps for the BASER_FVP
+ * Provide default value for LNX_KRNL_IMG_TEXT_OFFSET_BASE
+ * Update vexpress64 documentation
+
+Issue-Id: SCM-3728
+Upstream-Status: Inappropriate [other]
+  Temporary patch
+Signed-off-by: Peter Hoyes <Peter.Hoyes@arm.com>
+Change-Id: Id173e52afad473abcf3f61c6bf374fc31f17edd3
+---
+ arch/arm/Kconfig                     |  8 +++++
+ board/armltd/vexpress64/Kconfig      |  6 +++-
+ board/armltd/vexpress64/MAINTAINERS  |  7 ++++
+ board/armltd/vexpress64/vexpress64.c | 52 ++++++++++++++++++++++++++++
+ configs/vexpress_aemv8r_defconfig    | 27 +++++++++++++++
+ doc/board/armltd/vexpress64.rst      |  1 +
+ include/configs/vexpress_aemv8.h     | 42 ++++++++++++++++++++++
+ 7 files changed, 142 insertions(+), 1 deletion(-)
+ create mode 100644 configs/vexpress_aemv8r_defconfig
+
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+index 0448787b8b..7bf39264e3 100644
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -1157,6 +1157,14 @@ config TARGET_VEXPRESS64_BASE_FVP
+ 	select PL01X_SERIAL
+ 	select SEMIHOSTING
+ 
++config TARGET_VEXPRESS64_BASER_FVP
++	bool "Support Versatile Express ARMv8r64 FVP BASE model"
++	select ARM64
++	select DM
++	select DM_SERIAL
++	select PL01X_SERIAL
++	select LINUX_KERNEL_IMAGE_HEADER
++
+ config TARGET_VEXPRESS64_JUNO
+ 	bool "Support Versatile Express Juno Development Platform"
+ 	select ARM64
+diff --git a/board/armltd/vexpress64/Kconfig b/board/armltd/vexpress64/Kconfig
+index 4aab3f092e..e824173fe1 100644
+--- a/board/armltd/vexpress64/Kconfig
++++ b/board/armltd/vexpress64/Kconfig
+@@ -1,4 +1,5 @@
+-if TARGET_VEXPRESS64_BASE_FVP || TARGET_VEXPRESS64_JUNO
++if TARGET_VEXPRESS64_BASE_FVP || TARGET_VEXPRESS64_JUNO || \
++	TARGET_VEXPRESS64_BASER_FVP
+ 
+ config SYS_BOARD
+ 	default "vexpress64"
+@@ -16,4 +17,7 @@ config JUNO_DTB_PART
+ 	  The ARM partition name in the NOR flash memory holding the
+ 	  device tree blob to configure U-Boot.
+ 
++config LNX_KRNL_IMG_TEXT_OFFSET_BASE
++    default 0x0
++
+ endif
+diff --git a/board/armltd/vexpress64/MAINTAINERS b/board/armltd/vexpress64/MAINTAINERS
+index 0ba044d7ff..e89d9711b8 100644
+--- a/board/armltd/vexpress64/MAINTAINERS
++++ b/board/armltd/vexpress64/MAINTAINERS
+@@ -14,3 +14,10 @@ JUNO DEVELOPMENT PLATFORM BOARD
+ M:	Linus Walleij <linus.walleij@linaro.org>
+ S:	Maintained
+ F:	configs/vexpress_aemv8a_juno_defconfig
++
++VEXPRESS_AEMV8R BOARD
++M:	Diego Sueiro <diego.sueiro@arm.com>
++M:	Peter Hoyes <peter.hoyes@arm.com>
++R:	Andre Przywara <andre.przywara@arm.com>
++S:	Maintained
++F:	configs/vexpress_aemv8r_defconfig
+diff --git a/board/armltd/vexpress64/vexpress64.c b/board/armltd/vexpress64/vexpress64.c
+index 821f9cfc3b..07c76609ab 100644
+--- a/board/armltd/vexpress64/vexpress64.c
++++ b/board/armltd/vexpress64/vexpress64.c
+@@ -18,6 +18,7 @@
+ #include <dm/platform_data/serial_pl01x.h>
+ #include "pcie.h"
+ #include <asm/armv8/mmu.h>
++#include <asm/armv8/mpu.h>
+ #ifdef CONFIG_VIRTIO_NET
+ #include <virtio_types.h>
+ #include <virtio.h>
+@@ -36,6 +37,56 @@ U_BOOT_DRVINFO(vexpress_serials) = {
+ 	.plat = &serial_plat,
+ };
+ 
++#ifdef CONFIG_TARGET_VEXPRESS64_BASER_FVP
++
++static struct mpu_region vexpress64_aemv8r_mem_map[] = {
++       {
++               .start = 0x0UL,
++               .end = 0x7fffffffUL,
++               .attrs = PRLAR_ATTRIDX(MT_NORMAL)
++       }, {
++               .start = 0x80000000UL,
++               .end = 0xffffffffUL,
++               .attrs = PRLAR_ATTRIDX(MT_DEVICE_NGNRNE)
++       }, {
++               .start = 0x100000000UL,
++               .end = 0xffffffffffUL,
++               .attrs = PRLAR_ATTRIDX(MT_NORMAL)
++       }, {
++               /* List terminator */
++               0,
++       }
++};
++
++struct mpu_region *mpu_mem_map = vexpress64_aemv8r_mem_map;
++
++static struct mm_region vexpress64_mem_map[] = {
++	{
++		.virt = 0x0UL,
++		.phys = 0x0UL,
++		.size = 0x80000000UL,
++		.attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) |
++			 PTE_BLOCK_INNER_SHARE
++	}, {
++		.virt = 0x80000000UL,
++		.phys = 0x80000000UL,
++		.size = 0x80000000UL,
++		.attrs = PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
++			 PTE_BLOCK_NON_SHARE |
++			 PTE_BLOCK_PXN | PTE_BLOCK_UXN
++	},
++	{
++		.virt = 0x100000000UL,
++		.phys = 0x100000000UL,
++		.size = 0xff00000000UL,
++		.attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) |
++			 PTE_BLOCK_INNER_SHARE
++	}, {
++		/* List terminator */
++		0,
++	}
++};
++#else
+ static struct mm_region vexpress64_mem_map[] = {
+ 	{
+ 		.virt = 0x0UL,
+@@ -55,6 +106,7 @@ static struct mm_region vexpress64_mem_map[] = {
+ 		0,
+ 	}
+ };
++#endif
+ 
+ struct mm_region *mem_map = vexpress64_mem_map;
+ 
+diff --git a/configs/vexpress_aemv8r_defconfig b/configs/vexpress_aemv8r_defconfig
+new file mode 100644
+index 0000000000..37c393b66f
+--- /dev/null
++++ b/configs/vexpress_aemv8r_defconfig
+@@ -0,0 +1,27 @@
++CONFIG_ARM=y
++CONFIG_TARGET_VEXPRESS64_BASER_FVP=y
++CONFIG_SYS_TEXT_BASE=0x00080000
++CONFIG_POSITION_INDEPENDENT=y
++CONFIG_SYS_LOAD_ADDR=0x10000000
++CONFIG_SYS_MALLOC_F_LEN=0x2000
++CONFIG_NR_DRAM_BANKS=2
++CONFIG_ENV_SIZE=0x40000
++CONFIG_ENV_SECT_SIZE=0x40000
++CONFIG_IDENT_STRING=" vexpress_aemv8r64"
++CONFIG_DISTRO_DEFAULTS=y
++CONFIG_BOOTDELAY=3
++CONFIG_USE_BOOTARGS=y
++CONFIG_BOOTARGS="console=ttyAMA0 earlycon=pl011,0x9c090000 rootfstype=ext4 root=/dev/vda2 rw rootwait"
++# CONFIG_USE_BOOTCOMMAND is not set
++# CONFIG_DISPLAY_CPUINFO is not set
++CONFIG_SYS_PROMPT="VExpress64# "
++CONFIG_DM_ETH=y
++CONFIG_OF_CONTROL=y
++CONFIG_OF_BOARD=y
++CONFIG_VIRTIO_MMIO=y
++CONFIG_VIRTIO_BLK=y
++CONFIG_VIRTIO_NET=y
++CONFIG_ARMV8_SWITCH_TO_EL1=y
++CONFIG_ARMV8_DISABLE_HVC=n
++CONFIG_ARMV8_EXCEPTION_VECTORS=n
++CONFIG_ARCH_FIXUP_FDT_MEMORY=n
+diff --git a/doc/board/armltd/vexpress64.rst b/doc/board/armltd/vexpress64.rst
+index b98b096544..b8efbc1565 100644
+--- a/doc/board/armltd/vexpress64.rst
++++ b/doc/board/armltd/vexpress64.rst
+@@ -6,6 +6,7 @@ Arm Versatile Express
+ The vexpress_* board configuration supports the following platforms:
+ 
+  * FVP_Base_RevC-2xAEMvA
++ * FVP_BaseR_AEMv8R
+  * Juno development board
+ 
+ Fixed Virtual Platforms
+diff --git a/include/configs/vexpress_aemv8.h b/include/configs/vexpress_aemv8.h
+index 567a6dbf36..d0173735db 100644
+--- a/include/configs/vexpress_aemv8.h
++++ b/include/configs/vexpress_aemv8.h
+@@ -22,8 +22,13 @@
+ #define CONFIG_SYS_BOOTM_LEN (64 << 20)      /* Increase max gunzip size */
+ 
+ /* CS register bases for the original memory map. */
++#ifdef CONFIG_TARGET_VEXPRESS64_BASER_FVP
++#define V2M_BASE			0x00000000
++#define V2M_PA_BASE			0x80000000
++#else
+ #define V2M_BASE			0x80000000
+ #define V2M_PA_BASE			0x00000000
++#endif
+ 
+ #define V2M_PA_CS0			(V2M_PA_BASE + 0x00000000)
+ #define V2M_PA_CS1			(V2M_PA_BASE + 0x14000000)
+@@ -205,6 +210,43 @@
+ 				"fi"
+ #endif
+ 
++#elif CONFIG_TARGET_VEXPRESS64_BASER_FVP
++
++#define BOOTENV_DEV_MEM(devtypeu, devtypel, instance) \
++	"bootcmd_mem= " \
++		"source ${scriptaddr}; " \
++		"if test $? -eq 1; then " \
++		"  env import -t ${scriptaddr}; " \
++		"  if test -n $uenvcmd; then " \
++		"    echo Running uenvcmd ...; " \
++		"    run uenvcmd; " \
++		"  fi; " \
++		"fi\0"
++#define BOOTENV_DEV_NAME_MEM(devtypeu, devtypel, instance) "mem "
++
++#define BOOT_TARGET_DEVICES(func)	\
++	func(MEM, mem, na)		\
++	func(VIRTIO, virtio, 0)		\
++	func(PXE, pxe, na)		\
++	func(DHCP, dhcp, na)
++
++#include <config_distro_bootcmd.h>
++
++#define VEXPRESS_KERNEL_ADDR		0x00200000
++#define VEXPRESS_PXEFILE_ADDR		0x0fb00000
++#define VEXPRESS_FDT_ADDR		0x0fc00000
++#define VEXPRESS_SCRIPT_ADDR		0x0fd00000
++#define VEXPRESS_RAMDISK_ADDR		0x0fe00000
++
++#define CONFIG_EXTRA_ENV_SETTINGS       \
++		"kernel_addr_r=" __stringify(VEXPRESS_KERNEL_ADDR) "\0" \
++		"pxefile_addr_r=" __stringify(VEXPRESS_PXEFILE_ADDR) "\0" \
++		"fdt_addr_r=" __stringify(VEXPRESS_FDT_ADDR) "\0" \
++		"fdtfile=board.dtb\0" \
++		"scriptaddr=" __stringify(VEXPRESS_SCRIPT_ADDR) "\0"  \
++		"ramdisk_addr_r=" __stringify(VEXPRESS_RAMDISK_ADDR) "\0" \
++		BOOTENV
++
+ #endif
+ 
+ /* Monitor Command Prompt */
+-- 
+2.25.1
+

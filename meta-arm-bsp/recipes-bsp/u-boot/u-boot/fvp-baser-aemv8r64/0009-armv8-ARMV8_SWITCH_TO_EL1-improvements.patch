@@ -1,0 +1,163 @@
+From 5facc2d1389074475f90a0713cefe0e3f69379d8 Mon Sep 17 00:00:00 2001
+From: Peter Hoyes <Peter.Hoyes@arm.com>
+Date: Wed, 14 Jul 2021 12:44:27 +0100
+Subject: [PATCH 09/12] armv8: ARMV8_SWITCH_TO_EL1 improvements
+
+Convert CONFIG_ARMV8_SWITCH_TO_EL1 to a Kconfig variable.
+
+Add support for switching to EL1 to bootefi.
+
+Add the environment variable armv8_switch_to_el1 to allow configuring
+whether to switch to EL1 at runtime. This overrides the compile-time
+option.
+
+Issue-Id: SCM-3728
+Upstream-Status: Inappropriate [other]
+  Temporary patch
+Signed-off-by: Peter Hoyes <Peter.Hoyes@arm.com>
+Change-Id: If98478148d6d8d1f732acac5439276700614815f
+---
+ arch/arm/cpu/armv8/Kconfig           |  8 +++++++
+ arch/arm/cpu/armv8/exception_level.c | 21 ++++++++++++++--
+ arch/arm/lib/bootm.c                 | 36 ++++++++++++++++------------
+ scripts/config_whitelist.txt         |  1 -
+ 4 files changed, 48 insertions(+), 18 deletions(-)
+
+diff --git a/arch/arm/cpu/armv8/Kconfig b/arch/arm/cpu/armv8/Kconfig
+index 77dae1f84a..e994c261a1 100644
+--- a/arch/arm/cpu/armv8/Kconfig
++++ b/arch/arm/cpu/armv8/Kconfig
+@@ -179,4 +179,12 @@ config ARMV8_SECURE_BASE
+ 
+ endif
+ 
++config ARMV8_SWITCH_TO_EL1
++	bool "Switch to EL1 before booting the operating system"
++	default n
++	help
++	  Switch to EL1 before booting the operating system, if for example the
++	  operating system does not support booting at EL2, or you wish to prevent
++	  any hypervisors from running. Supported for bootm, booti and bootefi.
++
+ endif
+diff --git a/arch/arm/cpu/armv8/exception_level.c b/arch/arm/cpu/armv8/exception_level.c
+index b11936548f..4aad1550f4 100644
+--- a/arch/arm/cpu/armv8/exception_level.c
++++ b/arch/arm/cpu/armv8/exception_level.c
+@@ -40,19 +40,36 @@ static void entry_non_secure(struct jmp_buf_data *non_secure_jmp)
+  * trusted firmware being one embodiment). The operating system shall be
+  * started at exception level EL2. So here we check the exception level
+  * and switch it if necessary.
++ *
++ * If armv8_switch_to_el1 (config or env var) is enabled, also switch to EL1
++ * before booting the operating system.
+  */
+ void switch_to_non_secure_mode(void)
+ {
+ 	struct jmp_buf_data non_secure_jmp;
+ 
+ 	/* On AArch64 we need to make sure we call our payload in < EL3 */
+-	if (current_el() == 3) {
++
++	int switch_to_el1 = env_get_yesno("armv8_switch_to_el1");
++#ifdef CONFIG_ARMV8_SWITCH_TO_EL1
++	if (switch_to_el1 == -1) {
++			switch_to_el1 = 1;
++	}
++#endif
++
++	if (current_el() > 2) {
+ 		if (setjmp(&non_secure_jmp))
+ 			return;
+ 		dcache_disable();	/* flush cache before switch to EL2 */
+-
+ 		/* Move into EL2 and keep running there */
+ 		armv8_switch_to_el2((uintptr_t)&non_secure_jmp, 0, 0, 0,
+ 				    (uintptr_t)entry_non_secure, ES_TO_AARCH64);
++	} else if (switch_to_el1 == 1 && current_el() > 1) {
++		if (setjmp(&non_secure_jmp))
++			return;
++		dcache_disable();	/* flush cache before switch to EL1 */
++		/* Move into EL1 and keep running there */
++		armv8_switch_to_el1((uintptr_t)&non_secure_jmp, 0, 0, 0,
++				    (uintptr_t)entry_non_secure, ES_TO_AARCH64);
+ 	}
+ }
+diff --git a/arch/arm/lib/bootm.c b/arch/arm/lib/bootm.c
+index f60ee3a7e6..a87dd37664 100644
+--- a/arch/arm/lib/bootm.c
++++ b/arch/arm/lib/bootm.c
+@@ -317,7 +317,6 @@ __weak void update_os_arch_secondary_cores(uint8_t os_arch)
+ {
+ }
+ 
+-#ifdef CONFIG_ARMV8_SWITCH_TO_EL1
+ static void switch_to_el1(void)
+ {
+ 	if ((IH_ARCH_DEFAULT == IH_ARCH_ARM64) &&
+@@ -332,7 +331,6 @@ static void switch_to_el1(void)
+ 				    ES_TO_AARCH64);
+ }
+ #endif
+-#endif
+ 
+ /* Subcommand: GO */
+ static void boot_jump_linux(bootm_headers_t *images, int flag)
+@@ -359,21 +357,29 @@ static void boot_jump_linux(bootm_headers_t *images, int flag)
+ 
+ 		update_os_arch_secondary_cores(images->os.arch);
+ 
++		int armv8_switch_to_el1 = env_get_yesno("armv8_switch_to_el1");
+ #ifdef CONFIG_ARMV8_SWITCH_TO_EL1
+-		armv8_switch_to_el2((u64)images->ft_addr, 0, 0, 0,
+-				    (u64)switch_to_el1, ES_TO_AARCH64);
+-#else
+-		if ((IH_ARCH_DEFAULT == IH_ARCH_ARM64) &&
+-		    (images->os.arch == IH_ARCH_ARM))
+-			armv8_switch_to_el2(0, (u64)gd->bd->bi_arch_number,
+-					    (u64)images->ft_addr, 0,
+-					    (u64)images->ep,
+-					    ES_TO_AARCH32);
+-		else
+-			armv8_switch_to_el2((u64)images->ft_addr, 0, 0, 0,
+-					    images->ep,
+-					    ES_TO_AARCH64);
++		if (armv8_switch_to_el1 == -1) {
++			armv8_switch_to_el1 = 1;
++		}
+ #endif
++		if (armv8_switch_to_el1 == 1) {
++			armv8_switch_to_el2((u64)images->ft_addr, 0, 0, 0,
++					    (u64)switch_to_el1, ES_TO_AARCH64);
++		} else {
++			if ((IH_ARCH_DEFAULT == IH_ARCH_ARM64) &&
++					(images->os.arch == IH_ARCH_ARM))
++				armv8_switch_to_el2(0,
++						    (u64)gd->bd->bi_arch_number,
++						    (u64)images->ft_addr, 0,
++						    (u64)images->ep,
++						    ES_TO_AARCH32);
++			else
++				armv8_switch_to_el2((u64)images->ft_addr,
++						    0, 0, 0,
++						    images->ep,
++						    ES_TO_AARCH64);
++		}
+ 	}
+ #else
+ 	unsigned long machid = gd->bd->bi_arch_number;
+diff --git a/scripts/config_whitelist.txt b/scripts/config_whitelist.txt
+index 3dbcc042a8..60455d12e3 100644
+--- a/scripts/config_whitelist.txt
++++ b/scripts/config_whitelist.txt
+@@ -46,7 +46,6 @@ CONFIG_ARMADA168
+ CONFIG_ARMV7_SECURE_BASE
+ CONFIG_ARMV7_SECURE_MAX_SIZE
+ CONFIG_ARMV7_SECURE_RESERVE_SIZE
+-CONFIG_ARMV8_SWITCH_TO_EL1
+ CONFIG_ARM_ARCH_CP15_ERRATA
+ CONFIG_ARM_GIC_BASE_ADDRESS
+ CONFIG_ARM_PL180_MMCI_BASE
+-- 
+2.25.1
+
