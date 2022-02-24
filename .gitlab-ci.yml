@@ -56,15 +56,6 @@ update-repos:
   script:
     - flock --verbose --timeout 60 $KAS_REPO_REF_DIR ./ci/update-repos
 
-
-# What percentage of machines in the layer do we build
-machine-coverage:
-  stage: build
-  interruptible: true
-  script:
-    - ./ci/check-machine-coverage
-  coverage: '/Coverage: \d+/'
-
 #
 # Build stage, the actual build jobs
 #
@@ -73,39 +64,6 @@ machine-coverage:
 #  TCLIBC: [glibc, musl]
 #  VIRT: [none, xen]
 #  TESTING: testimage
-
-# Validate layers are Yocto Project Compatible
-check-layers:
-  extends: .setup
-  script:
-    - kas shell --update --force-checkout ci/base.yml:ci/meta-openembedded.yml --command \
-      "yocto-check-layer-wrapper $CI_PROJECT_DIR/$LAYER --dependency $CI_PROJECT_DIR/meta-* $KAS_WORK_DIR/meta-openembedded/meta-oe --no-auto-dependency"
-  parallel:
-    matrix:
-      - LAYER: [meta-arm, meta-arm-bsp, meta-arm-toolchain, meta-gem5]
-
-pending-updates:
-  extends: .setup
-  artifacts:
-    paths:
-      - update-report
-  script:
-    - rm -fr update-report
-    # This configuration has all of the layers we need enabled
-    - kas shell ci/gem5-arm64.yml --command \
-      "$CI_PROJECT_DIR/scripts/machine-summary.py -t report -o $CI_PROJECT_DIR/update-report $($CI_PROJECT_DIR/ci/listmachines.py meta-arm meta-arm-bsp meta-gem5)"
-  # Do this on x86 whilst the compilers are x86-only
-  tags:
-    - x86_64
-
-metrics:
-  extends: .setup
-  artifacts:
-    reports:
-      metrics: metrics.txt
-  script:
-    - kas shell --update --force-checkout ci/base.yml --command \
-      "$CI_PROJECT_DIR/ci/patchreview $CI_PROJECT_DIR/meta-* --verbose --metrics $CI_PROJECT_DIR/metrics.txt"
 
 corstone500:
   extends: .build
@@ -234,3 +192,44 @@ tc1:
 
 toolchains:
   extends: .build
+
+# Validate layers are Yocto Project Compatible
+check-layers:
+  extends: .setup
+  script:
+    - kas shell --update --force-checkout ci/base.yml:ci/meta-openembedded.yml --command \
+      "yocto-check-layer-wrapper $CI_PROJECT_DIR/$LAYER --dependency $CI_PROJECT_DIR/meta-* $KAS_WORK_DIR/meta-openembedded/meta-oe --no-auto-dependency"
+  parallel:
+    matrix:
+      - LAYER: [meta-arm, meta-arm-bsp, meta-arm-toolchain, meta-gem5]
+
+pending-updates:
+  extends: .setup
+  artifacts:
+    paths:
+      - update-report
+  script:
+    - rm -fr update-report
+    # This configuration has all of the layers we need enabled
+    - kas shell ci/gem5-arm64.yml --command \
+      "$CI_PROJECT_DIR/scripts/machine-summary.py -t report -o $CI_PROJECT_DIR/update-report $($CI_PROJECT_DIR/ci/listmachines.py meta-arm meta-arm-bsp meta-gem5)"
+  # Do this on x86 whilst the compilers are x86-only
+  tags:
+    - x86_64
+
+# What percentage of machines in the layer do we build
+machine-coverage:
+  stage: build
+  interruptible: true
+  script:
+    - ./ci/check-machine-coverage
+  coverage: '/Coverage: \d+/'
+
+metrics:
+  extends: .setup
+  artifacts:
+    reports:
+      metrics: metrics.txt
+  script:
+    - kas shell --update --force-checkout ci/base.yml --command \
+      "$CI_PROJECT_DIR/ci/patchreview $CI_PROJECT_DIR/meta-* --verbose --metrics $CI_PROJECT_DIR/metrics.txt"
