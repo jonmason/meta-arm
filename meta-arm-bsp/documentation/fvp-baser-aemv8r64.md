@@ -171,17 +171,10 @@ To run an image after the build is done with the Real-Time Linux kernel
 
 **Note:** The terminal console login is `root` without password.
 
-To finish the fvp emulation, you need to close the telnet session and stop the
-runfvp script:
-
-1. To close the telnet session:
+To finish the fvp emulation, you need to close the telnet session:
 
  - Escape to telnet console with ``ctrl+]``.
  - Run ``quit`` to close the session.
-
-2. To stop the runfvp:
-
- - Type ``ctrl+c`` and wait for kas process to finish.
 
 ### File sharing between host and fvp
 It is possible to share a directory between the host machine and the fvp using
@@ -194,6 +187,14 @@ Then, add the following parameter containing the path to the directory when
 launching the model:
 
     --parameter 'bp.virtiop9device.root_path=/path/to/host-mount-dir'
+
+e.g. for the standard Linux kernel:
+
+    kas shell --keep-config-unchanged \
+       meta-arm/kas/fvp-baser-aemv8r64-bsp.yml \
+           --command "../layers/meta-arm/scripts/runfvp \
+           --console --parameter
+           'bp.virtiop9device.root_path=/path/to/host-mount-dir'"
 
 Once you are logged into the fvp, the host directory can be mounted in a
 directory on the model using the following command:
@@ -216,6 +217,8 @@ Known Issues and Limitations
 - Only PSCI CPU\_ON and CPU\_OFF functions are supported
 - Linux kernel does not support booting from secure EL2 on Armv8-R AArch64
 - Linux KVM does not support Armv8-R AArch64
+- Enabling the FVP parameter `cache_state_modelled` is incompatible with virtio
+  devices
 
 Change Log
 ----------
