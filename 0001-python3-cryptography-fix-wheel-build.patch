@@ -1,0 +1,30 @@
+From f82b518cb64005962dfdd789849dd4356a67d8cf Mon Sep 17 00:00:00 2001
+From: Tim Orling <ticotimo@gmail.com>
+Date: Fri, 25 Feb 2022 10:55:50 -0800
+Subject: [PATCH] python3-cryptography: fix wheel build
+
+Like python3-setuptools-rust-native, this is building its wheel in
+${S}/dist rather than ${B}/dist. Set PIP_INSTALL_DIST_PATH accordingly.
+
+Signed-off-by: Tim Orling <tim.orling@konsulko.com>
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ .../recipes-devtools/python/python3-cryptography_36.0.1.bb      | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/meta-python/recipes-devtools/python/python3-cryptography_36.0.1.bb b/meta-python/recipes-devtools/python/python3-cryptography_36.0.1.bb
+index abb15381f5..00791dce2d 100644
+--- a/meta-python/recipes-devtools/python/python3-cryptography_36.0.1.bb
++++ b/meta-python/recipes-devtools/python/python3-cryptography_36.0.1.bb
+@@ -20,6 +20,8 @@ SRC_URI += " \
+ 
+ inherit pypi setuptools3_rust
+ 
++PIP_INSTALL_DIST_PATH = "${S}/dist"
++
+ DEPENDS += " \
+     ${PYTHON_PN}-asn1crypto-native \
+     ${PYTHON_PN}-cffi-native \
+-- 
+2.25.1
+
