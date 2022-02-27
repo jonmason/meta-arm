@@ -43,7 +43,7 @@ do_install() {
 
 INHIBIT_DEFAULT_DEPS = "1"
 
-INSANE_SKIP:${PN} = "already-stripped libdir staticdev file-rdeps arch dev-so"
+INSANE_SKIP:${PN} = "already-stripped libdir staticdev file-rdeps arch dev-so useless-rpaths"
 
 INHIBIT_SYSROOT_STRIP = "1"
 INHIBIT_PACKAGE_STRIP = "1"
