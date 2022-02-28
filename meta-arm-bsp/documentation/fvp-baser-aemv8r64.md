@@ -217,8 +217,11 @@ Known Issues and Limitations
 - Only PSCI CPU\_ON and CPU\_OFF functions are supported
 - Linux kernel does not support booting from secure EL2 on Armv8-R AArch64
 - Linux KVM does not support Armv8-R AArch64
-- Enabling the FVP parameter `cache_state_modelled` is incompatible with virtio
-  devices
+- Device DMA memory cache-coherence issue: the FVP cache_state_modelled
+  parameter will affect the cache coherence behavior of peripherals’ DMA. When
+  users set cache_state_modelled=1, they also have to set
+  cci400.force_on_from_start=1 to force the FVP to enable snooping on upstream
+  ports.
 
 Change Log
 ----------
