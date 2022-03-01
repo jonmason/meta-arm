@@ -1,7 +1,7 @@
 From ef0d9470c853ee8bbef33db4708d3657646ad8f8 Mon Sep 17 00:00:00 2001
 From: Tim Orling <ticotimo@gmail.com>
 Date: Sun, 27 Feb 2022 15:28:17 -0800
-Subject: [PATCH] python3-dtc: fix wheel build
+Subject: [PATCH 1/2] python3-dtc: fix wheel build
 
 The wheel that is built is ${S}/dist/libfdt-1.6.2.dev39+g4048aed.d20220103-cp310-cp310-linux_x86_64.whl
 Set PYPA_WHEEL to match this.
@@ -18,12 +18,44 @@ index 449d071..671d280 100644
 @@ -19,6 +19,8 @@ SRCREV = "4048aed12b81c5a0154b9af438edc99ec7d2b6a1"
  PV = "1.6.1+git${SRCPV}"
  S = "${WORKDIR}/git"
- 
+
 +PYPA_WHEEL = "${S}/dist/libfdt-1.6.2*.whl"
 +
  inherit setuptools3 pkgconfig
- 
+
  BBCLASSEXTEND = "native nativesdk"
--- 
+--
 2.25.1
 
+
+From 07ea5e0d41350f2bbee3c0a1498f5e42dec66e35 Mon Sep 17 00:00:00 2001
+From: Ross Burton <ross.burton@arm.com>
+Date: Tue, 1 Mar 2022 11:50:37 +0000
+Subject: [PATCH 2/2] python3-dtc: fix missing files in sysroot
+
+There is a bug in SWIG/setuptools where 'pip install' doesn't build
+libfdt.py unless the build tree is already dirty, which makes using
+the library impossible.
+
+Bump the SRCREV to incorporate the upstream workaround for this issue.
+
+Signed-off-by: Ross Burton <ross.burton@arm.com>
+---
+ recipes-kernel/dtc/python3-dtc_1.6.1.bb | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/recipes-kernel/dtc/python3-dtc_1.6.1.bb b/recipes-kernel/dtc/python3-dtc_1.6.1.bb
+index 671d280..a868bd0 100644
+--- a/recipes-kernel/dtc/python3-dtc_1.6.1.bb
++++ b/recipes-kernel/dtc/python3-dtc_1.6.1.bb
+@@ -14,7 +14,7 @@ UPSTREAM_CHECK_GITTAGREGEX = "v(?P<pver>\d+(\.\d+)+)"
+
+ LIC_FILES_CHKSUM = "file://pylibfdt/libfdt.i;beginline=1;endline=6;md5=afda088c974174a29108c8d80b5dce90"
+
+-SRCREV = "4048aed12b81c5a0154b9af438edc99ec7d2b6a1"
++SRCREV = "c001fc01a43e7a06447c06ea3d50bd60641322b8"
+
+ PV = "1.6.1+git${SRCPV}"
+ S = "${WORKDIR}/git"
+--
+2.25.1
