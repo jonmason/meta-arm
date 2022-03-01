@@ -45,7 +45,7 @@ EXTRA_IMAGEDEPENDS += "secure-partitions"
 
 # Linux kernel
 PREFERRED_PROVIDER_virtual/kernel:forcevariable = "linux-yocto"
-PREFERRED_VERSION_linux-yocto = "5.10%"
+PREFERRED_VERSION_linux-yocto = "5.15%"
 KERNEL_IMAGETYPE = "Image"
 
 INITRAMFS_IMAGE_BUNDLE ?= "1"
@@ -63,3 +63,4 @@ SERIAL_CONSOLES ?= "115200;ttyAMA0"
 WKS_FILE_DEPENDS:append = " ${EXTRA_IMAGEDEPENDS}"
 
 WKS_FILE ?= "corstone1000-image.corstone1000.wks"
+

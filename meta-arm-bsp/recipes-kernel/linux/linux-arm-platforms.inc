@@ -39,43 +39,7 @@ LINUX_KERNEL_TYPE:corstone1000 = "standard"
 #disabling the rootfs cpio file compression so it is not compressed twice when bundled with the kernel
 KERNEL_EXTRA_ARGS:corstone1000 += "CONFIG_INITRAMFS_COMPRESSION_NONE=y"
 SRC_URI:append:corstone1000 = " \
-           file://0001-usb-isp1760-fix-strict-typechecking.patch \
-           file://0002-usb-isp1760-move-to-regmap-for-register-access.patch \
-           file://0003-usb-isp1760-use-relaxed-primitives.patch \
-           file://0004-usb-isp1760-remove-platform-data-struct-and-code.patch \
-           file://0005-usb-isp1760-hcd-refactor-mempool-config-and-setup.patch \
-           file://0006-usb-isp1760-use-dr_mode-binding.patch \
-           file://0007-usb-isp1760-add-support-for-isp1763.patch \
-           file://0008-dt-bindings-usb-nxp-isp1760-add-bindings.patch \
-           file://0009-usb-isp1763-add-peripheral-mode.patch \
-           file://0010-firmware-smccc-Add-SMCCC-TRNG-function-call-IDs.patch \
-           file://0011-firmware-smccc-Introduce-SMCCC-TRNG-framework.patch \
-           file://0012-arm64-smccc-Add-support-for-SMCCCv1.2-extended-input-output-registers.patch \
-           file://0013-firmware-arm_ffa-Add-initial-FFA-bus-support-for-device-enumeration.patch \
-           file://0014-firmware-arm_ffa-Add-initial-Arm-FFA-driver-support.patch \
-           file://0015-firmware-arm_ffa-Add-support-for-SMCCC-as-transport-to-ffa-driver.patch \
-           file://0016-firmware-arm_ffa-Setup-in-kernel-users-of-FFA-partitions.patch \
-           file://0017-firmware-arm_ffa-Add-support-for-MEM_-interfaces.patch \
-           file://0018-firmware-arm_ffa-Ensure-drivers-provide-a-probe-function.patch \
-           file://0019-firmware-arm_ffa-Simplify-probe-function.patch \
-           file://0020-firmware-arm_ffa-Fix-the-comment-style.patch \
-           file://0021-firmware-arm_ffa-Fix-a-possible-ffa_linux_errmap-buffer-overflow.patch \
-           file://0022-usb-isp1760-isp1760-udc-Provide-missing-description-.patch \
-           file://0023-usb-isp1760-Fix-meaningless-check-in-isp1763_run.patch \
-           file://0024-usb-isp1760-remove-debug-message-as-error.patch \
-           file://0025-usb-isp1760-do-not-sleep-in-field-register-poll.patch \
-           file://0026-usb-isp1760-rework-cache-initialization-error-handli.patch \
-           file://0027-usb-isp1760-ignore-return-value-for-bus-change-patte.patch \
-           file://0028-usb-isp1760-check-maxpacketsize-before-using-it.patch \
-           file://0029-usb-isp1760-do-not-reset-retval.patch \
-           file://0030-usb-isp1760-do-not-shift-in-uninitialized-slot.patch \
-           file://0031-usb-isp1760-clean-never-read-udc_enabled-warning.patch \
-           file://0032-usb-isp1760-fix-memory-pool-initialization.patch \
-           file://0033-usb-isp1760-fix-qtd-fill-length.patch \
-           file://0034-usb-isp1760-write-to-status-and-address-register.patch \
-           file://0035-usb-isp1760-use-the-right-irq-status-bit.patch \
-           file://0036-usb-isp1760-otg-control-register-access.patch \
-           file://0037-firmware-arm_ffa-setting-the-FFA_VERSION-compatibility-checks.patch.patch \
+           file://0001-arm64-Correct-wrong-label-in-macro-__init_el2_gicv3.patch \
            file://defconfig  \
         "
 
