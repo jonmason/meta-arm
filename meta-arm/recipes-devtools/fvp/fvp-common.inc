@@ -20,7 +20,11 @@ FVPDIR = "${libdir}/fvp/${BPN}"
 
 # Used in do_install to create symlinks in $bindir to $FVPDIR
 fvp_link_binaries() {
-    for FVP in ${D}${FVPDIR}/models/${FVP_ARCH}/FVP_*; do
+    DIR="${D}${FVPDIR}/models/${FVP_ARCH}"
+
+    stat $DIR/FVP_* >/dev/null 2>&1 || bbfatal Cannot find FVP binaries in $DIR
+
+    for FVP in $DIR/FVP_*; do
         ln -rs $FVP ${D}${bindir}/$(basename $FVP)
     done
     # But not the .so files too
