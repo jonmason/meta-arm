@@ -9,10 +9,3 @@ repos:
       meta-networking:
       meta-oe:
       meta-python:
-    patches:
-      wheel1:
-        repo: meta-arm
-        path: 0001-python3-cryptography-fix-wheel-build.patch
-      wheel2:
-        repo: meta-arm
-        path: 0001-python3-setuptools-rust-native-fix-wheel-build.patch
