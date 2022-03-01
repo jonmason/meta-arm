@@ -3,7 +3,6 @@ ARMFILESPATHS := "${THISDIR}/${PN}:"
 COMPATIBLE_MACHINE:generic-arm64 = "generic-arm64"
 FILESEXTRAPATHS:prepend:generic-arm64 = "${ARMFILESPATHS}"
 SRC_URI:append:generic-arm64 = " \
-    file://defconfig.patch \
     file://tcpci.cfg \
     "
 
