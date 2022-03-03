@@ -106,18 +106,18 @@ For more details on kas, see https://kas.readthedocs.io/.
 
 To build the images for fvp-base machine, you also need to:
 
- - download the ``FVP_Base_AEMv8R_11.15_14.tgz`` image AEM V8-R FVP Installer
+ - download the ``FVP_Base_AEMv8R_11.17_21.tgz`` image AEM V8-R FVP Installer
   (Linux) package from Arm's website:
-  https://silver.arm.com/download/download.tm?pv=4858045&p=4029857. You need
+  https://silver.arm.com/download/download.tm?pv=4865959&p=4029857. You need
    to have an account and be logged in to be able to download it
- - set absolute path to the ``FVP_Base_AEMv8R_11.15_14.tgz`` downloaded
+ - set absolute path to the ``FVP_Base_AEMv8R_11.17_21.tgz`` downloaded
    package in ``FVP_BASE_R_AEM_TARBALL_URI``
  - accept EULA in ``FVP_BASE_R_ARM_EULA_ACCEPT``
 
 
 The variables should be set like so:
 
-    FVP_BASE_R_AEM_TARBALL_URI="file:///absolute/path/to/FVP_Base_AEMv8R_11.15_14.tgz"
+    FVP_BASE_R_AEM_TARBALL_URI="file:///absolute/path/to/FVP_Base_AEMv8R_11.17_21.tgz"
     FVP_BASE_R_ARM_EULA_ACCEPT="True"
 
 **Note:** The host machine should have at least 50 GBytes of free disk space
@@ -142,14 +142,14 @@ Fetch the meta-arm repository into a build directory:
 Building with the standard Linux kernel:
 
     cd ~/fvp-baser-aemv8r64-build
-    export FVP_BASE_R_AEM_TARBALL_URI="file:///absolute/path/to/FVP_Base_AEMv8R_11.15_14.tgz"
+    export FVP_BASE_R_AEM_TARBALL_URI="file:///absolute/path/to/FVP_Base_AEMv8R_11.17_21.tgz"
     export FVP_BASE_R_ARM_EULA_ACCEPT="True"
     kas build meta-arm/kas/fvp-baser-aemv8r64-bsp.yml
 
 Building with the Real-Time Linux kernel (PREEMPT\_RT):
 
     cd ~/fvp-baser-aemv8r64-build
-    export FVP_BASE_R_AEM_TARBALL_URI="file:///absolute/path/to/FVP_Base_AEMv8R_11.15_14.tgz"
+    export FVP_BASE_R_AEM_TARBALL_URI="file:///absolute/path/to/FVP_Base_AEMv8R_11.17_21.tgz"
     export FVP_BASE_R_ARM_EULA_ACCEPT="True"
     kas build meta-arm/kas/fvp-baser-aemv8r64-rt-bsp.yml
 
