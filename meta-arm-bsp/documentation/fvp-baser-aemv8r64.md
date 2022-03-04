@@ -135,7 +135,7 @@ Fetch the meta-arm repository into a build directory:
 
     mkdir -p ~/fvp-baser-aemv8r64-build
     cd ~/fvp-baser-aemv8r64-build
-    git clone https://git.yoctoproject.org/git/meta-arm
+    git clone https://git.yoctoproject.org/git/meta-arm -b honister
 
 
 ### Build
