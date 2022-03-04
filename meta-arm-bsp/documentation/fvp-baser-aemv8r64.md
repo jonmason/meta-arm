@@ -98,7 +98,7 @@ Install the required packages for the build host:
 https://docs.yoctoproject.org/singleindex.html#required-packages-for-the-build-host
 
 Kas is a setup tool for bitbake based projects. The minimal supported version
-is 2.6, install it like so:
+is 3.0, install it like so:
 
     pip3 install --user kas
 
