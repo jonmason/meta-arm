@@ -39,7 +39,6 @@ LINUX_KERNEL_TYPE:corstone1000 = "standard"
 #disabling the rootfs cpio file compression so it is not compressed twice when bundled with the kernel
 KERNEL_EXTRA_ARGS:corstone1000 += "CONFIG_INITRAMFS_COMPRESSION_NONE=y"
 SRC_URI:append:corstone1000 = " \
-           file://0001-arm64-Correct-wrong-label-in-macro-__init_el2_gicv3.patch \
            file://defconfig  \
         "
 
