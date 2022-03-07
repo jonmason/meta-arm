@@ -13,6 +13,7 @@ SRC_URI = "gitsm://git.trustedfirmware.org/hafnium/hafnium.git;protocol=https \
            file://hashbang.patch \
            file://host-ld.patch \
            file://pkg-config-native.patch \
+           file://0001-scripts-dtc-Remove-redundant-YYLOC-global-declaratio.patch \
            file://native-dtc.patch"
 SRCREV = "3a149eb219467c0d9336467ea1fb9d3fb65da94b"
 S = "${WORKDIR}/git"
