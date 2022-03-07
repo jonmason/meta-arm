@@ -6,10 +6,3 @@ header:
 repos:
   meta-virtualization:
     url: git://git.yoctoproject.org/meta-virtualization
-    patches:
-      lopper:
-        repo: meta-arm
-        path: 0001-lopper-fix-wheel-build.patch
-      dtc:
-        repo: meta-arm
-        path: 0001-python3-dtc-fix-wheel-build.patch
