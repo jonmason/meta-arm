@@ -21,7 +21,7 @@ require gem5-aarch64-native.inc
 require gem5-native.inc
 
 # Get rid of compiler errors when building protobuf
-GEM5_SCONS_ARGS_append = " CCFLAGS_EXTRA='-Wno-error=unused-variable' --verbose"
+GEM5_SCONS_ARGS_append = " CCFLAGS_EXTRA='-Wno-error=unused-variable -Wno-error=array-bounds -Wno-error=type-limits' --verbose"
 
 # Get rid of linker errors and have a faster link process
 GEM5_SCONS_ARGS_append = " LDFLAGS_EXTRA='${BUILD_LDFLAGS}' \
