@@ -13,6 +13,7 @@ KBRANCH = "n1sdp"
 
 SRC_URI = "git://git.linaro.org/landing-teams/working/arm/kernel-release.git;nobranch=1 \
            file://0001-menuconfig-mconf-cfg-Allow-specification-of-ncurses-location.patch \
+           file://0001-scripts-dtc-Remove-redundant-YYLOC-global-declaratio.patch \
           "
 LIC_FILES_CHKSUM = "file://COPYING;md5=bbea815ee2795b2f4230826c0c6b8814"
 
