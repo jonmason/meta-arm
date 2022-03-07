@@ -1,10 +1,10 @@
 Upstream-Status: Pending [Not submitted to upstream yet]
 Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 
-From b6879fc62b5ec01e3c87c2772d3a5e0f51c35f1c Mon Sep 17 00:00:00 2001
+From 3d991cd405ecffec480c12689fc02670aeb5ec53 Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Wed, 18 Dec 2019 21:52:34 +0000
-Subject: [PATCH] armv7: adding generic timer access through MMIO
+Subject: [PATCH 1/2] armv7: adding generic timer access through MMIO
 
 This driver enables the ARMv7 generic timer.
 
@@ -21,13 +21,13 @@ Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
 Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 ---
  arch/arm/cpu/armv7/Makefile     |  1 +
- arch/arm/cpu/armv7/mmio_timer.c | 64 +++++++++++++++++++++++++++++++++
+ arch/arm/cpu/armv7/mmio_timer.c | 75 +++++++++++++++++++++++++++++++++
  scripts/config_whitelist.txt    |  1 +
- 3 files changed, 66 insertions(+)
+ 3 files changed, 77 insertions(+)
  create mode 100644 arch/arm/cpu/armv7/mmio_timer.c
 
 diff --git a/arch/arm/cpu/armv7/Makefile b/arch/arm/cpu/armv7/Makefile
-index 8c955d0d52..82af9c0312 100644
+index bfbd85ae64ef..1a0a24e53110 100644
 --- a/arch/arm/cpu/armv7/Makefile
 +++ b/arch/arm/cpu/armv7/Makefile
 @@ -28,6 +28,7 @@ obj-$(CONFIG_ARMV7_PSCI)	+= psci.o psci-common.o
@@ -40,10 +40,10 @@ index 8c955d0d52..82af9c0312 100644
  obj-y += s5p-common/
 diff --git a/arch/arm/cpu/armv7/mmio_timer.c b/arch/arm/cpu/armv7/mmio_timer.c
 new file mode 100644
-index 0000000000..82ff3937b6
+index 000000000000..edd806e06e42
 --- /dev/null
 +++ b/arch/arm/cpu/armv7/mmio_timer.c
-@@ -0,0 +1,64 @@
+@@ -0,0 +1,75 @@
 +// SPDX-License-Identifier: GPL-2.0+
 +/*
 + * Copyright (c) 2019, Arm Limited. All rights reserved.
@@ -54,6 +54,7 @@ index 0000000000..82ff3937b6
 +#include <asm/io.h>
 +#include <div64.h>
 +#include <bootstage.h>
++#include <asm/global_data.h>
 +
 +DECLARE_GLOBAL_DATA_PTR;
 +
@@ -64,62 +65,72 @@ index 0000000000..82ff3937b6
 +
 +static inline uint32_t mmio_read32(uintptr_t addr)
 +{
-+      return *(volatile uint32_t*)addr;
++	return *(volatile uint32_t*)addr;
 +}
 +
 +static inline void mmio_write32(uintptr_t addr, uint32_t data)
 +{
-+      *(volatile uint32_t*)addr = data;
++	*(volatile uint32_t*)addr = data;
 +}
 +
 +int timer_init(void)
 +{
-+      gd->arch.timer_rate_hz = COUNTER_FREQUENCY / CONFIG_SYS_HZ; /* calculating the frequency in ms */
-+      mmio_write32(CNTCTLBASE + 0x20, COUNTER_FREQUENCY); /* configuring CNTFID0 register: setting the base frequency */
-+      mmio_write32(CNTCTLBASE, CNTFCREQ | CNTEN); /* configuring CNTCR register: enabling the generic counter and selecting the first frequency entry */
-+      return 0;
++	/* calculate the frequency in ms */
++	gd->arch.timer_rate_hz = COUNTER_FREQUENCY / CONFIG_SYS_HZ;
++
++	/* configure CNTFID0 register: set the base frequency */
++	mmio_write32(CNTCTLBASE + 0x20, COUNTER_FREQUENCY);
++
++	/*
++	 * configure CNTCR register:
++	 *    enable the generic counter and;
++	 *    select the first frequency entry
++	 */
++	mmio_write32(CNTCTLBASE, CNTFCREQ | CNTEN);
++
++	return 0;
 +}
 +
 +unsigned long long get_ticks(void)
 +{
-+      return ((mmio_read32(CNTREADBASE + 0x4) << 32) |
-+              mmio_read32(CNTREADBASE));
++	return (((u64)(mmio_read32(CNTREADBASE + 0x4)) << 32) |
++		mmio_read32(CNTREADBASE));
 +}
 +
 +ulong get_timer(ulong base)
 +{
-+      return lldiv(get_ticks(), gd->arch.timer_rate_hz) - base;
++	return lldiv(get_ticks(), gd->arch.timer_rate_hz) - base;
 +}
 +
 +void __udelay(unsigned long usec)
 +{
-+      unsigned long endtime;
++	unsigned long endtime;
 +
-+      endtime = lldiv((unsigned long long)usec * gd->arch.timer_rate_hz,
-+                      1000UL);
++	endtime = lldiv((unsigned long long)usec * gd->arch.timer_rate_hz,
++			1000UL);
 +
-+      endtime += get_ticks();
++	endtime += get_ticks();
 +
-+      while (get_ticks() < endtime)
-+              ;
++	while (get_ticks() < endtime)
++		;
 +}
 +
 +ulong get_tbclk(void)
 +{
-+      return gd->arch.timer_rate_hz;
++	return gd->arch.timer_rate_hz;
 +}
 diff --git a/scripts/config_whitelist.txt b/scripts/config_whitelist.txt
-index 916768f361..c8fd8c6e35 100644
+index b9c1c61e13dc..881cd0c51e78 100644
 --- a/scripts/config_whitelist.txt
 +++ b/scripts/config_whitelist.txt
-@@ -3075,6 +3075,7 @@ CONFIG_SYS_MMC_U_BOOT_DST
+@@ -2234,6 +2234,7 @@ CONFIG_SYS_MMC_U_BOOT_DST
  CONFIG_SYS_MMC_U_BOOT_OFFS
  CONFIG_SYS_MMC_U_BOOT_SIZE
  CONFIG_SYS_MMC_U_BOOT_START
 +CONFIG_SYS_MMIO_TIMER
- CONFIG_SYS_MONITOR_
  CONFIG_SYS_MONITOR_BASE
- CONFIG_SYS_MONITOR_BASE_EARLY
+ CONFIG_SYS_MONITOR_LEN
+ CONFIG_SYS_MONITOR_SEC
 -- 
-2.17.1
+2.35.1
 
