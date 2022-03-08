@@ -100,7 +100,7 @@ https://docs.yoctoproject.org/singleindex.html#required-packages-for-the-build-h
 Kas is a setup tool for bitbake based projects. The minimal supported version
 is 2.6, install it like so:
 
-    pip3 install --user kas
+    pip3 install --user --upgrade kas
 
 For more details on kas, see https://kas.readthedocs.io/.
 
@@ -193,7 +193,7 @@ e.g. for the standard Linux kernel:
     kas shell --keep-config-unchanged \
        meta-arm/kas/fvp-baser-aemv8r64-bsp.yml \
            --command "../layers/meta-arm/scripts/runfvp \
-           --console --parameter
+           --console -- --parameter \
            'bp.virtiop9device.root_path=/path/to/host-mount-dir'"
 
 Once you are logged into the fvp, the host directory can be mounted in a
@@ -217,10 +217,10 @@ Known Issues and Limitations
 - Only PSCI CPU\_ON and CPU\_OFF functions are supported
 - Linux kernel does not support booting from secure EL2 on Armv8-R AArch64
 - Linux KVM does not support Armv8-R AArch64
-- Device DMA memory cache-coherence issue: the FVP cache_state_modelled
+- Device DMA memory cache-coherence issue: the FVP `cache_state_modelled`
   parameter will affect the cache coherence behavior of peripherals’ DMA. When
-  users set cache_state_modelled=1, they also have to set
-  cci400.force_on_from_start=1 to force the FVP to enable snooping on upstream
+  users set `cache_state_modelled=1`, they also have to set
+  `cci400.force_on_from_start=1` to force the FVP to enable snooping on upstream
   ports.
 
 Change Log
@@ -228,16 +228,16 @@ Change Log
 
 - Added U-Boot v2021.07 for UEFI support.
 - Updated boot-wrapper-aarch64 revision and added support for booting U-Boot.
-- Included boot-wrapper-aarch64 PSCI services in /memreserve/ region.
+- Included boot-wrapper-aarch64 PSCI services in `/memreserve/` region.
 - Fixed the counter frequency initialization in boot-wrapper-aarch64.
 - Configured the FVP to use the default RAM size of 4 Gb
 - Fixed PL011 and SP805 register sizes in the device tree.
-- Added virtio_net User Networking mode by default and removed instructions
+- Added virtio\_net User Networking mode by default and removed instructions
   about tap networking setup.
 - Updated Linux kernel version from 5.10 to 5.14 for both standard and
   Real-Time (PREEMPT\_RT) builds.
-- Enabled SMP support via boot-wrapper-aarch64 providing the PSCI CPU_ON and
-  CPU_OFF functions.
+- Enabled SMP support via boot-wrapper-aarch64 providing the PSCI CPU\_ON and
+  CPU\_OFF functions.
 - Introduced Armv8-R64 compiler flags.
 - Added Linux PREEMPT\_RT support via linux-yocto-rt-5.10.
 - Added support for file sharing with the host machine using Virtio P9.
