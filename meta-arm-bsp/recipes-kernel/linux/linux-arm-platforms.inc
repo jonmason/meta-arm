@@ -95,20 +95,20 @@ COMPATIBLE_MACHINE:musca-s1 = "(^$)"
 #
 # N1SDP KMACHINE
 #
-FILESEXTRAPATHS:prepend:n1sdp := "${THISDIR}/linux-yocto-5.10/n1sdp:"
+FILESEXTRAPATHS:prepend:n1sdp := "${THISDIR}/linux-yocto-5.15/n1sdp:"
 COMPATIBLE_MACHINE:n1sdp = "n1sdp"
 KBUILD_DEFCONFIG:n1sdp = "defconfig"
 KCONFIG_MODE:n1sdp = "--alldefconfig"
 FILESEXTRAPATHS:prepend:n1sdp := "${ARMBSPFILESPATHS}"
 SRC_URI:append:n1sdp = " \
-    file://0001-pci_quirk-add-acs-override-for-PCI-devices.patch \
-    file://0002-pcie-Add-quirk-for-the-Arm-Neoverse-N1SDP-platform.patch \
-    file://0003-n1sdp-update-n1sdp-pci-quirk-for-SR-IOV-support.patch \
+    file://0001-iommu-arm-smmu-v3-workaround-for-ATC_INV_SIZE_ALL-in.patch \
+    file://0002-n1sdp-pci_quirk-add-acs-override-for-PCI-devices.patch \
+    file://0003-pcie-Add-quirk-for-the-Arm-Neoverse-N1SDP-platform.patch \
     file://0004-n1sdp-pcie-add-quirk-support-enabling-remote-chip-PC.patch \
-    file://0001-arm64-defconfig-drop-unused-BACKLIGHT_GENERIC-option.patch \
-    file://no-power-avs.patch \
+    file://0005-arm64-kpti-Whitelist-early-Arm-Neoverse-N1-revisions.patch \
     file://enable-realtek-R8169.cfg \
     file://enable-usb_conn_gpio.cfg \
+    file://usb_xhci_pci_renesas.cfg \
     "
 # Since we use the intree defconfig and the preempt-rt turns off some configs
 # do_kernel_configcheck will display warnings. So, lets disable it.

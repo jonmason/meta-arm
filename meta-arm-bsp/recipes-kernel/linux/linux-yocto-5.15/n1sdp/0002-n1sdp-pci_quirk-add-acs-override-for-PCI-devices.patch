@@ -1,46 +1,45 @@
-From cfe5f638279e99cfc991cb38635cb9083c71f1e2 Mon Sep 17 00:00:00 2001
-From: Khasim Mohammed <khasim.mohammed@arm.com>
-Date: Mon, 4 Jan 2021 18:03:00 +0000
-Subject: [PATCH 1/4] pci_quirk: add acs override for PCI devices
-
-Upstream-Status: Inappropriate [will not be submitted as its an hack required to fix the hardware issue]
-
+Upstream-Status: Inappropriate [will not be submitted as its a workaround to address hardware issue]
 Signed-off-by: Khasim Syed Mohammed <khasim.mohammed@arm.com>
+
+From e47ab593ee36b2480f8c2196722cded42749629a Mon Sep 17 00:00:00 2001
+From: Manoj Kumar <manoj.kumar3@arm.com>
+Date: Tue, 31 Aug 2021 16:15:38 +0000
+Subject: [PATCH 2/5] n1sdp: pci_quirk: add acs override for PCI devices
 
 Patch taken from:
 https://gitlab.com/Queuecumber/linux-acs-override/raw/master/workspaces/5.4/acso.patch
 
+Change-Id: Ib926bf50524ce9990fbaa2f2f8670fe84bd571f9
 Signed-off-by: Manoj Kumar <manoj.kumar3@arm.com>
 ---
- .../admin-guide/kernel-parameters.txt         |   9 ++
+ .../admin-guide/kernel-parameters.txt         |   8 ++
  drivers/pci/quirks.c                          | 102 ++++++++++++++++++
- 2 files changed, 111 insertions(+)
+ 2 files changed, 110 insertions(+)
 
 diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
-index 44fde25bb221..866a8eac8c3f 100644
+index 43dc35fe5bc0..a60e454854d7 100644
 --- a/Documentation/admin-guide/kernel-parameters.txt
 +++ b/Documentation/admin-guide/kernel-parameters.txt
-@@ -3629,6 +3629,15 @@
+@@ -3892,6 +3892,14 @@
  		nomsi		[MSI] If the PCI_MSI kernel config parameter is
  				enabled, this kernel boot option can be used to
  				disable the use of MSI interrupts system-wide.
-+		pcie_acs_override =
-+					[PCIE] Override missing PCIe ACS support for:
++		pcie_acs_override [PCIE] Override missing PCIe ACS support for
 +				downstream
-+					All downstream ports - full ACS capabilities
++				All downstream ports - full ACS capabilities
 +				multfunction
-+					All multifunction devices - multifunction ACS subset
++				All multifunction devices - multifunction ACS subset
 +				id:nnnn:nnnn
-+					Specfic device - full ACS capabilities
-+					Specified as vid:did (vendor/device ID) in hex
++				Specfic device - full ACS capabilities
++				Specified as vid:did (vendor/device ID) in hex
  		noioapicquirk	[APIC] Disable all boot interrupt quirks.
  				Safety option to keep boot IRQs enabled. This
  				should never be necessary.
 diff --git a/drivers/pci/quirks.c b/drivers/pci/quirks.c
-index f70692ac79c5..bc758323c8f3 100644
+index 4537d1ea14fd..984f30d25a6d 100644
 --- a/drivers/pci/quirks.c
 +++ b/drivers/pci/quirks.c
-@@ -3557,6 +3557,107 @@ static void quirk_no_bus_reset(struct pci_dev *dev)
+@@ -3588,6 +3588,107 @@ static void quirk_no_bus_reset(struct pci_dev *dev)
  	dev->dev_flags |= PCI_DEV_FLAGS_NO_BUS_RESET;
  }
  
@@ -146,10 +145,10 @@ index f70692ac79c5..bc758323c8f3 100644
 +}
 +
  /*
-  * Some Atheros AR9xxx and QCA988x chips do not behave after a bus reset.
-  * The device will throw a Link Down error on AER-capable systems and
-@@ -4769,6 +4870,7 @@ static const struct pci_dev_acs_enabled {
- 	{ PCI_VENDOR_ID_ZHAOXIN, 0x9083, pci_quirk_mf_endpoint_acs },
+  * Some NVIDIA GPU devices do not work with bus reset, SBR needs to be
+  * prevented for those affected devices.
+@@ -4949,6 +5050,7 @@ static const struct pci_dev_acs_enabled {
+ 	{ PCI_VENDOR_ID_NXP, 0x8d9b, pci_quirk_nxp_rp_acs },
  	/* Zhaoxin Root/Downstream Ports */
  	{ PCI_VENDOR_ID_ZHAOXIN, PCI_ANY_ID, pci_quirk_zhaoxin_pcie_ports_acs },
 +	{ PCI_ANY_ID, PCI_ANY_ID, pcie_acs_overrides },
