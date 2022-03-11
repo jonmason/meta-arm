@@ -176,6 +176,24 @@ To finish the fvp emulation, you need to close the telnet session:
  - Escape to telnet console with ``ctrl+]``.
  - Run ``quit`` to close the session.
 
+### Networking
+The FVP is configured by default to use "user-mode networking", which simulates
+an IP router and DHCP server to avoid additional host dependencies and
+networking configuration. Outbound connections work automatically, e.g. by
+running:
+
+    wget www.arm.com
+
+Inbound connections require an explicit port mapping from the host. By default,
+port 8022 on the host is mapped to port 22 on the FVP, so that the following
+command will connect to an ssh server running on the FVP:
+
+    ssh root@localhost -p 8022
+
+Note that user-mode networking does not support ICMP, so `ping` will not work.
+For more information about user-mode networking, please see
+https://developer.arm.com/documentation/100964/1117/Introduction-to-Fast-Models/User-mode-networking?lang=en
+
 ### File sharing between host and fvp
 It is possible to share a directory between the host machine and the fvp using
 the virtio P9 device component included in the kernel. To do so, create a
