@@ -51,6 +51,8 @@ KERNEL_IMAGETYPE = "Image"
 
 INITRAMFS_IMAGE_BUNDLE ?= "1"
 
+RDEPENDS:${KERNEL_PACKAGE_NAME}-base ?= ""
+
 #telling the build system which image is responsible of the generation of the initramfs rootfs
 INITRAMFS_IMAGE = "corstone1000-initramfs-image"
 
