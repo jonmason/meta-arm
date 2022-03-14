@@ -143,24 +143,6 @@ SRC_URI:append:corstone1000 = " ${@bb.utils.contains('MACHINE_FEATURES', \
 # corstone1000 has limited flash memory constraints
 KERNEL_EXTRA_FEATURES:corstone1000 = ""
 KERNEL_FEATURES:corstone1000 = ""
-# No need to include the kernel image in the rootfs
-# So, let's delete the package doing that and uninstalling the initial
-# kernel binary.
-# The kernel binary needed is the initramfs bundle
-
-FILES:kernel-image-image:corstone1000=""
-
-# Uninstalling the initial kernel binary
-
-do_install:append:corstone1000() {
-    if [ -e "${D}/${KERNEL_IMAGEDEST}/$imageType-${KERNEL_VERSION}" ]; then
-        rm ${D}/${KERNEL_IMAGEDEST}/$imageType-${KERNEL_VERSION}
-    fi
-
-    if [ -e "${D}/${KERNEL_IMAGEDEST}/$imageType" ]; then
-        rm ${D}/${KERNEL_IMAGEDEST}/$imageType
-    fi
-}
 
 #
 # FVP BASE KMACHINE
