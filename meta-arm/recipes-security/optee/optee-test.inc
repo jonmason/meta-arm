@@ -8,7 +8,7 @@ LIC_FILES_CHKSUM = "file://${S}/LICENSE.md;md5=daa2bcccc666345ab8940aab1315a4fa"
 inherit python3native ptest
 require optee.inc
 
-DEPENDS = "optee-client optee-os-tadevkit python3-pycryptodome-native"
+DEPENDS = "optee-client optee-os-tadevkit python3-cryptography-native"
 
 SRC_URI = "git://github.com/OP-TEE/optee_test.git;branch=master;protocol=https \
            file://run-ptest \

@@ -15,7 +15,7 @@ inherit deploy python3native
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${S}/LICENSE;md5=27e94c0280987ab296b0b8dd02ab9fe5"
 
-DEPENDS = "python3-pycryptodome-native python3-pycryptodomex-native python3-pyelftools-native optee-os-tadevkit"
+DEPENDS = "python3-pyelftools-native optee-os-tadevkit python3-cryptography-native "
 
 FTPM_UUID="bc50d971-d4c9-42c4-82cb-343fb7f37896"
 
@@ -47,6 +47,10 @@ EXTRA_OEMAKE += '\
 EXTRA_OEMAKE:append:aarch64:qemuall = "\
     CFG_ARM64_ta_arm64=y \
 "
+
+# python3-cryptography needs the legacy provider, so set OPENSSL_MODULES to the
+# right path until this is relocated automatically.
+export OPENSSL_MODULES="${STAGING_LIBDIR_NATIVE}/ossl-modules"
 
 PARALLEL_MAKE = ""
 

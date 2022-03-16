@@ -5,16 +5,14 @@ HOMEPAGE = "https://github.com/linaro-swg/optee_examples"
 LICENSE = "BSD-2-Clause"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=cd95ab417e23b94f381dafc453d70c30"
 
-DEPENDS = "optee-client optee-os-tadevkit python3-pycryptodome-native"
+DEPENDS = "optee-client optee-os-tadevkit python3-cryptography-native"
 
 inherit python3native
 
 require optee.inc
 
 SRC_URI = "git://github.com/linaro-swg/optee_examples.git;branch=master;protocol=https \
-           file://0001-plugins-Honour-default-cross-compiler-environment-se.patch \
-           file://0002-Makefile-Enable-plugins-installation-in-rootfs.patch \
-          "
+           file://0001-Makefile-Fix-non-portable-sh-check-for-plugins.patch"
 
 EXTRA_OEMAKE += "TA_DEV_KIT_DIR=${TA_DEV_KIT_DIR} \
                  HOST_CROSS_COMPILE=${HOST_PREFIX} \
@@ -24,6 +22,7 @@ EXTRA_OEMAKE += "TA_DEV_KIT_DIR=${TA_DEV_KIT_DIR} \
 
 S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
+
 
 do_compile() {
     oe_runmake -C ${S}

@@ -10,7 +10,7 @@ require optee.inc
 
 CVE_PRODUCT = "linaro:op-tee op-tee:op-tee_os"
 
-DEPENDS = "python3-pycryptodome-native python3-pyelftools-native"
+DEPENDS = "python3-pyelftools-native python3-cryptography-native"
 
 DEPENDS:append:toolchain-clang = " compiler-rt"
 
