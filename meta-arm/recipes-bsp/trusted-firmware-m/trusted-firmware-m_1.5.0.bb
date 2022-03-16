@@ -54,7 +54,6 @@ DEPENDS += "cmake-native \
             python3-pyyaml-native \
             python3-click-native \
             python3-cryptography-native \
-            python3-pyasn1-native \
             python3-cbor2-native"
 
 S = "${WORKDIR}/git/tfm"
