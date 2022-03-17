@@ -3,15 +3,11 @@ header:
   includes:
     - ci/base.yml
     - ci/meta-openembedded.yml
-
 local_conf_header:
-  image: |
-    INITRAMFS_IMAGE_BUNDLE = "0"
-    INITRAMFS_IMAGE:remove = "corstone1000-initramfs-image"
-    CORE_IMAGE_EXTRA_INSTALL += "optee-client"
-    CORE_IMAGE_EXTRA_INSTALL += "ffa-debugfs-mod"
+    perf: |
 
 distro: poky-tiny
 
 target:
-  - core-image-minimal
+  - perf
+  - corstone1000-image
