@@ -63,7 +63,8 @@ class OEFVPTarget(oeqa.core.target.ssh.OESSHTarget):
                 return
         except asyncio.TimeoutError:
             self.logger.info("Timed out waiting for login prompt.")
-        self.logger.info(b"\n".join(bootlog.splitlines()[-20:]).decode("utf-8", errors="replace"))
+        self.logger.info("Boot log follows:")
+        self.logger.info(b"\n".join(bootlog.splitlines()[-200:]).decode("utf-8", errors="replace"))
         raise RuntimeError("Failed to start FVP.")
 
     def start(self, **kwargs):
