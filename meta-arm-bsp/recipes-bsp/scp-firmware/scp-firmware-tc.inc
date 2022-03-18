@@ -3,7 +3,7 @@
 # Intermediate SHA with 2.9 baseline version
 # This has support for SCP features MPMM/POWER/PERFORMANCE for TC0
 SRCREV = "027b567fde5e3767fb1678bda28cf59fa7aac06d"
-PV = "2.9+git${SRCPV}"
+PV = "2.9.0+git${SRCPV}"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files/tc:"
 SRC_URI:append:tc = " \
