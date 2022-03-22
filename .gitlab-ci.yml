@@ -35,6 +35,11 @@ stages:
     - kas shell --update --force-checkout $KASFILES -c 'cat conf/*.conf'
     - kas build $KASFILES
     - ./ci/check-warnings $KAS_WORK_DIR/build/warnings.log
+  artifacts:
+    name: "logs"
+    when: on_failure
+    paths:
+      - $CI_PROJECT_DIR/work/build/tmp/work*/**/temp/log.do_*.*
 
 # Workaround for Zephyr not currectly handling TESTIMAGE_AUTO
 .build_and_test:
