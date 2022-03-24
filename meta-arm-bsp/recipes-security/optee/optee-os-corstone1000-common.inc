@@ -1,6 +1,8 @@
 SRCREV = "42f6617108fa43712652ef52f9d5b4ec5b2665f8"
 PV = "3.18.0+git${SRCPV}"
 
+TOOLCHAIN = "gcc"
+
 SRC_URI:remove = " \
                   file://0008-no-warn-rwx-segments.patch \
                  "

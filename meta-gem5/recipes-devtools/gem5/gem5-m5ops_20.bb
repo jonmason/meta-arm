@@ -5,6 +5,9 @@ HOMEPAGE = "https://www.gem5.org/documentation/general_docs/m5ops"
 SUMMARY = "m5ops provide pseudo-instructions to trigger gem5 functionality"
 LICENSE = "BSD-3-Clause"
 
+# For now we only build with GCC, so stop meta-clang trying to get involved
+TOOLCHAIN = "gcc"
+
 M5OPS_DIR = "util/m5"
 
 SRC_URI += "file://0001-util-m5ops-optional-extra-build-flags.patch"
