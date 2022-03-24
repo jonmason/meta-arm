@@ -2,6 +2,8 @@ SRC_URI = "git://git.trustedfirmware.org/OP-TEE/optee_os.git;protocol=https;bran
 SRCREV = "f9de2c9520ed97b89760cc4c99424aae440b63f4"
 PV .= "+git${SRCPV}"
 
+TOOLCHAIN = "gcc"
+
 DEPENDS += "python3-pycryptodomex-native dtc-native"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files/optee-os/corstone1000:"
