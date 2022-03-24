@@ -11,6 +11,9 @@ UPSTREAM_CHECK_GITTAGREGEX = "^v(?P<pver>\d+(\.\d+)+)$"
 
 SRCREV_FORMAT = "tfa"
 
+# For now we only build with GCC, so stop meta-clang trying to get involved
+TOOLCHAIN = "gcc"
+
 COMPATIBLE_MACHINE ?= "invalid"
 
 # Platform must be set for each machine

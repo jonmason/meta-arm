@@ -8,6 +8,9 @@ SRCREV = "8dab50c35c8d181fc3ed6ad46e156398447d753f"
 
 S = "${WORKDIR}/git"
 
+# For now we only build with GCC, so stop meta-clang trying to get involved
+TOOLCHAIN = "gcc"
+
 COMPATIBLE_HOST = "(i.86|x86_64|arm|aarch64).*-linux"
 
 EXTRA_OEMAKE = "ARCH='${TARGET_ARCH}' \

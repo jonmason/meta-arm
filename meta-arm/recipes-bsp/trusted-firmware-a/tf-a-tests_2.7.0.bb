@@ -50,3 +50,5 @@ do_deploy() {
     cp -rf ${D}/firmware/* ${DEPLOYDIR}/
 }
 addtask deploy after do_install
+
+TOOLCHAIN = "gcc"
