@@ -67,8 +67,14 @@ FILESEXTRAPATHS:prepend:fvp-base := "${ARMBSPFILESPATHS}"
 COMPATIBLE_MACHINE:fvp-base-arm32 = "fvp-base-arm32"
 KMACHINE:fvp-base-arm32 = "fvp-arm32"
 FILESEXTRAPATHS:prepend:fvp-base-arm32 := "${ARMBSPFILESPATHS}"
-SRC_URI:append:fvp-base-arm32 = " file://fvp-base-arm32-dts.patch \
-                                  file://0001-ARM-vexpress-enable-GICv3.patch"
+SRC_URI:append:fvp-base-arm32 = " file://0001-ARM-vexpress-enable-GICv3.patch"
+# We want to use the DT in the arm64 tree but the kernel build doesn't like that, so symlink it
+do_compile:prepend:fvp-base-arm32() {
+    mkdir --parents ${S}/arch/arm/boot/dts/arm
+    for file in fvp-base-revc.dts rtsm_ve-motherboard.dtsi rtsm_ve-motherboard-rs2.dtsi; do
+        ln -fsr ${S}/arch/arm64/boot/dts/arm/$file ${S}/arch/arm/boot/dts/arm
+    done
+}
 
 #
 # FVP BaseR AEMv8r64 Machine

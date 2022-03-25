@@ -14,6 +14,8 @@ SERIAL_CONSOLES = "115200;ttyAMA0"
 
 PREFERRED_PROVIDER_virtual/kernel ?= "linux-yocto"
 
+KERNEL_DEVICETREE = "arm/fvp-base-revc.dtb"
+
 EXTRA_IMAGEDEPENDS += "trusted-firmware-a u-boot"
 
 # As this is a virtual target that will not be used in the real world there is
@@ -37,6 +39,8 @@ FVP_CONFIG[bp.virtioblockdevice.image_path] ?= "${DEPLOY_DIR_IMAGE}/${IMAGE_NAME
 FVP_CONFIG[cluster0.has_arm_v8-4] = "1"
 FVP_CONFIG[cluster1.has_arm_v8-4] = "1"
 FVP_CONSOLE ?= "terminal_0"
+FVP_DATA ?= "cluster0.cpu0=${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE}@0x80080000 \
+             cluster0.cpu0=${DEPLOY_DIR_IMAGE}/fvp-base-revc.dtb@0x83000000"
 FVP_TERMINALS[bp.terminal_0] ?= "Console"
 FVP_TERMINALS[bp.terminal_1] ?= ""
 FVP_TERMINALS[bp.terminal_2] ?= ""
