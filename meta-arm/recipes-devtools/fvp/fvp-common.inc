@@ -15,6 +15,10 @@ def get_real_pv(d):
     # FVP versions are like 11.12_43
     pv = d.getVar("PV")
     return "%s.%s_%s" % tuple(pv.split("."))
+
+# If PV is 1.2.3, VERSION=1.2, BUILD=3, PV_URL=1.2_3.
+VERSION = "${@oe.utils.trim_version(d.getVar('PV', -1))}"
+BUILD = "${@d.getVar('PV').split('.')[-1]}"
 PV_URL = "${@get_real_pv(d)}"
 
 # The directory the FVP is installed into
