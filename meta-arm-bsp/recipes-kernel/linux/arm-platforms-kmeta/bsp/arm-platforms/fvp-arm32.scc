@@ -1,4 +1,5 @@
 include features/input/input.scc
+include features/net/net.scc
 include cfg/timer/no_hz.scc
 include cfg/virtio.scc
 
