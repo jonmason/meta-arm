@@ -9,7 +9,6 @@ LIC_FILES_CHKSUM = "file://license_terms/license_agreement.txt;md5=1a33828e132ba
 # (for example, file:///home/user/FVP_Base_AEMv8R_11.17_21.tgz).
 FVP_BASE_R_AEM_TARBALL_URI ?= ""
 PV = "11.17.21"
-FVP_ARCH = "Linux64_GCC-9.3"
 
 SRC_URI = "${FVP_BASE_R_AEM_TARBALL_URI};subdir=${BP}"
 python() {

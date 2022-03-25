@@ -10,5 +10,3 @@ SRC_URI[sha256sum] = "00ccb72d02c90e2424d24a625d275cabf8ea8dc024713985208f618bb8
 LIC_FILES_CHKSUM = "file://license_terms/license_agreement.txt;md5=1a33828e132ba71861c11688dbb0bd16 \
                     file://license_terms/third_party_licenses.txt;md5=41029e71051b1c786bae3112a29905a7"
 
-FVP_ARCH = "Linux64_GCC-9.3"
-
