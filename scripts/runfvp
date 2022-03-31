@@ -221,6 +221,9 @@ async def start_fvp(cli, console_cb):
 
     if await fvp_process.wait() != 0:
         logger.info(f"{cli[0]} quit with code {fvp_process.returncode}")
+        return fvp_process.returncode
+    else:
+        return 0
 
 def runfvp(cli_args):
     args, fvp_args = parse_args(cli_args)
@@ -234,7 +237,7 @@ def runfvp(cli_args):
         expected_terminal = config["console"]
         if not expected_terminal:
             logger.error("--console used but FVP_CONSOLE not set in machine configuration")
-            sys.exit(1)
+            return 1
     else:
         expected_terminal = None
 
@@ -252,9 +255,10 @@ def runfvp(cli_args):
         # When we can assume Py3.7+, this can simply be asyncio.run()
         loop = asyncio.get_event_loop()
         console_cb = expected_terminal and console_started or None
-        loop.run_until_complete(asyncio.gather(start_fvp(cli, console_cb=console_cb)))
+        return loop.run_until_complete(start_fvp(cli, console_cb=console_cb))
     except asyncio.CancelledError:
-        pass
+        # This means telnet exited, which isn't an error
+        return 0
 
 if __name__ == "__main__":
     try:
@@ -264,6 +268,6 @@ if __name__ == "__main__":
         if sys.stdin.isatty():
             signal.signal(signal.SIGTTOU, signal.SIG_IGN)
             os.tcsetpgrp(sys.stdin.fileno(), os.getpgrp())
-        runfvp(sys.argv[1:])
+        sys.exit(runfvp(sys.argv[1:]))
     except KeyboardInterrupt:
         pass
