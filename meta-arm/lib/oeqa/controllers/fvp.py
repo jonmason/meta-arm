@@ -16,7 +16,9 @@ class OEFVPTarget(oeqa.core.target.ssh.OESSHTarget):
                  **kwargs):
         super().__init__(logger, target_ip, server_ip, timeout, user, port)
         image_dir = pathlib.Path(dir_image)
-        basename = pathlib.Path(rootfs).stem
+        # rootfs may have multiple extensions so we need to strip *all* suffixes
+        basename = pathlib.Path(rootfs)
+        basename = basename.name.replace("".join(basename.suffixes), "")
         self.fvpconf = image_dir / (basename + ".fvpconf")
 
         if not self.fvpconf.exists():
