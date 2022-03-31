@@ -28,15 +28,15 @@ local_conf_header:
   base: |
     BB_SERVER_TIMEOUT = "60"
     CONF_VERSION = "2"
-    PACKAGE_CLASSES = "package_ipk"
-    LICENSE_FLAGS_ACCEPTED += "armcompiler Arm-FVP-EULA"
-    PACKAGECONFIG:remove:pn-qemu-system-native = "gtk+ sdl"
-    EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
     BB_NUMBER_THREADS = "16"
     PARALLEL_MAKE = "-j16"
-    INHERIT += "rm_work"
+    LICENSE_FLAGS_ACCEPTED += "armcompiler Arm-FVP-EULA"
+  setup: |
+    PACKAGE_CLASSES = "package_ipk"
+    PACKAGECONFIG:remove:pn-qemu-system-native = "gtk+ sdl"
+    EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
     PACKAGECONFIG:append:pn-perf = " coresight"
-  noptest: |
+    INHERIT += "rm_work"
     DISTRO_FEATURES:remove = "ptest"
   kvm: |
     QEMU_USE_KVM = ""
