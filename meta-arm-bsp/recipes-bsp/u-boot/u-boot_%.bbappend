@@ -69,6 +69,7 @@ SRC_URI:append:corstone1000 = " \
       file://0050-Comment-mm_communicate-failure-log.patch \
       file://0051-efi_loader-send-bootcomplete-message-to-secure-encla.patch \
       file://0052-efi_loader-fix-null-pointer-exception-with-get_image.patch \
+      file://0053-plat-corstone1000-add-support-for-SDCard.patch \
       "
 
 #
