@@ -3,22 +3,26 @@
 ## Howto Build and Run
 
 ### Configuration:
-In the local.conf file, MACHINE should be set as follow:
-MACHINE ?= "corstone500"
-DISTRO ?= "poky-tiny"
 
-Or set environment variables with that values:
-
-MACHINE "corstone500"
-DISTRO "poky-tiny"
+Use the kas
 
 ### Build:
-``bash$ bitbake arm-reference-image```
+
+``bash$ kas build kas/corstone500.yml
 
 ### Run:
-To run the result in a Fixed Virtual Platform please get:
-https://git.linaro.org/landing-teams/working/arm/model-scripts
 
-and follow the instructions in the readme.txt file in that
-repository.
+Building using kas should have fetch the Fixed Virtual Platform for this
+platform and installed at:
+
+build/tmp/sysroots-components/x86_64/fvp-corstone500-native/usr/bin/./FVP_Corstone-500
+
+with this in place is possible to launch the FVP using the runfvp inside the
+scripts directory:
+
+cd scripts
+
+./runfvp ../build/tmp/deploy/images/corstone500/core-image-minimal-corstone500.fvpconf --console
+
+this will output the console in the launching terminal
 
