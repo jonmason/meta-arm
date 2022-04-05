@@ -22,6 +22,8 @@ IMAGE_LINGUAS:forcevariable = ""
 SKIP_RECIPE[glibc] = "Using external toolchain"
 SKIP_RECIPE[libgcc] = "Using external toolchain"
 SKIP_RECIPE[gcc-cross] = "Using external toolchain"
+SKIP_RECIPE[gcc-cross-aarch64] = "Using external toolchain"
+SKIP_RECIPE[gcc-cross-arm] = "Using external toolchain"
 SKIP_RECIPE[gcc-runtime] = "Using external toolchain"
 SKIP_RECIPE[gcc-sanitizers] = "Using external toolchain"
 
