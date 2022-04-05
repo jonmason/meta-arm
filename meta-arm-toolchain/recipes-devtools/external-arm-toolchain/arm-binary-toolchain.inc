@@ -1,16 +1,15 @@
 INHIBIT_DEFAULT_DEPS = "1"
 
-FILES:${PN} = "${datadir} ${bindir}"
+FILES:${PN} = "${libexecdir} ${bindir}"
 
 BINNAME = "${@d.getVar("BPN").strip("gcc-")}"
 
 do_install() {
-    install -d ${D}${datadir}/${BINNAME}/
-    cp -r ${S}/. ${D}${datadir}/
+    install -d ${D}${bindir} ${D}${libexecdir}/${BPN}/
+    cp -r ${S}/. ${D}${libexecdir}/${BPN}
 
-    install -d ${D}${bindir}
     # Symlink all executables into bindir
-    for f in ${D}${datadir}/bin/${BINNAME}-*; do
+    for f in ${D}${libexecdir}/${BPN}/bin/*; do
         ln -rs $f ${D}${bindir}/$(basename $f)
     done
 }

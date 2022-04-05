@@ -44,13 +44,12 @@ UPSTREAM_CHECK_REGEX = "Download Arm Compiler.*,(?P<pver>[\d\.]+)"
 S = "${WORKDIR}/${ARMCLANG_VERSION}"
 
 do_install() {
-    install -d ${D}${datadir}/armclang/
+    install -d ${D}${bindir} ${D}${libexecdir}/${BPN}/
     # Commercial license flag set, so recipe will only install when explicitly agreed to it already
-    ${S}/install_x86_64.sh --i-agree-to-the-contained-eula -d ${D}${datadir}/armclang/ --no-interactive
+    ${S}/install_x86_64.sh --i-agree-to-the-contained-eula -d ${D}${libexecdir}/${BPN}/ --no-interactive
 
-    install -d ${D}${bindir}
     # Symlink all executables into bindir
-    for f in ${D}${datadir}/armclang/bin/*; do
+    for f in ${D}${libexecdir}/${BPN}/bin/*; do
         ln -rs $f ${D}${bindir}/$(basename $f)
     done
 }
