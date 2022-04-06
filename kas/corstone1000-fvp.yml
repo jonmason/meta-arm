@@ -6,7 +6,7 @@ header:
 repos:
   run-scripts:
      url: https://git.gitlab.arm.com/arm-reference-solutions/model-scripts.git
-     refspec: 7ad7b6f33bbdb7ae10c7ecfd56820c03a71e9bdf
+     refspec: b40b4227fe6b6fc8e4b688db8928f4be76e94eb7
      layers:
       .: 'excluded'
 
