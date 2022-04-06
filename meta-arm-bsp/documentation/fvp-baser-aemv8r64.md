@@ -226,6 +226,7 @@ Devices supported in the kernel
 - virtio 9p
 - virtio disk
 - virtio network
+- virtio rng
 - watchdog
 - rtc
 
@@ -243,7 +244,7 @@ Known Issues and Limitations
 
 Change Log
 ----------
-
+- Added virtio\_rng to improve random number generation.
 - Added U-Boot v2022.01 for UEFI support.
 - Updated Linux kernel version from 5.14 to 5.15 for both standard and
   Real-Time (PREEMPT\_RT) builds.

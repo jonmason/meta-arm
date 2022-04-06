@@ -175,6 +175,12 @@
                 interrupts = <0x0 44 0x4>;
         };
 
+        virtio-rng@9c200000 {
+                compatible = "virtio,mmio";
+                reg = <0 0x9c200000 0 0x200>;
+                interrupts = <0x0 46 0x4>;
+        };
+
         timer {
                 compatible = "arm,armv8-timer";
                 interrupts = <0x1 13 0xff08>,
