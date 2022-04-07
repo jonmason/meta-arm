@@ -6,9 +6,9 @@ header:
 machine: qemuarm64-secureboot
 
 local_conf_header:
-  bugs: |
-    # Only ping until errors can be resolved
-    TEST_SUITES = "ping"
+  failing_tests: |
+    # software IO TLB: Cannot allocate buffer
+    DEFAULT_TEST_SUITES:remove = "parselogs"
 
 target:
   - core-image-base
