@@ -42,6 +42,8 @@ local_conf_header:
     QEMU_USE_KVM = ""
   perf: |
     CORE_IMAGE_EXTRA_INSTALL += "perf"
+  sshkeys: |
+    CORE_IMAGE_EXTRA_INSTALL += "ssh-pregen-hostkeys"
 machine: unset
 
 target:
