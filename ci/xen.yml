@@ -6,6 +6,8 @@ header:
 local_conf_header:
   meta-virt: |
     DISTRO_FEATURES:append = " virtualization xen"
+  sshd: |
+    IMAGE_FEATURES:append = " ssh-server-openssh"
 
 target:
   - xen-image-minimal

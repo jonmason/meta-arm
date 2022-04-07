@@ -109,15 +109,15 @@ update-repos:
 #
 # Build stage, the actual build jobs
 #
-# Available options for building are
+# Available options for building are (VIRT _must_ be last for ssh override)
 #  DISTRO: [poky, poky-tiny]
 #  KERNEL: [linux-yocto, linux-yocto-dev, linux-yocto-rt]
 #  TOOLCHAINS: [gcc, clang, external-gccarm]
 #  TCLIBC: [glibc, musl]
 #  FIRMWARE: [u-boot, edk2]
 #  TS: [none, trusted-services]
-#  VIRT: [none, xen]
 #  TESTING: testimage
+#  VIRT: [none, xen, xen-guest]
 
 corstone1000-fvp:
   extends: .build
@@ -211,7 +211,7 @@ qemuarm64:
         TESTING: testimage
       - DISTRO: poky-tiny
         TESTING: testimage
-      - VIRT: xen
+        VIRT: [none, xen, xen-guest]
 
 qemuarm-secureboot:
   extends: .build
@@ -235,7 +235,7 @@ qemuarm:
         TESTING: testimage
       - DISTRO: poky-tiny
         TESTING: testimage
-      - VIRT: xen
+        VIRT: [none, xen, xen-guest]
 
 qemuarmv5:
   extends: .build
@@ -244,6 +244,7 @@ qemuarmv5:
       - DISTRO: poky
         KERNEL: [linux-yocto, linux-yocto-dev, linux-yocto-rt]
         TESTING: testimage
+        VIRT: [none, xen, xen-guest]
       - DISTRO: poky-tiny
         TESTING: testimage
 
