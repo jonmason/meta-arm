@@ -1,0 +1,7 @@
+header:
+  version: 11
+  includes:
+    - ci/xen.yml
+
+target:
+  - xen-guest-image-minimal
