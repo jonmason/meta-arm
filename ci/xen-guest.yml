@@ -1,0 +1,7 @@
+header:
+  version: 14
+  includes:
+    - ci/xen.yml
+
+target:
+  - xen-guest-image-minimal

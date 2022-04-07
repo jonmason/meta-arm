@@ -131,6 +131,7 @@ update-repos:
 #  TS: [none, trusted-services]
 #  TESTING: testimage
 #  SECUREDEBUG: [none, secure-debug]
+#  VIRT: [none, xen, xen-guest]
 
 # Validate layers are Yocto Project Compatible
 check-layers:
@@ -285,6 +286,8 @@ qemuarm64:
         FIRMWARE: [u-boot, edk2]
         TESTING: testimage
       - TF: tf-rmm
+      - TESTING: testimage
+        VIRT: [xen, xen-guest]
 
 qemuarm-secureboot:
   extends: .build
@@ -304,6 +307,7 @@ qemuarm:
     matrix:
       - TOOLCHAINS: [gcc, clang]
         TESTING: testimage
+        VIRT: [none, xen, xen-guest]
       - DISTRO: poky-tiny
         TESTING: testimage
 
@@ -314,6 +318,7 @@ qemuarmv5:
       - DISTRO: poky
         KERNEL: [linux-yocto, linux-yocto-dev]
         TESTING: testimage
+        VIRT: [none, xen, xen-guest]
       - DISTRO: poky-tiny
         TESTING: testimage
 
