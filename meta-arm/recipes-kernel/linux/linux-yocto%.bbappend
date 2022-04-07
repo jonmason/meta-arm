@@ -22,6 +22,8 @@ FILESEXTRAPATHS:prepend:qemuarm = "${ARMFILESPATHS}"
 SRC_URI:append:qemuarm = " \
     file://efi.cfg \
     "
+SRC_URI:append:qemuarm = " ${@bb.utils.contains('DISTRO_FEATURES', 'xen', 'file://xen-nopci.cfg', '' , d)}"
+KERNEL_FEATURES:remove:qemuarm = "${@bb.utils.contains('DISTRO_FEATURES', 'xen', 'features/drm-bochs/drm-bochs.scc', '' , d)}"
 
 FFA_TRANSPORT_INCLUDE = "${@bb.utils.contains('MACHINE_FEATURES', 'arm-ffa', 'arm-ffa-transport.inc', '' , d)}"
 require ${FFA_TRANSPORT_INCLUDE}

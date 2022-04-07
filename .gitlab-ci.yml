@@ -133,7 +133,7 @@ update-repos:
 #  TS: [none, trusted-services]
 #  TESTING: testimage
 #  SECUREDEBUG: [none, secure-debug]
-#  VIRT: [none, xen]
+#  VIRT: [none, xen, xen-guest]
 
 arm-systemready-ir-acs:
   extends: .build
@@ -287,9 +287,9 @@ qemuarm64:
         TOOLCHAINS: [gcc, clang]
         FIRMWARE: [u-boot, edk2]
         TESTING: testimage
+        VIRT: [none, xen, xen-guest]
       - DISTRO: poky-tiny
         TESTING: testimage
-      - VIRT: xen
       - KERNEL: linux-yocto-dev
         TESTING: testimage
 
@@ -315,9 +315,9 @@ qemuarm:
         TOOLCHAINS: [gcc, clang]
         FIRMWARE: [u-boot, edk2]
         TESTING: testimage
+        VIRT: [none, xen, xen-guest]
       - DISTRO: poky-tiny
         TESTING: testimage
-      - VIRT: xen
       - KERNEL: linux-yocto-dev
         TESTING: testimage
 
@@ -328,6 +328,7 @@ qemuarmv5:
       - DISTRO: poky
         KERNEL: [linux-yocto, linux-yocto-dev, linux-yocto-rt]
         TESTING: testimage
+        VIRT: [none, xen, xen-guest]
       - DISTRO: poky-tiny
         TESTING: testimage
 
