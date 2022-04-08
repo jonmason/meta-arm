@@ -5,6 +5,12 @@ require recipes-devtools/gcc/gcc-common.inc
 PV = "arm-9.2"
 CVE_VERSION = "9.2"
 
+# CVE-2019-15847 is only relevant to POWER9 architecture
+CVE_CHECK_WHITELIST += "CVE-2019-15847"
+
+# CVE-2021-37322 is in binutils < 2.32, not in gcc
+CVE_CHECK_WHITELIST += "CVE-2021-37322"
+
 # BINV should be incremented to a revision after a minor gcc release
 
 BINV = "9.2.1"

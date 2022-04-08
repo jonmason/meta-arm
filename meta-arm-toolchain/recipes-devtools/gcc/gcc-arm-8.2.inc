@@ -4,6 +4,12 @@ BASEPV = "8.2"
 PV = "arm-${BASEPV}"
 CVE_VERSION = "${BASEPV}"
 
+# CVE-2019-15847 is only relevant to POWER9 architecture
+CVE_CHECK_WHITELIST += "CVE-2019-15847"
+
+# CVE-2021-37322 is in binutils < 2.32, not in gcc
+CVE_CHECK_WHITELIST += "CVE-2021-37322"
+
 MMYY = "19.01"
 RELEASE = "20${MMYY}"
 PR = "r${RELEASE}"
