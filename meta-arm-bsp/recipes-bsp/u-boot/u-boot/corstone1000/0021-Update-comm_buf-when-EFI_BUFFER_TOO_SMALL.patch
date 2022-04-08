@@ -1,0 +1,30 @@
+From d220bf1805862c953d8adab799deaf7d0d3b2754 Mon Sep 17 00:00:00 2001
+From: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
+Date: Sun, 12 Dec 2021 17:58:08 +0000
+Subject: [PATCH 21/27] Update comm_buf when EFI_BUFFER_TOO_SMALL
+
+When the received buffer is larger than the comm buffer,
+the contents of the shared buffer which can fit in the
+comm buffer should be read before returning.
+
+Signed-off-by: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+---
+ lib/efi_loader/efi_variable_tee.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/lib/efi_loader/efi_variable_tee.c b/lib/efi_loader/efi_variable_tee.c
+index 03cc379482f8..fe3a5a7083fd 100644
+--- a/lib/efi_loader/efi_variable_tee.c
++++ b/lib/efi_loader/efi_variable_tee.c
+@@ -357,6 +357,7 @@ static efi_status_t __efi_runtime ffa_mm_communicate(void *comm_buf, ulong comm_
+ 			sizeof(size_t);
+ 
+ 		if (rx_data_size > comm_buf_size) {
++			efi_memcpy_runtime(comm_buf, virt_shared_buf, comm_buf_size);
+ 			unmap_sysmem(virt_shared_buf);
+ 			return EFI_BUFFER_TOO_SMALL;
+ 		}
+-- 
+2.35.1
+

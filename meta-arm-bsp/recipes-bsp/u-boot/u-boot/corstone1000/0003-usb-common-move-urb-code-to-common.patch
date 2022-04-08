@@ -1,16 +1,12 @@
-From 546a7151f29b5cec9de1b653594e004c7de259dd Mon Sep 17 00:00:00 2001
+From c16e273f6ee7de6f1d226ac321c680340edc19f9 Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Mon, 28 Jun 2021 23:20:55 +0100
-Subject: [PATCH] usb: common: move urb code to common
-
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+Subject: [PATCH 03/27] usb: common: move urb code to common
 
 Move urb code from musb only use to a more common scope, so other
 drivers in the future can use the handling of urb in usb.
 
 Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
-
 ---
  drivers/usb/common/Makefile                   |   2 +
  drivers/usb/common/usb_urb.c                  | 160 ++++++++++++++++++
@@ -20,11 +16,11 @@ Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
  drivers/usb/musb-new/musb_host.h              |   2 +-
  drivers/usb/musb-new/musb_uboot.c             |  38 +----
  drivers/usb/musb-new/musb_uboot.h             |   2 +-
- .../linux/usb/usb_urb_compat.h                |  52 ++++--
+ .../linux/usb/usb_urb_compat.h                |  46 ++++-
  include/usb_defs.h                            |  32 ++++
- 10 files changed, 240 insertions(+), 82 deletions(-)
+ 10 files changed, 240 insertions(+), 76 deletions(-)
  create mode 100644 drivers/usb/common/usb_urb.c
- rename drivers/usb/musb-new/usb-compat.h => include/linux/usb/usb_urb_compat.h (57%)
+ rename drivers/usb/musb-new/usb-compat.h => include/linux/usb/usb_urb_compat.h (60%)
 
 diff --git a/drivers/usb/common/Makefile b/drivers/usb/common/Makefile
 index 3bedbf213f47..dc05cb0a5077 100644
@@ -295,7 +291,7 @@ index afc8fa35a738..5a604bdb0cf2 100644
  
  static inline struct usb_hcd *musb_to_hcd(struct musb *musb)
 diff --git a/drivers/usb/musb-new/musb_uboot.c b/drivers/usb/musb-new/musb_uboot.c
-index 8ac2f0a78adb..85794356b0bc 100644
+index 61ff68def2fa..d186facc7e02 100644
 --- a/drivers/usb/musb-new/musb_uboot.c
 +++ b/drivers/usb/musb-new/musb_uboot.c
 @@ -8,10 +8,10 @@
@@ -365,10 +361,10 @@ index 18282efccc9d..6b162f03b19e 100644
  
  struct musb_host_data {
 diff --git a/drivers/usb/musb-new/usb-compat.h b/include/linux/usb/usb_urb_compat.h
-similarity index 57%
+similarity index 60%
 rename from drivers/usb/musb-new/usb-compat.h
 rename to include/linux/usb/usb_urb_compat.h
-index 1c66c4fe3637..438e70b56a63 100644
+index 1c66c4fe3637..c166301659a6 100644
 --- a/drivers/usb/musb-new/usb-compat.h
 +++ b/include/linux/usb/usb_urb_compat.h
 @@ -1,16 +1,31 @@
@@ -416,16 +412,8 @@ index 1c66c4fe3637..438e70b56a63 100644
  typedef void (*usb_complete_t)(struct urb *);
  
  struct urb {
-@@ -68,12 +81,27 @@ static inline int usb_hcd_unmap_urb_for_dma(struct usb_hcd *hcd,
- 	return 0;
- }
- 
--/**
-- * usb_dev_get_parent() - Get the parent of a USB device
-- *
-- * @udev: USB struct containing information about the device
-- * @return associated device for which udev == dev_get_parent_priv(dev)
-- */
+@@ -76,4 +89,25 @@ static inline int usb_hcd_unmap_urb_for_dma(struct usb_hcd *hcd,
+  */
  struct usb_device *usb_dev_get_parent(struct usb_device *udev);
  
 +int usb_urb_submit_control(struct usb_hcd *hcd, struct urb *urb,
@@ -504,3 +492,6 @@ index 6dd2c997f9b3..ec00161710a5 100644
  
  /*
   * Hub Status & Hub Change bit masks
+-- 
+2.35.1
+
