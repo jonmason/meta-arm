@@ -13,23 +13,16 @@ TOOLCHAIN = "gcc"
 inherit deploy python3native
 
 LICENSE = "MIT"
-LIC_FILES_CHKSUM = "file://${S}/LICENSE;md5=27e94c0280987ab296b0b8dd02ab9fe5"
+LIC_FILES_CHKSUM = "file://${S}/LICENSE;md5=5a3925ece0806073ae9ebbb08ff6f11e"
 
 DEPENDS = "python3-pyelftools-native optee-os-tadevkit python3-cryptography-native "
 
 FTPM_UUID="bc50d971-d4c9-42c4-82cb-343fb7f37896"
 
-# SRC_URI = "git://github.com/Microsoft/ms-tpm-20-ref;branch=master"
-# Since this is not built as a pseudo TA, we can only use it as a kernel module and not built in.
-# The TEE supplicant is also needed to provide access to secure storage.
-# Secure storage access required by OP-TEE fTPM TA
-# is provided via OP-TEE supplicant that's not available during boot.
-# Fix this once we replace this with the MS implementation
-SRC_URI = "gitsm://github.com/microsoft/MSRSec;protocol=https;branch=master \
-           file://0000-fix-ssl-fallthrough.patch \
+SRC_URI = "gitsm://github.com/Microsoft/ms-tpm-20-ref;branch=master;protocol=https \
            file://0001-add-enum-to-ta-flags.patch"
 
-SRCREV = "81abeb9fa968340438b4b0c08aa6685833f0bfa1"
+SRCREV = "d638536d0fe01acd5e39ffa1bd100b3da82d92c7"
 
 S = "${WORKDIR}/git"
 
@@ -55,21 +48,22 @@ export OPENSSL_MODULES="${STAGING_LIBDIR_NATIVE}/ossl-modules"
 PARALLEL_MAKE = ""
 
 do_compile() {
-    sed -i 's/-mcpu=$(TA_CPU)//' TAs/optee_ta/fTPM/sub.mk
+    # The internal ${CC} includes the correct -mcpu option
+    sed -i 's/-mcpu=$(TA_CPU)//' Samples/ARM32-FirmwareTPM/optee_ta/fTPM/sub.mk
     # there's also a secure variable storage TA called authvars
-    cd ${S}/TAs/optee_ta
-    oe_runmake ftpm
+    cd ${S}/Samples/ARM32-FirmwareTPM/optee_ta
+    oe_runmake
 }
 
 do_install () {
     mkdir -p ${D}/lib/optee_armtz
-    install -D -p -m 0644 ${S}/TAs/optee_ta/out/fTPM/${FTPM_UUID}.ta ${D}/lib/optee_armtz/
-    install -D -p -m 0644 ${S}/TAs/optee_ta/out/fTPM/${FTPM_UUID}.stripped.elf ${D}/lib/optee_armtz/
+    install -D -p -m 0644 ${S}/Samples/ARM32-FirmwareTPM/optee_ta/out/fTPM/${FTPM_UUID}.ta ${D}/lib/optee_armtz/
+    install -D -p -m 0644 ${S}/Samples/ARM32-FirmwareTPM/optee_ta/out/fTPM/${FTPM_UUID}.stripped.elf ${D}/lib/optee_armtz/
 }
 
 do_deploy () {
     install -d ${DEPLOYDIR}/optee
-    install -D -p -m 0644 ${S}/TAs/optee_ta/out/fTPM/${FTPM_UUID}.stripped.elf ${DEPLOYDIR}/optee/
+    install -D -p -m 0644 ${S}/Samples/ARM32-FirmwareTPM/optee_ta/out/fTPM/${FTPM_UUID}.stripped.elf ${DEPLOYDIR}/optee/
 }
 
 addtask deploy before do_build after do_install
