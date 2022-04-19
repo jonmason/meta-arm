@@ -40,6 +40,7 @@ LINUX_KERNEL_TYPE:corstone1000 = "standard"
 KERNEL_EXTRA_ARGS:corstone1000 += "CONFIG_INITRAMFS_COMPRESSION_NONE=y"
 SRC_URI:append:corstone1000 = " \
            file://defconfig  \
+           file://0001-UPSTREAM-firmware-arm_ffa-Handle-compatibility-with-.patch  \
         "
 
 SRC_URI:append:corstone1000 = " ${@bb.utils.contains('MACHINE_FEATURES', \
