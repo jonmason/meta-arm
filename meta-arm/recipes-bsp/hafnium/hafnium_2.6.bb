@@ -10,6 +10,7 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 inherit deploy python3native pkgconfig
 
 SRC_URI = "gitsm://git.trustedfirmware.org/hafnium/hafnium.git;protocol=https;branch=master \
+           file://0001-define-_Noreturn-if-needed.patch \
            file://host-ld.patch \
            file://pkg-config-native.patch \
            file://native-dtc.patch"
