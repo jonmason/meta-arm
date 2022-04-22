@@ -108,6 +108,11 @@ fvp-base-arm32:
 
 fvp-baser-aemv8r64:
   extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+  tags:
+    - x86_64
 
 fvps:
   extends: .build

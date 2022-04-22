@@ -34,6 +34,7 @@ local_conf_header:
     PACKAGECONFIG:remove:pn-qemu-system-native = "gtk+ sdl"
     EXTRA_IMAGE_FEATURES:append = " debug-tweaks ssh-server-openssh"
     LICENSE_FLAGS_ACCEPTED:append = " ${@oe.utils.vartrue('FVP_BASE_R_ARM_EULA_ACCEPT', 'Arm-FVP-EULA', '', d)}"
+    IMAGE_CLASSES:append = " testimage"
 
 target:
   - core-image-minimal

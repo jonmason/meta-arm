@@ -234,6 +234,7 @@ Known Issues and Limitations
 
 Change Log
 ----------
+- Enabled testimage support by default.
 - Added virtio\_rng to improve random number generation.
 - Added U-Boot v2022.01 for UEFI support.
 - Updated Linux kernel version from 5.14 to 5.15 for both standard and
