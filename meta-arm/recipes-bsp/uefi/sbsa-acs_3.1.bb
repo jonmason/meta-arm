@@ -1,4 +1,5 @@
 require recipes-bsp/uefi/edk2-firmware_202202.bb
+PROVIDES:remove = "virtual/bootloader"
 
 LICENSE += "& Apache-2.0"
 LIC_FILES_CHKSUM += "file://ShellPkg/Application/sbsa-acs/LICENSE.md;md5=2a944942e1496af1886903d274dedb13"
