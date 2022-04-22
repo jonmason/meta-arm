@@ -18,6 +18,11 @@ SRC_URI:append = " \
     file://0014-common-Add-mem-usage-to-memreserve.patch \
     file://0015-boot-Add-the-enable-keep-el-compile-option.patch \
     file://0016-Makefile-Change-COUNTER_FREQ-to-100-MHz.patch \
+    file://0017-PSCI-Apply-flush-cache-after-setting-branch_data.patch \
+    file://0018-PSCI-Add-function-call-entry-point.patch \
+    file://0019-lds-Rearrange-and-mark-the-sections.patch \
+    file://0020-common-Provide-firmware-info-using-libfdt.patch \
+    file://0021-boot-Enable-firmware-node-initialization.patch \
     "
 
 BOOT_WRAPPER_AARCH64_CMDLINE = "\

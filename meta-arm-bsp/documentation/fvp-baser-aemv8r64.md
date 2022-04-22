@@ -234,6 +234,7 @@ Known Issues and Limitations
 
 Change Log
 ----------
+- Added boot-wrapper-aarch64 support for booting SMP payloads at S-EL2.
 - Enabled testimage support by default.
 - Added virtio\_rng to improve random number generation.
 - Added U-Boot v2022.01 for UEFI support.
