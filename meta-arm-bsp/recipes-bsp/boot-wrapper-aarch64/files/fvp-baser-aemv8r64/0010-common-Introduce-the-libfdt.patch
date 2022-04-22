@@ -15,7 +15,7 @@ We choose BSD because the boot-wrapper is under BSD.
 
 Issue-Id: SCM-3814
 Upstream-Status: Inappropriate [other]
-  Temporary patch
+  Implementation pending further discussion
 Signed-off-by: Jaxson Han <jaxson.han@arm.com>
 Change-Id: Iec2f469053c8ac0ed38838c597b21a42bdf67b38
 ---

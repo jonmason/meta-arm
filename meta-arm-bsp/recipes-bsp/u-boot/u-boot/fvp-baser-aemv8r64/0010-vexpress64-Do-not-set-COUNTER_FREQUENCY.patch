@@ -11,7 +11,7 @@ providing PSCI services).
 
 Issue-Id: SCM-3728
 Upstream-Status: Inappropriate [other]
-  Temporary patch
+  Implementation pending further discussion
 Signed-off-by: Peter Hoyes <Peter.Hoyes@arm.com>
 Change-Id: I137473d721e58e4c348b9641f5b9778178d3bb65
 ---

@@ -13,7 +13,7 @@ option.
 
 Issue-Id: SCM-3728
 Upstream-Status: Inappropriate [other]
-  Temporary patch
+  Implementation pending further discussion
 Signed-off-by: Peter Hoyes <Peter.Hoyes@arm.com>
 Change-Id: If98478148d6d8d1f732acac5439276700614815f
 ---

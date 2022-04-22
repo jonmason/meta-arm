@@ -13,7 +13,7 @@ terms of BSD license. It is the same with boot-wrapper.
 
 Issue-Id: SCM-3814
 Upstream-Status: Inappropriate [other]
-  Temporary patch
+  Implementation pending further discussion
 Signed-off-by: Jaxson Han <jaxson.han@arm.com>
 Change-Id: If3b55b00afa8694c7522df989a41e0b38eda1d38
 ---

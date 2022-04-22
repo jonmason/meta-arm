@@ -9,7 +9,7 @@ calculate the mem range of boot-wrapper and then set the range to
 
 Issue-ID: SCM-3815
 Upstream-Status: Inappropriate [other]
-  Temporary patch
+  Implementation pending further discussion
 Signed-off-by: Jaxson Han <jaxson.han@arm.com>
 Change-Id: Idc5a2894e193c75381049a0f359b4b2a51c567ee
 ---

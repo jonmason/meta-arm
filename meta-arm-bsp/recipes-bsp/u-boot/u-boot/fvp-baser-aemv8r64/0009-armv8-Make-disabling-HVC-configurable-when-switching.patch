@@ -12,7 +12,7 @@ control whether to disable HVC exceptions in HCR_EL2->HCD
 
 Issue-Id: SCM-3728
 Upstream-Status: Inappropriate [other]
-  Temporary patch
+  Implementation pending further discussion
 Signed-off-by: Peter Hoyes <Peter.Hoyes@arm.com>
 Change-Id: I463d82f1db8a3cafcab40a9c0c208753569cc300
 ---

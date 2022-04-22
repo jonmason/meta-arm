@@ -16,7 +16,7 @@ board configurations.
 
 Issue-Id: SCM-2443
 Upstream-Status: Inappropriate [other]
-  Temporary patch
+  Implementation pending further discussion
 Signed-off-by: Peter Hoyes <Peter.Hoyes@arm.com>
 Change-Id: I0ee3879f9d7f03fe940664b3551c68eeaa458d17
 ---

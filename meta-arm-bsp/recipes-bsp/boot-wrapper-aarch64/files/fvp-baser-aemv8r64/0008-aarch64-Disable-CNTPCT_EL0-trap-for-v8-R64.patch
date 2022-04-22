@@ -16,7 +16,7 @@ FEAT_VHE. We can simply set CNTHCTL_EL2.EL1PCTEN to 1.
 
 Issue-ID: SCM-3508
 Upstream-Status: Inappropriate [other]
-  Temporary patch
+  Implementation pending further discussion
 Signed-off-by: Jaxson Han <jaxson.han@arm.com>
 Change-Id: I4147e66341c8153312021e6f2ab67d0037246da1
 ---

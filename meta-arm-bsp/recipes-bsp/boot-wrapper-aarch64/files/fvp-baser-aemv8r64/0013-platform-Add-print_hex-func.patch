@@ -8,7 +8,7 @@ numbers.
 
 Issue-Id: SCM-3814
 Upstream-Status: Inappropriate [other]
-  Temporary patch
+  Implementation pending further discussion
 Signed-off-by: Jaxson Han <jaxson.han@arm.com>
 Change-Id: Ic960345d9ef0b41d81d30c4a4dbd9c31139907c4
 ---

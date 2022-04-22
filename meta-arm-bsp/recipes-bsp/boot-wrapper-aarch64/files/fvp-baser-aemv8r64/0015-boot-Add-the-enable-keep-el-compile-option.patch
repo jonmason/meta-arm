@@ -12,7 +12,7 @@ Linux PSCI, this option will cause secondary cores booting at EL1.
 
 Issue-Id: SCM-3813
 Upstream-Status: Inappropriate [other]
-  Temporary patch
+  Implementation pending further discussion
 Signed-off-by: Jaxson Han <jaxson.han@arm.com>
 Change-Id: I3ba9c87cf0b59d163ca433f74c9e3a46e5ca2c63
 ---

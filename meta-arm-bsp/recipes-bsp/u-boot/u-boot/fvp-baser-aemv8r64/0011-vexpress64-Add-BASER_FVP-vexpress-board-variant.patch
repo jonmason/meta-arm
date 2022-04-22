@@ -19,7 +19,7 @@ inverted from the BASE_FVP
 
 Issue-Id: SCM-3728
 Upstream-Status: Inappropriate [other]
-  Temporary patch
+  Implementation pending further discussion
 Signed-off-by: Peter Hoyes <Peter.Hoyes@arm.com>
 Change-Id: Id173e52afad473abcf3f61c6bf374fc31f17edd3
 ---

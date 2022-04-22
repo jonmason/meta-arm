@@ -16,7 +16,7 @@ that both config flags be be targeted using CONFIG_IS_ENABLED.
 
 Issue-Id: SCM-3728
 Upstream-Status: Inappropriate [other]
-  Temporary patch
+  Implementation pending further discussion
 Signed-off-by: Peter Hoyes <Peter.Hoyes@arm.com>
 Change-Id: I0cf0fc6d7ef4d45791411cf1f67c65e198cc8b2b
 ---
