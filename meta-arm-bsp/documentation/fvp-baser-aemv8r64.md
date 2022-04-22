@@ -234,6 +234,8 @@ Known Issues and Limitations
 
 Change Log
 ----------
+- Fixed bug in U-Boot that caused changes to the `memory` node in the device
+  tree to be ignored.
 - Added boot-wrapper-aarch64 support for booting SMP payloads at S-EL2.
 - Enabled testimage support by default.
 - Added virtio\_rng to improve random number generation.
