@@ -234,6 +234,7 @@ Known Issues and Limitations
 
 Change Log
 ----------
+- Enabled the ability for U-Boot to apply device tree overlays
 - Fixed bug in U-Boot that caused changes to the `memory` node in the device
   tree to be ignored.
 - Added boot-wrapper-aarch64 support for booting SMP payloads at S-EL2.

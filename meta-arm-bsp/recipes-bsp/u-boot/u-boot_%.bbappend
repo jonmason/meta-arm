@@ -72,6 +72,7 @@ SRC_URI:append:fvp-baser-aemv8r64 = " \
     file://0010-vexpress64-Do-not-set-COUNTER_FREQUENCY.patch \
     file://0011-vexpress64-Add-BASER_FVP-vexpress-board-variant.patch \
     file://0012-vexpress64-Configure-memory-using-device-tree.patch \
+    file://0013-vexpress64-Enable-LIBFDT_OVERLAY-in-the-vexpress_aem.patch \
     "
 
 #
