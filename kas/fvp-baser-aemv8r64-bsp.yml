@@ -25,7 +25,6 @@ repos:
       meta-poky:
 
 env:
-  FVP_BASE_R_AEM_TARBALL_URI: ""
   FVP_BASE_R_ARM_EULA_ACCEPT: "False"
 
 local_conf_header:
@@ -34,8 +33,6 @@ local_conf_header:
     PACKAGE_CLASSES = "package_ipk"
     PACKAGECONFIG:remove:pn-qemu-system-native = "gtk+ sdl"
     EXTRA_IMAGE_FEATURES:append = " debug-tweaks ssh-server-openssh"
-    FVP_CONFIG[bp.virtio_net.hostbridge.userNetPorts] ?= "8022=22"
-    IMAGE_CLASSES:append = " ${@oe.utils.ifelse(d.getVar('FVP_BASE_R_AEM_TARBALL_URI'), 'fvpboot', '')}"
     LICENSE_FLAGS_ACCEPTED:append = " ${@oe.utils.vartrue('FVP_BASE_R_ARM_EULA_ACCEPT', 'Arm-FVP-EULA', '', d)}"
 
 target:
