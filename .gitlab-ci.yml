@@ -129,6 +129,7 @@ juno:
   parallel:
     matrix:
       - TOOLCHAINS: [gcc, clang]
+        FIRMWARE: [none, edk2]
 
 microbit-v1:
   extends: .build_and_test
