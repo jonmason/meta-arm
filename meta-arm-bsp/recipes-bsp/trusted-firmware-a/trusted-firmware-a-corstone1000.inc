@@ -11,13 +11,12 @@ PV .= "+git${SRCREV_tfa}"
 LIC_FILES_CHKSUM="file://docs/license.rst;md5=b2c740efedc159745b9b31f88ff03dde file://mbedtls/LICENSE;md5=3b83ef96387f14655fc854ddc3c6bd57"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files/corstone1000:"
-SRC_URI:append = " \
-                 file://0001-Rename-Diphda-to-corstone1000.patch \
-                 file://0002-plat-arm-corstone1000-made-changes-to-accommodate-3M.patch \
-                 file://0003-corstone1000-implement-platform-specific-psci-reset.patch \
-                 file://0004-plat-arm-corstone1000-change-base-address-of-FIP-in-the-fl.patch   \
-                 file://0005-plat-arm-corstone1000-identify-which-bank-to-load-fip-from.patch   \
-                 "
+SRCREV_tfa = "cf89fd57ed3286d7842eef41cd72a3977eb6d317"
+PV = "2.6+git${SRCPV}"
+
+SRC_URI:remove = " \
+     file://ssl.patch \
+     "  
 
 TFA_DEBUG = "1"
 TFA_UBOOT = "1"
