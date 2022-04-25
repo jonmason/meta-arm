@@ -56,9 +56,9 @@ do_compile() {
 }
 
 do_install () {
-    mkdir -p ${D}/lib/optee_armtz
-    install -D -p -m 0644 ${S}/Samples/ARM32-FirmwareTPM/optee_ta/out/fTPM/${FTPM_UUID}.ta ${D}/lib/optee_armtz/
-    install -D -p -m 0644 ${S}/Samples/ARM32-FirmwareTPM/optee_ta/out/fTPM/${FTPM_UUID}.stripped.elf ${D}/lib/optee_armtz/
+    mkdir -p ${D}/${nonarch_base_libdir}/optee_armtz
+    install -D -p -m 0644 ${S}/Samples/ARM32-FirmwareTPM/optee_ta/out/fTPM/${FTPM_UUID}.ta ${D}/${nonarch_base_libdir}/optee_armtz/
+    install -D -p -m 0644 ${S}/Samples/ARM32-FirmwareTPM/optee_ta/out/fTPM/${FTPM_UUID}.stripped.elf ${D}/${nonarch_base_libdir}/optee_armtz/
 }
 
 do_deploy () {
