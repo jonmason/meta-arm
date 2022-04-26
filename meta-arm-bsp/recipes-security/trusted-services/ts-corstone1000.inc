@@ -92,6 +92,8 @@ PSA_API_TESTS += "deployments/psa-api-test/internal_trusted_storage/${TS_ENVIRON
 PSA_API_TESTS += "deployments/psa-api-test/initial_attestation/${TS_ENVIRONMENT_LINUX}"
 PSA_API_TESTS += "deployments/psa-api-test/crypto/${TS_ENVIRONMENT_LINUX}"
 
+# ffa-debugfs-mod provides arm_ffa_user.h needed by psa-arch-tests source-code
+DEPENDS += "ffa-debugfs-mod"
 
 do_configure:append() {
     for PSA_API_TEST in ${PSA_API_TESTS}; do
