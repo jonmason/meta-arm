@@ -10,3 +10,4 @@ local_conf_header:
         INITRAMFS_IMAGE:remove = "corstone1000-initramfs-image"
 
 machine: corstone1000-fvp
+
