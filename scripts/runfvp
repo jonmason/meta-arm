@@ -182,7 +182,7 @@ def parse_config(args, config):
             # TODO if raw mode
             # cli.extend(["--parameter", f"{terminal}.mode=raw"])
             # TODO put name into terminal title
-            cli.extend(["--parameter", f"{terminal}.terminal_command={terminal_map[args.terminals]}"])
+            cli.extend(["--parameter", f"{terminal}.terminal_command={terminals[args.terminals].command}"])
         else:
             # Disable terminal
             cli.extend(["--parameter", f"{terminal}.start_telnet=0"])
