@@ -5,6 +5,7 @@ import collections
 import json
 import os
 import re
+import shutil
 import signal
 import sys
 import subprocess
@@ -42,7 +43,7 @@ class Terminals:
         return config.get("RunFVP", "Terminal", fallback=None)
 
     def preferred_terminal(self) -> str:
-        import shlex, shutil
+        import shlex
 
         preferred = self.configured_terminal()
         if preferred:
@@ -232,6 +233,11 @@ def runfvp(cli_args):
     cli = parse_config(args, config)
     cli.extend(fvp_args)
     logger.debug(f"Constructed FVP call: {cli}")
+
+    # Check that telnet is present
+    if not bool(shutil.which("telnet")):
+        logger.error("Cannot find telnet, this is needed to connect to the FVP.")
+        return 1
 
     if args.console:
         expected_terminal = config["console"]
