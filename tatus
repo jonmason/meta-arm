@@ -1,0 +1,168 @@
+[1mdiff --git a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0024-perf-arm-cmn-Use-irq_set_affinity.patch b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0024-perf-arm-cmn-Use-irq_set_affinity.patch[m
+[1mindex 0defb4f..e8674c3 100644[m
+[1m--- a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0024-perf-arm-cmn-Use-irq_set_affinity.patch[m
+[1m+++ b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0024-perf-arm-cmn-Use-irq_set_affinity.patch[m
+[36m@@ -25,6 +25,7 @@[m [mLink: https://lore.kernel.org/r/20210518093118.277228577@linutronix.de[m
+ Signed-off-by: Will Deacon <will@kernel.org>[m
+ [m
+ Upstream-Status: Backport [https://lore.kernel.org/r/20210518093118.277228577@linutronix.de][m
+[32m+[m[32mSigned-off-by: Rupinderjit Singh <rupinderjit.singh@arm.com>[m
+ ---[m
+  drivers/perf/arm-cmn.c | 9 ++-------[m
+  1 file changed, 2 insertions(+), 7 deletions(-)[m
+[1mdiff --git a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0025-perf-arm-cmn-Fix-CPU-hotplug-unregistration.patch b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0025-perf-arm-cmn-Fix-CPU-hotplug-unregistration.patch[m
+[1mindex 66c0582..e06fb88 100644[m
+[1m--- a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0025-perf-arm-cmn-Fix-CPU-hotplug-unregistration.patch[m
+[1m+++ b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0025-perf-arm-cmn-Fix-CPU-hotplug-unregistration.patch[m
+[36m@@ -13,6 +13,7 @@[m [mFixes: 0ba64770a2f2 ("perf: Add Arm CMN-600 PMU driver")[m
+ Signed-off-by: Robin Murphy <robin.murphy@arm.com>[m
+ [m
+ Upstream-Status: Backport [https://lore.kernel.org/r/2c221d745544774e4b07583b65b5d4d94f7e0fe4.1638530442.git.robin.murphy@arm.com][m
+[32m+[m[32mSigned-off-by: Rupinderjit Singh <rupinderjit.singh@arm.com>[m
+ ---[m
+  drivers/perf/arm-cmn.c | 5 +++--[m
+  1 file changed, 3 insertions(+), 2 deletions(-)[m
+[1mdiff --git a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0026-perf-arm-cmn-Account-for-NUMA-affinity.patch b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0026-perf-arm-cmn-Account-for-NUMA-affinity.patch[m
+[1mindex 2a1bbde..f93bff7 100644[m
+[1m--- a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0026-perf-arm-cmn-Account-for-NUMA-affinity.patch[m
+[1m+++ b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0026-perf-arm-cmn-Account-for-NUMA-affinity.patch[m
+[36m@@ -15,6 +15,7 @@[m [mLink: https://lore.kernel.org/r/32438b0d016e0649d882d47d30ac2000484287b9.1638530[m
+ Signed-off-by: Will Deacon <will@kernel.org>[m
+ [m
+ Upstream-Status: Backport [https://lore.kernel.org/r/32438b0d016e0649d882d47d30ac2000484287b9.1638530442.git.robin.murphy@arm.com][m
+[32m+[m[32mSigned-off-by: Rupinderjit Singh <rupinderjit.singh@arm.com>[m
+ ---[m
+  drivers/perf/arm-cmn.c | 51 +++++++++++++++++++++++++++++++-----------[m
+  1 file changed, 38 insertions(+), 13 deletions(-)[m
+[1mdiff --git a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0027-perf-arm-cmn-Drop-compile-test-restriction.patch b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0027-perf-arm-cmn-Drop-compile-test-restriction.patch[m
+[1mindex 47b24e9..1a3e2d9 100644[m
+[1m--- a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0027-perf-arm-cmn-Drop-compile-test-restriction.patch[m
+[1m+++ b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0027-perf-arm-cmn-Drop-compile-test-restriction.patch[m
+[36m@@ -15,6 +15,7 @@[m [mLink: https://lore.kernel.org/r/baee9ee0d0bdad8aaeb70f5a4b98d8fd4b1f5786.1638530[m
+ Signed-off-by: Will Deacon <will@kernel.org>[m
+ [m
+ Upstream-Status: Backport [https://lore.kernel.org/r/baee9ee0d0bdad8aaeb70f5a4b98d8fd4b1f5786.1638530442.git.robin.murphy@arm.com][m
+[32m+[m[32mSigned-off-by: Rupinderjit Singh <rupinderjit.singh@arm.com>[m
+ ---[m
+  drivers/perf/Kconfig   |  2 +-[m
+  drivers/perf/arm-cmn.c | 25 +++++++++++++------------[m
+[1mdiff --git a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0028-perf-arm-cmn-Refactor-node-ID-handling.patch b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0028-perf-arm-cmn-Refactor-node-ID-handling.patch[m
+[1mindex 80fbc06..ce4c2e5 100644[m
+[1m--- a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0028-perf-arm-cmn-Refactor-node-ID-handling.patch[m
+[1m+++ b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0028-perf-arm-cmn-Refactor-node-ID-handling.patch[m
+[36m@@ -15,6 +15,7 @@[m [mLink: https://lore.kernel.org/r/a2242a8c3c96056c13a04ae87bf2047e5e64d2d9.1638530[m
+ Signed-off-by: Will Deacon <will@kernel.org>[m
+ [m
+ Upstream-Status: Backport [https://lore.kernel.org/r/a2242a8c3c96056c13a04ae87bf2047e5e64d2d9.1638530442.git.robin.murphy@arm.com][m
+[32m+[m[32mSigned-off-by: Rupinderjit Singh <rupinderjit.singh@arm.com>[m
+ ---[m
+  drivers/perf/arm-cmn.c | 94 +++++++++++++++++++++++++-----------------[m
+  1 file changed, 56 insertions(+), 38 deletions(-)[m
+[1mdiff --git a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0029-perf-arm-cmn-Streamline-node-iteration.patch b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0029-perf-arm-cmn-Streamline-node-iteration.patch[m
+[1mindex 7b86023..fbe49b2 100644[m
+[1m--- a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0029-perf-arm-cmn-Streamline-node-iteration.patch[m
+[1m+++ b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0029-perf-arm-cmn-Streamline-node-iteration.patch[m
+[36m@@ -15,6 +15,7 @@[m [mLink: https://lore.kernel.org/r/ee0c9eda9a643f46001ac43aadf3f0b1fd5660dd.1638530[m
+ Signed-off-by: Will Deacon <will@kernel.org>[m
+ [m
+ Upstream-Status: Backport [https://lore.kernel.org/r/ee0c9eda9a643f46001ac43aadf3f0b1fd5660dd.1638530442.git.robin.murphy@arm.com][m
+[32m+[m[32mSigned-off-by: Rupinderjit Singh <rupinderjit.singh@arm.com>[m
+ ---[m
+  drivers/perf/arm-cmn.c | 33 ++++++++++++++++++++-------------[m
+  1 file changed, 20 insertions(+), 13 deletions(-)[m
+[1mdiff --git a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0030-drivers-perf-arm-cmn-Add-space-after.patch b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0030-drivers-perf-arm-cmn-Add-space-after.patch[m
+[1mindex d01ff04..3b11192 100644[m
+[1m--- a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0030-drivers-perf-arm-cmn-Add-space-after.patch[m
+[1m+++ b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0030-drivers-perf-arm-cmn-Add-space-after.patch[m
+[36m@@ -11,6 +11,7 @@[m [mSigned-off-by: Junhao He <hejunhao2@hisilicon.com>[m
+ Signed-off-by: Jay Fang <f.fangjian@huawei.com>[m
+ [m
+ Upstream-Status: Backport [https://lore.kernel.org/all/1620736054-58412-4-git-send-email-f.fangjian@huawei.com][m
+[32m+[m[32mSigned-off-by: Rupinderjit Singh <rupinderjit.singh@arm.com>[m
+ ---[m
+  drivers/perf/arm-cmn.c | 2 +-[m
+  1 file changed, 1 insertion(+), 1 deletion(-)[m
+[1mdiff --git a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0031-perf-arm-cmn-Refactor-DTM-handling.patch b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0031-perf-arm-cmn-Refactor-DTM-handling.patch[m
+[1mindex 3a37287..6a68a79 100644[m
+[1m--- a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0031-perf-arm-cmn-Refactor-DTM-handling.patch[m
+[1m+++ b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0031-perf-arm-cmn-Refactor-DTM-handling.patch[m
+[36m@@ -12,6 +12,7 @@[m [mLink: https://lore.kernel.org/r/9cca18b1b98f482df7f1aaf3d3213e7f39500423.1638530[m
+ Signed-off-by: Will Deacon <will@kernel.org>[m
+ [m
+ Upstream-Status: Backport [https://lore.kernel.org/r/9cca18b1b98f482df7f1aaf3d3213e7f39500423.1638530442.git.robin.murphy@arm.com][m
+[32m+[m[32mSigned-off-by: Rupinderjit Singh <rupinderjit.singh@arm.com>[m
+ ---[m
+  drivers/perf/arm-cmn.c | 169 +++++++++++++++++++++--------------------[m
+  1 file changed, 87 insertions(+), 82 deletions(-)[m
+[1mdiff --git a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0032-perf-arm-cmn-Optimise-DTM-counter-reads.patch b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0032-perf-arm-cmn-Optimise-DTM-counter-reads.patch[m
+[1mindex 3be9719..af33468 100644[m
+[1m--- a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0032-perf-arm-cmn-Optimise-DTM-counter-reads.patch[m
+[1m+++ b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0032-perf-arm-cmn-Optimise-DTM-counter-reads.patch[m
+[36m@@ -14,6 +14,7 @@[m [mLink: https://lore.kernel.org/r/7777d77c2df17693cd3dabb6e268906e15238d82.1638530[m
+ Signed-off-by: Will Deacon <will@kernel.org>[m
+ [m
+ Upstream-Status: Backport [https://lore.kernel.org/r/7777d77c2df17693cd3dabb6e268906e15238d82.1638530442.git.robin.murphy@arm.com][m
+[32m+[m[32mSigned-off-by: Rupinderjit Singh <rupinderjit.singh@arm.com>[m
+ ---[m
+  drivers/perf/arm-cmn.c | 17 +++++++++--------[m
+  1 file changed, 9 insertions(+), 8 deletions(-)[m
+[1mdiff --git a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0033-perf-arm-cmn-Optimise-DTC-counter-accesses.patch b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0033-perf-arm-cmn-Optimise-DTC-counter-accesses.patch[m
+[1mindex af44f5b..56334e8 100644[m
+[1m--- a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0033-perf-arm-cmn-Optimise-DTC-counter-accesses.patch[m
+[1m+++ b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0033-perf-arm-cmn-Optimise-DTC-counter-accesses.patch[m
+[36m@@ -17,6 +17,7 @@[m [mLink: https://lore.kernel.org/r/51d930fd945ef51c81f5889ccca055c302b0a1d0.1638530[m
+ Signed-off-by: Will Deacon <will@kernel.org>[m
+ [m
+ Upstream-Status: Backport [https://lore.kernel.org/r/51d930fd945ef51c81f5889ccca055c302b0a1d0.1638530442.git.robin.murphy@arm.com][m
+[32m+[m[32mSigned-off-by: Rupinderjit Singh <rupinderjit.singh@arm.com>[m
+ ---[m
+  drivers/perf/arm-cmn.c | 29 ++++++++++++-----------------[m
+  1 file changed, 12 insertions(+), 17 deletions(-)[m
+[1mdiff --git a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0034-perf-arm-cmn-Move-group-validation-data-off-stack.patch b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0034-perf-arm-cmn-Move-group-validation-data-off-stack.patch[m
+[1mindex 90a67a8..06adc56 100644[m
+[1m--- a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0034-perf-arm-cmn-Move-group-validation-data-off-stack.patch[m
+[1m+++ b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0034-perf-arm-cmn-Move-group-validation-data-off-stack.patch[m
+[36m@@ -15,6 +15,7 @@[m [mLink: https://lore.kernel.org/r/0cabff2e5839ddc0979e757c55515966f65359e4.1638530[m
+ Signed-off-by: Will Deacon <will@kernel.org>[m
+ [m
+ Upstream-Status: Backport [https://lore.kernel.org/r/0cabff2e5839ddc0979e757c55515966f65359e4.1638530442.git.robin.murphy@arm.com][m
+[32m+[m[32mSigned-off-by: Rupinderjit Singh <rupinderjit.singh@arm.com>[m
+ ---[m
+  drivers/perf/arm-cmn.c | 43 ++++++++++++++++++++++++------------------[m
+  1 file changed, 25 insertions(+), 18 deletions(-)[m
+[1mdiff --git a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0035-perf-arm-cmn-Demarcate-CMN-600-specifics.patch b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0035-perf-arm-cmn-Demarcate-CMN-600-specifics.patch[m
+[1mindex 14c95c4..0fbc5cb 100644[m
+[1m--- a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0035-perf-arm-cmn-Demarcate-CMN-600-specifics.patch[m
+[1m+++ b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0035-perf-arm-cmn-Demarcate-CMN-600-specifics.patch[m
+[36m@@ -15,6 +15,7 @@[m [mLink: https://lore.kernel.org/r/9f6368cdca4c821d801138939508a5bba54ccabb.1638530[m
+ Signed-off-by: Will Deacon <will@kernel.org>[m
+ [m
+ Upstream-Status: Backport [https://lore.kernel.org/r/9f6368cdca4c821d801138939508a5bba54ccabb.1638530442.git.robin.murphy@arm.com][m
+[32m+[m[32mSigned-off-by: Rupinderjit Singh <rupinderjit.singh@arm.com>[m
+ ---[m
+  drivers/perf/arm-cmn.c | 313 +++++++++++++++++++++--------------------[m
+  1 file changed, 162 insertions(+), 151 deletions(-)[m
+[1mdiff --git a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0036-perf-arm-cmn-Support-new-IP-features.patch b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0036-perf-arm-cmn-Support-new-IP-features.patch[m
+[1mindex ababdcd..fa0c5d9 100644[m
+[1m--- a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0036-perf-arm-cmn-Support-new-IP-features.patch[m
+[1m+++ b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0036-perf-arm-cmn-Support-new-IP-features.patch[m
+[36m@@ -13,6 +13,7 @@[m [mit around as necessary, and handling (most of) the new choices.[m
+ Signed-off-by: Robin Murphy <robin.murphy@arm.com>[m
+ Link: https://lore.kernel.org/r/e58b495bcc7deec3882be4bac910ed0bf6979674.1638530442.git.robin.murphy@arm.com[m
+ Signed-off-by: Will Deacon <will@kernel.org>[m
+[32m+[m[32mSigned-off-by: Rupinderjit Singh <rupinderjit.singh@arm.com>[m
+ ---[m
+  drivers/perf/arm-cmn.c | 222 ++++++++++++++++++++++++++++++++---------[m
+  1 file changed, 173 insertions(+), 49 deletions(-)[m
+[1mdiff --git a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0037-perf-arm-cmn-Add-CI-700-Support.patch b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0037-perf-arm-cmn-Add-CI-700-Support.patch[m
+[1mindex 4be16ae..a12911a 100644[m
+[1m--- a/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0037-perf-arm-cmn-Add-CI-700-Support.patch[m
+[1m+++ b/meta-arm-bsp/recipes-kernel/linux/linux-arm64-ack-5.10/tc/0037-perf-arm-cmn-Add-CI-700-Support.patch[m
+[36m@@ -10,6 +10,7 @@[m [mLink: https://lore.kernel.org/r/28f566ab23a83733c6c9ef9414c010b760b4549c.1638530[m
+ Signed-off-by: Will Deacon <will@kernel.org>[m
+ [m
+ Upstream-Status: Backport [https://lore.kernel.org/r/28f566ab23a83733c6c9ef9414c010b760b4549c.1638530442.git.robin.murphy@arm.com][m
+[32m+[m[32mSigned-off-by: Rupinderjit Singh <rupinderjit.singh@arm.com>[m
+ ---[m
+  drivers/perf/arm-cmn.c | 57 +++++++++++++++++++++++++++++++++++++++---[m
+  1 file changed, 53 insertions(+), 4 deletions(-)[m

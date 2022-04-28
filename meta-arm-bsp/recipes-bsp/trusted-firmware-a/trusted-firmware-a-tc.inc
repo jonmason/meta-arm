@@ -8,6 +8,7 @@ DEPENDS += "scp-firmware util-linux-native gptfdisk-native"
 
 SRC_URI:append = " \
     file://0001-plat-tc-Increase-maximum-BL2-size.patch \
+    file://0002-Enable-CI-700-interconnect.patch \
     file://generate_metadata.py \
     "
 

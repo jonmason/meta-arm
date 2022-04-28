@@ -158,6 +158,20 @@ SRC_URI:append:tc = " \
     file://0021-arm_ffa-add-support-for-FFA-v1.1.patch \
     file://0022-coresight-etm4x-Save-restore-TRFCR_EL1.patch \
     file://0023-coresight-etm4x-Use-Trace-Filtering-controls-dynamic.patch \
+    file://0024-perf-arm-cmn-Use-irq_set_affinity.patch \
+    file://0025-perf-arm-cmn-Fix-CPU-hotplug-unregistration.patch \
+    file://0026-perf-arm-cmn-Account-for-NUMA-affinity.patch \
+    file://0027-perf-arm-cmn-Drop-compile-test-restriction.patch \
+    file://0028-perf-arm-cmn-Refactor-node-ID-handling.patch \
+    file://0029-perf-arm-cmn-Streamline-node-iteration.patch \
+    file://0030-drivers-perf-arm-cmn-Add-space-after.patch \
+    file://0031-perf-arm-cmn-Refactor-DTM-handling.patch \
+    file://0032-perf-arm-cmn-Optimise-DTM-counter-reads.patch \
+    file://0033-perf-arm-cmn-Optimise-DTC-counter-accesses.patch \
+    file://0034-perf-arm-cmn-Move-group-validation-data-off-stack.patch \
+    file://0035-perf-arm-cmn-Demarcate-CMN-600-specifics.patch \
+    file://0036-perf-arm-cmn-Support-new-IP-features.patch \
+    file://0037-perf-arm-cmn-Add-CI-700-Support.patch \
     "
 KERNEL_FEATURES:append:tc = " bsp/arm-platforms/tc.scc"
 KERNEL_FEATURES:append:tc1 = " bsp/arm-platforms/tc-autofdo.scc"
