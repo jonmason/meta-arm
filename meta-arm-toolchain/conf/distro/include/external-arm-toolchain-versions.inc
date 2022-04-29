@@ -50,37 +50,26 @@ def eat_get_gcc_version(d):
 
 def eat_get_libc_version(d):
     import os,bb
+    import subprocess
+
     syspath = bb.data.expand('${EXTERNAL_TOOLCHAIN}/${EAT_TARGET_SYS}', d)
     if not syspath:
         return 'UNKNOWN'
 
-    libpath = syspath + '/libc/' + bb.data.expand('${EAT_LIBDIR}/${EAT_TARGET_SYS}/', d)
+    topdir = d.getVar('TOPDIR', True)
+    lddpath = syspath + '/libc/usr/bin/ldd'
 
-    if os.path.exists(libpath):
-        for file in os.listdir(libpath):
-            if file.find('libc-') == 0:
-                return file[5:-3]
+    if os.path.exists(lddpath):
+        cmd = '/bin/sh ' + lddpath + ' --version'
+        try:
+            stdout, stderr = bb.process.run(cmd, cwd=topdir, stderr=subprocess.PIPE)
+        except bb.process.CmdError as exc:
+            bb.error('Failed to obtain external Arm libc version: %s' % exc)
+            return 'UNKNOWN'
+        else:
+            first_line = stdout.splitlines()[0]
+            return first_line.split()[2]
 
-    libpath = syspath + '/libc/' + bb.data.expand('${EAT_LIBDIR}/', d)
-
-    if os.path.exists(libpath):
-        for file in os.listdir(libpath):
-            if file.find('libc-') == 0:
-                return file[5:-3]
-
-    libpath = syspath + '/libc/usr/' + bb.data.expand('${EAT_LIBDIR}/${EAT_TARGET_SYS}/', d)
-
-    if os.path.exists(libpath):
-        for file in os.listdir(libpath):
-            if file.find('libc-') == 0:
-                return file[5:-3]
-
-    libpath = syspath + '/libc/usr/' + bb.data.expand('${EAT_LIBDIR}/', d)
-
-    if os.path.exists(libpath):
-        for file in os.listdir(libpath):
-            if file.find('libc-') == 0:
-                return file[5:-3]
     return 'UNKNOWN'
 
 def eat_get_kernel_version(d):
