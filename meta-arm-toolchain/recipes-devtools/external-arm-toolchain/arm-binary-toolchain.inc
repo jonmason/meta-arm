@@ -20,4 +20,7 @@ INHIBIT_SYSROOT_STRIP = "1"
 INHIBIT_PACKAGE_STRIP = "1"
 INHIBIT_PACKAGE_DEBUG_SPLIT = "1"
 
+# Need to mark these as private until do_package's soname-finder only looks in $libdir
+PRIVATE_LIBS = "libgcc_s.so.1 libstdc++.so.6"
+
 BBCLASSEXTEND = "native nativesdk"
