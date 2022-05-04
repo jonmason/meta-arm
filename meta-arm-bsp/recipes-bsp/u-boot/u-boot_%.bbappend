@@ -80,5 +80,5 @@ SRC_URI:append:fvp-baser-aemv8r64 = " \
 #
 SRC_URI:append:tc = " \
         file://bootargs.cfg \
-        file://0001-arm-total_compute-increase-DRAM-to-8GB.patch \
+        file://0001-arm-total_compute-update-secure-dram-size.patch \
         "
