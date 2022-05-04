@@ -1,14 +1,21 @@
 # TC0 specific TFA configuration
 
 # Intermediate SHA with 2.6 baseline version
-SRCREV_tfa = "b06344a3f2c5a0fede3646627f37d1fce3d3d585"
+SRCREV_tfa = "141791088eb846c55291b1664813710ed3b532a1"
 PV = "2.6+git${SRCPV}"
 
 DEPENDS += "scp-firmware util-linux-native gptfdisk-native"
 
+FILESEXTRAPATHS:prepend := "${THISDIR}/files/tc:"
 SRC_URI:append = " \
     file://0001-plat-tc-Increase-maximum-BL2-size.patch \
-    file://0002-Enable-CI-700-interconnect.patch \
+    file://0002-feat-tc-enable-CI-700-PMU-for-profiling.patch \
+    file://0003-Makefile-add-trusty_sp_fw_config-build-option.patch \
+    file://0004-fix-plat-arm-increase-sp-max-image-size.patch \
+    file://0005-fix-plat-tc-increase-tc_tzc_dram1_size.patch \
+    file://0006-feat-plat-tc-add-spmc-manifest-with-trusty-sp.patch \
+    file://0007-feat-plat-tc-update-dts-with-trusty-compatible-strin.patch \
+    file://0008-fix-plat-tc-disable-smmu.patch \
     file://generate_metadata.py \
     "
 

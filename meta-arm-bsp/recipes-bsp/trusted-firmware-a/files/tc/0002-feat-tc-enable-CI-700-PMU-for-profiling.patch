@@ -1,0 +1,32 @@
+From 1565ac8995f90113b2be5acddc86773bfe0a0ac9 Mon Sep 17 00:00:00 2001
+From: Rupinderjit Singh <rupinderjit.singh@arm.com>
+Date: Tue, 22 Feb 2022 21:50:33 +0000
+Subject: [PATCH 1/7] feat(tc): enable CI-700 PMU for profiling
+
+Change-Id: Iaafdfc440b362022e6103eabf3fb2ebed85b6575
+Signed-off-by: Rupinderjit Singh <rupinderjit.singh@arm.com>
+Upstream-Status: Submitted [https://review.trustedfirmware.org/c/TF-A/trusted-firmware-a/+/14918]
+---
+ fdts/tc.dts | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/fdts/tc.dts b/fdts/tc.dts
+index 7c0e84260..20992294b 100644
+--- a/fdts/tc.dts
++++ b/fdts/tc.dts
+@@ -261,6 +261,12 @@
+ 		arm,mhuv2-protocols = <0 1>;
+ 	};
+ 
++	cmn-pmu {
++		compatible = "arm,ci-700";
++		reg = <0x0 0x50000000 0x0 0x10000000>;
++		interrupts = <0x0 460 0x4>;
++	};
++
+ 	scmi {
+ 		compatible = "arm,scmi";
+ 		mbox-names = "tx", "rx";
+-- 
+2.30.2
+
