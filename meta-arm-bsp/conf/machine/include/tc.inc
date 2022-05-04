@@ -25,6 +25,11 @@ FIT_GENERATE_KEYS = "1"
 PREFERRED_PROVIDER_virtual/kernel ?= "linux-arm64-ack"
 PREFERRED_VERSION_linux-arm64-ack ?= "5.10"
 
+# OP-TEE
+PREFERRED_VERSION_optee-os ?= "3.14%"
+PREFERRED_VERSION_optee-client ?= "3.14%"
+PREFERRED_VERSION_optee-test ?= "3.14%"
+
 # Cannot use the default zImage on arm64
 KERNEL_IMAGETYPE = "Image"
 KERNEL_IMAGETYPES += "fitImage"
