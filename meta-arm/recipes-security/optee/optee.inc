@@ -3,13 +3,15 @@ UPSTREAM_CHECK_GITTAGREGEX = "^(?P<pver>\d+(\.\d+)+)$"
 COMPATIBLE_MACHINE ?= "invalid"
 COMPATIBLE_MACHINE:qemuarm64 ?= "qemuarm64"
 COMPATIBLE_MACHINE:qemu-generic-arm64 ?= "qemu-generic-arm64"
+COMPATIBLE_MACHINE:qemuarm ?= "qemuarm"
 # Please add supported machines below or set it in .bbappend or .conf
 
 OPTEEMACHINE ?= "${MACHINE}"
 OPTEEMACHINE:aarch64:qemuall ?= "vexpress-qemu_armv8a"
+OPTEEMACHINE:arm:qemuall ?= "vexpress-qemu_virt"
 
 OPTEE_ARCH = "null"
-OPTEE_ARCH:armv7a = "arm32"
+OPTEE_ARCH:arm = "arm32"
 OPTEE_ARCH:aarch64 = "arm64"
 OPTEE_CORE = "${@d.getVar('OPTEE_ARCH').upper()}"
 

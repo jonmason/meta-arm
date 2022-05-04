@@ -6,6 +6,7 @@ COMPATIBLE_MACHINE ?= "invalid"
 COMPATIBLE_MACHINE:qemuarm64 = "qemuarm64"
 COMPATIBLE_MACHINE:qemuarm64-secureboot = "qemuarm64"
 COMPATIBLE_MACHINE:qemu-generic-arm64 = "qemu-generic-arm64"
+COMPATIBLE_MACHINE:qemuarm-secureboot = "qemuarm"
 
 #FIXME - doesn't currently work with clang
 TOOLCHAIN = "gcc"

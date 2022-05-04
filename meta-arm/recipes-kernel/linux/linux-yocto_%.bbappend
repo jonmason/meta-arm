@@ -11,3 +11,8 @@ SRC_URI:append:qemuarm64-secureboot = " \
     file://zone_dma_revert.patch \
     file://tee.cfg \
     "
+
+FILESEXTRAPATHS:prepend:qemuarm-secureboot = "${ARMFILESPATHS}"
+SRC_URI:append:qemuarm-secureboot = " \
+    file://tee.cfg \
+    "
