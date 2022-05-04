@@ -170,6 +170,7 @@ SRC_URI:append:tc = " \
     file://0032-firmware-arm_ffa-Add-ffa_dev_get_drvdata.patch \
     file://0033-firmware-arm_ffa-extern-ffa_bus_type.patch \
     file://0034-firmware-arm_ffa-Fix-FFA_MEM_SHARE-and-FFA_MEM_FRAG_.patch \
+    file://0035-ANDROID-trusty-Backport-of-trusty-driver.patch \
     "
 KERNEL_FEATURES:append:tc = " bsp/arm-platforms/tc.scc"
 KERNEL_FEATURES:append:tc1 = " bsp/arm-platforms/tc-autofdo.scc"
