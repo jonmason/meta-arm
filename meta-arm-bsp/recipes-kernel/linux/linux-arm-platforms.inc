@@ -171,6 +171,15 @@ SRC_URI:append:tc = " \
     file://0033-firmware-arm_ffa-extern-ffa_bus_type.patch \
     file://0034-firmware-arm_ffa-Fix-FFA_MEM_SHARE-and-FFA_MEM_FRAG_.patch \
     file://0035-ANDROID-trusty-Backport-of-trusty-driver.patch \
+    file://0036-ANDROID-trusty-Remove-FFA-specific-initilization.patch \
+    file://0037-ANDROID-trusty-Rename-transfer-memory-function-to-le.patch \
+    file://0038-ANDROID-trusty-Separate-out-SMC-based-transport.patch \
+    file://0039-ANDROID-trusty-Modify-device-compatible-string.patch \
+    file://0040-ANDROID-trusty-Add-transport-descriptor.patch \
+    file://0041-ANDROID-trusty-Add-trusty-ffa-driver.patch \
+    file://0042-ANDROID-trusty-ffa-Add-support-for-FFA-memory-operat.patch \
+    file://0043-ANDROID-trusty-ffa-Enable-FFA-transport-for-both-mem.patch \
+    file://0044-ANDROID-trusty-Make-trusty-transports-configurable.patch \
     "
 KERNEL_FEATURES:append:tc = " bsp/arm-platforms/tc.scc"
 KERNEL_FEATURES:append:tc1 = " bsp/arm-platforms/tc-autofdo.scc"
