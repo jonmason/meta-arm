@@ -3,6 +3,8 @@ DESCRIPTION = "This is the main Linux image which includes an initramfs kernel/r
 
 LICENSE = "MIT"
 
+COMPATIBLE_MACHINE = "corstone1000"
+
 IMAGE_FSTYPES = "${INITRAMFS_FSTYPES}"
 
 inherit core-image
