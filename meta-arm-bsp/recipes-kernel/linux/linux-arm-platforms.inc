@@ -166,6 +166,10 @@ SRC_URI:append:tc = " \
     file://0028-perf-arm-cmn-Demarcate-CMN-600-specifics.patch \
     file://0029-perf-arm-cmn-Support-new-IP-features.patch \
     file://0030-perf-arm-cmn-Add-CI-700-Support.patch \
+    file://0031-firmware-arm_ffa-Fix-uuid-argument-passed-to-ffa_par.patch \
+    file://0032-firmware-arm_ffa-Add-ffa_dev_get_drvdata.patch \
+    file://0033-firmware-arm_ffa-extern-ffa_bus_type.patch \
+    file://0034-firmware-arm_ffa-Fix-FFA_MEM_SHARE-and-FFA_MEM_FRAG_.patch \
     "
 KERNEL_FEATURES:append:tc = " bsp/arm-platforms/tc.scc"
 KERNEL_FEATURES:append:tc1 = " bsp/arm-platforms/tc-autofdo.scc"
