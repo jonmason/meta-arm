@@ -11,6 +11,7 @@ PLATFORM_FEATURE_SET
 Signed-off-by: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
 Change-Id: I93c0bc3e11fe18192bb8246df851345bdc473974
 Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Rupinderjit Singh <rupinderjit.singh@arm.com>
 ---
  product/tc0/doc/{variants.md => features.md} | 28 +++++++++-----------
  product/tc0/scp_ramfw/CMakeLists.txt         | 26 +++---------------
@@ -56,7 +57,7 @@ index fbf616db..3ef520e2 100644
  make -f Makefile.cmake \
      PRODUCT=tc0 \
      MODE=<debug,release> \
--    EXTRA_CONFIG_ARGS+=-DSCP_PLATFORM_VARIANT=<0,1>
+-    PLATFORM_VARIANT=<0,1>
 +    EXTRA_CONFIG_ARGS+=-DSCP_PLATFORM_FEATURE_SET=1
  
  ```
