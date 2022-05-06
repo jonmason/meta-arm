@@ -187,6 +187,12 @@ qemuarm64:
     matrix:
       - VIRT: xen
 
+qemuarm-secureboot:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
 qemuarm:
   extends: .build
   parallel:
