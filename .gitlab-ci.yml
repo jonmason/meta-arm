@@ -82,7 +82,7 @@ corstone1000-fvp:
   extends: .build
   parallel:
     matrix:
-      - TESTING: testimage
+      - TESTING: [testimage,tftf]
   tags:
     - x86_64
 
