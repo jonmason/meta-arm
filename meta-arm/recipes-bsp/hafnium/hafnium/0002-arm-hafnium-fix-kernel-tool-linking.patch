@@ -1,4 +1,4 @@
-From 9b1b93184c365a07b340c9404a6a0581e971bd54 Mon Sep 17 00:00:00 2001
+From b54c7b4d325b7effbebe5bdd86d0cfceedb66b9d Mon Sep 17 00:00:00 2001
 From: Ross Burton <ross.burton@arm.com>
 Date: Tue, 9 Nov 2021 23:31:22 +0000
 Subject: [PATCH] arm/hafnium: fix kernel tool linking
@@ -17,7 +17,7 @@ Signed-off-by: Ross Burton <ross.burton@arm.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/build/linux/linux.gni b/build/linux/linux.gni
-index 45860fa..b010254 100644
+index 45860fab..b0102544 100644
 --- a/build/linux/linux.gni
 +++ b/build/linux/linux.gni
 @@ -60,6 +60,7 @@ template("linux_kernel") {

@@ -1,4 +1,4 @@
-From c235511a06a54bcccec97b3067c1004d3957b1d8 Mon Sep 17 00:00:00 2001
+From 1fef5bd2504ce3a203c56a3b66dba773cd4893c6 Mon Sep 17 00:00:00 2001
 From: Davidson K <davidson.kumaresan@arm.com>
 Date: Thu, 8 Sep 2022 10:47:10 +0530
 Subject: [PATCH] feat(vhe): enable vhe and disable branch protection for TC
@@ -29,6 +29,3 @@ index 62ba763..f26ce03 100644
 +    enable_vhe = "1"
    }
  }
--- 
-2.34.1
-

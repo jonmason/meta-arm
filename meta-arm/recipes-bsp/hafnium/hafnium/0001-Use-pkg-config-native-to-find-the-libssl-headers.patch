@@ -1,4 +1,4 @@
-From b0405e0e25740ca0ea8b75d9b3b4f35b39d82e0e Mon Sep 17 00:00:00 2001
+From 60b8c4e852cbe76c383d5c495ecc8aeb84b407b6 Mon Sep 17 00:00:00 2001
 From: Ross Burton <ross.burton@arm.com>
 Date: Sat, 17 Jul 2021 14:38:02 -0500
 Subject: [PATCH] Use pkg-config-native to find the libssl headers.
@@ -24,6 +24,3 @@ index 9adb6d247..5fe371c7d 100644
  
  hostprogs-always-$(CONFIG_BUILD_BIN2C)			+= bin2c
  hostprogs-always-$(CONFIG_KALLSYMS)			+= kallsyms
--- 
-2.30.2
-

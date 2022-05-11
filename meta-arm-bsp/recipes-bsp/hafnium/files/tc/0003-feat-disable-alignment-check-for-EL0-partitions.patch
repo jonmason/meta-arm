@@ -1,4 +1,4 @@
-From 1e24b45a8ff34af45dda45c57f8403452d384f99 Mon Sep 17 00:00:00 2001
+From 1c4d28493faed6cf189c75fa91d19131e6a34e04 Mon Sep 17 00:00:00 2001
 From: Olivier Deprez <olivier.deprez@arm.com>
 Date: Mon, 8 Aug 2022 19:14:23 +0200
 Subject: [PATCH] feat: disable alignment check for EL0 partitions
@@ -40,7 +40,7 @@ Upstream-Status: Submitted [https://review.trustedfirmware.org/c/hafnium/hafnium
  8 files changed, 59 insertions(+), 30 deletions(-)
 
 diff --git a/src/arch/aarch64/hypervisor/cpu.c b/src/arch/aarch64/hypervisor/cpu.c
-index d2df77d..a000159 100644
+index d2df77d8..a000159b 100644
 --- a/src/arch/aarch64/hypervisor/cpu.c
 +++ b/src/arch/aarch64/hypervisor/cpu.c
 @@ -115,7 +115,9 @@ void arch_regs_reset(struct vcpu *vcpu)
@@ -69,7 +69,7 @@ index d2df77d..a000159 100644
  		r->lazy.vttbr_el2 = pa_addr(table) | ((uint64_t)vm_id << 48);
  #if SECURE_WORLD == 1
 diff --git a/src/arch/aarch64/hypervisor/exceptions.S b/src/arch/aarch64/hypervisor/exceptions.S
-index 539e196..d3732f8 100644
+index 539e196d..d3732f86 100644
 --- a/src/arch/aarch64/hypervisor/exceptions.S
 +++ b/src/arch/aarch64/hypervisor/exceptions.S
 @@ -20,6 +20,9 @@
@@ -147,7 +147,7 @@ index 539e196..d3732f8 100644
  	ret
  #endif
 diff --git a/src/arch/aarch64/hypervisor/feature_id.c b/src/arch/aarch64/hypervisor/feature_id.c
-index ed3bf8f..57f3262 100644
+index ed3bf8f1..57f32627 100644
 --- a/src/arch/aarch64/hypervisor/feature_id.c
 +++ b/src/arch/aarch64/hypervisor/feature_id.c
 @@ -175,7 +175,7 @@ void feature_set_traps(struct vm *vm, struct arch_regs *regs)
@@ -177,7 +177,7 @@ index ed3bf8f..57f3262 100644
  		vm->arch.tid3_masks.id_aa64isar1_el1 &= ~ID_AA64ISAR1_EL1_GPI;
  		vm->arch.tid3_masks.id_aa64isar1_el1 &= ~ID_AA64ISAR1_EL1_GPA;
 diff --git a/src/arch/aarch64/hypervisor/handler.c b/src/arch/aarch64/hypervisor/handler.c
-index cd5146b..8a3d628 100644
+index cd5146bd..8a3d6289 100644
 --- a/src/arch/aarch64/hypervisor/handler.c
 +++ b/src/arch/aarch64/hypervisor/handler.c
 @@ -272,9 +272,9 @@ noreturn void sync_current_exception_noreturn(uintreg_t elr, uintreg_t spsr)
@@ -241,7 +241,7 @@ index cd5146b..8a3d628 100644
  
  #if SECURE_WORLD == 1
 diff --git a/src/arch/aarch64/inc/hf/arch/types.h b/src/arch/aarch64/inc/hf/arch/types.h
-index 6379d73..6b8b24f 100644
+index 6379d73e..6b8b24f1 100644
 --- a/src/arch/aarch64/inc/hf/arch/types.h
 +++ b/src/arch/aarch64/inc/hf/arch/types.h
 @@ -79,8 +79,13 @@ struct arch_regs {
@@ -261,7 +261,7 @@ index 6379d73..6b8b24f 100644
  	/*
  	 * System registers.
 diff --git a/src/arch/aarch64/mm.c b/src/arch/aarch64/mm.c
-index 8ee65ca..487ae35 100644
+index 8ee65ca0..487ae353 100644
 --- a/src/arch/aarch64/mm.c
 +++ b/src/arch/aarch64/mm.c
 @@ -886,7 +886,7 @@ bool arch_mm_init(paddr_t table)
@@ -274,7 +274,7 @@ index 8ee65ca..487ae35 100644
  			     (0 << 30) |	    /* SA. */
  			     (0 << 29) |	    /* SW. */
 diff --git a/src/arch/aarch64/sysregs.c b/src/arch/aarch64/sysregs.c
-index e8c154b..087ba4e 100644
+index e8c154b1..087ba4ed 100644
 --- a/src/arch/aarch64/sysregs.c
 +++ b/src/arch/aarch64/sysregs.c
 @@ -159,7 +159,7 @@ uintreg_t get_cptr_el2_value(void)
@@ -303,7 +303,7 @@ index e8c154b..087ba4e 100644
  	sctlr_el2_value |= SCTLR_EL2_SA;
  	sctlr_el2_value |= SCTLR_EL2_I;
 diff --git a/src/arch/aarch64/sysregs.h b/src/arch/aarch64/sysregs.h
-index babd237..6fdab58 100644
+index babd2375..6fdab58e 100644
 --- a/src/arch/aarch64/sysregs.h
 +++ b/src/arch/aarch64/sysregs.h
 @@ -668,7 +668,7 @@ uintreg_t get_mdcr_el2_value(void);
@@ -315,6 +315,4 @@ index babd237..6fdab58 100644
  
  /**
   * Branch Target Identification mechanism support in AArch64 state.
--- 
-2.34.1
 
