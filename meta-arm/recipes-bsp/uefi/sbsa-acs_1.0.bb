@@ -8,10 +8,11 @@ SRC_URI += "git://github.com/ARM-software/sbsa-acs;destsuffix=edk2/ShellPkg/Appl
             git://github.com/tianocore/edk2-libc;destsuffix=edk2/edk2-libc;protocol=https;branch=master;name=libc \
             file://shell.patch \
             file://use_bfd_linker.patch \
+            file://0001-Revert-peripheral-test-3-updated-for-multiple-uarts.patch;patchdir=ShellPkg/Application/sbsa-acs \
             "
 
-SRCREV_acs = "ec02a7736ae5714326507c60595f4d5299e3dec8"
-SRCREV_libc = "61687168fe02ac4d933a36c9145fdd242ac424d1"
+SRCREV_acs = "28ecef569303af18b571ff3d66bbdcb6135eaed8"
+SRCREV_libc = "c32222fed9927420fc46da503dea1ebb874698b6"
 
 # GCC12 trips on it
 #see https://src.fedoraproject.org/rpms/edk2/blob/rawhide/f/0032-Basetools-turn-off-gcc12-warning.patch
