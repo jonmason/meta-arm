@@ -135,6 +135,10 @@ EXTRA_OEMAKE += "${@bb.utils.contains('TFA_UBOOT', '1', 'BL33=${DEPLOY_DIR_IMAGE
 DEPENDS += " ${@bb.utils.contains('TFA_UEFI', '1', 'edk2-firmware', '', d)}"
 EXTRA_OEMAKE += "${@bb.utils.contains('TFA_UEFI', '1', 'BL33=${RECIPE_SYSROOT}/firmware/uefi.bin', '', d)}"
 
+# TFTF test support
+DEPENDS += " ${@bb.utils.contains('TFTF_TESTS', '1', 'tf-a-tests', '', d)}"
+EXTRA_OEMAKE += "${@bb.utils.contains('TFTF_TESTS', '1', 'BL33=${RECIPE_SYSROOT}/firmware/tftf.bin', '',d)}"
+
 # Hafnium support
 SEL2_SPMC = "${@'${TFA_SPMD_SPM_AT_SEL2}' if d.getVar('TFA_SPD', True) == 'spmd' else ''}"
 

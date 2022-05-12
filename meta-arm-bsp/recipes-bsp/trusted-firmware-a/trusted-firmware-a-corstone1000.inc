@@ -11,7 +11,7 @@ SRC_URI:remove = " \
      "  
 
 TFA_DEBUG = "1"
-TFA_UBOOT = "1"
+TFA_UBOOT ?= "1"
 TFA_MBEDTLS = "1"
 TFA_BUILD_TARGET = "bl2 bl31 fip"
 
