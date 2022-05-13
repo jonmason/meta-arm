@@ -7,6 +7,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=c1f21c4f72f372ef38a5a4aee55ec173"
 
 inherit deploy python3native
 require optee.inc
+FILESEXTRAPATHS:prepend := "${THISDIR}/optee-os:"
 
 CVE_PRODUCT = "linaro:op-tee op-tee:op-tee_os"
 
@@ -15,7 +16,10 @@ DEPENDS = "python3-pyelftools-native"
 DEPENDS:append:toolchain-clang = " compiler-rt"
 
 # spdevkit isn't yet merged to master
-SRC_URI = "git://git.trustedfirmware.org/OP-TEE/optee_os.git;protocol=https;branch=psa-development"
+SRC_URI = "git://git.trustedfirmware.org/OP-TEE/optee_os.git;protocol=https;branch=psa-development \
+    file://0006-allow-setting-sysroot-for-libgcc-lookup.patch \
+    file://0007-allow-setting-sysroot-for-clang.patch \
+"
 SRCREV = "f9de2c9520ed97b89760cc4c99424aae440b63f4"
 PV = "3.10+git${SRCPV}"
 
