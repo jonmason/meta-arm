@@ -297,5 +297,7 @@ EOF
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
+COMPATIBLE_HOST = "aarch64.*-linux"
+
 # optee-spdevkit static library is part of optee-os image. No need to package this library in a staticdev package
 INSANE_SKIP:${PN}-dev = "staticdev"
