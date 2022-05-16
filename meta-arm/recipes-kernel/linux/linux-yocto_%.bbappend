@@ -8,6 +8,6 @@ SRC_URI:append:generic-arm64 = " \
 
 FILESEXTRAPATHS:prepend:qemuarm64-secureboot = "${ARMFILESPATHS}"
 SRC_URI:append:qemuarm64-secureboot = " \
-    file://zone_dma_revert.patch \
+    file://skip-unavailable-memory.patch \
     file://tee.cfg \
     "

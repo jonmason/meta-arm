@@ -1,0 +1,47 @@
+When in secure mode, qemu's devicetree has the following node to mark the
+secure memory as off-limits to non-secure environments:
+
+  secram@e000000 {
+    secure-status = "okay";
+    status = "disabled";
+    reg = <0x00 0xe000000 0x00 0x1000000>;
+    device_type = "memory";
+  };
+
+However, the kernel doesn't think that means the memory is off-limits:
+
+  Early memory node ranges
+    node   0: [mem 0x000000000e000000-0x000000000e0fffff]
+
+And not far into the boot accesses this region and crashes:
+
+  Internal error: synchronous external abort: 96000050 15 PREEMPT SMP
+
+This used to work more through luck than judgement, but recent changes to
+memory zoning[1] means this region is accessed more frequently.
+
+At present there is debate between qemu and kernel engineers over whether
+the kernel should be ignoring regions marked like this, or if qemu
+should block out the region in a different way. Until this is resolved,
+we can make a choice and simply ignore memory ranges that are marked
+as disabled.
+
+Upstream-Status: Pending [discussion ongoing]
+Signed-off-by: Ross Burton <ross.burton@arm.com>
+
+[1] https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/commit/?id=35ec3d09ff6a49ee90e1bfd09166596f017eb5bb
+
+diff --git a/drivers/of/fdt.c b/drivers/of/fdt.c
+index 59a7a9ee58ef..d151a31adbf9 100644
+--- a/drivers/of/fdt.c
++++ b/drivers/of/fdt.c
+@@ -1102,6 +1102,9 @@ int __init early_init_dt_scan_memory(unsigned long node, const char *uname,
+ 	if (type == NULL || strcmp(type, "memory") != 0)
+ 		return 0;
+ 
++	if (!of_fdt_device_is_available(initial_boot_params, node))
++		return 0;
++
+ 	reg = of_get_flat_dt_prop(node, "linux,usable-memory", &l);
+ 	if (reg == NULL)
+ 		reg = of_get_flat_dt_prop(node, "reg", &l);
