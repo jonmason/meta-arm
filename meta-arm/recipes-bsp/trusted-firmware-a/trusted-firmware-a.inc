@@ -6,7 +6,9 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 inherit deploy
 
 SRC_URI = "git://git.trustedfirmware.org/TF-A/trusted-firmware-a.git;protocol=https;name=tfa;branch=master \
-           file://ssl.patch"
+           file://ssl.patch \
+	    file://build-deps-upgrade-to-mbed-TLS-2.28.0.patch"
+
 UPSTREAM_CHECK_GITTAGREGEX = "^v(?P<pver>\d+(\.\d+)+)$"
 
 SRCREV_FORMAT = "tfa"
