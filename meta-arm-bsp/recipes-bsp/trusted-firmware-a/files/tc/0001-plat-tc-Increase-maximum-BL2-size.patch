@@ -22,10 +22,10 @@ index ccabced9e..f45457b9f 100644
   */
  #if TRUSTED_BOARD_BOOT
 -# define PLAT_ARM_MAX_BL2_SIZE		0x20000
-+# define PLAT_ARM_MAX_BL2_SIZE		0x22000
++# define PLAT_ARM_MAX_BL2_SIZE		0x25000
  #else
 -# define PLAT_ARM_MAX_BL2_SIZE		0x14000
-+# define PLAT_ARM_MAX_BL2_SIZE		0x16000
++# define PLAT_ARM_MAX_BL2_SIZE		0x19000
  #endif
 
  /*
