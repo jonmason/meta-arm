@@ -191,7 +191,8 @@ qemuarm-secureboot:
   extends: .build
   parallel:
     matrix:
-      - TESTING: testimage
+      - TOOLCHAINS: [gcc, clang]
+        TESTING: testimage
 
 qemuarm:
   extends: .build
