@@ -51,7 +51,7 @@ PROVIDES += "\
 	virtual/libc-locale \
 "
 
-PKGV = "${EAT_VER_MAIN}"
+PV = "${EAT_VER_MAIN}"
 
 BINV = "${EAT_VER_GCC}"
 
