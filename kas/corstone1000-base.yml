@@ -5,7 +5,7 @@ distro: poky-tiny
 
 defaults:
   repos:
-    refspec: master
+    refspec: kirkstone
 
 repos:
   meta-arm:
@@ -16,7 +16,6 @@ repos:
 
   poky:
     url: https://git.yoctoproject.org/git/poky
-    refspec: master
     layers:
       meta:
       meta-poky:
@@ -24,14 +23,9 @@ repos:
 
   meta-openembedded:
     url: https://git.openembedded.org/meta-openembedded
-    refspec: master
     layers:
       meta-oe:
       meta-python:
-
-  meta-arm-image:
-     url: https://git.gitlab.arm.com/arm-reference-solutions/meta-arm-image.git
-     refspec: e075959fd718bc3dcedf68965eb9f9205b88d5d0
 
 local_conf_header:
   base: |
