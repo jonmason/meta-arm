@@ -29,10 +29,6 @@ repos:
       meta-oe:
       meta-python:
 
-  meta-arm-image:
-     url: https://git.gitlab.arm.com/arm-reference-solutions/meta-arm-image.git
-     refspec: 9f611833ef58394b707836d69356c4e27d0265fc 
-
 local_conf_header:
   base: |
     CONF_VERSION = "2"
