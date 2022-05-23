@@ -3,13 +3,6 @@ header:
   includes:
     - kas/corstone1000-base.yml
 
-repos:
-  run-scripts:
-     url: https://git.gitlab.arm.com/arm-reference-solutions/model-scripts.git
-     refspec: b40b4227fe6b6fc8e4b688db8928f4be76e94eb7
-     layers:
-      .: 'excluded'
-
 machine: corstone1000-fvp
 
 local_conf_header:
