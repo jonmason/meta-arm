@@ -9,5 +9,9 @@ repos:
     layers:
       meta-zephyr-core:
 
+local_conf_header:
+  gcc12bug: |
+    EXTRA_OECONF:append:pn-gcc-runtime = " ac_cv_func_fcntl=no  ac_cv_func_getexecname=no"
+
 target:
   - zephyr-kernel-test-all
