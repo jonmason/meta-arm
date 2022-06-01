@@ -5,7 +5,7 @@ distro: poky
 
 defaults:
   repos:
-    refspec: kirkstone
+    refspec: master
 
 repos:
   meta-arm:
