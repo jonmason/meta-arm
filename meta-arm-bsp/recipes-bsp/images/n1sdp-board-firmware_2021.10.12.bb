@@ -2,7 +2,7 @@ SUMMARY = "Board Firmware binaries for N1SDP"
 SECTION = "firmware"
 
 LICENSE = "STM-SLA0044-Rev5"
-LIC_FILES_CHKSUM = "file://LICENSES/STM.TXT;md5=4b8dab81d0bfc0a5f63c9a983402705b"
+LIC_FILES_CHKSUM = "file://LICENSES/STM.TXT;md5=cd18335eff80d0a690a650f0e6748baf"
 
 inherit deploy
 
@@ -11,10 +11,11 @@ INHIBIT_DEFAULT_DEPS = "1"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 COMPATIBLE_MACHINE = "n1sdp"
 
-SRC_URI = "https://git.linaro.org/landing-teams/working/arm/n1sdp-board-firmware.git/snapshot/${BPN}-N1SDP-${PV}.tar.gz"
-SRC_URI[sha256sum] = "57feba404026f2d6d49c167d63e0e84653ad8b808b13e2244b81fea9e0d58d66"
+SRC_URI = "git://git.gitlab.arm.com/arm-reference-solutions/board-firmware.git;protocol=https;branch=n1sdp"
 
-S = "${WORKDIR}/${BPN}-N1SDP-${PV}"
+SRCREV = "e6cd91c7a9733e501bc3b57ff6f9eb2461ffee54"
+
+S = "${WORKDIR}/git"
 
 INSTALL_DIR = "/n1sdp-board-firmware_source"
 
