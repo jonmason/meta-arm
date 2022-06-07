@@ -68,6 +68,8 @@ SRC_URI:append:fvp-baser-aemv8r64 = " \
     file://0006-vexpress64-Do-not-set-COUNTER_FREQUENCY.patch \
     file://0007-vexpress64-Configure-memory-using-device-tree.patch \
     file://0008-vexpress64-Enable-LIBFDT_OVERLAY-in-the-vexpress_aem.patch \
+    file://0009-armv8-Allow-PRBAR-MPU-attributes-to-be-configured.patch \
+    file://0010-armv8-Enable-icache-when-switching-exception-levels-.patch \
     "
 
 #
