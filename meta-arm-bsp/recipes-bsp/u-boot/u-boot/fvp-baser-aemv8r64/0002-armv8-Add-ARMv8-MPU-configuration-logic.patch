@@ -1,7 +1,7 @@
-From 313710181095d032921d9e4111bc4a575bf88147 Mon Sep 17 00:00:00 2001
+From 4d22ed70639c2d0c9c537efd549e563d4856305b Mon Sep 17 00:00:00 2001
 From: Peter Hoyes <Peter.Hoyes@arm.com>
 Date: Wed, 26 May 2021 17:41:10 +0100
-Subject: [PATCH 06/11] armv8: Add ARMv8 MPU configuration logic
+Subject: [PATCH 2/8] armv8: Add ARMv8 MPU configuration logic
 
 Detect whether an MMU is present at the current exception level. If
 not, initialize the MPU instead of the MMU during init, and clear the

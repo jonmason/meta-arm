@@ -1,7 +1,7 @@
-From 511f1b1a8534da8f4947561a70d0fbe9cea5b84c Mon Sep 17 00:00:00 2001
+From d7c03f8d297faa641e267c69e83e3582a524af50 Mon Sep 17 00:00:00 2001
 From: Peter Hoyes <Peter.Hoyes@arm.com>
 Date: Fri, 10 Dec 2021 15:09:09 +0000
-Subject: [PATCH 10/11] vexpress64: Do not set COUNTER_FREQUENCY
+Subject: [PATCH 6/8] vexpress64: Do not set COUNTER_FREQUENCY
 
 VExpress boards normally run as a second-stage bootloader so should not
 need to modify CNTFRQ_EL0. On the BASER_FVP, U-Boot can modify it if
@@ -19,10 +19,10 @@ Change-Id: I137473d721e58e4c348b9641f5b9778178d3bb65
  1 file changed, 3 deletions(-)
 
 diff --git a/include/configs/vexpress_aemv8.h b/include/configs/vexpress_aemv8.h
-index ef271ea89b..76935f3173 100644
+index 8050f42f8b..dbf6f04230 100644
 --- a/include/configs/vexpress_aemv8.h
 +++ b/include/configs/vexpress_aemv8.h
-@@ -70,9 +70,6 @@
+@@ -73,9 +73,6 @@
  #define V2M_SYS_CFGCTRL			(V2M_SYSREGS + 0x0a4)
  #define V2M_SYS_CFGSTAT			(V2M_SYSREGS + 0x0a8)
  

@@ -1,7 +1,7 @@
-From 90db3d923adcade13d9a8aa50305e5c9c32737af Mon Sep 17 00:00:00 2001
+From 11a86f5a8c63b4b42dd976ab66c9abfaa4dce1cc Mon Sep 17 00:00:00 2001
 From: Peter Hoyes <Peter.Hoyes@arm.com>
 Date: Thu, 17 Feb 2022 17:02:34 +0000
-Subject: [PATCH 1/2] vexpress64: Configure memory using device tree
+Subject: [PATCH 7/8] vexpress64: Configure memory using device tree
 
 The memory size and memory banks were previously configured statically,
 using #defines in the vexpress header file, which could conflict with
@@ -20,7 +20,7 @@ Change-Id: I4add8258cb99dac87f078435272410b562b6fdc7
  2 files changed, 2 insertions(+), 29 deletions(-)
 
 diff --git a/board/armltd/vexpress64/vexpress64.c b/board/armltd/vexpress64/vexpress64.c
-index 270618a0ff..3f1ac04bac 100644
+index aebf1d9466..84a7810775 100644
 --- a/board/armltd/vexpress64/vexpress64.c
 +++ b/board/armltd/vexpress64/vexpress64.c
 @@ -24,8 +24,6 @@
@@ -56,10 +56,10 @@ index 270618a0ff..3f1ac04bac 100644
  
  /* Assigned in lowlevel_init.S
 diff --git a/include/configs/vexpress_aemv8.h b/include/configs/vexpress_aemv8.h
-index a9086879c9..15a1ae60bf 100644
+index dbf6f04230..85a9fcc198 100644
 --- a/include/configs/vexpress_aemv8.h
 +++ b/include/configs/vexpress_aemv8.h
-@@ -106,23 +106,6 @@
+@@ -104,23 +104,6 @@
  /* BOOTP options */
  #define CONFIG_BOOTP_BOOTFILESIZE
  
