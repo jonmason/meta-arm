@@ -73,6 +73,8 @@ SRC_URI:append:fvp-baser-aemv8r64 = " \
     file://0011-vexpress64-Add-BASER_FVP-vexpress-board-variant.patch \
     file://0012-vexpress64-Configure-memory-using-device-tree.patch \
     file://0013-vexpress64-Enable-LIBFDT_OVERLAY-in-the-vexpress_aem.patch \
+    file://0014-armv8-Allow-PRBAR-MPU-attributes-to-be-configured.patch \
+    file://0015-armv8-Enable-icache-when-switching-exception-levels-.patch \
     "
 
 #
