@@ -2,7 +2,7 @@
 set -u
 
 HOST_ARCH=$(uname -m)
-VER="10.3-2021.07"
+VER="11.2-2022.02"
 
 DOWNLOAD_DIR=$1
 TOOLCHAIN_DIR=$2
