@@ -48,6 +48,7 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 DEPENDS += "cmake-native \
             ninja-native \
+            gcc-arm-none-eabi-native \
             python3-intelhex-native \
             python3-jinja2-native \
             python3-pyyaml-native \
@@ -68,13 +69,13 @@ python() {
         raise bb.parse.SkipRecipe("TFM_PLATFORM needs to be set")
 }
 
-PACKAGECONFIG ??= "cc-gnuarm"
-# What compiler to use
-PACKAGECONFIG[cc-gnuarm] = "-DTFM_TOOLCHAIN_FILE=${S}/toolchain_GNUARM.cmake,,gcc-arm-none-eabi-native"
-PACKAGECONFIG[cc-armclang] = "-DTFM_TOOLCHAIN_FILE=${S}/toolchain_ARMCLANG.cmake,,armcompiler-native"
+PACKAGECONFIG ??= ""
 # Whether to integrate the test suite
 PACKAGECONFIG[test-secure] = "-DTEST_S=ON,-DTEST_S=OFF"
 PACKAGECONFIG[test-nonsecure] = "-DTEST_NS=ON,-DTEST_NS=OFF"
+
+# Currently we only support using the Arm binary GCC
+EXTRA_OECMAKE += "-DTFM_TOOLCHAIN_FILE=${S}/toolchain_GNUARM.cmake"
 
 # Don't let FetchContent download more sources during do_configure
 EXTRA_OECMAKE += "-DFETCHCONTENT_FULLY_DISCONNECTED=ON"
