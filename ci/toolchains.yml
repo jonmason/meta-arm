@@ -11,9 +11,7 @@ local_conf_header:
   toolchains: |
     SDKMACHINE = "x86_64"
 
-# No target armcompiler as currently there is no arm64 build
 target:
-  - nativesdk-armcompiler
   - gcc-aarch64-none-elf
   - nativesdk-gcc-aarch64-none-elf
   - gcc-arm-none-eabi

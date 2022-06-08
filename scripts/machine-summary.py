@@ -145,7 +145,6 @@ recipes = ("virtual/kernel",
            "edk2-firmware",
            "u-boot",
            "optee-os",
-           "armcompiler-native",
            "gcc-aarch64-none-elf-native",
            "gcc-arm-none-eabi-native")
 

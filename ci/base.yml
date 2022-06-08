@@ -30,7 +30,7 @@ local_conf_header:
     CONF_VERSION = "2"
     BB_NUMBER_THREADS = "16"
     PARALLEL_MAKE = "-j16"
-    LICENSE_FLAGS_ACCEPTED += "armcompiler Arm-FVP-EULA"
+    LICENSE_FLAGS_ACCEPTED += "Arm-FVP-EULA"
   setup: |
     PACKAGE_CLASSES = "package_ipk"
     PACKAGECONFIG:remove:pn-qemu-system-native = "gtk+ sdl"
