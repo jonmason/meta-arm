@@ -1,4 +1,4 @@
-require recipes-bsp/uefi/edk2-firmware_202202.bb
+require recipes-bsp/uefi/edk2-firmware_202205.bb
 PROVIDES:remove = "virtual/bootloader"
 
 LICENSE += "& Apache-2.0"
@@ -8,8 +8,6 @@ SRC_URI += "git://github.com/ARM-software/sbsa-acs;destsuffix=edk2/ShellPkg/Appl
             git://github.com/tianocore/edk2-libc;destsuffix=edk2/edk2-libc;protocol=https;branch=master;name=libc \
             file://shell.patch \
             file://use_bfd_linker.patch \
-            file://0001-BaseTools-fix-gcc12-warning.patch \
-            file://0001-BaseTools-fix-gcc12-warning-1.patch \
             "
 
 SRCREV_acs = "ec02a7736ae5714326507c60595f4d5299e3dec8"

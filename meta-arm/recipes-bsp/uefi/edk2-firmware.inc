@@ -18,6 +18,7 @@ SRC_URI = "\
     ${EDK2_SRC_URI};name=edk2;destsuffix=edk2;nobranch=1 \
     ${EDK2_PLATFORMS_SRC_URI};name=edk2-platforms;destsuffix=edk2/edk2-platforms;nobranch=1 \
     file://unaligned.patch \
+    file://default.patch \
 "
 
 SRCREV_FORMAT         = "edk2_edk2-platforms"
@@ -27,10 +28,6 @@ COMPATIBLE_MACHINE ?= "invalid"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 EDK2_BUILD_RELEASE = "1"
-# Release builds don't work with clang yet:
-# https://bugzilla.tianocore.org/show_bug.cgi?id=3758.
-# Can be removed in 202202 (c9b7c6e)
-EDK2_BUILD_RELEASE:toolchain-clang = "0"
 
 EDK2_PLATFORM      = "unset"
 # build --platform
