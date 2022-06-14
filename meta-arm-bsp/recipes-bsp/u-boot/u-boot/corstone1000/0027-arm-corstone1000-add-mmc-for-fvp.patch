@@ -1,4 +1,4 @@
-From fcae21d3dc049dd5a54e7515085b04ac1f887486 Mon Sep 17 00:00:00 2001
+From cbf16548dc6dcc8eea97aa18c6ae17fb848e5c6c Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Tue, 5 Apr 2022 10:24:38 +0100
 Subject: [PATCH 27/27] arm:corstone1000: add mmc for fvp
@@ -144,5 +144,5 @@ index 06b605e43bdf..d9855bf91ebf 100644
  #include <config_distro_bootcmd.h>
  
 -- 
-2.35.1
+2.30.2
 

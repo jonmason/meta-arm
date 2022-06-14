@@ -1,4 +1,4 @@
-From 69bded9c0eddae50a9346a316c359f75057bd5c3 Mon Sep 17 00:00:00 2001
+From af2defbfaffa4264052e30f269b91794068e4773 Mon Sep 17 00:00:00 2001
 From: Vishnu Banavath <vishnu.banavath@arm.com>
 Date: Wed, 5 Jan 2022 17:56:09 +0000
 Subject: [PATCH 25/27] efi_loader: send bootcomplete message to secure enclave
@@ -32,7 +32,7 @@ index a7445e61348b..06b605e43bdf 100644
  #define PREP_SEPROXY_SVC_ID_MASK	GENMASK(31, 16)
  #define PREP_SEPROXY_SVC_ID(x)	 (FIELD_PREP(PREP_SEPROXY_SVC_ID_MASK, (x)))
 diff --git a/lib/efi_loader/efi_boottime.c b/lib/efi_loader/efi_boottime.c
-index 6743ec6483b4..28185c0d7750 100644
+index b58a8c98fd05..d0703060491b 100644
 --- a/lib/efi_loader/efi_boottime.c
 +++ b/lib/efi_loader/efi_boottime.c
 @@ -2101,46 +2101,6 @@ static void efi_exit_caches(void)
@@ -99,10 +99,10 @@ index 6743ec6483b4..28185c0d7750 100644
  	efi_set_watchdog(0);
  	WATCHDOG_RESET();
 diff --git a/lib/efi_loader/efi_firmware.c b/lib/efi_loader/efi_firmware.c
-index 85fb5254ebd5..a7f7598eab02 100644
+index 9eb89849b28d..477ad072070e 100644
 --- a/lib/efi_loader/efi_firmware.c
 +++ b/lib/efi_loader/efi_firmware.c
-@@ -353,7 +353,7 @@ static efi_status_t efi_corstone1000_img_info_get (
+@@ -356,7 +356,7 @@ static efi_status_t efi_corstone1000_img_info_get (
  		*package_version_name = NULL; /* not supported */
  
  	if(image_info == NULL) {
@@ -112,7 +112,7 @@ index 85fb5254ebd5..a7f7598eab02 100644
  	}
  
 diff --git a/lib/efi_loader/efi_setup.c b/lib/efi_loader/efi_setup.c
-index bac1873d77db..d55992715c67 100644
+index 989380d4f8cd..515a0bdf74ef 100644
 --- a/lib/efi_loader/efi_setup.c
 +++ b/lib/efi_loader/efi_setup.c
 @@ -17,6 +17,9 @@
@@ -187,5 +187,5 @@ index bac1873d77db..d55992715c67 100644
  	if (ret != EFI_SUCCESS) {
  		printf("EFI: Corstone-1000: cannot allocate caspsule shared buffer\n");
 -- 
-2.35.1
+2.30.2
 

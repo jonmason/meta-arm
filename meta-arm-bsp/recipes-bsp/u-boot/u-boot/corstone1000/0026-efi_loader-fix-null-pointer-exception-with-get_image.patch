@@ -1,4 +1,4 @@
-From c1b959c9a3a4f09bbe69d088211bd0ecd0d0a071 Mon Sep 17 00:00:00 2001
+From 2da8554ab732c59c7ca624ac4b16412fa9c2e39c Mon Sep 17 00:00:00 2001
 From: Vishnu Banavath <vishnu.banavath@arm.com>
 Date: Fri, 14 Jan 2022 15:24:18 +0000
 Subject: [PATCH 26/27] efi_loader: fix null pointer exception with
@@ -16,10 +16,10 @@ Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
  1 file changed, 11 insertions(+), 8 deletions(-)
 
 diff --git a/lib/efi_loader/efi_firmware.c b/lib/efi_loader/efi_firmware.c
-index a7f7598eab02..d5f4788c8fdb 100644
+index 477ad072070e..f99c57fde576 100644
 --- a/lib/efi_loader/efi_firmware.c
 +++ b/lib/efi_loader/efi_firmware.c
-@@ -344,26 +344,29 @@ static efi_status_t efi_corstone1000_img_info_get (
+@@ -347,26 +347,29 @@ static efi_status_t efi_corstone1000_img_info_get (
  	int i = 0;
  
  	*image_info_size = sizeof(*image_info);
@@ -58,5 +58,5 @@ index a7f7598eab02..d5f4788c8fdb 100644
  					     IMAGE_ATTRIBUTE_AUTHENTICATION_REQUIRED;
  	image_info[i].attributes_setting = IMAGE_ATTRIBUTE_IMAGE_UPDATABLE;
 -- 
-2.35.1
+2.30.2
 

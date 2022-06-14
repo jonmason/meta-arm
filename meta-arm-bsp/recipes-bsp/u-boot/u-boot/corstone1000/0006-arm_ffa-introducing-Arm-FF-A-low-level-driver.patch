@@ -1,4 +1,4 @@
-From fb63805bdd396264a30eee9ce7b0dc0e4b2aa2b2 Mon Sep 17 00:00:00 2001
+From ede21dc1ca75132698cc81e88357c5789ccf67c7 Mon Sep 17 00:00:00 2001
 From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 Date: Tue, 16 Nov 2021 12:34:52 +0000
 Subject: [PATCH 06/27] arm_ffa: introducing Arm FF-A low-level driver
@@ -58,10 +58,10 @@ Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
  create mode 100644 lib/arm-ffa/arm_ffa_helper.c
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 90666ce376cd..6e791039c024 100644
+index 96582fc67777..14307e6da644 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -224,6 +224,14 @@ F:	board/CZ.NIC/
+@@ -232,6 +232,14 @@ F:	board/CZ.NIC/
  F:	configs/turris_*_defconfig
  F:	include/configs/turris_*.h
  
@@ -143,20 +143,20 @@ index 22fd541f9a28..45eca83a473c 100644
  	DEFINE(ARM_SMCCC_QUIRK_STATE_OFFS, offsetof(struct arm_smccc_quirk, state));
  #endif
 diff --git a/common/board_r.c b/common/board_r.c
-index 31a59c585a8d..d3ebae718976 100644
+index c24d9b4e220b..af20f38b104c 100644
 --- a/common/board_r.c
 +++ b/common/board_r.c
-@@ -78,6 +78,9 @@
- #ifdef CONFIG_EFI_SETUP_EARLY
+@@ -61,6 +61,9 @@
+ #include <wdt.h>
+ #include <asm-generic/gpio.h>
  #include <efi_loader.h>
- #endif
 +#ifdef CONFIG_ARM_FFA_TRANSPORT
 +#include <arm_ffa_helper.h>
 +#endif
  
  DECLARE_GLOBAL_DATA_PTR;
  
-@@ -781,6 +784,9 @@ static init_fnc_t init_sequence_r[] = {
+@@ -770,6 +773,9 @@ static init_fnc_t init_sequence_r[] = {
  	INIT_FUNC_WATCHDOG_RESET
  	initr_net,
  #endif
@@ -2320,10 +2320,10 @@ index 7f2be2339475..54980a130fdb 100644
  
  #define arm_smccc_smc_quirk(...) __arm_smccc_smc(__VA_ARGS__)
 diff --git a/lib/Kconfig b/lib/Kconfig
-index 807a4c6ade06..333e35a90964 100644
+index 3c6fa99b1a6a..473821b882e2 100644
 --- a/lib/Kconfig
 +++ b/lib/Kconfig
-@@ -771,6 +771,7 @@ config SMBIOS_PARSER
+@@ -810,6 +810,7 @@ config SMBIOS_PARSER
  source lib/efi/Kconfig
  source lib/efi_loader/Kconfig
  source lib/optee/Kconfig
@@ -2332,7 +2332,7 @@ index 807a4c6ade06..333e35a90964 100644
  config TEST_FDTDEC
  	bool "enable fdtdec test"
 diff --git a/lib/Makefile b/lib/Makefile
-index 5ddbc77ed6d8..ddfd70997da4 100644
+index 11b03d1cbec8..8e6fad613067 100644
 --- a/lib/Makefile
 +++ b/lib/Makefile
 @@ -9,6 +9,7 @@ obj-$(CONFIG_EFI) += efi/
@@ -2564,7 +2564,7 @@ index 000000000000..623899d38044
 +	return 0;
 +}
 diff --git a/lib/efi_loader/efi_boottime.c b/lib/efi_loader/efi_boottime.c
-index 20b69699fe94..eaa43d784ef1 100644
+index 5bcb8253edba..cffa2c69d621 100644
 --- a/lib/efi_loader/efi_boottime.c
 +++ b/lib/efi_loader/efi_boottime.c
 @@ -23,6 +23,10 @@
@@ -2606,5 +2606,5 @@ index 20b69699fe94..eaa43d784ef1 100644
  	efi_runtime_detach();
  
 -- 
-2.35.1
+2.30.2
 

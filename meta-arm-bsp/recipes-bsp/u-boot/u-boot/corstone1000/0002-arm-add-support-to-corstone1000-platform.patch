@@ -1,4 +1,4 @@
-From 04b82ccd9ae7620039dff6cfb6445e62bd3be0b5 Mon Sep 17 00:00:00 2001
+From 5cc889db3279ef4944ab64e36db3dbab1bf9ffa5 Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Tue, 15 Feb 2022 09:44:10 +0000
 Subject: [PATCH 02/27] arm: add support to corstone1000 platform
@@ -42,12 +42,12 @@ Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
  create mode 100644 include/configs/corstone1000.h
 
 diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
-index f7f03837feb4..71c1e93eb7cf 100644
+index 4567c183fb84..d64051b533a7 100644
 --- a/arch/arm/Kconfig
 +++ b/arch/arm/Kconfig
-@@ -1250,6 +1250,12 @@ config TARGET_VEXPRESS64_JUNO
- 	select BLK
+@@ -1266,6 +1266,12 @@ config TARGET_VEXPRESS64_JUNO
  	select USB
+ 	imply OF_HAS_PRIOR_STAGE
  
 +config TARGET_CORSTONE1000
 +	bool "Support Corstone1000 Platform"
@@ -58,7 +58,7 @@ index f7f03837feb4..71c1e93eb7cf 100644
  config TARGET_TOTAL_COMPUTE
  	bool "Support Total Compute Platform"
  	select ARM64
-@@ -2152,6 +2158,8 @@ source "arch/arm/mach-nexell/Kconfig"
+@@ -2198,6 +2204,8 @@ source "arch/arm/mach-nexell/Kconfig"
  
  source "board/armltd/total_compute/Kconfig"
  
@@ -68,19 +68,19 @@ index f7f03837feb4..71c1e93eb7cf 100644
  source "board/bosch/guardian/Kconfig"
  source "board/Marvell/octeontx/Kconfig"
 diff --git a/arch/arm/dts/Makefile b/arch/arm/dts/Makefile
-index b3e2a9c9d77b..5f91fd0ad707 100644
+index 644ba961a223..7de25d09c9fe 100644
 --- a/arch/arm/dts/Makefile
 +++ b/arch/arm/dts/Makefile
-@@ -1163,6 +1163,9 @@ dtb-$(CONFIG_TARGET_IMX8MM_CL_IOT_GATE_OPTEE) += imx8mm-cl-iot-gate-optee.dtb
+@@ -1215,6 +1215,9 @@ dtb-$(CONFIG_TARGET_EA_LPC3250DEVKITV2) += lpc3250-ea3250.dtb
  
- dtb-$(CONFIG_TARGET_EA_LPC3250DEVKITV2) += lpc3250-ea3250.dtb
+ dtb-$(CONFIG_ARCH_QEMU) += qemu-arm.dtb qemu-arm64.dtb
  
 +dtb-$(CONFIG_TARGET_CORSTONE1000) += corstone1000-mps3.dtb \
 +				     corstone1000-fvp.dtb
 +
- targets += $(dtb-y)
+ include $(srctree)/scripts/Makefile.dts
  
- # Add any required device tree compiler flags here
+ targets += $(dtb-y)
 diff --git a/arch/arm/dts/corstone1000-fvp.dts b/arch/arm/dts/corstone1000-fvp.dts
 new file mode 100644
 index 000000000000..1fcc137a493c
@@ -673,5 +673,5 @@ index 000000000000..cf166f107efd
 +				"bootefi $kernel_addr_r $fdtcontroladdr;"
 +#endif
 -- 
-2.35.1
+2.30.2
 

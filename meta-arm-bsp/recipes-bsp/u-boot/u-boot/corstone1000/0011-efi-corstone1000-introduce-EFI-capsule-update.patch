@@ -1,4 +1,4 @@
-From e6a9c52b70e53d359e24ec024716c40391b77572 Mon Sep 17 00:00:00 2001
+From e70d0128090158872847b82b82cdbcf0e2f13885 Mon Sep 17 00:00:00 2001
 From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 Date: Thu, 11 Nov 2021 16:27:59 +0000
 Subject: [PATCH 11/27] efi: corstone1000: introduce EFI capsule update
@@ -58,10 +58,10 @@ index afc9ccfc192b..a400cdef69d0 100644
  #define MM_SP_UUID_DATA	\
  	0xed, 0x32, 0xd5, 0x33,	\
 diff --git a/include/efi_loader.h b/include/efi_loader.h
-index 1866439ab51e..529051c83206 100644
+index 126db279dd3e..01b432e6184b 100644
 --- a/include/efi_loader.h
 +++ b/include/efi_loader.h
-@@ -957,11 +957,11 @@ extern const struct efi_firmware_management_protocol efi_fmp_fit;
+@@ -965,11 +965,11 @@ extern const struct efi_firmware_management_protocol efi_fmp_fit;
  extern const struct efi_firmware_management_protocol efi_fmp_raw;
  
  /* Capsule update */
@@ -76,7 +76,7 @@ index 1866439ab51e..529051c83206 100644
  		efi_uintn_t capsule_count,
  		u64 *maximum_capsule_size,
 diff --git a/lib/efi_loader/efi_boottime.c b/lib/efi_loader/efi_boottime.c
-index eaa43d784ef1..c3e67f791312 100644
+index cffa2c69d621..5c77a40c3ebe 100644
 --- a/lib/efi_loader/efi_boottime.c
 +++ b/lib/efi_loader/efi_boottime.c
 @@ -2096,6 +2096,44 @@ static void efi_exit_caches(void)
@@ -141,10 +141,10 @@ index eaa43d784ef1..c3e67f791312 100644
  	efi_set_watchdog(0);
  	WATCHDOG_RESET();
 diff --git a/lib/efi_loader/efi_capsule.c b/lib/efi_loader/efi_capsule.c
-index 8301eed6317d..5a5936b03325 100644
+index f00440163d41..c100c1b95298 100644
 --- a/lib/efi_loader/efi_capsule.c
 +++ b/lib/efi_loader/efi_capsule.c
-@@ -23,6 +23,14 @@
+@@ -24,6 +24,14 @@
  #include <crypto/pkcs7_parser.h>
  #include <linux/err.h>
  
@@ -159,7 +159,7 @@ index 8301eed6317d..5a5936b03325 100644
  DECLARE_GLOBAL_DATA_PTR;
  
  const efi_guid_t efi_guid_capsule_report = EFI_CAPSULE_REPORT_GUID;
-@@ -508,6 +516,89 @@ static efi_status_t efi_capsule_update_firmware(
+@@ -509,6 +517,89 @@ static efi_status_t efi_capsule_update_firmware(
  }
  #endif /* CONFIG_EFI_CAPSULE_FIRMWARE_MANAGEMENT */
  
@@ -249,7 +249,7 @@ index 8301eed6317d..5a5936b03325 100644
  /**
   * efi_update_capsule() - process information from operating system
   * @capsule_header_array:	Array of virtual address pointers
-@@ -521,7 +612,7 @@ static efi_status_t efi_capsule_update_firmware(
+@@ -522,7 +613,7 @@ static efi_status_t efi_capsule_update_firmware(
   *
   * Return:			status code
   */
@@ -258,7 +258,7 @@ index 8301eed6317d..5a5936b03325 100644
  		struct efi_capsule_header **capsule_header_array,
  		efi_uintn_t capsule_count,
  		u64 scatter_gather_list)
-@@ -538,6 +629,13 @@ efi_status_t EFIAPI efi_update_capsule(
+@@ -539,6 +630,13 @@ efi_status_t EFIAPI efi_update_capsule(
  		goto out;
  	}
  
@@ -272,9 +272,9 @@ index 8301eed6317d..5a5936b03325 100644
  	ret = EFI_SUCCESS;
  	for (i = 0, capsule = *capsule_header_array; i < capsule_count;
  	     i++, capsule = *(++capsule_header_array)) {
-@@ -550,6 +648,39 @@ efi_status_t EFIAPI efi_update_capsule(
+@@ -551,6 +649,39 @@ efi_status_t EFIAPI efi_update_capsule(
  
- 		log_debug("Capsule[%d] (guid:%pUl)\n",
+ 		log_debug("Capsule[%d] (guid:%pUs)\n",
  			  i, &capsule->capsule_guid);
 +
 +#if CONFIG_IS_ENABLED(TARGET_CORSTONE1000)
@@ -312,7 +312,7 @@ index 8301eed6317d..5a5936b03325 100644
  		if (!guidcmp(&capsule->capsule_guid,
  			     &efi_guid_firmware_management_capsule_id)) {
  			ret  = efi_capsule_update_firmware(capsule);
-@@ -588,7 +719,7 @@ out:
+@@ -589,7 +720,7 @@ out:
   *
   * Return:			status code
   */
@@ -322,7 +322,7 @@ index 8301eed6317d..5a5936b03325 100644
  		efi_uintn_t capsule_count,
  		u64 *maximum_capsule_size,
 diff --git a/lib/efi_loader/efi_setup.c b/lib/efi_loader/efi_setup.c
-index 49172e357989..bac1873d77db 100644
+index eee54e48784f..989380d4f8cd 100644
 --- a/lib/efi_loader/efi_setup.c
 +++ b/lib/efi_loader/efi_setup.c
 @@ -16,6 +16,13 @@
@@ -352,8 +352,8 @@ index 49172e357989..bac1873d77db 100644
 +#endif
 +
  	if (IS_ENABLED(CONFIG_EFI_HAVE_CAPSULE_UPDATE)) {
- 		ret = efi_set_variable_int(L"CapsuleMax",
+ 		ret = efi_set_variable_int(u"CapsuleMax",
  					   &efi_guid_capsule_report,
 -- 
-2.35.1
+2.30.2
 

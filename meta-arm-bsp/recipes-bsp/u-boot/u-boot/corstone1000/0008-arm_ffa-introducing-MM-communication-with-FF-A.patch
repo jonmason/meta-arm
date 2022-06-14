@@ -1,4 +1,4 @@
-From 4445ccbdd5ef52a6ca041d670f46d9aff104c0a0 Mon Sep 17 00:00:00 2001
+From 2f09d4a2e87febd7365b9e18d669208ff2c35edc Mon Sep 17 00:00:00 2001
 From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 Date: Wed, 13 Oct 2021 17:51:44 +0100
 Subject: [PATCH 08/27] arm_ffa: introducing MM communication with FF-A
@@ -30,7 +30,7 @@ Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
  2 files changed, 273 insertions(+), 6 deletions(-)
 
 diff --git a/lib/efi_loader/Kconfig b/lib/efi_loader/Kconfig
-index 24f9a2bb7571..4c914c712275 100644
+index e5e35fe51f65..6827b821545e 100644
 --- a/lib/efi_loader/Kconfig
 +++ b/lib/efi_loader/Kconfig
 @@ -56,13 +56,23 @@ config EFI_VARIABLE_FILE_STORE
@@ -60,7 +60,7 @@ index 24f9a2bb7571..4c914c712275 100644
  
  config EFI_VARIABLES_PRESEED
 diff --git a/lib/efi_loader/efi_variable_tee.c b/lib/efi_loader/efi_variable_tee.c
-index a2c65e369478..97c41b69dd78 100644
+index dfef18435dfa..9cb8cfb9c779 100644
 --- a/lib/efi_loader/efi_variable_tee.c
 +++ b/lib/efi_loader/efi_variable_tee.c
 @@ -15,6 +15,28 @@
@@ -369,7 +369,7 @@ index a2c65e369478..97c41b69dd78 100644
  	/*
  	 * There seems to be a bug in EDK2 miscalculating the boundaries and
  	 * size checks, so deduct 2 more bytes to fulfill this requirement. Fix
-@@ -688,7 +945,7 @@ void efi_variables_boot_exit_notify(void)
+@@ -697,7 +954,7 @@ void efi_variables_boot_exit_notify(void)
  		ret = EFI_NOT_FOUND;
  
  	if (ret != EFI_SUCCESS)
@@ -379,5 +379,5 @@ index a2c65e369478..97c41b69dd78 100644
  
  	/*
 -- 
-2.35.1
+2.30.2
 

@@ -1,4 +1,4 @@
-From ba83ce7fae42ced6ec25108cd96dd31c534d2706 Mon Sep 17 00:00:00 2001
+From 67a755f74716068cfd44a8897c31151fe9ee4328 Mon Sep 17 00:00:00 2001
 From: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
 Date: Thu, 18 Nov 2021 16:42:59 +0000
 Subject: [PATCH 13/27] corstone1000: Make sure shared buffer contents are not
@@ -24,7 +24,7 @@ Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
  1 file changed, 6 insertions(+)
 
 diff --git a/lib/efi_loader/efi_variable_tee.c b/lib/efi_loader/efi_variable_tee.c
-index 97c41b69dd78..a32f119c8c2b 100644
+index 9cb8cfb9c779..b6be2b54a030 100644
 --- a/lib/efi_loader/efi_variable_tee.c
 +++ b/lib/efi_loader/efi_variable_tee.c
 @@ -22,6 +22,7 @@
@@ -48,5 +48,5 @@ index 97c41b69dd78..a32f119c8c2b 100644
  
  	ffa_ret = ffa_notify_mm_sp();
 -- 
-2.35.1
+2.30.2
 

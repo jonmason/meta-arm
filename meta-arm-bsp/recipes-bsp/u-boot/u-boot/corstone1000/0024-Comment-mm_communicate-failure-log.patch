@@ -1,4 +1,4 @@
-From bcf3c59b1a73c7291d1acdbb23a36341020db32a Mon Sep 17 00:00:00 2001
+From c0c6e4c1166c4868afc36649b9ed98081a6966e1 Mon Sep 17 00:00:00 2001
 From: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
 Date: Fri, 24 Dec 2021 14:22:52 +0000
 Subject: [PATCH 24/27] Comment mm_communicate failure log
@@ -14,7 +14,7 @@ Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
  1 file changed, 4 insertions(+), 1 deletion(-)
 
 diff --git a/lib/efi_loader/efi_variable_tee.c b/lib/efi_loader/efi_variable_tee.c
-index fe3a5a7083fd..8e2496a840a4 100644
+index 67743d1f8fce..a34989efac83 100644
 --- a/lib/efi_loader/efi_variable_tee.c
 +++ b/lib/efi_loader/efi_variable_tee.c
 @@ -411,7 +411,10 @@ static efi_status_t __efi_runtime mm_communicate(u8 *comm_buf, efi_uintn_t dsize
@@ -30,5 +30,5 @@ index fe3a5a7083fd..8e2496a840a4 100644
  	}
  
 -- 
-2.35.1
+2.30.2
 

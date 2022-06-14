@@ -10,6 +10,7 @@ SRC_URI:append:corstone500 = " \
 #
 # Corstone1000 64-bit machines
 #
+DEPENDS:append:corstone1000 = " gnutls-native"
 CORSTONE1000_DEVICE_TREE:corstone1000-mps3 = "corstone1000-mps3"
 CORSTONE1000_DEVICE_TREE:corstone1000-fvp = "corstone1000-fvp"
 EXTRA_OEMAKE:append:corstone1000 = ' DEVICE_TREE=${CORSTONE1000_DEVICE_TREE}'
