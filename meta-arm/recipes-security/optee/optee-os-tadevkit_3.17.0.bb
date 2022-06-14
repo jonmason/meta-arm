@@ -1,10 +1,11 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}/optee-os:"
-require optee-os_3.16.0.bb
+require optee-os_3.17.0.bb
 
 SUMMARY = "OP-TEE Trusted OS TA devkit"
 DESCRIPTION = "OP-TEE TA devkit for build TAs"
 HOMEPAGE = "https://www.op-tee.org/"
 
+DEPENDS += "python3-pycryptodome-native"
 
 do_install() {
     #install TA devkit
