@@ -8,9 +8,7 @@ inherit deploy
 COMPATIBLE_MACHINE ?= "invalid"
 
 SRC_URI = "git://git.trustedfirmware.org/TF-A/tf-a-tests.git;protocol=https;branch=master"
-# post v2.6 snapshot
-SRCREV ?= "af5a517ae9f295455122109100fe5d55668e8eaf"
-PV .= "+git${SRCPV}"
+SRCREV ?= "5f591f67738a1bbe6b262c53d9dad46ed8bbcd67"
 
 DEPENDS += "optee-os"
 

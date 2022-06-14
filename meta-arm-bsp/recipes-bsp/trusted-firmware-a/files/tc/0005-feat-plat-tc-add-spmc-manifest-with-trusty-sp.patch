@@ -1,4 +1,4 @@
-From bdf66cf30ed4cb0c16a5335fbb68fa0b2e253f7c Mon Sep 17 00:00:00 2001
+From a04466ceb81a04c5179e8064837c34a89c2b11bd Mon Sep 17 00:00:00 2001
 From: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
 Date: Mon, 11 Apr 2022 14:43:15 +0100
 Subject: [PATCH 5/7] feat(plat/tc): add spmc manifest with trusty sp

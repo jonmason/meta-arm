@@ -1,4 +1,4 @@
-From c2f939891e46e2ef9b54ed5e270e42187fdc57b3 Mon Sep 17 00:00:00 2001
+From 96151af7eed28d63fdaa1ac6de2d14a9c71f1d4a Mon Sep 17 00:00:00 2001
 From: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
 Date: Wed, 30 Mar 2022 12:14:49 +0000
 Subject: [PATCH 6/7] feat(plat/tc): update dts with trusty compatible string

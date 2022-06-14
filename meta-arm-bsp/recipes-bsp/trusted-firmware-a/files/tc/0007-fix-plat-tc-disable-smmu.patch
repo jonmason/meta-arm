@@ -1,4 +1,4 @@
-From d67e1f76be37127b0fe2a84ee631c5a799c426ba Mon Sep 17 00:00:00 2001
+From 1a051bef6c63f6871edd8d87e969460f073820a7 Mon Sep 17 00:00:00 2001
 From: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
 Date: Wed, 27 Apr 2022 18:15:47 +0100
 Subject: [PATCH 7/7] fix(plat/tc): disable smmu

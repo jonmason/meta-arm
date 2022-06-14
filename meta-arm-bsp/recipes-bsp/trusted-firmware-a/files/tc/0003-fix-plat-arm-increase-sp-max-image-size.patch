@@ -1,4 +1,4 @@
-From d5a8e035de394f7a8924151318abc094d9ae68ae Mon Sep 17 00:00:00 2001
+From 0060b1a4fbe3bc9992f59a2d4cb986821f7bcf13 Mon Sep 17 00:00:00 2001
 From: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
 Date: Mon, 11 Apr 2022 18:31:01 +0100
 Subject: [PATCH 3/7] fix(plat/arm): increase sp max image size

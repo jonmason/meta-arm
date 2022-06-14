@@ -2,6 +2,10 @@ COMPATIBLE_MACHINE:qemuarm64-secureboot = "qemuarm64-secureboot"
 COMPATIBLE_MACHINE:qemu-generic-arm64 = "qemu-generic-arm64"
 COMPATIBLE_MACHINE:qemuarm-secureboot = "qemuarm-secureboot"
 
+#FIXME - clang fails to build tfa for qemuarm-secureboot, and possibly other
+# arm/aarch32.  This is a known testing hole in TF-A.
+TOOLCHAIN:qemuarm-secureboot = "gcc"
+
 TFA_PLATFORM:qemuarm64-secureboot = "qemu"
 TFA_PLATFORM:qemu-generic-arm64 = "qemu_sbsa"
 TFA_PLATFORM:qemuarm-secureboot = "qemu"

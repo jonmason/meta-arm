@@ -3,16 +3,10 @@
 COMPATIBLE_MACHINE = "(corstone1000)"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files/corstone1000:"
-SRCREV_tfa = "cf89fd57ed3286d7842eef41cd72a3977eb6d317"
-PV = "2.6+git${SRCPV}"
 
 SRC_URI:append = " \ 
 	file://0001-Fix-FF-A-version-in-SPMC-manifest.patch \
 	"
-
-SRC_URI:remove = " \
-     file://ssl.patch \
-     "  
 
 TFA_DEBUG = "1"
 TFA_UBOOT ?= "1"

@@ -5,12 +5,11 @@
 DESCRIPTION = "fiptool - Trusted Firmware tool for packaging"
 LICENSE = "BSD-3-Clause"
 
-SRC_URI = "git://git.trustedfirmware.org/TF-A/trusted-firmware-a.git;destsuffix=fiptool-${PV};protocol=https;branch=master \
-           file://ssl.patch"
-LIC_FILES_CHKSUM = "file://docs/license.rst;md5=713afe122abbe07f067f939ca3c480c5"
+SRC_URI = "git://git.trustedfirmware.org/TF-A/trusted-firmware-a.git;destsuffix=fiptool-${PV};protocol=https;branch=master"
+LIC_FILES_CHKSUM = "file://docs/license.rst;md5=b2c740efedc159745b9b31f88ff03dde"
 
-# Use fiptool from TF-A v2.5
-SRCREV = "c158878249f1bd930906ebd744b90d3f2a8265f1"
+# Use fiptool from TF-A v2.7
+SRCREV = "35f4c7295bafeb32c8bcbdfb6a3f2e74a57e732b"
 
 DEPENDS += "openssl-native"
 

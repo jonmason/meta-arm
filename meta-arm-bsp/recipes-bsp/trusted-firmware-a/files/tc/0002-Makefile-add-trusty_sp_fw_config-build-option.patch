@@ -1,4 +1,4 @@
-From f602df2563cbae1fce2559430a394180983fbbaf Mon Sep 17 00:00:00 2001
+From 2f8b0cc6be3787717247d1c02a45181a5ac6f125 Mon Sep 17 00:00:00 2001
 From: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
 Date: Mon, 11 Apr 2022 14:36:54 +0100
 Subject: [PATCH 2/7] Makefile: add trusty_sp_fw_config build option
@@ -12,10 +12,10 @@ Upstream-Status: Pending [Not submitted to upstream yet]
  2 files changed, 8 insertions(+)
 
 diff --git a/Makefile b/Makefile
-index f91699c44..f401a0010 100644
+index 3941f8698..a20d647a2 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -533,6 +533,10 @@ ifneq (${SPD},none)
+@@ -531,6 +531,10 @@ ifneq (${SPD},none)
              DTC_CPPFLAGS	+=	-DOPTEE_SP_FW_CONFIG
          endif
  

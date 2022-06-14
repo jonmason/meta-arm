@@ -1,7 +1,7 @@
 require trusted-firmware-a.inc
 
-# TF-A v2.6
-SRCREV_tfa = "a1f02f4f3daae7e21ee58b4c93ec3e46b8f28d15"
+# TF-A v2.7
+SRCREV_tfa = "35f4c7295bafeb32c8bcbdfb6a3f2e74a57e732b"
 
 LIC_FILES_CHKSUM += "file://docs/license.rst;md5=b2c740efedc159745b9b31f88ff03dde"
 

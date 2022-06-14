@@ -1,4 +1,4 @@
-From f6485e50af73c905faa0777e462ffdfa483d19da Mon Sep 17 00:00:00 2001
+From 000e19d360a5ad9abd7d823af86a364bac2afc58 Mon Sep 17 00:00:00 2001
 From: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
 Date: Mon, 11 Apr 2022 17:38:17 +0100
 Subject: [PATCH 4/7] fix(plat/tc): increase tc_tzc_dram1_size
@@ -30,7 +30,7 @@ index 20992294b..af64504a4 100644
  		};
  	};
 diff --git a/plat/arm/board/tc/include/platform_def.h b/plat/arm/board/tc/include/platform_def.h
-index 745d91cab..73b984308 100644
+index cd77773aa..35d8fd24e 100644
 --- a/plat/arm/board/tc/include/platform_def.h
 +++ b/plat/arm/board/tc/include/platform_def.h
 @@ -31,7 +31,7 @@
