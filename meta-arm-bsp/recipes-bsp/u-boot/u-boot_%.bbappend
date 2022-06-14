@@ -72,6 +72,13 @@ SRC_URI:append:fvp-baser-aemv8r64 = " \
     file://0010-armv8-Enable-icache-when-switching-exception-levels-.patch \
     "
 
+
+#
+# Juno Machines
+#
+SRC_URI:append:juno = " file://0001-arm-juno-add-custom-bootcmd-to-autoboot-from-uEnv.tx.patch"
+
+
 #
 # TC0 and TC1 MACHINES
 #
