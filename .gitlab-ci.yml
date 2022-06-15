@@ -73,8 +73,8 @@ update-repos:
 #  TOOLCHAINS: [gcc, clang, armgcc, external-gccarm]
 #  TCLIBC: [glibc, musl]
 #  FIRMWARE: [uboot, edk2]
-#  VIRT: [none, xen]
 #  TESTING: testimage
+#  VIRT: [none, xen]
 
 corstone500:
   extends: .build
@@ -156,6 +156,7 @@ qemuarm64-secureboot:
       - TOOLCHAINS: [gcc, clang]
         TCLIBC: [glibc, musl]
         TS: [none, trusted-services]
+        FIRMWARE: [uboot, edk2]
         TESTING: testimage
 
 qemuarm64:
@@ -163,7 +164,7 @@ qemuarm64:
   parallel:
     matrix:
       - TOOLCHAINS: [gcc, clang]
-        EFI: [uboot, edk2]
+        FIRMWARE: [uboot, edk2]
         TESTING: testimage
       - VIRT: xen
 
@@ -172,6 +173,7 @@ qemuarm-secureboot:
   parallel:
     matrix:
       - TOOLCHAINS: [gcc, clang]
+        FIRMWARE: [uboot, edk2]
         TESTING: testimage
 
 qemuarm:
@@ -179,7 +181,7 @@ qemuarm:
   parallel:
     matrix:
       - TOOLCHAINS: [gcc, clang]
-        EFI: [uboot, edk2]
+        FIRMWARE: [uboot, edk2]
         TESTING: testimage
       - VIRT: xen
 

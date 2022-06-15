@@ -3,6 +3,11 @@ EDK2_PLATFORM:qemuarm64-secureboot      = "ArmVirtQemu-AARCH64"
 EDK2_PLATFORM_DSC:qemuarm64-secureboot  = "ArmVirtPkg/ArmVirtQemu.dsc"
 EDK2_BIN_NAME:qemuarm64-secureboot      = "QEMU_EFI.fd"
 
+COMPATIBLE_MACHINE:qemuarm-secureboot = "qemuarm-secureboot"
+EDK2_PLATFORM:qemuarm-secureboot      = "ArmVirtQemu-ARM"
+EDK2_PLATFORM_DSC:qemuarm-secureboot  = "ArmVirtPkg/ArmVirtQemu.dsc"
+EDK2_BIN_NAME:qemuarm-secureboot      = "QEMU_EFI.fd"
+
 COMPATIBLE_MACHINE:qemuarm64 = "qemuarm64"
 EDK2_PLATFORM:qemuarm64      = "ArmVirtQemu-AARCH64"
 EDK2_PLATFORM_DSC:qemuarm64  = "ArmVirtPkg/ArmVirtQemu.dsc"
