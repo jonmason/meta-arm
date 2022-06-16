@@ -25,20 +25,18 @@ BB_STRICT_CHECKSUM = "ignore"
 
 S = "${WORKDIR}/${ANDROID_CLANG_VERSION}"
 
-FILES:${PN} = "${datadir} ${bindir}"
+FILES:${PN} = "${libexecdir} ${bindir}"
 
 do_install() {
-    # We should really use ${libexecdir} here, but that as some files have invalid RPATH
-    # this results in lots of warning. So using ${datadir} for now
-    install -d ${D}${datadir}/${ANDROID_CLANG_VERSION}/
+    install -d ${D}${libexecdir}/${ANDROID_CLANG_VERSION}/
 
-    cp --no-preserve=ownership -r ${S}/. ${D}${datadir}/${ANDROID_CLANG_VERSION}/
+    cp --no-preserve=ownership -r ${S}/. ${D}${libexecdir}/${ANDROID_CLANG_VERSION}/
     # Strip bad RPATHs in the embedded python3
-    chrpath -d ${D}${datadir}/${ANDROID_CLANG_VERSION}/python3/lib/python*/lib-dynload/*.so
+    chrpath -d ${D}${libexecdir}/${ANDROID_CLANG_VERSION}/python3/lib/python*/lib-dynload/*.so
 
     install -d ${D}${bindir}
     # Symlink all executables into bindir
-    for f in ${D}${datadir}/${ANDROID_CLANG_VERSION}/bin/*; do
+    for f in ${D}${libexecdir}/${ANDROID_CLANG_VERSION}/bin/*; do
         ln -rs $f ${D}${bindir}/$(basename $f)
     done
 }
