@@ -33,6 +33,8 @@ do_install() {
     install -d ${D}${datadir}/${ANDROID_CLANG_VERSION}/
 
     cp --no-preserve=ownership -r ${S}/. ${D}${datadir}/${ANDROID_CLANG_VERSION}/
+    # Strip bad RPATHs in the embedded python3
+    chrpath -d ${D}${datadir}/${ANDROID_CLANG_VERSION}/python3/lib/python*/lib-dynload/*.so
 
     install -d ${D}${bindir}
     # Symlink all executables into bindir
@@ -43,7 +45,7 @@ do_install() {
 
 INHIBIT_DEFAULT_DEPS = "1"
 
-INSANE_SKIP:${PN} = "already-stripped libdir staticdev file-rdeps arch dev-so useless-rpaths"
+INSANE_SKIP:${PN} = "already-stripped libdir staticdev file-rdeps arch dev-so"
 
 INHIBIT_SYSROOT_STRIP = "1"
 INHIBIT_PACKAGE_STRIP = "1"
