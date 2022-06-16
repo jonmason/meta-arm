@@ -1,3 +1,5 @@
+FILESEXTRAPATHS:prepend := "${THISDIR}/files/:"
+
 # Machine specific TFAs
 
 MACHINE_TFA_REQUIRE ?= ""
