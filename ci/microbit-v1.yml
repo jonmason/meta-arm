@@ -4,8 +4,4 @@ header:
     - ci/base.yml
     - ci/meta-zephyr.yml
 
-local_conf_header:
-  failing_tests: |
-    ZEPHYRTESTS:remove = "common"
-
 machine: microbit-v1
