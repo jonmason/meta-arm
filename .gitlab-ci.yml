@@ -185,6 +185,9 @@ qemuarm64:
   extends: .build
   parallel:
     matrix:
+      - TOOLCHAINS: [gcc, clang]
+        EFI: [uboot, edk2]
+        TESTING: testimage
       - VIRT: xen
 
 qemuarm-secureboot:
@@ -199,6 +202,7 @@ qemuarm:
   parallel:
     matrix:
       - TOOLCHAINS: [gcc, clang]
+        EFI: [uboot, edk2]
         TESTING: testimage
       - VIRT: xen
 

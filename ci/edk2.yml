@@ -7,3 +7,9 @@ local_conf_header:
     MACHINE_FEATURES += "efi"
     TFA_UBOOT = "0"
     TFA_UEFI = "1"
+
+    EXTRA_IMAGEDEPENDS += "edk2-firmware"
+    EFI_PROVIDER ?= "grub-efi"
+
+    QB_DEFAULT_BIOS = "QEMU_EFI.fd"
+    WKS_FILE ?= "efi-disk.wks.in"
