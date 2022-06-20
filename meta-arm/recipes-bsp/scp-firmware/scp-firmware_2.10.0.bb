@@ -16,9 +16,14 @@ SCP_BUILD_RELEASE   ?= "1"
 SCP_PLATFORM        ?= "invalid"
 SCP_COMPILER        ?= "arm-none-eabi"
 SCP_LOG_LEVEL       ?= "WARN"
+SCP_PLATFORM_FEATURE_SET ?= "0"
 
 INHIBIT_DEFAULT_DEPS = "1"
-DEPENDS = "virtual/arm-none-eabi-gcc-native"
+DEPENDS = "virtual/arm-none-eabi-gcc-native \
+           cmake-native \
+           ninja-native \
+          "
+
 # For now we only build with GCC, so stop meta-clang trying to get involved
 TOOLCHAIN = "gcc"
 
@@ -32,37 +37,56 @@ S = "${WORKDIR}/git"
 # Allow platform specific copying of only scp or both scp & mcp, default to both
 FW_TARGETS ?= "scp mcp"
 FW_INSTALL ?= "ramfw romfw"
-
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 COMPATIBLE_MACHINE ?= "invalid"
 
 LDFLAGS[unexport] = "1"
+CFLAGS[unexport] = "1"
 
-# No configure
-do_configure[noexec] = "1"
-
-EXTRA_OEMAKE = "V=1 \
-                BUILD_PATH='${B}' \
-                PRODUCT='${SCP_PLATFORM}' \
-                MODE='${SCP_BUILD_STR}' \
-                LOG_LEVEL='${SCP_LOG_LEVEL}' \
-                CC='${SCP_COMPILER}-gcc' \
-                AR='${SCP_COMPILER}-ar' \
-                SIZE='${SCP_COMPILER}-size' \
-                OBJCOPY='${SCP_COMPILER}-objcopy' \
+EXTRA_OECMAKE = "-D CMAKE_BUILD_TYPE=${SCP_BUILD_STR} \
+                 -D SCP_LOG_LEVEL=${SCP_LOG_LEVEL} \
+                 -D SCP_PLATFORM_FEATURE_SET=${SCP_PLATFORM_FEATURE_SET} \
                 "
 
-do_compile() {
-    oe_runmake -C "${S}"
+do_configure() {
+     for FW in ${FW_TARGETS}; do
+         for TYPE in ${FW_INSTALL}; do
+             cmake -GNinja ${EXTRA_OECMAKE} -S ${S} -B "${B}/${TYPE}/${FW}" -D SCP_FIRMWARE_SOURCE_DIR="${SCP_PLATFORM}/${FW}_${TYPE}"
+         done
+     done
 }
-do_compile[cleandirs] += "${B}"
+
+do_configure[cleandirs] += "${B}"
+
+do_compile() {
+     for FW in ${FW_TARGETS}; do
+         for TYPE in ${FW_INSTALL}; do
+             cmake --build ${B}/${TYPE}/${FW} --target all
+         done
+     done
+}
 
 do_install() {
      install -d ${D}/firmware
-     for FW in ${FW_TARGETS}; do
-        for TYPE in ${FW_INSTALL}; do
-           install -D "${B}/product/${SCP_PLATFORM}/${FW}_${TYPE}/${SCP_BUILD_STR}/bin/${FW}_${TYPE}.bin" "${D}/firmware/"
-           install -D "${B}/product/${SCP_PLATFORM}/${FW}_${TYPE}/${SCP_BUILD_STR}/bin/${FW}_${TYPE}.elf" "${D}/firmware/"
+     for TYPE in ${FW_INSTALL}; do
+         for FW in ${FW_TARGETS}; do
+            if [ "$TYPE" = "romfw" ]; then
+                if [ "$FW" = "scp" ]; then
+                    install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-bl1.bin" "${D}/firmware/${FW}_${TYPE}.bin"
+                    install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-bl1" "${D}/firmware/${FW}_${TYPE}.elf"
+                elif [ "$FW" = "mcp" ]; then
+                    install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-mcp-bl1.bin" "${D}/firmware/${FW}_${TYPE}.bin"
+                    install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-mcp-bl1" "${D}/firmware/${FW}_${TYPE}.elf"
+                fi
+            elif [ "$TYPE" = "ramfw" ]; then
+                if [ "$FW" = "scp" ]; then
+                    install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-bl2.bin" "${D}/firmware/${FW}_${TYPE}.bin"
+                    install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-bl2" "${D}/firmware/${FW}_${TYPE}.elf"
+                elif [ "$FW" = "mcp" ]; then
+                    install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-mcp-bl2.bin" "${D}/firmware/${FW}_${TYPE}.bin"
+                    install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-mcp-bl2" "${D}/firmware/${FW}_${TYPE}.elf"
+                fi
+            fi
         done
      done
 }
