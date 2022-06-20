@@ -13,6 +13,8 @@ local_conf_header:
   tclibc: |
     TCLIBC = "newlib"
   nonbuilding_tests: |
-    ZEPHYRTESTS:remove = "context pending sleep"
+    ZEPHYRTESTS:remove = "context pending poll sleep"
+  qemu_opts: |
+    QB_OPT_APPEND = "-icount shift=3,align=off,sleep=on -rtc clock=vm"
 
 machine: qemu-cortex-m3
