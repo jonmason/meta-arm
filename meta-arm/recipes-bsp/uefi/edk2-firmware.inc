@@ -77,9 +77,14 @@ export BTOOLS_PATH = "${EDK_TOOLS_PATH}/BinWrappers/PosixLike"
 
 EDK_COMPILER ?= "GCC5"
 export GCC5_AARCH64_PREFIX = "${TARGET_PREFIX}"
+export GCC5_ARM_PREFIX = "${TARGET_PREFIX}"
 
 EDK_COMPILER:toolchain-clang = "CLANG38"
 export CLANG38_AARCH64_PREFIX = "${TARGET_PREFIX}"
+export CLANG38_ARM_PREFIX = "${TARGET_PREFIX}"
+
+#FIXME - arm32 doesn't work with clang due to a linker issue
+TOOLCHAIN:arm = "gcc"
 
 do_configure:prepend() {
     sed -i -e "s#-target ${HOST_ARCH}-linux-gnu*#-target ${HOST_SYS}#" ${S}/BaseTools/Conf/tools_def.template
