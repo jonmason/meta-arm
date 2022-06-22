@@ -29,7 +29,7 @@ and run:
 
  - FVP_Base_AEMv8R: v11.18.16
  - boot-wrapper-aarch64: provides PSCI support
- - U-Boot: v2022.01 - provides UEFI services
+ - U-Boot: v2022.04 - provides UEFI services
  - Linux kernel: linux-yocto-5.15
  - Linux kernel with PREEMPT\_RT support: linux-yocto-rt-5.15
 
