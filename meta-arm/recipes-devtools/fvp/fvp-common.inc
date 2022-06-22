@@ -8,8 +8,10 @@ LICENSE = "Proprietary & Apache-2.0 & Python-2.0 & GPL-3.0-with-GCC-exception & 
 
 COMPATIBLE_HOST = '(x86_64|i.86).*-linux'
 
+# The architecture-specific download filename suffix
+FVP_ARCH = "Linux64"
 # The architecture-specific directory the binaries are installed under
-FVP_ARCH = "Linux64_GCC-*"
+FVP_ARCH_DIR = "${FVP_ARCH}_GCC-*"
 
 def get_real_pv(d):
     # FVP versions are like 11.12_43
@@ -26,7 +28,7 @@ FVPDIR = "${libdir}/fvp/${BPN}"
 
 # Used in do_install to create symlinks in $bindir to $FVPDIR
 fvp_link_binaries() {
-    DIR="${D}${FVPDIR}/models/${FVP_ARCH}"
+    DIR="${D}${FVPDIR}/models/${FVP_ARCH_DIR}"
 
     stat $DIR/FVP_* >/dev/null 2>&1 || bbfatal Cannot find FVP binaries in $DIR
 
