@@ -186,7 +186,7 @@
                 interrupts = <0x1 13 0xff08>,
                              <0x1 14 0xff08>,
                              <0x1 11 0xff08>,
-                             <0x1 10 0xff08>;
+                             <0x1  4 0xff08>;
                 clock-frequency = <100000000>;
         };
 
