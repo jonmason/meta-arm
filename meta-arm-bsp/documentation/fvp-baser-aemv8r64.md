@@ -27,7 +27,7 @@ The fvp-baser-aemv8r64 Yocto MACHINE supports the following BSP components,
 where either a standard or Real-Time Linux kernel (PREEMPT\_RT) can be built
 and run:
 
- - FVP_Base_AEMv8R: v11.17.21
+ - FVP_Base_AEMv8R: v11.18.16
  - boot-wrapper-aarch64: provides PSCI support
  - U-Boot: v2022.01 - provides UEFI services
  - Linux kernel: linux-yocto-5.15
@@ -107,7 +107,7 @@ For more details on kas, see https://kas.readthedocs.io/.
 
 To build the images for the fvp-baser-aemv8r64 machine, you also need to accept
 the EULA at
-https://developer.arm.com/tools-and-software/simulation-models/fixed-virtual-platforms/end-user-license-agreement-for-fixed-virtual-platforms
+https://developer.arm.com/downloads/-/arm-ecosystem-fvps/eula
 by setting the following environment variable:
 
     FVP_BASE_R_ARM_EULA_ACCEPT="True"
