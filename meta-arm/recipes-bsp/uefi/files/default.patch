@@ -16,8 +16,8 @@ Signed-off-by: Ross Burton <ross.burton@arm.com>
 
 diff --git a/Platform/ARM/Library/ArmShellCmdRunAxf/RunAxf.c b/Platform/ARM/Library/ArmShellCmdRunAxf/RunAxf.c
 index d23739ad38..fba5e0ba30 100644
---- a/edk2-platforms/Platform/ARM/Library/ArmShellCmdRunAxf/RunAxf.c
-+++ b/edk2-platforms/Platform/ARM/Library/ArmShellCmdRunAxf/RunAxf.c
+--- a/Platform/ARM/Library/ArmShellCmdRunAxf/RunAxf.c
++++ b/Platform/ARM/Library/ArmShellCmdRunAxf/RunAxf.c
 @@ -136,1 +136,1 @@ ShellDynCmdRunAxfHandler (
 -  UINTN                       FileSize;
 +  UINTN                       FileSize = 0;
