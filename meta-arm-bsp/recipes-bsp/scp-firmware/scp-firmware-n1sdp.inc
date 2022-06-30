@@ -3,6 +3,10 @@
 SCP_PLATFORM  = "n1sdp"
 SCP_LOG_LEVEL = "INFO"
 
+# master branch at n1sdp: Introduce trusted board boot
+SRCREV  = "3e4c34ceccc1c960eb3a4adaa922f2a0c6b36be3"
+PV .= "+git${SRCPV}"
+
 COMPATIBLE_MACHINE:n1sdp = "n1sdp"
 
 DEPENDS += "fiptool-native"
@@ -12,7 +16,7 @@ do_install:append() {
    fiptool \
        create \
        --scp-fw "${D}/firmware/scp_ramfw.bin" \
-       --soc-fw "${RECIPE_SYSROOT}/firmware/bl31.bin" \
+       --blob uuid=cfacc2c4-15e8-4668-82be-430a38fad705,file="${RECIPE_SYSROOT}/firmware/bl1.bin" \
        "scp_fw.bin"
 
    # This UUID is FIP_UUID_MCP_BL2 in SCP-Firmware.
