@@ -27,8 +27,8 @@ prepare_package() {
     cp -av ${RECIPE_SYSROOT}/${FIRMWARE_DIR}/* ${PRIMARY_DIR}
     mkdir -p ${PRIMARY_DIR}/SOFTWARE/
 
-    # Copy uefi binary
-    cp -v ${RECIPE_SYSROOT}/firmware/uefi.bin ${PRIMARY_DIR}/SOFTWARE/
+    # Copy FIP binary
+    cp -v ${RECIPE_SYSROOT}/firmware/fip.bin ${PRIMARY_DIR}/SOFTWARE/
 
     # Copy SOC binaries
     for f in ${SOC_BINARIES}; do
@@ -41,6 +41,11 @@ prepare_package() {
         ${PRIMARY_DIR}/MB/HBI0316A/io_v123f.txt
     sed -i -e 's|.*SOCCON: 0x1170.*PLATFORM_CTRL.*|SOCCON: 0x1170 0x00000100   ;SoC SCC PLATFORM_CTRL|' \
         ${PRIMARY_DIR}/MB/HBI0316A/io_v123f.txt
+
+    # Update load address for trusted boot
+    sed -i -e '/^IMAGE4ADDRESS:/ s|0x60200000|0x64200000|' ${PRIMARY_DIR}/MB/HBI0316A/images.txt
+    sed -i -e '/^IMAGE4UPDATE:/ s|FORCE   |SCP_AUTO|' ${PRIMARY_DIR}/MB/HBI0316A/images.txt
+    sed -i -e '/^IMAGE4FILE: \\SOFTWARE\\/s|uefi.bin|fip.bin |' ${PRIMARY_DIR}/MB/HBI0316A/images.txt
 
     # Slave/Secondary
     cp -av ${RECIPE_SYSROOT}/${FIRMWARE_DIR}/* ${SECONDARY_DIR}
