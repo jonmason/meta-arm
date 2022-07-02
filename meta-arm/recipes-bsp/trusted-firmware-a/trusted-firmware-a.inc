@@ -57,7 +57,6 @@ SRCREV_FORMAT_append = "${@bb.utils.contains('TFA_MBEDTLS', '1', '_mbedtls', '',
 
 SRC_URI_append = " \
     file://0002-pmf.h-made-PMF_STOTE_ENABLE-pass-Wtautological.patch  \
-    file://0003-xlat-tables-v2-remove-tautological-assert.patch \
     "
 
 # U-boot support (set TFA_UBOOT to 1 to activate)
