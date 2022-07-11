@@ -56,7 +56,7 @@ LIC_FILES_CHKSUM_append = "${@bb.utils.contains('TFA_MBEDTLS', '1', ' ${LIC_FILE
 SRCREV_FORMAT_append = "${@bb.utils.contains('TFA_MBEDTLS', '1', '_mbedtls', '', d)}"
 
 SRC_URI_append = " \
-    file://0002-pmf.h-made-PMF_STOTE_ENABLE-pass-Wtautological.patch  \
+    file://0002-pmf.h-made-PMF_STOTE_ENABLE-pass-Wtautological.patch \
     "
 
 # U-boot support (set TFA_UBOOT to 1 to activate)
