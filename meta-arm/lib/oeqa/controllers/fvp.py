@@ -87,7 +87,8 @@ class OEFVPSerialTarget(OEFVPSSHTarget):
     This still depends on OEFVPSSHTarget so SSH commands can still be run on
     the target, but note that this class does not inherently guarantee that
     the SSH server is running prior to running test cases. Test cases that use
-    SSH should first validate that SSH is available.
+    SSH should first validate that SSH is available, e.g. by depending on the
+    "linuxboot" test case in meta-arm.
     """
     DEFAULT_CONSOLE = "default"
 

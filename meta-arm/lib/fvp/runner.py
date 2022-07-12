@@ -119,7 +119,9 @@ class FVPRunner:
         check_telnet()
         import pexpect
         port = await self._get_terminal_port(terminal, timeout)
-        return pexpect.spawn(f"telnet localhost {port}", **kwargs)
+        instance = pexpect.spawn(f"telnet localhost {port}", **kwargs)
+        self._pexpects.append(instance)
+        return instance
 
     def pid(self):
         return self._fvp_process.pid
