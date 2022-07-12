@@ -55,7 +55,7 @@ async def start_fvp(args, config, extra_args):
 
         if args.console:
             fvp.add_line_callback(lambda line: logger.debug(f"FVP output: {line}"))
-            expected_terminal = config["console"]
+            expected_terminal = config["consoles"]["default"]
             if not expected_terminal:
                 logger.error("--console used but FVP_CONSOLE not set in machine configuration")
                 return 1
