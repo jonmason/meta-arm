@@ -51,6 +51,7 @@ class FVPRunner:
         self._logger = logger
         self._fvp_process = None
         self._telnets = []
+        self._pexpects = []
 
     def add_line_callback(self, callback):
         self._line_callbacks.append(callback)
@@ -87,6 +88,9 @@ class FVPRunner:
             await telnet.terminate()
             await telnet.wait()
 
+        for pexpect in self._pexpects:
+            pexpect.close()
+
     async def run(self, until=None):
         if until and until():
             return
@@ -110,6 +114,12 @@ class FVPRunner:
         telnet = await asyncio.create_subprocess_exec("telnet", "localhost", str(port), stdin=sys.stdin, stdout=sys.stdout)
         self._telnets.append(telnet)
         return telnet
+
+    async def create_pexpect(self, terminal, timeout=15.0, **kwargs):
+        check_telnet()
+        import pexpect
+        port = await self._get_terminal_port(terminal, timeout)
+        return pexpect.spawn(f"telnet localhost {port}", **kwargs)
 
     def pid(self):
         return self._fvp_process.pid

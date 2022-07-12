@@ -1,16 +1,11 @@
 import asyncio
-import os
 import pathlib
-import signal
-import subprocess
+import pexpect
 
 import oeqa.core.target.ssh
+from fvp import conffile, runner
 
 class OEFVPTarget(oeqa.core.target.ssh.OESSHTarget):
-
-    # meta-arm/scripts isn't on PATH, so work out where it is
-    metaarm = pathlib.Path(__file__).parents[4]
-
     def __init__(self, logger, target_ip, server_ip, timeout=300, user='root',
                  port=None, server_port=0, dir_image=None, rootfs=None, bootlog=None,
                  **kwargs):
@@ -29,45 +24,24 @@ class OEFVPTarget(oeqa.core.target.ssh.OESSHTarget):
         self.logfile = bootlog and open(bootlog, "wb") or None
 
     async def boot_fvp(self):
-        cmd = [OEFVPTarget.metaarm / "scripts" / "runfvp", "--console", "--verbose", self.fvpconf]
-        # Python 3.7 needs the command items to be str
-        cmd = [str(c) for c in cmd]
-        self.logger.debug(f"Starting {cmd}")
-
-        # TODO: refactor runfvp so this can import it and directly hook to the
-        # console callback, then use telnetlib directly to access the console.
-
-        # As we're using --console, telnet expects stdin to be readable too.
-        self.fvp = await asyncio.create_subprocess_exec(*cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE)
-        self.logger.debug(f"Started runfvp PID {self.fvp.pid}")
-
-        async def wait_for_login(bootlog):
-            while True:
-                line = await self.fvp.stdout.read(1024)
-                if not line:
-                    self.logger.debug("runfvp terminated")
-                    return False
-
-                self.logger.debug(f"Read line [{line}]")
-
-                bootlog += line
-                if self.logfile:
-                    self.logfile.write(line)
-
-                if b" login:" in bootlog:
-                    self.logger.debug("Found login prompt")
-                    return True
-
-        bootlog = bytearray()
+        config = conffile.load(self.fvpconf)
+        self.fvp = runner.FVPRunner(self.logger)
+        await self.fvp.start(config)
+        self.logger.debug(f"Started FVP PID {self.fvp.pid()}")
+        console = await self.fvp.create_pexpect(config["console"])
         try:
-            found = await asyncio.wait_for(wait_for_login(bootlog), self.boot_timeout)
-            if found:
-                return
-        except asyncio.TimeoutError:
+            console.expect("login\:", timeout=self.boot_timeout)
+            self.logger.debug("Found login prompt")
+        except pexpect.TIMEOUT:
             self.logger.info("Timed out waiting for login prompt.")
-        self.logger.info("Boot log follows:")
-        self.logger.info(b"\n".join(bootlog.splitlines()[-200:]).decode("utf-8", errors="replace"))
-        raise RuntimeError("Failed to start FVP.")
+            self.logger.info("Boot log follows:")
+            self.logger.info(b"\n".join(console.before.splitlines()[-200:]).decode("utf-8", errors="replace"))
+            raise RuntimeError("Failed to start FVP.")
+
+    async def stop_fvp(self):
+        returncode = await self.fvp.stop()
+
+        self.logger.debug(f"Stopped FVP with return code {returncode}")
 
     def start(self, **kwargs):
         # When we can assume Py3.7+, this can simply be asyncio.run()
@@ -76,15 +50,4 @@ class OEFVPTarget(oeqa.core.target.ssh.OESSHTarget):
 
     def stop(self, **kwargs):
         loop = asyncio.get_event_loop()
-
-        try:
-            # Kill the process group so that the telnet and FVP die too
-            gid = os.getpgid(self.fvp.pid)
-            self.logger.debug(f"Sending SIGTERM to {gid}")
-            os.killpg(gid, signal.SIGTERM)
-            loop.run_until_complete(asyncio.wait_for(self.fvp.wait(), 10))
-        except TimeoutError:
-            self.logger.debug(f"Timed out, sending SIGKILL to {gid}")
-            os.killpg(gid, signal.SIGKILL)
-        except ProcessLookupError:
-            return
+        loop.run_until_complete(asyncio.gather(self.stop_fvp()))
