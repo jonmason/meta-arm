@@ -18,6 +18,9 @@ FVP_APPLICATIONS ?= ""
 FVP_TERMINALS ?= ""
 # What terminal should be considered the primary console
 FVP_CONSOLE ?= ""
+# Flags for console names, as they appear in the FVP output. Flag name is an
+# application-specific id for the console for use in test cases
+FVP_CONSOLES[default] ?= "${FVP_CONSOLE}"
 # Arbitrary extra arguments
 FVP_EXTRA_ARGS ?= ""
 
@@ -59,7 +62,7 @@ python do_write_fvpboot_conf() {
     data["parameters"] = getFlags("FVP_CONFIG")
     data["data"] = shlex.split(d.getVar("FVP_DATA") or "")
     data["applications"] = getFlags("FVP_APPLICATIONS")
-    data["console"] = d.getVar("FVP_CONSOLE")
+    data["consoles"] = getFlags("FVP_CONSOLES")
     data["terminals"] = getFlags("FVP_TERMINALS")
     data["args"] = shlex.split(d.getVar("FVP_EXTRA_ARGS") or "")
 

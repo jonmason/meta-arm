@@ -78,7 +78,7 @@ class ConfFileTests(OESelftestTestCase):
             self.assertTrue("applications" in conf)
             self.assertTrue("terminals" in conf)
             self.assertTrue("args" in conf)
-            self.assertTrue("console" in conf)
+            self.assertTrue("consoles" in conf)
 
 
 class RunnerTests(OESelftestTestCase):
