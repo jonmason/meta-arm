@@ -11,6 +11,12 @@ COMPATIBLE_MACHINE = "n1sdp"
 EFIDIR             = "/EFI/BOOT"
 EFI_BOOT_IMAGE     = "bootaa64.efi"
 
+FILESEXTRAPATHS:prepend := "${THISDIR}/files/edk2-platforms:"
+
+SRC_URI:append = "\
+    file://add-nt-fw-config.patch;patchdir=edk2-platforms \
+"
+
 do_deploy:append() {
     EFIPATH=$(echo "${EFIDIR}" | sed 's/\//\\/g')
     printf 'FS2:%s\%s\n' "$EFIPATH" "${EFI_BOOT_IMAGE}" > ${DEPLOYDIR}/startup.nsh
