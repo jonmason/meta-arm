@@ -127,12 +127,6 @@ class OEFVPSerialTarget(OEFVPSSHTarget):
                 default_test_file = f"{name}_log{self.test_log_suffix}"
                 os.symlink(default_test_file, self.bootlog)
 
-    async def _after_stop(self):
-        # Ensure pexpect logs all remaining output to the logfile
-        for terminal in self.terminals.values():
-            terminal.expect(pexpect.EOF, timeout=5)
-            terminal.close()
-
     def _get_terminal(self, name):
         return self.terminals[name]
 

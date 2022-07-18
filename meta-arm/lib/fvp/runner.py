@@ -72,24 +72,36 @@ class FVPRunner:
 
     async def stop(self):
         if self._fvp_process:
-            self._logger.debug(f"Killing FVP PID {self._fvp_process.pid}")
+            self._logger.debug(f"Terminating FVP PID {self._fvp_process.pid}")
             try:
                 self._fvp_process.terminate()
+                await asyncio.wait_for(self._fvp_process.wait(), 10.0)
+            except asyncio.TimeoutError:
+                self._logger.debug(f"Killing FVP PID {self._fvp_process.pid}")
+                self._fvp_process.kill()
             except ProcessLookupError:
                 pass
 
-            if await self._fvp_process.wait() != 0:
-                self._logger.info(f"FVP quit with code {self._fvp_process.returncode}")
-                return self._fvp_process.returncode
-            else:
-                return 0
-
         for telnet in self._telnets:
-            await telnet.terminate()
-            await telnet.wait()
+            try:
+                telnet.terminate()
+                await asyncio.wait_for(telnet.wait(), 10.0)
+            except asyncio.TimeoutError:
+                telnet.kill()
+            except ProcessLookupError:
+                pass
 
-        for pexpect in self._pexpects:
-            pexpect.close()
+        for console in self._pexpects:
+            import pexpect
+            # Ensure pexpect logs all remaining output to the logfile
+            console.expect(pexpect.EOF, timeout=5.0)
+            console.close()
+
+        if self._fvp_process and self._fvp_process.returncode:
+            self._logger.info(f"FVP quit with code {self._fvp_process.returncode}")
+            return self._fvp_process.returncode
+        else:
+            return 0
 
     async def run(self, until=None):
         if until and until():
