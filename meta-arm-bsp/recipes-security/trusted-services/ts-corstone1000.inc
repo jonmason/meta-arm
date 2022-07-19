@@ -121,6 +121,6 @@ do_install:append() {
 }
 
 FILES:${PN}-dev = "${includedir}/deployments/psa-api-test/"
-INSANE_SKIP:${PN}-psa-api-tests += "rpaths dev-so"
+INSANE_SKIP:${PN}-psa-api-tests += "rpaths dev-so buildpaths"
 PACKAGES += "${PN}-psa-api-tests"
 FILES:${PN}-psa-api-tests = "${libdir} ${bindir}"

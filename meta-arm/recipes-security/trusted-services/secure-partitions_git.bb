@@ -68,3 +68,7 @@ do_deploy() {
 addtask deploy after do_install
 
 FILES:${PN} = "/firmware/sp/opteesp*"
+
+# Build paths are currently embedded
+INSANE_SKIP:${PN} += "buildpaths"
+INSANE_SKIP:${PN}-dbg += "buildpaths"
