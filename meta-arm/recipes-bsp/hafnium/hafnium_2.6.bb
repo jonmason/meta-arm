@@ -59,6 +59,8 @@ FILES:${PN}-dbg = "/firmware/*.elf"
 SYSROOT_DIRS += "/firmware"
 INSANE_SKIP:${PN} = "ldflags"
 INSANE_SKIP:${PN}-dbg = "ldflags"
+# Build paths are currently embedded
+INSANE_SKIP:${PN}-dbg += "buildpaths"
 
 do_deploy() {
     cp -rf ${D}/firmware/* ${DEPLOYDIR}/
