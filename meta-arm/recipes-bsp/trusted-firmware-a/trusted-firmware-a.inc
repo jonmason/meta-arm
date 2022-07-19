@@ -231,7 +231,10 @@ SYSROOT_DIRS += "/firmware"
 
 FILES:${PN}-dbg = "/firmware/*.elf"
 # Skip QA check for relocations in .text of elf binaries
-INSANE_SKIP:${PN}-dbg = "textrel"
+INSANE_SKIP:${PN}-dbg += "textrel"
+# Build paths are currently embedded
+INSANE_SKIP:${PN} += "buildpaths"
+INSANE_SKIP:${PN}-dbg += "buildpaths"
 
 do_deploy() {
     cp -rf ${D}/firmware/* ${DEPLOYDIR}/
