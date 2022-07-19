@@ -137,3 +137,6 @@ addtask deploy after do_install
 do_deploy() {
     cp -rf ${D}/firmware/* ${DEPLOYDIR}/
 }
+
+# Build paths are currently embedded
+INSANE_SKIP:${PN} += "buildpaths"
