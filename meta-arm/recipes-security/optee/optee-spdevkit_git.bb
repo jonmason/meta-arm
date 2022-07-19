@@ -301,3 +301,5 @@ COMPATIBLE_HOST = "aarch64.*-linux"
 
 # optee-spdevkit static library is part of optee-os image. No need to package this library in a staticdev package
 INSANE_SKIP:${PN}-dev = "staticdev"
+# Build paths are currently embedded
+INSANE_SKIP:${PN}-dev += "buildpaths"

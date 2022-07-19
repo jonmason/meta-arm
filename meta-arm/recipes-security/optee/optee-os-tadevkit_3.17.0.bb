@@ -20,3 +20,6 @@ do_deploy() {
 }
 
 FILES:${PN} = "${includedir}/optee/"
+
+# Build paths are currently embedded
+INSANE_SKIP:${PN}-dev += "buildpaths"
