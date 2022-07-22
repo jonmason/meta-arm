@@ -67,6 +67,7 @@ update-repos:
 # Available options for building are
 #  TOOLCHAINS: [gcc, clang, armgcc, external-gccarm]
 #  TCLIBC: [glibc, musl]
+#  FIRMWARE: [uboot, edk2]
 #  VIRT: [none, xen]
 #  TESTING: testimage
 
@@ -134,7 +135,7 @@ juno:
   parallel:
     matrix:
       - TOOLCHAINS: [gcc, clang]
-        FIRMWARE: [none, edk2]
+        FIRMWARE: [uboot, edk2]
 
 microbit-v1:
   extends: .build_and_test
