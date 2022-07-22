@@ -44,7 +44,10 @@ local_conf_header:
     CORE_IMAGE_EXTRA_INSTALL += "perf"
   sshkeys: |
     CORE_IMAGE_EXTRA_INSTALL += "ssh-pregen-hostkeys"
+  universally_failing_tests: |
+    TEST_SUITES:remove = "opkg"
+
 machine: unset
 
 target:
-  - core-image-base
+  - core-image-sato

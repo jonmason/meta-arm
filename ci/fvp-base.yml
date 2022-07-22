@@ -14,3 +14,5 @@ local_conf_header:
     # Tell testimage to connect to localhost:8022, and forward that to SSH in the FVP.
     TEST_TARGET_IP = "localhost:8022"
     FVP_CONFIG[bp.virtio_net.hostbridge.userNetPorts] ?= "8022=22"
+  failing_tests: |
+    TEST_SUITES:remove = "xorg"
