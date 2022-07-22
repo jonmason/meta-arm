@@ -2,7 +2,7 @@ SUMMARY = "Firmware image recipe for generating SD-Card artifacts."
 
 inherit deploy nopackages
 
-DEPENDS = "edk2-firmware \
+DEPENDS = "trusted-firmware-a \
            virtual/control-processor-firmware \
            n1sdp-board-firmware"
 
