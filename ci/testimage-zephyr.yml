@@ -6,3 +6,4 @@ local_conf_header:
     IMAGE_CLASSES += "testimage"
     TEST_TARGET = "QemuTargetZephyr"
     TEST_SUITES = "zephyr"
+    TESTIMAGE_AUTO = "1"
