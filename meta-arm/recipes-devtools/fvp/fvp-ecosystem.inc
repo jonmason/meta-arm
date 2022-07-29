@@ -10,9 +10,6 @@ HOMEPAGE = "https://developer.arm.com/tools-and-software/open-source-software/ar
 
 SRC_URI = "https://developer.arm.com/-/media/Arm%20Developer%20Community/Downloads/OSS/FVP/${MODEL}/${MODEL_CODE}_${PV_URL}.tgz;subdir=${BP}"
 
-LIC_FILES_CHKSUM = "file://license_terms/license_agreement.txt;md5=1a33828e132ba71861c11688dbb0bd16 \
-                    file://license_terms/third_party_licenses.txt;md5=47473b1e04b70938cf0a7ffea8ea4cc3"
-
 UPSTREAM_CHECK_URI = "${HOMEPAGE}"
 UPSTREAM_CHECK_REGEX = "${MODEL_CODE}_(?P<pver>(\d+[\.\-_]*)+).tgz"
 

@@ -6,12 +6,14 @@ LICENSE_FLAGS = "Arm-FVP-EULA"
 
 LICENSE = "Proprietary & Apache-2.0 & Python-2.0 & GPL-3.0-with-GCC-exception & Zlib & NCSA & LGPL-2.0-or-later & MIT & BSD-3-Clause"
 
-COMPATIBLE_HOST = '(x86_64|i.86).*-linux'
+COMPATIBLE_HOST = "x86_64.*-linux"
 
 # The architecture-specific download filename suffix
-FVP_ARCH = "Linux64"
+FVP_ARCH:aarch64 = "Linux64_armv8l"
+FVP_ARCH:x86-64 = "Linux64"
+
 # The architecture-specific directory the binaries are installed under
-FVP_ARCH_DIR = "${FVP_ARCH}_GCC-*"
+FVP_ARCH_DIR = "${FVP_ARCH}"
 
 def get_real_pv(d):
     # FVP versions are like 11.12_43
@@ -28,7 +30,7 @@ FVPDIR = "${libdir}/fvp/${BPN}"
 
 # Used in do_install to create symlinks in $bindir to $FVPDIR
 fvp_link_binaries() {
-    DIR="${D}${FVPDIR}/models/${FVP_ARCH_DIR}"
+    DIR="${D}${FVPDIR}/models/${FVP_ARCH_DIR}*"
 
     stat $DIR/FVP_* >/dev/null 2>&1 || bbfatal Cannot find FVP binaries in $DIR
 
@@ -45,6 +47,8 @@ FILES:${PN} = "${bindir} ${FVPDIR}"
 INSANE_SKIP:${PN} += "already-stripped"
 # FVP can optionally have a GUI, but we can use the host libraries in native/nativesdk
 INSANE_SKIP:${PN} += "file-rdeps"
+# GNU_HASH warnings
+INSANE_SKIP:${PN} += "ldflags"
 
 # FVP brings its own standard library so don't let it be used as a shlib provider
 PRIVATE_LIBS = "libgcc_s.so.1 libstdc++.so.6"
