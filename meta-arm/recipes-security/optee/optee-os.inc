@@ -16,6 +16,11 @@ DEPENDS:append:toolchain-clang = " compiler-rt"
 
 SRC_URI = "git://github.com/OP-TEE/optee_os.git;branch=master;protocol=https"
 
+SRC_URI:append = " \
+    file://0006-allow-setting-sysroot-for-libgcc-lookup.patch \
+    file://0007-allow-setting-sysroot-for-clang.patch \
+   "
+
 S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
 
