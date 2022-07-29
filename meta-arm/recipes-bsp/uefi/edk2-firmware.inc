@@ -18,6 +18,9 @@ SRC_URI = "\
     ${EDK2_SRC_URI};name=edk2;destsuffix=edk2;nobranch=1 \
     ${EDK2_PLATFORMS_SRC_URI};name=edk2-platforms;destsuffix=edk2/edk2-platforms;nobranch=1 \
     file://unaligned.patch \
+    file://0001-Basetools-turn-off-gcc12-warning.patch \
+    file://0002-BaseTools-fix-gcc12-warning.patch \
+    file://0003-BaseTools-fix-gcc12-warning.patch \
 "
 
 SRCREV_FORMAT         = "edk2_edk2-platforms"
