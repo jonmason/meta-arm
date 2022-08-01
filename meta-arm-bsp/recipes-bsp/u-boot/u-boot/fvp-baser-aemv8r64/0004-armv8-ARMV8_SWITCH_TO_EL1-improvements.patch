@@ -1,7 +1,7 @@
-From 02054cf03be7a8b657543cc7a0e2f4abadacbee1 Mon Sep 17 00:00:00 2001
+From dbc1a218e9837e39cd50dd3c19f603f29a08ddba Mon Sep 17 00:00:00 2001
 From: Peter Hoyes <Peter.Hoyes@arm.com>
 Date: Wed, 14 Jul 2021 12:44:27 +0100
-Subject: [PATCH 4/8] armv8: ARMV8_SWITCH_TO_EL1 improvements
+Subject: [PATCH 4/9] armv8: ARMV8_SWITCH_TO_EL1 improvements
 
 Convert CONFIG_ARMV8_SWITCH_TO_EL1 to a Kconfig variable.
 
@@ -21,16 +21,15 @@ Change-Id: If98478148d6d8d1f732acac5439276700614815f
  arch/arm/cpu/armv8/exception_level.c | 21 ++++++++++++++--
  arch/arm/lib/bootm.c                 | 36 ++++++++++++++++------------
  configs/vexpress_aemv8r_defconfig    |  1 +
- scripts/config_whitelist.txt         |  1 -
- 5 files changed, 49 insertions(+), 18 deletions(-)
+ 4 files changed, 49 insertions(+), 17 deletions(-)
 
 diff --git a/arch/arm/cpu/armv8/Kconfig b/arch/arm/cpu/armv8/Kconfig
-index 6f9d0610e8..b50ce60097 100644
+index 031faa909c..110adf63b3 100644
 --- a/arch/arm/cpu/armv8/Kconfig
 +++ b/arch/arm/cpu/armv8/Kconfig
-@@ -177,4 +177,12 @@ config ARMV8_SECURE_BASE
- 
- endif
+@@ -191,4 +191,12 @@ config ARMV8_EA_EL3_FIRST
+ 	  Exception handling at all exception levels for External Abort and
+ 	  SError interrupt exception are taken in EL3.
  
 +config ARMV8_SWITCH_TO_EL1
 +	bool "Switch to EL1 before booting the operating system"
@@ -148,26 +147,14 @@ index a59a5e6c0e..e2cf2e6ec4 100644
  #else
  	unsigned long machid = gd->bd->bi_arch_number;
 diff --git a/configs/vexpress_aemv8r_defconfig b/configs/vexpress_aemv8r_defconfig
-index 402062cecf..dff1836da2 100644
+index 1d5b7411f0..35e5e8a5e1 100644
 --- a/configs/vexpress_aemv8r_defconfig
 +++ b/configs/vexpress_aemv8r_defconfig
-@@ -23,3 +23,4 @@ CONFIG_VIRTIO_BLK=y
- CONFIG_VIRTIO_NET=y
- CONFIG_ARCH_FIXUP_FDT_MEMORY=n
+@@ -14,3 +14,4 @@ CONFIG_SYS_PROMPT="VExpress64# "
+ # CONFIG_MMC is not set
+ CONFIG_VIRTIO_MMIO=y
  CONFIG_ARMV8_EXCEPTION_VECTORS=n
 +CONFIG_ARMV8_SWITCH_TO_EL1=y
-diff --git a/scripts/config_whitelist.txt b/scripts/config_whitelist.txt
-index a6bc234f51..a0dd5074aa 100644
---- a/scripts/config_whitelist.txt
-+++ b/scripts/config_whitelist.txt
-@@ -7,7 +7,6 @@ CONFIG_AM335X_USB1_MODE
- CONFIG_ARMV7_SECURE_BASE
- CONFIG_ARMV7_SECURE_MAX_SIZE
- CONFIG_ARMV7_SECURE_RESERVE_SIZE
--CONFIG_ARMV8_SWITCH_TO_EL1
- CONFIG_ARM_GIC_BASE_ADDRESS
- CONFIG_ARP_TIMEOUT
- CONFIG_AT91SAM9260EK
 -- 
 2.25.1
 

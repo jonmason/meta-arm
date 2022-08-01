@@ -63,16 +63,15 @@ SRC_URI:append:fvp-base-arm32 = " file://0001-Add-vexpress_aemv8a_aarch32-varian
 # FVP BASER
 #
 SRC_URI:append:fvp-baser-aemv8r64 = " \
-    file://0001-vexpress64-Add-BASER_FVP-vexpress-board-variant.patch \
-    file://0002-armv8-Add-ARMv8-MPU-configuration-logic.patch \
+    file://0001-armv8-Add-ARMv8-MPU-configuration-logic.patch \
+    file://0002-vexpress64-add-MPU-memory-map-for-the-BASER_FVP.patch \
     file://0003-armv8-Allow-disabling-exception-vectors-on-non-SPL-b.patch \
     file://0004-armv8-ARMV8_SWITCH_TO_EL1-improvements.patch \
     file://0005-armv8-Make-disabling-HVC-configurable-when-switching.patch \
     file://0006-vexpress64-Do-not-set-COUNTER_FREQUENCY.patch \
-    file://0007-vexpress64-Configure-memory-using-device-tree.patch \
-    file://0008-vexpress64-Enable-LIBFDT_OVERLAY-in-the-vexpress_aem.patch \
-    file://0009-armv8-Allow-PRBAR-MPU-attributes-to-be-configured.patch \
-    file://0010-armv8-Enable-icache-when-switching-exception-levels-.patch \
+    file://0007-vexpress64-Enable-LIBFDT_OVERLAY-in-the-vexpress_aem.patch \
+    file://0008-armv8-Allow-PRBAR-MPU-attributes-to-be-configured.patch \
+    file://0009-armv8-Enable-icache-when-switching-exception-levels-.patch \
     "
 
 

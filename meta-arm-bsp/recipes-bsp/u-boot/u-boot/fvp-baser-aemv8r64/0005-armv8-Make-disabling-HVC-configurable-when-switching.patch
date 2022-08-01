@@ -1,7 +1,7 @@
-From 995a9daf6fd1e6375d2492cb821d24481141731b Mon Sep 17 00:00:00 2001
+From f75060be04aaed4bb5a07cb40361d694b3775f4a Mon Sep 17 00:00:00 2001
 From: Peter Hoyes <Peter.Hoyes@arm.com>
 Date: Fri, 10 Dec 2021 16:37:26 +0000
-Subject: [PATCH 5/8] armv8: Make disabling HVC configurable when switching to
+Subject: [PATCH 5/9] armv8: Make disabling HVC configurable when switching to
  EL1
 
 On the BASER_FVP there is no EL3, so HVC is used to provide PSCI
@@ -22,10 +22,10 @@ Change-Id: I463d82f1db8a3cafcab40a9c0c208753569cc300
  3 files changed, 18 insertions(+), 2 deletions(-)
 
 diff --git a/arch/arm/cpu/armv8/Kconfig b/arch/arm/cpu/armv8/Kconfig
-index b50ce60097..90e28f4e36 100644
+index 110adf63b3..a821e219d8 100644
 --- a/arch/arm/cpu/armv8/Kconfig
 +++ b/arch/arm/cpu/armv8/Kconfig
-@@ -185,4 +185,13 @@ config ARMV8_SWITCH_TO_EL1
+@@ -199,4 +199,13 @@ config ARMV8_SWITCH_TO_EL1
  	  operating system does not support booting at EL2, or you wish to prevent
  	  any hypervisors from running. Supported for bootm, booti and bootefi.
  
@@ -40,10 +40,10 @@ index b50ce60097..90e28f4e36 100644
 +
  endif
 diff --git a/arch/arm/include/asm/macro.h b/arch/arm/include/asm/macro.h
-index ec0171e0e6..6d267cbae2 100644
+index 1a1edc9870..7167739210 100644
 --- a/arch/arm/include/asm/macro.h
 +++ b/arch/arm/include/asm/macro.h
-@@ -311,9 +311,12 @@ lr	.req	x30
+@@ -296,9 +296,12 @@ lr	.req	x30
  	ldr	\tmp2, =(ID_AA64ISAR1_EL1_GPI | ID_AA64ISAR1_EL1_GPA | \
  		      ID_AA64ISAR1_EL1_API | ID_AA64ISAR1_EL1_APA)
  	tst	\tmp, \tmp2
@@ -57,7 +57,7 @@ index ec0171e0e6..6d267cbae2 100644
  	msr	hcr_el2, \tmp
  
  	/* Return to the EL1_SP1 mode from EL2 */
-@@ -326,7 +329,10 @@ lr	.req	x30
+@@ -311,7 +314,10 @@ lr	.req	x30
  
  1:
  	/* Initialize HCR_EL2 */
@@ -70,11 +70,11 @@ index ec0171e0e6..6d267cbae2 100644
  
  	/* Return to AArch32 Supervisor mode from EL2 */
 diff --git a/configs/vexpress_aemv8r_defconfig b/configs/vexpress_aemv8r_defconfig
-index dff1836da2..a1522c48b5 100644
+index 35e5e8a5e1..605a724a61 100644
 --- a/configs/vexpress_aemv8r_defconfig
 +++ b/configs/vexpress_aemv8r_defconfig
-@@ -24,3 +24,4 @@ CONFIG_VIRTIO_NET=y
- CONFIG_ARCH_FIXUP_FDT_MEMORY=n
+@@ -15,3 +15,4 @@ CONFIG_SYS_PROMPT="VExpress64# "
+ CONFIG_VIRTIO_MMIO=y
  CONFIG_ARMV8_EXCEPTION_VECTORS=n
  CONFIG_ARMV8_SWITCH_TO_EL1=y
 +CONFIG_ARMV8_DISABLE_HVC=n

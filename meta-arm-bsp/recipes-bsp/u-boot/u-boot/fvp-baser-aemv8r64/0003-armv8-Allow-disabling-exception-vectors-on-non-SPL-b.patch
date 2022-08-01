@@ -1,7 +1,7 @@
-From 2edfe3f7c44028fccdc8f8c71461e8c5a0b0b14e Mon Sep 17 00:00:00 2001
+From 61a2df4467c13bbc83bff8a3429e9ebb4b957b56 Mon Sep 17 00:00:00 2001
 From: Peter Hoyes <Peter.Hoyes@arm.com>
 Date: Fri, 10 Dec 2021 11:41:19 +0000
-Subject: [PATCH 3/8] armv8: Allow disabling exception vectors on non-SPL
+Subject: [PATCH 3/9] armv8: Allow disabling exception vectors on non-SPL
  builds
 
 On the BASER_FVP, U-Boot shares EL2 with another bootloader, so we do
@@ -23,12 +23,11 @@ Change-Id: I0cf0fc6d7ef4d45791411cf1f67c65e198cc8b2b
  arch/arm/cpu/armv8/Kconfig        | 10 ++++++++--
  arch/arm/cpu/armv8/Makefile       |  6 ++----
  arch/arm/cpu/armv8/start.S        |  4 ++--
- arch/arm/mach-imx/imx8ulp/Kconfig |  2 +-
  configs/vexpress_aemv8r_defconfig |  1 +
- 5 files changed, 14 insertions(+), 9 deletions(-)
+ 4 files changed, 13 insertions(+), 8 deletions(-)
 
 diff --git a/arch/arm/cpu/armv8/Kconfig b/arch/arm/cpu/armv8/Kconfig
-index 9967376eca..6f9d0610e8 100644
+index 09f3f50fa2..031faa909c 100644
 --- a/arch/arm/cpu/armv8/Kconfig
 +++ b/arch/arm/cpu/armv8/Kconfig
 @@ -1,8 +1,8 @@
@@ -73,7 +72,7 @@ index 85fe0475c8..8b3f695835 100644
  endif
  obj-y	+= tlb.o
 diff --git a/arch/arm/cpu/armv8/start.S b/arch/arm/cpu/armv8/start.S
-index 91b00a46cc..d2fcae1e94 100644
+index 28f0df13f0..f831e77af3 100644
 --- a/arch/arm/cpu/armv8/start.S
 +++ b/arch/arm/cpu/armv8/start.S
 @@ -104,7 +104,7 @@ pie_skip_reloc:
@@ -85,7 +84,7 @@ index 91b00a46cc..d2fcae1e94 100644
  .macro	set_vbar, regname, reg
  	msr	\regname, \reg
  .endm
-@@ -350,7 +350,7 @@ ENDPROC(smp_kick_all_cpus)
+@@ -354,7 +354,7 @@ ENDPROC(smp_kick_all_cpus)
  /*-----------------------------------------------------------------------*/
  
  ENTRY(c_runtime_cpu_setup)
@@ -94,27 +93,14 @@ index 91b00a46cc..d2fcae1e94 100644
  	/* Relocate vBAR */
  	adr	x0, vectors
  	switch_el x1, 3f, 2f, 1f
-diff --git a/arch/arm/mach-imx/imx8ulp/Kconfig b/arch/arm/mach-imx/imx8ulp/Kconfig
-index 963fc93d34..6255711f12 100644
---- a/arch/arm/mach-imx/imx8ulp/Kconfig
-+++ b/arch/arm/mach-imx/imx8ulp/Kconfig
-@@ -2,7 +2,7 @@ if ARCH_IMX8ULP
- 
- config IMX8ULP
- 	bool
--	select ARMV8_SPL_EXCEPTION_VECTORS
-+	select SPL_ARMV8_EXCEPTION_VECTORS
- 
- config SYS_SOC
- 	default "imx8ulp"
 diff --git a/configs/vexpress_aemv8r_defconfig b/configs/vexpress_aemv8r_defconfig
-index 6fa7c979f6..402062cecf 100644
+index a1c5d88717..1d5b7411f0 100644
 --- a/configs/vexpress_aemv8r_defconfig
 +++ b/configs/vexpress_aemv8r_defconfig
-@@ -22,3 +22,4 @@ CONFIG_VIRTIO_MMIO=y
- CONFIG_VIRTIO_BLK=y
- CONFIG_VIRTIO_NET=y
- CONFIG_ARCH_FIXUP_FDT_MEMORY=n
+@@ -13,3 +13,4 @@ CONFIG_BOOTARGS="console=ttyAMA0 earlycon=pl011,0x9c090000 rootfstype=ext4 root=
+ CONFIG_SYS_PROMPT="VExpress64# "
+ # CONFIG_MMC is not set
+ CONFIG_VIRTIO_MMIO=y
 +CONFIG_ARMV8_EXCEPTION_VECTORS=n
 -- 
 2.25.1

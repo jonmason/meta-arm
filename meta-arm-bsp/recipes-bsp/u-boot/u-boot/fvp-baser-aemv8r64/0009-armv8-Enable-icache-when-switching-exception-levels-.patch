@@ -1,7 +1,7 @@
-From a5790fe98179b2490500cde629f7a48fbbe341df Mon Sep 17 00:00:00 2001
+From 0f15f6b02825b042ddc1d753f62cf87f30b1fe12 Mon Sep 17 00:00:00 2001
 From: Peter Hoyes <Peter.Hoyes@arm.com>
 Date: Thu, 19 May 2022 09:02:32 +0100
-Subject: [PATCH 2/2] armv8: Enable icache when switching exception levels in
+Subject: [PATCH 9/9] armv8: Enable icache when switching exception levels in
  bootefi
 
 bootefi calls the function switch_to_non_secure_mode before calling the
