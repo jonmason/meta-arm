@@ -1,16 +1,18 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
-
-From 20bab8442387480d77cf5d7c8271758acf9ed181 Mon Sep 17 00:00:00 2001
+From 259300dc81b95ff65cd2e95e0fecd140d76e4b5e Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Tue, 7 Dec 2021 11:50:00 +0000
-Subject: [PATCH 3/5] Add psa ipc attestation to se proxy
+Subject: [PATCH] Add psa ipc attestation to se proxy
 
 Implement attestation client API as psa ipc and include it to
 se proxy deployment.
 
 Signed-off-by: Rui Miguel Silva <rui.silva@arm.com>
 Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+
+
 ---
  .../client/psa_ipc/component.cmake            | 13 +++
  .../client/psa_ipc/iat_ipc_client.c           | 86 +++++++++++++++++++
@@ -27,7 +29,7 @@ Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
 
 diff --git a/components/service/attestation/client/psa_ipc/component.cmake b/components/service/attestation/client/psa_ipc/component.cmake
 new file mode 100644
-index 0000000..a5bc6b4
+index 00000000..a5bc6b4a
 --- /dev/null
 +++ b/components/service/attestation/client/psa_ipc/component.cmake
 @@ -0,0 +1,13 @@
@@ -46,7 +48,7 @@ index 0000000..a5bc6b4
 +	)
 diff --git a/components/service/attestation/client/psa_ipc/iat_ipc_client.c b/components/service/attestation/client/psa_ipc/iat_ipc_client.c
 new file mode 100644
-index 0000000..30bd0a1
+index 00000000..30bd0a13
 --- /dev/null
 +++ b/components/service/attestation/client/psa_ipc/iat_ipc_client.c
 @@ -0,0 +1,86 @@
@@ -138,7 +140,7 @@ index 0000000..30bd0a1
 +}
 diff --git a/components/service/attestation/reporter/psa_ipc/component.cmake b/components/service/attestation/reporter/psa_ipc/component.cmake
 new file mode 100644
-index 0000000..b37830c
+index 00000000..b37830c6
 --- /dev/null
 +++ b/components/service/attestation/reporter/psa_ipc/component.cmake
 @@ -0,0 +1,13 @@
@@ -157,7 +159,7 @@ index 0000000..b37830c
 +	)
 diff --git a/components/service/attestation/reporter/psa_ipc/psa_ipc_attest_report.c b/components/service/attestation/reporter/psa_ipc/psa_ipc_attest_report.c
 new file mode 100644
-index 0000000..15805e8
+index 00000000..15805e8e
 --- /dev/null
 +++ b/components/service/attestation/reporter/psa_ipc/psa_ipc_attest_report.c
 @@ -0,0 +1,45 @@
@@ -207,7 +209,7 @@ index 0000000..15805e8
 +	(void)report;
 +}
 diff --git a/components/service/common/include/psa/sid.h b/components/service/common/include/psa/sid.h
-index aaa973c..833f503 100644
+index aaa973c6..833f5039 100644
 --- a/components/service/common/include/psa/sid.h
 +++ b/components/service/common/include/psa/sid.h
 @@ -50,6 +50,10 @@ extern "C" {
@@ -222,7 +224,7 @@ index aaa973c..833f503 100644
  #define TFM_FWU_WRITE_SID                                          (0x000000A0U)
  #define TFM_FWU_WRITE_VERSION                                      (1U)
 diff --git a/deployments/se-proxy/opteesp/CMakeLists.txt b/deployments/se-proxy/opteesp/CMakeLists.txt
-index 663177b..af2225e 100644
+index 663177b7..af2225e7 100644
 --- a/deployments/se-proxy/opteesp/CMakeLists.txt
 +++ b/deployments/se-proxy/opteesp/CMakeLists.txt
 @@ -77,12 +77,13 @@ add_components(TARGET "se-proxy"
@@ -241,7 +243,7 @@ index 663177b..af2225e 100644
  		"components/service/crypto/backend/stub"
  		"components/service/crypto/client/psa"
 diff --git a/deployments/se-proxy/opteesp/service_proxy_factory.c b/deployments/se-proxy/opteesp/service_proxy_factory.c
-index 5729005..4b8ccec 100644
+index 57290056..4b8ccecc 100644
 --- a/deployments/se-proxy/opteesp/service_proxy_factory.c
 +++ b/deployments/se-proxy/opteesp/service_proxy_factory.c
 @@ -23,12 +23,18 @@ struct openamp_caller openamp;
@@ -263,6 +265,3 @@ index 5729005..4b8ccec 100644
  
  	attest_provider_register_serializer(&attest_provider,
  		TS_RPC_ENCODING_PACKED_C, packedc_attest_provider_serializer_instance());
--- 
-2.17.1
-

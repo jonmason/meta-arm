@@ -1,16 +1,18 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
-
-From deb8fb7a7b214edc095c971f7a439e75b8e428d1 Mon Sep 17 00:00:00 2001
+From 5af98a77887c2aa60bc93dbdddb174e03501b733 Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Thu, 9 Dec 2021 14:17:39 +0000
-Subject: [PATCH 5/5] add psa ipc crypto backend
+Subject: [PATCH] add psa ipc crypto backend
 
 Add psa ipc crypto backend and attach it to se proxy
 deployment.
 
 Signed-off-by: Rui Miguel Silva <rui.silva@arm.com>
 Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+
+
 ---
  components/service/common/include/psa/sid.h   |  73 +++++
  .../crypto/backend/psa_ipc/component.cmake    |  21 ++
@@ -67,7 +69,7 @@ Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
  create mode 100644 components/service/crypto/client/caller/psa_ipc/crypto_caller_verify_hash.h
 
 diff --git a/components/service/common/include/psa/sid.h b/components/service/common/include/psa/sid.h
-index 4a951d4..7a29cc2 100644
+index 4a951d4a..7a29cc25 100644
 --- a/components/service/common/include/psa/sid.h
 +++ b/components/service/common/include/psa/sid.h
 @@ -37,6 +37,79 @@ extern "C" {
@@ -152,7 +154,7 @@ index 4a951d4..7a29cc2 100644
  #define TFM_SP_PLATFORM_SYSTEM_RESET_VERSION                       (1U)
 diff --git a/components/service/crypto/backend/psa_ipc/component.cmake b/components/service/crypto/backend/psa_ipc/component.cmake
 new file mode 100644
-index 0000000..93c297a
+index 00000000..93c297a8
 --- /dev/null
 +++ b/components/service/crypto/backend/psa_ipc/component.cmake
 @@ -0,0 +1,21 @@
@@ -179,7 +181,7 @@ index 0000000..93c297a
 +)
 diff --git a/components/service/crypto/backend/psa_ipc/crypto_ipc_backend.c b/components/service/crypto/backend/psa_ipc/crypto_ipc_backend.c
 new file mode 100644
-index 0000000..e47cd4f
+index 00000000..e47cd4ff
 --- /dev/null
 +++ b/components/service/crypto/backend/psa_ipc/crypto_ipc_backend.c
 @@ -0,0 +1,26 @@
@@ -211,7 +213,7 @@ index 0000000..e47cd4f
 +}
 diff --git a/components/service/crypto/backend/psa_ipc/crypto_ipc_backend.h b/components/service/crypto/backend/psa_ipc/crypto_ipc_backend.h
 new file mode 100644
-index 0000000..c13c20e
+index 00000000..c13c20e8
 --- /dev/null
 +++ b/components/service/crypto/backend/psa_ipc/crypto_ipc_backend.h
 @@ -0,0 +1,70 @@
@@ -287,7 +289,7 @@ index 0000000..c13c20e
 +#endif /* CRYPTO_IPC_BACKEND_H */
 diff --git a/components/service/crypto/client/caller/psa_ipc/crypto_caller.h b/components/service/crypto/client/caller/psa_ipc/crypto_caller.h
 new file mode 100644
-index 0000000..0a97218
+index 00000000..0a972187
 --- /dev/null
 +++ b/components/service/crypto/client/caller/psa_ipc/crypto_caller.h
 @@ -0,0 +1,34 @@
@@ -327,7 +329,7 @@ index 0000000..0a97218
 +#endif /* PSA_IPC_CRYPTO_CALLER_H */
 diff --git a/components/service/crypto/client/caller/psa_ipc/crypto_caller_aead.h b/components/service/crypto/client/caller/psa_ipc/crypto_caller_aead.h
 new file mode 100644
-index 0000000..78517fe
+index 00000000..78517fe3
 --- /dev/null
 +++ b/components/service/crypto/client/caller/psa_ipc/crypto_caller_aead.h
 @@ -0,0 +1,252 @@
@@ -585,7 +587,7 @@ index 0000000..78517fe
 +#endif /* PSA_IPC_CRYPTO_CALLER_AEAD_H */
 diff --git a/components/service/crypto/client/caller/psa_ipc/crypto_caller_asymmetric_decrypt.h b/components/service/crypto/client/caller/psa_ipc/crypto_caller_asymmetric_decrypt.h
 new file mode 100644
-index 0000000..ff01815
+index 00000000..ff01815c
 --- /dev/null
 +++ b/components/service/crypto/client/caller/psa_ipc/crypto_caller_asymmetric_decrypt.h
 @@ -0,0 +1,76 @@
@@ -667,7 +669,7 @@ index 0000000..ff01815
 +#endif /* PSA_IPC_CRYPTO_CALLER_ASYMMETRIC_DECRYPT_H */
 diff --git a/components/service/crypto/client/caller/psa_ipc/crypto_caller_asymmetric_encrypt.h b/components/service/crypto/client/caller/psa_ipc/crypto_caller_asymmetric_encrypt.h
 new file mode 100644
-index 0000000..1daf168
+index 00000000..1daf1689
 --- /dev/null
 +++ b/components/service/crypto/client/caller/psa_ipc/crypto_caller_asymmetric_encrypt.h
 @@ -0,0 +1,76 @@
@@ -749,7 +751,7 @@ index 0000000..1daf168
 +#endif /* PSA_IPC_CRYPTO_CALLER_ASYMMETRIC_ENCRYPT_H */
 diff --git a/components/service/crypto/client/caller/psa_ipc/crypto_caller_cipher.h b/components/service/crypto/client/caller/psa_ipc/crypto_caller_cipher.h
 new file mode 100644
-index 0000000..fbefb28
+index 00000000..fbefb28d
 --- /dev/null
 +++ b/components/service/crypto/client/caller/psa_ipc/crypto_caller_cipher.h
 @@ -0,0 +1,246 @@
@@ -1001,7 +1003,7 @@ index 0000000..fbefb28
 +#endif /* PSA_IPC_CRYPTO_CALLER_CIPHER_H */
 diff --git a/components/service/crypto/client/caller/psa_ipc/crypto_caller_copy_key.h b/components/service/crypto/client/caller/psa_ipc/crypto_caller_copy_key.h
 new file mode 100644
-index 0000000..9a98817
+index 00000000..9a988171
 --- /dev/null
 +++ b/components/service/crypto/client/caller/psa_ipc/crypto_caller_copy_key.h
 @@ -0,0 +1,57 @@
@@ -1064,7 +1066,7 @@ index 0000000..9a98817
 +#endif /* PSA_IPC_CRYPTO_CALLER_COPY_KEY_H */
 diff --git a/components/service/crypto/client/caller/psa_ipc/crypto_caller_destroy_key.h b/components/service/crypto/client/caller/psa_ipc/crypto_caller_destroy_key.h
 new file mode 100644
-index 0000000..d00f4fa
+index 00000000..d00f4faa
 --- /dev/null
 +++ b/components/service/crypto/client/caller/psa_ipc/crypto_caller_destroy_key.h
 @@ -0,0 +1,51 @@
@@ -1121,7 +1123,7 @@ index 0000000..d00f4fa
 +#endif /* PSA_IPC_CRYPTO_CALLER_DESTROY_KEY_H */
 diff --git a/components/service/crypto/client/caller/psa_ipc/crypto_caller_export_key.h b/components/service/crypto/client/caller/psa_ipc/crypto_caller_export_key.h
 new file mode 100644
-index 0000000..8ac5477
+index 00000000..8ac5477f
 --- /dev/null
 +++ b/components/service/crypto/client/caller/psa_ipc/crypto_caller_export_key.h
 @@ -0,0 +1,59 @@
@@ -1186,7 +1188,7 @@ index 0000000..8ac5477
 +#endif /* PSA_IPC_CRYPTO_CALLER_EXPORT_KEY_H */
 diff --git a/components/service/crypto/client/caller/psa_ipc/crypto_caller_export_public_key.h b/components/service/crypto/client/caller/psa_ipc/crypto_caller_export_public_key.h
 new file mode 100644
-index 0000000..b24c47f
+index 00000000..b24c47f1
 --- /dev/null
 +++ b/components/service/crypto/client/caller/psa_ipc/crypto_caller_export_public_key.h
 @@ -0,0 +1,59 @@
@@ -1251,7 +1253,7 @@ index 0000000..b24c47f
 +#endif /* PSA_IPC_CRYPTO_CALLER_EXPORT_PUBLIC_KEY_H */
 diff --git a/components/service/crypto/client/caller/psa_ipc/crypto_caller_generate_key.h b/components/service/crypto/client/caller/psa_ipc/crypto_caller_generate_key.h
 new file mode 100644
-index 0000000..1b66ed4
+index 00000000..1b66ed40
 --- /dev/null
 +++ b/components/service/crypto/client/caller/psa_ipc/crypto_caller_generate_key.h
 @@ -0,0 +1,55 @@
@@ -1312,7 +1314,7 @@ index 0000000..1b66ed4
 +#endif /* PSA_IPC_CRYPTO_CALLER_GENERATE_KEY_H */
 diff --git a/components/service/crypto/client/caller/psa_ipc/crypto_caller_generate_random.h b/components/service/crypto/client/caller/psa_ipc/crypto_caller_generate_random.h
 new file mode 100644
-index 0000000..7c53823
+index 00000000..7c538237
 --- /dev/null
 +++ b/components/service/crypto/client/caller/psa_ipc/crypto_caller_generate_random.h
 @@ -0,0 +1,57 @@
@@ -1375,7 +1377,7 @@ index 0000000..7c53823
 +#endif /* PSA_IPC_CRYPTO_CALLER_GENERATE_RANDOM_H */
 diff --git a/components/service/crypto/client/caller/psa_ipc/crypto_caller_get_key_attributes.h b/components/service/crypto/client/caller/psa_ipc/crypto_caller_get_key_attributes.h
 new file mode 100644
-index 0000000..22f1d18
+index 00000000..22f1d18f
 --- /dev/null
 +++ b/components/service/crypto/client/caller/psa_ipc/crypto_caller_get_key_attributes.h
 @@ -0,0 +1,56 @@
@@ -1437,7 +1439,7 @@ index 0000000..22f1d18
 +#endif /* PSA_IPC_CRYPTO_CALLER_GET_KEY_ATTRIBUTES_H */
 diff --git a/components/service/crypto/client/caller/psa_ipc/crypto_caller_hash.h b/components/service/crypto/client/caller/psa_ipc/crypto_caller_hash.h
 new file mode 100644
-index 0000000..9f37908
+index 00000000..9f37908a
 --- /dev/null
 +++ b/components/service/crypto/client/caller/psa_ipc/crypto_caller_hash.h
 @@ -0,0 +1,220 @@
@@ -1663,7 +1665,7 @@ index 0000000..9f37908
 +#endif /* PSA_IPC_CRYPTO_CALLER_HASH_H */
 diff --git a/components/service/crypto/client/caller/psa_ipc/crypto_caller_import_key.h b/components/service/crypto/client/caller/psa_ipc/crypto_caller_import_key.h
 new file mode 100644
-index 0000000..d470336
+index 00000000..d4703366
 --- /dev/null
 +++ b/components/service/crypto/client/caller/psa_ipc/crypto_caller_import_key.h
 @@ -0,0 +1,57 @@
@@ -1726,7 +1728,7 @@ index 0000000..d470336
 +#endif /* PACKEDC_CRYPTO_CALLER_IMPORT_KEY_H */
 diff --git a/components/service/crypto/client/caller/psa_ipc/crypto_caller_key_attributes.h b/components/service/crypto/client/caller/psa_ipc/crypto_caller_key_attributes.h
 new file mode 100644
-index 0000000..2fad2f0
+index 00000000..2fad2f0a
 --- /dev/null
 +++ b/components/service/crypto/client/caller/psa_ipc/crypto_caller_key_attributes.h
 @@ -0,0 +1,51 @@
@@ -1783,7 +1785,7 @@ index 0000000..2fad2f0
 +#endif /* PACKEDC_CRYPTO_CALLER_KEY_ATTRIBUTES_H */
 diff --git a/components/service/crypto/client/caller/psa_ipc/crypto_caller_key_derivation.h b/components/service/crypto/client/caller/psa_ipc/crypto_caller_key_derivation.h
 new file mode 100644
-index 0000000..5ce4fb6
+index 00000000..5ce4fb6c
 --- /dev/null
 +++ b/components/service/crypto/client/caller/psa_ipc/crypto_caller_key_derivation.h
 @@ -0,0 +1,298 @@
@@ -2087,7 +2089,7 @@ index 0000000..5ce4fb6
 +#endif /* PSA_IPC_CRYPTO_CALLER_KEY_DERIVATION_H */
 diff --git a/components/service/crypto/client/caller/psa_ipc/crypto_caller_mac.h b/components/service/crypto/client/caller/psa_ipc/crypto_caller_mac.h
 new file mode 100644
-index 0000000..3a82019
+index 00000000..3a820192
 --- /dev/null
 +++ b/components/service/crypto/client/caller/psa_ipc/crypto_caller_mac.h
 @@ -0,0 +1,207 @@
@@ -2300,7 +2302,7 @@ index 0000000..3a82019
 +#endif /* PSA_IPC_CRYPTO_CALLER_MAC_H */
 diff --git a/components/service/crypto/client/caller/psa_ipc/crypto_caller_purge_key.h b/components/service/crypto/client/caller/psa_ipc/crypto_caller_purge_key.h
 new file mode 100644
-index 0000000..a3a796e
+index 00000000..a3a796e2
 --- /dev/null
 +++ b/components/service/crypto/client/caller/psa_ipc/crypto_caller_purge_key.h
 @@ -0,0 +1,51 @@
@@ -2357,7 +2359,7 @@ index 0000000..a3a796e
 +#endif /* PACKEDC_CRYPTO_CALLER_PURGE_KEY_H */
 diff --git a/components/service/crypto/client/caller/psa_ipc/crypto_caller_sign_hash.h b/components/service/crypto/client/caller/psa_ipc/crypto_caller_sign_hash.h
 new file mode 100644
-index 0000000..71d88ce
+index 00000000..71d88ced
 --- /dev/null
 +++ b/components/service/crypto/client/caller/psa_ipc/crypto_caller_sign_hash.h
 @@ -0,0 +1,64 @@
@@ -2427,7 +2429,7 @@ index 0000000..71d88ce
 +#endif /* PSA_IPC_CRYPTO_CALLER_SIGN_HASH_H */
 diff --git a/components/service/crypto/client/caller/psa_ipc/crypto_caller_verify_hash.h b/components/service/crypto/client/caller/psa_ipc/crypto_caller_verify_hash.h
 new file mode 100644
-index 0000000..e16f6e5
+index 00000000..e16f6e54
 --- /dev/null
 +++ b/components/service/crypto/client/caller/psa_ipc/crypto_caller_verify_hash.h
 @@ -0,0 +1,59 @@
@@ -2491,7 +2493,7 @@ index 0000000..e16f6e5
 +
 +#endif /* PSA_IPC_CRYPTO_CALLER_VERIFY_HASH_H */
 diff --git a/components/service/crypto/include/psa/crypto_client_struct.h b/components/service/crypto/include/psa/crypto_client_struct.h
-index abd420c..bf95c98 100644
+index abd420c8..bf95c982 100644
 --- a/components/service/crypto/include/psa/crypto_client_struct.h
 +++ b/components/service/crypto/include/psa/crypto_client_struct.h
 @@ -31,12 +31,12 @@ extern "C" {
@@ -2512,7 +2514,7 @@ index abd420c..bf95c98 100644
  
  #define PSA_CLIENT_KEY_ATTRIBUTES_INIT {0, 0, 0, 0, 0, 0}
 diff --git a/components/service/crypto/include/psa/crypto_sizes.h b/components/service/crypto/include/psa/crypto_sizes.h
-index 7a0149b..4d7bf6e 100644
+index 7a0149bb..4d7bf6e9 100644
 --- a/components/service/crypto/include/psa/crypto_sizes.h
 +++ b/components/service/crypto/include/psa/crypto_sizes.h
 @@ -81,7 +81,7 @@
@@ -2525,7 +2527,7 @@ index 7a0149b..4d7bf6e 100644
  #endif
  
 diff --git a/deployments/se-proxy/opteesp/CMakeLists.txt b/deployments/se-proxy/opteesp/CMakeLists.txt
-index af2225e..2190428 100644
+index af2225e7..21904283 100644
 --- a/deployments/se-proxy/opteesp/CMakeLists.txt
 +++ b/deployments/se-proxy/opteesp/CMakeLists.txt
 @@ -85,7 +85,7 @@ add_components(TARGET "se-proxy"
@@ -2538,7 +2540,7 @@ index af2225e..2190428 100644
  		"components/service/secure_storage/backend/mock_store"
  )
 diff --git a/deployments/se-proxy/opteesp/service_proxy_factory.c b/deployments/se-proxy/opteesp/service_proxy_factory.c
-index 1110ac4..7edeef8 100644
+index 1110ac46..7edeef8b 100644
 --- a/deployments/se-proxy/opteesp/service_proxy_factory.c
 +++ b/deployments/se-proxy/opteesp/service_proxy_factory.c
 @@ -15,7 +15,7 @@
@@ -2573,7 +2575,7 @@ index 1110ac4..7edeef8 100644
  	return crypto_iface;
  }
 diff --git a/platform/providers/arm/corstone1000/platform.cmake b/platform/providers/arm/corstone1000/platform.cmake
-index bb778bb..51e5faa 100644
+index bb778bb9..51e5faa3 100644
 --- a/platform/providers/arm/corstone1000/platform.cmake
 +++ b/platform/providers/arm/corstone1000/platform.cmake
 @@ -8,3 +8,5 @@
@@ -2582,6 +2584,3 @@ index bb778bb..51e5faa 100644
  include(${TS_ROOT}/platform/drivers/arm/mhu_driver/component.cmake)
 +
 +add_compile_definitions(MBEDTLS_ECP_DP_SECP521R1_ENABLED)
--- 
-2.17.1
-

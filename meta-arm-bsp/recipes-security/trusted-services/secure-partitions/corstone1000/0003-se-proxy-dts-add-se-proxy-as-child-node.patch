@@ -1,7 +1,4 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
-
-From 77fa96b728b81066c440c2e1e185f745376a6fb2 Mon Sep 17 00:00:00 2001
+From 0ec1b3d20d612325b9c55baa2539d080eb6a72a8 Mon Sep 17 00:00:00 2001
 From: Vishnu Banavath <vishnu.banavath@arm.com>
 Date: Sat, 13 Nov 2021 08:34:42 +0000
 Subject: [PATCH] se-proxy:dts: add se-proxy as child node
@@ -10,11 +7,16 @@ se-proxy sp string should be added for se-proxy node to be
 read properly.
 
 Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 
-%% original patch: 0003-se-proxy-dts-add-se-proxy-as-child-node.patch
+
+---
+ .../se-proxy/opteesp/default_se-proxy.dts.in  | 20 ++++++++++---------
+ 1 file changed, 11 insertions(+), 9 deletions(-)
 
 diff --git a/deployments/se-proxy/opteesp/default_se-proxy.dts.in b/deployments/se-proxy/opteesp/default_se-proxy.dts.in
-index 961071a..9f5cf71 100644
+index 961071ad..9f5cf712 100644
 --- a/deployments/se-proxy/opteesp/default_se-proxy.dts.in
 +++ b/deployments/se-proxy/opteesp/default_se-proxy.dts.in
 @@ -7,13 +7,15 @@
@@ -42,6 +44,3 @@ index 961071a..9f5cf71 100644
 +		messaging-method = <0>; /* Direct messaging only */
 +	};
  };
--- 
-2.25.1
-

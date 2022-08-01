@@ -1,7 +1,4 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
-
-From 5ea2bdc34efcbbd235091341027d86fd8d9ffb16 Mon Sep 17 00:00:00 2001
+From 289bec4cacac80cb43c19e4ca7b2c50fc932712e Mon Sep 17 00:00:00 2001
 From: Julian Hall <julian.hall@arm.com>
 Date: Wed, 8 Dec 2021 11:48:28 +0000
 Subject: [PATCH] Fix interface ID parameter setting in sp/ffarpc_caller
@@ -13,8 +10,16 @@ This change fixes this issue.
 Signed-off-by: Julian Hall <julian.hall@arm.com>
 Change-Id: Iab520e4c7dc63ee1f5d3bf1bd1de702e4cc6f093
 
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
+
+
+---
+ components/rpc/ffarpc/caller/sp/ffarpc_caller.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
 diff --git a/components/rpc/ffarpc/caller/sp/ffarpc_caller.c b/components/rpc/ffarpc/caller/sp/ffarpc_caller.c
-index 250b178..dabcd90 100644
+index 250b1781..dabcd90c 100644
 --- a/components/rpc/ffarpc/caller/sp/ffarpc_caller.c
 +++ b/components/rpc/ffarpc/caller/sp/ffarpc_caller.c
 @@ -81,7 +81,7 @@ static rpc_status_t call_invoke(void *context, rpc_call_handle handle, uint32_t
@@ -26,6 +31,3 @@ index 250b178..dabcd90 100644
  	//TODO: downcast problem?
  	req.args[SP_CALL_ARGS_REQ_DATA_LEN] = (uint32_t)this_context->req_len;
  	req.args[SP_CALL_ARGS_ENCODING] = this_context->rpc_caller.encoding;
--- 
-2.25.1
-

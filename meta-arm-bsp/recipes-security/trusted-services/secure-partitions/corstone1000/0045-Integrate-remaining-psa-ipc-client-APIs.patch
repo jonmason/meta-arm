@@ -1,12 +1,14 @@
+From b8060d9e15b1b910cf9b466a3f43088c71d7a38f Mon Sep 17 00:00:00 2001
+From: Satish Kumar <satish.kumar01@arm.com>
+Date: Sun, 13 Feb 2022 09:49:51 +0000
+Subject: [PATCH] Integrate remaining psa-ipc client APIs.
+
+Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+
 Upstream-Status: Pending [Not submitted to upstream yet]
 Signed-off-by: Emekcan Aras <Emekcan.Aras@arm.com>
 
-From 0469b4650bb011ec157286dbae0f1cef5cbfbe41 Mon Sep 17 00:00:00 2001
-From: Satish Kumar <satish.kumar01@arm.com>
-Date: Sun, 13 Feb 2022 09:49:51 +0000
-Subject: [PATCH 13/15] Integrate remaining psa-ipc client APIs.
 
-Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
 ---
  .../caller/psa_ipc/crypto_caller_aead.h       | 297 +++++++++++++++++-
  .../caller/psa_ipc/crypto_caller_sign_hash.h  |  35 +++
@@ -14,7 +16,7 @@ Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
  3 files changed, 352 insertions(+), 13 deletions(-)
 
 diff --git a/components/service/crypto/client/caller/psa_ipc/crypto_caller_aead.h b/components/service/crypto/client/caller/psa_ipc/crypto_caller_aead.h
-index 78517fe3..9c64fe62 100644
+index 78517fe3..f6aadd8b 100644
 --- a/components/service/crypto/client/caller/psa_ipc/crypto_caller_aead.h
 +++ b/components/service/crypto/client/caller/psa_ipc/crypto_caller_aead.h
 @@ -152,7 +152,27 @@ static inline psa_status_t crypto_caller_aead_encrypt_setup(
@@ -44,7 +46,7 @@ index 78517fe3..9c64fe62 100644
 +
 +	return status;
  }
-
+ 
  static inline psa_status_t crypto_caller_aead_decrypt_setup(
 @@ -161,7 +181,26 @@ static inline psa_status_t crypto_caller_aead_decrypt_setup(
  					    psa_key_id_t key,
@@ -72,7 +74,7 @@ index 78517fe3..9c64fe62 100644
 +	                   IOVEC_LEN(in_vec), out_vec, IOVEC_LEN(out_vec));
 +	return status;
  }
-
+ 
  static inline psa_status_t crypto_caller_aead_generate_nonce(
 @@ -171,7 +210,27 @@ static inline psa_status_t crypto_caller_aead_generate_nonce(
  					     size_t nonce_size,
@@ -101,7 +103,7 @@ index 78517fe3..9c64fe62 100644
 +	*nonce_length = out_vec[1].len;
 +	return status;
  }
-
+ 
  static inline psa_status_t crypto_caller_aead_set_nonce(
 @@ -180,7 +239,25 @@ static inline psa_status_t crypto_caller_aead_set_nonce(
  						const uint8_t *nonce,
@@ -128,7 +130,7 @@ index 78517fe3..9c64fe62 100644
 +	                   IOVEC_LEN(in_vec), out_vec, IOVEC_LEN(out_vec));
 +	return status;
  }
-
+ 
  static inline psa_status_t crypto_caller_aead_set_lengths(
 @@ -189,7 +266,27 @@ static inline psa_status_t crypto_caller_aead_set_lengths(
  					  size_t ad_length,
@@ -157,7 +159,7 @@ index 78517fe3..9c64fe62 100644
 +
 +	return status;
  }
-
+ 
  static inline psa_status_t crypto_caller_aead_update_ad(
 @@ -198,7 +295,35 @@ static inline psa_status_t crypto_caller_aead_update_ad(
  						const uint8_t *input,
@@ -194,7 +196,7 @@ index 78517fe3..9c64fe62 100644
 +	                   in_len, out_vec, IOVEC_LEN(out_vec));
 +	return status;
  }
-
+ 
  static inline psa_status_t crypto_caller_aead_update(
 @@ -210,7 +335,38 @@ static inline psa_status_t crypto_caller_aead_update(
  					     size_t output_size,
@@ -234,7 +236,7 @@ index 78517fe3..9c64fe62 100644
 +	*output_length = out_vec[1].len;
 +	return status;
  }
-
+ 
  static inline psa_status_t crypto_caller_aead_finish(
 @@ -223,7 +379,48 @@ static inline psa_status_t crypto_caller_aead_finish(
  					     size_t tag_size,
@@ -284,7 +286,7 @@ index 78517fe3..9c64fe62 100644
 +	}
 +	return status;
  }
-
+ 
  static inline psa_status_t crypto_caller_aead_verify(
 @@ -235,14 +432,94 @@ static inline psa_status_t crypto_caller_aead_verify(
  					     const uint8_t *tag,
@@ -332,7 +334,7 @@ index 78517fe3..9c64fe62 100644
 +	}
 +	return status;
  }
-
+ 
  static inline psa_status_t crypto_caller_aead_abort(
  					    struct service_client *context,
  					    uint32_t op_handle)
@@ -381,7 +383,7 @@ index 78517fe3..9c64fe62 100644
 +
 +	return (payload_space > overhead) ? payload_space - overhead : 0;
  }
-
+ 
  #ifdef __cplusplus
 diff --git a/components/service/crypto/client/caller/psa_ipc/crypto_caller_sign_hash.h b/components/service/crypto/client/caller/psa_ipc/crypto_caller_sign_hash.h
 index 71d88ced..e4a2b167 100644
@@ -390,7 +392,7 @@ index 71d88ced..e4a2b167 100644
 @@ -57,6 +57,41 @@ static inline psa_status_t crypto_caller_sign_hash(struct service_client *contex
  	return status;
  }
-
+ 
 +static inline psa_status_t crypto_caller_sign_message(struct service_client *context,
 +						   psa_key_id_t id,
 +						   psa_algorithm_t alg,
@@ -436,7 +438,7 @@ index e16f6e54..cc9279ee 100644
 @@ -24,19 +24,20 @@
  extern "C" {
  #endif
-
+ 
 -static inline psa_status_t crypto_caller_verify_hash(struct service_client *context,
 +static inline psa_status_t crypto_caller_common(struct service_client *context,
  						     psa_key_id_t id,
@@ -460,7 +462,7 @@ index e16f6e54..cc9279ee 100644
 @@ -52,6 +53,32 @@ static inline psa_status_t crypto_caller_verify_hash(struct service_client *cont
  	return status;
  }
-
+ 
 +static inline psa_status_t crypto_caller_verify_hash(struct service_client *context,
 +						     psa_key_id_t id,
 +						     psa_algorithm_t alg,
@@ -490,5 +492,3 @@ index e16f6e54..cc9279ee 100644
  #ifdef __cplusplus
  }
  #endif
---
-2.25.1

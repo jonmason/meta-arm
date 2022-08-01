@@ -1,12 +1,14 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
-
-From 85df04f724f95218b57f78425966f0230d75c57e Mon Sep 17 00:00:00 2001
+From da3bd0721f2403562b6ae6d1939f5f331fd141bb Mon Sep 17 00:00:00 2001
 From: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
 Date: Wed, 15 Dec 2021 17:23:25 +0000
 Subject: [PATCH] Revert "Add uefi variable append write support"
 
 This reverts commit e8758d9aff0eddae81a74b0191cd027bcdc92c04.
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
+
+
 ---
  .../backend/test/variable_index_tests.cpp     |  90 +++---
  .../backend/test/variable_store_tests.cpp     |  72 +----
@@ -20,7 +22,7 @@ This reverts commit e8758d9aff0eddae81a74b0191cd027bcdc92c04.
  9 files changed, 239 insertions(+), 426 deletions(-)
 
 diff --git a/components/service/smm_variable/backend/test/variable_index_tests.cpp b/components/service/smm_variable/backend/test/variable_index_tests.cpp
-index 8edc0e7..c8bacf9 100644
+index 8edc0e70..c8bacf97 100644
 --- a/components/service/smm_variable/backend/test/variable_index_tests.cpp
 +++ b/components/service/smm_variable/backend/test/variable_index_tests.cpp
 @@ -69,37 +69,34 @@ TEST_GROUP(UefiVariableIndexTests)
@@ -289,7 +291,7 @@ index 8edc0e7..c8bacf9 100644
  	CHECK_TRUE(info->is_variable_set);
  	CHECK_TRUE(info->is_constraints_set);
 diff --git a/components/service/smm_variable/backend/test/variable_store_tests.cpp b/components/service/smm_variable/backend/test/variable_store_tests.cpp
-index e90c106..235642e 100644
+index e90c1067..235642e6 100644
 --- a/components/service/smm_variable/backend/test/variable_store_tests.cpp
 +++ b/components/service/smm_variable/backend/test/variable_store_tests.cpp
 @@ -305,37 +305,6 @@ TEST(UefiVariableStoreTests, setGetRoundtrip)
@@ -400,10 +402,10 @@ index e90c106..235642e 100644
  
  	/* Expect variable to no loger exist */
 diff --git a/components/service/smm_variable/backend/uefi_variable_store.c b/components/service/smm_variable/backend/uefi_variable_store.c
-index ed50eaf..d084e8d 100644
+index b7cfff40..6a90f46a 100644
 --- a/components/service/smm_variable/backend/uefi_variable_store.c
 +++ b/components/service/smm_variable/backend/uefi_variable_store.c
-@@ -46,20 +46,6 @@ static efi_status_t load_variable_data(
+@@ -47,20 +47,6 @@ static efi_status_t load_variable_data(
  	SMM_VARIABLE_COMMUNICATE_ACCESS_VARIABLE *var,
  	size_t max_data_len);
  
@@ -424,7 +426,7 @@ index ed50eaf..d084e8d 100644
  static void purge_orphan_index_entries(
  	struct uefi_variable_store *context);
  
-@@ -163,45 +149,40 @@ efi_status_t uefi_variable_store_set_variable(
+@@ -168,45 +154,40 @@ efi_status_t uefi_variable_store_set_variable(
  	struct uefi_variable_store *context,
  	const SMM_VARIABLE_COMMUNICATE_ACCESS_VARIABLE *var)
  {
@@ -488,7 +490,7 @@ index ed50eaf..d084e8d 100644
  
  				/* It's a remove operation - for a remove, the variable
  				 * data must be removed from the storage backend before
-@@ -210,30 +191,31 @@ efi_status_t uefi_variable_store_set_variable(
+@@ -215,30 +196,31 @@ efi_status_t uefi_variable_store_set_variable(
  				 * the storage backend without a corresponding index entry.
  				 */
  				remove_variable_data(context, info);
@@ -537,7 +539,7 @@ index ed50eaf..d084e8d 100644
  
  	/* The order of these operations is important. For an update
  	 * or create operation, The variable index is always synchronized
-@@ -249,13 +231,11 @@ efi_status_t uefi_variable_store_set_variable(
+@@ -254,13 +236,11 @@ efi_status_t uefi_variable_store_set_variable(
  	}
  
  	/* Store any variable data to the storage backend */
@@ -552,7 +554,7 @@ index ed50eaf..d084e8d 100644
  	return status;
  }
  
-@@ -361,41 +341,53 @@ efi_status_t uefi_variable_store_set_var_check_property(
+@@ -373,41 +353,53 @@ efi_status_t uefi_variable_store_set_var_check_property(
  	efi_status_t status = check_name_terminator(property->Name, property->NameSize);
  	if (status != EFI_SUCCESS) return status;
  
@@ -628,7 +630,7 @@ index ed50eaf..d084e8d 100644
  
  	return status;
  }
-@@ -496,8 +488,7 @@ static efi_status_t check_capabilities(
+@@ -514,8 +506,7 @@ static efi_status_t check_capabilities(
  	if (var->Attributes & ~(
  		EFI_VARIABLE_NON_VOLATILE |
  		EFI_VARIABLE_BOOTSERVICE_ACCESS |
@@ -638,7 +640,7 @@ index ed50eaf..d084e8d 100644
  
  		/* An unsupported attribute has been requested */
  		status = EFI_UNSUPPORTED;
-@@ -543,6 +534,17 @@ static efi_status_t check_access_permitted_on_set(
+@@ -561,6 +552,17 @@ static efi_status_t check_access_permitted_on_set(
  			var->DataSize);
  	}
  
@@ -656,7 +658,7 @@ index ed50eaf..d084e8d 100644
  	return status;
  }
  
-@@ -562,33 +564,20 @@ static efi_status_t store_variable_data(
+@@ -581,33 +583,20 @@ static efi_status_t store_variable_data(
  
  	if (delegate_store->storage_backend) {
  
@@ -699,7 +701,7 @@ index ed50eaf..d084e8d 100644
  		purge_orphan_index_entries(context);
  	}
  
-@@ -651,100 +640,6 @@ static efi_status_t load_variable_data(
+@@ -674,100 +663,6 @@ static efi_status_t load_variable_data(
  	return psa_to_efi_storage_status(psa_status);
  }
  
@@ -800,7 +802,7 @@ index ed50eaf..d084e8d 100644
  static void purge_orphan_index_entries(
  	struct uefi_variable_store *context)
  {
-@@ -759,7 +654,7 @@ static void purge_orphan_index_entries(
+@@ -782,7 +677,7 @@ static void purge_orphan_index_entries(
  	 */
  	while (!variable_index_iterator_is_done(&iter)) {
  
@@ -809,7 +811,7 @@ index ed50eaf..d084e8d 100644
  
  		if (info->is_variable_set && (info->metadata.attributes & EFI_VARIABLE_NON_VOLATILE)) {
  
-@@ -775,7 +670,7 @@ static void purge_orphan_index_entries(
+@@ -799,7 +694,7 @@ static void purge_orphan_index_entries(
  			if (psa_status != PSA_SUCCESS) {
  
  				/* Detected a mismatch between the index and storage */
@@ -819,7 +821,7 @@ index ed50eaf..d084e8d 100644
  			}
  		}
 diff --git a/components/service/smm_variable/backend/variable_index.c b/components/service/smm_variable/backend/variable_index.c
-index a8a5575..99d7c97 100644
+index a8a55753..99d7c97a 100644
 --- a/components/service/smm_variable/backend/variable_index.c
 +++ b/components/service/smm_variable/backend/variable_index.c
 @@ -132,13 +132,13 @@ size_t variable_index_max_dump_size(
@@ -986,7 +988,7 @@ index a8a5575..99d7c97 100644
  }
  
 diff --git a/components/service/smm_variable/backend/variable_index.h b/components/service/smm_variable/backend/variable_index.h
-index 63f42ab..e109d0d 100644
+index 63f42ab6..e109d0d1 100644
 --- a/components/service/smm_variable/backend/variable_index.h
 +++ b/components/service/smm_variable/backend/variable_index.h
 @@ -119,8 +119,8 @@ size_t variable_index_max_dump_size(
@@ -1106,7 +1108,7 @@ index 63f42ab..e109d0d 100644
  
  /**
 diff --git a/components/service/smm_variable/backend/variable_index_iterator.c b/components/service/smm_variable/backend/variable_index_iterator.c
-index 8f8fc74..7cc6dc7 100644
+index 8f8fc741..7cc6dc7a 100644
 --- a/components/service/smm_variable/backend/variable_index_iterator.c
 +++ b/components/service/smm_variable/backend/variable_index_iterator.c
 @@ -31,10 +31,10 @@ bool variable_index_iterator_is_done(
@@ -1123,7 +1125,7 @@ index 8f8fc74..7cc6dc7 100644
  	if (!variable_index_iterator_is_done(iter)) {
  
 diff --git a/components/service/smm_variable/backend/variable_index_iterator.h b/components/service/smm_variable/backend/variable_index_iterator.h
-index 7ff77c5..f64a2c4 100644
+index 7ff77c50..f64a2c49 100644
 --- a/components/service/smm_variable/backend/variable_index_iterator.h
 +++ b/components/service/smm_variable/backend/variable_index_iterator.h
 @@ -54,7 +54,7 @@ bool variable_index_iterator_is_done(
@@ -1136,7 +1138,7 @@ index 7ff77c5..f64a2c4 100644
  
  /**
 diff --git a/components/service/smm_variable/test/service/smm_variable_service_tests.cpp b/components/service/smm_variable/test/service/smm_variable_service_tests.cpp
-index 15556e9..38c08eb 100644
+index 15556e9d..38c08ebe 100644
 --- a/components/service/smm_variable/test/service/smm_variable_service_tests.cpp
 +++ b/components/service/smm_variable/test/service/smm_variable_service_tests.cpp
 @@ -249,30 +249,6 @@ TEST(SmmVariableServiceTests, setAndGet)
@@ -1202,7 +1204,7 @@ index 15556e9..38c08eb 100644
  	efi_status = m_client->remove_variable(m_common_guid, var_name);
  	UNSIGNED_LONGLONGS_EQUAL(EFI_SUCCESS, efi_status);
 diff --git a/protocols/service/smm_variable/parameters.h b/protocols/service/smm_variable/parameters.h
-index 233f301..1f795a9 100644
+index 233f301b..1f795a9b 100644
 --- a/protocols/service/smm_variable/parameters.h
 +++ b/protocols/service/smm_variable/parameters.h
 @@ -47,9 +47,6 @@ typedef struct {
@@ -1215,6 +1217,3 @@ index 233f301..1f795a9 100644
  
  /**
   * Parameter structure for SetVariable and GetVariable.
--- 
-2.17.1
-

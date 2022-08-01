@@ -1,7 +1,4 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
-
-From c88937f3fb2d1259b1abb1a6926e869bf2f5d69e Mon Sep 17 00:00:00 2001
+From 571ddac16048dfba4b25b04fe5cbd706c392b5ba Mon Sep 17 00:00:00 2001
 From: Vishnu Banavath <vishnu.banavath@arm.com>
 Date: Fri, 24 Dec 2021 19:17:17 +0000
 Subject: [PATCH] smm_gateway: add checks for null attributes
@@ -13,8 +10,16 @@ This change is to add that support
 
 Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
 
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
+
+
+---
+ .../backend/uefi_variable_store.c             | 28 ++++++++++++-------
+ 1 file changed, 18 insertions(+), 10 deletions(-)
+
 diff --git a/components/service/smm_variable/backend/uefi_variable_store.c b/components/service/smm_variable/backend/uefi_variable_store.c
-index a57b334..e8771c2 100644
+index a57b3346..e8771c21 100644
 --- a/components/service/smm_variable/backend/uefi_variable_store.c
 +++ b/components/service/smm_variable/backend/uefi_variable_store.c
 @@ -167,7 +167,9 @@ efi_status_t uefi_variable_store_set_variable(
@@ -74,6 +79,3 @@ index a57b334..e8771c2 100644
  			/* Don't permit change of attributes */
  			status = EFI_INVALID_PARAMETER;
  		}
--- 
-2.17.1
-

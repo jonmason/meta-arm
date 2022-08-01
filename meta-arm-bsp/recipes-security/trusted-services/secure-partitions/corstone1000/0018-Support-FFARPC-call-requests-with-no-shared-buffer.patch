@@ -1,7 +1,4 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
-
-From e3891ecaaa754eab74166bacea19f25dce060451 Mon Sep 17 00:00:00 2001
+From 18b20dea7cf7e8afc26c5d49d5368d3180bd54d7 Mon Sep 17 00:00:00 2001
 From: Julian Hall <julian.hall@arm.com>
 Date: Wed, 8 Dec 2021 16:05:22 +0000
 Subject: [PATCH] Support FFARPC call requests with no shared buffer
@@ -14,8 +11,16 @@ when no shared buffer exists, as long as there is no request data.
 Signed-off-by: Julian Hall <julian.hall@arm.com>
 Change-Id: I83b1bfb719a005922d6394887492d2d272b74907
 
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
+
+
+---
+ .../rpc/ffarpc/endpoint/ffarpc_call_ep.c      | 52 ++++++++++---------
+ 1 file changed, 27 insertions(+), 25 deletions(-)
+
 diff --git a/components/rpc/ffarpc/endpoint/ffarpc_call_ep.c b/components/rpc/ffarpc/endpoint/ffarpc_call_ep.c
-index 17f957c..a08a250 100644
+index 17f957c2..a08a250c 100644
 --- a/components/rpc/ffarpc/endpoint/ffarpc_call_ep.c
 +++ b/components/rpc/ffarpc/endpoint/ffarpc_call_ep.c
 @@ -150,29 +150,43 @@ out:
@@ -102,6 +107,3 @@ index 17f957c..a08a250 100644
 +		handle_service_msg(call_ep, source_id, req_args, resp_args);
  	}
  }
--- 
-2.25.1
-

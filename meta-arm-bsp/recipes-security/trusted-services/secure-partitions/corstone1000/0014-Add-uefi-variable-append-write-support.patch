@@ -1,7 +1,4 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
-
-From 355fc5189657ef9db94fc5329544e8c65e65a1bf Mon Sep 17 00:00:00 2001
+From 254f564c76320478e7b509faf279c0c493470657 Mon Sep 17 00:00:00 2001
 From: Julian Hall <julian.hall@arm.com>
 Date: Thu, 2 Dec 2021 10:15:54 +0000
 Subject: [PATCH] Add uefi variable append write support
@@ -13,8 +10,24 @@ attribute.
 Signed-off-by: Julian Hall <julian.hall@arm.com>
 Change-Id: I7a6562327bc0a5ce5cd0e85276325227b83e9f9e
 
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
+
+
+---
+ .../backend/test/variable_index_tests.cpp     |  90 +++---
+ .../backend/test/variable_store_tests.cpp     |  40 ++-
+ .../backend/uefi_variable_store.c             | 263 +++++++++++-------
+ .../smm_variable/backend/variable_index.c     |  95 +++----
+ .../smm_variable/backend/variable_index.h     |  58 ++--
+ .../backend/variable_index_iterator.c         |   4 +-
+ .../backend/variable_index_iterator.h         |   2 +-
+ .../service/smm_variable_service_tests.cpp    |  48 ++++
+ protocols/service/smm_variable/parameters.h   |   3 +
+ 9 files changed, 364 insertions(+), 239 deletions(-)
+
 diff --git a/components/service/smm_variable/backend/test/variable_index_tests.cpp b/components/service/smm_variable/backend/test/variable_index_tests.cpp
-index c8bacf9..8edc0e7 100644
+index c8bacf97..8edc0e70 100644
 --- a/components/service/smm_variable/backend/test/variable_index_tests.cpp
 +++ b/components/service/smm_variable/backend/test/variable_index_tests.cpp
 @@ -69,34 +69,37 @@ TEST_GROUP(UefiVariableIndexTests)
@@ -283,7 +296,7 @@ index c8bacf9..8edc0e7 100644
  	CHECK_TRUE(info->is_variable_set);
  	CHECK_TRUE(info->is_constraints_set);
 diff --git a/components/service/smm_variable/backend/test/variable_store_tests.cpp b/components/service/smm_variable/backend/test/variable_store_tests.cpp
-index f6aba13..578f118 100644
+index f6aba13a..578f118f 100644
 --- a/components/service/smm_variable/backend/test/variable_store_tests.cpp
 +++ b/components/service/smm_variable/backend/test/variable_store_tests.cpp
 @@ -250,6 +250,21 @@ TEST(UefiVariableStoreTests, setGetRoundtrip)
@@ -362,7 +375,7 @@ index f6aba13..578f118 100644
  
  	/* Expect variable to no loger exist */
 diff --git a/components/service/smm_variable/backend/uefi_variable_store.c b/components/service/smm_variable/backend/uefi_variable_store.c
-index b7091d7..bcb8599 100644
+index b7091d75..bcb85995 100644
 --- a/components/service/smm_variable/backend/uefi_variable_store.c
 +++ b/components/service/smm_variable/backend/uefi_variable_store.c
 @@ -46,6 +46,13 @@ static efi_status_t load_variable_data(
@@ -751,7 +764,7 @@ index b7091d7..bcb8599 100644
  			}
  		}
 diff --git a/components/service/smm_variable/backend/variable_index.c b/components/service/smm_variable/backend/variable_index.c
-index 99d7c97..a8a5575 100644
+index 99d7c97a..a8a55753 100644
 --- a/components/service/smm_variable/backend/variable_index.c
 +++ b/components/service/smm_variable/backend/variable_index.c
 @@ -132,13 +132,13 @@ size_t variable_index_max_dump_size(
@@ -918,7 +931,7 @@ index 99d7c97..a8a5575 100644
  }
  
 diff --git a/components/service/smm_variable/backend/variable_index.h b/components/service/smm_variable/backend/variable_index.h
-index e109d0d..63f42ab 100644
+index e109d0d1..63f42ab6 100644
 --- a/components/service/smm_variable/backend/variable_index.h
 +++ b/components/service/smm_variable/backend/variable_index.h
 @@ -119,8 +119,8 @@ size_t variable_index_max_dump_size(
@@ -1038,7 +1051,7 @@ index e109d0d..63f42ab 100644
  
  /**
 diff --git a/components/service/smm_variable/backend/variable_index_iterator.c b/components/service/smm_variable/backend/variable_index_iterator.c
-index 7cc6dc7..8f8fc74 100644
+index 7cc6dc7a..8f8fc741 100644
 --- a/components/service/smm_variable/backend/variable_index_iterator.c
 +++ b/components/service/smm_variable/backend/variable_index_iterator.c
 @@ -31,10 +31,10 @@ bool variable_index_iterator_is_done(
@@ -1055,7 +1068,7 @@ index 7cc6dc7..8f8fc74 100644
  	if (!variable_index_iterator_is_done(iter)) {
  
 diff --git a/components/service/smm_variable/backend/variable_index_iterator.h b/components/service/smm_variable/backend/variable_index_iterator.h
-index f64a2c4..7ff77c5 100644
+index f64a2c49..7ff77c50 100644
 --- a/components/service/smm_variable/backend/variable_index_iterator.h
 +++ b/components/service/smm_variable/backend/variable_index_iterator.h
 @@ -54,7 +54,7 @@ bool variable_index_iterator_is_done(
@@ -1068,7 +1081,7 @@ index f64a2c4..7ff77c5 100644
  
  /**
 diff --git a/components/service/smm_variable/test/service/smm_variable_service_tests.cpp b/components/service/smm_variable/test/service/smm_variable_service_tests.cpp
-index d76d9cc..088940a 100644
+index d76d9cce..088940a8 100644
 --- a/components/service/smm_variable/test/service/smm_variable_service_tests.cpp
 +++ b/components/service/smm_variable/test/service/smm_variable_service_tests.cpp
 @@ -249,6 +249,30 @@ TEST(SmmVariableServiceTests, setAndGet)
@@ -1134,7 +1147,7 @@ index d76d9cc..088940a 100644
  	efi_status = m_client->remove_variable(m_common_guid, var_name);
  	UNSIGNED_LONGLONGS_EQUAL(EFI_SUCCESS, efi_status);
 diff --git a/protocols/service/smm_variable/parameters.h b/protocols/service/smm_variable/parameters.h
-index 1f795a9..233f301 100644
+index 1f795a9b..233f301b 100644
 --- a/protocols/service/smm_variable/parameters.h
 +++ b/protocols/service/smm_variable/parameters.h
 @@ -47,6 +47,9 @@ typedef struct {
@@ -1147,6 +1160,3 @@ index 1f795a9..233f301 100644
  
  /**
   * Parameter structure for SetVariable and GetVariable.
--- 
-2.25.1
-

@@ -1,10 +1,11 @@
+From 24436d459ddde697c89ff947c821cec9c5e0906e Mon Sep 17 00:00:00 2001
+From: Vishnu Banavath <vishnu.banavath@arm.com>
+Date: Wed, 16 Feb 2022 15:55:55 +0000
+Subject: [PATCH] pass sysroot_yocto
+
 Upstream-Status: Pending [Not submitted to upstream yet]
 Signed-off-by: Emekcan Aras <Emekcan.Aras@arm.com>
 
-From 386a086debf70f739a7dfc0bdce9c4f1053ba8d5 Mon Sep 17 00:00:00 2001
-From: Vishnu Banavath <vishnu.banavath@arm.com>
-Date: Wed, 16 Feb 2022 15:55:55 +0000
-Subject: [PATCH 11/15] pass sysroot_yocto
 
 ---
  deployments/libts/libts-import.cmake         |  3 +++
@@ -17,9 +18,9 @@ index 792ba86c..b900ce3f 100644
 --- a/deployments/libts/libts-import.cmake
 +++ b/deployments/libts/libts-import.cmake
 @@ -27,9 +27,12 @@ set(LIBTS_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/_deps/libts-build" CACHE PATH
-
+ 
  file(MAKE_DIRECTORY ${LIBTS_BINARY_DIR})
-
+ 
 +set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --sysroot=${SYSROOT_YOCTO}")
 +
  #Configure the library
@@ -48,7 +49,7 @@ index f6d2fb9f..42f73a37 100644
 @@ -5,30 +5,33 @@
  #
  #-------------------------------------------------------------------------------
-
+ 
 -# Temporarily using modified tests used for tf-m verification
 +# Determine the number of processes to run while running parallel builds.
 +# Pass -DPROCESSOR_COUNT=<n> to cmake to override.
@@ -68,7 +69,7 @@ index f6d2fb9f..42f73a37 100644
 -set(PSA_ARCH_TESTS_SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/_deps/psa_arch_tests-src" CACHE PATH "psa-arch-tests source.")
 +
 +include(FetchContent)
-
+ 
  # Checking git
  find_program(GIT_COMMAND "git")
  if (NOT GIT_COMMAND)
@@ -85,7 +86,7 @@ index f6d2fb9f..42f73a37 100644
 -	PATCH_COMMAND git stash
 -		COMMAND git apply ${CMAKE_CURRENT_LIST_DIR}/modify_attest_config.patch
  )
-
+ 
  # FetchContent_GetProperties exports psa-arch-tests_SOURCE_DIR and psa-arch-tests_BINARY_DIR variables
 @@ -37,7 +40,10 @@ if(NOT psa-arch-tests_POPULATED)
  	message(STATUS "Fetching psa-arch-tests")
@@ -98,7 +99,7 @@ index f6d2fb9f..42f73a37 100644
 +endif()
  # Ensure list of include paths is separated correctly
  string(REPLACE ";" "\\;" PSA_ARCH_TESTS_EXTERNAL_INCLUDE_PATHS "${PSA_ARCH_TESTS_EXTERNAL_INCLUDE_PATHS}")
-
+ 
 @@ -47,6 +53,7 @@ string(REPLACE ";" " " PSA_ARCH_TEST_EXTERNAL_DEFS "${PSA_ARCH_TEST_EXTERNAL_DEF
  # Configure the psa-arch-test library
  execute_process(COMMAND
@@ -107,5 +108,3 @@ index f6d2fb9f..42f73a37 100644
  			-DTOOLCHAIN=INHERIT
  			-DCMAKE_TOOLCHAIN_FILE=${TS_EXTERNAL_LIB_TOOLCHAIN_FILE}
  			-DPSA_INCLUDE_PATHS=${PSA_ARCH_TESTS_EXTERNAL_INCLUDE_PATHS}
---
-2.25.1

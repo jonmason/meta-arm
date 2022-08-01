@@ -1,10 +1,7 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Emekcan Aras <Emekcan.Aras@arm.com>
-
-From 9fb18f0cfba8f97fa71a5e7e7e3e31a43692a8e0 Mon Sep 17 00:00:00 2001
+From 75c0689513e7da7fb26bf23c1da4e1aa49783d46 Mon Sep 17 00:00:00 2001
 From: Julian Hall <julian.hall@arm.com>
 Date: Tue, 11 Jan 2022 09:43:52 +0000
-Subject: [PATCH 10/15] Peg to updated t_cose version fc3a4b2c
+Subject: [PATCH] Peg to updated t_cose version fc3a4b2c
 
 The current version of TS fails to build due to a regression introduced
 by a new t_cose version in the upstream project.
@@ -19,6 +16,11 @@ so the previously required compatibility patch has been removed.
 
 Signed-off-by: Julian Hall <julian.hall@arm.com>
 Change-Id: I9491a5210904cc369846da2af45b0f7e5913bed8
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Emekcan Aras <Emekcan.Aras@arm.com>
+
+
 ---
  .../0002-add-tls3_0_0-compatibility.patch     | 31 -------------------
  external/t_cose/t_cose.cmake                  |  5 ++-
@@ -90,6 +92,3 @@ index 660824bd..9321466f 100644
  		COMMAND git reset HEAD~1
  
  )
--- 
-2.25.1
-

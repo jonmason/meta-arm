@@ -1,12 +1,14 @@
+From 55463b12cca39d2c6a3fd18bbd3d28ae95dff8cf Mon Sep 17 00:00:00 2001
+From: Satish Kumar <satish.kumar01@arm.com>
+Date: Mon, 14 Feb 2022 08:22:25 +0000
+Subject: [PATCH] Fixes in AEAD for psa-arch test 54 and 58.
+
+Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+
 Upstream-Status: Pending [Not submitted to upstream yet]
 Signed-off-by: Emekcan Aras <Emekcan.Aras@arm.com>
 
-From 500a359b65398d0a272a474566659fd5a21f44ff Mon Sep 17 00:00:00 2001
-From: Satish Kumar <satish.kumar01@arm.com>
-Date: Mon, 14 Feb 2022 08:22:25 +0000
-Subject: [PATCH 15/15] Fixes in AEAD for psa-arch test 54 and 58.
 
-Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
 ---
  .../crypto/client/caller/packed-c/crypto_caller_aead.h    | 1 +
  components/service/crypto/include/psa/crypto_sizes.h      | 2 +-
@@ -22,11 +24,11 @@ index c4ffb20c..a91f66c1 100644
 +++ b/components/service/crypto/client/caller/packed-c/crypto_caller_aead.h
 @@ -309,6 +309,7 @@ static inline psa_status_t crypto_caller_aead_update(struct service_client *cont
  	size_t req_len = req_fixed_len;
-
+ 
  	*output_length = 0;
 +        req_msg.output_size = output_size;
  	req_msg.op_handle = op_handle;
-
+ 
  	/* Mandatory input data parameter */
 diff --git a/components/service/crypto/include/psa/crypto_sizes.h b/components/service/crypto/include/psa/crypto_sizes.h
 index 4d7bf6e9..e3c4df29 100644
@@ -38,7 +40,7 @@ index 4d7bf6e9..e3c4df29 100644
   */
 -#define PSA_AEAD_NONCE_MAX_SIZE 12
 +#define PSA_AEAD_NONCE_MAX_SIZE 16
-
+ 
  /** A sufficient output buffer size for psa_aead_update().
   *
 diff --git a/components/service/crypto/provider/extension/aead/aead_provider.c b/components/service/crypto/provider/extension/aead/aead_provider.c
@@ -50,27 +52,27 @@ index 14a25436..6b144db8 100644
  	const uint8_t *input;
  	size_t input_len;
 +        uint32_t recv_output_size;
-
+ 
  	if (serializer)
  		rpc_status = serializer->deserialize_aead_update_req(req_buf, &op_handle,
 -			&input, &input_len);
 +			&recv_output_size, &input, &input_len);
-
+ 
  	if (rpc_status == TS_RPC_CALL_ACCEPTED) {
-
+ 
 @@ -300,9 +301,12 @@ static rpc_status_t aead_update_handler(void *context, struct call_req *req)
  		if (crypto_context) {
-
+ 
  			size_t output_len = 0;
 -			size_t output_size = PSA_AEAD_UPDATE_OUTPUT_MAX_SIZE(input_len);
 +			size_t output_size = PSA_AEAD_UPDATE_OUTPUT_MAX_SIZE(24);
  			uint8_t *output = malloc(output_size);
-
+ 
 +                        if (recv_output_size < output_size) {
 +                            output_size = recv_output_size;
 +                        }
  			if (output) {
-
+ 
  				psa_status = psa_aead_update(&crypto_context->op.aead,
 diff --git a/components/service/crypto/provider/extension/aead/serializer/aead_provider_serializer.h b/components/service/crypto/provider/extension/aead/serializer/aead_provider_serializer.h
 index bb1a2a97..0156aaba 100644
@@ -82,7 +84,7 @@ index bb1a2a97..0156aaba 100644
  		uint32_t *op_handle,
 +                uint32_t *output_size,
  		const uint8_t **input, size_t *input_len);
-
+ 
  	rpc_status_t (*serialize_aead_update_resp)(struct call_param_buf *resp_buf,
 diff --git a/components/service/crypto/provider/extension/aead/serializer/packed-c/packedc_aead_provider_serializer.c b/components/service/crypto/provider/extension/aead/serializer/packed-c/packedc_aead_provider_serializer.c
 index 6f00b3e3..45c739ab 100644
@@ -98,10 +100,10 @@ index 6f00b3e3..45c739ab 100644
  	rpc_status_t rpc_status = TS_RPC_ERROR_INVALID_REQ_BODY;
 @@ -208,6 +209,7 @@ static rpc_status_t deserialize_aead_update_req(const struct call_param_buf *req
  		memcpy(&recv_msg, req_buf->data, expected_fixed_len);
-
+ 
  		*op_handle = recv_msg.op_handle;
 +                *output_size = recv_msg.output_size;
-
+ 
  		tlv_const_iterator_begin(&req_iter,
  			(uint8_t*)req_buf->data + expected_fixed_len,
 diff --git a/protocols/service/crypto/packed-c/aead.h b/protocols/service/crypto/packed-c/aead.h
@@ -114,7 +116,5 @@ index 0be266b5..435fd3b5 100644
    uint32_t op_handle;
 +  uint32_t output_size;
  };
-
+ 
  /* Variable length input parameter tags */
---
-2.25.1

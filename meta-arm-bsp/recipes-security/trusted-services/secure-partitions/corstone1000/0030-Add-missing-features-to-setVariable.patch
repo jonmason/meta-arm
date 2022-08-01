@@ -1,10 +1,7 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
-
-From 2ba5fa76a886e0ef59656fe96666f2582e8ffc72 Mon Sep 17 00:00:00 2001
+From 55fc3dbfb0ec21b1239808d0dddae14fbb8bb5f3 Mon Sep 17 00:00:00 2001
 From: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
 Date: Mon, 20 Dec 2021 19:56:30 +0000
-Subject: [PATCH 2/3] Add missing features to setVariable()
+Subject: [PATCH] Add missing features to setVariable()
 
 This patch resolves the failing tests in SCT related to
 setVariable() function. The existing implementation is
@@ -12,13 +9,16 @@ missing few cases where error codes are returned when called
 with certain paramters. These conditions are implemented in
 this patch based on the explanation provided in uefi spec.
 
-%% original patch: 0030-Add-missing-features-to-setVariable.patch
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
+
+
 ---
  .../backend/uefi_variable_store.c             | 29 ++++++++++++++++---
  1 file changed, 25 insertions(+), 4 deletions(-)
 
 diff --git a/components/service/smm_variable/backend/uefi_variable_store.c b/components/service/smm_variable/backend/uefi_variable_store.c
-index 1bb869a..a167107 100644
+index 1bb869ae..a1671074 100644
 --- a/components/service/smm_variable/backend/uefi_variable_store.c
 +++ b/components/service/smm_variable/backend/uefi_variable_store.c
 @@ -161,6 +161,17 @@ efi_status_t uefi_variable_store_set_variable(
@@ -71,6 +71,3 @@ index 1bb869a..a167107 100644
  			status = EFI_INVALID_PARAMETER;
  		}
  	}
--- 
-2.17.1
-

@@ -1,15 +1,18 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
-
-From 1f75194e884a1795c3523f41dc0912dc5068e525 Mon Sep 17 00:00:00 2001
+From 97b4f3cd0216c30c39f6ece4f68d8faf3901fded Mon Sep 17 00:00:00 2001
 From: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
 Date: Wed, 17 Nov 2021 15:31:09 +0000
 Subject: [PATCH] Update mm-comm-buffer region in dts file
 
-%% original patch: 0004-Update-mm-comm-buffer-region-in-dts-file.patch
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
+
+
+---
+ .../opteesp/default_smm-gateway.dts.in        | 35 ++++++++++---------
+ 1 file changed, 18 insertions(+), 17 deletions(-)
 
 diff --git a/deployments/smm-gateway/opteesp/default_smm-gateway.dts.in b/deployments/smm-gateway/opteesp/default_smm-gateway.dts.in
-index 0ad7878..183c38a 100644
+index 0ad7878b..183c38a7 100644
 --- a/deployments/smm-gateway/opteesp/default_smm-gateway.dts.in
 +++ b/deployments/smm-gateway/opteesp/default_smm-gateway.dts.in
 @@ -7,23 +7,24 @@
@@ -54,6 +57,3 @@ index 0ad7878..183c38a 100644
  		};
  	};
  };
--- 
-2.25.1
-

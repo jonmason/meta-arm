@@ -1,7 +1,4 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
-
-From 409e2c5eeb4999852acbe22da346f018e30f15c0 Mon Sep 17 00:00:00 2001
+From 22120b4bd64da232e5a4e04a9a15376f34a933a3 Mon Sep 17 00:00:00 2001
 From: Julian Hall <julian.hall@arm.com>
 Date: Mon, 6 Dec 2021 15:20:12 +0000
 Subject: [PATCH] Add uefi-test deployment
@@ -13,8 +10,23 @@ or any other similar secure-world uefi service provider.
 Signed-off-by: Julian Hall <julian.hall@arm.com>
 Change-Id: Ic0e16dff51ef76ddd1f4dea37a4a55b029edd696
 
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
+
+
+---
+ .../ts-service-test/arm-linux/CMakeLists.txt  |  3 -
+ .../uefi-test/arm-linux/CMakeLists.txt        | 43 +++++++++++
+ deployments/uefi-test/linux-pc/CMakeLists.txt | 76 +++++++++++++++++++
+ deployments/uefi-test/uefi-test.cmake         | 52 +++++++++++++
+ tools/b-test/test_data.yaml                   | 10 +++
+ 5 files changed, 181 insertions(+), 3 deletions(-)
+ create mode 100644 deployments/uefi-test/arm-linux/CMakeLists.txt
+ create mode 100644 deployments/uefi-test/linux-pc/CMakeLists.txt
+ create mode 100644 deployments/uefi-test/uefi-test.cmake
+
 diff --git a/deployments/ts-service-test/arm-linux/CMakeLists.txt b/deployments/ts-service-test/arm-linux/CMakeLists.txt
-index 6a01d38..e902cd2 100644
+index 6a01d38a..e902cd2f 100644
 --- a/deployments/ts-service-test/arm-linux/CMakeLists.txt
 +++ b/deployments/ts-service-test/arm-linux/CMakeLists.txt
 @@ -23,9 +23,6 @@ add_components(
@@ -29,7 +41,7 @@ index 6a01d38..e902cd2 100644
  include(${TS_ROOT}/external/CppUTest/CppUTest.cmake)
 diff --git a/deployments/uefi-test/arm-linux/CMakeLists.txt b/deployments/uefi-test/arm-linux/CMakeLists.txt
 new file mode 100644
-index 0000000..053041a
+index 00000000..053041ad
 --- /dev/null
 +++ b/deployments/uefi-test/arm-linux/CMakeLists.txt
 @@ -0,0 +1,43 @@
@@ -78,7 +90,7 @@ index 0000000..053041a
 +target_link_libraries(uefi-test PRIVATE stdc++ gcc m)
 diff --git a/deployments/uefi-test/linux-pc/CMakeLists.txt b/deployments/uefi-test/linux-pc/CMakeLists.txt
 new file mode 100644
-index 0000000..be6e984
+index 00000000..be6e9840
 --- /dev/null
 +++ b/deployments/uefi-test/linux-pc/CMakeLists.txt
 @@ -0,0 +1,76 @@
@@ -160,7 +172,7 @@ index 0000000..be6e984
 +include(../uefi-test.cmake REQUIRED)
 diff --git a/deployments/uefi-test/uefi-test.cmake b/deployments/uefi-test/uefi-test.cmake
 new file mode 100644
-index 0000000..ea678d0
+index 00000000..ea678d0e
 --- /dev/null
 +++ b/deployments/uefi-test/uefi-test.cmake
 @@ -0,0 +1,52 @@
@@ -217,7 +229,7 @@ index 0000000..ea678d0
 +endif()
 +install(TARGETS uefi-test RUNTIME DESTINATION ${TS_ENV}/bin)
 diff --git a/tools/b-test/test_data.yaml b/tools/b-test/test_data.yaml
-index 11f8f63..33a85b1 100644
+index 11f8f633..33a85b12 100644
 --- a/tools/b-test/test_data.yaml
 +++ b/tools/b-test/test_data.yaml
 @@ -163,3 +163,13 @@ data:
@@ -234,6 +246,3 @@ index 11f8f63..33a85b1 100644
 +      os_id : "GNU/Linux"
 +      params:
 +          - "-GUnix Makefiles"
--- 
-2.25.1
-

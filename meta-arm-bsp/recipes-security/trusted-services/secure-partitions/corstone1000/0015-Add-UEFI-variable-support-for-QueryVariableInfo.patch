@@ -1,7 +1,4 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
-
-From 7cc8eaa66c6ecfd66a27317efd9b03725564a43a Mon Sep 17 00:00:00 2001
+From c4eaf83548eed4ed6194ff9e1368d6ae65f4ebf9 Mon Sep 17 00:00:00 2001
 From: Julian Hall <julian.hall@arm.com>
 Date: Thu, 2 Dec 2021 17:27:55 +0000
 Subject: [PATCH] Add UEFI variable support for QueryVariableInfo
@@ -16,8 +13,22 @@ storage backend storage providers.
 Signed-off-by: Julian Hall <julian.hall@arm.com>
 Change-Id: I971252831f7e478914d736c672d184a371e64502
 
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
+
+
+---
+ .../backend/test/variable_store_tests.cpp     |  89 +++++++-
+ .../backend/uefi_variable_store.c             | 213 ++++++++++++++----
+ .../backend/uefi_variable_store.h             |  39 +++-
+ .../client/cpp/smm_variable_client.cpp        |  66 ++++++
+ .../client/cpp/smm_variable_client.h          |   7 +
+ .../provider/smm_variable_provider.c          |  31 ++-
+ .../service/smm_variable_service_tests.cpp    |  55 ++++-
+ 7 files changed, 445 insertions(+), 55 deletions(-)
+
 diff --git a/components/service/smm_variable/backend/test/variable_store_tests.cpp b/components/service/smm_variable/backend/test/variable_store_tests.cpp
-index 578f118..e90c106 100644
+index 578f118f..e90c1067 100644
 --- a/components/service/smm_variable/backend/test/variable_store_tests.cpp
 +++ b/components/service/smm_variable/backend/test/variable_store_tests.cpp
 @@ -27,6 +27,18 @@ TEST_GROUP(UefiVariableStoreTests)
@@ -155,7 +166,7 @@ index 578f118..e90c106 100644
  
  TEST(UefiVariableStoreTests, removeVolatile)
 diff --git a/components/service/smm_variable/backend/uefi_variable_store.c b/components/service/smm_variable/backend/uefi_variable_store.c
-index bcb8599..ed50eaf 100644
+index bcb85995..ed50eaf9 100644
 --- a/components/service/smm_variable/backend/uefi_variable_store.c
 +++ b/components/service/smm_variable/backend/uefi_variable_store.c
 @@ -46,8 +46,15 @@ static efi_status_t load_variable_data(
@@ -524,7 +535,7 @@ index bcb8599..ed50eaf 100644
  	psa_status_t psa_status)
  {
 diff --git a/components/service/smm_variable/backend/uefi_variable_store.h b/components/service/smm_variable/backend/uefi_variable_store.h
-index fe0f24a..cc99206 100644
+index fe0f24af..cc992067 100644
 --- a/components/service/smm_variable/backend/uefi_variable_store.h
 +++ b/components/service/smm_variable/backend/uefi_variable_store.h
 @@ -20,6 +20,20 @@
@@ -600,7 +611,7 @@ index fe0f24a..cc99206 100644
  /**
   * @brief      Exit boot service
 diff --git a/components/service/smm_variable/client/cpp/smm_variable_client.cpp b/components/service/smm_variable/client/cpp/smm_variable_client.cpp
-index a68b7ac..8438285 100644
+index a68b7ace..8438285b 100644
 --- a/components/service/smm_variable/client/cpp/smm_variable_client.cpp
 +++ b/components/service/smm_variable/client/cpp/smm_variable_client.cpp
 @@ -219,6 +219,72 @@ efi_status_t smm_variable_client::get_next_variable_name(
@@ -677,7 +688,7 @@ index a68b7ac..8438285 100644
  	EFI_GUID &guid,
  	std::wstring &name,
 diff --git a/components/service/smm_variable/client/cpp/smm_variable_client.h b/components/service/smm_variable/client/cpp/smm_variable_client.h
-index 9c36c4e..c797391 100644
+index 9c36c4eb..c7973916 100644
 --- a/components/service/smm_variable/client/cpp/smm_variable_client.h
 +++ b/components/service/smm_variable/client/cpp/smm_variable_client.h
 @@ -63,6 +63,13 @@ public:
@@ -695,7 +706,7 @@ index 9c36c4e..c797391 100644
  	efi_status_t get_next_variable_name(
  		EFI_GUID &guid,
 diff --git a/components/service/smm_variable/provider/smm_variable_provider.c b/components/service/smm_variable/provider/smm_variable_provider.c
-index d239a42..52e68d0 100644
+index d239a428..52e68d09 100644
 --- a/components/service/smm_variable/provider/smm_variable_provider.c
 +++ b/components/service/smm_variable/provider/smm_variable_provider.c
 @@ -252,11 +252,38 @@ static rpc_status_t set_variable_handler(void *context, struct call_req* req)
@@ -740,7 +751,7 @@ index d239a42..52e68d0 100644
  
  static rpc_status_t exit_boot_service_handler(void *context, struct call_req* req)
 diff --git a/components/service/smm_variable/test/service/smm_variable_service_tests.cpp b/components/service/smm_variable/test/service/smm_variable_service_tests.cpp
-index 088940a..15556e9 100644
+index 088940a8..15556e9d 100644
 --- a/components/service/smm_variable/test/service/smm_variable_service_tests.cpp
 +++ b/components/service/smm_variable/test/service/smm_variable_service_tests.cpp
 @@ -335,12 +335,38 @@ TEST(SmmVariableServiceTests, setAndGetNv)
@@ -817,6 +828,3 @@ index 088940a..15556e9 100644
  	/* Enumerate store contents - expect the values we added */
  	std::wstring var_name;
  	EFI_GUID guid = {0};
--- 
-2.25.1
-

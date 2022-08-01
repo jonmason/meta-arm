@@ -1,14 +1,16 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
-
-From 53d5b73b84deb7feb4f87f2792f50fc8018ac0d5 Mon Sep 17 00:00:00 2001
+From 90006cecbbba58afee5f51e6bd72f7027a257b5e Mon Sep 17 00:00:00 2001
 From: Satish Kumar <satish.kumar01@arm.com>
 Date: Thu, 9 Dec 2021 14:11:06 +0000
-Subject: [PATCH 4/5] Setup its backend as openamp rpc using secure storage ipc
+Subject: [PATCH] Setup its backend as openamp rpc using secure storage ipc
  implementation.
 
 Signed-off-by: Rui Miguel Silva <rui.silva@arm.com>
 Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+
+
 ---
  components/service/common/include/psa/sid.h   | 12 +++++-----
  .../secure_storage_ipc/secure_storage_ipc.c   | 20 ++++++++---------
@@ -17,7 +19,7 @@ Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
  4 files changed, 32 insertions(+), 23 deletions(-)
 
 diff --git a/components/service/common/include/psa/sid.h b/components/service/common/include/psa/sid.h
-index 833f503..4a951d4 100644
+index 833f5039..4a951d4a 100644
 --- a/components/service/common/include/psa/sid.h
 +++ b/components/service/common/include/psa/sid.h
 @@ -20,12 +20,12 @@ extern "C" {
@@ -40,7 +42,7 @@ index 833f503..4a951d4 100644
  /******** TFM_SP_ITS ********/
  #define TFM_INTERNAL_TRUSTED_STORAGE_SERVICE_SID                   (0x00000070U)
 diff --git a/components/service/secure_storage/backend/secure_storage_ipc/secure_storage_ipc.c b/components/service/secure_storage/backend/secure_storage_ipc/secure_storage_ipc.c
-index bda442a..0e1b48c 100644
+index bda442a6..0e1b48c0 100644
 --- a/components/service/secure_storage/backend/secure_storage_ipc/secure_storage_ipc.c
 +++ b/components/service/secure_storage/backend/secure_storage_ipc/secure_storage_ipc.c
 @@ -31,8 +31,8 @@ static psa_status_t secure_storage_ipc_set(void *context, uint32_t client_id,
@@ -99,7 +101,7 @@ index bda442a..0e1b48c 100644
  	if (psa_status != PSA_SUCCESS)
  		EMSG("ipc_get_support: failed to psa_call: %d", psa_status);
 diff --git a/components/service/secure_storage/backend/secure_storage_ipc/secure_storage_ipc.h b/components/service/secure_storage/backend/secure_storage_ipc/secure_storage_ipc.h
-index e8c1e8f..d9949f6 100644
+index e8c1e8fd..d9949f6a 100644
 --- a/components/service/secure_storage/backend/secure_storage_ipc/secure_storage_ipc.h
 +++ b/components/service/secure_storage/backend/secure_storage_ipc/secure_storage_ipc.h
 @@ -21,6 +21,7 @@ struct secure_storage_ipc
@@ -111,7 +113,7 @@ index e8c1e8f..d9949f6 100644
  
  /**
 diff --git a/deployments/se-proxy/opteesp/service_proxy_factory.c b/deployments/se-proxy/opteesp/service_proxy_factory.c
-index 4b8ccec..1110ac4 100644
+index 4b8ccecc..1110ac46 100644
 --- a/deployments/se-proxy/opteesp/service_proxy_factory.c
 +++ b/deployments/se-proxy/opteesp/service_proxy_factory.c
 @@ -5,6 +5,7 @@
@@ -160,6 +162,3 @@ index 4b8ccec..1110ac4 100644
 + 
 +        return secure_storage_provider_init(&its_provider, backend);
  }
--- 
-2.17.1
-

@@ -1,10 +1,7 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Emekcan Aras <Emekcan.Aras@arm.com>
-
-From 5afda176526010872b5849622a69c1a4cafb76fd Mon Sep 17 00:00:00 2001
+From b160f734006f4959d92377dc3aa8eabc3ac7c1da Mon Sep 17 00:00:00 2001
 From: Julian Hall <julian.hall@arm.com>
 Date: Fri, 11 Feb 2022 14:08:13 +0000
-Subject: [PATCH 04/15] Separate sign/verify message and hash operations
+Subject: [PATCH] Separate sign/verify message and hash operations
 
 Previous versions of mbedtls didn't distinguish between
 asymmetric sign and verify operations on a hash or message.
@@ -15,6 +12,11 @@ components.
 
 Signed-off-by: Julian Hall <julian.hall@arm.com>
 Change-Id: Ic0041c694c026522c9b00c974d22261e9e2feadd
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Emekcan Aras <Emekcan.Aras@arm.com>
+
+
 ---
  .../caller/packed-c/crypto_caller_sign_hash.h | 29 +++++++-
  .../packed-c/crypto_caller_verify_hash.h      | 33 ++++++++-
@@ -54,7 +56,7 @@ index e807773e..4a9ed20d 100644
 @@ -20,7 +20,8 @@
  extern "C" {
  #endif
-
+ 
 -static inline psa_status_t crypto_caller_sign_hash(struct service_client *context,
 +static inline psa_status_t crypto_caller_asym_sign_commom(struct service_client *context,
 +	uint32_t opcode,
@@ -62,18 +64,18 @@ index e807773e..4a9ed20d 100644
  	psa_algorithm_t alg,
  	const uint8_t *hash, size_t hash_length,
 @@ -60,7 +61,7 @@ static inline psa_status_t crypto_caller_sign_hash(struct service_client *contex
-
+ 
  		context->rpc_status =
  			rpc_caller_invoke(context->caller, call_handle,
 -						TS_CRYPTO_OPCODE_SIGN_HASH, &opstatus, &resp_buf, &resp_len);
 +						opcode, &opstatus, &resp_buf, &resp_len);
-
+ 
  		if (context->rpc_status == TS_RPC_CALL_ACCEPTED) {
-
+ 
 @@ -98,6 +99,28 @@ static inline psa_status_t crypto_caller_sign_hash(struct service_client *contex
  	return psa_status;
  }
-
+ 
 +static inline psa_status_t crypto_caller_sign_hash(struct service_client *context,
 +	psa_key_id_t id,
 +	psa_algorithm_t alg,
@@ -113,7 +115,7 @@ index 47152946..daa11330 100644
 @@ -20,7 +20,8 @@
  extern "C" {
  #endif
-
+ 
 -static inline psa_status_t crypto_caller_verify_hash(struct service_client *context,
 +static inline psa_status_t crypto_caller_asym_verify_common(struct service_client *context,
 +	uint32_t opcode,
@@ -121,18 +123,18 @@ index 47152946..daa11330 100644
  	psa_algorithm_t alg,
  	const uint8_t *hash, size_t hash_length,
 @@ -65,7 +66,7 @@ static inline psa_status_t crypto_caller_verify_hash(struct service_client *cont
-
+ 
  		context->rpc_status =
  			rpc_caller_invoke(context->caller, call_handle,
 -					TS_CRYPTO_OPCODE_VERIFY_HASH, &opstatus, &resp_buf, &resp_len);
 +					opcode, &opstatus, &resp_buf, &resp_len);
-
+ 
  		if (context->rpc_status == TS_RPC_CALL_ACCEPTED) psa_status = opstatus;
-
+ 
 @@ -75,6 +76,32 @@ static inline psa_status_t crypto_caller_verify_hash(struct service_client *cont
  	return psa_status;
  }
-
+ 
 +static inline psa_status_t crypto_caller_verify_hash(struct service_client *context,
 +	psa_key_id_t id,
 +	psa_algorithm_t alg,
@@ -176,7 +178,7 @@ index d09369a2..09049f5c 100644
 @@ -23,6 +23,15 @@ static inline psa_status_t crypto_caller_sign_hash(struct service_client *contex
  	return PSA_ERROR_NOT_SUPPORTED;
  }
-
+ 
 +static inline psa_status_t crypto_caller_sign_message(struct service_client *context,
 +	psa_key_id_t id,
 +	psa_algorithm_t alg,
@@ -203,7 +205,7 @@ index 20d11dcf..3f3eb878 100644
 @@ -23,6 +23,15 @@ static inline psa_status_t crypto_caller_verify_hash(struct service_client *cont
  	return PSA_ERROR_NOT_SUPPORTED;
  }
-
+ 
 +static inline psa_status_t crypto_caller_verify_message(struct service_client *context,
 +	psa_key_id_t id,
 +	psa_algorithm_t alg,
@@ -230,7 +232,7 @@ index 2a5e5b99..ccb0714a 100644
 @@ -57,7 +57,7 @@ public:
  		psa_key_id_t id,
  		uint8_t *data, size_t data_size, size_t *data_length) = 0;
-
+ 
 -	/* Sign/verify methods */
 +	/* Sign/verify hash methods */
  	virtual psa_status_t sign_hash(
@@ -239,7 +241,7 @@ index 2a5e5b99..ccb0714a 100644
 @@ -70,6 +70,19 @@ public:
  		const uint8_t *hash, size_t hash_length,
  		const uint8_t *signature, size_t signature_length) = 0;
-
+ 
 +	/* Sign/verify message methods */
 +	virtual psa_status_t sign_message(
 +		psa_key_id_t id,
@@ -270,7 +272,7 @@ index 4d9d8f41..4e10f9be 100644
 @@ -107,6 +107,26 @@ psa_status_t packedc_crypto_client::verify_hash(
  		signature, signature_length);
  }
-
+ 
 +psa_status_t packedc_crypto_client::sign_message(
 +	psa_key_id_t id, psa_algorithm_t alg,
 +	const uint8_t *message, size_t message_length,
@@ -308,7 +310,7 @@ index 377b51d1..d74ba609 100644
 @@ -54,7 +54,7 @@ public:
  		psa_key_id_t id,
  		uint8_t *data, size_t data_size, size_t *data_length);
-
+ 
 -	/* Sign/verify methods */
 +	/* Sign/verify hash methods */
  	psa_status_t sign_hash(
@@ -317,7 +319,7 @@ index 377b51d1..d74ba609 100644
 @@ -67,6 +67,19 @@ public:
  		const uint8_t *hash, size_t hash_length,
  		const uint8_t *signature, size_t signature_length);
-
+ 
 +	/* Sign/verify message methods */
 +	psa_status_t sign_message(
 +		psa_key_id_t id,
@@ -366,17 +368,17 @@ index 17780351..28c8f6fb 100644
  	pb_bytes_array_t *hash_byte_array =
 @@ -416,7 +435,7 @@ psa_status_t protobuf_crypto_client::sign_hash(psa_key_id_t id, psa_algorithm_t
  			pb_encode(&ostream, ts_crypto_SignHashIn_fields, &req_msg);
-
+ 
  			m_client.rpc_status = rpc_caller_invoke(m_client.caller, call_handle,
 -						ts_crypto_Opcode_SIGN_HASH, &opstatus, &resp_buf, &resp_len);
 +						opcode, &opstatus, &resp_buf, &resp_len);
-
+ 
  			if (m_client.rpc_status == TS_RPC_CALL_ACCEPTED) {
-
+ 
 @@ -462,10 +481,28 @@ psa_status_t protobuf_crypto_client::sign_hash(psa_key_id_t id, psa_algorithm_t
  	return psa_status;
  }
-
+ 
 -
  psa_status_t protobuf_crypto_client::verify_hash(psa_key_id_t id, psa_algorithm_t alg,
  						const uint8_t *hash, size_t hash_length,
@@ -405,13 +407,13 @@ index 17780351..28c8f6fb 100644
  	pb_bytes_array_t *hash_byte_array =
 @@ -497,7 +534,7 @@ psa_status_t protobuf_crypto_client::verify_hash(psa_key_id_t id, psa_algorithm_
  			pb_encode(&ostream, ts_crypto_VerifyHashIn_fields, &req_msg);
-
+ 
  			m_client.rpc_status = rpc_caller_invoke(m_client.caller, call_handle,
 -						ts_crypto_Opcode_VERIFY_HASH, &opstatus, &resp_buf, &resp_len);
 +						opcode, &opstatus, &resp_buf, &resp_len);
-
+ 
  			if (m_client.rpc_status == TS_RPC_CALL_ACCEPTED) psa_status = opstatus;
-
+ 
 diff --git a/components/service/crypto/client/cpp/protocol/protobuf/protobuf_crypto_client.h b/components/service/crypto/client/cpp/protocol/protobuf/protobuf_crypto_client.h
 index 085d9cfa..abe4439e 100644
 --- a/components/service/crypto/client/cpp/protocol/protobuf/protobuf_crypto_client.h
@@ -426,7 +428,7 @@ index 085d9cfa..abe4439e 100644
 @@ -54,7 +54,7 @@ public:
  		psa_key_id_t id,
  		uint8_t *data, size_t data_size, size_t *data_length);
-
+ 
 -	/* Sign/verify methods */
 +	/* Sign/verify hash methods */
  	psa_status_t sign_hash(
@@ -435,7 +437,7 @@ index 085d9cfa..abe4439e 100644
 @@ -67,6 +67,19 @@ public:
  		const uint8_t *hash, size_t hash_length,
  		const uint8_t *signature, size_t signature_length);
-
+ 
 +	/* Sign/verify message methods */
 +	psa_status_t sign_message(
 +		psa_key_id_t id,
@@ -453,9 +455,9 @@ index 085d9cfa..abe4439e 100644
  	psa_status_t asymmetric_encrypt(
  		psa_key_id_t id,
 @@ -221,6 +234,16 @@ public:
-
+ 
  private:
-
+ 
 +	psa_status_t asym_sign(uint32_t opcode,
 +		psa_key_id_t id, psa_algorithm_t alg,
 +		const uint8_t *hash, size_t hash_length,
@@ -480,11 +482,11 @@ index dc2f7e80..b6446253 100644
   *
   * SPDX-License-Identifier: BSD-3-Clause
   */
-
+ 
  #include <psa/crypto.h>
 +#include "psa_crypto_client.h"
 +#include "crypto_caller_selector.h"
-
+ 
  psa_status_t psa_sign_message(
 -	psa_key_id_t key,
 +	psa_key_id_t id,
@@ -499,7 +501,7 @@ index dc2f7e80..b6446253 100644
 -	uint8_t hash[PSA_HASH_MAX_SIZE];
 +	if (psa_crypto_client_instance.init_status != PSA_SUCCESS)
 +		return psa_crypto_client_instance.init_status;
-
+ 
 -	psa_status_t psa_status = psa_hash_compute(PSA_ALG_SIGN_GET_HASH(alg),
 +	return crypto_caller_sign_message(&psa_crypto_client_instance.base,
 +		id, alg,
@@ -527,11 +529,11 @@ index d0fbc7c8..57c2c5e8 100644
   *
   * SPDX-License-Identifier: BSD-3-Clause
   */
-
+ 
  #include <psa/crypto.h>
 +#include "psa_crypto_client.h"
 +#include "crypto_caller_selector.h"
-
+ 
  psa_status_t psa_verify_message(
 -	psa_key_id_t key,
 +	psa_key_id_t id,
@@ -545,7 +547,7 @@ index d0fbc7c8..57c2c5e8 100644
 -	uint8_t hash[PSA_HASH_MAX_SIZE];
 +	if (psa_crypto_client_instance.init_status != PSA_SUCCESS)
 +		return psa_crypto_client_instance.init_status;
-
+ 
 -	psa_status_t psa_status = psa_hash_compute(PSA_ALG_SIGN_GET_HASH(alg),
 +	return crypto_caller_verify_message(&psa_crypto_client_instance.base,
 +		id, alg,
@@ -601,12 +603,12 @@ index d0fc7cac..67a5b340 100644
 +	{TS_CRYPTO_OPCODE_SIGN_MESSAGE,         asymmetric_sign_handler},
 +	{TS_CRYPTO_OPCODE_VERIFY_MESSAGE,       asymmetric_verify_handler},
  };
-
+ 
  struct rpc_interface *crypto_provider_init(struct crypto_provider *context)
 @@ -272,7 +274,7 @@ static rpc_status_t import_key_handler(void *context, struct call_req* req)
  	return rpc_status;
  }
-
+ 
 -static rpc_status_t sign_hash_handler(void *context, struct call_req* req)
 +static rpc_status_t asymmetric_sign_handler(void *context, struct call_req* req)
  {
@@ -614,17 +616,17 @@ index d0fc7cac..67a5b340 100644
  	struct call_param_buf *req_buf = call_req_get_req_buf(req);
 @@ -284,7 +286,7 @@ static rpc_status_t sign_hash_handler(void *context, struct call_req* req)
  	uint8_t hash_buffer[PSA_HASH_MAX_SIZE];
-
+ 
  	if (serializer)
 -		rpc_status = serializer->deserialize_sign_hash_req(req_buf, &id, &alg, hash_buffer, &hash_len);
 +		rpc_status = serializer->deserialize_asymmetric_sign_req(req_buf, &id, &alg, hash_buffer, &hash_len);
-
+ 
  	if (rpc_status == TS_RPC_CALL_ACCEPTED) {
-
+ 
 @@ -292,14 +294,16 @@ static rpc_status_t sign_hash_handler(void *context, struct call_req* req)
  		size_t sig_len;
  		uint8_t sig_buffer[PSA_SIGNATURE_MAX_SIZE];
-
+ 
 -		psa_status = psa_sign_hash(id, alg,
 -					hash_buffer, hash_len,
 -					sig_buffer, sizeof(sig_buffer), &sig_len);
@@ -633,19 +635,19 @@ index d0fc7cac..67a5b340 100644
 +				sig_buffer, sizeof(sig_buffer), &sig_len) :
 +			psa_sign_message(id, alg, hash_buffer, hash_len,
 +				sig_buffer, sizeof(sig_buffer), &sig_len);
-
+ 
  		if (psa_status == PSA_SUCCESS) {
-
+ 
  			struct call_param_buf *resp_buf = call_req_get_resp_buf(req);
 -			rpc_status = serializer->serialize_sign_hash_resp(resp_buf, sig_buffer, sig_len);
 +			rpc_status = serializer->serialize_asymmetric_sign_resp(resp_buf, sig_buffer, sig_len);
  		}
-
+ 
  		call_req_set_opstatus(req, psa_status);
 @@ -308,7 +312,7 @@ static rpc_status_t sign_hash_handler(void *context, struct call_req* req)
  	return rpc_status;
  }
-
+ 
 -static rpc_status_t verify_hash_handler(void *context, struct call_req* req)
 +static rpc_status_t asymmetric_verify_handler(void *context, struct call_req* req)
  {
@@ -653,17 +655,17 @@ index d0fc7cac..67a5b340 100644
  	struct call_param_buf *req_buf = call_req_get_req_buf(req);
 @@ -322,7 +326,7 @@ static rpc_status_t verify_hash_handler(void *context, struct call_req* req)
  	uint8_t sig_buffer[PSA_SIGNATURE_MAX_SIZE];
-
+ 
  	if (serializer)
 -		rpc_status = serializer->deserialize_verify_hash_req(req_buf, &id, &alg,
 +		rpc_status = serializer->deserialize_asymmetric_verify_req(req_buf, &id, &alg,
  											hash_buffer, &hash_len,
  											sig_buffer, &sig_len);
-
+ 
 @@ -330,9 +334,13 @@ static rpc_status_t verify_hash_handler(void *context, struct call_req* req)
-
+ 
  		psa_status_t psa_status;
-
+ 
 -		psa_status = psa_verify_hash(id, alg,
 -					hash_buffer, hash_len,
 -					sig_buffer, sig_len);
@@ -674,7 +676,7 @@ index d0fc7cac..67a5b340 100644
 +			psa_verify_message(id, alg,
 +				hash_buffer, hash_len,
 +				sig_buffer, sig_len);
-
+ 
  		call_req_set_opstatus(req, psa_status);
  	}
 diff --git a/components/service/crypto/provider/serializer/crypto_provider_serializer.h b/components/service/crypto/provider/serializer/crypto_provider_serializer.h
@@ -683,17 +685,17 @@ index 68940cae..57364f24 100644
 +++ b/components/service/crypto/provider/serializer/crypto_provider_serializer.h
 @@ -79,15 +79,15 @@ struct crypto_provider_serializer {
                                          const psa_key_attributes_t *attributes);
-
+ 
      /* Operation: sign_hash */
 -    rpc_status_t (*deserialize_sign_hash_req)(const struct call_param_buf *req_buf,
 +    rpc_status_t (*deserialize_asymmetric_sign_req)(const struct call_param_buf *req_buf,
                                          psa_key_id_t *id, psa_algorithm_t *alg,
                                          uint8_t *hash, size_t *hash_len);
-
+ 
 -    rpc_status_t (*serialize_sign_hash_resp)(struct call_param_buf *resp_buf,
 +    rpc_status_t (*serialize_asymmetric_sign_resp)(struct call_param_buf *resp_buf,
                                          const uint8_t *sig, size_t sig_len);
-
+ 
      /* Operation: verify_hash */
 -    rpc_status_t (*deserialize_verify_hash_req)(const struct call_param_buf *req_buf,
 +    rpc_status_t (*deserialize_asymmetric_verify_req)(const struct call_param_buf *req_buf,
@@ -706,7 +708,7 @@ index c70db865..4a7e59f0 100644
 +++ b/components/service/crypto/provider/serializer/packed-c/packedc_crypto_provider_serializer.c
 @@ -333,7 +333,7 @@ static rpc_status_t serialize_get_key_attributes_resp(struct call_param_buf *res
  }
-
+ 
  /* Operation: sign_hash */
 -static rpc_status_t deserialize_sign_hash_req(const struct call_param_buf *req_buf,
 +static rpc_status_t deserialize_asymmetric_sign_req(const struct call_param_buf *req_buf,
@@ -716,7 +718,7 @@ index c70db865..4a7e59f0 100644
 @@ -378,7 +378,7 @@ static rpc_status_t deserialize_sign_hash_req(const struct call_param_buf *req_b
      return rpc_status;
  }
-
+ 
 -static rpc_status_t serialize_sign_hash_resp(struct call_param_buf *resp_buf,
 +static rpc_status_t serialize_asymmetric_sign_resp(struct call_param_buf *resp_buf,
                              const uint8_t *sig, size_t sig_len)
@@ -724,7 +726,7 @@ index c70db865..4a7e59f0 100644
      rpc_status_t rpc_status = TS_RPC_ERROR_INTERNAL;
 @@ -401,7 +401,7 @@ static rpc_status_t serialize_sign_hash_resp(struct call_param_buf *resp_buf,
  }
-
+ 
  /* Operation: verify_hash */
 -static rpc_status_t deserialize_verify_hash_req(const struct call_param_buf *req_buf,
 +static rpc_status_t deserialize_asymmetric_verify_req(const struct call_param_buf *req_buf,
@@ -750,7 +752,7 @@ index 7767d20a..083a581a 100644
 +++ b/components/service/crypto/provider/serializer/protobuf/pb_crypto_provider_serializer.c
 @@ -267,9 +267,9 @@ static rpc_status_t serialize_get_key_attributes_resp(struct call_param_buf *res
  }
-
+ 
  /* Operation: sign_hash */
 -static rpc_status_t deserialize_sign_hash_req(const struct call_param_buf *req_buf,
 -                            psa_key_id_t *id, psa_algorithm_t *alg,
@@ -764,7 +766,7 @@ index 7767d20a..083a581a 100644
 @@ -295,8 +295,8 @@ static rpc_status_t deserialize_sign_hash_req(const struct call_param_buf *req_b
      return rpc_status;
  }
-
+ 
 -static rpc_status_t serialize_sign_hash_resp(struct call_param_buf *resp_buf,
 -                            const uint8_t *sig, size_t sig_len)
 +static rpc_status_t serialize_asymmetric_sign_resp(struct call_param_buf *resp_buf,
@@ -774,7 +776,7 @@ index 7767d20a..083a581a 100644
      rpc_status_t rpc_status = TS_RPC_ERROR_INTERNAL;
 @@ -323,10 +323,10 @@ static rpc_status_t serialize_sign_hash_resp(struct call_param_buf *resp_buf,
  }
-
+ 
  /* Operation: verify_hash */
 -static rpc_status_t deserialize_verify_hash_req(const struct call_param_buf *req_buf,
 -                                psa_key_id_t *id, psa_algorithm_t *alg,
@@ -860,7 +862,7 @@ index bd6c66ee..da01abf4 100644
   * SPDX-License-Identifier: BSD-3-Clause
   */
 @@ -18,15 +18,16 @@ TEST_GROUP(CryptoProtocolOpcodeChecks)
-
+ 
  TEST(CryptoProtocolOpcodeChecks, checkPackedcToProtobuf)
  {
 -    CHECK_EQUAL(TS_CRYPTO_OPCODE_GENERATE_KEY, ts_crypto_Opcode_GENERATE_KEY);
@@ -901,7 +903,7 @@ index ec2c6736..b3345551 100644
 @@ -290,6 +290,56 @@ void crypto_service_scenarios::signAndVerifyHash()
  	CHECK_EQUAL(PSA_SUCCESS, status);
  }
-
+ 
 +void crypto_service_scenarios::signAndVerifyMessage()
 +{
 +	psa_status_t status;
@@ -958,7 +960,7 @@ index ec2c6736..b3345551 100644
 @@ -348,7 +398,7 @@ void crypto_service_scenarios::asymEncryptDecrypt()
  	psa_key_attributes_t attributes = PSA_KEY_ATTRIBUTES_INIT;
  	psa_key_id_t key_id;
-
+ 
 -	psa_set_key_id(&attributes, 14);
 +	psa_set_key_id(&attributes, 15);
  	psa_set_key_usage_flags(&attributes, PSA_KEY_USAGE_ENCRYPT | PSA_KEY_USAGE_DECRYPT);
@@ -967,7 +969,7 @@ index ec2c6736..b3345551 100644
 @@ -394,7 +444,7 @@ void crypto_service_scenarios::asymEncryptDecryptWithSalt()
  	psa_key_attributes_t attributes = PSA_KEY_ATTRIBUTES_INIT;
  	psa_key_id_t key_id;
-
+ 
 -	psa_set_key_id(&attributes, 15);
 +	psa_set_key_id(&attributes, 16);
  	psa_set_key_usage_flags(&attributes, PSA_KEY_USAGE_ENCRYPT | PSA_KEY_USAGE_DECRYPT);
@@ -1006,7 +1008,7 @@ index 79eddfbb..ea238432 100644
 @@ -87,6 +87,11 @@ TEST(CryptoServicePackedcTests, signAndVerifyHash)
  	m_scenarios->signAndVerifyHash();
  }
-
+ 
 +TEST(CryptoServicePackedcTests, signAndVerifyMessage)
 +{
 +	m_scenarios->signAndVerifyMessage();
@@ -1029,7 +1031,7 @@ index 1230752c..c172ad4a 100644
 @@ -77,6 +77,11 @@ TEST(CryptoServiceProtobufTests, signAndVerifyHash)
      m_scenarios->signAndVerifyHash();
  }
-
+ 
 +TEST(CryptoServiceProtobufTests, signAndVerifyMessage)
 +{
 +    m_scenarios->signAndVerifyMessage();
@@ -1055,7 +1057,7 @@ index a07bd57e..5aebf2fa 100644
  #define TS_CRYPTO_OPCODE_GET_KEY_ATTRIBUTES     (TS_CRYPTO_OPCODE_BASE + 15)
 +#define TS_CRYPTO_OPCODE_SIGN_MESSAGE           (TS_CRYPTO_OPCODE_BASE + 16)
 +#define TS_CRYPTO_OPCODE_VERIFY_MESSAGE         (TS_CRYPTO_OPCODE_BASE + 17)
-
+ 
  /* Hash operations */
  #define TS_CRYPTO_OPCODE_HASH_BASE              (0x0200)
 diff --git a/protocols/service/crypto/protobuf/opcodes.proto b/protocols/service/crypto/protobuf/opcodes.proto
@@ -1076,5 +1078,3 @@ index 094d3a02..ef64d044 100644
 +  SIGN_MESSAGE        = 0x0110;
 +  VERIFY_MESSAGE      = 0x0111;
  }
---
-2.25.1

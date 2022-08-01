@@ -1,16 +1,18 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Emekcan Aras <Emekcan.Aras@arm.com>
-
-From d800f7eaa25efca41535a223ef5d524651dee103 Mon Sep 17 00:00:00 2001
+From 00b4f777b377c69f948f5a9d68cbfc8fa8c38a86 Mon Sep 17 00:00:00 2001
 From: Julian Hall <julian.hall@arm.com>
 Date: Fri, 11 Feb 2022 14:24:53 +0000
-Subject: [PATCH 06/15] Integrate AEAD operation support
+Subject: [PATCH] Integrate AEAD operation support
 
 Resolves issues and integrates AEAD support into the crypto service
 provider and clients.
 
 Signed-off-by: Julian Hall <julian.hall@arm.com>
 Change-Id: I5fbe78a2dd825f592e26fd665f60c18b576f9de9
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Emekcan Aras <Emekcan.Aras@arm.com>
+
+
 ---
  .../caller/packed-c/crypto_caller_aead.h      |  70 +++---
  .../client/caller/stub/crypto_caller_aead.h   |  12 +-
@@ -36,7 +38,7 @@ index 3d9947d5..c4ffb20c 100644
 @@ -20,38 +20,6 @@
  extern "C" {
  #endif
-
+ 
 -static inline psa_status_t crypto_caller_aead_encrypt(struct service_client *context,
 -	psa_key_id_t key,
 -	psa_algorithm_t alg,
@@ -79,12 +81,12 @@ index 3d9947d5..c4ffb20c 100644
 -	size_t req_fixed_len = sizeof(struct ts_crypto_aead_abort_in);
 +	size_t req_fixed_len = sizeof(struct ts_crypto_aead_set_lengths_in);
  	size_t req_len = req_fixed_len;
-
+ 
  	req_msg.op_handle = op_handle;
 @@ -611,6 +579,40 @@ static inline psa_status_t crypto_caller_aead_abort(struct service_client *conte
  	return psa_status;
  }
-
+ 
 +/**
 + * The maximum data length that may be carried in an update operation will be
 + * constrained by the maximum call payload capacity imposed by the end-to-end
@@ -136,7 +138,7 @@ index 18aa8cec..455e7ac1 100644
 @@ -135,6 +135,16 @@ static inline psa_status_t crypto_caller_aead_abort(struct service_client *conte
  	return PSA_ERROR_NOT_SUPPORTED;
  }
-
+ 
 +static inline size_t crypto_caller_aead_max_update_ad_size(const struct service_client *context)
 +{
 +	return 0;
@@ -164,7 +166,7 @@ index 22fd3da1..e4579e63 100644
 @@ -8,37 +8,6 @@
  #include "psa_crypto_client.h"
  #include "crypto_caller_selector.h"
-
+ 
 -
 -psa_status_t psa_aead_encrypt(psa_key_id_t key,
 -	psa_algorithm_t alg,
@@ -410,19 +412,19 @@ index 2d926eb6..ee2b4473 100644
 +#include <service/crypto/provider/extension/aead/serializer/packed-c/packedc_aead_provider_serializer.h>
  #include <service/discovery/provider/discovery_provider.h>
  #include <service/discovery/provider/serializer/packed-c/packedc_discovery_provider_serializer.h>
-
+ 
 @@ -34,6 +36,7 @@ static struct full_crypto_provider
  	struct cipher_provider cipher_provider;
  	struct key_derivation_provider key_derivation_provider;
  	struct mac_provider mac_provider;
 +	struct aead_provider aead_provider;
-
+ 
  } instance;
-
+ 
 @@ -98,6 +101,17 @@ struct crypto_provider *crypto_provider_factory_create(void)
  	crypto_provider_extend(&instance.crypto_provider,
  		&instance.mac_provider.base_provider);
-
+ 
 +	/**
 +	 * Extend with aead operations
 +	 */
@@ -436,7 +438,7 @@ index 2d926eb6..ee2b4473 100644
 +
  	return &instance.crypto_provider;
  }
-
+ 
 diff --git a/deployments/component-test/component-test.cmake b/deployments/component-test/component-test.cmake
 index a0233c34..c3b015ab 100644
 --- a/deployments/component-test/component-test.cmake
@@ -517,5 +519,3 @@ index 953bb716..24a8ca65 100644
  		"components/service/crypto/factory/full"
  		"components/service/secure_storage/include"
  		"components/service/secure_storage/frontend/secure_storage_provider"
---
-2.25.1

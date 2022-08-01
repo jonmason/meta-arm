@@ -11,7 +11,7 @@ LIC_FILES_CHKSUM += "file://../mbedtls/LICENSE;md5=3b83ef96387f14655fc854ddc3c6b
 
 SRC_URI:append = " \
                   ${SRC_URI_MBEDTLS} ${SRC_URI_NANOPB} ${SRC_URI_OPENAMP} ${SRC_URI_LIBMETAL} ${SRC_URI_ARCH-TESTS}\
-                  file://0001-tools-cmake-common-applying-lowercase-project-convention.patch \
+                  file://0001-tools-cmake-common-applying-lowercase-project-conven.patch \
                   file://0002-fix-EARLY_TA_PATHS-env-variable.patch \
                   file://0003-se-proxy-dts-add-se-proxy-as-child-node.patch \
                   file://0004-Update-mm-comm-buffer-region-in-dts-file.patch \
@@ -74,7 +74,7 @@ SRC_URI_LIBMETAL = "git://github.com/OpenAMP/libmetal.git;name=libmetal;protocol
 SRCREV_libmetal = "f252f0e007fbfb8b3a52b1d5901250ddac96baad"
 
 SRC_URI_ARCH-TESTS = "git://github.com/bensze01/psa-arch-tests.git;name=psa-arch-tests;protocol=https;nobranch=1;destsuffix=git/psa-arch-tests"
-SRCREV_psa-arch-tests = "fix-multipart-aead"
+SRCREV_psa-arch-tests = "5d1a87f9c0a82e1632a3145687b4c8d7cbbeed2d"
 
 TS_ENVIRONMENT_LINUX = "arm-linux"
 TS_PLATFORM = "arm/corstone1000"

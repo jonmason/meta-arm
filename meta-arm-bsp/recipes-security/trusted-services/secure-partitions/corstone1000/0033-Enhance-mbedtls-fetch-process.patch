@@ -1,10 +1,7 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Emekcan Aras <Emekcan.Aras@arm.com>
-
-From ddff15a07e2fb7eddfa1d988fce25d82cb22f7ee Mon Sep 17 00:00:00 2001
+From 47db072e9ec749c6be7c0a27d64d7fbd75748d60 Mon Sep 17 00:00:00 2001
 From: Gyorgy Szing <Gyorgy.Szing@arm.com>
 Date: Wed, 8 Dec 2021 04:20:34 +0100
-Subject: [PATCH 01/15] Enhance mbedtls fetch process
+Subject: [PATCH] Enhance mbedtls fetch process
 
 Update management of MbedTLS external component to be optimized
 for download speed insted of availability.
@@ -30,6 +27,11 @@ used later to speed up a clean build an use the prebuilt binary.
 
 Change-Id: I8a9ad8b3303e6dfa0a7c9c3d7e4b4787b94d925a
 Signed-off-by: Gyorgy Szing <Gyorgy.Szing@arm.com>
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Emekcan Aras <Emekcan.Aras@arm.com>
+
+
 ---
  external/MbedTLS/MbedTLS.cmake | 192 ++++++++++++++++++++-------------
  1 file changed, 119 insertions(+), 73 deletions(-)
@@ -46,7 +48,7 @@ index 3cbaed15..935be765 100644
  # SPDX-License-Identifier: BSD-3-Clause
  #
  #-------------------------------------------------------------------------------
-
+ 
 -# Determine the number of processes to run while running parallel builds.
 -# Pass -DPROCESSOR_COUNT=<n> to cmake to override.
 -if(NOT DEFINED PROCESSOR_COUNT)
@@ -62,7 +64,7 @@ index 3cbaed15..935be765 100644
 +		CACHE PATH "MbedTLS source directory")
 +set(MBEDTLS_INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/mbedtls_install"
 +		CACHE PATH "Mbed TLS installation directory")
-
+ 
 -set(MBEDTLS_URL "https://github.com/ARMmbed/mbedtls.git" CACHE STRING "Mbed TLS repository URL")
 -set(MBEDTLS_REFSPEC "mbedtls-3.0.0" CACHE STRING "Mbed TLS git refspec")
 -set(MBEDTLS_INSTALL_PATH "${CMAKE_CURRENT_BINARY_DIR}/mbedtls_install" CACHE PATH "Mbed TLS installation directory")
@@ -74,18 +76,18 @@ index 3cbaed15..935be765 100644
 +				DOC "Location of mberdrypto library."
 +				NO_DEFAULT_PATH
 +)
-
+ 
 -include(FetchContent)
 +set(MBEDCRYPTO_LIB_FILE ${MBEDCRYPTO_LIB_FILE})
 +unset(MBEDCRYPTO_LIB_FILE CACHE)
-
+ 
 -# Checking git
 -find_program(GIT_COMMAND "git")
 -if (NOT GIT_COMMAND)
 -	message(FATAL_ERROR "Please install git")
 -endif()
 +set(MBEDTLS_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/_deps/mbedtls-build")
-
+ 
 -# Fetching Mbed TLS
 -FetchContent_Declare(
 -	mbedtls
@@ -103,7 +105,7 @@ index 3cbaed15..935be765 100644
 +		set(PROCESSOR_COUNT ${PROCESSOR_COUNT}
 +				CACHE STRING "Number of cores to use for parallel builds.")
 +	endif()
-
+ 
 -# FetchContent_GetProperties exports mbedtls_SOURCE_DIR and mbedtls_BINARY_DIR variables
 -FetchContent_GetProperties(mbedtls)
 -if(NOT mbedtls_POPULATED)
@@ -119,14 +121,14 @@ index 3cbaed15..935be765 100644
 +	)
 +	set(MBEDCRYPTO_HEADER_FILE ${MBEDCRYPTO_HEADER_FILE})
 +	unset(MBEDCRYPTO_HEADER_FILE CACHE)
-
+ 
 -# Convert the include path list to a string. Needed to make parameter passing to
 -# Mbed TLS build work fine.
 -string(REPLACE ";" "\\;" MBEDTLS_EXTRA_INCLUDES "${MBEDTLS_EXTRA_INCLUDES}")
 +	# Source not found, fetch it.
 +	if (NOT MBEDCRYPTO_HEADER_FILE)
 +		include(FetchContent)
-
+ 
 -find_package(Python3 COMPONENTS Interpreter)
 -if (NOT Python3_Interpreter_FOUND)
 -	message(FATAL_ERROR "Python 3 interpreter not found.")
@@ -136,7 +138,7 @@ index 3cbaed15..935be765 100644
 +		if (NOT GIT_COMMAND)
 +			message(FATAL_ERROR "Please install git")
 +		endif()
-
+ 
 -#Configure Mbed TLS to build only mbedcrypto lib
 -execute_process(COMMAND ${Python3_EXECUTABLE} scripts/config.py crypto WORKING_DIRECTORY ${mbedtls_SOURCE_DIR})
 -
@@ -169,7 +171,7 @@ index 3cbaed15..935be765 100644
 +			GIT_TAG ${MBEDTLS_REFSPEC}
 +			GIT_SHALLOW TRUE
 +		)
-
+ 
 -if (_exec_error)
 -	message(FATAL_ERROR "Configuration step of Mbed TLS failed with ${_exec_error}.")
 -endif()
@@ -182,7 +184,7 @@ index 3cbaed15..935be765 100644
 +
 +		# If the source directory has been moved, the binary dir must be regenerated from scratch.
 +		file(REMOVE_RECURSE "${MBEDTLS_BINARY_DIR}")
-
+ 
 -#TODO: add dependency to generated project on this file!
 -#TODO: add custom target to rebuild Mbed TLS
 +		if (NOT mbedtls_POPULATED)
@@ -191,7 +193,7 @@ index 3cbaed15..935be765 100644
 +		endif()
 +		set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${MBEDTLS_SOURCE_DIR})
 +	endif()
-
+ 
 -#Build the library
 -execute_process(COMMAND
 -		${CMAKE_COMMAND} --build ${mbedtls_BINARY_DIR} --parallel ${PROCESSOR_COUNT} --target install
@@ -246,7 +248,7 @@ index 3cbaed15..935be765 100644
 +
 +	set(MBEDCRYPTO_LIB_FILE "${MBEDTLS_INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}mbedcrypto${CMAKE_STATIC_LIBRARY_SUFFIX}")
  endif()
-
+ 
  #Create an imported target to have clean abstraction in the build-system.
  add_library(mbedcrypto STATIC IMPORTED)
 -set_property(TARGET mbedcrypto PROPERTY IMPORTED_LOCATION "${MBEDTLS_INSTALL_PATH}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}mbedcrypto${CMAKE_STATIC_LIBRARY_SUFFIX}")
@@ -254,5 +256,3 @@ index 3cbaed15..935be765 100644
 +set_property(DIRECTORY ${CMAKE_SOURCE_DIR} APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${MBEDCRYPTO_LIB_FILE})
 +set_property(TARGET mbedcrypto PROPERTY IMPORTED_LOCATION ${MBEDCRYPTO_LIB_FILE})
 +set_property(TARGET mbedcrypto PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${MBEDTLS_INSTALL_DIR}/include")
---
-2.25.1

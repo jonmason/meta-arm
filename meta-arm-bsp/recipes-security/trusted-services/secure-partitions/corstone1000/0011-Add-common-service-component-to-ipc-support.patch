@@ -1,7 +1,4 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
-
-From f08ec4e601e70669aafeb712d7c521cc07fd0c77 Mon Sep 17 00:00:00 2001
+From b7e9e6fc59263f5daf4ae79eb758fa7647058338 Mon Sep 17 00:00:00 2001
 From: Vishnu Banavath <vishnu.banavath@arm.com>
 Date: Fri, 3 Dec 2021 19:13:03 +0000
 Subject: [PATCH] Add common service component to ipc support
@@ -11,11 +8,23 @@ including, the openamp client side structures lib.
 
 Signed-off-by: Rui Miguel Silva <rui.silva@arm.com>
 
-%% original patch: 0011-Add-common-service-component-to-ipc-support.patch
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
+
+
+---
+ .../service/common/psa_ipc/component.cmake    |  13 ++
+ .../service/common/psa_ipc/service_psa_ipc.c  |  97 +++++++++++++
+ .../psa_ipc/service_psa_ipc_openamp_lib.h     | 131 ++++++++++++++++++
+ deployments/se-proxy/opteesp/CMakeLists.txt   |   1 +
+ 4 files changed, 242 insertions(+)
+ create mode 100644 components/service/common/psa_ipc/component.cmake
+ create mode 100644 components/service/common/psa_ipc/service_psa_ipc.c
+ create mode 100644 components/service/common/psa_ipc/service_psa_ipc_openamp_lib.h
 
 diff --git a/components/service/common/psa_ipc/component.cmake b/components/service/common/psa_ipc/component.cmake
 new file mode 100644
-index 0000000..5a1c9e6
+index 00000000..5a1c9e62
 --- /dev/null
 +++ b/components/service/common/psa_ipc/component.cmake
 @@ -0,0 +1,13 @@
@@ -34,7 +43,7 @@ index 0000000..5a1c9e6
 +	)
 diff --git a/components/service/common/psa_ipc/service_psa_ipc.c b/components/service/common/psa_ipc/service_psa_ipc.c
 new file mode 100644
-index 0000000..e8093c2
+index 00000000..e8093c20
 --- /dev/null
 +++ b/components/service/common/psa_ipc/service_psa_ipc.c
 @@ -0,0 +1,97 @@
@@ -137,7 +146,7 @@ index 0000000..e8093c2
 +}
 diff --git a/components/service/common/psa_ipc/service_psa_ipc_openamp_lib.h b/components/service/common/psa_ipc/service_psa_ipc_openamp_lib.h
 new file mode 100644
-index 0000000..33ea966
+index 00000000..33ea9666
 --- /dev/null
 +++ b/components/service/common/psa_ipc/service_psa_ipc_openamp_lib.h
 @@ -0,0 +1,131 @@
@@ -273,7 +282,7 @@ index 0000000..33ea966
 +
 +
 diff --git a/deployments/se-proxy/opteesp/CMakeLists.txt b/deployments/se-proxy/opteesp/CMakeLists.txt
-index 1511bba..e0e0e12 100644
+index 1511bbad..e0e0e12b 100644
 --- a/deployments/se-proxy/opteesp/CMakeLists.txt
 +++ b/deployments/se-proxy/opteesp/CMakeLists.txt
 @@ -54,6 +54,7 @@ add_components(TARGET "se-proxy"
@@ -284,6 +293,3 @@ index 1511bba..e0e0e12 100644
  		"components/service/common/provider"
  		"components/service/discovery/provider"
  		"components/service/discovery/provider/serializer/packed-c"
--- 
-2.25.1
-

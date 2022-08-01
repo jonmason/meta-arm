@@ -1,7 +1,4 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
-
-From 0f32eaab3c1c5ef534139474b0453916bc4d8b63 Mon Sep 17 00:00:00 2001
+From 791a1302d7b779f3aeee7d6f7c9fac00b4244c1b Mon Sep 17 00:00:00 2001
 From: Vishnu Banavath <vishnu.banavath@arm.com>
 Date: Fri, 3 Dec 2021 19:05:18 +0000
 Subject: [PATCH] add psa client definitions for ff-m
@@ -12,11 +9,20 @@ ff-m support.
 Signed-off-by: Rui Miguel Silva <rui.silva@arm.com>
 Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
 
-%% original patch: 0010-add-psa-client-definitions-for-ff-m.patch
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
+
+
+---
+ .../service/common/include/psa/client.h       | 194 ++++++++++++++++++
+ components/service/common/include/psa/sid.h   |  71 +++++++
+ 2 files changed, 265 insertions(+)
+ create mode 100644 components/service/common/include/psa/client.h
+ create mode 100644 components/service/common/include/psa/sid.h
 
 diff --git a/components/service/common/include/psa/client.h b/components/service/common/include/psa/client.h
 new file mode 100644
-index 0000000..69ccf14
+index 00000000..69ccf14f
 --- /dev/null
 +++ b/components/service/common/include/psa/client.h
 @@ -0,0 +1,194 @@
@@ -216,7 +222,7 @@ index 0000000..69ccf14
 +
 diff --git a/components/service/common/include/psa/sid.h b/components/service/common/include/psa/sid.h
 new file mode 100644
-index 0000000..aaa973c
+index 00000000..aaa973c6
 --- /dev/null
 +++ b/components/service/common/include/psa/sid.h
 @@ -0,0 +1,71 @@
@@ -291,6 +297,3 @@ index 0000000..aaa973c
 +#endif
 +
 +#endif /* __PSA_MANIFEST_SID_H__ */
--- 
-2.25.1
-

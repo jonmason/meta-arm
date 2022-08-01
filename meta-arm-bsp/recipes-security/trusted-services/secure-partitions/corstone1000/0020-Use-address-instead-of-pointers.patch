@@ -1,10 +1,7 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
-
-From 1974cdc2a0a4f3395131570d4080ffc1ddde4990 Mon Sep 17 00:00:00 2001
+From b417c1124af9d4569ba8871dfd1e43e626dddf12 Mon Sep 17 00:00:00 2001
 From: Satish Kumar <satish.kumar01@arm.com>
 Date: Sun, 12 Dec 2021 10:57:17 +0000
-Subject: [PATCH 2/5] Use address instead of pointers
+Subject: [PATCH] Use address instead of pointers
 
 Since secure enclave is 32bit and we 64bit there is an issue
 in the protocol communication design that force us to handle
@@ -13,6 +10,11 @@ this work.
 
 Signed-off-by: Rui Miguel Silva <rui.silva@arm.com>
 Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
+
+
 ---
  .../service/common/include/psa/client.h       | 15 ++++++++++++++
  .../service/common/psa_ipc/service_psa_ipc.c  | 20 ++++++++++++-------
@@ -20,7 +22,7 @@ Signed-off-by: Satish Kumar <satish.kumar01@arm.com>
  3 files changed, 38 insertions(+), 17 deletions(-)
 
 diff --git a/components/service/common/include/psa/client.h b/components/service/common/include/psa/client.h
-index 69ccf14..12dcd68 100644
+index 69ccf14f..12dcd68f 100644
 --- a/components/service/common/include/psa/client.h
 +++ b/components/service/common/include/psa/client.h
 @@ -81,6 +81,21 @@ struct __attribute__ ((__packed__)) psa_outvec {
@@ -46,7 +48,7 @@ index 69ccf14..12dcd68 100644
  
  /**
 diff --git a/components/service/common/psa_ipc/service_psa_ipc.c b/components/service/common/psa_ipc/service_psa_ipc.c
-index 5e5815d..435c6c0 100644
+index 5e5815db..435c6c0a 100644
 --- a/components/service/common/psa_ipc/service_psa_ipc.c
 +++ b/components/service/common/psa_ipc/service_psa_ipc.c
 @@ -62,6 +62,11 @@ static size_t psa_call_out_vec_len(const struct psa_outvec *out_vec, size_t out_
@@ -103,7 +105,7 @@ index 5e5815d..435c6c0 100644
  	}
  
 diff --git a/components/service/secure_storage/backend/secure_storage_ipc/secure_storage_ipc.c b/components/service/secure_storage/backend/secure_storage_ipc/secure_storage_ipc.c
-index a1f369d..bda442a 100644
+index a1f369db..bda442a6 100644
 --- a/components/service/secure_storage/backend/secure_storage_ipc/secure_storage_ipc.c
 +++ b/components/service/secure_storage/backend/secure_storage_ipc/secure_storage_ipc.c
 @@ -22,9 +22,9 @@ static psa_status_t secure_storage_ipc_set(void *context, uint32_t client_id,
@@ -165,6 +167,3 @@ index a1f369d..bda442a 100644
  	};
  
  	(void)client_id;
--- 
-2.17.1
-

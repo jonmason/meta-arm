@@ -1,7 +1,4 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
-
-From 9b9261f73f93a5ac7ad823da376858b56560a08b Mon Sep 17 00:00:00 2001
+From 8fca2a8eed6ebc1cbf9f7972c6a9bb137ebafe1a Mon Sep 17 00:00:00 2001
 From: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
 Date: Sun, 12 Dec 2021 17:07:03 +0000
 Subject: [PATCH] Increase SMM gateway UEFI variable macro value
@@ -12,12 +9,17 @@ or read SMM gateway returns error code. Currently this value is
 increased to 100 to support more UEFI variables.
 
 Signed-off-by: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
+
+
 ---
  deployments/smm-gateway/smm_gateway.c | 3 +++
  1 file changed, 3 insertions(+)
 
 diff --git a/deployments/smm-gateway/smm_gateway.c b/deployments/smm-gateway/smm_gateway.c
-index 7828b3a..7e6729e 100644
+index 7828b3af..7e6729ee 100644
 --- a/deployments/smm-gateway/smm_gateway.c
 +++ b/deployments/smm-gateway/smm_gateway.c
 @@ -20,6 +20,9 @@
@@ -30,6 +32,3 @@ index 7828b3a..7e6729e 100644
  /* Default maximum number of UEFI variables */
  #ifndef SMM_GATEWAY_MAX_UEFI_VARIABLES
  #define SMM_GATEWAY_MAX_UEFI_VARIABLES		(40)
--- 
-2.17.1
-

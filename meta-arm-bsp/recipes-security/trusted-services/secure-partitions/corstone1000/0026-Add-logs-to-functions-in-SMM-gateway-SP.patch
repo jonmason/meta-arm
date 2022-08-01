@@ -1,21 +1,21 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
-
-From 9dc09450180d2d35b61359399c1313a97016ad07 Mon Sep 17 00:00:00 2001
+From c9188e59fd27d208a975187da285a9b5938bb00d Mon Sep 17 00:00:00 2001
 From: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
 Date: Thu, 16 Dec 2021 13:29:58 +0000
 Subject: [PATCH] Add logs to functions in SMM gateway SP
 
 Signed-off-by: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
 
-%% original patch: 0026-Logging.patch
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
+
+
 ---
  .../backend/uefi_variable_store.c             | 29 +++++++++++++++++--
  .../provider/smm_variable_provider.c          |  7 +++--
  2 files changed, 32 insertions(+), 4 deletions(-)
 
 diff --git a/components/service/smm_variable/backend/uefi_variable_store.c b/components/service/smm_variable/backend/uefi_variable_store.c
-index ed50eaf..0c371e9 100644
+index ed50eaf9..0c371e94 100644
 --- a/components/service/smm_variable/backend/uefi_variable_store.c
 +++ b/components/service/smm_variable/backend/uefi_variable_store.c
 @@ -11,6 +11,7 @@
@@ -206,7 +206,7 @@ index ed50eaf..0c371e9 100644
  			if (psa_status == PSA_SUCCESS) total_used += storage_info.size;
  		}
 diff --git a/components/service/smm_variable/provider/smm_variable_provider.c b/components/service/smm_variable/provider/smm_variable_provider.c
-index 52e68d0..1f362c1 100644
+index 52e68d09..1f362c17 100644
 --- a/components/service/smm_variable/provider/smm_variable_provider.c
 +++ b/components/service/smm_variable/provider/smm_variable_provider.c
 @@ -9,6 +9,7 @@
@@ -246,6 +246,3 @@ index 52e68d0..1f362c1 100644
  			}
  		}
  		else {
--- 
-2.17.1
-

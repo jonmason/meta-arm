@@ -1,7 +1,4 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
-
-From 000f8beb8aaa70b1e9f805fd62b886f49b540251 Mon Sep 17 00:00:00 2001
+From 993a3c3cb08a723f5b5eb07cf38d70e9acf52e7f Mon Sep 17 00:00:00 2001
 From: Vishnu Banavath <vishnu.banavath@arm.com>
 Date: Fri, 3 Dec 2021 18:00:46 +0000
 Subject: [PATCH] Implement mhu driver and the OpenAmp conversion layer.
@@ -13,10 +10,24 @@ the secure enclave using OpenAmp.
 Signed-off-by: Rui Miguel Silva <rui.silva@arm.com>
 Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
 
-%% original patch: 0008-Implement-mhu-driver-and-the-OpenAmp-conversion-laye.patch
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
+
+
+---
+ .../se-proxy/opteesp/default_se-proxy.dts.in  |  16 +
+ .../drivers/arm/mhu_driver/component.cmake    |  12 +
+ platform/drivers/arm/mhu_driver/mhu_v2.h      | 391 ++++++++++++
+ platform/drivers/arm/mhu_driver/mhu_v2_x.c    | 602 ++++++++++++++++++
+ .../providers/arm/corstone1000/platform.cmake |  10 +
+ 5 files changed, 1031 insertions(+)
+ create mode 100644 platform/drivers/arm/mhu_driver/component.cmake
+ create mode 100644 platform/drivers/arm/mhu_driver/mhu_v2.h
+ create mode 100644 platform/drivers/arm/mhu_driver/mhu_v2_x.c
+ create mode 100644 platform/providers/arm/corstone1000/platform.cmake
 
 diff --git a/deployments/se-proxy/opteesp/default_se-proxy.dts.in b/deployments/se-proxy/opteesp/default_se-proxy.dts.in
-index 9f5cf71..f351a59 100644
+index 9f5cf712..f351a592 100644
 --- a/deployments/se-proxy/opteesp/default_se-proxy.dts.in
 +++ b/deployments/se-proxy/opteesp/default_se-proxy.dts.in
 @@ -17,5 +17,21 @@
@@ -43,7 +54,7 @@ index 9f5cf71..f351a59 100644
  };
 diff --git a/platform/drivers/arm/mhu_driver/component.cmake b/platform/drivers/arm/mhu_driver/component.cmake
 new file mode 100644
-index 0000000..77a5a50
+index 00000000..77a5a50b
 --- /dev/null
 +++ b/platform/drivers/arm/mhu_driver/component.cmake
 @@ -0,0 +1,12 @@
@@ -61,7 +72,7 @@ index 0000000..77a5a50
 +)
 diff --git a/platform/drivers/arm/mhu_driver/mhu_v2.h b/platform/drivers/arm/mhu_driver/mhu_v2.h
 new file mode 100644
-index 0000000..2e4ba80
+index 00000000..2e4ba80f
 --- /dev/null
 +++ b/platform/drivers/arm/mhu_driver/mhu_v2.h
 @@ -0,0 +1,391 @@
@@ -458,7 +469,7 @@ index 0000000..2e4ba80
 +#endif /* __MHU_V2_X_H__ */
 diff --git a/platform/drivers/arm/mhu_driver/mhu_v2_x.c b/platform/drivers/arm/mhu_driver/mhu_v2_x.c
 new file mode 100644
-index 0000000..01d8f65
+index 00000000..01d8f659
 --- /dev/null
 +++ b/platform/drivers/arm/mhu_driver/mhu_v2_x.c
 @@ -0,0 +1,602 @@
@@ -1066,7 +1077,7 @@ index 0000000..01d8f65
 +}
 diff --git a/platform/providers/arm/corstone1000/platform.cmake b/platform/providers/arm/corstone1000/platform.cmake
 new file mode 100644
-index 0000000..bb778bb
+index 00000000..bb778bb9
 --- /dev/null
 +++ b/platform/providers/arm/corstone1000/platform.cmake
 @@ -0,0 +1,10 @@
@@ -1080,6 +1091,3 @@ index 0000000..bb778bb
 +
 +# include MHU driver
 +include(${TS_ROOT}/platform/drivers/arm/mhu_driver/component.cmake)
--- 
-2.25.1
-

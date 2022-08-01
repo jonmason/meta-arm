@@ -1,10 +1,7 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
-
-From 8a2a47d360e43004d277c00ed06cbc59ccfb721e Mon Sep 17 00:00:00 2001
+From dc3f134436ad6852f1bad9542232e84166843a7e Mon Sep 17 00:00:00 2001
 From: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
 Date: Mon, 20 Dec 2021 20:01:10 +0000
-Subject: [PATCH 3/3] Add invalid parameter check in getNextVariableName()
+Subject: [PATCH] Add invalid parameter check in getNextVariableName()
 
 This patch resolves the failing tests in SCT related to
 getNextVariableName() function. The existing implementation is
@@ -12,13 +9,16 @@ missing few cases where error codes are returned when called
 with certain paramters. These conditions are implemented in
 this patch based on the explanation provided in uefi spec.
 
-%% original patch: 0031-Add-invalid-parameter-check-in-getNextVariableName.patch
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
+
+
 ---
  .../smm_variable/backend/uefi_variable_store.c | 18 +++++++++++++++++-
  1 file changed, 17 insertions(+), 1 deletion(-)
 
 diff --git a/components/service/smm_variable/backend/uefi_variable_store.c b/components/service/smm_variable/backend/uefi_variable_store.c
-index a167107..a57b334 100644
+index a1671074..a57b3346 100644
 --- a/components/service/smm_variable/backend/uefi_variable_store.c
 +++ b/components/service/smm_variable/backend/uefi_variable_store.c
 @@ -161,7 +161,7 @@ efi_status_t uefi_variable_store_set_variable(
@@ -53,6 +53,3 @@ index a167107..a57b334 100644
  	const struct variable_info *info = variable_index_find_next(
  		&context->variable_index,
  		&cur->Guid,
--- 
-2.17.1
-

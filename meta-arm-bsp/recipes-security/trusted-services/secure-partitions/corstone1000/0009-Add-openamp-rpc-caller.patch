@@ -1,7 +1,4 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
-
-From 57b6e8dab4de03998023404910e3a30c16860bec Mon Sep 17 00:00:00 2001
+From a6721cc391397f5f999db84e4ebec4c20985996a Mon Sep 17 00:00:00 2001
 From: Vishnu Banavath <vishnu.banavath@arm.com>
 Date: Fri, 3 Dec 2021 19:00:54 +0000
 Subject: [PATCH] Add openamp rpc caller
@@ -9,10 +6,33 @@ Subject: [PATCH] Add openamp rpc caller
 Signed-off-by: Rui Miguel Silva <rui.silva@arm.com>
 Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
 
-%% original patch: 0009-Add-openamp-rpc-caller.patch
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
+
+
+---
+ components/rpc/common/caller/rpc_caller.c     |  10 +
+ components/rpc/common/interface/rpc_caller.h  |   8 +
+ .../rpc/openamp/caller/sp/component.cmake     |  15 +
+ .../rpc/openamp/caller/sp/openamp_caller.c    | 203 +++++++
+ .../rpc/openamp/caller/sp/openamp_caller.h    |  43 ++
+ .../rpc/openamp/caller/sp/openamp_mhu.c       | 191 ++++++
+ .../rpc/openamp/caller/sp/openamp_mhu.h       |  19 +
+ .../rpc/openamp/caller/sp/openamp_virtio.c    | 554 ++++++++++++++++++
+ .../rpc/openamp/caller/sp/openamp_virtio.h    |  24 +
+ deployments/se-proxy/opteesp/CMakeLists.txt   |   1 +
+ .../se-proxy/opteesp/default_se-proxy.dts.in  |   6 +
+ 11 files changed, 1074 insertions(+)
+ create mode 100644 components/rpc/openamp/caller/sp/component.cmake
+ create mode 100644 components/rpc/openamp/caller/sp/openamp_caller.c
+ create mode 100644 components/rpc/openamp/caller/sp/openamp_caller.h
+ create mode 100644 components/rpc/openamp/caller/sp/openamp_mhu.c
+ create mode 100644 components/rpc/openamp/caller/sp/openamp_mhu.h
+ create mode 100644 components/rpc/openamp/caller/sp/openamp_virtio.c
+ create mode 100644 components/rpc/openamp/caller/sp/openamp_virtio.h
 
 diff --git a/components/rpc/common/caller/rpc_caller.c b/components/rpc/common/caller/rpc_caller.c
-index 2dceabe..20d889c 100644
+index 2dceabeb..20d889c1 100644
 --- a/components/rpc/common/caller/rpc_caller.c
 +++ b/components/rpc/common/caller/rpc_caller.c
 @@ -37,3 +37,13 @@ void rpc_caller_end(struct rpc_caller *s, rpc_call_handle handle)
@@ -30,7 +50,7 @@ index 2dceabe..20d889c 100644
 +	return s->phys_to_virt(s->context, pa);
 +}
 diff --git a/components/rpc/common/interface/rpc_caller.h b/components/rpc/common/interface/rpc_caller.h
-index 387489c..ef9bb64 100644
+index 387489cd..ef9bb649 100644
 --- a/components/rpc/common/interface/rpc_caller.h
 +++ b/components/rpc/common/interface/rpc_caller.h
 @@ -45,6 +45,10 @@ struct rpc_caller
@@ -57,7 +77,7 @@ index 387489c..ef9bb64 100644
  #endif
 diff --git a/components/rpc/openamp/caller/sp/component.cmake b/components/rpc/openamp/caller/sp/component.cmake
 new file mode 100644
-index 0000000..fc91952
+index 00000000..fc919529
 --- /dev/null
 +++ b/components/rpc/openamp/caller/sp/component.cmake
 @@ -0,0 +1,15 @@
@@ -78,7 +98,7 @@ index 0000000..fc91952
 +	)
 diff --git a/components/rpc/openamp/caller/sp/openamp_caller.c b/components/rpc/openamp/caller/sp/openamp_caller.c
 new file mode 100644
-index 0000000..6cdfb75
+index 00000000..6cdfb756
 --- /dev/null
 +++ b/components/rpc/openamp/caller/sp/openamp_caller.c
 @@ -0,0 +1,203 @@
@@ -287,7 +307,7 @@ index 0000000..6cdfb75
 +}
 diff --git a/components/rpc/openamp/caller/sp/openamp_caller.h b/components/rpc/openamp/caller/sp/openamp_caller.h
 new file mode 100644
-index 0000000..3fb67c5
+index 00000000..3fb67c56
 --- /dev/null
 +++ b/components/rpc/openamp/caller/sp/openamp_caller.h
 @@ -0,0 +1,43 @@
@@ -336,7 +356,7 @@ index 0000000..3fb67c5
 +#endif
 diff --git a/components/rpc/openamp/caller/sp/openamp_mhu.c b/components/rpc/openamp/caller/sp/openamp_mhu.c
 new file mode 100644
-index 0000000..ffdadaf
+index 00000000..ffdadaf8
 --- /dev/null
 +++ b/components/rpc/openamp/caller/sp/openamp_mhu.c
 @@ -0,0 +1,191 @@
@@ -533,7 +553,7 @@ index 0000000..ffdadaf
 +}
 diff --git a/components/rpc/openamp/caller/sp/openamp_mhu.h b/components/rpc/openamp/caller/sp/openamp_mhu.h
 new file mode 100644
-index 0000000..2ae5cb8
+index 00000000..2ae5cb8e
 --- /dev/null
 +++ b/components/rpc/openamp/caller/sp/openamp_mhu.h
 @@ -0,0 +1,19 @@
@@ -558,7 +578,7 @@ index 0000000..2ae5cb8
 +#endif
 diff --git a/components/rpc/openamp/caller/sp/openamp_virtio.c b/components/rpc/openamp/caller/sp/openamp_virtio.c
 new file mode 100644
-index 0000000..06e0735
+index 00000000..06e0735b
 --- /dev/null
 +++ b/components/rpc/openamp/caller/sp/openamp_virtio.c
 @@ -0,0 +1,554 @@
@@ -1118,7 +1138,7 @@ index 0000000..06e0735
 +}
 diff --git a/components/rpc/openamp/caller/sp/openamp_virtio.h b/components/rpc/openamp/caller/sp/openamp_virtio.h
 new file mode 100644
-index 0000000..915128f
+index 00000000..915128ff
 --- /dev/null
 +++ b/components/rpc/openamp/caller/sp/openamp_virtio.h
 @@ -0,0 +1,24 @@
@@ -1147,7 +1167,7 @@ index 0000000..915128f
 +
 +#endif
 diff --git a/deployments/se-proxy/opteesp/CMakeLists.txt b/deployments/se-proxy/opteesp/CMakeLists.txt
-index 248bd7e..1511bba 100644
+index 248bd7e3..1511bbad 100644
 --- a/deployments/se-proxy/opteesp/CMakeLists.txt
 +++ b/deployments/se-proxy/opteesp/CMakeLists.txt
 @@ -75,6 +75,7 @@ add_components(TARGET "se-proxy"
@@ -1159,7 +1179,7 @@ index 248bd7e..1511bba 100644
  		# Stub service provider backends
  		"components/rpc/dummy"
 diff --git a/deployments/se-proxy/opteesp/default_se-proxy.dts.in b/deployments/se-proxy/opteesp/default_se-proxy.dts.in
-index f351a59..55d49b3 100644
+index f351a592..55d49b31 100644
 --- a/deployments/se-proxy/opteesp/default_se-proxy.dts.in
 +++ b/deployments/se-proxy/opteesp/default_se-proxy.dts.in
 @@ -32,6 +32,12 @@
@@ -1175,6 +1195,3 @@ index f351a59..55d49b3 100644
  		};
  	};
  };
--- 
-2.25.1
-
