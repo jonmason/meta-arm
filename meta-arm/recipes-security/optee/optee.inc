@@ -9,7 +9,7 @@ OPTEEMACHINE ?= "${MACHINE}"
 OPTEEMACHINE:aarch64:qemuall ?= "vexpress-qemu_armv8a"
 
 OPTEE_ARCH = "null"
-OPTEE_ARCH:armv7a = "arm32"
+OPTEE_ARCH:arm = "arm32"
 OPTEE_ARCH:aarch64 = "arm64"
 OPTEE_CORE = "${@d.getVar('OPTEE_ARCH').upper()}"
 
