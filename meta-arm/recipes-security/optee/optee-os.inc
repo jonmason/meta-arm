@@ -51,8 +51,8 @@ do_install() {
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 do_deploy() {
-    install -d ${DEPLOYDIR}/optee
-    install -m 644 ${D}${nonarch_base_libdir}/firmware/* ${DEPLOYDIR}/optee/
+    install -d ${DEPLOYDIR}/${MLPREFIX}optee
+    install -m 644 ${D}${nonarch_base_libdir}/firmware/* ${DEPLOYDIR}/${MLPREFIX}optee
 }
 
 addtask deploy before do_build after do_install
