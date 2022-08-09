@@ -7,3 +7,5 @@ SRC_URI:append = " \
     file://0007-allow-setting-sysroot-for-clang.patch \
 "
 DEPENDS = "python3-pycryptodome-native python3-pyelftools-native"
+
+EXTRA_OEMAKE += "LIBGCC_LOCATE_CFLAGS=--sysroot=${STAGING_DIR_HOST}"
