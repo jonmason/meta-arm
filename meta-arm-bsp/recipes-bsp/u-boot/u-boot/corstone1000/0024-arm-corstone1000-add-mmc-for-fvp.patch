@@ -1,7 +1,7 @@
-From cbf16548dc6dcc8eea97aa18c6ae17fb848e5c6c Mon Sep 17 00:00:00 2001
+From cc3356c2a30b7aa85a25e9bc7b69a03537df3f27 Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Tue, 5 Apr 2022 10:24:38 +0100
-Subject: [PATCH 27/27] arm:corstone1000: add mmc for fvp
+Subject: [PATCH 24/24] arm:corstone1000: add mmc for fvp
 
 Enable support mmc/sdcard for the corstone1000 FVP.
 
@@ -52,7 +52,7 @@ index 1fcc137a493c..26b0f1b3cea6 100644
 +	};
  };
 diff --git a/board/armltd/corstone1000/corstone1000.c b/board/armltd/corstone1000/corstone1000.c
-index eff1739f0b02..936a6c9f8b89 100644
+index 2fa485ff3799..3d537d7a9052 100644
 --- a/board/armltd/corstone1000/corstone1000.c
 +++ b/board/armltd/corstone1000/corstone1000.c
 @@ -46,22 +46,38 @@ static struct mm_region corstone1000_mem_map[] = {
@@ -144,5 +144,5 @@ index 06b605e43bdf..d9855bf91ebf 100644
  #include <config_distro_bootcmd.h>
  
 -- 
-2.30.2
+2.37.1
 

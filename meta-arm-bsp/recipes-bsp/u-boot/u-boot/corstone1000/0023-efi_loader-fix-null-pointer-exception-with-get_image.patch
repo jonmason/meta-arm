@@ -1,7 +1,7 @@
-From 2da8554ab732c59c7ca624ac4b16412fa9c2e39c Mon Sep 17 00:00:00 2001
+From 383078dde2fbf509dc3d24505f6b328316aee030 Mon Sep 17 00:00:00 2001
 From: Vishnu Banavath <vishnu.banavath@arm.com>
 Date: Fri, 14 Jan 2022 15:24:18 +0000
-Subject: [PATCH 26/27] efi_loader: fix null pointer exception with
+Subject: [PATCH 23/24] efi_loader: fix null pointer exception with
  get_image_info
 
 get_img_info API implemented for corstone1000 target does not
@@ -16,10 +16,10 @@ Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
  1 file changed, 11 insertions(+), 8 deletions(-)
 
 diff --git a/lib/efi_loader/efi_firmware.c b/lib/efi_loader/efi_firmware.c
-index 477ad072070e..f99c57fde576 100644
+index 25f427b93669..28d9a19edb90 100644
 --- a/lib/efi_loader/efi_firmware.c
 +++ b/lib/efi_loader/efi_firmware.c
-@@ -347,26 +347,29 @@ static efi_status_t efi_corstone1000_img_info_get (
+@@ -38,26 +38,29 @@ static efi_status_t efi_corstone1000_img_info_get (
  	int i = 0;
  
  	*image_info_size = sizeof(*image_info);
@@ -58,5 +58,5 @@ index 477ad072070e..f99c57fde576 100644
  					     IMAGE_ATTRIBUTE_AUTHENTICATION_REQUIRED;
  	image_info[i].attributes_setting = IMAGE_ATTRIBUTE_IMAGE_UPDATABLE;
 -- 
-2.30.2
+2.37.1
 
