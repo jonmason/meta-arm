@@ -91,7 +91,6 @@ COMPATIBLE_MACHINE:juno = "juno"
 KBUILD_DEFCONFIG:juno = "defconfig"
 KCONFIG_MODE:juno = "--alldefconfig"
 FILESEXTRAPATHS:prepend:juno := "${ARMBSPFILESPATHS}"
-SRC_URI:append:juno = " file://juno-dts-mhu-doorbell.patch"
 
 #
 # Musca B1/S2 can't run Linux
