@@ -3,7 +3,7 @@ require optee-test.inc
 SRC_URI:append = " \
     file://musl-workaround.patch \
    "
-SRCREV = "44a31d02379bd8e50762caa5e1592ad81e3339af"
+SRCREV = "da5282a011b40621a2cf7a296c11a35c833ed91b"
 
 EXTRA_OEMAKE:append:libc-musl = " OPTEE_OPENSSL_EXPORT=${STAGING_INCDIR}"
 DEPENDS:append:libc-musl = " openssl"

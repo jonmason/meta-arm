@@ -1,5 +1,5 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}/optee-os:"
-require optee-os_3.17.0.bb
+require optee-os_3.18.0.bb
 
 SUMMARY = "OP-TEE Trusted OS TA devkit"
 DESCRIPTION = "OP-TEE TA devkit for build TAs"
