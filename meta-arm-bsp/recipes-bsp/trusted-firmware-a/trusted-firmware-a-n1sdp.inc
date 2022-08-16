@@ -14,12 +14,21 @@ TFA_UEFI           = "1"
 
 TFA_ROT_KEY= "plat/arm/board/common/rotpk/arm_rotprivk_rsa.pem"
 
+# Enabling Secure-EL1 Payload Dispatcher (SPD)
+TFA_SPD = "spmd"
+# Cortex-A35 supports Armv8.0-A (no S-EL2 execution state).
+# So, the SPD SPMC component should run at the S-EL1 execution state
+TFA_SPMD_SPM_AT_SEL2 = "0"
+
+# BL2 loads BL32 (optee). So, optee needs to be built first:
+DEPENDS += "optee-os"
+
 EXTRA_OEMAKE:append = "\
                     TRUSTED_BOARD_BOOT=1 \
-                    GENERATE_COT=1 \
-                    CREATE_KEYS=1 \
-                    ENABLE_PIE=0 \
-                    ARM_ROTPK_LOCATION="devel_rsa" \
-                    ROT_KEY="${TFA_ROT_KEY}" \
-                    BL33=${RECIPE_SYSROOT}/firmware/uefi.bin \
-                    "
+		    GENERATE_COT=1 \
+		    CREATE_KEYS=1 \
+		    ARM_ROTPK_LOCATION="devel_rsa" \
+		    ROT_KEY="${TFA_ROT_KEY}" \
+		    BL32=${RECIPE_SYSROOT}/lib/firmware/tee-pager_v2.bin \
+		    BL33=${RECIPE_SYSROOT}/firmware/uefi.bin \
+		    "
