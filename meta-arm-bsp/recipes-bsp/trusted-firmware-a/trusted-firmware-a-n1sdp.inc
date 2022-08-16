@@ -1,5 +1,8 @@
 # N1SDP specific TFA support
 
+SRCREV_tfa  = "1d867c14cb41c1171d16fa7e395a4eaed3d572b2"
+PV .= "+git${SRCPV}"
+
 COMPATIBLE_MACHINE = "n1sdp"
 TFA_PLATFORM       = "n1sdp"
 TFA_BUILD_TARGET   = "all fip"
@@ -8,8 +11,6 @@ TFA_DEBUG          = "1"
 TFA_MBEDTLS        = "1"
 TFA_UBOOT          = "0"
 TFA_UEFI           = "1"
-
-SRC_URI:append = " file://bl_size.patch"
 
 TFA_ROT_KEY= "plat/arm/board/common/rotpk/arm_rotprivk_rsa.pem"
 
