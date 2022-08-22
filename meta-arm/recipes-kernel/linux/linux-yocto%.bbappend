@@ -11,12 +11,11 @@ SRC_URI:append:qemuarm64-secureboot = "\
     "
 
 FILESEXTRAPATHS:prepend:qemuarm-secureboot = "${ARMFILESPATHS}"
-SRC_URI:append:qemuarm-secureboot = " \
-    file://tee.cfg \
-    "
-
 FILESEXTRAPATHS:prepend:qemuarm64 = "${ARMFILESPATHS}"
 FILESEXTRAPATHS:prepend:qemuarm = "${ARMFILESPATHS}"
+
+KERNEL_FEATURES:append = " ${@bb.utils.contains('MACHINE_FEATURES', 'optee', 'tee.scc', '', d)}"
+
 FFA_TRANSPORT_INCLUDE = "${@bb.utils.contains('MACHINE_FEATURES', 'arm-ffa', 'arm-ffa-transport.inc', '' , d)}"
 require ${FFA_TRANSPORT_INCLUDE}
 
