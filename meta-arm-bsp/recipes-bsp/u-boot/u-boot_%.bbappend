@@ -42,6 +42,7 @@ SRC_URI:append:corstone1000 = " \
         file://0022-efi_loader-send-bootcomplete-message-to-secure-encla.patch \
         file://0023-efi_loader-fix-null-pointer-exception-with-get_image.patch \
         file://0024-arm-corstone1000-add-mmc-for-fvp.patch \
+        file://0025-corstone1000-use-a-compressed-kernel.patch \
       "
 
 #
