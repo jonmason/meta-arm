@@ -2,13 +2,18 @@ SUMMARY ?= "The Trusted Services: framework for developing root-of-trust service
 HOMEPAGE = "https://trusted-services.readthedocs.io/en/latest/index.html"
 
 LICENSE = "Apache-2.0 & BSD-3-Clause & Zlib"
-LIC_FILES_CHKSUM = "file://${S}/license.rst;md5=ea160bac7f690a069c608516b17997f4"
 
 inherit python3native cmake
 
 COMPATIBLE_HOST = "aarch64.*-linux"
 
 require trusted-services-src.inc
+
+# By default bitbake includes only ${S} (i.e git/trusted-services) in the maps.
+# We also need to include the TS dependencies source trees.
+DEBUG_PREFIX_MAP:append = "-fmacro-prefix-map=${WORKDIR}/git=/usr/src/debug/${PN}/${EXTENDPE}${PV}-${PR} \
+ -fdebug-prefix-map=${WORKDIR}/git=/usr/src/debug/${PN}/${EXTENDPE}${PV}-${PR} \
+"
 
 TS_PLATFORM ?= "ts/mock"
 
@@ -18,7 +23,7 @@ SP_PACKAGING_METHOD ?= "embedded"
 
 SYSROOT_DIRS += "/usr/opteesp /usr/arm-linux"
 
-# In TS cmake files use find_file() to search through source code and build dirs.
+# TS cmake files use find_file() to search through source code and build dirs.
 # Yocto cmake class limits CMAKE_FIND_ROOT_PATH and find_file() fails.
 # Include the source tree and build dirs into searchable path.
 OECMAKE_EXTRA_ROOT_PATH = "${WORKDIR}/git/ ${WORKDIR}/build/"
