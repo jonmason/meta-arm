@@ -37,7 +37,7 @@ self.target.expect('default', r'root@.*\:~#', timeout=30)
 self.assertNotIn(b'ERROR:', self.target.before('tf-a'))
 ```
 
-For an example of a full test case, see meta-arm/lib/oeqa/runtime/cases/linuxboot.py This test case can be used to minimally verify that a machine boots to a Linux shell.
+For an example of a full test case, see meta-arm/lib/oeqa/runtime/cases/linuxboot.py This test case can be used to minimally verify that a machine boots to a Linux shell. The default timeout is 10 minutes, but this can be configured with the variable TEST_FVP_LINUX_BOOT_TIMEOUT, which expects a value in seconds.
 
 The SSH interface described above is also available on OEFVPSerialTarget to support writing a set of hybrid test suites that use a combination of serial and SSH access. Note however that this test target does not guarantee that Linux has booted to shell prior to running any tests, so the test cases in OE-core are not supported.
 
