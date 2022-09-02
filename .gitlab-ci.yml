@@ -170,6 +170,13 @@ juno:
       - TOOLCHAINS: [gcc, clang]
         FIRMWARE: [u-boot, edk2]
 
+
+mps2-an521:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage-zephyr
+
 musca-b1:
   extends: .build
 
