@@ -177,6 +177,12 @@ mps2-an521:
     matrix:
       - TESTING: testimage-zephyr
 
+mps3-an547:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage-zephyr
+
 musca-b1:
   extends: .build
 

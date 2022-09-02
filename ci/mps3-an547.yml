@@ -1,0 +1,11 @@
+header:
+  version: 11
+  includes:
+    - ci/base.yml
+    - ci/meta-zephyr.yml
+
+machine: mps3-an547
+
+target:
+  - trusted-firmware-m
+  - zephyr-kernel-test-all
