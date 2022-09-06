@@ -60,6 +60,7 @@ SRC_URI:append = " \
 		  file://0047-Fixes-in-AEAD-for-psa-arch-test-54-and-58.patch \
 		  file://0003-corstone1000-port-crypto-config.patch;patchdir=../psa-arch-tests \
                   file://0048-Fix-UEFI-get_variable-with-small-buffer.patch \
+                  file://0049-Add-atomic-outline-to-fix-build-for-opemamp.patch \
                   "
 
 SRC_URI_MBEDTLS = "git://github.com/ARMmbed/mbedtls.git;protocol=https;branch=development;name=mbedtls;destsuffix=git/mbedtls"
