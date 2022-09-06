@@ -1,0 +1,8 @@
+header:
+  version: 11
+
+local_conf_header:
+  testing: |
+    EXTRA_OECMAKE:append:pn-trusted-firmware-m = " -DBL2=false"
+    PACKAGECONFIG:pn-trusted-firmware-m = "test-secure"
+    TFM_DEBUG = "1"
