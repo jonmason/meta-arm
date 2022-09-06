@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://arm_ffa_user.c;beginline=1;endline=1;md5=fcab174c20ea
 SRC_URI = "git://git.gitlab.arm.com/linux-arm/linux-trusted-services.git;branch=main;protocol=https"
 
 # ffa-debugfs v2.1.0
-SRCREV = "77967912d033144aff2695cecbd52d3be450deaa"
+SRCREV = "45eb7c1484ae9bea2bbd0583b86beb55b627073b"
 
 S = "${WORKDIR}/git"
 
