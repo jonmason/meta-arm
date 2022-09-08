@@ -1,4 +1,4 @@
-require optee-os_corstone1000_common.inc
+require optee-os-corstone1000-common.inc
 
 DEPENDS += " secure-partitions"
 EXTRA_OEMAKE +="'SP_PACKAGING_METHOD=embedded'"
