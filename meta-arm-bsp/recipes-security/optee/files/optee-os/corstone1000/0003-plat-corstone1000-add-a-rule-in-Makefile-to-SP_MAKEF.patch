@@ -1,16 +1,20 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
-
-From 327290faefe16440c4975c9539b11d43c92bcf48 Mon Sep 17 00:00:00 2001
+From 66df8edb433ad11face32e4f6aab90e64222d38c Mon Sep 17 00:00:00 2001
 From: Vishnu Banavath <vishnu.banavath@arm.com>
 Date: Thu, 25 Nov 2021 06:20:48 +0000
 Subject: [PATCH] plat-corstone1000: add a rule in Makefile to SP_MAKEFILE_PATH
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
 
 This change is to provide an option to user to include
 secure manifest into optee-os Makefile so that the secure
 partition is part of optee-os image
 
 Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
+
+---
+ Makefile | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
 diff --git a/Makefile b/Makefile
 index f6fcea8b..21722939 100644
@@ -33,6 +37,3 @@ index f6fcea8b..21722939 100644
  include mk/checkconf.mk
  
  .PHONY: all
--- 
-2.17.1
-

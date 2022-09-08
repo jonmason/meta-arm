@@ -1,10 +1,10 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
-
-From 4617f85b70c7e4206b244f3eaffdc62ac3744a17 Mon Sep 17 00:00:00 2001
+From 9ec42a39ba4b14bc99f66b3fb9fc227e4e25d0ed Mon Sep 17 00:00:00 2001
 From: Jelle Sels <jelle.sels@arm.com>
 Date: Mon, 10 May 2021 11:37:23 +0200
 Subject: [PATCH] Fix: add missing error check during SP init
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
 
 Error checking during SP initialization (sp_init_uuid()) was lacking.
 As a result an out of CORE HEAP situation resulted in a panic. This was
@@ -12,6 +12,10 @@ due to lack of memory in the inflate() function of zlib.
 
 Signed-off-by: Jelle Sels <jelle.sels@arm.com>
 Change-Id: I287e2e2dd507feb45991b32ed264b3b6ad6fcd39
+
+---
+ core/arch/arm/kernel/sp.c | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
 
 diff --git a/core/arch/arm/kernel/sp.c b/core/arch/arm/kernel/sp.c
 index 4acbc2e2..23532a01 100644
@@ -35,6 +39,3 @@ index 4acbc2e2..23532a01 100644
  
  	return res;
  }
--- 
-2.25.1
-

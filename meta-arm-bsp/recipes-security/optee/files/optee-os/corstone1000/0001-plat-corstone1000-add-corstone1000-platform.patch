@@ -1,14 +1,25 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
-
-From 439a87df6a9f60f2b29afd988ad58a67e6f0b603 Mon Sep 17 00:00:00 2001
+From 617e3a116178559fb6e148553b1cd56fb13ed7aa Mon Sep 17 00:00:00 2001
 From: Vishnu Banavath <vishnu.banavath@arm.com>
 Date: Tue, 22 Jun 2021 22:09:28 +0100
 Subject: [PATCH] plat-corstone1000: add corstone1000 platform
 
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Arpita S.K <arpita.s.k@arm.com>
+
 These changes are to add corstone1000 platform to optee core
 
 Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
+
+---
+ core/arch/arm/plat-corstone1000/conf.mk       | 37 +++++++++
+ core/arch/arm/plat-corstone1000/main.c        | 77 +++++++++++++++++++
+ .../arm/plat-corstone1000/platform_config.h   | 46 +++++++++++
+ core/arch/arm/plat-corstone1000/sub.mk        |  2 +
+ 4 files changed, 162 insertions(+)
+ create mode 100644 core/arch/arm/plat-corstone1000/conf.mk
+ create mode 100644 core/arch/arm/plat-corstone1000/main.c
+ create mode 100644 core/arch/arm/plat-corstone1000/platform_config.h
+ create mode 100644 core/arch/arm/plat-corstone1000/sub.mk
 
 diff --git a/core/arch/arm/plat-corstone1000/conf.mk b/core/arch/arm/plat-corstone1000/conf.mk
 new file mode 100644
@@ -196,6 +207,3 @@ index 00000000..8ddc2fd4
 @@ -0,0 +1,2 @@
 +global-incdirs-y += .
 +srcs-y += main.c
--- 
-2.17.1
-
