@@ -4,17 +4,17 @@ Upstream-Status: Inappropriate
 Signed-off-by: Ross Burton <ross.burton@arm.com>
 
 diff --git a/scripts/Makefile b/scripts/Makefile
-index b4b7d8b58..26a5160ee 100644
+index 9adb6d247..5fe371c7d 100644
 --- a/third_party/linux/scripts/Makefile
 +++ b/third_party/linux/scripts/Makefile
-@@ -10,8 +10,8 @@
-
- HOST_EXTRACFLAGS += -I$(srctree)/tools/include
-
+@@ -3,8 +3,8 @@
+ # scripts contains sources for various helper programs used throughout
+ # the kernel for the build process.
+ 
 -CRYPTO_LIBS = $(shell pkg-config --libs libcrypto 2> /dev/null || echo -lcrypto)
 -CRYPTO_CFLAGS = $(shell pkg-config --cflags libcrypto 2> /dev/null)
 +CRYPTO_LIBS = $(shell pkg-config-native --libs libcrypto 2> /dev/null || echo -lcrypto)
 +CRYPTO_CFLAGS = $(shell pkg-config-native --cflags libcrypto 2> /dev/null)
-
- hostprogs-$(CONFIG_BUILD_BIN2C)  += bin2c
- hostprogs-$(CONFIG_KALLSYMS)     += kallsyms
+ 
+ hostprogs-always-$(CONFIG_BUILD_BIN2C)			+= bin2c
+ hostprogs-always-$(CONFIG_KALLSYMS)			+= kallsyms
