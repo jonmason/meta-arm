@@ -2,7 +2,7 @@ SUMMARY = "Board Firmware binaries for N1SDP"
 SECTION = "firmware"
 
 LICENSE = "STM-SLA0044-Rev5"
-LIC_FILES_CHKSUM = "file://LICENSES/STM.TXT;md5=cd18335eff80d0a690a650f0e6748baf"
+LIC_FILES_CHKSUM = "file://LICENSES/MB/STM.TXT;md5=1b74d8c842307d03c116f2d71cbf868a"
 
 inherit deploy
 
@@ -13,7 +13,7 @@ COMPATIBLE_MACHINE = "n1sdp"
 
 SRC_URI = "git://git.gitlab.arm.com/arm-reference-solutions/board-firmware.git;protocol=https;branch=n1sdp"
 
-SRCREV = "e6cd91c7a9733e501bc3b57ff6f9eb2461ffee54"
+SRCREV = "6d5253584a9c2fdc2edbdc39bf6f2436215d1382"
 
 S = "${WORKDIR}/git"
 
@@ -25,6 +25,7 @@ do_install() {
     cp -Rp --no-preserve=ownership ${S}/* ${D}${INSTALL_DIR}
 }
 
+FILES:${PN}-staticdev += " ${INSTALL_DIR}/LIB/sensor.a"
 FILES:${PN} = "${INSTALL_DIR}"
 SYSROOT_DIRS += "${INSTALL_DIR}"
 
