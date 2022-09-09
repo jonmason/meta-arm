@@ -43,6 +43,9 @@ OPTEE_BINARY = "tee-pager_v2.bin"
 # Trusted Services(TS)
 EXTRA_IMAGEDEPENDS += "secure-partitions"
 
+# External System(Cortex-M3)
+EXTRA_IMAGEDEPENDS += "external-system"
+
 # Linux kernel
 PREFERRED_PROVIDER_virtual/kernel:forcevariable = "linux-yocto"
 PREFERRED_VERSION_linux-yocto = "5.15%"
