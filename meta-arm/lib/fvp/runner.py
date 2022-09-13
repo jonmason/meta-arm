@@ -60,7 +60,10 @@ class FVPRunner:
         cli = cli_from_config(config, terminal_choice)
         cli += extra_args
         self._logger.debug(f"Constructed FVP call: {cli}")
-        self._fvp_process = await asyncio.create_subprocess_exec(*cli, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        self._fvp_process = await asyncio.create_subprocess_exec(
+            *cli,
+            stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            env=config['env'])
 
         def detect_terminals(line):
             m = re.match(r"^(\S+): Listening for serial connection on port (\d+)$", line)
