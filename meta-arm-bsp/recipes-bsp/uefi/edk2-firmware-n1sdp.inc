@@ -19,7 +19,9 @@ EFI_BOOT_IMAGE     = "bootaa64.efi"
 FILESEXTRAPATHS:prepend := "${THISDIR}/files/edk2-platforms:"
 
 SRC_URI:append = "\
-    file://add-nt-fw-config.patch;patchdir=edk2-platforms \
+    file://0001-Platform-ARM-N1sdp-Add-support-to-parse-NT_FW_CONFIG.patch;patchdir=edk2-platforms \
+    file://0002-Platform-ARM-N1Sdp-Fix-RemoteDdrSize-cast.patch;patchdir=edk2-platforms            \
+    file://0003-Platform-ARM-N1Sdp-Modify-the-IRQ-ID-of-Debug-UART-a.patch;patchdir=edk2-platforms \
 "
 
 do_deploy:append() {
