@@ -5,13 +5,13 @@ Subject: [PATCH] tc: increase heap pages
 
 Signed-off-by: Arunachalam Ganapathy <arunachalam.ganapathy@arm.com>
 ---
- project/reference/BUILD.gn | 2 +-
+ /BUILD.gn | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/project/reference/BUILD.gn b/project/reference/BUILD.gn
+diff --git a//BUILD.gn b//BUILD.gn
 index 5d84d13..4ea0890 100644
---- a/project/reference/BUILD.gn
-+++ b/project/reference/BUILD.gn
+--- a//BUILD.gn
++++ b//BUILD.gn
 @@ -233,7 +233,7 @@ aarch64_toolchains("secure_tc") {
    gicd_base_address = "0x30000000"
    gicr_base_address = "0x30080000"
