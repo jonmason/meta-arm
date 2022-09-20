@@ -1,4 +1,4 @@
-From a9d099d17ef0af6deac4c3b4d15ad0555d258ec8 Mon Sep 17 00:00:00 2001
+From ea932656461865ab9ac4036245c756c082aeb3e1 Mon Sep 17 00:00:00 2001
 From: Jerome Forissier <jerome.forissier@linaro.org>
 Date: Tue, 23 Aug 2022 11:41:00 +0000
 Subject: [PATCH] core, ldelf: link: add -z execstack
@@ -22,6 +22,10 @@ Signed-off-by: Anton Antonov <Anton.Antonov@arm.com>
 Upstream-Status: Backport [https://github.com/OP-TEE/optee_os/pull/5499]
 
 ---
+ core/arch/arm/kernel/link.mk | 13 +++++++++----
+ ldelf/link.mk                |  3 +++
+ 2 files changed, 12 insertions(+), 4 deletions(-)
+
 diff --git a/core/arch/arm/kernel/link.mk b/core/arch/arm/kernel/link.mk
 index c39d43cb..0e96e606 100644
 --- a/core/arch/arm/kernel/link.mk

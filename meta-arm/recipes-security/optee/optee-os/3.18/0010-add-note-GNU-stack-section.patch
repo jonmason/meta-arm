@@ -1,4 +1,4 @@
-From 38bf606653ee08b10db6bb298e369cb3a9cdcda9 Mon Sep 17 00:00:00 2001
+From ec30e84671aac9a2e9549754eb7bc6201728db4c Mon Sep 17 00:00:00 2001
 From: Jerome Forissier <jerome.forissier@linaro.org>
 Date: Tue, 23 Aug 2022 12:31:46 +0000
 Subject: [PATCH] arm32: libutils, libutee, ta: add .note.GNU-stack section to
