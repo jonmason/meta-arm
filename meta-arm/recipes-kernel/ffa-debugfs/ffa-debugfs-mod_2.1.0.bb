@@ -37,3 +37,5 @@ python remove_kernel_dependency() {
   key = "RDEPENDS:kernel-module-arm-ffa-user-" + d.getVar("KERNEL_VERSION")
   d.delVar(key)
 }
+# Conflicts installing arm_ffa_user.h with arm-ffa-user recipe, lets build only one during world builds
+EXCLUDE_FROM_WORLD = "1"
