@@ -44,6 +44,7 @@ SRC_URI:append:corstone1000 = " \
         file://0024-arm-corstone1000-add-mmc-for-fvp.patch \
         file://0025-corstone1000-use-a-compressed-kernel.patch \
         file://0026-Introduce-external-sys-driver-to-device-tree.patch \
+        file://0027-Add-mhu-and-rpmsg-client-to-u-boot-device-tree.patch \
       "
 
 #
