@@ -42,6 +42,7 @@ SRC_URI:append:corstone1000 = " \
            file://defconfig  \
            file://0001-UPSTREAM-firmware-arm_ffa-Handle-compatibility-with-.patch  \
            file://0002-Add-external-system-driver.patch \
+           file://0003-Add-rpsmg-driver-for-corstone1000.patch \
         "
 
 SRC_URI:append:corstone1000 = " ${@bb.utils.contains('MACHINE_FEATURES', \
