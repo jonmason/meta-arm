@@ -7,12 +7,17 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=782b40c14bad5294672c500501edc103"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
-inherit deploy python3native pkgconfig
+
+CLANGNATIVE = ""
+CLANGNATIVE:runtime-llvm = "clang-native"
+
+inherit deploy python3native pkgconfig ${CLANGNATIVE}
 
 SRC_URI = "gitsm://git.trustedfirmware.org/hafnium/hafnium.git;protocol=https;branch=master \
            file://0001-define-_Noreturn-if-needed.patch \
            file://host-ld.patch \
            file://pkg-config-native.patch;patchdir=third_party/linux \
+           file://0001-Fix-build-with-clang-15.patch \
           "
 SRCREV = "79e9522d26fc2a88a44af149034acc27312b73a1"
 S = "${WORKDIR}/git"
