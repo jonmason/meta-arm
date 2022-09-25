@@ -9,6 +9,8 @@ PV = "2.7+git${SRCPV}"
 
 FILESEXTRAPATHS:prepend:tc := "${THISDIR}/files/tc:"
 
+SRC_URI:remove = "file://0001-Fix-build-with-clang-15.patch"
+
 SRC_URI:append = " \
         file://0001-feat-emulate-cntp-timer-register-accesses-using-cnth.patch \
         file://0002-feat-emulate-interrupt-controller-register-access.patch \
