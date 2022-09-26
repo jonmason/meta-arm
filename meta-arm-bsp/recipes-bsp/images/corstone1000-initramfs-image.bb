@@ -28,3 +28,6 @@ IMAGE_INSTALL += "ffa-debugfs-mod"
 
 # psa-arch-tests linux userspace application
 IMAGE_INSTALL += "secure-partitions-psa-api-tests"
+
+# external system linux userspace test application
+IMAGE_INSTALL += "corstone1000-external-sys-tests"
