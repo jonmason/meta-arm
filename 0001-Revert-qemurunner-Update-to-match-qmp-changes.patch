@@ -1,0 +1,40 @@
+From 7ec1129a1dd31197d1e0d0992f5c3386588cde11 Mon Sep 17 00:00:00 2001
+From: Anton Antonov <Anton.Antonov@arm.com>
+Date: Thu, 22 Sep 2022 10:45:27 +0100
+Subject: [PATCH] Revert "qemurunner: Update to match qmp changes"
+
+This reverts commit df89d59a19f3000d829ee6b18364260a4e5312e8.
+
+Signed-off-by: Anton Antonov <Anton.Antonov@arm.com>
+---
+ meta/lib/oeqa/utils/qemurunner.py | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/meta/lib/oeqa/utils/qemurunner.py b/meta/lib/oeqa/utils/qemurunner.py
+index 6a85f57e49..a70f3fd46a 100644
+--- a/meta/lib/oeqa/utils/qemurunner.py
++++ b/meta/lib/oeqa/utils/qemurunner.py
+@@ -191,8 +191,8 @@ class QemuRunner:
+         importlib.invalidate_caches()
+         try:
+             qmp = importlib.import_module("qmp")
+-        except Exception as e:
+-            self.logger.error("qemurunner: qmp.py missing, please ensure it's installed (%s)" % str(e))
++        except:
++            self.logger.error("qemurunner: qmp.py missing, please ensure it's installed")
+             return False
+         # Path relative to tmpdir used as cwd for qemu below to avoid unix socket path length issues
+         qmp_file = "." + next(tempfile._get_candidate_names())
+@@ -328,8 +328,7 @@ class QemuRunner:
+         try:
+             os.chdir(os.path.dirname(qmp_port))
+             try:
+-               from qmp.legacy import QEMUMonitorProtocol
+-               self.qmp = QEMUMonitorProtocol(os.path.basename(qmp_port))
++               self.qmp = qmp.QEMUMonitorProtocol(os.path.basename(qmp_port))
+             except OSError as msg:
+                 self.logger.warning("Failed to initialize qemu monitor socket: %s File: %s" % (msg, msg.filename))
+                 return False
+-- 
+2.25.1
+
