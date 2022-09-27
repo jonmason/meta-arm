@@ -33,15 +33,12 @@ UBOOT_BOOTARGS = "earlycon=pl011,0x1a510000 console=ttyAMA0 loglevel=9"
 UBOOT_ARCH = "arm"
 UBOOT_EXTLINUX = "0"
 
-# optee
-PREFERRED_VERSION_optee-os ?= "3.10.%"
-PREFERRED_VERSION_optee-client ?= "3.14.%"
+#optee
+PREFERRED_VERSION_optee-os ?= "3.18.%"
+PREFERRED_VERSION_optee-client ?= "3.18.%"
 EXTRA_IMAGEDEPENDS += "optee-os"
 OPTEE_ARCH = "arm64"
 OPTEE_BINARY = "tee-pager_v2.bin"
-
-# Trusted Services(TS)
-EXTRA_IMAGEDEPENDS += "secure-partitions"
 
 # External System(Cortex-M3)
 EXTRA_IMAGEDEPENDS += "external-system"
