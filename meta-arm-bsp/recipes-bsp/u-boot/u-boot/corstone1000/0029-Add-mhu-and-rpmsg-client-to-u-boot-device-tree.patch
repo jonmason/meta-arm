@@ -1,6 +1,3 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Emekcan Aras <emekcan.aras@arm.com>
-
 From a1b8b91a43cfa9dbaa2d907a6d9629da6f93fa3e Mon Sep 17 00:00:00 2001
 From: Emekcan <emekcan.aras@arm.com>
 Date: Mon, 12 Sep 2022 15:47:06 +0100
@@ -11,6 +8,7 @@ device tree. This enables communication between host and
 the external system.
 
 Signed-off-by: Emekcan Aras <Emekcan.Aras@arm.com>
+Upstream-Status: Pending [Not submitted to upstream yet]
 ---
  arch/arm/dts/corstone1000.dtsi | 50 ++++++++++++++++++++++++++++++++
  1 file changed, 50 insertions(+)

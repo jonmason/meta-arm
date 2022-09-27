@@ -1,26 +1,48 @@
-From 58358f79d9f8abbdc8bcfc7d08bd0c7c4c90ec84 Mon Sep 17 00:00:00 2001
+From a09ed2542f4d991fef61bd51f87d373f44ad1ff3 Mon Sep 17 00:00:00 2001
 From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
-Date: Tue, 16 Nov 2021 12:36:27 +0000
-Subject: [PATCH 07/24] arm_ffa: introducing armffa command
+Date: Mon, 6 Jun 2022 12:46:38 +0100
+Subject: [PATCH 10/26] arm_ffa: introduce armffa command
 
-A new armffa command is provided as an example of how to use
-the FF-A helper functions to communicate with secure world.
+Provide armffa command showcasing the use of the FF-A driver
 
 The armffa command allows to query secure partitions data from
 the secure world and exchanging messages with the partitions.
 
 Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
-Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+Upstream-Status: Submitted [cover letter: https://lore.kernel.org/all/20220926101723.9965-1-abdellatif.elkhlifi@arm.com/]
 ---
- MAINTAINERS  |   1 +
- cmd/Kconfig  |  10 ++
- cmd/Makefile |   2 +
- cmd/armffa.c | 266 +++++++++++++++++++++++++++++++++++++++++++++++++++
- 4 files changed, 279 insertions(+)
+
+Changelog:
+===============
+
+v4:
+
+* remove pattern data in do_ffa_msg_send_direct_req
+
+v3:
+
+* use the new driver interfaces (partition_info_get, sync_send_receive)
+  in armffa command
+
+v2:
+
+* replace use of ffa_helper_init_device function by
+ ffa_helper_bus_discover
+
+v1:
+
+* introduce armffa command
+
+ MAINTAINERS                      |   1 +
+ cmd/Kconfig                      |  10 ++
+ cmd/Makefile                     |   2 +
+ cmd/armffa.c                     | 242 +++++++++++++++++++++++++++++++
+ drivers/firmware/arm-ffa/Kconfig |   1 +
+ 5 files changed, 256 insertions(+)
  create mode 100644 cmd/armffa.c
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index d29d7e040764..32fc267fcf13 100644
+index e760b4ca3a..9f0a1b7387 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
 @@ -247,6 +247,7 @@ F:	include/configs/turris_*.h
@@ -28,11 +50,11 @@ index d29d7e040764..32fc267fcf13 100644
  M:	Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
  S:	Maintained
 +F:	cmd/armffa.c
- F:	drivers/arm-ffa/
+ F:	doc/README.ffa.drv
+ F:	drivers/firmware/arm-ffa/
  F:	include/arm_ffa.h
- F:	include/arm_ffa_helper.h
 diff --git a/cmd/Kconfig b/cmd/Kconfig
-index ba2f321ae989..090e668125d5 100644
+index ba2f321ae9..090e668125 100644
 --- a/cmd/Kconfig
 +++ b/cmd/Kconfig
 @@ -873,6 +873,16 @@ endmenu
@@ -53,7 +75,7 @@ index ba2f321ae989..090e668125d5 100644
  	#depends on FLASH_CFI_DRIVER
  	bool "armflash"
 diff --git a/cmd/Makefile b/cmd/Makefile
-index 5e43a1e022e8..e40f52f1e416 100644
+index 5e43a1e022..e40f52f1e4 100644
 --- a/cmd/Makefile
 +++ b/cmd/Makefile
 @@ -12,6 +12,8 @@ obj-y += panic.o
@@ -67,17 +89,17 @@ index 5e43a1e022e8..e40f52f1e416 100644
  obj-$(CONFIG_CMD_AES) += aes.o
 diff --git a/cmd/armffa.c b/cmd/armffa.c
 new file mode 100644
-index 000000000000..71a6ebb656d1
+index 0000000000..9b56e8a830
 --- /dev/null
 +++ b/cmd/armffa.c
-@@ -0,0 +1,266 @@
+@@ -0,0 +1,242 @@
 +// SPDX-License-Identifier: GPL-2.0+
 +/*
-+ * (C) Copyright 2021 ARM Limited
++ * (C) Copyright 2022 ARM Limited
 + * Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 + */
 +
-+#include <arm_ffa_helper.h>
++#include <arm_ffa.h>
 +#include <asm/io.h>
 +#include <common.h>
 +#include <command.h>
@@ -93,7 +115,7 @@ index 000000000000..71a6ebb656d1
 + * @argv:		arguments
 + *
 + * This function queries the secure partition information which the UUID is provided
-+ * as an argument. The function uses the arm_ffa driver helper function
++ * as an argument. The function uses the arm_ffa driver partition_info_get operation
 + * to retrieve the data.
 + * The input UUID string is expected to be in big endian format.
 + *
@@ -104,31 +126,17 @@ index 000000000000..71a6ebb656d1
 +static int do_ffa_get_singular_partition_info(struct cmd_tbl *cmdtp, int flag, int argc,
 +					      char *const argv[])
 +{
-+	struct ffa_interface_data func_data = {0};
-+	u32 count = 0;
++	u32 count = 0, size = 0;
 +	int ret;
-+	union ffa_partition_uuid service_uuid = {0};
 +	struct ffa_partition_info *parts_info;
 +	u32 info_idx;
 +
 +	if (argc != 1)
 +		return -EINVAL;
 +
-+	if (ffa_uuid_str_to_bin(argv[0], (unsigned char *)&service_uuid)) {
-+		ffa_err("Invalid UUID");
-+		return -EINVAL;
-+	}
-+
-+	/*
-+	 * get from the driver the count of the SPs matching the UUID
-+	 */
-+	func_data.data0_size = sizeof(service_uuid);
-+	func_data.data0 = &service_uuid;
-+	func_data.data1_size = sizeof(count);
-+	func_data.data1 = &count;
-+
-+	ret = ffa_helper_get_partitions_info(&func_data);
-+	if (ret != FFA_ERR_STAT_SUCCESS) {
++	/* Mode 1: getting the number of secure partitions */
++	ret = ffa_bus_ops_get()->partition_info_get(argv[0], &count, NULL);
++	if (ret != 0) {
 +		ffa_err("Failure in querying partitions count (error code: %d)", ret);
 +		return ret;
 +	}
@@ -140,23 +148,23 @@ index 000000000000..71a6ebb656d1
 +
 +	/*
 +	 * pre-allocate a buffer to be filled by the driver
-+	 * with	 ffa_partition_info structs
++	 * with ffa_partition_info structs
 +	 */
++
++	ffa_info("Pre-allocating %d partition(s) info structures", count);
 +
 +	parts_info = calloc(count, sizeof(struct ffa_partition_info));
 +	if (!parts_info)
 +		return -EINVAL;
 +
-+	ffa_info("Pre-allocating %d partition(s) info structures", count);
-+
-+	func_data.data1_size = count * sizeof(struct ffa_partition_info);
-+	func_data.data1 = parts_info;
++	size = count * sizeof(struct ffa_partition_info);
 +
 +	/*
 +	 * ask the driver to fill the buffer with the SPs info
 +	 */
-+	ret = ffa_helper_get_partitions_info(&func_data);
-+	if (ret != FFA_ERR_STAT_SUCCESS) {
++
++	ret = ffa_bus_ops_get()->partition_info_get(argv[0], &size, parts_info);
++	if (ret != 0) {
 +		ffa_err("Failure in querying partition(s) info (error code: %d)", ret);
 +		free(parts_info);
 +		return ret;
@@ -185,7 +193,7 @@ index 000000000000..71a6ebb656d1
 + * @argv:		arguments
 + *
 + * This function sends data to the secure partition which the ID is provided
-+ * as an argument. The function uses the arm_ffa driver helper function
++ * as an argument. The function uses the arm_ffa driver sync_send_receive operation
 + * to send data.
 + *
 + * Return:
@@ -195,9 +203,13 @@ index 000000000000..71a6ebb656d1
 +int  do_ffa_msg_send_direct_req(struct cmd_tbl *cmdtp, int flag, int argc,
 +				char *const argv[])
 +{
-+	struct ffa_interface_data func_data = {0};
-+	struct ffa_send_direct_data msg = {0};
-+	u32 pattern = 0xaabbccd0;
++	struct ffa_send_direct_data msg = {
++			.data0 = 0xaaaaaaaa,
++			.data1 = 0xbbbbbbbb,
++			.data2 = 0xcccccccc,
++			.data3 = 0xdddddddd,
++			.data4 = 0xeeeeeeee,
++	};
 +	u16 part_id;
 +	int ret;
 +
@@ -212,32 +224,15 @@ index 000000000000..71a6ebb656d1
 +		return -EINVAL;
 +	}
 +
-+	/*
-+	 * telling the driver which partition to use
-+	 */
-+	func_data.data0_size = sizeof(part_id);
-+	func_data.data0 = &part_id;
-+
-+	/*
-+	 * filling the message data
-+	 */
-+	msg.a3 = ++pattern;
-+	msg.a4 = ++pattern;
-+	msg.a5 = ++pattern;
-+	msg.a6 = ++pattern;
-+	msg.a7 = ++pattern;
-+	func_data.data1_size = sizeof(msg);
-+	func_data.data1 = &msg;
-+
-+	ret = ffa_helper_msg_send_direct_req(&func_data);
-+	if (ret == FFA_ERR_STAT_SUCCESS) {
++	ret = ffa_bus_ops_get()->sync_send_receive(part_id, &msg);
++	if (ret == 0) {
 +		u8 cnt;
 +
 +		ffa_info("SP response:\n[LSB]");
 +		for (cnt = 0;
-+		     cnt < sizeof(struct ffa_send_direct_data) / sizeof(u32);
++		     cnt < sizeof(struct ffa_send_direct_data) / sizeof(u64);
 +		     cnt++)
-+			ffa_info("0x%x", ((u32 *)&msg)[cnt]);
++			ffa_info("0x%llx", ((u64 *)&msg)[cnt]);
 +	} else {
 +		ffa_err("Sending direct request error (%d)", ret);
 +	}
@@ -320,9 +315,12 @@ index 000000000000..71a6ebb656d1
 +	if (!armffa_cmd || argc > armffa_cmd->maxargs)
 +		return CMD_RET_USAGE;
 +
-+	ret = ffa_helper_init_device();
-+	if (ret != FFA_ERR_STAT_SUCCESS)
++	ret = ffa_bus_discover();
++	if (ret != 0)
 +		return cmd_process_error(cmdtp, ret);
++
++	if (!ffa_bus_ops_get())
++		return -EINVAL;
 +
 +	ret = armffa_cmd->cmd(armffa_cmd, flag, argc, argv);
 +
@@ -337,6 +335,18 @@ index 000000000000..71a6ebb656d1
 +	   "	 - sends a data pattern to the specified partition\n"
 +	   "devlist\n"
 +	   "	 - displays the arm_ffa device info\n");
+diff --git a/drivers/firmware/arm-ffa/Kconfig b/drivers/firmware/arm-ffa/Kconfig
+index aceb61cf49..40b467b0a5 100644
+--- a/drivers/firmware/arm-ffa/Kconfig
++++ b/drivers/firmware/arm-ffa/Kconfig
+@@ -4,6 +4,7 @@ config ARM_FFA_TRANSPORT
+ 	bool "Enable Arm Firmware Framework for Armv8-A driver"
+ 	depends on DM && ARM64
+ 	select ARM_SMCCC
++	select CMD_ARMFFA
+ 	select LIB_UUID
+ 	select DEVRES
+ 	help
 -- 
-2.37.1
+2.17.1
 

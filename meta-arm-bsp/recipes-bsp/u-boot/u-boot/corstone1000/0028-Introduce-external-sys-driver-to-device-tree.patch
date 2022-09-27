@@ -1,6 +1,3 @@
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Emekcan Aras <emekcan.aras@arm.com>
-
 From 83f16fe96a86b00f7a4b7c4c4f7416119b80eddd Mon Sep 17 00:00:00 2001
 From: Emekcan <emekcan.aras@arm.com>
 Date: Fri, 19 Aug 2022 16:04:48 +0100
@@ -10,6 +7,7 @@ It adds external sys driver binding to u-boot
 device tree.
 
 Signed-off-by: Emekcan Aras <emekcan.aras@arm.com>
+Upstream-Status: Pending [Not submitted to upstream yet]
 ---
  arch/arm/dts/corstone1000.dtsi | 7 +++++++
  1 file changed, 7 insertions(+)

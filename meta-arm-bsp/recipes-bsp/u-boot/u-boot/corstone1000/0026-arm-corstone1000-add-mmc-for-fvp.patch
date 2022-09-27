@@ -1,12 +1,13 @@
-From cc3356c2a30b7aa85a25e9bc7b69a03537df3f27 Mon Sep 17 00:00:00 2001
+From 5e4c819c7ab0841429016c098106615b33486c8b Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Tue, 5 Apr 2022 10:24:38 +0100
-Subject: [PATCH 24/24] arm:corstone1000: add mmc for fvp
+Subject: [PATCH 26/26] arm:corstone1000: add mmc for fvp
 
 Enable support mmc/sdcard for the corstone1000 FVP.
 
 Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
 Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+Upstream-Status: Pending [Not submitted to upstream yet]
 ---
  arch/arm/dts/corstone1000-fvp.dts        | 28 +++++++++++++++
  board/armltd/corstone1000/corstone1000.c | 46 ++++++++++++++++--------
@@ -15,7 +16,7 @@ Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
  4 files changed, 69 insertions(+), 17 deletions(-)
 
 diff --git a/arch/arm/dts/corstone1000-fvp.dts b/arch/arm/dts/corstone1000-fvp.dts
-index 1fcc137a493c..26b0f1b3cea6 100644
+index 1fcc137a49..26b0f1b3ce 100644
 --- a/arch/arm/dts/corstone1000-fvp.dts
 +++ b/arch/arm/dts/corstone1000-fvp.dts
 @@ -20,4 +20,32 @@
@@ -52,7 +53,7 @@ index 1fcc137a493c..26b0f1b3cea6 100644
 +	};
  };
 diff --git a/board/armltd/corstone1000/corstone1000.c b/board/armltd/corstone1000/corstone1000.c
-index 2fa485ff3799..3d537d7a9052 100644
+index 2fa485ff37..3d537d7a90 100644
 --- a/board/armltd/corstone1000/corstone1000.c
 +++ b/board/armltd/corstone1000/corstone1000.c
 @@ -46,22 +46,38 @@ static struct mm_region corstone1000_mem_map[] = {
@@ -110,7 +111,7 @@ index 2fa485ff3799..3d537d7a9052 100644
  		/* OCVM */
  		.virt = 0x80000000UL,
 diff --git a/configs/corstone1000_defconfig b/configs/corstone1000_defconfig
-index b042d4e49419..147c14c94865 100644
+index c299dda49f..76e07fc20c 100644
 --- a/configs/corstone1000_defconfig
 +++ b/configs/corstone1000_defconfig
 @@ -38,7 +38,13 @@ CONFIG_CMD_EFIDEBUG=y
@@ -129,10 +130,10 @@ index b042d4e49419..147c14c94865 100644
  CONFIG_USB=y
  CONFIG_DM_USB=y
 diff --git a/include/configs/corstone1000.h b/include/configs/corstone1000.h
-index 06b605e43bdf..d9855bf91ebf 100644
+index 333b1d93b6..815239590e 100644
 --- a/include/configs/corstone1000.h
 +++ b/include/configs/corstone1000.h
-@@ -95,7 +95,9 @@
+@@ -89,7 +89,9 @@
  #define CONFIG_SYS_MAXARGS	64	/* max command args */
  
  #define BOOT_TARGET_DEVICES(func) \
@@ -144,5 +145,5 @@ index 06b605e43bdf..d9855bf91ebf 100644
  #include <config_distro_bootcmd.h>
  
 -- 
-2.37.1
+2.17.1
 
