@@ -32,6 +32,7 @@ KCONFIG_MODE:corstone500 = "--alldefconfig"
 # Corstone1000 KMACHINE
 #
 FILESEXTRAPATHS:prepend:corstone1000 := "${ARMBSPFILESPATHS}"
+FILESEXTRAPATHS:prepend:corstone1000 := "${ARMFILESPATHS}"
 COMPATIBLE_MACHINE:corstone1000 = "${MACHINE}"
 KCONFIG_MODE:corstone1000 = "--alldefconfig"
 KMACHINE:corstone1000 = "corstone1000"
