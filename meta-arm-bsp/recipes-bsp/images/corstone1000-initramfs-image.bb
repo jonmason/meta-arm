@@ -23,11 +23,5 @@ IMAGE_FEATURES:remove = "package-management"
 # all optee packages
 IMAGE_INSTALL += "optee-client"
 
-# FF-A Debugfs driver
-IMAGE_INSTALL += "ffa-debugfs-mod"
-
-# psa-arch-tests linux userspace application
-IMAGE_INSTALL += "secure-partitions-psa-api-tests"
-
 # external system linux userspace test application
 IMAGE_INSTALL += "corstone1000-external-sys-tests"
