@@ -15,6 +15,8 @@ SRC_URI:append = " \
     file://0005-feat-plat-tc-add-spmc-manifest-with-trusty-sp.patch \
     file://0006-feat-plat-tc-update-dts-with-trusty-compatible-strin.patch \
     file://0007-feat-arm-tc-Update-trusty-load-address-in-dts-files.patch \
+    file://0008-feat-plat-tc-add-firmware-update-secure-partition.patch \
+    file://0009-feat-plat-tc-reserve-4-MB-for-stmm-communication-use.patch \
     file://generate_metadata.py \
     "
 
