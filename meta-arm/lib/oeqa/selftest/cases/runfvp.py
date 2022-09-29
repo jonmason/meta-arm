@@ -107,3 +107,25 @@ class RunnerTests(OESelftestTestCase):
                 stdout=unittest.mock.ANY,
                 stderr=unittest.mock.ANY,
                 env={"FOO":"BAR"})
+
+    @unittest.mock.patch.dict(os.environ, {"DISPLAY": ":42", "WAYLAND_DISPLAY": "wayland-42"})
+    def test_env_passthrough(self):
+        from fvp import runner
+        with self.create_mock() as m:
+            fvp = runner.FVPRunner(self.logger)
+            asyncio.run(fvp.start({
+                "fvp-bindir": "/usr/bin",
+                "exe": "FVP_Binary",
+                "parameters": {},
+                "data": [],
+                "applications": {},
+                "terminals": {},
+                "args": [],
+                "env": {"FOO": "BAR"}
+            }))
+
+            m.assert_called_once_with('/usr/bin/FVP_Binary',
+                stdin=unittest.mock.ANY,
+                stdout=unittest.mock.ANY,
+                stderr=unittest.mock.ANY,
+                env={"DISPLAY":":42", "FOO": "BAR", "WAYLAND_DISPLAY": "wayland-42"})
