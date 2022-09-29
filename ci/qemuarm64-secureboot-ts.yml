@@ -9,18 +9,6 @@ header:
     - ci/base.yml
     - ci/meta-openembedded.yml
 
-# qemu image with optee and arm-ffa kernel drivers fails to boot under qemu 7.1.0
-# temporary use qemu 7.0.0 until a proper fix is implemented
-repos:
-  poky:
-    patches:
-      qemu:
-        repo: meta-arm
-        path: 0001-Revert-qemu-Upgrade-7.0.0-7.1.0.patch
-      qemurunner:
-        repo: meta-arm
-        path: 0001-Revert-qemurunner-Update-to-match-qmp-changes.patch
-
 machine: qemuarm64-secureboot
 
 local_conf_header:
