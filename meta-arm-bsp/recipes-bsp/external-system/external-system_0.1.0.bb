@@ -8,16 +8,14 @@ LICENSE = "BSD-3-Clause & Apache-2.0"
 LIC_FILES_CHKSUM = "file://license.md;md5=e44b2531cd6ffe9dece394dbe988d9a0 \
                     file://cmsis/LICENSE.txt;md5=e3fc50a88d0a364313df4b21ef20c29e"
 
-SRC_URI = "gitsm://git.linaro.org/landing-teams/working/arm/external-system.git;protocol=https;branch=master"
-SRCREV = "2057819cd3652b457907ad70f6b951cf10c7a481"
+SRC_URI = "gitsm://git.gitlab.arm.com/arm-reference-solutions/corstone1000/external_system/rtx.git;protocol=https;branch=master"
+SRCREV = "8c9dca74b104ff6c9722fb0738ba93dd3719c080"
 PV .= "+git${SRCPV}"
 
 COMPATIBLE_MACHINE = "(corstone1000)"
 
 # PRODUCT is passed to the Makefile to specify the platform to be used.
-# platform code is same for corstone700 and corstone1000, hence use the
-# same PRODUCT for both.
-PRODUCT = "corstone-700"
+PRODUCT = "corstone-1000"
 
 S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
