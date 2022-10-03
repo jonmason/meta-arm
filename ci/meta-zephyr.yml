@@ -8,6 +8,10 @@ repos:
     url: https://git.yoctoproject.org/git/meta-zephyr
     layers:
       meta-zephyr-core:
+    patches:
+      langdale:
+        repo: meta-arm
+        path: 0001-layers-add-langdale-compatibility.patch
 
 target:
   - zephyr-kernel-test-all

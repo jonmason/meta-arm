@@ -1,0 +1,42 @@
+From 6eb21b8c40daa9049c68787b0e6ed841e8f2d07c Mon Sep 17 00:00:00 2001
+From: Jon Mason <jon.mason@arm.com>
+Date: Thu, 29 Sep 2022 18:09:02 -0400
+Subject: [PATCH] layers: add langdale compatibility
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+---
+ meta-zephyr-bsp/conf/layer.conf  | 4 ++--
+ meta-zephyr-core/conf/layer.conf | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/meta-zephyr-bsp/conf/layer.conf b/meta-zephyr-bsp/conf/layer.conf
+index 507374f206b0..cbbaafe2a8dc 100644
+--- a/meta-zephyr-bsp/conf/layer.conf
++++ b/meta-zephyr-bsp/conf/layer.conf
+@@ -15,6 +15,6 @@ LAYERVERSION_zephyrbsp = "1"
+ 
+ LAYERDEPENDS_zephyrbsp = "zephyrcore core meta-python"
+ 
+-LAYERSERIES_COMPAT_zephyrbsp = "dunfell gatesgarth hardknott honister kirkstone"
++LAYERSERIES_COMPAT_zephyrbsp = "dunfell gatesgarth hardknott honister kirkstone langdale"
+ 
+-X86_TUNE_DIR = "${@bb.utils.contains_any('LAYERSERIES_CORENAMES', 'honister kirkstone', 'include/x86', 'include', d)}"
++X86_TUNE_DIR = "${@bb.utils.contains_any('LAYERSERIES_CORENAMES', 'honister kirkstone langdale', 'include/x86', 'include', d)}"
+diff --git a/meta-zephyr-core/conf/layer.conf b/meta-zephyr-core/conf/layer.conf
+index 20c8fdf93a83..3d1e57b13897 100644
+--- a/meta-zephyr-core/conf/layer.conf
++++ b/meta-zephyr-core/conf/layer.conf
+@@ -15,8 +15,8 @@ LAYERVERSION_zephyrcore = "1"
+ 
+ LAYERDEPENDS_zephyrcore = "core meta-python"
+ 
+-LAYERSERIES_COMPAT_zephyrcore = "dunfell gatesgarth hardknott honister kirkstone"
++LAYERSERIES_COMPAT_zephyrcore = "dunfell gatesgarth hardknott honister kirkstone langdale"
+ 
+-X86_TUNE_DIR = "${@bb.utils.contains_any('LAYERSERIES_CORENAMES', 'honister kirkstone', 'include/x86', 'include', d)}"
++X86_TUNE_DIR = "${@bb.utils.contains_any('LAYERSERIES_CORENAMES', 'honister kirkstone langdale', 'include/x86', 'include', d)}"
+ 
+ PYTHON3_NATIVE_SITEPACKAGES_DIR = "${libdir_native}/${PYTHON3_DIR}/site-packages"
+-- 
+2.30.2
+
