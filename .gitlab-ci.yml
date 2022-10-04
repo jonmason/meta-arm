@@ -157,7 +157,8 @@ qemuarm64-secureboot-ts:
   extends: .build
   parallel:
     matrix:
-      - TCLIBC: [glibc, musl]
+      - TOOLCHAINS: [gcc, clang]
+        TCLIBC: [glibc, musl]
         TESTING: testimage
 
 qemuarm64:
