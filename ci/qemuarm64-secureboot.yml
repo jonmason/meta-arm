@@ -14,5 +14,4 @@ target:
   - core-image-base
   - optee-examples
   - optee-test
-  - optee-spdevkit
   - optee-os-tadevkit
