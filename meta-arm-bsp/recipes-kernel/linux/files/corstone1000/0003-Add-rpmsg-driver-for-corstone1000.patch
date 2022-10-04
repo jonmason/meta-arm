@@ -4,9 +4,9 @@ Signed-off-by: Emekcan Aras <emekcan.aras@arm.com>
 From e683c37ee51717e625c8a598056cf4bb1bdadcbc Mon Sep 17 00:00:00 2001
 From: Emekcan <emekcan.aras@arm.com>
 Date: Wed, 17 Aug 2022 14:21:42 +0100
-Subject: [PATCH] Add rpsmg driver for corstone1000
+Subject: [PATCH] Add rpmsg driver for corstone1000
 
-Adds rpsmg driver to communicate with external
+Adds rpmsg driver to communicate with external
 system in corstone1000 platform.
 
 Signed-off-by: Emekcan Aras <emekcan.aras@arm.com>

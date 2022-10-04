@@ -41,9 +41,10 @@ LINUX_KERNEL_TYPE:corstone1000 = "standard"
 KERNEL_EXTRA_ARGS:corstone1000 += "CONFIG_INITRAMFS_COMPRESSION_NONE=y"
 SRC_URI:append:corstone1000 = " \
            file://defconfig  \
-           file://0001-UPSTREAM-firmware-arm_ffa-Handle-compatibility-with-.patch  \
            file://0002-Add-external-system-driver.patch \
-           file://0003-Add-rpsmg-driver-for-corstone1000.patch \
+           file://0003-Add-rpmsg-driver-for-corstone1000.patch \
+           file://0004-rpmsg-arm-fix-return-value.patch \
+           file://0005-rpmsg-arm-update-chrdev-to-ctrldev-registration.patch \
         "
 
 SRC_URI:append:corstone1000 = " ${@bb.utils.contains('MACHINE_FEATURES', \
