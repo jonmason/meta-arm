@@ -1,4 +1,4 @@
-From f88153a427046f92d52694708adc5ee0eefa8d55 Mon Sep 17 00:00:00 2001
+From 97caa9365f221b5aff93274a29ea894da55dce88 Mon Sep 17 00:00:00 2001
 From: Manoj Kumar <manoj.kumar3@arm.com>
 Date: Mon, 1 Feb 2021 21:36:43 +0530
 Subject: [PATCH] iommu/arm-smmu-v3: workaround for ATC_INV_SIZE_ALL in N1SDP
@@ -14,16 +14,18 @@ Signed-off-by: Khasim Syed Mohammed <khasim.mohammed@arm.com>
 
 Upstream-Status: Inappropriate [Workaround]
 Signed-off-by: Manoj Kumar <manoj.kumar3@arm.com>
+Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
+Signed-off-by: Adam Johnston <adam.johnston@arm.com>
 ---
  drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c | 1 +
  drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.h | 1 +
  2 files changed, 2 insertions(+)
 
 diff --git a/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c b/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c
-index 79edfdca6607..ded17e199ee4 100644
+index 88817a3376ef..80e252d59a3a 100644
 --- a/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c
 +++ b/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c
-@@ -1725,6 +1725,7 @@ arm_smmu_atc_inv_to_cmd(int ssid, unsigned long iova, size_t size,
+@@ -1731,6 +1731,7 @@ arm_smmu_atc_inv_to_cmd(int ssid, unsigned long iova, size_t size,
  	};
  
  	if (!size) {
@@ -32,10 +34,10 @@ index 79edfdca6607..ded17e199ee4 100644
  		return;
  	}
 diff --git a/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.h b/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.h
-index 4cb136f07914..5615ffd24e46 100644
+index cd48590ada30..20892b2bfe1d 100644
 --- a/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.h
 +++ b/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.h
-@@ -473,6 +473,7 @@ struct arm_smmu_cmdq_ent {
+@@ -472,6 +472,7 @@ struct arm_smmu_cmdq_ent {
  
  		#define CMDQ_OP_ATC_INV		0x40
  		#define ATC_INV_SIZE_ALL	52
