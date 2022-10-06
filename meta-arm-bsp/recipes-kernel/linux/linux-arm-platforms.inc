@@ -141,53 +141,50 @@ KCONFIG_MODE:sgi575 = "--alldefconfig"
 #
 COMPATIBLE_MACHINE:tc = "(tc0|tc1)"
 KCONFIG_MODE:tc = "--alldefconfig"
-FILESEXTRAPATHS:prepend:tc := "${ARMBSPFILESPATHS}:${THISDIR}/linux-arm64-ack-5.10/tc:"
+FILESEXTRAPATHS:prepend:tc := "${ARMBSPFILESPATHS}:${THISDIR}/linux-arm64-ack-5.15/tc:"
 SRC_URI:append:tc = " \
     file://gki_defconfig \
     file://0001-drm-Add-component-aware-simple-encoder.patch \
+    file://0001-drm-komeda-Fix-handling-of-atomic-commits-in-the-ato.patch \
     file://0002-drm-arm-komeda-add-RENDER-capability-to-the-device-n.patch \
-    file://0003-dt-bindings-mailbox-arm-mhuv2-Add-bindings.patch \
-    file://0004-mailbox-arm_mhuv2-Add-driver.patch \
-    file://0005-mailbox-arm_mhuv2-Fix-sparse-warnings.patch \
-    file://0006-mailbox-arm_mhuv2-make-remove-callback-return-void.patch \
-    file://0007-mailbox-arm_mhuv2-Skip-calling-kfree-with-invalid-po.patch \
-    file://0008-firmware-arm_ffa-Backport-of-arm_ffa-driver.patch \
-    file://0009-tee-add-sec_world_id-to-struct-tee_shm.patch \
-    file://0010-optee-simplify-optee_release.patch \
-    file://0011-optee-sync-OP-TEE-headers.patch \
-    file://0012-optee-refactor-driver-with-internal-callbacks.patch \
-    file://0013-optee-add-a-FF-A-memory-pool.patch \
-    file://0014-optee-add-FF-A-support.patch \
-    file://0015-coresight-etm4x-Save-restore-TRFCR_EL1.patch \
-    file://0016-coresight-etm4x-Use-Trace-Filtering-controls-dynamic.patch \
-    file://0017-perf-arm-cmn-Use-irq_set_affinity.patch \
-    file://0018-perf-arm-cmn-Fix-CPU-hotplug-unregistration.patch \
-    file://0019-perf-arm-cmn-Account-for-NUMA-affinity.patch \
-    file://0020-perf-arm-cmn-Drop-compile-test-restriction.patch \
-    file://0021-perf-arm-cmn-Refactor-node-ID-handling.patch \
-    file://0022-perf-arm-cmn-Streamline-node-iteration.patch \
-    file://0023-drivers-perf-arm-cmn-Add-space-after.patch \
-    file://0024-perf-arm-cmn-Refactor-DTM-handling.patch \
-    file://0025-perf-arm-cmn-Optimise-DTM-counter-reads.patch \
-    file://0026-perf-arm-cmn-Optimise-DTC-counter-accesses.patch \
-    file://0027-perf-arm-cmn-Move-group-validation-data-off-stack.patch \
-    file://0028-perf-arm-cmn-Demarcate-CMN-600-specifics.patch \
-    file://0029-perf-arm-cmn-Support-new-IP-features.patch \
-    file://0030-perf-arm-cmn-Add-CI-700-Support.patch \
-    file://0031-firmware-arm_ffa-Fix-uuid-argument-passed-to-ffa_par.patch \
-    file://0032-firmware-arm_ffa-Add-ffa_dev_get_drvdata.patch \
-    file://0033-firmware-arm_ffa-extern-ffa_bus_type.patch \
-    file://0034-firmware-arm_ffa-Fix-FFA_MEM_SHARE-and-FFA_MEM_FRAG_.patch \
-    file://0035-ANDROID-trusty-Backport-of-trusty-driver.patch \
-    file://0036-ANDROID-trusty-Remove-FFA-specific-initilization.patch \
-    file://0037-ANDROID-trusty-Rename-transfer-memory-function-to-le.patch \
-    file://0038-ANDROID-trusty-Separate-out-SMC-based-transport.patch \
-    file://0039-ANDROID-trusty-Modify-device-compatible-string.patch \
-    file://0040-ANDROID-trusty-Add-transport-descriptor.patch \
-    file://0041-ANDROID-trusty-Add-trusty-ffa-driver.patch \
-    file://0042-ANDROID-trusty-ffa-Add-support-for-FFA-memory-operat.patch \
-    file://0043-ANDROID-trusty-ffa-Enable-FFA-transport-for-both-mem.patch \
-    file://0044-ANDROID-trusty-Make-trusty-transports-configurable.patch \
+    file://0003-firmware-arm_ffa-Fix-uuid-argument-passed-to-ffa_par.patch \
+    file://0004-firmware-arm_ffa-Add-ffa_dev_get_drvdata.patch \
+    file://0005-firmware-arm_ffa-extern-ffa_bus_type.patch \
+    file://0006-firmware-arm_ffa-Fix-FFA_MEM_SHARE-and-FFA_MEM_FRAG_.patch \
+    file://0007-Revert-optee-use-driver-internal-tee_context-for-som.patch \
+    file://0008-tee-add-sec_world_id-to-struct-tee_shm.patch \
+    file://0009-optee-simplify-optee_release.patch \
+    file://0010-optee-refactor-driver-with-internal-callbacks.patch \
+    file://0011-optee-isolate-smc-abi.patch \
+    file://0012-optee-add-FF-A-support.patch \
+    file://0013-optee-smc_abi.c-add-missing-include-linux-mm.h.patch \
+    file://0014-optee-Fix-spelling-mistake-reclain-reclaim.patch \
+    file://0015-optee-fix-kfree-NULL-pointer.patch \
+    file://0016-perf-arm-cmn-Account-for-NUMA-affinity.patch \
+    file://0017-perf-arm-cmn-Drop-compile-test-restriction.patch \
+    file://0018-perf-arm-cmn-Refactor-node-ID-handling.patch \
+    file://0019-perf-arm-cmn-Streamline-node-iteration.patch \
+    file://0020-perf-arm-cmn-Refactor-DTM-handling.patch \
+    file://0021-perf-arm-cmn-Optimise-DTM-counter-reads.patch \
+    file://0022-perf-arm-cmn-Optimise-DTC-counter-accesses.patch \
+    file://0023-perf-arm-cmn-Move-group-validation-data-off-stack.patch \
+    file://0024-perf-arm-cmn-Demarcate-CMN-600-specifics.patch \
+    file://0025-perf-arm-cmn-Support-new-IP-features.patch \
+    file://0026-perf-arm-cmn-Add-CI-700-Support.patch \
+    file://0027-ANDROID-trusty-Backport-of-trusty-driver.patch \
+    file://0028-ANDROID-trusty-Remove-FFA-specific-initilization.patch \
+    file://0029-ANDROID-trusty-Rename-transfer-memory-function-to-le.patch \
+    file://0030-ANDROID-trusty-Separate-out-SMC-based-transport.patch \
+    file://0031-ANDROID-trusty-Modify-device-compatible-string.patch \
+    file://0032-ANDROID-trusty-Add-transport-descriptor.patch \
+    file://0033-ANDROID-trusty-Add-trusty-ffa-driver.patch \
+    file://0034-ANDROID-trusty-ffa-Add-support-for-FFA-memory-operat.patch \
+    file://0035-ANDROID-trusty-ffa-Enable-FFA-transport-for-both-mem.patch \
+    file://0036-ANDROID-trusty-Make-trusty-transports-configurable.patch \
+    file://0037-ANDROID-trusty-log-include-panic_notifier.h.patch \
+    file://0038-ANDROID-trusty-ipc-fix-VIRTIO_ID_TRUSTY_IPC-ID.patch \
+    file://0039-gki_config-add-tc-disable_mpam.patch \
+    file://0040-ANDROID-KVM-arm64-disable-FFA-driver-at-EL2.patch \
     file://init_disassemble_info-signature-changes-causes-compile-failures.patch \
     "
 KERNEL_FEATURES:append:tc = " bsp/arm-platforms/tc.scc"
