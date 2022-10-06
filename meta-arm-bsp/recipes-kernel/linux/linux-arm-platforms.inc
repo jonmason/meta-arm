@@ -186,6 +186,8 @@ SRC_URI:append:tc = " \
     file://0039-gki_config-add-tc-disable_mpam.patch \
     file://0040-ANDROID-KVM-arm64-disable-FFA-driver-at-EL2.patch \
     file://init_disassemble_info-signature-changes-causes-compile-failures.patch \
+    file://0041-etherdevice-Adjust-ether_addr-prototypes-to-silence-.patch \
+    file://0042-mm-page_alloc-fix-building-error-on-Werror-array-com.patch \
     "
 KERNEL_FEATURES:append:tc = " bsp/arm-platforms/tc.scc"
 KERNEL_FEATURES:append:tc1 = " bsp/arm-platforms/tc-autofdo.scc"
