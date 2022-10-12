@@ -5,8 +5,6 @@ TS_ENV = "opteesp"
 require trusted-services.inc
 
 SRC_URI += "git://sourceware.org/git/newlib-cygwin.git;name=newlib;protocol=https;branch=master;destsuffix=git/newlib \
-            file://0003-Add-newlib-deployment.patch \
-            file://0021-newlib-configure.patch \
 "
 
 # tag "newlib-0.4.1"
@@ -17,7 +15,7 @@ LIC_FILES_CHKSUM += "file://../newlib/COPYING.NEWLIB;md5=b8dda70da54e0efb49b1074
 TOOLCHAIN = "gcc"
 
 EXTRA_OECMAKE += '-DNEWLIB_SOURCE_DIR=${WORKDIR}/git/newlib \
-                  -DNEWLIB_EXTRA="CFLAGS=--sysroot=${STAGING_DIR_HOST}" \
+                  -DNEWLIB_CFLAGS="--sysroot=${STAGING_DIR_HOST}" \
                  '
 
 OECMAKE_SOURCEPATH = "${S}/deployments/newlib/${TS_ENV}/"
@@ -30,5 +28,5 @@ apply_ts_patch() {
 }
 do_patch[postfuncs] += "apply_ts_patch"
 
-FILES:${PN}-dev = "${TS_INSTALL}/newlib_install"
-FILES:${PN}-staticdev = "${TS_INSTALL}/newlib_install/*/lib/*.a"
+FILES:${PN}-dev = "${TS_INSTALL}/newlib"
+FILES:${PN}-staticdev = "${TS_INSTALL}/newlib/*/lib/*.a"

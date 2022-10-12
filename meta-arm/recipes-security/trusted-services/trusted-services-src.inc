@@ -3,16 +3,10 @@
 LICENSE = "Apache-2.0 & BSD-3-Clause & BSD-2-Clause & Zlib"
 
 SRC_URI = "git://git.trustedfirmware.org/TS/trusted-services.git;protocol=https;branch=integration;name=trusted-services;destsuffix=git/trusted-services \
-           file://0004-correctly-find-headers-dir.patch \
-           file://0005-setting-sysroot-for-libgcc-lookup.patch \
-           file://0006-applying-lowercase-project-convention.patch \
-           file://0009-PSA-CRYPTO-API-INCLUDE.patch \
-           file://0010-change-libts-to-export-CMake-package.patch \
-           file://0011-Adapt-deployments-to-libts-changes.patch \
 "
 
-#latest on 07.10.22.
-SRCREV_trusted-services = "45353ba0bd5b4059e71ae67f9c49749da8b41b43"
+#latest on 12.10.22.
+SRCREV_trusted-services = "3d4956770f89eb9ae0a73257901ae6277c078da6"
 LIC_FILES_CHKSUM = "file://${S}/license.rst;md5=ea160bac7f690a069c608516b17997f4"
 
 S = "${WORKDIR}/git/trusted-services"
