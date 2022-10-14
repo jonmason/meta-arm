@@ -49,6 +49,7 @@ SRC_URI:append:corstone1000 = " \
            file://0003-Add-rpmsg-driver-for-corstone1000.patch \
            file://0004-rpmsg-arm-fix-return-value.patch \
            file://0005-rpmsg-arm-update-chrdev-to-ctrldev-registration.patch \
+           file://0006-Adds-workaround-for-cs1k-specific-bug.patch \
         "
 
 SRC_URI:append:corstone1000 = " ${@bb.utils.contains('MACHINE_FEATURES', \
