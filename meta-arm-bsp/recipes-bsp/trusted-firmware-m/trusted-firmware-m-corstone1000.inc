@@ -11,6 +11,22 @@ TFM_PLATFORM_IS_FVP ?= "FALSE"
 EXTRA_OECMAKE += "-DPLATFORM_IS_FVP=${TFM_PLATFORM_IS_FVP}"
 EXTRA_OECMAKE += "-DCC312_LEGACY_DRIVER_API_ENABLED=OFF"
 
+SRCBRANCH_tfm = "master"
+SRC_URI  = "git://git.trustedfirmware.org/TF-M/trusted-firmware-m.git;protocol=https;branch=${SRCBRANCH_tfm};name=tfm;destsuffix=git/tfm \
+            git://git.trustedfirmware.org/TF-M/tf-m-tests.git;protocol=https;branch=master;name=tfm-tests;destsuffix=git/tf-m-tests \
+            git://github.com/ARMmbed/mbedtls.git;protocol=https;branch=master;name=mbedtls;destsuffix=git/mbedtls \
+            git://github.com/mcu-tools/mcuboot.git;protocol=https;branch=main;name=mcuboot;destsuffix=git/mcuboot \
+            "
+
+# Bumping the SHA of TFM is required as multiple changes are needed in the TFM to support the ESRT 
+# The most crucial change needed is TFM support for UEFI FMP Image Information 
+SRCREV_tfm = "b065a6b28cc6c692b99e4f7e9387d96f51bf4d07"
+SRCREV_mbedtls = "869298bffeea13b205343361b7a7daf2b210e33d"
+SRCREV_mcuboot = "c657cbea75f2bb1faf1fceacf972a0537a8d26dd"
+SRCREV_tfm-tests = "3e6c52b4b255e4b1343ba6a257a77fa7a976e8fb"
+PV .= "+git${SRCPV}"
+SRCREV_FORMAT ?= "tfm"
+
 # libmetal
 LICENSE += "& BSD-3-Clause"
 LIC_FILES_CHKSUM += "file://../libmetal/LICENSE.md;md5=fe0b8a4beea8f0813b606d15a3df3d3c"
