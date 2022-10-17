@@ -1,27 +1,55 @@
-From 9e6f16c236fbf5d8631ebc53a79c80b85042b736 Mon Sep 17 00:00:00 2001
+From e4ccb92f8de94a82edd3548d62c853790ae36bd1 Mon Sep 17 00:00:00 2001
 From: Vishnu Banavath <vishnu.banavath@arm.com>
-Date: Tue, 27 Sep 2022 18:47:36 +0100
-Subject: [PATCH 27/27] Add MHU driver
+Date: Fri, 3 Dec 2021 18:00:46 +0000
+Subject: [PATCH 02/19] Implement mhu driver and the OpenAmp conversion layer.
 
-This change is to add MHU driver. This is required to communicate
-between cortex-A and cortex-M
+This commit adds an mhu driver (v2.1 and v2) to the secure
+partition se_proxy and a conversion layer to communicate with
+the secure enclave using OpenAmp.
 
+Upstream-Status: Pending
 Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
-Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
-Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
 ---
+ .../se-proxy/opteesp/default_se-proxy.dts.in  |  16 +
  .../drivers/arm/mhu_driver/component.cmake    |  12 +
  platform/drivers/arm/mhu_driver/mhu_v2.h      | 391 ++++++++++++
  platform/drivers/arm/mhu_driver/mhu_v2_x.c    | 602 ++++++++++++++++++
- .../providers/arm/corstone1000/platform.cmake |   3 +
- 4 files changed, 1008 insertions(+)
+ .../providers/arm/corstone1000/platform.cmake |  10 +
+ 5 files changed, 1031 insertions(+)
  create mode 100644 platform/drivers/arm/mhu_driver/component.cmake
  create mode 100644 platform/drivers/arm/mhu_driver/mhu_v2.h
  create mode 100644 platform/drivers/arm/mhu_driver/mhu_v2_x.c
+ create mode 100644 platform/providers/arm/corstone1000/platform.cmake
 
+diff --git a/deployments/se-proxy/opteesp/default_se-proxy.dts.in b/deployments/se-proxy/opteesp/default_se-proxy.dts.in
+index 5748d2f80f88..267b4f923540 100644
+--- a/deployments/se-proxy/opteesp/default_se-proxy.dts.in
++++ b/deployments/se-proxy/opteesp/default_se-proxy.dts.in
+@@ -17,4 +17,20 @@
+ 	xlat-granule = <0>; /* 4KiB */
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	legacy-elf-format = <1>;
++
++	device-regions {
++		compatible = "arm,ffa-manifest-device-regions";
++		mhu-sender {
++			/* Armv8 A Foundation Platform values */
++			base-address = <0x00000000 0x1b820000>;
++			pages-count = <16>;
++			attributes = <0x3>; /* read-write */
++		};
++		mhu-receiver {
++			/* Armv8 A Foundation Platform values */
++			base-address = <0x00000000 0x1b830000>;
++			pages-count = <16>;
++			attributes = <0x3>; /* read-write */
++		};
++	};
+ };
 diff --git a/platform/drivers/arm/mhu_driver/component.cmake b/platform/drivers/arm/mhu_driver/component.cmake
 new file mode 100644
-index 00000000..77a5a50b
+index 000000000000..77a5a50b67d1
 --- /dev/null
 +++ b/platform/drivers/arm/mhu_driver/component.cmake
 @@ -0,0 +1,12 @@
@@ -39,7 +67,7 @@ index 00000000..77a5a50b
 +)
 diff --git a/platform/drivers/arm/mhu_driver/mhu_v2.h b/platform/drivers/arm/mhu_driver/mhu_v2.h
 new file mode 100644
-index 00000000..2e4ba80f
+index 000000000000..2e4ba80fab95
 --- /dev/null
 +++ b/platform/drivers/arm/mhu_driver/mhu_v2.h
 @@ -0,0 +1,391 @@
@@ -436,7 +464,7 @@ index 00000000..2e4ba80f
 +#endif /* __MHU_V2_X_H__ */
 diff --git a/platform/drivers/arm/mhu_driver/mhu_v2_x.c b/platform/drivers/arm/mhu_driver/mhu_v2_x.c
 new file mode 100644
-index 00000000..01d8f659
+index 000000000000..01d8f659a73a
 --- /dev/null
 +++ b/platform/drivers/arm/mhu_driver/mhu_v2_x.c
 @@ -0,0 +1,602 @@
@@ -1043,19 +1071,21 @@ index 00000000..01d8f659
 +    return MHU_V_2_X_ERR_GENERAL;
 +}
 diff --git a/platform/providers/arm/corstone1000/platform.cmake b/platform/providers/arm/corstone1000/platform.cmake
-index 14a9f6b0..df9cab71 100644
---- a/platform/providers/arm/corstone1000/platform.cmake
+new file mode 100644
+index 000000000000..bb778bb9719b
+--- /dev/null
 +++ b/platform/providers/arm/corstone1000/platform.cmake
-@@ -6,6 +6,9 @@
- # Platform definition for the corstone1000 platform.
- #-------------------------------------------------------------------------------
- 
+@@ -0,0 +1,10 @@
++#-------------------------------------------------------------------------------
++# Copyright (c) 2021, Arm Limited and Contributors. All rights reserved.
++#
++# SPDX-License-Identifier: BSD-3-Clause
++#
++# Platform definition for the 'fvp_base_revc-2xaem8a' virtual platform.
++#-------------------------------------------------------------------------------
++
 +# include MHU driver
 +include(${TS_ROOT}/platform/drivers/arm/mhu_driver/component.cmake)
-+
- target_compile_definitions(${TGT} PRIVATE
- 	SMM_GATEWAY_NV_STORE_SN="sn:ffa:46bb39d1-b4d9-45b5-88ff-040027dab249:1"
- )
 -- 
-2.17.1
+2.38.0
 
