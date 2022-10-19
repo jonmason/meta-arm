@@ -55,6 +55,9 @@ INITRAMFS_IMAGE_BUNDLE ?= "1"
 #telling the build system which image is responsible of the generation of the initramfs rootfs
 INITRAMFS_IMAGE = "corstone1000-initramfs-image"
 
+# prevent the kernel image from being included in the intramfs rootfs
+PACKAGE_EXCLUDE = "kernel-image-*"
+
 # enable this feature for kernel debugging
 # MACHINE_FEATURES += "corstone1000_kernel_debug"
 
