@@ -41,17 +41,6 @@ SRC_URI += "git://github.com/OpenAMP/open-amp.git;protocol=https;branch=main;nam
 SRCREV_openamp = "347397decaa43372fc4d00f965640ebde042966d"
 EXTRA_OECMAKE += "-DLIBOPENAMP_SRC_PATH=${S}/../openamp -DLIBOPENAMP_BIN_PATH=${B}/libopenamp-build"
 
-# Secure Debug ADAC
-LICENSE += "& BSD-3-Clause"
-LIC_FILES_CHKSUM += "file://../psa-adac/license.rst;md5=07f368487da347f3c7bd0fc3085f3afa"
-SRC_URI += "git://git.trustedfirmware.org/shared/psa-adac.git;protocol=https;branch=master;name=psa-adac;destsuffix=git/psa-adac"
-SRCREV_psa-adac = "427923cc0152578d536fb2065154d5d0dd874910"
-# Secure debug is disabled by default
-EXTRA_OECMAKE += "-DPLATFORM_PSA_ADAC_SECURE_DEBUG=OFF"
-EXTRA_OECMAKE += "-DPLATFORM_PSA_ADAC_SOURCE_PATH=${S}/../psa-adac -DPLATFORM_PSA_ADAC_BUILD_PATH=${B}/libpsa-adac-build"
-
-DEPENDS += "trusted-firmware-a"
-
 do_install() {
   install -D -p -m 0644 ${B}/install/outputs/tfm_s_signed.bin ${D}/firmware/tfm_s_signed.bin
   install -D -p -m 0644 ${B}/install/outputs/bl2_signed.bin ${D}/firmware/bl2_signed.bin
