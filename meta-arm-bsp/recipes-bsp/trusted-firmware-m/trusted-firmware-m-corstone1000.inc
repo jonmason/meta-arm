@@ -25,6 +25,17 @@ SRC_URI += "git://github.com/OpenAMP/open-amp.git;protocol=https;branch=main;nam
 SRCREV_openamp = "347397decaa43372fc4d00f965640ebde042966d"
 EXTRA_OECMAKE += "-DLIBOPENAMP_SRC_PATH=${S}/../openamp -DLIBOPENAMP_BIN_PATH=${B}/libopenamp-build"
 
+# Apply the necessary changes for supporting FMP image info
+FILESEXTRAPATHS:prepend := "${THISDIR}/corstone1000:"
+SRC_URI:append:corstone1000 = " \
+        file://0001-corstone1000-platform-secure-test-framework.patch             \
+        file://0002-corstone1000-make-external-system-support-optional.patch      \
+        file://0003-corstone1000-enable-secure-enclave-run-without-host-.patch    \
+        file://0004-Platform-Partition-Allow-configuration-of-input-and-.patch    \
+        file://0005-corstone1000-support-for-UEFI-FMP-image-Information.patch     \
+        file://0006-corstone1000-remove-two-partition-configuration.patch         \
+      "
+
 do_install() {
   install -D -p -m 0644 ${B}/install/outputs/tfm_s_signed.bin ${D}/firmware/tfm_s_signed.bin
   install -D -p -m 0644 ${B}/install/outputs/bl2_signed.bin ${D}/firmware/bl2_signed.bin
