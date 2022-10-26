@@ -1,7 +1,6 @@
 # N1 SDP specific configuration for optee-os
 
-COMPATIBLE_MACHINE:n1sdp = "n1sdp"
-OPTEEMACHINE:n1sdp = "n1sdp"
+require optee-os-generic-n1sdp.inc
 
 TS_INSTALL_PREFIX_PATH = "${RECIPE_SYSROOT}/firmware/sp/opteesp"
 
