@@ -18,6 +18,7 @@ SRC_URI = "gitsm://git.trustedfirmware.org/hafnium/hafnium.git;protocol=https;br
            file://0002-arm-hafnium-fix-kernel-tool-linking.patch  \
            file://0003-Fix-build-with-clang-15.patch \
            file://0001-Use-pkg-config-native-to-find-the-libssl-headers.patch;patchdir=third_party/linux \
+           file://0001-work-around-visibility-issue.patch;patchdir=third_party/dtc \
           "
 SRCREV = "79e9522d26fc2a88a44af149034acc27312b73a1"
 S = "${WORKDIR}/git"
