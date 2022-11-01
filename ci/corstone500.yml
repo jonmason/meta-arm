@@ -2,10 +2,10 @@ header:
   version: 11
   includes:
     - ci/base.yml
+    - ci/fvp.yml
 
 local_conf_header:
-  testimagefvp: |
-    INHERIT += "fvpboot"
+  fvp-config: |
     IMAGE_FEATURES:remove = " ssh-server-dropbear"
   extrapackages: |
     # Intentionally blank to prevent perf from being added to the image in base.yml
