@@ -21,4 +21,5 @@ SRC_URI:append:corstone1000  = " \
     file://0018-Fixes-in-AEAD-for-psa-arch-test-54-and-58.patch;patchdir=../trusted-services \
     file://0019-plat-corstone1000-change-default-smm-values.patch;patchdir=../trusted-services \
     file://0020-FMP-Support-in-Corstone1000.patch;patchdir=../trusted-services \
+    file://0021-smm_gateway-add-checks-for-null-attributes.patch;patchdir=../trusted-services \
     "
