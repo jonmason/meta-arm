@@ -69,6 +69,7 @@ KERNEL_FEATURES:corstone1000 = ""
 COMPATIBLE_MACHINE:fvp-base = "fvp-base"
 KMACHINE:fvp-base = "fvp"
 FILESEXTRAPATHS:prepend:fvp-base := "${ARMBSPFILESPATHS}"
+SRC_URI:append:fvp-base = " file://0001-arm64-dts-fvp-Enable-virtio-rng-support.patch"
 
 #
 # FVP BASE ARM32 KMACHINE
