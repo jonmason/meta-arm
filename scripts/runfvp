@@ -1,6 +1,5 @@
 #! /usr/bin/env python3
 
-import asyncio
 import os
 import pathlib
 import signal
@@ -47,11 +46,10 @@ def parse_args(arguments):
     logger.debug(f"FVP arguments: {fvp_args}")
     return args, fvp_args
 
-
-async def start_fvp(args, config, extra_args):
+def start_fvp(args, config, extra_args):
     fvp = runner.FVPRunner(logger)
     try:
-        await fvp.start(config, extra_args, args.terminals)
+        fvp.start(config, extra_args, args.terminals)
 
         if args.console:
             fvp.add_line_callback(lambda line: logger.debug(f"FVP output: {line}"))
@@ -59,15 +57,16 @@ async def start_fvp(args, config, extra_args):
             if not expected_terminal:
                 logger.error("--console used but FVP_CONSOLE not set in machine configuration")
                 return 1
-            telnet = await fvp.create_telnet(expected_terminal)
-            await telnet.wait()
+            telnet = fvp.create_telnet(expected_terminal)
+            telnet.wait()
             logger.debug(f"Telnet quit, cancelling tasks")
         else:
             fvp.add_line_callback(lambda line: print(line))
-            await fvp.run()
+            fvp.run()
 
     finally:
-        await fvp.stop()
+        fvp.stop()
+
 
 def runfvp(cli_args):
     args, extra_args = parse_args(cli_args)
@@ -77,14 +76,8 @@ def runfvp(cli_args):
         config_file = conffile.find(args.config)
     logger.debug(f"Loading {config_file}")
     config = conffile.load(config_file)
+    start_fvp(args, config, extra_args)
 
-    try:
-        # When we can assume Py3.7+, this can simply be asyncio.run()
-        loop = asyncio.get_event_loop()
-        return loop.run_until_complete(start_fvp(args, config, extra_args))
-    except asyncio.CancelledError:
-        # This means telnet exited, which isn't an error
-        return 0
 
 if __name__ == "__main__":
     try:

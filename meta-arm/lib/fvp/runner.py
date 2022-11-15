@@ -1,4 +1,3 @@
-import asyncio
 import re
 import subprocess
 import os
@@ -57,7 +56,7 @@ class FVPRunner:
     def add_line_callback(self, callback):
         self._line_callbacks.append(callback)
 
-    async def start(self, config, extra_args=[], terminal_choice="none"):
+    def start(self, config, extra_args=[], terminal_choice="none"):
         cli = cli_from_config(config, terminal_choice)
         cli += extra_args
 
@@ -69,8 +68,8 @@ class FVPRunner:
                 env[name] = os.environ[name]
 
         self._logger.debug(f"Constructed FVP call: {shlex.join(cli)}")
-        self._fvp_process = await asyncio.create_subprocess_exec(
-            *cli,
+        self._fvp_process = subprocess.Popen(
+            cli,
             stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             env=env)
 
@@ -82,13 +81,13 @@ class FVPRunner:
                 self._terminal_ports[terminal] = port
         self.add_line_callback(detect_terminals)
 
-    async def stop(self):
+    def stop(self):
         if self._fvp_process:
             self._logger.debug(f"Terminating FVP PID {self._fvp_process.pid}")
             try:
                 self._fvp_process.terminate()
-                await asyncio.wait_for(self._fvp_process.wait(), 10.0)
-            except asyncio.TimeoutError:
+                self._fvp_process.wait(10.0)
+            except subprocess.TimeoutExpired:
                 self._logger.debug(f"Killing FVP PID {self._fvp_process.pid}")
                 self._fvp_process.kill()
             except ProcessLookupError:
@@ -97,8 +96,8 @@ class FVPRunner:
         for telnet in self._telnets:
             try:
                 telnet.terminate()
-                await asyncio.wait_for(telnet.wait(), 10.0)
-            except asyncio.TimeoutError:
+                telnet.wait(10.0)
+            except subprocess.TimeoutExpired:
                 telnet.kill()
             except ProcessLookupError:
                 pass
@@ -118,34 +117,34 @@ class FVPRunner:
         else:
             return 0
 
-    async def run(self, until=None):
+    def run(self, until=None):
         if until and until():
             return
 
-        async for line in self._fvp_process.stdout:
+        for line in self._fvp_process.stdout:
             line = line.strip().decode("utf-8", errors="replace")
             for callback in self._line_callbacks:
                 callback(line)
             if until and until():
                 return
 
-    async def _get_terminal_port(self, terminal, timeout):
+    def _get_terminal_port(self, terminal):
         def terminal_exists():
             return terminal in self._terminal_ports
-        await asyncio.wait_for(self.run(terminal_exists), timeout)
+        self.run(terminal_exists)
         return self._terminal_ports[terminal]
 
-    async def create_telnet(self, terminal, timeout=15.0):
+    def create_telnet(self, terminal):
         check_telnet()
-        port = await self._get_terminal_port(terminal, timeout)
-        telnet = await asyncio.create_subprocess_exec("telnet", "localhost", str(port), stdin=sys.stdin, stdout=sys.stdout)
+        port = self._get_terminal_port(terminal)
+        telnet = subprocess.Popen(["telnet", "localhost", str(port)], stdin=sys.stdin, stdout=sys.stdout)
         self._telnets.append(telnet)
         return telnet
 
-    async def create_pexpect(self, terminal, timeout=15.0, **kwargs):
+    def create_pexpect(self, terminal, **kwargs):
         check_telnet()
         import pexpect
-        port = await self._get_terminal_port(terminal, timeout)
+        port = self._get_terminal_port(terminal)
         instance = pexpect.spawn(f"telnet localhost {port}", **kwargs)
         self._pexpects.append(instance)
         return instance
