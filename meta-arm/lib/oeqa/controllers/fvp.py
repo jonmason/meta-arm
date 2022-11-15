@@ -1,4 +1,3 @@
-import asyncio
 import pathlib
 import pexpect
 import os
@@ -25,32 +24,18 @@ class OEFVPSSHTarget(OESSHTarget):
         if not self.fvpconf.exists():
             raise FileNotFoundError(f"Cannot find {self.fvpconf}")
 
-    async def boot_fvp(self):
-        self.fvp = runner.FVPRunner(self.logger)
-        await self.fvp.start(self.config)
-        self.logger.debug(f"Started FVP PID {self.fvp.pid()}")
-        await self._after_start()
-
-    async def _after_start(self):
+    def _after_start(self):
         pass
-
-    async def _after_stop(self):
-        pass
-
-    async def stop_fvp(self):
-        returncode = await self.fvp.stop()
-        await self._after_stop()
-
-        self.logger.debug(f"Stopped FVP with return code {returncode}")
 
     def start(self, **kwargs):
-        # When we can assume Py3.7+, this can simply be asyncio.run()
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(asyncio.gather(self.boot_fvp()))
+        self.fvp = runner.FVPRunner(self.logger)
+        self.fvp.start(self.config)
+        self.logger.debug(f"Started FVP PID {self.fvp.pid()}")
+        self._after_start()
 
     def stop(self, **kwargs):
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(asyncio.gather(self.stop_fvp()))
+        returncode = self.fvp.stop()
+        self.logger.debug(f"Stopped FVP with return code {returncode}")
 
 
 class OEFVPTarget(OEFVPSSHTarget):
@@ -66,9 +51,9 @@ class OEFVPTarget(OEFVPSSHTarget):
         # FVPs boot slowly, so allow ten minutes
         self.boot_timeout = 10 * 60
 
-    async def _after_start(self):
+    def _after_start(self):
         self.logger.debug(f"Awaiting console on terminal {self.config['consoles']['default']}")
-        console = await self.fvp.create_pexpect(self.config['consoles']['default'])
+        console = self.fvp.create_pexpect(self.config['consoles']['default'])
         try:
             console.expect("login\\:", timeout=self.boot_timeout)
             self.logger.debug("Found login prompt")
@@ -100,11 +85,11 @@ class OEFVPSerialTarget(OEFVPSSHTarget):
         self.test_log_suffix = pathlib.Path(bootlog).suffix
         self.bootlog = bootlog
 
-    async def _add_terminal(self, name, fvp_name):
+    def _add_terminal(self, name, fvp_name):
         logfile = self._create_logfile(name)
         self.logger.info(f'Creating terminal {name} on {fvp_name}')
         self.terminals[name] = \
-            await self.fvp.create_pexpect(fvp_name, logfile=logfile)
+            self.fvp.create_pexpect(fvp_name, logfile=logfile)
 
     def _create_logfile(self, name):
         fvp_log_file = f"{name}_log{self.test_log_suffix}"
@@ -117,9 +102,9 @@ class OEFVPSerialTarget(OEFVPSSHTarget):
         os.symlink(fvp_log_file, fvp_log_symlink)
         return open(fvp_log_path, 'wb')
 
-    async def _after_start(self):
+    def _after_start(self):
         for name, console in self.config["consoles"].items():
-            await self._add_terminal(name, console)
+            self._add_terminal(name, console)
 
             # testimage.bbclass expects to see a log file at `bootlog`,
             # so make a symlink to the 'default' log file
