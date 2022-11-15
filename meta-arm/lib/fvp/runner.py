@@ -2,6 +2,7 @@ import asyncio
 import re
 import subprocess
 import os
+import shlex
 import shutil
 import sys
 
@@ -67,7 +68,7 @@ class FVPRunner:
             if name in os.environ:
                 env[name] = os.environ[name]
 
-        self._logger.debug(f"Constructed FVP call: {cli}")
+        self._logger.debug(f"Constructed FVP call: {shlex.join(cli)}")
         self._fvp_process = await asyncio.create_subprocess_exec(
             *cli,
             stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
