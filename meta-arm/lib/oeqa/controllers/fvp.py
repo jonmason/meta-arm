@@ -52,8 +52,10 @@ class OEFVPTarget(OEFVPSSHTarget):
         self.boot_timeout = 10 * 60
 
     def _after_start(self):
+        parser = runner.ConsolePortParser(self.fvp.stdout)
         self.logger.debug(f"Awaiting console on terminal {self.config['consoles']['default']}")
-        console = self.fvp.create_pexpect(self.config['consoles']['default'])
+        port = parser.parse_port(self.config['consoles']['default'])
+        console = self.fvp.create_pexpect(port)
         try:
             console.expect("login\\:", timeout=self.boot_timeout)
             self.logger.debug("Found login prompt")
@@ -85,12 +87,6 @@ class OEFVPSerialTarget(OEFVPSSHTarget):
         self.test_log_suffix = pathlib.Path(bootlog).suffix
         self.bootlog = bootlog
 
-    def _add_terminal(self, name, fvp_name):
-        logfile = self._create_logfile(name)
-        self.logger.info(f'Creating terminal {name} on {fvp_name}')
-        self.terminals[name] = \
-            self.fvp.create_pexpect(fvp_name, logfile=logfile)
-
     def _create_logfile(self, name):
         fvp_log_file = f"{name}_log{self.test_log_suffix}"
         fvp_log_path = pathlib.Path(self.test_log_path, fvp_log_file)
@@ -103,8 +99,13 @@ class OEFVPSerialTarget(OEFVPSSHTarget):
         return open(fvp_log_path, 'wb')
 
     def _after_start(self):
+        parser = runner.ConsolePortParser(self.fvp.stdout)
         for name, console in self.config["consoles"].items():
-            self._add_terminal(name, console)
+            logfile = self._create_logfile(name)
+            self.logger.info(f'Creating terminal {name} on {console}')
+            port = parser.parse_port(console)
+            self.terminals[name] = \
+                self.fvp.create_pexpect(port, logfile=logfile)
 
             # testimage.bbclass expects to see a log file at `bootlog`,
             # so make a symlink to the 'default' log file

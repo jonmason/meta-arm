@@ -44,17 +44,38 @@ def check_telnet():
     if not bool(shutil.which("telnet")):
         raise RuntimeError("Cannot find telnet, this is needed to connect to the FVP.")
 
+
+class ConsolePortParser:
+    def __init__(self, lines):
+        self._lines = lines
+        self._console_ports = {}
+
+    def parse_port(self, console):
+        if console in self._console_ports:
+            return self._console_ports[console]
+
+        while True:
+            try:
+                line = next(self._lines).strip().decode(errors='ignore')
+                m = re.match(r"^(\S+): Listening for serial connection on port (\d+)$", line)
+                if m:
+                    matched_console = m.group(1)
+                    matched_port = int(m.group(2))
+                    if matched_console == console:
+                        return matched_port
+                    else:
+                        self._console_ports[matched_console] = matched_port
+            except StopIteration:
+                # self._lines might be a growing log file
+                pass
+
+
 class FVPRunner:
     def __init__(self, logger):
-        self._terminal_ports = {}
-        self._line_callbacks = []
         self._logger = logger
         self._fvp_process = None
         self._telnets = []
         self._pexpects = []
-
-    def add_line_callback(self, callback):
-        self._line_callbacks.append(callback)
 
     def start(self, config, extra_args=[], terminal_choice="none"):
         cli = cli_from_config(config, terminal_choice)
@@ -72,14 +93,6 @@ class FVPRunner:
             cli,
             stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             env=env)
-
-        def detect_terminals(line):
-            m = re.match(r"^(\S+): Listening for serial connection on port (\d+)$", line)
-            if m:
-                terminal = m.group(1)
-                port = int(m.group(2))
-                self._terminal_ports[terminal] = port
-        self.add_line_callback(detect_terminals)
 
     def stop(self):
         if self._fvp_process:
@@ -117,34 +130,21 @@ class FVPRunner:
         else:
             return 0
 
-    def run(self, until=None):
-        if until and until():
-            return
+    def wait(self, timeout):
+        self._fvp_process.wait(timeout)
 
-        for line in self._fvp_process.stdout:
-            line = line.strip().decode("utf-8", errors="replace")
-            for callback in self._line_callbacks:
-                callback(line)
-            if until and until():
-                return
+    @property
+    def stdout(self):
+        return self._fvp_process.stdout
 
-    def _get_terminal_port(self, terminal):
-        def terminal_exists():
-            return terminal in self._terminal_ports
-        self.run(terminal_exists)
-        return self._terminal_ports[terminal]
-
-    def create_telnet(self, terminal):
+    def create_telnet(self, port):
         check_telnet()
-        port = self._get_terminal_port(terminal)
         telnet = subprocess.Popen(["telnet", "localhost", str(port)], stdin=sys.stdin, stdout=sys.stdout)
         self._telnets.append(telnet)
         return telnet
 
-    def create_pexpect(self, terminal, **kwargs):
-        check_telnet()
+    def create_pexpect(self, port, **kwargs):
         import pexpect
-        port = self._get_terminal_port(terminal)
         instance = pexpect.spawn(f"telnet localhost {port}", **kwargs)
         self._pexpects.append(instance)
         return instance
