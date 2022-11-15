@@ -1,0 +1,107 @@
+#!/bin/bash
+
+set -e -u
+
+MACHINE=$1
+TEST_LEVEL=$2
+
+# Available options for building are
+#  TOOLCHAINS: [gcc, clang, armgcc, external-gccarm]
+#  TCLIBC: [glibc, musl]
+#  FIRMWARE: [uboot, edk2]
+#  TS: [none, trusted-services]
+#  TESTING: testimage
+#  VIRT: [none, xen]
+
+TC="gcc"
+LIBC="glibc"
+FIRMWARE="none"
+TS="none"
+TEST="none"
+VIRT="none"
+TAGS=""
+
+case $TEST_LEVEL in
+	5)
+		TC="gcc, clang, armgcc, external-gccarm"
+		LIBC="glibc, musl"
+		VIRT="none, xen"
+		;;
+	4)
+		TC="gcc, clang, armgcc, external-gccarm"
+		LIBC="glibc, musl"
+		;;
+	3)
+		TC="gcc, clang, armgcc, external-gccarm"
+		;;
+	2)
+		TC="gcc, clang, armgcc"
+		;;
+esac
+
+#Only run testimage on machines that can handle it
+if [[ $(find . -name $MACHINE.conf -exec grep -l 'FVP_\|QB_' {} \;) != "" || $(echo $MACHINE | grep qemu) != "" ]]; then
+	if [ $MACHINE == "corstone1000-fvp" ]; then
+		TEST="testimage, tftf"
+	else
+		TEST="testimage"
+	fi
+fi
+
+# HACK - Can probably be extrapolated for others as support is added.
+case $MACHINE in
+	"juno" | "qemuarm64" | "qemuarm")
+		FIRMWARE="uboot, edk2"
+		;;
+	"qemuarm64" | "n1sdp")
+		TS="none, trusted-services"
+		;;
+esac
+
+# Add Tags as needed
+case $MACHINE in
+	"fvp-base"* | "corstone"* | "tc"*)
+		TAGS="  tags:\n    - x86_64"
+		;;
+esac
+
+echo -e "$MACHINE:
+  interruptible: true
+  variables:
+    KAS_WORK_DIR: \$CI_PROJECT_DIR/work
+    KAS_REPO_REF_DIR: \$CI_BUILDS_DIR/persist/repos
+    SSTATE_DIR: \$CI_BUILDS_DIR/persist/sstate
+    DL_DIR: \$CI_BUILDS_DIR/persist/downloads
+    BB_LOGCONFIG: \$CI_PROJECT_DIR/ci/logging.yml
+    TOOLCHAIN_DIR: \$CI_BUILDS_DIR/persist/toolchains
+    IMAGE_DIR: \$CI_PROJECT_DIR/work/build/tmp/deploy/images
+    TOOLCHAIN_LINK_DIR: \$CI_PROJECT_DIR/work/build/toolchains
+  before_script:
+    - echo KAS_WORK_DIR = \$KAS_WORK_DIR
+    - echo SSTATE_DIR = \$SSTATE_DIR
+    - echo DL_DIR = \$DL_DIR
+    - rm -rf \$KAS_WORK_DIR
+    - mkdir --verbose --parents \$KAS_WORK_DIR \$KAS_REPO_REF_DIR \$SSTATE_DIR \$DL_DIR \$TOOLCHAIN_DIR \$TOOLCHAIN_LINK_DIR
+    # Must do this here, as it's the only way to make sure the toolchain is installed on the same builder
+    - ./ci/get-binary-toolchains \$DL_DIR \$TOOLCHAIN_DIR \$TOOLCHAIN_LINK_DIR
+    - sudo apt-get update && sudo apt-get install --yes telnet python3-subunit
+  script:
+    - KASFILES=\$(./ci/jobs-to-kas \"\$CI_JOB_NAME\")
+    - kas shell --update --force-checkout \$KASFILES -c 'cat conf/*.conf'
+    - kas build \$KASFILES
+    - ./ci/check-warnings \$KAS_WORK_DIR/build/warnings.log
+  parallel:
+    matrix:
+      - TOOLCHAINS: [$TC]
+        TCLIBC: [$LIBC]
+        FIRMWARE: [$FIRMWARE]
+        TS: [$TS]
+        TESTING: [$TEST]
+        VIRT: [$VIRT]
+  artifacts:
+    name: "logs"
+    when: on_failure
+    paths:
+      - \$CI_PROJECT_DIR/work/build/tmp/work*/**/temp/log.do_*.*
+$TAGS
+" | sed '/\[none\]/d'
