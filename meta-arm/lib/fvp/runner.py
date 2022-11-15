@@ -77,7 +77,7 @@ class FVPRunner:
         self._telnets = []
         self._pexpects = []
 
-    def start(self, config, extra_args=[], terminal_choice="none"):
+    def start(self, config, extra_args=[], terminal_choice="none", stdout=subprocess.PIPE):
         cli = cli_from_config(config, terminal_choice)
         cli += extra_args
 
@@ -91,7 +91,7 @@ class FVPRunner:
         self._logger.debug(f"Constructed FVP call: {shlex.join(cli)}")
         self._fvp_process = subprocess.Popen(
             cli,
-            stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            stdin=subprocess.DEVNULL, stdout=stdout, stderr=subprocess.STDOUT,
             env=env)
 
     def stop(self):
