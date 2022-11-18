@@ -65,6 +65,9 @@ rtos-machine-config:
 
 linux-machine-pipeline:
   stage: build
+  needs:
+    - job: update-repos
+      job: linux-machine-config
   trigger:
     strategy: depend
     include:
@@ -73,6 +76,9 @@ linux-machine-pipeline:
 
 rtos-machine-pipeline:
   stage: build
+  needs:
+    - job: update-repos
+      job: rtos-machine-config
   trigger:
     strategy: depend
     include:
@@ -81,6 +87,8 @@ rtos-machine-pipeline:
 
 selftest:
   extends: .setup
+  needs:
+    - job: update-repos
   script:
     - sudo apt-get update && sudo apt-get install --yes telnet python3-subunit
     - KASFILES=./ci/qemuarm64.yml:./ci/selftest.yml
@@ -89,6 +97,8 @@ selftest:
 # Validate layers are Yocto Project Compatible
 check-layers:
   extends: .setup
+  needs:
+    - job: update-repos
   script:
     - kas shell --update --force-checkout ci/base.yml:ci/meta-openembedded.yml --command \
       "yocto-check-layer-wrapper $CI_PROJECT_DIR/$LAYER --dependency $CI_PROJECT_DIR/meta-* $KAS_WORK_DIR/meta-openembedded/meta-oe --no-auto-dependency"
@@ -98,7 +108,7 @@ check-layers:
 
 # What percentage of machines in the layer do we build
 machine-coverage:
-  stage: build
+  stage: prep
   interruptible: true
   script:
     - ./ci/check-machine-coverage
