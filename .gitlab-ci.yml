@@ -90,6 +90,9 @@ rtos-machine-config:
 
 linux-machine-pipeline:
   stage: build
+  needs:
+    - job: update-repos
+    - job: linux-machine-config
   trigger:
     strategy: depend
     include:
@@ -98,6 +101,9 @@ linux-machine-pipeline:
 
 rtos-machine-pipeline:
   stage: build
+  needs:
+    - job: update-repos
+    - job: rtos-machine-config
   trigger:
     strategy: depend
     include:
@@ -106,6 +112,8 @@ rtos-machine-pipeline:
 
 selftest:
   extends: .setup
+  needs:
+    - job: update-repos
   script:
     - KASFILES=./ci/qemuarm64.yml:./ci/selftest.yml
     - kas shell --update --force-checkout $KASFILES -c 'oe-selftest --num-processes 1 --run-tests runfvp'
@@ -113,6 +121,8 @@ selftest:
 # Validate layers are Yocto Project Compatible
 check-layers:
   extends: .setup
+  needs:
+    - job: update-repos
   script:
     - kas shell --update --force-checkout ci/base.yml:ci/meta-openembedded.yml --command \
       "yocto-check-layer-wrapper $CI_PROJECT_DIR/$LAYER --dependency $CI_PROJECT_DIR/meta-* $KAS_WORK_DIR/meta-openembedded/meta-oe --no-auto-dependency"
@@ -142,6 +152,7 @@ pending-updates:
 # What percentage of machines in the layer do we build
 machine-coverage:
   extends: .setup
+  stage: prep
   script:
     - ./ci/check-machine-coverage
   coverage: '/Coverage: \d+/'
