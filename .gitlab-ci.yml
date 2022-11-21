@@ -210,7 +210,7 @@ check-layers:
       "yocto-check-layer-wrapper $CI_PROJECT_DIR/$LAYER --dependency $CI_PROJECT_DIR/meta-* $KAS_WORK_DIR/meta-openembedded/meta-oe --no-auto-dependency"
   parallel:
     matrix:
-      - LAYER: [meta-arm, meta-arm-bsp, meta-arm-toolchain, meta-gem5]
+      - LAYER: [meta-arm, meta-arm-bsp, meta-arm-toolchain, meta-gem5, meta-atp]
 
 pending-updates:
   extends: .setup
