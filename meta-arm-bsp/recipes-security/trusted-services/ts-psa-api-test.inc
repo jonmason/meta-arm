@@ -1,4 +1,4 @@
-FILESEXTRAPATHS:prepend := "${THISDIR}/corstone1000/psa-apitest:"
+FILESEXTRAPATHS:prepend:corstone1000 := "${THISDIR}/corstone1000/psa-apitest:"
 
 include ts-arm-platforms.inc
 

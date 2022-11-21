@@ -137,6 +137,7 @@ n1sdp:
   parallel:
     matrix:
       - TOOLCHAINS: [gcc, armgcc]
+        TS: [none, trusted-services]
 
 qemu-generic-arm64:
   extends: .build

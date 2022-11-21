@@ -1,7 +1,6 @@
 FILESEXTRAPATHS:prepend:corstone1000 := "${THISDIR}/corstone1000:"
 
 COMPATIBLE_MACHINE:corstone1000 = "corstone1000"
-
 SRC_URI:append:corstone1000  = " \
     file://0001-Add-openamp-to-SE-proxy-deployment.patch;patchdir=../trusted-services \
     file://0002-Implement-mhu-driver-and-the-OpenAmp-conversion-laye.patch;patchdir=../trusted-services \
@@ -26,3 +25,5 @@ SRC_URI:append:corstone1000  = " \
     file://0021-smm_gateway-add-checks-for-null-attributes.patch;patchdir=../trusted-services \
     file://0022-GetNextVariableName-Fix.patch;patchdir=../trusted-services \
     "
+
+COMPATIBLE_MACHINE:n1sdp = "n1sdp"
