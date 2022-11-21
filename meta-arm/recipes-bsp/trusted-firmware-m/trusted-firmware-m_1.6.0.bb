@@ -108,10 +108,9 @@ export OPENSSL_MODULES="${STAGING_LIBDIR_NATIVE}/ossl-modules"
 
 # TF-M ships patches that it needs applied to mbedcrypto, so apply them
 # as part of do_patch.
-apply_local_patches() {
-    cat ${S}/lib/ext/mbedcrypto/*.patch | patch -p1 -d ${S}/../mbedtls
-}
-do_patch[postfuncs] += "apply_local_patches"
+LOCAL_SRC_PATCHES_INPUT_DIR = "${S}/lib/ext/mbedcrypto"
+LOCAL_SRC_PATCHES_DEST_DIR = "${S}/../mbedtls"
+inherit apply_local_src_patches
 
 do_configure[cleandirs] = "${B}"
 do_configure() {
