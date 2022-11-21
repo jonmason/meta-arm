@@ -13,7 +13,7 @@ The resulting gem5 native executable contains the AMBA ATP Engine. The resulting
 Users should run the environment as follows:
 
 ```bash
-./tmp/deploy/tools/start-gem5-atp.sh
+oe-run-native atp-gem5-native start-gem5-atp.sh
 ```
 
 This script launches a fast simulation to fast-forward Linux boot. Once Linux boot is completed, the fast simulation switches into a detailed simulation for the final usable environment. Users can connect and interact with the environment as follows:
