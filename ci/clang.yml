@@ -5,6 +5,10 @@ repos:
   meta-clang:
     url: https://github.com/kraj/meta-clang
     refspec: master
+    patches:
+      pixman:
+        repo: meta-arm
+        path: ci/0001-Revert-pixman-Do-not-use-clang-assembler-for-now.patch
 
 local_conf_header:
   clang: |
