@@ -8,7 +8,7 @@ DESCRIPTION = "Trusted Firmware-M"
 HOMEPAGE = "https://git.trustedfirmware.org/trusted-firmware-m.git"
 PROVIDES = "virtual/trusted-firmware-m"
 
-LICENSE = "BSD-3-Clause & Apache-2.0"
+LICENSE = "BSD-2-Clause & BSD-3-Clause & Apache-2.0"
 
 LIC_FILES_CHKSUM = "file://license.rst;md5=07f368487da347f3c7bd0fc3085f3afa \
                     file://../tf-m-tests/license.rst;md5=02d06ffb8d9f099ff4961c0cb0183a18 \
@@ -19,6 +19,7 @@ SRC_URI  = "git://git.trustedfirmware.org/TF-M/trusted-firmware-m.git;protocol=h
             git://git.trustedfirmware.org/TF-M/tf-m-tests.git;protocol=https;branch=${SRCBRANCH_tfm-tests};name=tfm-tests;destsuffix=git/tf-m-tests \
             git://github.com/ARMmbed/mbedtls.git;protocol=https;branch=${SRCBRANCH_mbedtls};name=mbedtls;destsuffix=git/mbedtls \
             git://github.com/mcu-tools/mcuboot.git;protocol=https;branch=${SRCBRANCH_mcuboot};name=mcuboot;destsuffix=git/mcuboot \
+            git://github.com/laurencelundblade/QCBOR.git;protocol=https;branch=${SRCBRANCH_qcbor};name=qcbor;destsuffix=git/qcbor \
             "
 
 # The required dependencies are documented in tf-m/config/config_default.cmake
@@ -34,6 +35,9 @@ SRCREV_tfm-tests = "4972e8df3fcbd386a5b0c18613d8a803f4dda082"
 # v1.9.0
 SRCBRANCH_mcuboot ?= "main"
 SRCREV_mcuboot = "c657cbea75f2bb1faf1fceacf972a0537a8d26dd"
+# qcbor
+SRCBRANCH_qcbor ?= "master"
+SRCREV_qcbor = "b0e7033268e88c9f27146fa9a1415ef4c19ebaff"
 
 UPSTREAM_CHECK_GITTAGREGEX = "^TF-Mv(?P<pver>\d+(\.\d+)+)$"
 
@@ -92,7 +96,7 @@ EXTRA_OECMAKE += "${@bb.utils.contains('TFM_DEBUG', '1', '-DCMAKE_BUILD_TYPE=Deb
 # Verbose builds
 EXTRA_OECMAKE += "-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
 
-EXTRA_OECMAKE += "-DMBEDCRYPTO_PATH=${S}/../mbedtls -DTFM_TEST_REPO_PATH=${S}/../tf-m-tests -DMCUBOOT_PATH=${S}/../mcuboot"
+EXTRA_OECMAKE += "-DMBEDCRYPTO_PATH=${S}/../mbedtls -DTFM_TEST_REPO_PATH=${S}/../tf-m-tests -DMCUBOOT_PATH=${S}/../mcuboot -DQCBOR_PATH=${S}/../qcbor"
 
 export CMAKE_BUILD_PARALLEL_LEVEL = "${@oe.utils.parallel_make(d, False)}"
 
