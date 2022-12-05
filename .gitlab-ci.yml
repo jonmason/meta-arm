@@ -120,12 +120,6 @@ fvp-baser-aemv8r64:
 fvps:
   extends: .build
 
-gem5-arm64:
-  extends: .build
-  parallel:
-    matrix:
-      - VIRT: [none, xen]
-
 generic-arm64:
   extends: .build
 
@@ -221,7 +215,7 @@ check-layers:
       "yocto-check-layer-wrapper $CI_PROJECT_DIR/$LAYER --dependency $CI_PROJECT_DIR/meta-* $KAS_WORK_DIR/meta-openembedded/meta-oe --no-auto-dependency"
   parallel:
     matrix:
-      - LAYER: [meta-arm, meta-arm-bsp, meta-arm-toolchain, meta-gem5]
+      - LAYER: [meta-arm, meta-arm-bsp, meta-arm-toolchain]
 
 pending-updates:
   extends: .setup
@@ -231,8 +225,8 @@ pending-updates:
   script:
     - rm -fr update-report
     # This configuration has all of the layers we need enabled
-    - kas shell ci/meta-openembedded.yml:ci/gem5-arm64.yml:ci/qemuarm64.yml --command \
-      "$CI_PROJECT_DIR/scripts/machine-summary.py -t report -o $CI_PROJECT_DIR/update-report $($CI_PROJECT_DIR/ci/listmachines.py meta-arm meta-arm-bsp meta-gem5)"
+    - kas shell ci/qemuarm64.yml:ci/meta-openembedded.yml --command \
+      "$CI_PROJECT_DIR/scripts/machine-summary.py -t report -o $CI_PROJECT_DIR/update-report $($CI_PROJECT_DIR/ci/listmachines.py meta-arm meta-arm-bsp)"
   # Do this on x86 whilst the compilers are x86-only
   tags:
     - x86_64
