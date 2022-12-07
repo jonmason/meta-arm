@@ -23,16 +23,16 @@ TAGS=""
 
 case $TEST_LEVEL in
 	5)
-		TC="gcc, clang, armgcc, external-gccarm"
+		TC="gcc, clang, armgcc"
 		LIBC="glibc, musl"
 		VIRT="none, xen"
 		;;
 	4)
-		TC="gcc, clang, armgcc, external-gccarm"
+		TC="gcc, clang, armgcc"
 		LIBC="glibc, musl"
 		;;
 	3)
-		TC="gcc, clang, armgcc, external-gccarm"
+		TC="gcc, clang, armgcc"
 		;;
 	2)
 		TC="gcc, clang, armgcc"
@@ -65,6 +65,23 @@ case $MACHINE in
 		;;
 esac
 
+# The binary toolchain cannot work with anything but glibc.  So, we have to get super hacky here and replicate the matrix with a unique entry just for it
+MATRIX="      - TOOLCHAINS: [$TC]
+        TCLIBC: [$LIBC]
+        FIRMWARE: [$FIRMWARE]
+        TS: [$TS]
+        TESTING: [$TEST]
+        VIRT: [$VIRT]"
+if [ $TEST_LEVEL -gt 2 ]; then
+	MATRIX="$MATRIX
+      - TOOLCHAINS: [external-gccarm]
+        TCLIBC: [glibc]
+        FIRMWARE: [$FIRMWARE]
+        TS: [$TS]
+        TESTING: [$TEST]
+        VIRT: [$VIRT]"
+fi
+
 echo -e "$MACHINE:
   interruptible: true
   variables:
@@ -92,12 +109,7 @@ echo -e "$MACHINE:
     - ./ci/check-warnings \$KAS_WORK_DIR/build/warnings.log
   parallel:
     matrix:
-      - TOOLCHAINS: [$TC]
-        TCLIBC: [$LIBC]
-        FIRMWARE: [$FIRMWARE]
-        TS: [$TS]
-        TESTING: [$TEST]
-        VIRT: [$VIRT]
+$MATRIX
   artifacts:
     name: "logs"
     when: on_failure
