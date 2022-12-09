@@ -18,10 +18,6 @@ This repository contains the Arm layers for OpenEmbedded.
 
   This layer contains recipes for Arm's binary toolchains (GCC and Clang for -A and -M), and a recipe to build Arm's GCC.
 
-* meta-atp
-
-  This layer contains recipes for the [AMBA Adaptive Traffic Profiles (ATP)](https://developer.arm.com/documentation/ihi0082/latest) generation integration into meta-gem5.
-
 * meta-gem5
 
   This layer contains recipes and machines for gem5, a system-level and processor simulator.
