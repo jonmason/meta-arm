@@ -13,6 +13,8 @@ stages:
 
 # Common job fragment to get a worker ready
 .setup:
+  tags:
+    - $DEFAULT_TAG
   stage: build
   variables:
     KAS_WORK_DIR: $CI_PROJECT_DIR/work
@@ -63,6 +65,8 @@ n1sdp/bootstrap:
 # What percentage of machines in the layer do we build
 machine-coverage:
   stage: bootstrap
+  tags:
+    - $DEFAULT_TAG
   script:
   - ./ci/check-machine-coverage
   coverage: '/Coverage: \d+/'
