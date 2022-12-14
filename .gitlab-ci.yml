@@ -12,6 +12,8 @@ stages:
 
 # Common job fragment to get a worker ready
 .setup:
+  tags:
+    - $DEFAULT_TAG
   stage: build
   interruptible: true
   variables:
@@ -262,6 +264,8 @@ machine-coverage:
   script:
     - ./ci/check-machine-coverage
   coverage: '/Coverage: \d+/'
+  tags:
+    - x86_64
 
 metrics:
   extends: .setup
