@@ -239,13 +239,10 @@ pending-updates:
 
 # What percentage of machines in the layer do we build
 machine-coverage:
-  stage: build
-  interruptible: true
+  extends: .setup
   script:
     - ./ci/check-machine-coverage
   coverage: '/Coverage: \d+/'
-  tags:
-    - x86_64
 
 metrics:
   extends: .setup
