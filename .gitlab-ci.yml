@@ -1,8 +1,10 @@
 image: ghcr.io/siemens/kas/kas:latest-release
 
-# These are needed as the k8s executor doesn't respect the container entrypoint
-# by default
 variables:
+  CPU_REQUEST: ""
+  DEFAULT_TAG: ""
+  # These are needed as the k8s executor doesn't respect the container entrypoint
+  # by default
   FF_USE_LEGACY_KUBERNETES_EXECUTION_STRATEGY: 0
   FF_KUBERNETES_HONOR_ENTRYPOINT: 1
 
