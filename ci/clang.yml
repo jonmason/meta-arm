@@ -4,6 +4,11 @@ header:
 repos:
   meta-clang:
     url: https://github.com/kraj/meta-clang
+  poky:
+    patches:
+      perf:
+        repo: meta-arm
+        path: 0001-linux-yocto-fix-perf-with-clang.patch
 
 local_conf_header:
   clang: |

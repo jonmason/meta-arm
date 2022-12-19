@@ -1,0 +1,132 @@
+From fc2e155f4127935d11a6fc2de2af934f379b5416 Mon Sep 17 00:00:00 2001
+From: Ross Burton <ross.burton@arm.com>
+Date: Mon, 19 Dec 2022 12:25:06 +0000
+Subject: [PATCH] linux-yocto: fix perf with clang
+
+Signed-off-by: Ross Burton <ross.burton@arm.com>
+---
+ ...hon-Account-for-multiple-words-in-CC.patch | 98 +++++++++++++++++++
+ meta/recipes-kernel/linux/linux-yocto_5.15.bb |  2 +
+ 2 files changed, 100 insertions(+)
+ create mode 100644 meta/recipes-kernel/linux/files/0001-perf-python-Account-for-multiple-words-in-CC.patch
+
+diff --git a/meta/recipes-kernel/linux/files/0001-perf-python-Account-for-multiple-words-in-CC.patch b/meta/recipes-kernel/linux/files/0001-perf-python-Account-for-multiple-words-in-CC.patch
+new file mode 100644
+index 00000000000..e9f5ab9d836
+--- /dev/null
++++ b/meta/recipes-kernel/linux/files/0001-perf-python-Account-for-multiple-words-in-CC.patch
+@@ -0,0 +1,98 @@
++https://lore.kernel.org/linux-perf-users/Y5d4k7fDxfRP7hcN@kernel.org/T/
++https://lore.kernel.org/bpf/20221205025039.149139-1-raj.khem@gmail.com/T/
++
++Upstream-Status: Submitted
++Signed-off-by: Ross Burton <ross.burton@arm.com>
++
++From ec36ad2d4842fa324d532fe49ff2aa67f7e3e939 Mon Sep 17 00:00:00 2001
++From: Khem Raj <raj.khem@gmail.com>
++Date: Sun, 4 Dec 2022 18:50:39 -0800
++Subject: [PATCH 1/2] libbpf: Fix build warning on ref_ctr_off
++
++Clang warns on 32-bit ARM on this comparision
++
++libbpf.c:10497:18: error: result of comparison of constant 4294967296 with expression of type 'size_t' (aka 'unsigned int') is always false [-Werror,-Wtautological-constant-out-of-range-compare]
++        if (ref_ctr_off >= (1ULL << PERF_UPROBE_REF_CTR_OFFSET_BITS))
++            ~~~~~~~~~~~ ^  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++
++Check for platform long int to be larger than 32-bits before enabling
++this check, it false on 32bit anyways.
++
++Cc: Alexei Starovoitov <ast@kernel.org>
++Cc: Daniel Borkmann <daniel@iogearbox.net>
++Cc: Song Liu <song@kernel.org>
++Cc: Yonghong Song <yhs@fb.com>
++Cc: Jiri Olsa <jolsa@kernel.org>
++Cc: Paul Walmsley <paul.walmsley@sifive.com>
++Cc: Palmer Dabbelt <palmer@dabbelt.com>
++Cc: Nathan Chancellor <nathan@kernel.org>
++Cc: Nick Desaulniers <ndesaulniers@google.com>
++
++Signed-off-by: Khem Raj <raj.khem@gmail.com>
++---
++ tools/lib/bpf/libbpf.c | 2 +-
++ 1 file changed, 1 insertion(+), 1 deletion(-)
++
++diff --git a/tools/lib/bpf/libbpf.c b/tools/lib/bpf/libbpf.c
++index 050622649797..596d9a335652 100644
++--- a/tools/lib/bpf/libbpf.c
+++++ b/tools/lib/bpf/libbpf.c
++@@ -9185,7 +9185,7 @@ static int perf_event_open_probe(bool uprobe, bool retprobe, const char *name,
++ 	char errmsg[STRERR_BUFSIZE];
++ 	int type, pfd, err;
++ 
++-	if (ref_ctr_off >= (1ULL << PERF_UPROBE_REF_CTR_OFFSET_BITS))
+++	if (BITS_PER_LONG > 32 && ref_ctr_off >= (1ULL << PERF_UPROBE_REF_CTR_OFFSET_BITS))
++ 		return -EINVAL;
++ 
++ 	type = uprobe ? determine_uprobe_perf_type()
++-- 
++2.34.1
++
++
++From 08bdb3dba2ace03bc48e25b9a6136fc48e1991c9 Mon Sep 17 00:00:00 2001
++From: Khem Raj <raj.khem@gmail.com>
++Date: Sun, 4 Dec 2022 18:55:34 -0800
++Subject: [PATCH 2/2] perf python: Account for multiple words in CC
++
++Sometimes build systems may append options e.g. --sysroot etc. to CC
++variable especially in cross-compile environments like yocto project
++where CC varable is composed of cross-compiler name and some needed
++options for it to work in a relocatable environment. Therefore separate
++out the compiler name from rest of the options in CC, then add the
++options via second argument to Popen() API
++
++Cc: Adrian Hunter <adrian.hunter@intel.com>
++Cc: Fangrui Song <maskray@google.com>
++Cc: Florian Fainelli <f.fainelli@gmail.com>
++Cc: Ian Rogers <irogers@google.com>
++Cc: Jiri Olsa <jolsa@kernel.org>
++Cc: John Keeping <john@metanate.com>
++Cc: Leo Yan <leo.yan@linaro.org>
++Cc: Michael Petlan <mpetlan@redhat.com>
++Cc: Namhyung Kim <namhyung@kernel.org>
++Cc: Nathan Chancellor <nathan@kernel.org>
++Cc: Nick Desaulniers <ndesaulniers@google.com>
++Cc: Sedat Dilek <sedat.dilek@gmail.com>
++Signed-off-by: Khem Raj <raj.khem@gmail.com>
++Reviewed-by: Florian Fainelli <f.fainelli@gmail.com>
++---
++ tools/perf/util/setup.py | 2 +-
++ 1 file changed, 1 insertion(+), 1 deletion(-)
++
++diff --git a/tools/perf/util/setup.py b/tools/perf/util/setup.py
++index c255a2c90cd6..3699b3f8d2d7 100644
++--- a/tools/perf/util/setup.py
+++++ b/tools/perf/util/setup.py
++@@ -7,7 +7,7 @@ cc_is_clang = b"clang version" in Popen([cc.split()[0], "-v"], stderr=PIPE).stde
++ src_feature_tests  = getenv('srctree') + '/tools/build/feature'
++ 
++ def clang_has_option(option):
++-    cc_output = Popen([cc, option, path.join(src_feature_tests, "test-hello.c") ], stderr=PIPE).stderr.readlines()
+++    cc_output = Popen([cc.split()[0], str(cc.split()[1:]) + option, path.join(src_feature_tests, "test-hello.c") ], stderr=PIPE).stderr.readlines()
++     return [o for o in cc_output if ((b"unknown argument" in o) or (b"is not supported" in o))] == [ ]
++ 
++ if cc_is_clang:
++-- 
++2.34.1
++
+diff --git a/meta/recipes-kernel/linux/linux-yocto_5.15.bb b/meta/recipes-kernel/linux/linux-yocto_5.15.bb
+index d5f21daf35b..d9535e65a97 100644
+--- a/meta/recipes-kernel/linux/linux-yocto_5.15.bb
++++ b/meta/recipes-kernel/linux/linux-yocto_5.15.bb
+@@ -37,6 +37,8 @@ KBRANCH:class-devupstream = "v5.15/base"
+ SRC_URI = "git://git.yoctoproject.org/linux-yocto.git;name=machine;branch=${KBRANCH}; \
+            git://git.yoctoproject.org/yocto-kernel-cache;type=kmeta;name=meta;branch=yocto-5.15;destsuffix=${KMETA}"
+ 
++SRC_URI += "file://0001-perf-python-Account-for-multiple-words-in-CC.patch"
++
+ LIC_FILES_CHKSUM = "file://COPYING;md5=6bc538ed5bd9a7fc9398086aedcd7e46"
+ LINUX_VERSION ?= "5.15.78"
+ 
+-- 
+2.34.1
+
