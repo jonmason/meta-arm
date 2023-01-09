@@ -11,6 +11,7 @@ LIC_FILES_CHKSUM += "file://cmsis/LICENSE.txt;md5=e3fc50a88d0a364313df4b21ef20c2
 SRC_URI = "\
     git://github.com/ARM-software/SCP-firmware.git;protocol=https;name=scp;destsuffix=src;nobranch=1 \
     git://github.com/ARM-software/CMSIS_5.git;protocol=https;name=cmsis;destsuffix=src/cmsis;lfs=0;nobranch=1 \
+    file://0001-tools-gen_module_code-atomically-rewrite-the-generat.patch \
 "
 
 PV            = "2.6+git${SRCPV}"
