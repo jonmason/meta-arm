@@ -13,8 +13,9 @@ SRC_URI = "\
     git://github.com/ARM-software/CMSIS_5.git;protocol=https;name=cmsis;destsuffix=src/cmsis;lfs=0;nobranch=1 \
 "
 
+PV            = "2.6+git${SRCPV}"
 SRCREV_scp    = "fd7c83561a7d76c7681d5d017fb23aa3664c028c"
-SRCREV_cmsis  = "refs/tags/5.2.0"
+SRCREV_cmsis  = "80cc44bba16cb4c8f495b7aa9709d41ac50e9529"
 SRCREV_FORMAT = "scp_cmsis"
 
 require scp-firmware.inc
