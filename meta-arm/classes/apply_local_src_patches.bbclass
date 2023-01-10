@@ -32,7 +32,7 @@ apply_local_src_patches() {
     export QUILT_PATCHES=./patches-extra
     mkdir -p patches-extra
 
-    for patch in $(find $input_dir -type f -name *.patch -or -name *.diff)
+    for patch in $(find $input_dir -type f -name *.patch -or -name *.diff | sort)
     do
         patch_basename=`basename $patch`
         if ! quilt applied $patch_basename >/dev/null ; then
