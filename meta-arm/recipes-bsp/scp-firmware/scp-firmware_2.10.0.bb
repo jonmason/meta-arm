@@ -46,6 +46,7 @@ CFLAGS[unexport] = "1"
 EXTRA_OECMAKE = "-D CMAKE_BUILD_TYPE=${SCP_BUILD_STR} \
                  -D SCP_LOG_LEVEL=${SCP_LOG_LEVEL} \
                  -D SCP_PLATFORM_FEATURE_SET=${SCP_PLATFORM_FEATURE_SET} \
+                 -D DISABLE_CPPCHECK=1 \
                 "
 
 do_configure() {
