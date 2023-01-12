@@ -1,7 +1,7 @@
-From 2cad562823976134f201d6e2ef187bf103e17d1e Mon Sep 17 00:00:00 2001
+From 323df950c63af6d1a9ba5bd16f4f9d9348e9afc2 Mon Sep 17 00:00:00 2001
 From: Vishnu Banavath <vishnu.banavath@arm.com>
 Date: Fri, 17 Dec 2021 19:50:25 +0000
-Subject: [PATCH 23/26] efi_firmware: add get_image_info for corstone1000
+Subject: [PATCH 17/25] efi_firmware: add get_image_info for corstone1000
 
 This change is to populate get_image_info which eventually
 will be populated in ESRT table

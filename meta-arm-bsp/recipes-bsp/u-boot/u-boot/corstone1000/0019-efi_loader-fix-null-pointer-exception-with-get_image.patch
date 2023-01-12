@@ -1,7 +1,7 @@
-From 456e616401b02a579e9ea5ec3e5ab1d1c884b389 Mon Sep 17 00:00:00 2001
+From 28e7a47c7021b7d321bb6e4dbe1bd7d2ceb8aa6d Mon Sep 17 00:00:00 2001
 From: Vishnu Banavath <vishnu.banavath@arm.com>
 Date: Fri, 14 Jan 2022 15:24:18 +0000
-Subject: [PATCH 25/26] efi_loader: fix null pointer exception with
+Subject: [PATCH 19/25] efi_loader: fix null pointer exception with
  get_image_info
 
 get_img_info API implemented for corstone1000 target does not

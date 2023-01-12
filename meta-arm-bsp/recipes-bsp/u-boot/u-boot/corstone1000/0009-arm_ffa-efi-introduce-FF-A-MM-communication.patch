@@ -1,11 +1,9 @@
-From b3c7d84dcde6ee1cbc13e10664d24ffa220f5fb3 Mon Sep 17 00:00:00 2001
+From cefc1d101c62e62e66f9cbf1775defde7d2c3d27 Mon Sep 17 00:00:00 2001
 From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 Date: Mon, 15 Aug 2022 15:12:49 +0100
-Subject: [PATCH 14/26] arm_ffa: introduce FF-A MM communication
+Subject: [PATCH 09/25] arm_ffa: efi: introduce FF-A MM communication
 
 Add MM communication support using FF-A transport
-
-Access an SP's service through EFI MM communication protocol.
 
 This feature allows accessing MM partitions services through
 EFI MM communication protocol. MM partitions such as StandAlonneMM
@@ -26,17 +24,40 @@ buffer with the response data.
 The response data is copied back to the communication buffer and
 consumed by the EFI subsystem.
 
-FF-A driver private data is copied to EFI runtime section at
-ExitBootServices(). This garantees secure world partitions data are
-available at EFI runtime level.
+MM communication protocol supports FF-A 64-bit direct messaging.
 
 Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 Signed-off-by: Gowtham Suresh Kumar <gowtham.sureshkumar@arm.com>
-Upstream-Status: Submitted [cover letter: https://lore.kernel.org/all/20220926101723.9965-1-abdellatif.elkhlifi@arm.com/]
----
+Cc: Tom Rini <trini@konsulko.com>
+Cc: Simon Glass <sjg@chromium.org>
+Cc: Ilias Apalodimas <ilias.apalodimas@linaro.org>
+Cc: Jens Wiklander <jens.wiklander@linaro.org>
+Upstream-Status: Submitted [cover letter: https://lore.kernel.org/all/20221122131751.22747-1-abdellatif.elkhlifi@arm.com/]
 
 Changelog:
 ===============
+
+v8:
+
+* isolate the compilation choices between FF-A and OP-TEE
+* update partition_info_get() second argument to be an SP count
+* pass NULL device pointer to the FF-A bus discovery and operations
+
+v7:
+
+* set the MM door bell event to use 64-bit direct messaging
+* issue a compile time error when one of these macros are not found :
+  FFA_SHARED_MM_BUFFER_SIZE, FFA_SHARED_MM_BUFFER_OFFSET, FFA_SHARED_MM_BUFFER_ADDR
+* make mm_sp_svc_uuid static
+* replace EINVAL with ENOMEM in ffa_discover_mm_sp_id() when calloc() fails
+* improve use of unmap_sysmem() in ffa_mm_communicate()
+
+v6:
+
+* add FF-A runtime discovery at MM communication level
+* drop EFI runtime support for FF-A MM communication
+* revert the changes in include/mm_communication.h for
+  efi_mm_communicate_header and smm_variable_access structures
 
 v4:
 
@@ -45,7 +66,7 @@ v4:
 * copy FF-A driver private data to EFI runtime section at
   ExitBootServices()
 * drop use of FFA_ERR_STAT_SUCCESS error code
-* replace EFI_BUFFER_TOO_SMALL by EFI_OUT_OF_RESOURCES
+* replace EFI_BUFFER_TOO_SMALL with EFI_OUT_OF_RESOURCES
   in ffa_mm_communicate(). No need for efi_memcpy_runtime() anymore
 * revert the error log in mm_communicate() in case of failure
 * remove packed attribute from efi_mm_communicate_header and
@@ -58,93 +79,26 @@ v2:
 v1:
 
 * introduce FF-A MM communication
-
- arch/arm/cpu/armv8/cache.S        |  16 ++
- arch/arm/cpu/armv8/cache_v8.c     |   3 +-
- include/mm_communication.h        |   7 +-
+---
+ include/mm_communication.h        |   5 +
  lib/efi_loader/Kconfig            |  14 +-
- lib/efi_loader/efi_boottime.c     |   7 +
- lib/efi_loader/efi_variable_tee.c | 261 +++++++++++++++++++++++++++++-
- 6 files changed, 299 insertions(+), 9 deletions(-)
+ lib/efi_loader/efi_variable_tee.c | 294 +++++++++++++++++++++++++++++-
+ 3 files changed, 307 insertions(+), 6 deletions(-)
 
-diff --git a/arch/arm/cpu/armv8/cache.S b/arch/arm/cpu/armv8/cache.S
-index d1cee23437..f69ef64ed6 100644
---- a/arch/arm/cpu/armv8/cache.S
-+++ b/arch/arm/cpu/armv8/cache.S
-@@ -21,7 +21,11 @@
-  * x1: 0 clean & invalidate, 1 invalidate only
-  * x2~x9: clobbered
-  */
-+#ifdef CONFIG_EFI_LOADER
-+.pushsection .text.efi_runtime, "ax"
-+#else
- .pushsection .text.__asm_dcache_level, "ax"
-+#endif
- ENTRY(__asm_dcache_level)
- 	lsl	x12, x0, #1
- 	msr	csselr_el1, x12		/* select cache level */
-@@ -65,7 +69,11 @@ ENDPROC(__asm_dcache_level)
-  *
-  * flush or invalidate all data cache by SET/WAY.
-  */
-+#ifdef CONFIG_EFI_LOADER
-+.pushsection .text.efi_runtime, "ax"
-+#else
- .pushsection .text.__asm_dcache_all, "ax"
-+#endif
- ENTRY(__asm_dcache_all)
- 	mov	x1, x0
- 	dsb	sy
-@@ -109,7 +117,11 @@ ENTRY(__asm_flush_dcache_all)
- ENDPROC(__asm_flush_dcache_all)
- .popsection
- 
-+#ifdef CONFIG_EFI_LOADER
-+.pushsection .text.efi_runtime, "ax"
-+#else
- .pushsection .text.__asm_invalidate_dcache_all, "ax"
-+#endif
- ENTRY(__asm_invalidate_dcache_all)
- 	mov	x0, #0x1
- 	b	__asm_dcache_all
-@@ -182,7 +194,11 @@ ENTRY(__asm_invalidate_icache_all)
- ENDPROC(__asm_invalidate_icache_all)
- .popsection
- 
-+#ifdef CONFIG_EFI_LOADER
-+.pushsection .text.efi_runtime, "ax"
-+#else
- .pushsection .text.__asm_invalidate_l3_dcache, "ax"
-+#endif
- WEAK(__asm_invalidate_l3_dcache)
- 	mov	x0, #0			/* return status as success */
- 	ret
-diff --git a/arch/arm/cpu/armv8/cache_v8.c b/arch/arm/cpu/armv8/cache_v8.c
-index e4736e5643..afbc487fa1 100644
---- a/arch/arm/cpu/armv8/cache_v8.c
-+++ b/arch/arm/cpu/armv8/cache_v8.c
-@@ -9,6 +9,7 @@
- 
- #include <common.h>
- #include <cpu_func.h>
-+#include <efi_loader.h>
- #include <hang.h>
- #include <log.h>
- #include <asm/cache.h>
-@@ -445,7 +446,7 @@ __weak void mmu_setup(void)
- /*
-  * Performs a invalidation of the entire data cache at all levels
-  */
--void invalidate_dcache_all(void)
-+void __efi_runtime invalidate_dcache_all(void)
- {
- 	__asm_invalidate_dcache_all();
- 	__asm_invalidate_l3_dcache();
 diff --git a/include/mm_communication.h b/include/mm_communication.h
-index e65fbde60d..32dc5dbac8 100644
+index e65fbde60d..d409bed777 100644
 --- a/include/mm_communication.h
 +++ b/include/mm_communication.h
-@@ -13,6 +13,9 @@
+@@ -6,6 +6,8 @@
+  *  Copyright (c) 2017, Intel Corporation. All rights reserved.
+  *  Copyright (C) 2020 Linaro Ltd. <sughosh.ganu@linaro.org>
+  *  Copyright (C) 2020 Linaro Ltd. <ilias.apalodimas@linaro.org>
++ * (C) Copyright 2022 ARM Limited
++ * Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+  */
+ 
+ #ifndef _MM_COMMUNICATION_H_
+@@ -13,6 +15,9 @@
  
  #include <part_efi.h>
  
@@ -154,29 +108,11 @@ index e65fbde60d..32dc5dbac8 100644
  /*
   * Interface to the pseudo Trusted Application (TA), which provides a
   * communication channel with the Standalone MM (Management Mode)
-@@ -43,7 +46,7 @@
-  * To avoid confusion in interpreting frames, the communication buffer should
-  * always begin with efi_mm_communicate_header.
-  */
--struct __packed efi_mm_communicate_header {
-+struct efi_mm_communicate_header {
- 	efi_guid_t header_guid;
- 	size_t     message_len;
- 	u8         data[];
-@@ -145,7 +148,7 @@ struct smm_variable_communicate_header {
-  * Defined in EDK2 as SMM_VARIABLE_COMMUNICATE_ACCESS_VARIABLE.
-  *
-  */
--struct smm_variable_access {
-+struct __packed smm_variable_access {
- 	efi_guid_t  guid;
- 	efi_uintn_t data_size;
- 	efi_uintn_t name_size;
 diff --git a/lib/efi_loader/Kconfig b/lib/efi_loader/Kconfig
-index e3f2402d0e..2a6d70f862 100644
+index b8fb2701a7..d292f57244 100644
 --- a/lib/efi_loader/Kconfig
 +++ b/lib/efi_loader/Kconfig
-@@ -60,13 +60,23 @@ config EFI_VARIABLE_FILE_STORE
+@@ -61,13 +61,23 @@ config EFI_VARIABLE_FILE_STORE
  	  stored as file /ubootefi.var on the EFI system partition.
  
  config EFI_MM_COMM_TEE
@@ -202,29 +138,24 @@ index e3f2402d0e..2a6d70f862 100644
  config EFI_VARIABLE_NO_STORE
  	bool "Don't persist non-volatile UEFI variables"
  	help
-diff --git a/lib/efi_loader/efi_boottime.c b/lib/efi_loader/efi_boottime.c
-index 8fa9a58d76..cede7826bd 100644
---- a/lib/efi_loader/efi_boottime.c
-+++ b/lib/efi_loader/efi_boottime.c
-@@ -2185,6 +2185,13 @@ static efi_status_t EFIAPI efi_exit_boot_services(efi_handle_t image_handle,
- 			debug("[efi_boottime][INFO]: FF-A RX/TX buffers unmapped\n");
- #endif
- 
-+#if CONFIG_IS_ENABLED(ARM_FFA_EFI_RUNTIME_MODE) && !CONFIG_IS_ENABLED(SANDBOX_FFA)
-+		if (ffa_copy_runtime_data())
-+			printf("ERROR: EFI: FFA: copying runtime data\n");
-+		else
-+			printf("INFO: EFI: FFA: runtime data copied\n");
-+#endif
-+
- 	/* Patch out unsupported runtime function */
- 	efi_runtime_detach();
- 
 diff --git a/lib/efi_loader/efi_variable_tee.c b/lib/efi_loader/efi_variable_tee.c
-index dfef18435d..7d9d577281 100644
+index dfef18435d..3933a24e8c 100644
 --- a/lib/efi_loader/efi_variable_tee.c
 +++ b/lib/efi_loader/efi_variable_tee.c
-@@ -15,6 +15,36 @@
+@@ -4,9 +4,12 @@
+  *
+  *  Copyright (C) 2019 Linaro Ltd. <sughosh.ganu@linaro.org>
+  *  Copyright (C) 2019 Linaro Ltd. <ilias.apalodimas@linaro.org>
++ *  Copyright (C) 2022 ARM Limited
++ *  Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+  */
+ 
+ #include <common.h>
++#include <dm.h>
+ #include <efi.h>
+ #include <efi_api.h>
+ #include <efi_loader.h>
+@@ -15,6 +18,36 @@
  #include <malloc.h>
  #include <mm_communication.h>
  
@@ -235,33 +166,33 @@ index dfef18435d..7d9d577281 100644
 +#include <mapmem.h>
 +
 +#ifndef FFA_SHARED_MM_BUFFER_SIZE
-+#warning "FFA_SHARED_MM_BUFFER_SIZE must be defined in include/configs/<board>.h"
++#error "FFA_SHARED_MM_BUFFER_SIZE must be defined in include/configs/<board>.h"
 +#define FFA_SHARED_MM_BUFFER_SIZE 0
 +#endif
 +
 +#ifndef FFA_SHARED_MM_BUFFER_OFFSET
-+#warning "FFA_SHARED_MM_BUFFER_OFFSET must be defined in include/configs/<board>.h"
++#error "FFA_SHARED_MM_BUFFER_OFFSET must be defined in include/configs/<board>.h"
 +#define FFA_SHARED_MM_BUFFER_OFFSET 0
 +#endif
 +
 +#ifndef FFA_SHARED_MM_BUFFER_ADDR
-+#warning "FFA_SHARED_MM_BUFFER_ADDR must be defined in include/configs/<board>.h"
++#error "FFA_SHARED_MM_BUFFER_ADDR must be defined in include/configs/<board>.h"
 +#define FFA_SHARED_MM_BUFFER_ADDR 0
 +#endif
 +
 +/* MM return codes */
 +#define MM_SUCCESS (0)
 +
-+const char *mm_sp_svc_uuid = MM_SP_UUID;
++static const char *mm_sp_svc_uuid = MM_SP_UUID;
 +
-+static __efi_runtime_data u16 mm_sp_id;
++static u16 mm_sp_id;
 +
 +#endif
 +
  extern struct efi_var_file __efi_runtime_data *efi_var_buf;
  static efi_uintn_t max_buffer_size;	/* comm + var + func + data */
  static efi_uintn_t max_payload_size;	/* func + data */
-@@ -24,6 +54,7 @@ struct mm_connection {
+@@ -24,6 +57,7 @@ struct mm_connection {
  	u32 session;
  };
  
@@ -269,7 +200,7 @@ index dfef18435d..7d9d577281 100644
  /**
   * get_connection() - Retrieve OP-TEE session for a specific UUID.
   *
-@@ -143,16 +174,227 @@ static efi_status_t optee_mm_communicate(void *comm_buf, ulong dsize)
+@@ -143,13 +177,248 @@ static efi_status_t optee_mm_communicate(void *comm_buf, ulong dsize)
  
  	return ret;
  }
@@ -290,7 +221,7 @@ index dfef18435d..7d9d577281 100644
 + *
 + * 0 on success
 + */
-+static int __efi_runtime ffa_notify_mm_sp(void)
++static int ffa_notify_mm_sp(void)
 +{
 +	struct ffa_send_direct_data msg = {0};
 +	int ret;
@@ -301,7 +232,7 @@ index dfef18435d..7d9d577281 100644
 +
 +	msg.data0 = FFA_SHARED_MM_BUFFER_OFFSET; /* x3 */
 +
-+	ret = ffa_bus_ops_get()->sync_send_receive(mm_sp_id, &msg);
++	ret = ffa_bus_ops_get()->sync_send_receive(NULL, mm_sp_id, &msg, 1);
 +	if (ret != 0)
 +		return ret;
 +
@@ -330,7 +261,7 @@ index dfef18435d..7d9d577281 100644
 + */
 +static int ffa_discover_mm_sp_id(void)
 +{
-+	u32 count = 0, size = 0;
++	u32 count = 0;
 +	int ret;
 +	struct ffa_partition_info *parts_info;
 +
@@ -340,7 +271,7 @@ index dfef18435d..7d9d577281 100644
 +	/*
 +	 * get from the driver the count of the SPs matching the UUID
 +	 */
-+	ret = ffa_bus_ops_get()->partition_info_get(mm_sp_svc_uuid, &count, NULL);
++	ret = ffa_bus_ops_get()->partition_info_get(NULL, mm_sp_svc_uuid, &count, NULL);
 +	if (ret != 0) {
 +		log_err("EFI: Failure in querying partitions count (error code: %d)\n", ret);
 +		return ret;
@@ -358,18 +289,16 @@ index dfef18435d..7d9d577281 100644
 +
 +	log_info("EFI: Pre-allocating %d partition(s) info structures\n", count);
 +
-+	parts_info = calloc(count, sizeof(struct ffa_partition_info));
++	parts_info = calloc(count, sizeof(*parts_info));
 +	if (!parts_info)
-+		return -EINVAL;
-+
-+	size = count * sizeof(struct ffa_partition_info);
++		return -ENOMEM;
 +
 +	/*
 +	 * ask the driver to fill the
 +	 * buffer with the SPs info
 +	 */
-+	ret = ffa_bus_ops_get()->partition_info_get(mm_sp_svc_uuid, &size, parts_info);
-+	if (ret != 0) {
++	ret = ffa_bus_ops_get()->partition_info_get(NULL, mm_sp_svc_uuid, &count, parts_info);
++	if (ret) {
 +		log_err("EFI: Failure in querying partition(s) info (error code: %d)\n", ret);
 +		free(parts_info);
 +		return ret;
@@ -404,10 +333,11 @@ index dfef18435d..7d9d577281 100644
 + *
 + * EFI status code
 + */
-+static efi_status_t __efi_runtime ffa_mm_communicate(void *comm_buf, ulong comm_buf_size)
++static efi_status_t ffa_mm_communicate(void *comm_buf, ulong comm_buf_size)
 +{
 +	ulong tx_data_size;
 +	int ffa_ret;
++	efi_status_t efi_ret;
 +	struct efi_mm_communicate_header *mm_hdr;
 +	void *virt_shared_buf;
 +
@@ -429,7 +359,7 @@ index dfef18435d..7d9d577281 100644
 +	/* Copy the data to the shared buffer */
 +
 +	virt_shared_buf = (void *)map_sysmem((phys_addr_t)FFA_SHARED_MM_BUFFER_ADDR, 0);
-+	efi_memcpy_runtime(virt_shared_buf, comm_buf, tx_data_size);
++	memcpy(virt_shared_buf, comm_buf, tx_data_size);
 +
 +	/*
 +	 * The secure world might have cache disabled for
@@ -444,8 +374,6 @@ index dfef18435d..7d9d577281 100644
 +	/* Announce there is data in the shared buffer */
 +
 +	ffa_ret = ffa_notify_mm_sp();
-+	if (ffa_ret)
-+		unmap_sysmem(virt_shared_buf);
 +
 +	switch (ffa_ret) {
 +	case 0:
@@ -457,28 +385,55 @@ index dfef18435d..7d9d577281 100644
 +			sizeof(size_t);
 +
 +		if (rx_data_size > comm_buf_size) {
-+			unmap_sysmem(virt_shared_buf);
-+			return EFI_OUT_OF_RESOURCES;
++			efi_ret = EFI_OUT_OF_RESOURCES;
++			break;
 +		}
 +
-+		efi_memcpy_runtime(comm_buf, virt_shared_buf, rx_data_size);
-+		unmap_sysmem(virt_shared_buf);
-+
-+		return EFI_SUCCESS;
++		memcpy(comm_buf, virt_shared_buf, rx_data_size);
++		efi_ret = EFI_SUCCESS;
++		break;
 +	}
 +	case -EINVAL:
-+		return EFI_DEVICE_ERROR;
++		efi_ret = EFI_DEVICE_ERROR;
++		break;
 +	case -EPERM:
-+		return EFI_INVALID_PARAMETER;
++		efi_ret = EFI_INVALID_PARAMETER;
++		break;
 +	case -EACCES:
-+		return EFI_ACCESS_DENIED;
++		efi_ret = EFI_ACCESS_DENIED;
++		break;
 +	case -EBUSY:
-+		return EFI_OUT_OF_RESOURCES;
++		efi_ret = EFI_OUT_OF_RESOURCES;
++		break;
 +	default:
-+		return EFI_ACCESS_DENIED;
++		efi_ret = EFI_ACCESS_DENIED;
 +	}
++
++	unmap_sysmem(virt_shared_buf);
++	return efi_ret;
 +}
 +#endif
++
++/**
++ * select_ffa_mm_comms() - checks FF-A support availability
++ *
++ * Making sure FF-A is compiled in. If that's the case try to discover
++ * the FF-A bus.
++ *
++ * Return:
++ *
++ * 0: FF-A ready for use. Otherwise, failure
++ */
++static efi_status_t select_ffa_mm_comms(void)
++{
++	efi_status_t ret = EFI_UNSUPPORTED;
++#if (IS_ENABLED(CONFIG_ARM_FFA_TRANSPORT))
++	ret = ffa_bus_discover(NULL);
++	if (ret)
++		ret = EFI_NOT_READY;
++#endif
++	return ret;
++}
 +
 +/**
 + * mm_communicate() - Adjust the communication buffer to the MM SP and send
@@ -488,31 +443,34 @@ index dfef18435d..7d9d577281 100644
 + * @comm_buf:		locally allocated communication buffer
   * @dsize:		buffer size
 + *
-+ * The MM SP (also called partition) can be StandAlonneMM or smm-gateway.
++ * The SP (also called partition) can be any MM SP such as  StandAlonneMM or smm-gateway.
 + * The comm_buf format is the same for both partitions.
 + * When using the u-boot OP-TEE driver, StandAlonneMM is supported.
-+ * When using the u-boot FF-A  driver, StandAlonneMM and smm-gateway are supported.
++ * When using the u-boot FF-A  driver, any MM SP is supported.
 + *
   * Return:		status code
   */
--static efi_status_t mm_communicate(u8 *comm_buf, efi_uintn_t dsize)
-+static efi_status_t __efi_runtime mm_communicate(u8 *comm_buf, efi_uintn_t dsize)
- {
- 	efi_status_t ret;
- 	struct efi_mm_communicate_header *mm_hdr;
-@@ -162,7 +404,11 @@ static efi_status_t mm_communicate(u8 *comm_buf, efi_uintn_t dsize)
+ static efi_status_t mm_communicate(u8 *comm_buf, efi_uintn_t dsize)
+@@ -162,7 +431,17 @@ static efi_status_t mm_communicate(u8 *comm_buf, efi_uintn_t dsize)
  	mm_hdr = (struct efi_mm_communicate_header *)comm_buf;
  	var_hdr = (struct smm_variable_communicate_header *)mm_hdr->data;
  
-+	#if (IS_ENABLED(CONFIG_OPTEE))
- 	ret = optee_mm_communicate(comm_buf, dsize);
-+	#elif (IS_ENABLED(CONFIG_ARM_FFA_TRANSPORT))
-+	ret = ffa_mm_communicate(comm_buf, dsize);
-+	#endif
+-	ret = optee_mm_communicate(comm_buf, dsize);
++	ret = select_ffa_mm_comms();
++	if (ret != EFI_SUCCESS) {
++#if (IS_ENABLED(CONFIG_OPTEE))
++		ret = optee_mm_communicate(comm_buf, dsize);
++#endif
++	} else {
++#if (IS_ENABLED(CONFIG_ARM_FFA_TRANSPORT))
++		ret = ffa_mm_communicate(comm_buf, dsize);
++#endif
++	}
++
  	if (ret != EFI_SUCCESS) {
  		log_err("%s failed!\n", __func__);
  		return ret;
-@@ -258,6 +504,13 @@ efi_status_t EFIAPI get_max_payload(efi_uintn_t *size)
+@@ -258,6 +537,13 @@ efi_status_t EFIAPI get_max_payload(efi_uintn_t *size)
  		goto out;
  	}
  	*size = var_payload->size;
@@ -526,7 +484,7 @@ index dfef18435d..7d9d577281 100644
  	/*
  	 * There seems to be a bug in EDK2 miscalculating the boundaries and
  	 * size checks, so deduct 2 more bytes to fulfill this requirement. Fix
-@@ -697,7 +950,7 @@ void efi_variables_boot_exit_notify(void)
+@@ -697,7 +983,7 @@ void efi_variables_boot_exit_notify(void)
  		ret = EFI_NOT_FOUND;
  
  	if (ret != EFI_SUCCESS)

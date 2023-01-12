@@ -1,7 +1,7 @@
-From dbc51066367481b5a45ce24f91571f83a022576e Mon Sep 17 00:00:00 2001
+From de26427c9f9b450ab4a18352fa51f46b3b585bc1 Mon Sep 17 00:00:00 2001
 From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 Date: Mon, 6 Jun 2022 17:26:06 +0100
-Subject: [PATCH 12/26] arm_ffa: introduce Sandbox test cases for UCLASS_FFA
+Subject: [PATCH 07/25] arm_ffa: introduce Sandbox test cases for UCLASS_FFA
 
 Add functional test cases for the FF-A core driver
 
@@ -9,28 +9,38 @@ These tests rely on the FF-A Sandbox driver which helps in
  inspecting the FF-A core driver.
 
 Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
-Upstream-Status: Submitted [cover letter: https://lore.kernel.org/all/20220926101723.9965-1-abdellatif.elkhlifi@arm.com/]
----
+Cc: Tom Rini <trini@konsulko.com>
+Cc: Simon Glass <sjg@chromium.org>
+Cc: Ilias Apalodimas <ilias.apalodimas@linaro.org>
+Cc: Jens Wiklander <jens.wiklander@linaro.org>
+Upstream-Status: Submitted [cover letter: https://lore.kernel.org/all/20221122131751.22747-1-abdellatif.elkhlifi@arm.com/]
 
 Changelog:
 ===============
+
+v8:
+
+  * update partition_info_get() second argument to be an SP count
+  * pass NULL device pointer to the FF-A bus discovery and operations
+
+v7: set the tests to use 64-bit direct messaging
 
 v4: align sandbox tests with the new FF-A driver interfaces
  and new way of error handling
 
 v1: introduce sandbox tests
-
+---
  MAINTAINERS      |   1 +
- test/dm/Makefile |   1 +
- test/dm/ffa.c    | 394 +++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 396 insertions(+)
+ test/dm/Makefile |   2 +
+ test/dm/ffa.c    | 392 +++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 395 insertions(+)
  create mode 100644 test/dm/ffa.c
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 96157db6b6..e5b71b0ade 100644
+index 23cebbd526..e682db8d8f 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -252,6 +252,7 @@ F:	doc/README.ffa.drv
+@@ -256,6 +256,7 @@ F:	doc/arch/arm64.ffa.rst
  F:	drivers/firmware/arm-ffa/
  F:	include/arm_ffa.h
  F:	include/sandbox_arm_ffa.h
@@ -39,10 +49,18 @@ index 96157db6b6..e5b71b0ade 100644
  ARM FREESCALE IMX
  M:	Stefano Babic <sbabic@denx.de>
 diff --git a/test/dm/Makefile b/test/dm/Makefile
-index f0a7c97e3d..f96f848046 100644
+index 7543df8823..e5a791768e 100644
 --- a/test/dm/Makefile
 +++ b/test/dm/Makefile
-@@ -79,6 +79,7 @@ obj-$(CONFIG_POWER_DOMAIN) += power-domain.o
+@@ -1,6 +1,7 @@
+ # SPDX-License-Identifier: GPL-2.0+
+ #
+ # Copyright (c) 2013 Google, Inc
++# (C) Copyright 2022 ARM Limited
+ 
+ obj-$(CONFIG_UT_DM) += test-dm.o
+ 
+@@ -81,6 +82,7 @@ obj-$(CONFIG_POWER_DOMAIN) += power-domain.o
  obj-$(CONFIG_ACPI_PMC) += pmc.o
  obj-$(CONFIG_DM_PMIC) += pmic.o
  obj-$(CONFIG_DM_PWM) += pwm.o
@@ -52,10 +70,10 @@ index f0a7c97e3d..f96f848046 100644
  obj-y += regmap.o
 diff --git a/test/dm/ffa.c b/test/dm/ffa.c
 new file mode 100644
-index 0000000000..052d5fc3f4
+index 0000000000..128d8626a7
 --- /dev/null
 +++ b/test/dm/ffa.c
-@@ -0,0 +1,394 @@
+@@ -0,0 +1,392 @@
 +// SPDX-License-Identifier: GPL-2.0+
 +/*
 + * Functional tests for UCLASS_FFA  class
@@ -228,7 +246,7 @@ index 0000000000..052d5fc3f4
 +	struct ffa_send_direct_data msg = {0};
 +	u8 cnt;
 +
-+	ut_assertok(ffa_bus_ops_get()->sync_send_receive(part_id, &msg));
++	ut_assertok(ffa_bus_ops_get()->sync_send_receive(NULL, part_id, &msg, 1));
 +
 +	for (cnt = 0; cnt < sizeof(struct ffa_send_direct_data) / sizeof(u64); cnt++)
 +		ut_assertok(((u64 *)&msg)[cnt] != 0xffffffffffffffff);
@@ -240,7 +258,7 @@ index 0000000000..052d5fc3f4
 +				     struct sandbox_ffa_prvdata *sdx_prvdata,
 +				     struct unit_test_state *uts)
 +{
-+	u32 count = 0, size = 0;
++	u32 count = 0;
 +	struct ffa_partition_info *parts_info;
 +	u32 info_idx, exp_info_idx;
 +	int ret;
@@ -248,7 +266,7 @@ index 0000000000..052d5fc3f4
 +	/*
 +	 * get from the driver the count of the SPs matching the UUID
 +	 */
-+	ret = ffa_bus_ops_get()->partition_info_get(service_uuid, &count, NULL);
++	ret = ffa_bus_ops_get()->partition_info_get(NULL, service_uuid, &count, NULL);
 +	/* make sure partitions are detected */
 +	ut_assertok(ret != 0);
 +	ut_assertok(count != SANDBOX_SP_COUNT_PER_VALID_SERVICE);
@@ -261,12 +279,10 @@ index 0000000000..052d5fc3f4
 +	parts_info = calloc(count, sizeof(struct ffa_partition_info));
 +	ut_assertok(!parts_info);
 +
-+	size = count * sizeof(struct ffa_partition_info);
-+
 +	/*
 +	 * ask the driver to fill the buffer with the SPs info
 +	 */
-+	ret = ffa_bus_ops_get()->partition_info_get(service_uuid, &size, parts_info);
++	ret = ffa_bus_ops_get()->partition_info_get(NULL, service_uuid, &count, parts_info);
 +	if (ret != 0) {
 +		free(parts_info);
 +		ut_assertok(ret != 0);
@@ -317,7 +333,7 @@ index 0000000000..052d5fc3f4
 +	int ret;
 +
 +	/*  test probing FF-A devices */
-+	ut_assertok(ffa_bus_discover());
++	ut_assertok(ffa_bus_discover(NULL));
 +
 +	/* get a pointer to the FF-A core and sandbox drivers private data */
 +	func_data.data0 = &prvdata;
@@ -374,7 +390,7 @@ index 0000000000..052d5fc3f4
 +	ut_assertok(check_rxbuf_release_flag(rxbuf_flag, uts));
 +
 +	/* test FFA_RXTX_UNMAP */
-+	ut_assertok(ffa_bus_ops_get()->rxtx_unmap());
++	ut_assertok(ffa_bus_ops_get()->rxtx_unmap(NULL));
 +
 +	rxbuf_flag = 1;
 +	ut_assertok(sandbox_ffa_query_core_state(FFA_RXTX_UNMAP, &func_data));
@@ -399,7 +415,7 @@ index 0000000000..052d5fc3f4
 +	u16 part_id = 0;
 +
 +	/*  test probing FF-A devices */
-+	ut_assertok(ffa_bus_discover());
++	ut_assertok(ffa_bus_discover(NULL));
 +
 +	/* get a pointer to the FF-A core and sandbox drivers private data */
 +	func_data.data0 = &prvdata;
@@ -418,32 +434,32 @@ index 0000000000..052d5fc3f4
 +	ut_assertok(check_sandbox_dev(sdx_prvdata, uts));
 +
 +	/* query partitions count using  invalid arguments  */
-+	ret = ffa_bus_ops_get()->partition_info_get(unvalid_svc_uuid, NULL, NULL);
++	ret = ffa_bus_ops_get()->partition_info_get(NULL, unvalid_svc_uuid, NULL, NULL);
 +	ut_assertok(ret != -EINVAL);
 +
 +	/* query partitions count using an invalid UUID  string */
-+	ret = ffa_bus_ops_get()->partition_info_get(unvalid_svc_uuid_str, &count, NULL);
++	ret = ffa_bus_ops_get()->partition_info_get(NULL, unvalid_svc_uuid_str, &count, NULL);
 +	ut_assertok(ret != -EINVAL);
 +
 +	/* query partitions count using an invalid UUID (no matching SP) */
 +	count = 0;
-+	ret = ffa_bus_ops_get()->partition_info_get(unvalid_svc_uuid, &count, NULL);
++	ret = ffa_bus_ops_get()->partition_info_get(NULL, unvalid_svc_uuid, &count, NULL);
 +	ut_assertok(count != 0);
 +
 +	/* query partitions count using a valid UUID  */
 +	count = 0;
-+	ret = ffa_bus_ops_get()->partition_info_get(valid_svc_uuid, &count, NULL);
++	ret = ffa_bus_ops_get()->partition_info_get(NULL, valid_svc_uuid, &count, NULL);
 +	/* make sure partitions are detected */
 +	ut_assertok(ret != 0);
 +	ut_assertok(count != SANDBOX_SP_COUNT_PER_VALID_SERVICE);
 +
 +	/* send data to an invalid partition */
-+	ret = ffa_bus_ops_get()->sync_send_receive(part_id, &msg);
++	ret = ffa_bus_ops_get()->sync_send_receive(NULL, part_id, &msg, 1);
 +	ut_assertok(ret != -EINVAL);
 +
 +	/* send data to a valid partition */
 +	part_id = prvdata->partitions.descs[0].info.id;
-+	ret = ffa_bus_ops_get()->sync_send_receive(part_id, &msg);
++	ret = ffa_bus_ops_get()->sync_send_receive(NULL, part_id, &msg, 1);
 +	ut_assertok(ret != 0);
 +
 +	return CMD_RET_SUCCESS;

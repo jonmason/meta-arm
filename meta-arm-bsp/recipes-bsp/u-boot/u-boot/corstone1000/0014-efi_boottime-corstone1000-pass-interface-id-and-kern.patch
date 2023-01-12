@@ -1,7 +1,7 @@
-From 668fe40ccb0db5542ef333cd4655511dbb8572f9 Mon Sep 17 00:00:00 2001
+From e4e7ccc77a4e6930a768cc1c1f6daf8907ac16c3 Mon Sep 17 00:00:00 2001
 From: Vishnu Banavath <vishnu.banavath@arm.com>
 Date: Fri, 10 Dec 2021 20:10:41 +0000
-Subject: [PATCH 20/26] efi_boottime: corstone1000: pass interface id and
+Subject: [PATCH 14/25] efi_boottime: corstone1000: pass interface id and
  kernel event id using register w4
 
 Initially the interface/event IDs are passed to the SP using register
@@ -22,10 +22,10 @@ Upstream-Status: Pending [Not submitted to upstream yet]
  1 file changed, 10 insertions(+), 3 deletions(-)
 
 diff --git a/lib/efi_loader/efi_boottime.c b/lib/efi_loader/efi_boottime.c
-index 9bf2596597..de815484d2 100644
+index d9eed33ac8..88f2d050be 100644
 --- a/lib/efi_loader/efi_boottime.c
 +++ b/lib/efi_loader/efi_boottime.c
-@@ -27,6 +27,11 @@
+@@ -30,6 +30,11 @@
  #include <arm_ffa.h>
  #endif
  
@@ -37,7 +37,7 @@ index 9bf2596597..de815484d2 100644
  DECLARE_GLOBAL_DATA_PTR;
  
  /* Task priority level */
-@@ -2112,10 +2117,12 @@ static int efi_corstone1000_kernel_started_event(void)
+@@ -2120,10 +2125,12 @@ static int efi_corstone1000_kernel_started_event(void)
  	log_debug("[%s]\n", __func__);
  
  	/*
@@ -51,7 +51,7 @@ index 9bf2596597..de815484d2 100644
 +	msg.data1 = PREP_SEPROXY_SVC_ID(CORSTONE1000_SEPROXY_UPDATE_SVC_ID) |
 +		PREP_SEPROXY_EVT(CORSTONE1000_KERNEL_STARTED_EVT); /* w4 */
  
- 	return ffa_bus_ops_get()->sync_send_receive(CORSTONE1000_SEPROXY_PART_ID, &msg);
+ 	return ffa_bus_ops_get()->sync_send_receive(CORSTONE1000_SEPROXY_PART_ID, &msg, 0);
  }
 -- 
 2.17.1

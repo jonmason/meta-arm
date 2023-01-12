@@ -1,7 +1,7 @@
-From 709e5d8ff07474f840f1d34d3077135f77795452 Mon Sep 17 00:00:00 2001
+From 7bf9c380c63726b7de8316e9c743cb06c9bc7842 Mon Sep 17 00:00:00 2001
 From: Vishnu Banavath <vishnu.banavath@arm.com>
 Date: Mon, 15 Aug 2022 15:46:18 +0100
-Subject: [PATCH 24/26] efi_loader: send bootcomplete message to secure enclave
+Subject: [PATCH 18/25] efi_loader: send bootcomplete message to secure enclave
 
 On corstone1000 platform, Secure Enclave will be expecting
 an event from uboot when it performs capsule update. Previously,
@@ -21,7 +21,7 @@ Upstream-Status: Pending [Not submitted to upstream yet]
  4 files changed, 41 insertions(+), 45 deletions(-)
 
 diff --git a/include/configs/corstone1000.h b/include/configs/corstone1000.h
-index 4637dd5d5d..333b1d93b6 100644
+index 77f96e87a1..4cf1170ffb 100644
 --- a/include/configs/corstone1000.h
 +++ b/include/configs/corstone1000.h
 @@ -22,7 +22,7 @@
@@ -34,10 +34,10 @@ index 4637dd5d5d..333b1d93b6 100644
  #define PREP_SEPROXY_SVC_ID_MASK	GENMASK(31, 16)
  #define PREP_SEPROXY_SVC_ID(x)	 (FIELD_PREP(PREP_SEPROXY_SVC_ID_MASK, (x)))
 diff --git a/lib/efi_loader/efi_boottime.c b/lib/efi_loader/efi_boottime.c
-index de815484d2..cede7826bd 100644
+index 88f2d050be..1099ccc800 100644
 --- a/lib/efi_loader/efi_boottime.c
 +++ b/lib/efi_loader/efi_boottime.c
-@@ -27,11 +27,6 @@
+@@ -30,11 +30,6 @@
  #include <arm_ffa.h>
  #endif
  
@@ -49,7 +49,7 @@ index de815484d2..cede7826bd 100644
  DECLARE_GLOBAL_DATA_PTR;
  
  /* Task priority level */
-@@ -2100,35 +2095,6 @@ static void efi_exit_caches(void)
+@@ -2108,35 +2103,6 @@ static void efi_exit_caches(void)
  #endif
  }
  
@@ -77,7 +77,7 @@ index de815484d2..cede7826bd 100644
 -	msg.data1 = PREP_SEPROXY_SVC_ID(CORSTONE1000_SEPROXY_UPDATE_SVC_ID) |
 -		PREP_SEPROXY_EVT(CORSTONE1000_KERNEL_STARTED_EVT); /* w4 */
 -
--	return ffa_bus_ops_get()->sync_send_receive(CORSTONE1000_SEPROXY_PART_ID, &msg);
+-	return ffa_bus_ops_get()->sync_send_receive(CORSTONE1000_SEPROXY_PART_ID, &msg, 0);
 -}
 -
 -#endif
@@ -85,7 +85,7 @@ index de815484d2..cede7826bd 100644
  /**
   * efi_exit_boot_services() - stop all boot services
   * @image_handle: handle of the loaded image
-@@ -2244,15 +2210,6 @@ static efi_status_t EFIAPI efi_exit_boot_services(efi_handle_t image_handle,
+@@ -2243,15 +2209,6 @@ static efi_status_t EFIAPI efi_exit_boot_services(efi_handle_t image_handle,
  	/* Recalculate CRC32 */
  	efi_update_table_header_crc32(&systab.hdr);
  
@@ -115,7 +115,7 @@ index af43d4502f..25f427b936 100644
  	}
  
 diff --git a/lib/efi_loader/efi_setup.c b/lib/efi_loader/efi_setup.c
-index bfd4687e10..6c9e14c37e 100644
+index 443f409906..c154eb0e9d 100644
 --- a/lib/efi_loader/efi_setup.c
 +++ b/lib/efi_loader/efi_setup.c
 @@ -17,6 +17,9 @@
@@ -156,7 +156,7 @@ index bfd4687e10..6c9e14c37e 100644
 +	msg.data1 = PREP_SEPROXY_SVC_ID(CORSTONE1000_SEPROXY_UPDATE_SVC_ID) |
 +			PREP_SEPROXY_EVT(CORSTONE1000_UBOOT_EFI_STARTED_EVT); /* w4 */
 +
-+	return ffa_bus_ops_get()->sync_send_receive(CORSTONE1000_SEPROXY_PART_ID, &msg);
++	return ffa_bus_ops_get()->sync_send_receive(NULL, CORSTONE1000_SEPROXY_PART_ID, &msg, 0);
 +}
 +#endif
 +

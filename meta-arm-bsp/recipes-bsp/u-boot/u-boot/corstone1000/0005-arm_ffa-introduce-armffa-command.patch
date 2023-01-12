@@ -1,19 +1,34 @@
-From a09ed2542f4d991fef61bd51f87d373f44ad1ff3 Mon Sep 17 00:00:00 2001
+From e9ec690a3f0d34631729a17c1734d66111e768e1 Mon Sep 17 00:00:00 2001
 From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 Date: Mon, 6 Jun 2022 12:46:38 +0100
-Subject: [PATCH 10/26] arm_ffa: introduce armffa command
+Subject: [PATCH 05/25] arm_ffa: introduce armffa command
 
 Provide armffa command showcasing the use of the FF-A driver
 
 The armffa command allows to query secure partitions data from
-the secure world and exchanging messages with the partitions.
+the secure world and exchanging messages with the partitions
+using 64-bit FF-A direct messaging.
 
 Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
-Upstream-Status: Submitted [cover letter: https://lore.kernel.org/all/20220926101723.9965-1-abdellatif.elkhlifi@arm.com/]
----
+Cc: Tom Rini <trini@konsulko.com>
+Cc: Simon Glass <sjg@chromium.org>
+Cc: Ilias Apalodimas <ilias.apalodimas@linaro.org>
+Cc: Jens Wiklander <jens.wiklander@linaro.org>
+Upstream-Status: Submitted [cover letter: https://lore.kernel.org/all/20221122131751.22747-1-abdellatif.elkhlifi@arm.com/]
 
 Changelog:
 ===============
+
+v8:
+
+* update partition_info_get() second argument to be an SP count
+* pass NULL device pointer to the FF-A bus discovery and operations
+
+v7:
+
+* adapt do_ffa_dev_list() following the recent update on
+  uclass_first_device/uclass_next_device functions (they return void now)
+* set armffa command to use 64-bit direct messaging
 
 v4:
 
@@ -32,32 +47,32 @@ v2:
 v1:
 
 * introduce armffa command
-
+---
  MAINTAINERS                      |   1 +
  cmd/Kconfig                      |  10 ++
  cmd/Makefile                     |   2 +
- cmd/armffa.c                     | 242 +++++++++++++++++++++++++++++++
+ cmd/armffa.c                     | 237 +++++++++++++++++++++++++++++++
  drivers/firmware/arm-ffa/Kconfig |   1 +
- 5 files changed, 256 insertions(+)
+ 5 files changed, 251 insertions(+)
  create mode 100644 cmd/armffa.c
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index e760b4ca3a..9f0a1b7387 100644
+index 734fcb10c4..d50bdddea8 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -247,6 +247,7 @@ F:	include/configs/turris_*.h
+@@ -251,6 +251,7 @@ F:	configs/cortina_presidio-asic-pnand_defconfig
  ARM FF-A
  M:	Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
  S:	Maintained
 +F:	cmd/armffa.c
- F:	doc/README.ffa.drv
+ F:	doc/arch/arm64.ffa.rst
  F:	drivers/firmware/arm-ffa/
  F:	include/arm_ffa.h
 diff --git a/cmd/Kconfig b/cmd/Kconfig
-index ba2f321ae9..090e668125 100644
+index 0e0be94f41..013d4c3da7 100644
 --- a/cmd/Kconfig
 +++ b/cmd/Kconfig
-@@ -873,6 +873,16 @@ endmenu
+@@ -912,6 +912,16 @@ endmenu
  
  menu "Device access commands"
  
@@ -75,7 +90,7 @@ index ba2f321ae9..090e668125 100644
  	#depends on FLASH_CFI_DRIVER
  	bool "armflash"
 diff --git a/cmd/Makefile b/cmd/Makefile
-index 5e43a1e022..e40f52f1e4 100644
+index 6e87522b62..979c6d59df 100644
 --- a/cmd/Makefile
 +++ b/cmd/Makefile
 @@ -12,6 +12,8 @@ obj-y += panic.o
@@ -89,10 +104,10 @@ index 5e43a1e022..e40f52f1e4 100644
  obj-$(CONFIG_CMD_AES) += aes.o
 diff --git a/cmd/armffa.c b/cmd/armffa.c
 new file mode 100644
-index 0000000000..9b56e8a830
+index 0000000000..d2e8687bfb
 --- /dev/null
 +++ b/cmd/armffa.c
-@@ -0,0 +1,242 @@
+@@ -0,0 +1,237 @@
 +// SPDX-License-Identifier: GPL-2.0+
 +/*
 + * (C) Copyright 2022 ARM Limited
@@ -126,7 +141,7 @@ index 0000000000..9b56e8a830
 +static int do_ffa_get_singular_partition_info(struct cmd_tbl *cmdtp, int flag, int argc,
 +					      char *const argv[])
 +{
-+	u32 count = 0, size = 0;
++	u32 count = 0;
 +	int ret;
 +	struct ffa_partition_info *parts_info;
 +	u32 info_idx;
@@ -135,7 +150,7 @@ index 0000000000..9b56e8a830
 +		return -EINVAL;
 +
 +	/* Mode 1: getting the number of secure partitions */
-+	ret = ffa_bus_ops_get()->partition_info_get(argv[0], &count, NULL);
++	ret = ffa_bus_ops_get()->partition_info_get(NULL, argv[0], &count, NULL);
 +	if (ret != 0) {
 +		ffa_err("Failure in querying partitions count (error code: %d)", ret);
 +		return ret;
@@ -157,13 +172,11 @@ index 0000000000..9b56e8a830
 +	if (!parts_info)
 +		return -EINVAL;
 +
-+	size = count * sizeof(struct ffa_partition_info);
-+
 +	/*
 +	 * ask the driver to fill the buffer with the SPs info
 +	 */
 +
-+	ret = ffa_bus_ops_get()->partition_info_get(argv[0], &size, parts_info);
++	ret = ffa_bus_ops_get()->partition_info_get(NULL, argv[0], &count, parts_info);
 +	if (ret != 0) {
 +		ffa_err("Failure in querying partition(s) info (error code: %d)", ret);
 +		free(parts_info);
@@ -224,7 +237,7 @@ index 0000000000..9b56e8a830
 +		return -EINVAL;
 +	}
 +
-+	ret = ffa_bus_ops_get()->sync_send_receive(part_id, &msg);
++	ret = ffa_bus_ops_get()->sync_send_receive(NULL, part_id, &msg, 1);
 +	if (ret == 0) {
 +		u8 cnt;
 +
@@ -257,16 +270,13 @@ index 0000000000..9b56e8a830
 +int do_ffa_dev_list(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 +{
 +	struct udevice *dev = NULL;
-+	int i, ret;
++	int i;
 +
 +	ffa_info("arm_ffa uclass entries:");
 +
-+	for (i = 0, ret = uclass_first_device(UCLASS_FFA, &dev);
++	for (i = 0, uclass_first_device(UCLASS_FFA, &dev);
 +	     dev;
-+	     ret = uclass_next_device(&dev), i++) {
-+		if (ret)
-+			break;
-+
++	     uclass_next_device(&dev), i++) {
 +		ffa_info("entry %d - instance %08x, ops %08x, plat %08x",
 +			 i,
 +			 (u32)map_to_sysmem(dev),
@@ -274,7 +284,7 @@ index 0000000000..9b56e8a830
 +			 (u32)map_to_sysmem(dev_get_plat(dev)));
 +	}
 +
-+	return cmd_process_error(cmdtp, ret);
++	return 0;
 +}
 +
 +static struct cmd_tbl armffa_commands[] = {
@@ -315,7 +325,7 @@ index 0000000000..9b56e8a830
 +	if (!armffa_cmd || argc > armffa_cmd->maxargs)
 +		return CMD_RET_USAGE;
 +
-+	ret = ffa_bus_discover();
++	ret = ffa_bus_discover(NULL);
 +	if (ret != 0)
 +		return cmd_process_error(cmdtp, ret);
 +
@@ -336,7 +346,7 @@ index 0000000000..9b56e8a830
 +	   "devlist\n"
 +	   "	 - displays the arm_ffa device info\n");
 diff --git a/drivers/firmware/arm-ffa/Kconfig b/drivers/firmware/arm-ffa/Kconfig
-index aceb61cf49..40b467b0a5 100644
+index e4914b9bc7..be4df89d23 100644
 --- a/drivers/firmware/arm-ffa/Kconfig
 +++ b/drivers/firmware/arm-ffa/Kconfig
 @@ -4,6 +4,7 @@ config ARM_FFA_TRANSPORT

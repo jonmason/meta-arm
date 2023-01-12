@@ -1,7 +1,7 @@
-From 7afe2370bc24b9003be8184fbd3169ebca03165a Mon Sep 17 00:00:00 2001
+From 584e4952dca726c3dc9df319dffb37a518b65c14 Mon Sep 17 00:00:00 2001
 From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 Date: Fri, 29 Jul 2022 13:06:19 +0100
-Subject: [PATCH 06/26] arm64: smccc: add support for SMCCCv1.2 x0-x17
+Subject: [PATCH 01/25] arm64: smccc: add support for SMCCCv1.2 x0-x17
  registers
 
 add support for x0-x17 registers used by the SMC calls
@@ -16,12 +16,18 @@ arm64: smccc: Add support for SMCCCv1.2 extended input/output registers
 [1]: https://documentation-service.arm.com/static/5f8edaeff86e16515cdbe4c6?token=
 
 Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
-Upstream-Status: Submitted [cover letter: https://lore.kernel.org/all/20220926101723.9965-1-abdellatif.elkhlifi@arm.com/]
-
----
+Reviewed-by: Jens Wiklander <jens.wiklander@linaro.org>
+Cc: Tom Rini <trini@konsulko.com>
+Cc: Simon Glass <sjg@chromium.org>
+Cc: Ilias Apalodimas <ilias.apalodimas@linaro.org>
+Upstream-Status: Submitted [cover letter: https://lore.kernel.org/all/20221122131751.22747-1-abdellatif.elkhlifi@arm.com/]
 
 Changelog:
 ===============
+
+v7:
+
+* improve indentation of ARM_SMCCC_1_2_REGS_Xn_OFFS
 
 v4:
 
@@ -33,11 +39,11 @@ v3:
 * port x0-x17 registers support from linux kernel as defined by SMCCCv1.2
   commit title:
       arm64: smccc: add Xn registers support used by SMC calls
-
+---
  arch/arm/cpu/armv8/smccc-call.S | 53 +++++++++++++++++++++++++++++++++
- arch/arm/lib/asm-offsets.c      | 13 ++++++++
+ arch/arm/lib/asm-offsets.c      | 14 +++++++++
  include/linux/arm-smccc.h       | 43 ++++++++++++++++++++++++++
- 3 files changed, 109 insertions(+)
+ 3 files changed, 110 insertions(+)
 
 diff --git a/arch/arm/cpu/armv8/smccc-call.S b/arch/arm/cpu/armv8/smccc-call.S
 index dc92b28777..ec6f299bc9 100644
@@ -108,38 +114,39 @@ index dc92b28777..ec6f299bc9 100644
 +
 +#endif
 diff --git a/arch/arm/lib/asm-offsets.c b/arch/arm/lib/asm-offsets.c
-index 22fd541f9a..b6bd1b32b0 100644
+index 22fd541f9a..db6d7ed234 100644
 --- a/arch/arm/lib/asm-offsets.c
 +++ b/arch/arm/lib/asm-offsets.c
-@@ -9,6 +9,8 @@
+@@ -9,6 +9,9 @@
   * generate asm statements containing #defines,
   * compile this file to assembler, and then extract the
   * #defines from the assembly-language output.
 + *
 + * (C) Copyright 2022 ARM Limited
++ * Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
   */
  
  #include <common.h>
-@@ -117,6 +119,17 @@ int main(void)
+@@ -117,6 +120,17 @@ int main(void)
  	DEFINE(ARM_SMCCC_RES_X2_OFFS, offsetof(struct arm_smccc_res, a2));
  	DEFINE(ARM_SMCCC_QUIRK_ID_OFFS, offsetof(struct arm_smccc_quirk, id));
  	DEFINE(ARM_SMCCC_QUIRK_STATE_OFFS, offsetof(struct arm_smccc_quirk, state));
-+	#ifdef CONFIG_ARM64
-+		DEFINE(ARM_SMCCC_1_2_REGS_X0_OFFS,	offsetof(struct arm_smccc_1_2_regs, a0));
-+		DEFINE(ARM_SMCCC_1_2_REGS_X2_OFFS,	offsetof(struct arm_smccc_1_2_regs, a2));
-+		DEFINE(ARM_SMCCC_1_2_REGS_X4_OFFS,	offsetof(struct arm_smccc_1_2_regs, a4));
-+		DEFINE(ARM_SMCCC_1_2_REGS_X6_OFFS,	offsetof(struct arm_smccc_1_2_regs, a6));
-+		DEFINE(ARM_SMCCC_1_2_REGS_X8_OFFS,	offsetof(struct arm_smccc_1_2_regs, a8));
-+		DEFINE(ARM_SMCCC_1_2_REGS_X10_OFFS,	offsetof(struct arm_smccc_1_2_regs, a10));
-+		DEFINE(ARM_SMCCC_1_2_REGS_X12_OFFS,	offsetof(struct arm_smccc_1_2_regs, a12));
-+		DEFINE(ARM_SMCCC_1_2_REGS_X14_OFFS,	offsetof(struct arm_smccc_1_2_regs, a14));
-+		DEFINE(ARM_SMCCC_1_2_REGS_X16_OFFS,	offsetof(struct arm_smccc_1_2_regs, a16));
-+	#endif
++#ifdef CONFIG_ARM64
++	DEFINE(ARM_SMCCC_1_2_REGS_X0_OFFS,	offsetof(struct arm_smccc_1_2_regs, a0));
++	DEFINE(ARM_SMCCC_1_2_REGS_X2_OFFS,	offsetof(struct arm_smccc_1_2_regs, a2));
++	DEFINE(ARM_SMCCC_1_2_REGS_X4_OFFS,	offsetof(struct arm_smccc_1_2_regs, a4));
++	DEFINE(ARM_SMCCC_1_2_REGS_X6_OFFS,	offsetof(struct arm_smccc_1_2_regs, a6));
++	DEFINE(ARM_SMCCC_1_2_REGS_X8_OFFS,	offsetof(struct arm_smccc_1_2_regs, a8));
++	DEFINE(ARM_SMCCC_1_2_REGS_X10_OFFS,	offsetof(struct arm_smccc_1_2_regs, a10));
++	DEFINE(ARM_SMCCC_1_2_REGS_X12_OFFS,	offsetof(struct arm_smccc_1_2_regs, a12));
++	DEFINE(ARM_SMCCC_1_2_REGS_X14_OFFS,	offsetof(struct arm_smccc_1_2_regs, a14));
++	DEFINE(ARM_SMCCC_1_2_REGS_X16_OFFS,	offsetof(struct arm_smccc_1_2_regs, a16));
++#endif
  #endif
  
  	return 0;
 diff --git a/include/linux/arm-smccc.h b/include/linux/arm-smccc.h
-index 7f2be23394..dae58d3476 100644
+index e1d09884a1..9105031d55 100644
 --- a/include/linux/arm-smccc.h
 +++ b/include/linux/arm-smccc.h
 @@ -1,6 +1,8 @@
@@ -151,7 +158,7 @@ index 7f2be23394..dae58d3476 100644
   */
  #ifndef __LINUX_ARM_SMCCC_H
  #define __LINUX_ARM_SMCCC_H
-@@ -66,6 +68,47 @@ struct arm_smccc_res {
+@@ -70,6 +72,47 @@ struct arm_smccc_res {
  	unsigned long a3;
  };
  

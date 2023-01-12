@@ -1,7 +1,7 @@
-From 3bb5826af8e3891617d41a30419de0ce089f9fc3 Mon Sep 17 00:00:00 2001
+From f8ccaf53dec63d57bab2f86b822f9fb3ed06d132 Mon Sep 17 00:00:00 2001
 From: Vishnu Banavath <vishnu.banavath@arm.com>
 Date: Fri, 10 Dec 2021 20:03:35 +0000
-Subject: [PATCH 19/26] efi_capsule: corstone1000: pass interface id and buffer
+Subject: [PATCH 13/25] efi_capsule: corstone1000: pass interface id and buffer
  event id using register w4
 
 Initially the interface/event IDs are passed to the SP using register
@@ -23,7 +23,7 @@ Upstream-Status: Pending [Not submitted to upstream yet]
  2 files changed, 13 insertions(+), 4 deletions(-)
 
 diff --git a/include/configs/corstone1000.h b/include/configs/corstone1000.h
-index 2d89a8966e..4637dd5d5d 100644
+index 4d20090c9b..77f96e87a1 100644
 --- a/include/configs/corstone1000.h
 +++ b/include/configs/corstone1000.h
 @@ -24,6 +24,12 @@
@@ -40,7 +40,7 @@ index 2d89a8966e..4637dd5d5d 100644
  #define CORSTONE1000_CAPSULE_BUFFER_SIZE	(8192) /* 32 MB */
  
 diff --git a/lib/efi_loader/efi_capsule.c b/lib/efi_loader/efi_capsule.c
-index c0f3427a60..bf8bd68256 100644
+index 636b61f0ad..c22b9b5aa0 100644
 --- a/lib/efi_loader/efi_capsule.c
 +++ b/lib/efi_loader/efi_capsule.c
 @@ -28,6 +28,8 @@
@@ -67,7 +67,7 @@ index c0f3427a60..bf8bd68256 100644
 +	msg.data1 = PREP_SEPROXY_SVC_ID(CORSTONE1000_SEPROXY_UPDATE_SVC_ID) |
 +		PREP_SEPROXY_EVT(CORSTONE1000_BUFFER_READY_EVT); /* w4 */
  
- 	return ffa_bus_ops_get()->sync_send_receive(CORSTONE1000_SEPROXY_PART_ID, &msg);
+ 	return ffa_bus_ops_get()->sync_send_receive(NULL, CORSTONE1000_SEPROXY_PART_ID, &msg, 0);
  }
 -- 
 2.17.1

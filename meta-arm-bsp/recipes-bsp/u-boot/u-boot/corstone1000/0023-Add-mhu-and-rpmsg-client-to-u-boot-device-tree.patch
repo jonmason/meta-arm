@@ -1,7 +1,7 @@
-From a1b8b91a43cfa9dbaa2d907a6d9629da6f93fa3e Mon Sep 17 00:00:00 2001
+From 55e2bc835be50b23ef04066b950bbe75c0065d19 Mon Sep 17 00:00:00 2001
 From: Emekcan <emekcan.aras@arm.com>
 Date: Mon, 12 Sep 2022 15:47:06 +0100
-Subject: [PATCH] Add mhu and rpmsg client to u-boot device tree
+Subject: [PATCH 23/25] Add mhu and rpmsg client to u-boot device tree
 
 Adds external system controller and mhu driver to u-boot
 device tree. This enables communication between host and
@@ -10,11 +10,11 @@ the external system.
 Signed-off-by: Emekcan Aras <Emekcan.Aras@arm.com>
 Upstream-Status: Pending [Not submitted to upstream yet]
 ---
- arch/arm/dts/corstone1000.dtsi | 50 ++++++++++++++++++++++++++++++++
+ arch/arm/dts/corstone1000.dtsi | 50 ++++++++++++++++++++++++++++++++++
  1 file changed, 50 insertions(+)
 
 diff --git a/arch/arm/dts/corstone1000.dtsi b/arch/arm/dts/corstone1000.dtsi
-index 19b6e3ea72..61dd6c432c 100644
+index 2c7185e139..61e0c33247 100644
 --- a/arch/arm/dts/corstone1000.dtsi
 +++ b/arch/arm/dts/corstone1000.dtsi
 @@ -161,6 +161,56 @@
