@@ -1,0 +1,27 @@
+From 097a43223da4fa42335944295903ede2755e2dfd Mon Sep 17 00:00:00 2001
+From: Jon Mason <jdmason@kudzu.us>
+Date: Mon, 19 Dec 2022 11:36:04 -0500
+Subject: [PATCH] configs: vexpress: modify to boot compressed initramfs
+
+Signed-off-by: Jon Mason <jdmason@kudzu.us>
+Upstream-Status: Inappropriate
+---
+ include/configs/vexpress_aemv8a.h       | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/include/configs/vexpress_aemv8.h b/include/configs/vexpress_aemv8a.h
+index cd7f6c1b9ba0..c2f5eb302076 100644
+--- a/include/configs/vexpress_aemv8a.h
++++ b/include/configs/vexpress_aemv8a.h
+@@ -164,6 +164,8 @@
+ 				"kernel_name=norkern\0"	\
+ 				"kernel_alt_name=Image\0"	\
+ 				"kernel_addr_r=0x80080000\0" \
++				"kernel_comp_addr_r=0x90000000\0" \
++				"kernel_comp_size=0x3000000\0" \
+ 				"initrd_name=ramdisk.img\0"	\
+ 				"initrd_addr_r=0x88000000\0"	\
+ 				"fdtfile=board.dtb\0" \
+-- 
+2.30.2
+
