@@ -13,4 +13,7 @@ SRC_URI_append_corstone500 = " \
 #
 # Juno KMACHINE
 #
-SRC_URI_append_juno = " file://u-boot_vexpress_uenv.patch"
+SRC_URI_append_juno = " \
+    file://u-boot_vexpress_uenv.patch \
+    file://0002-configs-vexpress-modify-to-boot-compressed-initramfs.patch \
+    "
