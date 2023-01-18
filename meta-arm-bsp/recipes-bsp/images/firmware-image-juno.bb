@@ -63,7 +63,7 @@ do_deploy() {
     done
 
     if [ "${INITRAMFS_IMAGE_BUNDLE}" -eq 1 ]; then
-        cp -L -f ${DEPLOY_DIR_IMAGE}/Image-initramfs-juno.bin \
+        cp -L -f ${DEPLOY_DIR_IMAGE}/Image.gz-initramfs-juno.bin \
             ${D}/${UNPACK_DIR}/SOFTWARE/Image
     else
         cp -L -f ${DEPLOY_DIR_IMAGE}/Image ${D}/${UNPACK_DIR}/SOFTWARE/
