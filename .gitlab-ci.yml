@@ -35,8 +35,6 @@ stages:
     - mkdir --verbose --parents $KAS_WORK_DIR $KAS_REPO_REF_DIR $SSTATE_DIR $DL_DIR $TOOLCHAIN_DIR $TOOLCHAIN_LINK_DIR
     # Must do this here, as it's the only way to make sure the toolchain is installed on the same builder
     - ./ci/get-binary-toolchains $DL_DIR $TOOLCHAIN_DIR $TOOLCHAIN_LINK_DIR
-    # This can be removed with Kas 3.2
-    - sudo apt-get update && sudo apt-get install --yes python3-subunit
 
 # Generalised fragment to do a Kas build
 .build:
