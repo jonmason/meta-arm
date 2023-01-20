@@ -173,6 +173,7 @@ qemuarm-secureboot:
   parallel:
     matrix:
       - TOOLCHAINS: [gcc, clang]
+        TCLIBC: [glibc, musl]
         FIRMWARE: [uboot, edk2]
         TESTING: testimage
 
