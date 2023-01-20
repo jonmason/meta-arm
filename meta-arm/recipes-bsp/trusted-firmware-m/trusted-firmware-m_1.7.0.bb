@@ -20,6 +20,7 @@ SRC_URI  = "git://git.trustedfirmware.org/TF-M/trusted-firmware-m.git;protocol=h
             git://github.com/ARMmbed/mbedtls.git;protocol=https;branch=${SRCBRANCH_mbedtls};name=mbedtls;destsuffix=git/mbedtls \
             git://github.com/mcu-tools/mcuboot.git;protocol=https;branch=${SRCBRANCH_mcuboot};name=mcuboot;destsuffix=git/mcuboot \
             git://github.com/laurencelundblade/QCBOR.git;protocol=https;branch=${SRCBRANCH_qcbor};name=qcbor;destsuffix=git/qcbor \
+            file://rwx.patch \
             "
 
 # The required dependencies are documented in tf-m/config/config_default.cmake
