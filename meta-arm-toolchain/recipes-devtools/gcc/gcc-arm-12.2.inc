@@ -1,16 +1,16 @@
 require recipes-devtools/gcc/gcc-common.inc
 
 # Third digit in PV should be incremented after a minor release
-ARM_GCC_VERSION = "11.3"
+ARM_GCC_VERSION = "12.2"
 ARM_GCC_SUB_VERSION = "rel1"
 PV = "arm-${ARM_GCC_VERSION}"
-CVE_VERSION = "11.3"
+CVE_VERSION = "12.2"
 
 # BINV should be incremented to a revision after a minor gcc release
 
-BINV = "11.3.1"
+BINV = "12.2.1"
 
-MMYY = "22.08"
+MMYY = "22.12"
 RELEASE = "20${MMYY}"
 PR = "r${RELEASE}"
 
@@ -30,45 +30,34 @@ LIC_FILES_CHKSUM = "\
 "
 
 BASEURI ?= "https://developer.arm.com/-/media/Files/downloads/gnu/${ARM_GCC_VERSION}.${ARM_GCC_SUB_VERSION}/srcrel/arm-gnu-toolchain-src-snapshot-${ARM_GCC_VERSION}.${ARM_GCC_SUB_VERSION}.tar.xz"
-SRC_URI = "\
-           ${BASEURI} \
+SRC_URI = "${BASEURI} \
            file://0001-gcc-4.3.1-ARCH_FLAGS_FOR_TARGET.patch \
            file://0002-gcc-poison-system-directories.patch \
            file://0003-64-bit-multilib-hack.patch \
-           file://0004-Use-the-defaults.h-in-B-instead-of-S-and-t-oe-in-B.patch \
-           file://0005-cpp-honor-sysroot.patch \
-           file://0006-Define-GLIBC_DYNAMIC_LINKER-and-UCLIBC_DYNAMIC_LINKE.patch \
-           file://0007-gcc-Fix-argument-list-too-long-error.patch \
+           file://0004-Pass-CXXFLAGS_FOR_BUILD-in-a-couple-of-places-to-avo.patch \
+           file://0005-Use-the-defaults.h-in-B-instead-of-S-and-t-oe-in-B.patch \
+           file://0006-cpp-honor-sysroot.patch \
+           file://0007-Define-GLIBC_DYNAMIC_LINKER-and-UCLIBC_DYNAMIC_LINKE.patch \
            file://0008-libtool.patch \
            file://0009-gcc-armv4-pass-fix-v4bx-to-linker-to-support-EABI.patch \
            file://0010-Use-the-multilib-config-files-from-B-instead-of-usin.patch \
            file://0011-Avoid-using-libdir-from-.la-which-usually-points-to-.patch \
-           file://0012-Ensure-target-gcc-headers-can-be-included.patch \
-           file://0013-Don-t-search-host-directory-during-relink-if-inst_pr.patch \
-           file://0014-libcc1-fix-libcc1-s-install-path-and-rpath.patch \
-           file://0015-Makefile.in-Ensure-build-CPP-CPPFLAGS-is-used-for-bu.patch \
-           file://0016-If-CXXFLAGS-contains-something-unsupported-by-the-bu.patch \
-           file://0017-handle-sysroot-support-for-nativesdk-gcc.patch \
-           file://0018-Search-target-sysroot-gcc-version-specific-dirs-with.patch \
-           file://0019-nios2-Define-MUSL_DYNAMIC_LINKER.patch \
-           file://0020-Add-ssp_nonshared-to-link-commandline-for-musl-targe.patch \
-           file://0021-Link-libgcc-using-LDFLAGS-not-just-SHLIB_LDFLAGS.patch \
-           file://0022-sync-gcc-stddef.h-with-musl.patch \
-           file://0023-Re-introduce-spe-commandline-options.patch \
-           file://0024-libgcc_s-Use-alias-for-__cpu_indicator_init-instead-.patch \
-           file://0025-gentypes-genmodes-Do-not-use-__LINE__-for-maintainin.patch \
-           file://0026-mingw32-Enable-operation_not_supported.patch \
-           file://0027-libatomic-Do-not-enforce-march-on-aarch64.patch \
-           file://0028-debug-101473-apply-debug-prefix-maps-before-checksum.patch \
-           file://0029-Fix-install-path-of-linux64.h.patch \
-           file://0030-rust-recursion-limit.patch \
-           file://0001-CVE-2021-42574.patch \
-           file://0002-CVE-2021-42574.patch \
-           file://0003-CVE-2021-42574.patch \
-           file://0004-CVE-2021-42574.patch \
-           file://0001-CVE-2021-46195.patch \
+           file://0013-Ensure-target-gcc-headers-can-be-included.patch \
+           file://0014-Don-t-search-host-directory-during-relink-if-inst_pr.patch \
+           file://0015-libcc1-fix-libcc1-s-install-path-and-rpath.patch \
+           file://0016-handle-sysroot-support-for-nativesdk-gcc.patch \
+           file://0017-Search-target-sysroot-gcc-version-specific-dirs-with.patch \
+           file://0018-Add-ssp_nonshared-to-link-commandline-for-musl-targe.patch \
+           file://0019-Re-introduce-spe-commandline-options.patch \
+           file://0020-libgcc_s-Use-alias-for-__cpu_indicator_init-instead-.patch \
+           file://0021-gentypes-genmodes-Do-not-use-__LINE__-for-maintainin.patch \
+           file://0023-libatomic-Do-not-enforce-march-on-aarch64.patch \
+           file://0024-Fix-install-path-of-linux64.h.patch \
+           file://0026-rust-recursion-limit.patch \
+           file://prefix-map-realpath.patch \
+           file://hardcoded-paths.patch \
 "
-SRC_URI[sha256sum] = "4fb9a3c58c94deb91bd75bc503962fae347f05d4d47a0e079141350f08919fb5"
+SRC_URI[sha256sum] = "108b5e0786b988c7ce24b82187d8cf643fefbd8e3db24fa5f67e530e727d0c70"
 
 S = "${TMPDIR}/work-shared/gcc-${PV}-${PR}/arm-gnu-toolchain-src-snapshot-${ARM_GCC_VERSION}.${ARM_GCC_SUB_VERSION}"
 
