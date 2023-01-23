@@ -73,7 +73,8 @@ python do_write_fvpboot_conf() {
 
     data["env"] = {}
     for var in d.getVar("FVP_ENV_PASSTHROUGH").split():
-        data["env"][var] = d.getVar(var)
+        if d.getVar(var) is not None:
+            data["env"][var] = d.getVar(var)
 
     os.makedirs(os.path.dirname(conffile), exist_ok=True)
     with open(conffile, "wt") as f:
