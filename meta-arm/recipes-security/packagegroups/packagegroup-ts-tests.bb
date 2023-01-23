@@ -4,9 +4,10 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 inherit packagegroup
 
-COMPATIBLE_HOST = "aarch64.*-linux"
+COMPATIBLE_HOST = "(arm|aarch64).*-linux"
 COMPATIBLE_MACHINE ?= "invalid"
 COMPATIBLE_MACHINE:qemuarm64-secureboot = "qemuarm64-secureboot"
+COMPATIBLE_MACHINE:qemuarm-secureboot = "qemuarm-secureboot"
 
 PACKAGES = "${PN} ${PN}-psa"
 
