@@ -269,7 +269,7 @@ qemuarm64-secureboot:
       - KERNEL: [linux-yocto, linux-yocto-rt]
         TOOLCHAINS: [gcc, clang]
         TCLIBC: [glibc, musl]
-        TS: [none, qemuarm64-secureboot-ts]
+        TS: [none, trusted-services]
         TESTING: testimage
       - TOOLCHAINS: [gcc, clang]
         TS: [none, qemuarm64-secureboot-ts]
@@ -300,6 +300,7 @@ qemuarm-secureboot:
       - KERNEL: [linux-yocto, linux-yocto-rt]
         TOOLCHAINS: [gcc, clang]
         TCLIBC: [glibc, musl]
+        TS: [none, trusted-services]
         TESTING: testimage
       - DISTRO: [poky, poky-altcfg]
         TESTING: testimage
