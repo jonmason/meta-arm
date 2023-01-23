@@ -25,6 +25,7 @@ FVP_CONSOLES[default] ?= "${FVP_CONSOLE}"
 FVP_EXTRA_ARGS ?= ""
 # Bitbake variables to pass to the FVP environment
 FVP_ENV_PASSTHROUGH ?= "FASTSIM_DISABLE_TA"
+FVP_ENV_PASSTHROUGH[vardeps] = "${FVP_ENV_PASSTHROUGH}"
 # Disable timing annotation by default
 FASTSIM_DISABLE_TA ?= "1"
 
