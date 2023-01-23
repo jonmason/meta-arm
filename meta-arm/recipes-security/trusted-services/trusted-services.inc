@@ -5,9 +5,10 @@ LICENSE = "Apache-2.0 & BSD-3-Clause & Zlib"
 
 inherit python3native cmake pkgconfig
 
-COMPATIBLE_HOST = "aarch64.*-linux"
+COMPATIBLE_HOST = "(arm|aarch64).*-linux"
 COMPATIBLE_MACHINE ?= "invalid"
 COMPATIBLE_MACHINE:qemuarm64-secureboot = "qemuarm64-secureboot"
+COMPATIBLE_MACHINE:qemuarm-secureboot = "qemuarm-secureboot"
 
 require trusted-services-src.inc
 

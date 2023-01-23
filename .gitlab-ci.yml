@@ -257,7 +257,7 @@ qemuarm64-secureboot:
     matrix:
       - TOOLCHAINS: [gcc, clang]
         TCLIBC: [glibc, musl]
-        TS: [none, qemuarm64-secureboot-ts]
+        TS: [none, trusted-services]
         TESTING: testimage
       - UEFISB: [none, uefi-secureboot]
         TESTING: testimage
@@ -278,6 +278,7 @@ qemuarm-secureboot:
     matrix:
       - TOOLCHAINS: [gcc, clang]
         TCLIBC: [glibc, musl]
+        TS: [none, trusted-services]
         TESTING: testimage
       - DISTRO: [poky, poky-altcfg]
         TESTING: testimage
