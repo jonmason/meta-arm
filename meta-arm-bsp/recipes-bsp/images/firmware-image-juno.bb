@@ -66,7 +66,7 @@ do_deploy() {
         cp -L -f ${DEPLOY_DIR_IMAGE}/Image.gz-initramfs-juno.bin \
             ${D}/${UNPACK_DIR}/SOFTWARE/Image
     else
-        cp -L -f ${DEPLOY_DIR_IMAGE}/Image ${D}/${UNPACK_DIR}/SOFTWARE/
+        cp -L -f ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} ${D}/${UNPACK_DIR}/SOFTWARE/
     fi
 
     # Compress the files
