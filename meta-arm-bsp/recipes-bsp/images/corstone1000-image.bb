@@ -7,10 +7,17 @@ COMPATIBLE_MACHINE = "corstone1000"
 
 inherit image
 inherit wic_nopt tfm_sign_image
+inherit  uefi_capsule
 
 PACKAGE_INSTALL = ""
 
-IMAGE_FSTYPES += "wic wic.nopt"
+IMAGE_FSTYPES += "wic wic.nopt uefi_capsule"
+
+UEFI_FIRMWARE_BINARY = "corstone1000-image-${MACHINE}.wic.nopt"
+UEFI_FIRMWARE_VERSION = "5"
+UEFI_FIRMWARE_LSV = "0"
+UEFI_FIRMWARE_GUID = "e2bb9c06-70e9-4b14-97a3-5a7913176e3f"
+UEFI_FIRMWARE_UPDATE_INDEX = "0"
 
 do_sign_images() {
     # Sign TF-A BL2
