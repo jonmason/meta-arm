@@ -10,8 +10,8 @@ SRC_URI = "git://gitlab.arm.com/linux-arm/linux-trusted-services;protocol=https;
           "
 S = "${WORKDIR}/git"
 
-# Tag tee-v1.1
-SRCREV = "3b543b7591505b715f332c972248a3ea41604d83"
+# Tag tee-v1.1.2
+SRCREV = "8a81f5d2406f146b15a705d49b256efaa5fa3ba9"
 
 COMPATIBLE_HOST = "(arm|aarch64).*-linux"
 KERNEL_MODULE_AUTOLOAD += "arm-ffa-tee"
