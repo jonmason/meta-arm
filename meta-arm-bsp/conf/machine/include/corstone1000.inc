@@ -73,3 +73,6 @@ SERIAL_CONSOLES ?= "115200;ttyAMA0"
 WKS_FILE_DEPENDS:append = " ${EXTRA_IMAGEDEPENDS}"
 
 WKS_FILE ?= "corstone1000-image.corstone1000.wks"
+
+# Disable openssl in kmod to shink the initramfs size
+PACKAGECONFIG:remove:pn-kmod = "openssl"
