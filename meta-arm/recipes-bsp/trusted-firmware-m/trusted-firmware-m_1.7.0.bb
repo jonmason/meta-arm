@@ -30,14 +30,14 @@ SRC_URI  = "${SRC_URI_TRUSTED_FIRMWARE_M};branch=${SRCBRANCH_tfm};name=tfm;dests
 
 # The required dependencies are documented in tf-m/config/config_default.cmake
 # TF-Mv1.7.0
-SRCBRANCH_tfm ?= "release/1.7.x"
+SRCBRANCH_tfm ?= "master"
 SRCREV_tfm = "b725a1346cdb9ec75b1adcdc4c84705881e8fd4e"
 # mbedtls-3.2.0
 SRCBRANCH_mbedtls ?= "master"
 SRCREV_mbedtls = "869298bffeea13b205343361b7a7daf2b210e33d"
-# TF-Mv1.6.0
-SRCBRANCH_tfm-tests ?= "release/1.7.x"
-SRCREV_tfm-tests = "4972e8df3fcbd386a5b0c18613d8a803f4dda082"
+# TF-Mv1.7.0
+SRCBRANCH_tfm-tests ?= "master"
+SRCREV_tfm-tests = "4c4b58041c6c01670266690538a780b4a23d08b8"
 # v1.9.0
 SRCBRANCH_mcuboot ?= "main"
 SRCREV_mcuboot = "c657cbea75f2bb1faf1fceacf972a0537a8d26dd"
