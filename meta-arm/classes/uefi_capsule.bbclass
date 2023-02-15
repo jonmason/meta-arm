@@ -1,6 +1,7 @@
 # This class generates UEFI capsules
 # The current class supports generating a capsule with single firmware binary
 
+DEPENDS += "gettext-native"
 inherit python3native
 
 IMAGE_TYPES += "uefi_capsule"
@@ -19,14 +20,11 @@ CAPSULE_EXTENSION ?= "uefi.capsule"
 
 # The following variables must be set to be able to generate a capsule update
 UEFI_FIRMWARE_BINARY ?= ""
-UEFI_FIRMWARE_VERSION ?= ""
-UEFI_FIRMWARE_LSV ?= ""
-UEFI_FIRMWARE_GUID ?= ""
-UEFI_FIRMWARE_UPDATE_INDEX ?= ""
+UEFI_CAPSULE_CONFIG ?= ""
 
 # Check if the required variables are set
 python() {
-    for var in ["UEFI_FIRMWARE_BINARY", "UEFI_FIRMWARE_VERSION", "UEFI_FIRMWARE_LSV", "UEFI_FIRMWARE_GUID", "UEFI_FIRMWARE_UPDATE_INDEX"]:
+    for var in ["UEFI_FIRMWARE_BINARY", "UEFI_CAPSULE_CONFIG"]:
         if not d.getVar(var):
             raise bb.parse.SkipRecipe(f"{var} not set")
 }
@@ -36,10 +34,21 @@ IMAGE_CMD:uefi_capsule(){
     # Force the GenerateCapsule script to use python3
     export PYTHON_COMMAND=${PYTHON}
 
-    ${STAGING_DIR_NATIVE}/usr/bin/edk2-BaseTools/BinWrappers/PosixLike/GenerateCapsule -e -o \
-    ${CAPSULE_IMGLOCATION}/${UEFI_FIRMWARE_BINARY}.${CAPSULE_EXTENSION} --fw-version ${UEFI_FIRMWARE_VERSION} \
-    --lsv ${UEFI_FIRMWARE_LSV} --guid ${UEFI_FIRMWARE_GUID} --verbose --update-image-index \
-    ${UEFI_FIRMWARE_UPDATE_INDEX} --verbose ${CAPSULE_IMGLOCATION}/${UEFI_FIRMWARE_BINARY}
+    # Copy the firmware and the capsule config json to current directory
+    if [ -e ${CAPSULE_IMGLOCATION}/${UEFI_FIRMWARE_BINARY} ]; then
+        cp ${CAPSULE_IMGLOCATION}/${UEFI_FIRMWARE_BINARY} . ;
+    fi
+
+    export UEFI_FIRMWARE_BINARY=${UEFI_FIRMWARE_BINARY}
+    envsubst < ${UEFI_CAPSULE_CONFIG} > ./${MACHINE}-capsule-update-image.json
+
+    ${STAGING_DIR_NATIVE}/usr/bin/edk2-BaseTools/BinWrappers/PosixLike/GenerateCapsule \
+    -e -o ${UEFI_FIRMWARE_BINARY}.${CAPSULE_EXTENSION} -j \
+    ${MACHINE}-capsule-update-image.json
+
+    # Remove the firmware to avoid contamination of IMGDEPLOYDIR
+    rm ${UEFI_FIRMWARE_BINARY}
+
 }
 
 # The firmware binary should be created before generating the capsule
