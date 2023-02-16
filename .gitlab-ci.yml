@@ -52,6 +52,7 @@ stages:
     when: on_failure
     paths:
       - $CI_PROJECT_DIR/work/build/tmp/work*/**/temp/log.do_*.*
+      - $CI_PROJECT_DIR/work/build/tmp/work*/**/testimage/*
 
 #
 # Prep stage, update repositories once
