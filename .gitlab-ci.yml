@@ -3,6 +3,7 @@ image: ghcr.io/siemens/kas/kas:3.2
 variables:
   CPU_REQUEST: ""
   DEFAULT_TAG: ""
+  CACHE_DIR: $CI_BUILDS_DIR/persist
   # These are needed as the k8s executor doesn't respect the container entrypoint
   # by default
   FF_KUBERNETES_HONOR_ENTRYPOINT: 1
@@ -20,11 +21,11 @@ stages:
   interruptible: true
   variables:
     KAS_WORK_DIR: $CI_PROJECT_DIR/work
-    KAS_REPO_REF_DIR: $CI_BUILDS_DIR/persist/repos
-    SSTATE_DIR: $CI_BUILDS_DIR/persist/sstate
-    DL_DIR: $CI_BUILDS_DIR/persist/downloads
+    KAS_REPO_REF_DIR: $CACHE_DIR/repos
+    SSTATE_DIR: $CACHE_DIR/sstate
+    DL_DIR: $CACHE_DIR/downloads
     BB_LOGCONFIG: $CI_PROJECT_DIR/ci/logging.yml
-    TOOLCHAIN_DIR: $CI_BUILDS_DIR/persist/toolchains
+    TOOLCHAIN_DIR: $CACHE_DIR/toolchains
     IMAGE_DIR: $CI_PROJECT_DIR/work/build/tmp/deploy/images
     TOOLCHAIN_LINK_DIR: $CI_PROJECT_DIR/work/build/toolchains
   before_script:
