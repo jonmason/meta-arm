@@ -1,14 +1,8 @@
+SUMMARY = "Trusted Firmware image signing scripts"
+DESCRIPTION = "Trusted Firmware-M image signing scripts"
+HOMEPAGE = "https://git.trustedfirmware.org/trusted-firmware-m.git"
 
-SRC_URI_TRUSTED_FIRMWARE_M ?= "git://git.trustedfirmware.org/TF-M/trusted-firmware-m.git;protocol=https"
-SRC_URI = "${SRC_URI_TRUSTED_FIRMWARE_M};branch=${SRCBRANCH}"
-# Use the wrapper script from TF-Mv1.7.0
-SRCBRANCH ?= "master"
-SRCREV = "b725a1346cdb9ec75b1adcdc4c84705881e8fd4e"
-
-LICENSE = "BSD-3-Clause"
-LIC_FILES_CHKSUM = "file://license.rst;md5=07f368487da347f3c7bd0fc3085f3afa"
-
-S = "${WORKDIR}/git"
+require recipes-bsp/trusted-firmware-m/trusted-firmware-m-1.7.0-src.inc
 
 inherit native
 
