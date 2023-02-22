@@ -35,6 +35,21 @@ DEPENDS += "trusted-firmware-m-scripts-native"
 # right path until this is relocated automatically.
 export OPENSSL_MODULES="${STAGING_LIBDIR_NATIVE}/ossl-modules"
 
+# The arguments passed to the TF-M image signing script. Override this variable
+# in an image recipe to customize the arguments.
+TFM_IMAGE_SIGN_ARGS ?= "\
+    -v ${RE_LAYOUT_WRAPPER_VERSION} \
+    --layout "${TFM_IMAGE_SIGN_DIR}/${host_binary_layout}" \
+    -k  "${RECIPE_SYSROOT_NATIVE}/${TFM_SIGN_PRIVATE_KEY}" \
+    --public-key-format full \
+    --align 1 \
+    --pad \
+    --pad-header \
+    --measured-boot-record \
+    -H ${RE_IMAGE_OFFSET} \
+    -s auto \
+"
+
 #
 # sign_host_image
 #
@@ -65,16 +80,7 @@ EOF
     host_binary_signed="${TFM_IMAGE_SIGN_DIR}/signed_$(basename "${1}")"
 
     ${PYTHON} "${STAGING_LIBDIR_NATIVE}/tfm-scripts/wrapper/wrapper.py" \
-            -v ${RE_LAYOUT_WRAPPER_VERSION} \
-            --layout "${TFM_IMAGE_SIGN_DIR}/${host_binary_layout}" \
-            -k  "${RECIPE_SYSROOT_NATIVE}/${TFM_SIGN_PRIVATE_KEY}" \
-            --public-key-format full \
-            --align 1 \
-            --pad \
-            --pad-header \
-            --measured-boot-record \
-            -H ${RE_IMAGE_OFFSET} \
-            -s auto \
+            ${TFM_IMAGE_SIGN_ARGS} \
             "${1}" \
             "${host_binary_signed}"
 }
