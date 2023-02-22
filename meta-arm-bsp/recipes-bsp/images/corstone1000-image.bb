@@ -24,7 +24,8 @@ do_sign_images() {
 
     # Update BL2 in the FIP image
     cp ${RECIPE_SYSROOT}/firmware/${TFA_FIP_BINARY} .
-    fiptool update --tb-fw ${TFM_IMAGE_SIGN_DIR}/signed_${TFA_BL2_BINARY} \
+    fiptool update --tb-fw \
+        ${TFM_IMAGE_SIGN_DEPLOY_DIR}/signed_${TFA_BL2_BINARY} \
         ${TFM_IMAGE_SIGN_DIR}/${TFA_FIP_BINARY}
 
     # Sign the FIP image

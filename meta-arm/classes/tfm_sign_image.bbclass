@@ -6,28 +6,28 @@
 #  * Write the signing logic, which may call the function sign_host_image,
 #    described below
 
-inherit python3native deploy
+inherit python3native
 
 # The output and working directory
 TFM_IMAGE_SIGN_DIR = "${WORKDIR}/tfm-signed-images"
+TFM_IMAGE_SIGN_DEPLOY_DIR = "${WORKDIR}/deploy-tfm-signed-images"
 
+SSTATETASKS += "do_sign_images"
+do_sign_images[sstate-inputdirs] = "${TFM_IMAGE_SIGN_DEPLOY_DIR}"
+do_sign_images[sstate-outputdirs] = "${DEPLOY_DIR_IMAGE}"
+do_sign_images[dirs] = "${TFM_IMAGE_SIGN_DEPLOY_DIR} ${TFM_IMAGE_SIGN_DIR}"
+do_sign_images[cleandirs] = "${TFM_IMAGE_SIGN_DEPLOY_DIR} ${TFM_IMAGE_SIGN_DIR}"
+do_sign_images[stamp-extra-info] = "${MACHINE_ARCH}"
 tfm_sign_image_do_sign_images() {
     :
 }
-addtask sign_images after do_configure before do_compile
-do_sign_images[dirs] = "${TFM_IMAGE_SIGN_DIR}"
+addtask sign_images after do_prepare_recipe_sysroot before do_image
+EXPORT_FUNCTIONS do_sign_images
 
-tfm_sign_image_do_deploy() {
-    :
+python do_sign_images_setscene () {
+    sstate_setscene(d)
 }
-addtask deploy after do_sign_images
-
-deploy_signed_images() {
-    cp ${TFM_IMAGE_SIGN_DIR}/signed_* ${DEPLOYDIR}/
-}
-do_deploy[postfuncs] += "deploy_signed_images"
-
-EXPORT_FUNCTIONS do_sign_images do_deploy
+addtask do_sign_images_setscene
 
 DEPENDS += "trusted-firmware-m-scripts-native"
 
@@ -77,7 +77,7 @@ enum image_attributes {
 };
 EOF
 
-    host_binary_signed="${TFM_IMAGE_SIGN_DIR}/signed_$(basename "${1}")"
+    host_binary_signed="${TFM_IMAGE_SIGN_DEPLOY_DIR}/signed_$(basename "${1}")"
 
     ${PYTHON} "${STAGING_LIBDIR_NATIVE}/tfm-scripts/wrapper/wrapper.py" \
             ${TFM_IMAGE_SIGN_ARGS} \
