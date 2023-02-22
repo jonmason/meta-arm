@@ -72,6 +72,7 @@ EOF
             --align 1 \
             --pad \
             --pad-header \
+            --measured-boot-record \
             -H ${RE_IMAGE_OFFSET} \
             -s auto \
             "${1}" \

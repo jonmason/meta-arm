@@ -59,15 +59,21 @@ INHIBIT_DEFAULT_DEPS = "1"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
+# See tools/requirements.txt for Python dependencies
 DEPENDS += "cmake-native \
             ninja-native \
             gcc-arm-none-eabi-native \
-            python3-intelhex-native \
-            python3-jinja2-native \
-            python3-pyyaml-native \
+            python3-cbor2-native \
             python3-click-native \
             python3-cryptography-native \
-            python3-cbor2-native"
+            python3-pyasn1-native \
+            python3-imgtool-native \
+            python3-jinja2-native \
+            python3-pyyaml-native \
+            python3-pyhsslms-native \
+            python3-ecdsa-native \
+            python3-kconfiglib-native \
+"
 
 S = "${WORKDIR}/git/tfm"
 B = "${WORKDIR}/build"
