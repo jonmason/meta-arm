@@ -42,6 +42,9 @@ stages:
   extends: .setup
   variables:
     KUBERNETES_CPU_REQUEST: $CPU_REQUEST
+  only:
+    variables:
+      - $BUILD_ENABLE_REGEX == null || $CI_JOB_NAME =~ $BUILD_ENABLE_REGEX
   script:
     - KASFILES=$(./ci/jobs-to-kas "$CI_JOB_NAME")
     - kas dump --update --force-checkout --resolve-refs --resolve-env $KASFILES 
