@@ -15,8 +15,16 @@ local_conf_header:
 
 target:
   - nativesdk-fvp-base-a-aem
+  - nativesdk-fvp-corstone300
   - nativesdk-fvp-corstone500
+  - nativesdk-fvp-corstone700
   - nativesdk-fvp-corstone1000
+  - nativesdk-fvp-e1-edge
+  - nativesdk-fvp-morello
   - nativesdk-fvp-n1-edge
+  - nativesdk-fvp-n2-automotive
+  - nativesdk-fvp-neoverse-v1
+  - nativesdk-fvp-neoverse-v2
   - nativesdk-fvp-sgi575
+  - nativesdk-fvp-tc0
   - nativesdk-fvp-tc1
