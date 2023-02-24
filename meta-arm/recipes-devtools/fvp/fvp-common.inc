@@ -22,7 +22,7 @@ FVP_ARCH:aarch64 = "Linux64_armv8l"
 FVP_ARCH:x86-64 = "Linux64"
 
 # The architecture-specific directory the binaries are installed under
-FVP_ARCH_DIR = "${FVP_ARCH}"
+FVP_ARCH_DIR ?= "${FVP_ARCH}"
 
 def get_real_pv(d):
     # FVP versions are like 11.12_43
