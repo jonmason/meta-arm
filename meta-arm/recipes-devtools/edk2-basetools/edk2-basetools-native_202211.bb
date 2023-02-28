@@ -3,7 +3,7 @@
 # generating UEFI capsules as it only depends on some python scripts. Other
 # tools need to be built first before adding to sysroot.
 
-DESCRIPTION = "EDK2 Base Tools"
+SUMMARY = "EDK2 Base Tools"
 LICENSE = "BSD-2-Clause-Patent"
 
 # EDK2
@@ -14,11 +14,11 @@ SRCREV = "fff6d81270b57ee786ea18ad74f43149b9f03494"
 
 S = "${WORKDIR}/git"
 
+inherit native
+
 RDEPENDS:${PN} += "python3-core"
 
 do_install () {
     mkdir -p ${D}${bindir}/edk2-BaseTools
     cp -r ${WORKDIR}/git/BaseTools/* ${D}${bindir}/edk2-BaseTools/
 }
-
-BBCLASSEXTEND = "native"
