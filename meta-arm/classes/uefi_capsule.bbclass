@@ -43,7 +43,7 @@ IMAGE_CMD:uefi_capsule(){
     envsubst < ${UEFI_CAPSULE_CONFIG} > ./${MACHINE}-capsule-update-image.json
 
     ${STAGING_DIR_NATIVE}/usr/bin/edk2-BaseTools/BinWrappers/PosixLike/GenerateCapsule \
-    -e -o ${UEFI_FIRMWARE_BINARY}.${CAPSULE_EXTENSION} -j \
+    -e -o ${IMGDEPLOYDIR}/${UEFI_FIRMWARE_BINARY}.${CAPSULE_EXTENSION} -j \
     ${MACHINE}-capsule-update-image.json
 
     # Remove the firmware to avoid contamination of IMGDEPLOYDIR
