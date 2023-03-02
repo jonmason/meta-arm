@@ -14,7 +14,6 @@ ARMBSPFILESPATHS := "${THISDIR}:${THISDIR}/files:"
 # Arm platforms kmeta
 SRC_URI_KMETA = "file://arm-platforms-kmeta;type=kmeta;name=arm-platforms-kmeta;destsuffix=arm-platforms-kmeta"
 SRC_URI:append:fvp-base = " ${SRC_URI_KMETA}"
-SRC_URI:append:fvp-base-arm32 = " ${SRC_URI_KMETA}"
 SRC_URI:append:fvp-baser-aemv8r64 = " ${SRC_URI_KMETA}"
 SRC_URI:append:juno = " ${SRC_URI_KMETA}"
 SRC_URI:append:n1sdp = " ${SRC_URI_KMETA}"
@@ -66,21 +65,6 @@ COMPATIBLE_MACHINE:fvp-base = "fvp-base"
 KMACHINE:fvp-base = "fvp"
 FILESEXTRAPATHS:prepend:fvp-base := "${ARMBSPFILESPATHS}"
 SRC_URI:append:fvp-base = " file://0001-arm64-dts-fvp-Enable-virtio-rng-support.patch"
-
-#
-# FVP BASE ARM32 KMACHINE
-#
-COMPATIBLE_MACHINE:fvp-base-arm32 = "fvp-base-arm32"
-KMACHINE:fvp-base-arm32 = "fvp-arm32"
-FILESEXTRAPATHS:prepend:fvp-base-arm32 := "${ARMBSPFILESPATHS}"
-SRC_URI:append:fvp-base-arm32 = " file://0001-ARM-vexpress-enable-GICv3.patch"
-# We want to use the DT in the arm64 tree but the kernel build doesn't like that, so symlink it
-do_compile:prepend:fvp-base-arm32() {
-    mkdir --parents ${S}/arch/arm/boot/dts/arm
-    for file in fvp-base-revc.dts rtsm_ve-motherboard.dtsi rtsm_ve-motherboard-rs2.dtsi; do
-        ln -fsr ${S}/arch/arm64/boot/dts/arm/$file ${S}/arch/arm/boot/dts/arm
-    done
-}
 
 #
 # FVP BaseR AEMv8r64 Machine

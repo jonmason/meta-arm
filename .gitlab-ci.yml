@@ -104,13 +104,6 @@ fvp-base:
     matrix:
       - TESTING: testimage
 
-fvp-base-arm32:
-  extends: .build
-  parallel:
-    matrix:
-      - TOOLCHAINS: [gcc, external-gccarm]
-        TESTING: testimage
-
 fvp-baser-aemv8r64:
   extends: .build
   parallel:

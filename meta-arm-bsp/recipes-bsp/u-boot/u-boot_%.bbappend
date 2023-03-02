@@ -54,13 +54,6 @@ SRC_URI:append:fvp-base = " file://bootargs.cfg \
 	"
 
 #
-# FVP BASE ARM32
-#
-SRC_URI:append:fvp-base-arm32 = " file://0001-Add-vexpress_aemv8a_aarch32-variant.patch \
-				  file://0002-Revert-vexpress64-Enable-OF_CONTROL-and-OF_BOARD-for.patch \
-				"
-
-#
 # FVP BASER
 #
 SRC_URI:append:fvp-baser-aemv8r64 = " \
