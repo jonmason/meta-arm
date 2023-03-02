@@ -49,7 +49,9 @@ SRC_URI:append:corstone1000 = " \
 #
 # FVP BASE
 #
-SRC_URI:append:fvp-base = " file://bootargs.cfg"
+SRC_URI:append:fvp-base = " file://bootargs.cfg \
+	file://0001-Revert-vexpress64-pick-DRAM-size-from-DT.patch \
+	"
 
 #
 # FVP BASE ARM32
