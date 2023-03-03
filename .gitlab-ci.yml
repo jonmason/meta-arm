@@ -174,7 +174,7 @@ qemuarm-secureboot:
   parallel:
     matrix:
       - KERNEL: [linux-yocto, linux-yocto-dev, linux-yocto-rt]
-        TOOLCHAINS: [gcc, clang]
+        TOOLCHAINS: [gcc, clang, external-gccarm]
         TESTING: testimage
 
 qemuarm:
