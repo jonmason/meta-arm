@@ -1,4 +1,4 @@
-From 97caa9365f221b5aff93274a29ea894da55dce88 Mon Sep 17 00:00:00 2001
+From 32ae4539865e64bcfb0c6955bdac8db5904e493d Mon Sep 17 00:00:00 2001
 From: Manoj Kumar <manoj.kumar3@arm.com>
 Date: Mon, 1 Feb 2021 21:36:43 +0530
 Subject: [PATCH] iommu/arm-smmu-v3: workaround for ATC_INV_SIZE_ALL in N1SDP
@@ -22,10 +22,10 @@ Signed-off-by: Adam Johnston <adam.johnston@arm.com>
  2 files changed, 2 insertions(+)
 
 diff --git a/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c b/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c
-index 88817a3376ef..80e252d59a3a 100644
+index d4d8bfee9feb..0524bf2ec021 100644
 --- a/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c
 +++ b/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c
-@@ -1731,6 +1731,7 @@ arm_smmu_atc_inv_to_cmd(int ssid, unsigned long iova, size_t size,
+@@ -1738,6 +1738,7 @@ arm_smmu_atc_inv_to_cmd(int ssid, unsigned long iova, size_t size,
  	};
  
  	if (!size) {

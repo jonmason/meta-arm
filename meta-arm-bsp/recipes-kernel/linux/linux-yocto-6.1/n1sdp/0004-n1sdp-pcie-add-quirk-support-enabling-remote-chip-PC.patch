@@ -1,13 +1,12 @@
-From 74e052b7533827af9f43d093af8f430c99357eac Mon Sep 17 00:00:00 2001
-From: Vishnu Banavath <vishnu.banavath@arm.com>
-Date: Tue, 23 Aug 2022 15:18:38 +0100
+From b59e0d6c6035db80fc9044df0333f96ede53ad7a Mon Sep 17 00:00:00 2001
+From: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Date: Wed, 9 Feb 2022 20:37:43 +0530
 Subject: [PATCH] n1sdp: pcie: add quirk support enabling remote chip PCIe
 
 Base address mapping for remote chip Root PCIe ECAM space.
 
 When two N1SDP boards are coupled via the CCIX connection, the PCI host
-complex of the remote board appears as PCIe segment 2 on the primary
-board.
+complex of the remote board appears as PCIe segment 2 on the primary board.
 The resources of the secondary board, including the host complex, are
 mapped at offset 0x40000000000 into the address space of the primary
 board, so take that into account when accessing the remote PCIe segment.
@@ -29,7 +28,7 @@ Signed-off-by: Adam Johnston <adam.johnston@arm.com>
  3 files changed, 30 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/acpi/pci_mcfg.c b/drivers/acpi/pci_mcfg.c
-index 7700d36393ec..806ed8dd0d81 100644
+index 2d4c1c699ffe..27f1e9a45c17 100644
 --- a/drivers/acpi/pci_mcfg.c
 +++ b/drivers/acpi/pci_mcfg.c
 @@ -178,6 +178,7 @@ static struct mcfg_fixup mcfg_quirks[] = {
@@ -38,10 +37,10 @@ index 7700d36393ec..806ed8dd0d81 100644
  	N1SDP_ECAM_MCFG(0x20181101, 1, &pci_n1sdp_ccix_ecam_ops),
 +	N1SDP_ECAM_MCFG(0x20181101, 2, &pci_n1sdp_remote_pcie_ecam_ops),
  #endif /* ARM64 */
- };
  
+ #ifdef CONFIG_LOONGARCH
 diff --git a/drivers/pci/controller/pcie-n1sdp.c b/drivers/pci/controller/pcie-n1sdp.c
-index 408699b9dcb1..a03665dd056a 100644
+index 408699b9dcb1..b3b02417fd7d 100644
 --- a/drivers/pci/controller/pcie-n1sdp.c
 +++ b/drivers/pci/controller/pcie-n1sdp.c
 @@ -30,8 +30,10 @@
@@ -68,10 +67,10 @@ index 408699b9dcb1..a03665dd056a 100644
  
 -	table_base = AP_NS_SHARED_MEM_BASE + segment * BDF_TABLE_SIZE;
 +	if (segment > 1) {
-+	    rc_base_addr = REMOTE_CHIP_ADDR_OFFSET;
-+	    table_base = AP_NS_SHARED_MEM_BASE + REMOTE_CHIP_ADDR_OFFSET;
-+        } else {
-+            table_base = AP_NS_SHARED_MEM_BASE + segment * BDF_TABLE_SIZE;
++		rc_base_addr = REMOTE_CHIP_ADDR_OFFSET;
++		table_base = AP_NS_SHARED_MEM_BASE + REMOTE_CHIP_ADDR_OFFSET;
++	} else {
++		table_base = AP_NS_SHARED_MEM_BASE + segment * BDF_TABLE_SIZE;
 +	}
  
  	if (!request_mem_region(table_base, BDF_TABLE_SIZE,
@@ -100,7 +99,7 @@ index 408699b9dcb1..a03665dd056a 100644
 +/* Called for ACPI segment 2. */
 +static int pci_n1sdp_remote_pcie_init(struct pci_config_window *cfg)
 +{
-+        return pci_n1sdp_init(cfg, 2);
++	return pci_n1sdp_init(cfg, 2);
 +}
 +
  const struct pci_ecam_ops pci_n1sdp_pcie_ecam_ops = {
@@ -124,11 +123,11 @@ index 408699b9dcb1..a03665dd056a 100644
  	{ .compatible = "arm,n1sdp-pcie", .data = &pci_n1sdp_pcie_ecam_ops },
  	{ },
 diff --git a/include/linux/pci-ecam.h b/include/linux/pci-ecam.h
-index e6bbc037cef8..7bd8c1d702ee 100644
+index b3cf3adeab28..d4316795c00d 100644
 --- a/include/linux/pci-ecam.h
 +++ b/include/linux/pci-ecam.h
-@@ -89,6 +89,7 @@ extern const struct pci_ecam_ops al_pcie_ops;	/* Amazon Annapurna Labs PCIe */
- extern const struct pci_ecam_ops tegra194_pcie_ops; /* Tegra194 PCIe */
+@@ -90,6 +90,7 @@ extern const struct pci_ecam_ops tegra194_pcie_ops; /* Tegra194 PCIe */
+ extern const struct pci_ecam_ops loongson_pci_ecam_ops; /* Loongson PCIe */
  extern const struct pci_ecam_ops pci_n1sdp_pcie_ecam_ops; /* Arm N1SDP PCIe */
  extern const struct pci_ecam_ops pci_n1sdp_ccix_ecam_ops; /* Arm N1SDP PCIe */
 +extern const struct pci_ecam_ops pci_n1sdp_remote_pcie_ecam_ops; /* Arm N1SDP PCIe */

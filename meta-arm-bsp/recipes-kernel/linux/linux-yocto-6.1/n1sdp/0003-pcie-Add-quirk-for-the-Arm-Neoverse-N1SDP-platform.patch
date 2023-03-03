@@ -1,6 +1,6 @@
-From e88326f652ac6d126d5df8b3c0b2ac40e8b73797 Mon Sep 17 00:00:00 2001
-From: Vishnu Banavath <vishnu.banavath@arm.com>
-Date: Tue, 23 Aug 2022 15:17:28 +0100
+From 5aa5769af625c79589fd84b8afc06149c2362218 Mon Sep 17 00:00:00 2001
+From: Deepak Pandey <Deepak.Pandey@arm.com>
+Date: Fri, 31 May 2019 16:42:43 +0100
 Subject: [PATCH] pcie: Add quirk for the Arm Neoverse N1SDP platform
 
 The Arm N1SDP SoC suffers from some PCIe integration issues, most
@@ -25,6 +25,7 @@ Signed-off-by: Sudipto Paul <sudipto.paul@arm.com>
 [Andre: fix coding style issues, rewrite some parts, add DT support]
 Signed-off-by: Andre Przywara <andre.przywara@arm.com>
 
+Change-Id: I1d3a4b9bf6b3b883d262e3c4ff1f88a0eb81c1fe
 Upstream-Status: Inappropriate [will not be submitted as its a workaround to address hardware issue]
 Signed-off-by: Deepak Pandey <Deepak.Pandey@arm.com>
 Signed-off-by: Vishnu Banavath <vishnu.banavath@arm.com>
@@ -33,26 +34,26 @@ Signed-off-by: Adam Johnston <adam.johnston@arm.com>
  arch/arm64/configs/defconfig        |   1 +
  drivers/acpi/pci_mcfg.c             |   7 +
  drivers/pci/controller/Kconfig      |  11 ++
- drivers/pci/controller/Makefile     |   1 +
+ drivers/pci/controller/Makefile     |   2 +-
  drivers/pci/controller/pcie-n1sdp.c | 198 ++++++++++++++++++++++++++++
  include/linux/pci-ecam.h            |   2 +
- 6 files changed, 220 insertions(+)
+ 6 files changed, 220 insertions(+), 1 deletion(-)
  create mode 100644 drivers/pci/controller/pcie-n1sdp.c
 
 diff --git a/arch/arm64/configs/defconfig b/arch/arm64/configs/defconfig
-index 3ccbe378f875..1ce32678ccc7 100644
+index bbbc31391a65..973aa3b4d407 100644
 --- a/arch/arm64/configs/defconfig
 +++ b/arch/arm64/configs/defconfig
-@@ -236,6 +236,7 @@ CONFIG_PCIE_LAYERSCAPE_GEN4=y
- CONFIG_PCI_ENDPOINT=y
- CONFIG_PCI_ENDPOINT_CONFIGFS=y
- CONFIG_PCI_EPF_TEST=m
+@@ -214,6 +214,7 @@ CONFIG_NFC_S3FWRN5_I2C=m
+ CONFIG_PCI=y
+ CONFIG_PCIEPORTBUS=y
+ CONFIG_PCIEAER=y
 +CONFIG_PCI_QUIRKS=y
- CONFIG_DEVTMPFS=y
- CONFIG_DEVTMPFS_MOUNT=y
- CONFIG_FW_LOADER_USER_HELPER=y
+ CONFIG_PCI_IOV=y
+ CONFIG_PCI_PASID=y
+ CONFIG_HOTPLUG_PCI=y
 diff --git a/drivers/acpi/pci_mcfg.c b/drivers/acpi/pci_mcfg.c
-index 63b98eae5e75..7700d36393ec 100644
+index 860014b89b8e..2d4c1c699ffe 100644
 --- a/drivers/acpi/pci_mcfg.c
 +++ b/drivers/acpi/pci_mcfg.c
 @@ -171,6 +171,13 @@ static struct mcfg_fixup mcfg_quirks[] = {
@@ -67,10 +68,10 @@ index 63b98eae5e75..7700d36393ec 100644
 +	N1SDP_ECAM_MCFG(0x20181101, 0, &pci_n1sdp_pcie_ecam_ops),
 +	N1SDP_ECAM_MCFG(0x20181101, 1, &pci_n1sdp_ccix_ecam_ops),
  #endif /* ARM64 */
- };
  
+ #ifdef CONFIG_LOONGARCH
 diff --git a/drivers/pci/controller/Kconfig b/drivers/pci/controller/Kconfig
-index b8d96d38064d..3c5a8a218442 100644
+index bfd9bac37e24..7a65799dded7 100644
 --- a/drivers/pci/controller/Kconfig
 +++ b/drivers/pci/controller/Kconfig
 @@ -50,6 +50,17 @@ config PCI_IXP4XX
@@ -92,17 +93,18 @@ index b8d96d38064d..3c5a8a218442 100644
  	bool "NVIDIA Tegra PCIe controller"
  	depends on ARCH_TEGRA || COMPILE_TEST
 diff --git a/drivers/pci/controller/Makefile b/drivers/pci/controller/Makefile
-index 37c8663de7fe..5b8a9535a2f7 100644
+index 37c8663de7fe..08e5afcf6e86 100644
 --- a/drivers/pci/controller/Makefile
 +++ b/drivers/pci/controller/Makefile
-@@ -39,6 +39,7 @@ obj-$(CONFIG_PCI_LOONGSON) += pci-loongson.o
+@@ -39,7 +39,7 @@ obj-$(CONFIG_PCI_LOONGSON) += pci-loongson.o
  obj-$(CONFIG_PCIE_HISI_ERR) += pcie-hisi-error.o
  obj-$(CONFIG_PCIE_APPLE) += pcie-apple.o
  obj-$(CONFIG_PCIE_MT7621) += pcie-mt7621.o
+-
 +obj-$(CONFIG_PCIE_HOST_N1SDP_ECAM) += pcie-n1sdp.o
- 
  # pcie-hisi.o quirks are needed even without CONFIG_PCIE_DW
  obj-y				+= dwc/
+ obj-y				+= mobiveil/
 diff --git a/drivers/pci/controller/pcie-n1sdp.c b/drivers/pci/controller/pcie-n1sdp.c
 new file mode 100644
 index 000000000000..408699b9dcb1
@@ -308,13 +310,13 @@ index 000000000000..408699b9dcb1
 +};
 +builtin_platform_driver(n1sdp_pcie_driver);
 diff --git a/include/linux/pci-ecam.h b/include/linux/pci-ecam.h
-index adea5a4771cf..e6bbc037cef8 100644
+index 6b1301e2498e..b3cf3adeab28 100644
 --- a/include/linux/pci-ecam.h
 +++ b/include/linux/pci-ecam.h
-@@ -87,6 +87,8 @@ extern const struct pci_ecam_ops xgene_v1_pcie_ecam_ops; /* APM X-Gene PCIe v1 *
- extern const struct pci_ecam_ops xgene_v2_pcie_ecam_ops; /* APM X-Gene PCIe v2.x */
+@@ -88,6 +88,8 @@ extern const struct pci_ecam_ops xgene_v2_pcie_ecam_ops; /* APM X-Gene PCIe v2.x
  extern const struct pci_ecam_ops al_pcie_ops;	/* Amazon Annapurna Labs PCIe */
  extern const struct pci_ecam_ops tegra194_pcie_ops; /* Tegra194 PCIe */
+ extern const struct pci_ecam_ops loongson_pci_ecam_ops; /* Loongson PCIe */
 +extern const struct pci_ecam_ops pci_n1sdp_pcie_ecam_ops; /* Arm N1SDP PCIe */
 +extern const struct pci_ecam_ops pci_n1sdp_ccix_ecam_ops; /* Arm N1SDP PCIe */
  #endif
