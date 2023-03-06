@@ -70,6 +70,8 @@ update-repos:
 # Build stage, the actual build jobs
 #
 # Available options for building are
+#  DISTRO: [poky, poky-tiny]
+#  KERNEL: [linux-yocto, linux-yocto-dev, linux-yocto-rt]
 #  TOOLCHAINS: [gcc, clang, armgcc, external-gccarm]
 #  TCLIBC: [glibc, musl]
 #  FIRMWARE: [u-boot, edk2]
@@ -147,14 +149,16 @@ qemu-generic-arm64:
   extends: .build
   parallel:
     matrix:
-      - TOOLCHAINS: [gcc, clang]
+      - KERNEL: [linux-yocto, linux-yocto-dev, linux-yocto-rt]
+        TOOLCHAINS: [gcc, clang]
         TESTING: testimage
 
 qemuarm64-secureboot:
   extends: .build
   parallel:
     matrix:
-      - TOOLCHAINS: [gcc, clang]
+      - KERNEL: [linux-yocto, linux-yocto-dev, linux-yocto-rt]
+        TOOLCHAINS: [gcc, clang]
         TCLIBC: [glibc, musl]
         TS: [none, trusted-services]
         TESTING: testimage
@@ -163,8 +167,12 @@ qemuarm64:
   extends: .build
   parallel:
     matrix:
-      - TOOLCHAINS: [gcc, clang]
+      - DISTRO: poky
+        KERNEL: [linux-yocto, linux-yocto-dev, linux-yocto-rt]
+        TOOLCHAINS: [gcc, clang]
         FIRMWARE: [u-boot, edk2]
+        TESTING: testimage
+      - DISTRO: poky-tiny
         TESTING: testimage
       - VIRT: xen
 
@@ -172,15 +180,20 @@ qemuarm-secureboot:
   extends: .build
   parallel:
     matrix:
-      - TOOLCHAINS: [gcc, clang]
+      - KERNEL: [linux-yocto, linux-yocto-dev, linux-yocto-rt]
+        TOOLCHAINS: [gcc, clang]
         TESTING: testimage
 
 qemuarm:
   extends: .build
   parallel:
     matrix:
-      - TOOLCHAINS: [gcc, clang]
+      - DISTRO: poky
+        KERNEL: [linux-yocto, linux-yocto-dev, linux-yocto-rt]
+        TOOLCHAINS: [gcc, clang]
         FIRMWARE: [u-boot, edk2]
+        TESTING: testimage
+      - DISTRO: poky-tiny
         TESTING: testimage
       - VIRT: xen
 
@@ -188,7 +201,11 @@ qemuarmv5:
   extends: .build
   parallel:
     matrix:
-      - TESTING: testimage
+      - DISTRO: poky
+        KERNEL: [linux-yocto, linux-yocto-dev, linux-yocto-rt]
+        TESTING: testimage
+      - DISTRO: poky-tiny
+        TESTING: testimage
 
 sgi575:
   extends: .build

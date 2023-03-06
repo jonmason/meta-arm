@@ -1,9 +1,16 @@
 ARMFILESPATHS := "${THISDIR}/files:"
 
+FILESEXTRAPATHS:prepend:aarch64 = "${ARMFILESPATHS}"
+SRC_URI:append:aarch64 = " \
+    file://0001-Revert-arm64-defconfig-Enable-Tegra-MGBE-driver.patch \
+    file://0002-Revert-arm64-defconfig-Add-Nuvoton-NPCM-family-suppo.patch \
+    "
+
 COMPATIBLE_MACHINE:generic-arm64 = "generic-arm64"
 FILESEXTRAPATHS:prepend:generic-arm64 = "${ARMFILESPATHS}"
 SRC_URI:append:generic-arm64 = " \
     file://generic-arm64-kmeta;type=kmeta;destsuffix=generic-arm64-kmeta \
+    file://no-ipvs.cfg \
     "
 
 FILESEXTRAPATHS:prepend:qemuarm64-secureboot = "${ARMFILESPATHS}"
@@ -25,7 +32,10 @@ FILESEXTRAPATHS:prepend:qemuarm64 = "${ARMFILESPATHS}"
 SRC_URI:append:qemuarm64 = " file://efi.cfg"
 
 FILESEXTRAPATHS:prepend:qemuarm = "${ARMFILESPATHS}"
-SRC_URI:append:qemuarm = " file://efi.cfg"
+SRC_URI:append:qemuarm = " \
+    file://efi.cfg \
+    file://qemuarm-phys-virt.cfg \
+    "
 
 FFA_TRANSPORT_INCLUDE = "${@bb.utils.contains('MACHINE_FEATURES', 'arm-ffa', 'arm-ffa-transport.inc', '' , d)}"
 require ${FFA_TRANSPORT_INCLUDE}
