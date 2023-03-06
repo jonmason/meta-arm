@@ -72,7 +72,8 @@ update-repos:
 # Available options for building are
 #  TOOLCHAINS: [gcc, clang, armgcc, external-gccarm]
 #  TCLIBC: [glibc, musl]
-#  FIRMWARE: [uboot, edk2]
+#  FIRMWARE: [u-boot, edk2]
+#  TS: [none, trusted-services]
 #  VIRT: [none, xen]
 #  TESTING: testimage
 
@@ -88,7 +89,7 @@ corstone1000-fvp:
   extends: .build
   parallel:
     matrix:
-      - TESTING: [testimage,tftf]
+      - TESTING: [testimage, tftf]
   tags:
     - x86_64
 
@@ -127,7 +128,7 @@ juno:
   parallel:
     matrix:
       - TOOLCHAINS: [gcc, clang]
-        FIRMWARE: [uboot, edk2]
+        FIRMWARE: [u-boot, edk2]
 
 musca-b1:
   extends: .build
@@ -163,7 +164,7 @@ qemuarm64:
   parallel:
     matrix:
       - TOOLCHAINS: [gcc, clang]
-        EFI: [uboot, edk2]
+        FIRMWARE: [u-boot, edk2]
         TESTING: testimage
       - VIRT: xen
 
@@ -179,7 +180,7 @@ qemuarm:
   parallel:
     matrix:
       - TOOLCHAINS: [gcc, clang]
-        EFI: [uboot, edk2]
+        FIRMWARE: [u-boot, edk2]
         TESTING: testimage
       - VIRT: xen
 
