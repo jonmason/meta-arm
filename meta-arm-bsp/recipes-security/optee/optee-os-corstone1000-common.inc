@@ -2,7 +2,7 @@ SRCREV = "42f6617108fa43712652ef52f9d5b4ec5b2665f8"
 PV = "3.18.0+git${SRCPV}"
 
 SRC_URI:remove = " \
-                  file://0008-no-warn-rwx-segments.patch \
+                  file://0003-core-link-add-no-warn-rwx-segments.patch \
                  "
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files/optee-os/corstone1000:"
