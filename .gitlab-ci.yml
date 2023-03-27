@@ -58,7 +58,8 @@ stages:
       - $CI_PROJECT_DIR/work/build/tmp/work*/**/testimage/*
 
 #
-# Prep stage, update repositories once
+# Prep stage, update repositories once.
+# Set the CI variable CI_CLEAN_REPOS=1 to refetch the respositories from scratch
 #
 update-repos:
   extends: .setup
