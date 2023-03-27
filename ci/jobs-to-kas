@@ -11,7 +11,11 @@
 
 set -e -u
 
-FILES="ci/$(echo $1 | cut -d ':' -f 1).yml"
+MACHINE=$(echo "$1" | cut -d ':' -f 1)
+FILES="ci/machines/$MACHINE.yml"
+if [ ! -f "$FILES" ]; then
+	FILES="ci/$MACHINE.yml"
+fi
 
 for i in $(echo $1 | cut -s -d ':' -f 2 | sed 's/[][,]//g'); do
 	# Given that there are no yml files for gcc or glibc, as those are the

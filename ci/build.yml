@@ -1,0 +1,158 @@
+include:
+  - 'https://gitlab.com/jonmason00/gitlab-templates/-/raw/master/templates/build.yml'
+
+#
+# Build stage, the actual build jobs
+#
+# Available options for building are
+#  TOOLCHAINS: [gcc, clang, armgcc, external-gccarm]
+#  TCLIBC: [glibc, musl]
+#  VIRT: [none, xen]
+#  TESTING: testimage
+
+corstone500:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+  tags:
+    - x86_64
+
+corstone1000-fvp:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: [testimage,tftf]
+  tags:
+    - x86_64
+
+corstone1000-mps3:
+  extends: .build
+
+fvp-base:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+  tags:
+    - x86_64
+
+fvp-base-arm32:
+  extends: .build
+  parallel:
+    matrix:
+      - TOOLCHAINS: [gcc, external-gccarm]
+        TESTING: testimage
+  tags:
+    - x86_64
+
+fvp-baser-aemv8r64:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+  tags:
+    - x86_64
+
+fvps:
+  extends: .build
+
+gem5-arm64:
+  extends: .build
+  parallel:
+    matrix:
+      - VIRT: [none, xen]
+
+gem5-atp-arm64:
+  extends: .build
+
+generic-arm64:
+  extends: .build
+
+juno:
+  extends: .build
+  parallel:
+    matrix:
+      - TOOLCHAINS: [gcc, clang]
+        FIRMWARE: [none, edk2]
+
+microbit-v1:
+  extends: .build_and_test
+  parallel:
+    matrix:
+      - TESTING: testimage-zephyr
+
+musca-b1:
+  extends: .build
+
+musca-s1:
+  extends: .build
+
+n1sdp:
+  extends: .build
+  parallel:
+    matrix:
+      - TOOLCHAINS: [gcc, armgcc]
+
+qemu-cortex-a53:
+  extends: .build
+
+qemu-cortex-m3:
+  extends: .build_and_test
+  parallel:
+    matrix:
+      - TESTING: testimage-zephyr
+
+qemu-cortex-r5:
+  extends: .build
+
+qemu-generic-arm64:
+  extends: .build
+  parallel:
+    matrix:
+      - TOOLCHAINS: [gcc, clang]
+        TESTING: testimage
+
+qemuarm64-secureboot:
+  extends: .build
+  parallel:
+    matrix:
+      - TOOLCHAINS: [gcc, clang]
+        TCLIBC: [glibc, musl]
+        TESTING: testimage
+
+qemuarm64:
+  extends: .build
+  parallel:
+    matrix:
+      - VIRT: xen
+
+qemuarm:
+  extends: .build
+  parallel:
+    matrix:
+      - TOOLCHAINS: [gcc, clang]
+        TESTING: testimage
+      - VIRT: xen
+
+qemuarmv5:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
+sgi575:
+  extends: .build
+
+tc0:
+  extends: .build
+  tags:
+    - x86_64
+
+tc1:
+  extends: .build
+  tags:
+    - x86_64
+
+toolchains:
+  extends: .build
