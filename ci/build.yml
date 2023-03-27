@@ -1,0 +1,148 @@
+include:
+  - 'https://gitlab.com/jonmason00/gitlab-templates/-/raw/master/templates/build.yml'
+
+#
+# Build stage, the actual build jobs
+#
+# Available options for building are
+#  DISTRO: [poky, poky-tiny]
+#  KERNEL: [linux-yocto, linux-yocto-dev, linux-yocto-rt]
+#  TOOLCHAINS: [gcc, clang, armgcc, external-gccarm]
+#  TCLIBC: [glibc, musl]
+#  FIRMWARE: [u-boot, edk2]
+#  TS: [none, trusted-services]
+#  VIRT: [none, xen]
+#  TESTING: testimage
+
+corstone500:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+  tags:
+    - x86_64
+
+corstone1000-fvp:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: [testimage, tftf]
+  tags:
+    - x86_64
+
+corstone1000-mps3:
+  extends: .build
+
+fvp-base:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+      - FIRMWARE: edk2
+
+fvp-baser-aemv8r64:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+  tags:
+    - x86_64
+
+fvps:
+  extends: .build
+
+generic-arm64:
+  extends: .build
+
+juno:
+  extends: .build
+  parallel:
+    matrix:
+      - TOOLCHAINS: [gcc, clang]
+        FIRMWARE: [u-boot, edk2]
+
+musca-b1:
+  extends: .build
+
+musca-s1:
+  extends: .build
+
+n1sdp:
+  extends: .build
+  parallel:
+    matrix:
+      - TOOLCHAINS: [gcc, armgcc]
+        TS: [none, trusted-services]
+
+qemu-generic-arm64:
+  extends: .build
+  parallel:
+    matrix:
+      - KERNEL: [linux-yocto, linux-yocto-dev, linux-yocto-rt]
+        TOOLCHAINS: [gcc, clang]
+        TESTING: testimage
+
+qemuarm64-secureboot:
+  extends: .build
+  parallel:
+    matrix:
+      - KERNEL: [linux-yocto, linux-yocto-dev, linux-yocto-rt]
+        TOOLCHAINS: [gcc, clang]
+        TCLIBC: [glibc, musl]
+        TS: [none, trusted-services]
+        TESTING: testimage
+
+qemuarm64:
+  extends: .build
+  parallel:
+    matrix:
+      - DISTRO: poky
+        KERNEL: [linux-yocto, linux-yocto-dev, linux-yocto-rt]
+        TOOLCHAINS: [gcc, clang]
+        FIRMWARE: [u-boot, edk2]
+        TESTING: testimage
+      - DISTRO: poky-tiny
+        TESTING: testimage
+      - VIRT: xen
+
+qemuarm-secureboot:
+  extends: .build
+  parallel:
+    matrix:
+      - KERNEL: [linux-yocto, linux-yocto-dev, linux-yocto-rt]
+        TOOLCHAINS: [gcc, clang, external-gccarm]
+        TESTING: testimage
+
+qemuarm:
+  extends: .build
+  parallel:
+    matrix:
+      - DISTRO: poky
+        KERNEL: [linux-yocto, linux-yocto-dev, linux-yocto-rt]
+        TOOLCHAINS: [gcc, clang]
+        FIRMWARE: [u-boot, edk2]
+        TESTING: testimage
+      - DISTRO: poky-tiny
+        TESTING: testimage
+      - VIRT: xen
+
+qemuarmv5:
+  extends: .build
+  parallel:
+    matrix:
+      - DISTRO: poky
+        KERNEL: [linux-yocto, linux-yocto-dev, linux-yocto-rt]
+        TESTING: testimage
+      - DISTRO: poky-tiny
+        TESTING: testimage
+
+sgi575:
+  extends: .build
+
+tc1:
+  extends: .build
+  tags:
+    - x86_64
+
+toolchains:
+  extends: .build
