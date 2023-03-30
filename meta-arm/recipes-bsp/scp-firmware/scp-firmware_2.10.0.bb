@@ -64,7 +64,7 @@ do_configure[cleandirs] += "${B}"
 do_compile() {
     for FW in ${FW_TARGETS}; do
         for TYPE in ${FW_INSTALL}; do
-            cmake --build ${B}/${TYPE}/${FW} --target all
+            VERBOSE=1 cmake --build ${B}/${TYPE}/${FW} --target all
         done
     done
 }
