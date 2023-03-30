@@ -14,7 +14,7 @@ SRCREV  = "673d014f3861ad81cc5ab06d2884a314a610799b"
 
 PROVIDES += "virtual/control-processor-firmware"
 
-SCP_BUILD_RELEASE   ?= "1"
+CMAKE_BUILD_TYPE    ?= "RelWithDebInfo"
 SCP_PLATFORM        ?= "invalid"
 SCP_COMPILER        ?= "arm-none-eabi"
 SCP_LOG_LEVEL       ?= "WARN"
@@ -29,8 +29,6 @@ DEPENDS = "virtual/arm-none-eabi-gcc-native \
 # For now we only build with GCC, so stop meta-clang trying to get involved
 TOOLCHAIN = "gcc"
 
-SCP_BUILD_STR = "${@bb.utils.contains('SCP_BUILD_RELEASE', '1', 'Release', 'Debug', d)}"
-
 inherit deploy
 
 B = "${WORKDIR}/build"
@@ -39,13 +37,16 @@ S = "${WORKDIR}/git"
 # Allow platform specific copying of only scp or both scp & mcp, default to both
 FW_TARGETS ?= "scp mcp"
 FW_INSTALL ?= "ramfw romfw"
+
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 COMPATIBLE_MACHINE ?= "invalid"
 
-LDFLAGS[unexport] = "1"
-CFLAGS[unexport] = "1"
+export CFLAGS = "${DEBUG_PREFIX_MAP}"
+export ASMFLAGS = "${DEBUG_PREFIX_MAP}"
 
-EXTRA_OECMAKE = "-D CMAKE_BUILD_TYPE=${SCP_BUILD_STR} \
+LDFLAGS[unexport] = "1"
+
+EXTRA_OECMAKE = "-D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
                  -D SCP_LOG_LEVEL=${SCP_LOG_LEVEL} \
                  -D SCP_PLATFORM_FEATURE_SET=${SCP_PLATFORM_FEATURE_SET} \
                  -D DISABLE_CPPCHECK=1 \
