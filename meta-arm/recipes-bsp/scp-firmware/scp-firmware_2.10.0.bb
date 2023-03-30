@@ -98,8 +98,8 @@ FILES:${PN} = "/firmware"
 SYSROOT_DIRS += "/firmware"
 
 FILES:${PN}-dbg += "/firmware/*.elf"
-# Skip QA check for relocations in .text of elf binaries
-INSANE_SKIP:${PN}-dbg = "arch textrel"
+# These binaries are specifically for 32-bit arm
+INSANE_SKIP:${PN}-dbg += "arch"
 INHIBIT_PACKAGE_DEBUG_SPLIT = "1"
 INHIBIT_PACKAGE_STRIP = "1"
 
