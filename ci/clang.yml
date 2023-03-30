@@ -8,3 +8,6 @@ repos:
 local_conf_header:
   toolchain: |
     TOOLCHAIN = "clang"
+    # This is needed to stop bitbake getting confused about what clang/llvm is
+    # being used, see https://github.com/kraj/meta-clang/pull/766
+    BBMASK += "/meta/recipes-devtools/llvm/llvm.*\.bb"
