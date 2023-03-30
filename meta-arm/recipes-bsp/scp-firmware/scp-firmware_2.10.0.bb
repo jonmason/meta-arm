@@ -52,46 +52,46 @@ EXTRA_OECMAKE = "-D CMAKE_BUILD_TYPE=${SCP_BUILD_STR} \
                 "
 
 do_configure() {
-     for FW in ${FW_TARGETS}; do
-         for TYPE in ${FW_INSTALL}; do
-             cmake -GNinja ${EXTRA_OECMAKE} -S ${S} -B "${B}/${TYPE}/${FW}" -D SCP_FIRMWARE_SOURCE_DIR="${SCP_PLATFORM}/${FW}_${TYPE}"
-         done
-     done
+    for FW in ${FW_TARGETS}; do
+        for TYPE in ${FW_INSTALL}; do
+            cmake -GNinja ${EXTRA_OECMAKE} -S ${S} -B "${B}/${TYPE}/${FW}" -D SCP_FIRMWARE_SOURCE_DIR="${SCP_PLATFORM}/${FW}_${TYPE}"
+        done
+    done
 }
 
 do_configure[cleandirs] += "${B}"
 
 do_compile() {
-     for FW in ${FW_TARGETS}; do
-         for TYPE in ${FW_INSTALL}; do
-             cmake --build ${B}/${TYPE}/${FW} --target all
-         done
-     done
+    for FW in ${FW_TARGETS}; do
+        for TYPE in ${FW_INSTALL}; do
+            cmake --build ${B}/${TYPE}/${FW} --target all
+        done
+    done
 }
 
 do_install() {
-     install -d ${D}/firmware
-     for TYPE in ${FW_INSTALL}; do
-         for FW in ${FW_TARGETS}; do
-            if [ "$TYPE" = "romfw" ]; then
-                if [ "$FW" = "scp" ]; then
-                    install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-bl1.bin" "${D}/firmware/${FW}_${TYPE}.bin"
-                    install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-bl1" "${D}/firmware/${FW}_${TYPE}.elf"
-                elif [ "$FW" = "mcp" ]; then
-                    install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-mcp-bl1.bin" "${D}/firmware/${FW}_${TYPE}.bin"
-                    install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-mcp-bl1" "${D}/firmware/${FW}_${TYPE}.elf"
-                fi
-            elif [ "$TYPE" = "ramfw" ]; then
-                if [ "$FW" = "scp" ]; then
-                    install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-bl2.bin" "${D}/firmware/${FW}_${TYPE}.bin"
-                    install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-bl2" "${D}/firmware/${FW}_${TYPE}.elf"
-                elif [ "$FW" = "mcp" ]; then
-                    install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-mcp-bl2.bin" "${D}/firmware/${FW}_${TYPE}.bin"
-                    install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-mcp-bl2" "${D}/firmware/${FW}_${TYPE}.elf"
-                fi
-            fi
-        done
-     done
+    install -d ${D}/firmware
+    for TYPE in ${FW_INSTALL}; do
+        for FW in ${FW_TARGETS}; do
+           if [ "$TYPE" = "romfw" ]; then
+               if [ "$FW" = "scp" ]; then
+                   install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-bl1.bin" "${D}/firmware/${FW}_${TYPE}.bin"
+                   install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-bl1" "${D}/firmware/${FW}_${TYPE}.elf"
+               elif [ "$FW" = "mcp" ]; then
+                   install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-mcp-bl1.bin" "${D}/firmware/${FW}_${TYPE}.bin"
+                   install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-mcp-bl1" "${D}/firmware/${FW}_${TYPE}.elf"
+               fi
+           elif [ "$TYPE" = "ramfw" ]; then
+               if [ "$FW" = "scp" ]; then
+                   install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-bl2.bin" "${D}/firmware/${FW}_${TYPE}.bin"
+                   install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-bl2" "${D}/firmware/${FW}_${TYPE}.elf"
+               elif [ "$FW" = "mcp" ]; then
+                   install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-mcp-bl2.bin" "${D}/firmware/${FW}_${TYPE}.bin"
+                   install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-mcp-bl2" "${D}/firmware/${FW}_${TYPE}.elf"
+               fi
+           fi
+       done
+    done
 }
 
 FILES:${PN} = "/firmware"
