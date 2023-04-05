@@ -39,6 +39,7 @@ SRC_URI:append:corstone1000 = " \
     file://0009-Platform-corstone1000-BL2-uses-GPT-layout.patch                 \
     file://0010-Platform-corstone1000-flash_layout-simplification.patch         \
     file://0011-corstone1000-make-sure-to-write-fwu-metadata-to-repl.patch      \
+    file://0012-Platform-Corstone1000-get-fwu-and-private-metadata-f.patch      \
            "
 
 do_install() {
