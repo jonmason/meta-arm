@@ -78,17 +78,17 @@ do_install() {
                if [ "$FW" = "scp" ]; then
                    install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-bl1.bin" "${D}/firmware/${FW}_${TYPE}.bin"
                    install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-bl1.elf" "${D}/firmware/${FW}_${TYPE}.elf"
-               elif [ "$FW" = "mcp" ]; then
-                   install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-mcp-bl1.bin" "${D}/firmware/${FW}_${TYPE}.bin"
-                   install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-mcp-bl1.elf" "${D}/firmware/${FW}_${TYPE}.elf"
+               else
+                   install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-${FW}-bl1.bin" "${D}/firmware/${FW}_${TYPE}.bin"
+                   install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-${FW}-bl1.elf" "${D}/firmware/${FW}_${TYPE}.elf"
                fi
            elif [ "$TYPE" = "ramfw" ]; then
                if [ "$FW" = "scp" ]; then
                    install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-bl2.bin" "${D}/firmware/${FW}_${TYPE}.bin"
                    install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-bl2.elf" "${D}/firmware/${FW}_${TYPE}.elf"
-               elif [ "$FW" = "mcp" ]; then
-                   install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-mcp-bl2.bin" "${D}/firmware/${FW}_${TYPE}.bin"
-                   install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-mcp-bl2.elf" "${D}/firmware/${FW}_${TYPE}.elf"
+               else
+                   install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-${FW}-bl2.bin" "${D}/firmware/${FW}_${TYPE}.bin"
+                   install -D "${B}/${TYPE}/${FW}/bin/${SCP_PLATFORM}-${FW}-bl2.elf" "${D}/firmware/${FW}_${TYPE}.elf"
                fi
            fi
        done
