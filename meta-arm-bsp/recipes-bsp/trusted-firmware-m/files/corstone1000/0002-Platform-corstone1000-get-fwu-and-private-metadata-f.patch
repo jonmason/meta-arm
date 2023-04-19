@@ -7,7 +7,7 @@ Read and Write the FWU metadata and private metadata using instead
 static flash offsets get the partitions and start address from gpt
 partition table.
 
-Upstream-Status: Pending (not submitted yet)
+Upstream-Status: Submitted [https://review.trustedfirmware.org/c/TF-M/trusted-firmware-m/+/20551]
 Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
 ---
  .../target/arm/corstone1000/CMakeLists.txt    |  7 ++

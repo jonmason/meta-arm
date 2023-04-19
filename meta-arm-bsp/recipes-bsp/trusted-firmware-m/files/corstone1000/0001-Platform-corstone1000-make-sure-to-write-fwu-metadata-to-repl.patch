@@ -7,7 +7,7 @@ u-boot and other, before using fwu metadata validate if
 the copies in both replicas are good. so, make sure
 we write fwu metadata in both replicas.
 
-Upstream-Status: Pending [Not submitted to upstream yet]
+Upstream-Status: Submitted [https://review.trustedfirmware.org/c/TF-M/trusted-firmware-m/+/20550]
 Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
 ---
  .../arm/corstone1000/fw_update_agent/fwu_agent.c   | 14 ++++++++++++++
