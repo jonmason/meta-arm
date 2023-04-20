@@ -106,11 +106,16 @@ do_install() {
 
 FILES:${PN} = "/firmware"
 SYSROOT_DIRS += "/firmware"
+FILES:${PN}-dbg = "/firmware/*.elf"
 
 addtask deploy after do_install
 do_deploy() {
     cp -rf ${D}/firmware/* ${DEPLOYDIR}/
 }
 
-# Build paths are currently embedded
+# Build paths are currently embedded because it's impossible to pass -fdebug-prefix-map
 INSANE_SKIP:${PN} += "buildpaths"
+INSANE_SKIP:${PN}-dbg += "buildpaths"
+# Target binaries will be 32-bit Arm
+INSANE_SKIP:${PN} += "arch"
+INSANE_SKIP:${PN}-dbg += "arch"
