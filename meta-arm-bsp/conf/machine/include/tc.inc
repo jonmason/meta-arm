@@ -21,6 +21,7 @@ UBOOT_MKIMAGE_DTCOPTS = "-I dts -O dtb"
 UBOOT_SIGN_KEYNAME = "dev_key"
 UBOOT_SIGN_KEYDIR = "${DEPLOY_DIR_IMAGE}/keys"
 FIT_GENERATE_KEYS = "1"
+FIT_SIGN_INDIVIDUAL = "1"
 
 PREFERRED_PROVIDER_virtual/kernel ?= "linux-arm64-ack"
 
