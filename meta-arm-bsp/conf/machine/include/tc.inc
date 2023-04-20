@@ -39,3 +39,8 @@ IMAGE_FSTYPES += "cpio.gz"
 INITRAMFS_IMAGE ?= "core-image-minimal"
 
 SERIAL_CONSOLES = "115200;ttyAMA0"
+
+EXTRA_IMAGEDEPENDS += "trusted-firmware-a optee-os"
+# FIXME - there is signed image dependency/race with testimage.
+# This should be fixed in oe-core
+TESTIMAGEDEPENDS:append = " virtual/kernel:do_deploy"

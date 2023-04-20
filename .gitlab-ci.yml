@@ -219,6 +219,9 @@ sgi575:
 
 tc1:
   extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
   tags:
     - x86_64
 
