@@ -3,8 +3,10 @@ header:
   includes:
     - ci/base.yml
     - ci/fvp.yml
+    - ci/meta-openembedded.yml
 
 machine: tc1
 
 target:
   - core-image-minimal
+  - trusted-firmware-m
