@@ -76,10 +76,8 @@ EXTRA_OECMAKE += "-DMBEDCRYPTO_PATH=${S}/../mbedtls -DTFM_TEST_REPO_PATH=${S}/..
 
 export CMAKE_BUILD_PARALLEL_LEVEL = "${@oe.utils.parallel_make(d, False)}"
 
-# Let the Makefile handle setting up the CFLAGS and LDFLAGS as it is a standalone application
-CFLAGS[unexport] = "1"
-LDFLAGS[unexport] = "1"
 AS[unexport] = "1"
+CC[unexport] = "1"
 LD[unexport] = "1"
 
 # python3-cryptography needs the legacy provider, so set OPENSSL_MODULES to the
