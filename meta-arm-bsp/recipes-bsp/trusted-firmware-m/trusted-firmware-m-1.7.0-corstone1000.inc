@@ -47,6 +47,7 @@ SRC_URI:append:corstone1000 = " \
     file://0009-Platform-corstone1000-fix-flash-reading-issue-for-fi.patch      \
     file://0010-Platform-corstone1000-Adds-compiler-flags-to-FWU-age.patch      \
     file://0011-Platform-corstone1000-adjust-PS-asset-configuration.patch       \
+    file://0012-Platform-corstone1000-Increase-number-of-assets.patch           \
     file://corstone1000/rwx.patch                                               \
     "
 
