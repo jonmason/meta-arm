@@ -102,6 +102,7 @@ class RunnerTests(OESelftestTestCase):
             with tempfile.NamedTemporaryFile('w') as fvpconf:
                 json.dump(config, fvpconf)
                 fvpconf.flush()
+                cwd_mock = os.path.dirname(fvpconf.name)
                 fvp.start(fvpconf.name)
 
             m.assert_called_once_with(['/usr/bin/FVP_Binary',
@@ -112,7 +113,8 @@ class RunnerTests(OESelftestTestCase):
                 stdin=unittest.mock.ANY,
                 stdout=unittest.mock.ANY,
                 stderr=unittest.mock.ANY,
-                env={"FOO":"BAR", "PATH": "/path-42:/usr/sbin:/usr/bin:/sbin:/bin"})
+                env={"FOO":"BAR", "PATH": "/path-42:/usr/sbin:/usr/bin:/sbin:/bin"},
+                cwd=cwd_mock)
 
     @unittest.mock.patch.dict(os.environ, {"DISPLAY": ":42", "WAYLAND_DISPLAY": "wayland-42", "PATH": "/path-42:/usr/sbin:/usr/bin:/sbin:/bin"})
     def test_env_passthrough(self):
@@ -132,10 +134,12 @@ class RunnerTests(OESelftestTestCase):
             with tempfile.NamedTemporaryFile('w') as fvpconf:
                 json.dump(config, fvpconf)
                 fvpconf.flush()
+                cwd_mock = os.path.dirname(fvpconf.name)
                 fvp.start(fvpconf.name)
 
             m.assert_called_once_with(['/usr/bin/FVP_Binary'],
                 stdin=unittest.mock.ANY,
                 stdout=unittest.mock.ANY,
                 stderr=unittest.mock.ANY,
-                env={"DISPLAY":":42", "FOO": "BAR", "WAYLAND_DISPLAY": "wayland-42", "PATH": "/path-42:/usr/sbin:/usr/bin:/sbin:/bin"})
+                env={"DISPLAY":":42", "FOO": "BAR", "WAYLAND_DISPLAY": "wayland-42", "PATH": "/path-42:/usr/sbin:/usr/bin:/sbin:/bin"},
+                cwd=cwd_mock)

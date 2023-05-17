@@ -99,11 +99,16 @@ class FVPRunner:
             if name in os.environ:
                 env[name] = os.environ[name]
 
+        # Allow filepath to be relative to fvp configuration file
+        cwd = os.path.dirname(fvpconf)
+        self._logger.debug(f"FVP call will be executed in working directory: {cwd}")
+
         self._logger.debug(f"Constructed FVP call: {shlex_join(cli)}")
         self._fvp_process = subprocess.Popen(
             cli,
             stdin=subprocess.DEVNULL, stdout=stdout, stderr=subprocess.STDOUT,
-            env=env)
+            env=env,
+            cwd=cwd)
 
     def stop(self):
         if self._fvp_process:
