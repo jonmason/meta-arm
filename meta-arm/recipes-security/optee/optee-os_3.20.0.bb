@@ -5,7 +5,7 @@ DEPENDS += "dtc-native"
 FILESEXTRAPATHS:prepend := "${THISDIR}/optee-os-3.20.0:"
 
 SRCREV = "8e74d47616a20eaa23ca692f4bbbf917a236ed94"
-SRC_URI:append = " \
+SRC_URI += " \
     file://0004-core-Define-section-attributes-for-clang.patch \
     file://0005-core-arm-S-EL1-SPMC-boot-ABI-update.patch \
     file://0006-core-ffa-add-TOS_FW_CONFIG-handling.patch \

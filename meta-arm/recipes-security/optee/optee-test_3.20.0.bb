@@ -1,6 +1,6 @@
 require optee-test.inc
 
-SRC_URI:append = " \
+SRC_URI += " \
     file://Update-arm_ffa_user-driver-dependency.patch \
     file://ffa_spmc-Add-arm_ffa_user-driver-compatibility-check.patch \
     file://musl-workaround.patch \
