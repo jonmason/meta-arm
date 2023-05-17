@@ -1,5 +1,6 @@
 import asyncio
 import os
+import json
 import pathlib
 import subprocess
 import tempfile
@@ -88,16 +89,20 @@ class RunnerTests(OESelftestTestCase):
         from fvp import runner
         with self.create_mock() as m:
             fvp = runner.FVPRunner(self.logger)
-            fvp.start({
-                "fvp-bindir": "/usr/bin",
-                "exe": "FVP_Binary",
-                "parameters": {'foo': 'bar'},
-                "data": ['data1'],
-                "applications": {'a1': 'file'},
-                "terminals": {},
-                "args": ['--extra-arg'],
-                "env": {"FOO": "BAR"}
-            })
+            config = {"fvp-bindir": "/usr/bin",
+                    "exe": "FVP_Binary",
+                    "parameters": {'foo': 'bar'},
+                    "data": ['data1'],
+                    "applications": {'a1': 'file'},
+                    "terminals": {},
+                    "args": ['--extra-arg'],
+                    "env": {"FOO": "BAR"}
+                     }
+
+            with tempfile.NamedTemporaryFile('w') as fvpconf:
+                json.dump(config, fvpconf)
+                fvpconf.flush()
+                fvp.start(fvpconf.name)
 
             m.assert_called_once_with(['/usr/bin/FVP_Binary',
                 '--parameter', 'foo=bar',
@@ -114,16 +119,20 @@ class RunnerTests(OESelftestTestCase):
         from fvp import runner
         with self.create_mock() as m:
             fvp = runner.FVPRunner(self.logger)
-            fvp.start({
-                "fvp-bindir": "/usr/bin",
-                "exe": "FVP_Binary",
-                "parameters": {},
-                "data": [],
-                "applications": {},
-                "terminals": {},
-                "args": [],
-                "env": {"FOO": "BAR"}
-            })
+            config = {"fvp-bindir": "/usr/bin",
+                      "exe": "FVP_Binary",
+                      "parameters": {},
+                      "data": [],
+                      "applications": {},
+                      "terminals": {},
+                      "args": [],
+                      "env": {"FOO": "BAR"}
+                     }
+
+            with tempfile.NamedTemporaryFile('w') as fvpconf:
+                json.dump(config, fvpconf)
+                fvpconf.flush()
+                fvp.start(fvpconf.name)
 
             m.assert_called_once_with(['/usr/bin/FVP_Binary'],
                 stdin=unittest.mock.ANY,

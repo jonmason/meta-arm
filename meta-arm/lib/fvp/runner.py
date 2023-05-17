@@ -6,7 +6,7 @@ import shutil
 import sys
 
 from .terminal import terminals
-
+from .conffile import load
 
 def cli_from_config(config, terminal_choice):
     cli = []
@@ -83,14 +83,18 @@ class FVPRunner:
         self._fvp_process = None
         self._telnets = []
         self._pexpects = []
+        self._config = None
 
-    def start(self, config, extra_args=[], terminal_choice="none", stdout=subprocess.PIPE):
-        cli = cli_from_config(config, terminal_choice)
+    def start(self, fvpconf, extra_args=[], terminal_choice="none", stdout=subprocess.PIPE):
+        self._logger.debug(f"Loading {fvpconf}")
+        self._config = load(fvpconf)
+
+        cli = cli_from_config(self._config, terminal_choice)
         cli += extra_args
 
         # Pass through environment variables needed for GUI applications, such
         # as xterm, to work.
-        env = config['env']
+        env = self._config['env']
         for name in ('DISPLAY', 'PATH', 'WAYLAND_DISPLAY', 'XAUTHORITY'):
             if name in os.environ:
                 env[name] = os.environ[name]
@@ -139,6 +143,9 @@ class FVPRunner:
 
     def wait(self, timeout):
         self._fvp_process.wait(timeout)
+
+    def getConfig(self):
+        return self._config
 
     @property
     def stdout(self):
