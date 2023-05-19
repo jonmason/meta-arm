@@ -1,24 +1,25 @@
-From ca7d37502f9453125aead14c7ee5181336cbe8f4 Mon Sep 17 00:00:00 2001
+From c294197b17358b20c75757b9a06d628f43cd7884 Mon Sep 17 00:00:00 2001
 From: Mohamed Omar Asaker <mohamed.omarasaker@arm.com>
 Date: Thu, 9 Feb 2023 00:22:40 +0000
-Subject: [PATCH 1/3] TF-Mv1.7 alignment: Align PSA Crypto SIDs
+Subject: [PATCH 4/6] TF-Mv1.7 alignment: Align PSA Crypto SIDs
 
 This patch is to change the PSA Crypto SIDs to match the values of the
 PSA Crypto SID definitions in TF-M v1.7 running on the secure enclave
 
 Signed-off-by: Mohamed Omar Asaker <mohamed.omarasaker@arm.com>
 Upstream-Status: Pending [Not submitted yet]
+Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
 ---
  .../service/common/include/psa/crypto_sid.h   | 241 ++++++++++++++++++
- components/service/common/include/psa/sid.h   |  78 +-----
+ components/service/common/include/psa/sid.h   |  76 +-----
  .../caller/psa_ipc/crypto_caller_sign_hash.h  |   4 +-
  .../psa_ipc/crypto_caller_verify_hash.h       |   4 +-
- 4 files changed, 249 insertions(+), 78 deletions(-)
+ 4 files changed, 248 insertions(+), 77 deletions(-)
  create mode 100644 components/service/common/include/psa/crypto_sid.h
 
 diff --git a/components/service/common/include/psa/crypto_sid.h b/components/service/common/include/psa/crypto_sid.h
 new file mode 100644
-index 00000000..5b05f46d
+index 000000000000..5b05f46d7d72
 --- /dev/null
 +++ b/components/service/common/include/psa/crypto_sid.h
 @@ -0,0 +1,241 @@
@@ -264,16 +265,9 @@ index 00000000..5b05f46d
 +
 +#endif /* __PSA_CRYPTO_SID_H__ */
 diff --git a/components/service/common/include/psa/sid.h b/components/service/common/include/psa/sid.h
-index 8103a9af..50ad070e 100644
+index 8e2c6bdf2919..5aaa659d49a0 100644
 --- a/components/service/common/include/psa/sid.h
 +++ b/components/service/common/include/psa/sid.h
-@@ -1,5 +1,5 @@
- /*
-- * Copyright (c) 2019-2021, Arm Limited. All rights reserved.
-+ * Copyright (c) 2019-2023, Arm Limited. All rights reserved.
-  *
-  * SPDX-License-Identifier: BSD-3-Clause
-  *
 @@ -12,6 +12,9 @@
  extern "C" {
  #endif
@@ -284,9 +278,9 @@ index 8103a9af..50ad070e 100644
  /******** TFM_SP_PS ********/
  #define TFM_PROTECTED_STORAGE_SERVICE_SID                          (0x00000060U)
  #define TFM_PROTECTED_STORAGE_SERVICE_VERSION                      (1U)
-@@ -43,79 +46,6 @@ extern "C" {
- #define TFM_PLATFORM_SERVICE_HANDLE       (0x40000105U)
- 
+@@ -37,79 +40,6 @@ extern "C" {
+ #define TFM_CRYPTO_VERSION                                         (1U)
+ #define TFM_CRYPTO_HANDLE                                          (0x40000100U)
  
 -/**
 - * \brief Define a progressive numerical value for each SID which can be used
@@ -365,7 +359,7 @@ index 8103a9af..50ad070e 100644
  #define TFM_SP_PLATFORM_SYSTEM_RESET_SID                           (0x00000040U)
  #define TFM_SP_PLATFORM_SYSTEM_RESET_VERSION                       (1U)
 diff --git a/components/service/crypto/client/caller/psa_ipc/crypto_caller_sign_hash.h b/components/service/crypto/client/caller/psa_ipc/crypto_caller_sign_hash.h
-index e4a2b167..9276748d 100644
+index 29bd56e60708..bebfe05c7c49 100644
 --- a/components/service/crypto/client/caller/psa_ipc/crypto_caller_sign_hash.h
 +++ b/components/service/crypto/client/caller/psa_ipc/crypto_caller_sign_hash.h
 @@ -37,7 +37,7 @@ static inline psa_status_t crypto_caller_sign_hash(struct service_client *contex
@@ -387,7 +381,7 @@ index e4a2b167..9276748d 100644
  		.alg = alg,
  	};
 diff --git a/components/service/crypto/client/caller/psa_ipc/crypto_caller_verify_hash.h b/components/service/crypto/client/caller/psa_ipc/crypto_caller_verify_hash.h
-index cc9279ee..bcd8e0e4 100644
+index 66281d588626..d0a3850678cb 100644
 --- a/components/service/crypto/client/caller/psa_ipc/crypto_caller_verify_hash.h
 +++ b/components/service/crypto/client/caller/psa_ipc/crypto_caller_verify_hash.h
 @@ -63,7 +63,7 @@ static inline psa_status_t crypto_caller_verify_hash(struct service_client *cont
@@ -409,5 +403,5 @@ index cc9279ee..bcd8e0e4 100644
  
  #ifdef __cplusplus
 -- 
-2.25.1
+2.40.0
 
