@@ -1,7 +1,7 @@
-From 1a4d46fdc0b5745b9cfb0789e4b778111bd6dbbb Mon Sep 17 00:00:00 2001
+From 51a7024967187644011c5043ef0f733cf81b26be Mon Sep 17 00:00:00 2001
 From: Satish Kumar <satish.kumar01@arm.com>
 Date: Mon, 14 Feb 2022 08:22:25 +0000
-Subject: [PATCH 18/20] Fixes in AEAD for psa-arch test 54 and 58.
+Subject: [PATCH 2/6] Fixes in AEAD for psa-arch test 54 and 58.
 
 Upstream-Status: Pending [Not submitted to upstream yet]
 Signed-off-by: Emekcan Aras <Emekcan.Aras@arm.com>
@@ -29,7 +29,7 @@ index c4ffb20cf7f8..a91f66c14008 100644
  
  	/* Mandatory input data parameter */
 diff --git a/components/service/crypto/include/psa/crypto_sizes.h b/components/service/crypto/include/psa/crypto_sizes.h
-index 4d7bf6e959b0..e3c4df2927b3 100644
+index 30aa102da581..130d27295878 100644
 --- a/components/service/crypto/include/psa/crypto_sizes.h
 +++ b/components/service/crypto/include/psa/crypto_sizes.h
 @@ -351,7 +351,7 @@
@@ -117,5 +117,5 @@ index 0be266b52403..435fd3b523ce 100644
  
  /* Variable length input parameter tags */
 -- 
-2.38.1
+2.40.0
 
