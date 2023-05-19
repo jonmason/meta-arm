@@ -62,6 +62,12 @@ class TrustedServicesTest(OERuntimeTestCase):
         test_grp_list+=" DiscoveryServiceTests"
         self.run_test_tool('ts-service-test -lg', expected_output=test_grp_list)
 
+    @OEHasPackage(['optee-test'])
+    @skipIfNotInDataVar('MACHINE_FEATURES', 'optee-spmc-test', 'SPMC Test SPs are not included')
+    @OETestDepends(['ssh.SSHTest.test_ssh'])
+    def test_07_spmc_test(self):
+        self.run_test_tool('xtest -t ffa_spmc')
+
     @OEHasPackage(['ts-service-test'])
     @skipIfNotInDataVar('MACHINE_FEATURES', 'ts-fwu', 'FWU SP is not included')
     @OETestDepends(['ssh.SSHTest.test_ssh'])
