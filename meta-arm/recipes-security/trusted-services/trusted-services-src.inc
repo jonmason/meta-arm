@@ -5,6 +5,12 @@ LICENSE = "Apache-2.0 & BSD-3-Clause & BSD-2-Clause & Zlib"
 SRC_URI = "git://git.trustedfirmware.org/TS/trusted-services.git;protocol=https;branch=integration;name=trusted-services;destsuffix=git/trusted-services \
 "
 
+FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
+
+SRC_URI:append = "\
+	file://0001-Limit-nanopb-build-to-single-process.patch \
+"
+
 #Latest on 2023 April 25
 SRCREV="0d292e7c879076ea36cc39e30e0ac930b71e8cd8"
 LIC_FILES_CHKSUM = "file://${S}/license.rst;md5=ea160bac7f690a069c608516b17997f4"
