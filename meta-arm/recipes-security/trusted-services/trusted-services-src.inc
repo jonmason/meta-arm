@@ -11,8 +11,8 @@ SRC_URI:append = "\
 	file://0001-Limit-nanopb-build-to-single-process.patch \
 "
 
-#Latest on 2023 April 25
-SRCREV="0d292e7c879076ea36cc39e30e0ac930b71e8cd8"
+#Latest on 2023 April 28
+SRCREV="08b3d39471f4914186bd23793dc920e83b0e3197"
 LIC_FILES_CHKSUM = "file://${S}/license.rst;md5=ea160bac7f690a069c608516b17997f4"
 
 S = "${WORKDIR}/git/trusted-services"
