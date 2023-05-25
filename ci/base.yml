@@ -27,7 +27,6 @@ env:
 local_conf_header:
   base: |
     CONF_VERSION = "2"
-    LICENSE_FLAGS_ACCEPTED += "Arm-FVP-EULA"
   setup: |
     PACKAGE_CLASSES = "package_ipk"
     PACKAGECONFIG:remove:pn-qemu-system-native = "gtk+ sdl"
