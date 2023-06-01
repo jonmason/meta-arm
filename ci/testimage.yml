@@ -1,9 +1,10 @@
 header:
   version: 11
+  includes:
+    - ci/debug.yml
 
 local_conf_header:
   testimage: |
-    EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
     IMAGE_CLASSES += "testimage"
     TESTIMAGE_AUTO = "1"
   kvm: |
