@@ -1,7 +1,8 @@
 require trusted-firmware-a.inc
 
-# TF-A v2.8
-SRCREV_tfa = "9881bb93a3bc0a3ea37e9f093e09ab4b360a9e48"
+# TF-A v2.8.6
+SRCREV_tfa = "ff0bd5f9bb2ba2f31fb9cec96df917747af9e92d"
+SRCBRANCH = "lts-v2.8"
 
 SRC_URI += "file://rwx-segments.patch"
 
