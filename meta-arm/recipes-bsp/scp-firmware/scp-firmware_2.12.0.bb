@@ -10,7 +10,7 @@ SRC_URI_SCP_FIRMWARE ?= "gitsm://github.com/ARM-software/SCP-firmware.git;protoc
 SRC_URI = "${SRC_URI_SCP_FIRMWARE};branch=${SRCBRANCH}"
 SRCBRANCH = "master"
 
-SRCREV  = "635697544170b78167ed698393a72d6e522032e1"
+SRCREV  = "0c7236b1851d90124210a0414fd982dc55322c7c"
 
 PROVIDES += "virtual/control-processor-firmware"
 
