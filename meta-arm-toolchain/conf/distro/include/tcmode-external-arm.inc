@@ -4,6 +4,9 @@
 
 EXTERNAL_TOOLCHAIN ?= "/usr/local/arm-binary-toolchain/${TARGET_ARCH}"
 
+# oe-core passes this by default because it assumes GCC 13. This can be removed when Arm GCC is 13.1+.
+DEBUG_PREFIX_MAP:remove = "-fcanon-prefix-map"
+
 TOOLCHAIN_PATH_ADD = "${EXTERNAL_TOOLCHAIN}/bin:"
 PATH =. "${TOOLCHAIN_PATH_ADD}"
 
