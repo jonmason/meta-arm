@@ -85,7 +85,7 @@ update-repos:
 # Available options for building are
 #  DISTRO: [poky, poky-tiny]
 #  KERNEL: [linux-yocto, linux-yocto-dev, linux-yocto-rt]
-#  TOOLCHAINS: [gcc, clang, armgcc, external-gccarm]
+#  TOOLCHAINS: [gcc, clang, external-gccarm]
 #  TCLIBC: [glibc, musl]
 #  FIRMWARE: [u-boot, edk2]
 #  TS: [none, trusted-services]
@@ -149,8 +149,7 @@ n1sdp:
   extends: .build
   parallel:
     matrix:
-      - TOOLCHAINS: [gcc, armgcc]
-        TS: [none, n1sdp-ts]
+      - TS: [none, n1sdp-ts]
 
 qemu-generic-arm64:
   extends: .build
