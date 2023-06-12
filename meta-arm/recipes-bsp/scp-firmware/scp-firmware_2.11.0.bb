@@ -21,7 +21,7 @@ SCP_LOG_LEVEL       ?= "WARN"
 SCP_PLATFORM_FEATURE_SET ?= "0"
 
 INHIBIT_DEFAULT_DEPS = "1"
-DEPENDS = "virtual/arm-none-eabi-gcc-native \
+DEPENDS = "gcc-arm-none-eabi-native \
            cmake-native \
            ninja-native \
           "
