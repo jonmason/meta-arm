@@ -1,7 +1,7 @@
-From ceae4ec0d459b1ef12e544f4e36d6043a09d3b05 Mon Sep 17 00:00:00 2001
+From 92948559987d02baf9f690d9bbdc96d1179264ef Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Wed, 1 Feb 2023 16:15:30 +0000
-Subject: [PATCH 38/43] corstone1000: add boot index
+Subject: [PATCH 36/42] corstone1000: add boot index
 
 it is expected that the firmware that runs before
 u-boot somehow provide the information of the bank
@@ -16,7 +16,7 @@ Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/board/armltd/corstone1000/corstone1000.c b/board/armltd/corstone1000/corstone1000.c
-index d6ca6e896140..0a58ccd99cdd 100644
+index d6ca6e8961..0a58ccd99c 100644
 --- a/board/armltd/corstone1000/corstone1000.c
 +++ b/board/armltd/corstone1000/corstone1000.c
 @@ -106,6 +106,7 @@ int dram_init_banksize(void)
@@ -29,5 +29,5 @@ index d6ca6e896140..0a58ccd99cdd 100644
 +	*boot_idx = 0;
  }
 -- 
-2.39.2
+2.25.1
 
