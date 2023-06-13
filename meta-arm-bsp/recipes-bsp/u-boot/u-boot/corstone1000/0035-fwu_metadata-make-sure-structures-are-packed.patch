@@ -1,7 +1,7 @@
-From a8142be9b32a769040b6238ff611c22cb31c8cb5 Mon Sep 17 00:00:00 2001
+From ac77679ffcb4b7fac01414c1492d3e1aae13f9be Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Wed, 1 Feb 2023 16:13:24 +0000
-Subject: [PATCH 37/43] fwu_metadata: make sure structures are packed
+Subject: [PATCH 35/42] fwu_metadata: make sure structures are packed
 
 The fwu metadata in the metadata partitions
 should/are packed to guarantee that the info is
@@ -16,7 +16,7 @@ Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/include/fwu_mdata.h b/include/fwu_mdata.h
-index 8fda4f4ac225..c61221a91735 100644
+index 8fda4f4ac2..c61221a917 100644
 --- a/include/fwu_mdata.h
 +++ b/include/fwu_mdata.h
 @@ -22,7 +22,7 @@ struct fwu_image_bank_info {
@@ -46,5 +46,5 @@ index 8fda4f4ac225..c61221a91735 100644
  
  #endif /* _FWU_MDATA_H_ */
 -- 
-2.39.2
+2.25.1
 

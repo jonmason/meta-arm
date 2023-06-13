@@ -1,7 +1,7 @@
-From 0c2bd094b7686e9497327d825470cb90aa29d10f Mon Sep 17 00:00:00 2001
+From 5e0b7e40c4702d5494378d3e120fce0136f69a79 Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
-Date: Wed, 1 Feb 2023 16:19:40 +0000
-Subject: [PATCH 40/43] corstone1000: add nvmxip, fwu-mdata and gpt options
+Date: Fri, 9 Jun 2023 13:28:06 +0100
+Subject: [PATCH 38/42] corstone1000: add nvmxip, fwu-mdata and gpt options
 
 Enable the newest features: nvmxip, fwu-metadata and
 gpt. Commands to print the partition info, gpt info
@@ -10,11 +10,11 @@ and fwu metadata will be available.
 Upstream-Status: Pending
 Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
 ---
- configs/corstone1000_defconfig | 33 ++++++++++++++++++++-------------
- 1 file changed, 20 insertions(+), 13 deletions(-)
+ configs/corstone1000_defconfig | 29 +++++++++++++++++++----------
+ 1 file changed, 19 insertions(+), 10 deletions(-)
 
 diff --git a/configs/corstone1000_defconfig b/configs/corstone1000_defconfig
-index e009faee0252..96bb86ec91e9 100644
+index 1179bf5f3b..c38113ce95 100644
 --- a/configs/corstone1000_defconfig
 +++ b/configs/corstone1000_defconfig
 @@ -4,18 +4,20 @@ CONFIG_TARGET_CORSTONE1000=y
@@ -41,7 +41,7 @@ index e009faee0252..96bb86ec91e9 100644
  CONFIG_CONSOLE_RECORD=y
  CONFIG_LOGLEVEL=7
  # CONFIG_DISPLAY_CPUINFO is not set
-@@ -23,11 +25,16 @@ CONFIG_LOGLEVEL=7
+@@ -23,11 +25,15 @@ CONFIG_LOGLEVEL=7
  CONFIG_SYS_MAXARGS=64
  CONFIG_SYS_CBSIZE=512
  # CONFIG_CMD_CONSOLE is not set
@@ -49,7 +49,6 @@ index e009faee0252..96bb86ec91e9 100644
  CONFIG_CMD_BOOTZ=y
  CONFIG_SYS_BOOTM_LEN=0x800000
  # CONFIG_CMD_XIMG is not set
-+CONFIG_CMD_NVMXIP=y
 +CONFIG_CMD_GPT=y
 +# CONFIG_RANDOM_UUID is not set
  CONFIG_CMD_LOADM=y
@@ -58,7 +57,7 @@ index e009faee0252..96bb86ec91e9 100644
  CONFIG_CMD_USB=y
  # CONFIG_CMD_SETEXPR is not set
  # CONFIG_CMD_NFS is not set
-@@ -39,29 +46,29 @@ CONFIG_OF_CONTROL=y
+@@ -39,27 +45,30 @@ CONFIG_OF_CONTROL=y
  CONFIG_VERSION_VARIABLE=y
  CONFIG_NET_RANDOM_ETHADDR=y
  CONFIG_REGMAP=y
@@ -87,10 +86,8 @@ index e009faee0252..96bb86ec91e9 100644
  CONFIG_USB=y
  CONFIG_USB_ISP1760=y
  CONFIG_ERRNO_STR=y
--CONFIG_NVMXIP_QSPI=y
--CONFIG_CMD_NVMXIP=y
  CONFIG_EFI_MM_COMM_TEE=y
--CONFIG_ARM_FFA_TRANSPORT=y
+ CONFIG_ARM_FFA_TRANSPORT=y
  CONFIG_EFI_RUNTIME_UPDATE_CAPSULE=y
 +CONFIG_EFI_CAPSULE_ON_DISK=y
 +CONFIG_EFI_IGNORE_OSINDICATIONS=y
@@ -99,5 +96,5 @@ index e009faee0252..96bb86ec91e9 100644
 +CONFIG_FWU_MULTI_BANK_UPDATE=y
 +# CONFIG_TOOLS_MKEFICAPSULE is not set
 -- 
-2.40.0
+2.25.1
 

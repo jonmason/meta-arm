@@ -1,21 +1,28 @@
-From 3f72e390fc8e1a0d774d80c3ccd21be38c9af1db Mon Sep 17 00:00:00 2001
+From 635848c90343a1b8a268519e3fc78ef7af2e4819 Mon Sep 17 00:00:00 2001
 From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 Date: Mon, 19 Dec 2022 13:20:19 +0000
-Subject: [PATCH 30/43] corstone1000: add NVM XIP QSPI device tree node
+Subject: [PATCH 31/42] corstone1000: add NVM XIP QSPI device tree node
 
 add QSPI flash device node for block storage access
 
-Upstream-Status: Submitted
 Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
-Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+Upstream-Status: Backport [https://github.com/u-boot/u-boot/commit/c9c2c95d4cd27fe0cd41fe13a863899d268f973c]
 ---
- arch/arm/dts/corstone1000.dtsi | 7 +++++++
- 1 file changed, 7 insertions(+)
+ arch/arm/dts/corstone1000.dtsi | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
 
 diff --git a/arch/arm/dts/corstone1000.dtsi b/arch/arm/dts/corstone1000.dtsi
-index 61e0c33247ce..faf4e12bab2a 100644
+index 61e0c33247..18c4d1e19a 100644
 --- a/arch/arm/dts/corstone1000.dtsi
 +++ b/arch/arm/dts/corstone1000.dtsi
+@@ -1,6 +1,6 @@
+ // SPDX-License-Identifier: GPL-2.0 or MIT
+ /*
+- * Copyright (c) 2022, Arm Limited. All rights reserved.
++ * Copyright 2022-2023 Arm Limited and/or its affiliates <open-source-office@arm.com>
+  * Copyright (c) 2022, Linaro Limited. All rights reserved.
+  *
+  */
 @@ -38,6 +38,13 @@
  		reg = <0x88200000 0x77e00000>;
  	};
@@ -31,5 +38,5 @@ index 61e0c33247ce..faf4e12bab2a 100644
  		compatible = "arm,gic-400";
  		#interrupt-cells = <3>;
 -- 
-2.39.2
+2.25.1
 

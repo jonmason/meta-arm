@@ -1,7 +1,7 @@
-From 9ef889ff89e6d2e2e40edecbd4ab7601c3d68052 Mon Sep 17 00:00:00 2001
+From e2fb90ab15babd146dd47b7c946674cd5a5260a1 Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Wed, 1 Feb 2023 15:58:07 +0000
-Subject: [PATCH 34/43] corstone1000: add fwu-metadata store info
+Subject: [PATCH 33/42] corstone1000: add fwu-metadata store info
 
 Add fwu-mdata node and handle for the reference
 nvmxip-qspi.
@@ -13,7 +13,7 @@ Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
  1 file changed, 6 insertions(+), 1 deletion(-)
 
 diff --git a/arch/arm/dts/corstone1000.dtsi b/arch/arm/dts/corstone1000.dtsi
-index faf4e12bab2a..b1d83b5ba861 100644
+index 18c4d1e19a..25a032b6b3 100644
 --- a/arch/arm/dts/corstone1000.dtsi
 +++ b/arch/arm/dts/corstone1000.dtsi
 @@ -38,7 +38,7 @@
@@ -38,5 +38,5 @@ index faf4e12bab2a..b1d83b5ba861 100644
  		compatible = "simple-bus";
  		#address-cells = <1>;
 -- 
-2.39.2
+2.25.1
 
