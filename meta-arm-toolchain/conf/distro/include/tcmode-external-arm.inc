@@ -82,6 +82,9 @@ python toolchain_metadata_setup () {
     if not external_toolchain or external_toolchain == 'UNDEFINED':
         bb.fatal("Error: EXTERNAL_TOOLCHAIN must be set to the path to your arm toolchain")
 
+    if not os.path.isabs(external_toolchain):
+        bb.fatal("Error: EXTERNAL_TOOLCHAIN path '%s' must be absolute path" % external_toolchain)
+
     if not os.path.exists(external_toolchain):
         bb.fatal("Error: EXTERNAL_TOOLCHAIN path '%s' does not exist" % external_toolchain)
 
