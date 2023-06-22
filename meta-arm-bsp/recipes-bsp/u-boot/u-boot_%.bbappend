@@ -59,7 +59,8 @@ SRC_URI:append:corstone1000 = " \
         file://0039-corstone1000-set-kernel_addr-based-on-boot_idx.patch		  \ 
         file://0040-corstone1000-boot-index-from-active.patch				  \ 
         file://0041-corstone1000-enable-PSCI-reset.patch				  \
-        file://0042-Enable-EFI-set-get-time-services.patch                                \ 
+        file://0042-Enable-EFI-set-get-time-services.patch                                \
+        file://0043-corstone1000-fix-compilation-warnings-in-fwu_plat_get_bootidx.patch   \ 
         "
 
 #
