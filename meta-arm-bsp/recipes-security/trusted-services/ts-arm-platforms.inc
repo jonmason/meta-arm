@@ -6,6 +6,7 @@ SRC_URI:append:corstone1000  = " \
     file://0002-Fixes-in-AEAD-for-psa-arch-test-54-and-58.patch;patchdir=../trusted-services \
     file://0003-FMP-Support-in-Corstone1000.patch;patchdir=../trusted-services \
     file://0004-GetNextVariableName-Fix.patch;patchdir=../trusted-services     \
+    file://0005-plat-corstone1000-add-compile-definitions-for-ECP_DP.patch;patchdir=../trusted-services \
     "
 
 
