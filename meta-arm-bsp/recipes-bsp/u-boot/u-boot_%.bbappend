@@ -58,7 +58,8 @@ SRC_URI:append:corstone1000 = " \
         file://0038-nvmxip-move-header-to-include.patch					  \ 
         file://0039-corstone1000-set-kernel_addr-based-on-boot_idx.patch		  \ 
         file://0040-corstone1000-boot-index-from-active.patch				  \ 
-        file://0041-corstone1000-enable-PSCI-reset.patch				  \ 
+        file://0041-corstone1000-enable-PSCI-reset.patch				  \
+        file://0042-Enable-EFI-set-get-time-services.patch                                \ 
         "
 
 #
