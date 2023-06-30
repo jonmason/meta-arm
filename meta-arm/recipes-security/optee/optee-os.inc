@@ -56,6 +56,10 @@ do_install() {
     #install core in firmware
     install -d ${D}${nonarch_base_libdir}/firmware/
     install -m 644 ${B}/core/*.bin ${B}/core/tee.elf ${D}${nonarch_base_libdir}/firmware/
+
+    #install tas in optee_armtz
+    install -d ${D}${nonarch_base_libdir}/optee_armtz/
+    install -m 444 ${B}/ta/*/*.ta ${D}${nonarch_base_libdir}/optee_armtz
 }
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
@@ -69,7 +73,10 @@ addtask deploy before do_build after do_install
 
 SYSROOT_DIRS += "${nonarch_base_libdir}/firmware"
 
+PACKAGES += "${PN}-ta"
 FILES:${PN} = "${nonarch_base_libdir}/firmware/"
+FILES:${PN}-ta = "${nonarch_base_libdir}/optee_armtz/*"
+
 
 # note: "textrel" is not triggered on all archs
 INSANE_SKIP:${PN} = "textrel"
