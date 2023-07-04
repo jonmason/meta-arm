@@ -5,7 +5,7 @@ distro: poky
 
 defaults:
   repos:
-    refspec: mickledore
+    branch: mickledore
 
 repos:
   meta-arm:
