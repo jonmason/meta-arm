@@ -203,7 +203,7 @@ Flash the firmware image on FPGA
 
 The user should download the FPGA bit file image ``AN550:  Arm® Corstone™-1000 for MPS3 Version 2.0``
 from `this link <https://developer.arm.com/tools-and-software/development-boards/fpga-prototyping-boards/download-fpga-images>`__
-and under the section ``Arm® Corstone™-1000 for MPS3``.
+and under the section ``Arm® Corstone™-1000 for MPS3``. The download is available after logging in.
 
 The directory structure of the FPGA bundle is shown below.
 
@@ -428,8 +428,14 @@ software stack and flash the FPGA as normal. And continue the testing.
 Run SystemReady-IR ACS tests
 ============================
 
+Architecture Compliance Suite (ACS) is used to ensure architectural compliance
+across different implementations of the architecture. Arm Enterprise ACS
+includes a set of examples of the invariant behaviors that are provided by a
+set of specifications for enterprise systems (For example: SBSA, SBBR, etc.),
+so that implementers can verify if these behaviours have been interpreted correctly.
+
 ACS image contains two partitions. BOOT partition and RESULT partition.
-Following packages are under BOOT partition
+Following test suites and bootable applications are under BOOT partition:
 
  * SCT
  * FWTS
@@ -437,6 +443,24 @@ Following packages are under BOOT partition
  * BSA linux
  * grub
  * uefi manual capsule application
+
+BOOT partition contains the following:
+
+::
+
+    ├── EFI
+    │   └── BOOT
+    │       ├── app
+    │       ├── bbr
+    │       ├── bootaa64.efi
+    │       ├── bsa
+    │       ├── debug
+    │       ├── Shell.efi
+    │       └── startup.nsh
+    ├── grub
+    ├── grub.cfg
+    ├── Image
+    └── ramdisk-busybox.img
 
 RESULT partition is used to store the test results.
 **NOTE**: PLEASE MAKE SURE THAT THE RESULT PARTITION IS EMPTY BEFORE YOU START THE TESTING. OTHERWISE THE TEST RESULTS
@@ -481,7 +505,8 @@ Once the USB stick with ACS image is prepared, the user should make sure that
 ensure that only the USB stick with the ACS image is connected to the board,
 and then boot the board.
 
-The FPGA will reset multiple times during the test, and it might take approx. 24-36 hours to finish the test. At the end of test, the FPGA host terminal will halt showing a shell prompt. Once test is finished the result can be copied following above instructions.
+The FPGA will reset multiple times during the test, and it might take approx. 24-36 hours to finish the test.
+
 
 FVP instructions for ACS image and run
 ======================================
@@ -554,6 +579,8 @@ Download edk2 under <_workspace>:
 ::
 
   git clone https://github.com/tianocore/edk2.git
+  cd edk2
+  git checkout f2188fe5d1553ad1896e27b2514d2f8d0308da8a
 
 Download systemready-patch repo under <_workspace>:
 ::
@@ -563,11 +590,6 @@ Download systemready-patch repo under <_workspace>:
 *******************
 Generating Capsules
 *******************
-
-The capsule binary size (wic file) should be less than 15 MB.
-
-Based on the user's requirement, the user can change the firmware version
-number given to ``--fw-version`` option (the version number needs to be >= 1).
 
 Generating FPGA Capsules
 ========================
@@ -614,6 +636,16 @@ generate a UEFI capsule.
    --lsv 0 --guid    e2bb9c06-70e9-4b14-97a3-5a7913176e3f --verbose --update-image-index \
    0 --verbose build/tmp/deploy/images/corstone1000-fvp/corstone1000_image.nopt
 
+
+Common Notes for FVP and FPGA
+=============================
+
+The capsule binary size (wic file) should be less than 15 MB.
+
+Based on the user's requirement, the user can change the firmware version
+number given to ``--fw-version`` option (the version number needs to be >= 1).
+
+
 ****************
 Copying Capsules
 ****************
@@ -621,7 +653,7 @@ Copying Capsules
 Copying the FPGA capsules
 =========================
 
-The user should prepare a USB stick as explained in ACS image section (see above).
+The user should prepare a USB stick as explained in ACS image section `FPGA instructions for ACS image`_.
 Place the generated ``cs1k_cap`` files in the root directory of the boot partition
 in the USB stick. Note: As we are running the direct method, the ``cs1k_cap`` file
 should not be under the EFI/UpdateCapsule directory as this may or may not trigger
@@ -685,7 +717,7 @@ Run the FVP with the IR prebuilt image:
 
 ::
 
-   <_workspace>/meta-arm/scripts/runfvp --terminals=xterm <_workspace>/build/tmp/deploy/images/corstone1000-fvp/corstone1000-image-corstone1000-fvp.fvpconf -- -C "board.msd_mmc.p_mmc_file ${<path-to-img>/ir_acs_live_image.img}"
+   <_workspace>/meta-arm/scripts/runfvp --terminals=xterm <_workspace>/build/tmp/deploy/images/corstone1000-fvp/corstone1000-image-corstone1000-fvp.fvpconf -- -C "board.msd_mmc.p_mmc_file=${<path-to-img>/ir_acs_live_image.img}"
 
 Running the FPGA with the IR prebuilt image
 ===========================================
@@ -884,7 +916,7 @@ Debian install and boot preparation (applicable to FPGA only)
 
 There is a known issue in the `Shim 15.7 <https://salsa.debian.org/efi-team/shim/-/tree/upstream/15.7?ref_type=tags>`__
 provided with the Debian installer image (see below). This bug causes a fatal
-error when attempting to install Debian.
+error when attempting to boot media installer for Debian, and it resets the MPS3 before installation starts.
 A patch to be applied to the Corstone-1000 stack (only applicable when
 installing Debian) is provided to
 `Skip the Shim <https://gitlab.arm.com/arm-reference-solutions/systemready-patch/-/blob/CORSTONE1000-2023.06/embedded-a/corstone1000/shim/0001-arm-bsp-u-boot-corstone1000-Skip-the-shim-by-booting.patch>`__.
@@ -905,6 +937,8 @@ documentation.
   git am 0001-arm-bsp-u-boot-corstone1000-Skip-the-shim-by-booting.patch
   cd ..
   kas shell meta-arm/kas/corstone1000-mps3.yml -c="bitbake u-boot trusted-firmware-a corstone1000-image -c cleansstate; bitbake corstone1000-image"
+
+Please update the cs1000.bin on the SD card with the newly generated wic file.
 
 *************************************************
 Debian/openSUSE install (applicable to FPGA only)
@@ -1079,7 +1113,7 @@ First, load FF-A TEE kernel module:
 
 ::
 
-  insmod /lib/modules/6.1.25-yocto-standard/extra/arm-ffa-tee.ko
+  insmod /lib/modules/6.1.32-yocto-standard/extra/arm-ffa-tee.ko
 
 Then, check whether the FF-A TEE driver is loaded correctly by using the following command:
 
