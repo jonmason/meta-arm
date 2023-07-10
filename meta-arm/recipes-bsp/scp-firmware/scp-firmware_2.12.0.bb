@@ -15,7 +15,7 @@ SRCREV  = "0c7236b1851d90124210a0414fd982dc55322c7c"
 PROVIDES += "virtual/control-processor-firmware"
 
 CMAKE_BUILD_TYPE    ?= "RelWithDebInfo"
-SCP_PLATFORM        ?= "invalid"
+SCP_PLATFORM        ?= "${MACHINE}"
 SCP_COMPILER        ?= "arm-none-eabi"
 SCP_LOG_LEVEL       ?= "WARN"
 SCP_PLATFORM_FEATURE_SET ?= "0"
