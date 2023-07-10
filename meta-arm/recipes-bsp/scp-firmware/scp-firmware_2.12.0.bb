@@ -58,7 +58,8 @@ EXTRA_OECMAKE = "-D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
 do_configure() {
     for FW in ${FW_TARGETS}; do
         for TYPE in ${FW_INSTALL}; do
-            cmake -GNinja ${EXTRA_OECMAKE} -S ${S} -B "${B}/${TYPE}/${FW}" -D SCP_FIRMWARE_SOURCE_DIR="${SCP_PLATFORM}/${FW}_${TYPE}"
+            bbnote Configuring ${SCP_PLATFORM}/${FW}_${TYPE}...
+            cmake -GNinja ${EXTRA_OECMAKE} -S ${S} -B "${B}/${TYPE}/${FW}" -D SCP_FIRMWARE_SOURCE_DIR:PATH="${SCP_PLATFORM}/${FW}_${TYPE}"
         done
     done
 }
@@ -68,6 +69,7 @@ do_configure[cleandirs] += "${B}"
 do_compile() {
     for FW in ${FW_TARGETS}; do
         for TYPE in ${FW_INSTALL}; do
+            bbnote Building ${SCP_PLATFORM}/${FW}_${TYPE}...
             VERBOSE=1 cmake --build ${B}/${TYPE}/${FW} --target all
         done
     done
