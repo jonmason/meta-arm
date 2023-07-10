@@ -16,7 +16,6 @@ PROVIDES += "virtual/control-processor-firmware"
 
 CMAKE_BUILD_TYPE    ?= "RelWithDebInfo"
 SCP_PLATFORM        ?= "${MACHINE}"
-SCP_COMPILER        ?= "arm-none-eabi"
 SCP_LOG_LEVEL       ?= "WARN"
 SCP_PLATFORM_FEATURE_SET ?= "0"
 
@@ -53,6 +52,7 @@ EXTRA_OECMAKE = "-D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
                  -D SCP_LOG_LEVEL=${SCP_LOG_LEVEL} \
                  -D SCP_PLATFORM_FEATURE_SET=${SCP_PLATFORM_FEATURE_SET} \
                  -D DISABLE_CPPCHECK=1 \
+                 -D SCP_TOOLCHAIN=GNU \
                 "
 
 do_configure() {
