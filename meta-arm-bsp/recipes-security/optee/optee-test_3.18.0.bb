@@ -1,4 +1,4 @@
-require optee-test.inc
+require recipes-security/optee/optee-test.inc
 
 SRC_URI += " \
     file://musl-workaround.patch \

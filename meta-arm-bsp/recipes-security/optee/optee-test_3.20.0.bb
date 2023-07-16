@@ -1,4 +1,4 @@
-require optee-test.inc
+require recipes-security/optee/optee-test.inc
 
 SRC_URI += " \
     file://Update-arm_ffa_user-driver-dependency.patch \

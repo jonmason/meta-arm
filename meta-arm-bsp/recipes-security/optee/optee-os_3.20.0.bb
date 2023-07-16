@@ -1,4 +1,4 @@
-require optee-os.inc
+require recipes-security/optee/optee-os.inc
 
 DEPENDS += "dtc-native"
 
