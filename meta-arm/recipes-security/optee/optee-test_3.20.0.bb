@@ -7,6 +7,6 @@ SRC_URI += " \
    "
 SRCREV = "5db8ab4c733d5b2f4afac3e9aef0a26634c4b444"
 
-EXTRA_OEMAKE:append:libc-musl = " OPTEE_OPENSSL_EXPORT=${STAGING_INCDIR}"
-DEPENDS:append:libc-musl = " openssl"
-CFLAGS:append:libc-musl = " -Wno-error=deprecated-declarations"
+EXTRA_OEMAKE:append = " OPTEE_OPENSSL_EXPORT=${STAGING_INCDIR}"
+DEPENDS:append = " openssl"
+CFLAGS:append = " -Wno-error=deprecated-declarations"
