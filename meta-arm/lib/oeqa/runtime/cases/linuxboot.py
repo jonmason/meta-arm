@@ -5,9 +5,7 @@ from oeqa.runtime.case import OERuntimeTestCase
 
 class LinuxBootTest(OERuntimeTestCase):
     """
-    This test case is only compatible with the OEFVPSerialTarget as it uses
-    the pexpect interface. It waits for a Linux login prompt on the default
-    console.
+    This test waits for a Linux login prompt on the default console.
     """
 
     def setUp(self):
