@@ -132,3 +132,7 @@ class OEFVPTarget(OESSHTarget):
                 return attr
 
         return call_pexpect
+
+    @property
+    def config(self):
+        return self.fvp.getConfig()
