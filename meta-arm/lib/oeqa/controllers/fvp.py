@@ -1,9 +1,16 @@
+import contextlib
+import enum
 import pathlib
 import pexpect
 import os
 
 from oeqa.core.target.ssh import OESSHTarget
 from fvp import runner
+
+class OEFVPTargetState(str, enum.Enum):
+    OFF = "off"
+    ON = "on"
+    LINUX = "linux"
 
 
 class OEFVPTarget(OESSHTarget):
@@ -27,37 +34,50 @@ class OEFVPTarget(OESSHTarget):
 
         self.bootlog = bootlog
         self.terminals = {}
-        self.booted = False
+        self.stack = None
+        self.state = OEFVPTargetState.OFF
 
-    def start(self, **kwargs):
-        self.fvp_log = self._create_logfile("fvp")
-        self.fvp = runner.FVPRunner(self.logger)
-        self.fvp.start(self.fvpconf, stdout=self.fvp_log)
-        self.logger.debug(f"Started FVP PID {self.fvp.pid()}")
-        self._setup_consoles()
-
-    def await_boot(self):
-        if self.booted:
+    def transition(self, state, timeout=10*60):
+        if state == self.state:
             return
 
-        # FVPs boot slowly, so allow ten minutes
-        boot_timeout = 10*60
-        try:
-            self.expect(OEFVPTarget.DEFAULT_CONSOLE, "login\\:", timeout=boot_timeout)
-            self.logger.debug("Found login prompt")
-            self.booted = True
-        except pexpect.TIMEOUT:
-            self.logger.info("Timed out waiting for login prompt.")
-            self.logger.info("Boot log follows:")
-            self.logger.info(b"\n".join(self.before(OEFVPTarget.DEFAULT_CONSOLE).splitlines()[-200:]).decode("utf-8", errors="replace"))
-            raise RuntimeError("Failed to start FVP.")
+        if state == OEFVPTargetState.OFF:
+            returncode = self.fvp.stop()
+            self.logger.debug(f"Stopped FVP with return code {returncode}")
+            self.stack.close()
+        elif state == OEFVPTargetState.ON:
+            self.transition(OEFVPTargetState.OFF, timeout)
+            self.stack = contextlib.ExitStack()
+            self.fvp = runner.FVPRunner(self.logger)
+            self.fvp_log = self._create_logfile("fvp", "wb")
+            self.fvp.start(self.fvpconf, stdout=self.fvp_log)
+            self.logger.debug(f"Started FVP PID {self.fvp.pid()}")
+            self._setup_consoles()
+        elif state == OEFVPTargetState.LINUX:
+            self.transition(OEFVPTargetState.ON, timeout)
+            try:
+                self.expect(OEFVPTarget.DEFAULT_CONSOLE, "login\\:", timeout=timeout)
+                self.logger.debug("Found login prompt")
+                self.state = OEFVPTargetState.LINUX
+            except pexpect.TIMEOUT:
+                self.logger.info("Timed out waiting for login prompt.")
+                self.logger.info("Boot log follows:")
+                self.logger.info(b"\n".join(self.before(OEFVPTarget.DEFAULT_CONSOLE).splitlines()[-200:]).decode("utf-8", errors="replace"))
+                raise RuntimeError("Failed to start FVP.")
+
+        self.logger.info(f"Transitioned to {state}")
+        self.state = state
+
+    def start(self, **kwargs):
+        # No-op - put the FVP in the required state lazily
+        pass
 
     def stop(self, **kwargs):
-        returncode = self.fvp.stop()
-        self.logger.debug(f"Stopped FVP with return code {returncode}")
+        self.transition(OEFVPTargetState.OFF)
 
     def run(self, cmd, timeout=None):
-        self.await_boot()
+        # Running a command implies the LINUX state
+        self.transition(OEFVPTargetState.LINUX)
         return super().run(cmd, timeout)
 
     def _setup_consoles(self):
@@ -73,11 +93,12 @@ class OEFVPTarget(OESSHTarget):
 
                 # testimage.bbclass expects to see a log file at `bootlog`,
                 # so make a symlink to the 'default' log file
-                if name == 'default':
-                    default_test_file = f"{name}_log{self.test_log_suffix}"
+                test_log_suffix = pathlib.Path(self.bootlog).suffix
+                default_test_file = f"{name}_log{test_log_suffix}"
+                if name == 'default' and not os.path.exists(self.bootlog):
                     os.symlink(default_test_file, self.bootlog)
 
-    def _create_logfile(self, name):
+    def _create_logfile(self, name, mode='ab'):
         if not self.bootlog:
             return None
 
@@ -91,7 +112,7 @@ class OEFVPTarget(OESSHTarget):
         except:
             pass
         os.symlink(fvp_log_file, fvp_log_symlink)
-        return open(fvp_log_path, 'wb')
+        return self.stack.enter_context(open(fvp_log_path, mode))
 
     def _get_terminal(self, name):
         return self.terminals[name]
