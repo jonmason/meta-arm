@@ -5,7 +5,7 @@ distro: poky
 
 defaults:
   repos:
-    branch: mickledore
+    branch: master
 
 repos:
   meta-arm:
