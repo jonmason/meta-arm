@@ -24,7 +24,8 @@ MACHINE_EXTRA_RRECOMMENDS += "ssh-pregen-hostkeys"
 
 TEST_TARGET = "OEFVPTarget"
 TEST_TARGET_IP = "127.0.0.1:8022"
-TEST_SUITES:append = " fvp_boot"
+TEST_SUITES:append = " fvp_boot fvp_devices"
+TEST_FVP_DEVICES ?= "rtc watchdog networking virtiorng cpu_hotplug"
 
 FVP_PROVIDER ?= "fvp-base-a-aem-native"
 FVP_EXE ?= "FVP_Base_RevC-2xAEMvA"
