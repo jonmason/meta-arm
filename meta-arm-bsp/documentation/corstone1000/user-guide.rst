@@ -176,7 +176,15 @@ To build a Corstone-1000 image for MPS3 FPGA, run:
 
     kas build meta-arm/kas/corstone1000-mps3.yml
 
-Alternatively, to build a Corstone-1000 image for FVP, run:
+Alternatively, to build a Corstone-1000 image for FVP, you need to accept
+the EULA at https://developer.arm.com/downloads/-/arm-ecosystem-fvps/eula
+by setting the ARM_FVP_EULA_ACCEPT environment variable as follows:
+
+::
+  
+    export ARM_FVP_EULA_ACCEPT="True"
+
+then run:
 
 ::
 
