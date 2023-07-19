@@ -1,4 +1,4 @@
-From ea932656461865ab9ac4036245c756c082aeb3e1 Mon Sep 17 00:00:00 2001
+From 63445958678b58c5adc7eca476b216e5dc0f4195 Mon Sep 17 00:00:00 2001
 From: Jerome Forissier <jerome.forissier@linaro.org>
 Date: Tue, 23 Aug 2022 11:41:00 +0000
 Subject: [PATCH] core, ldelf: link: add -z execstack
@@ -20,14 +20,13 @@ Signed-off-by: Jerome Forissier <jerome.forissier@linaro.org>
 
 Signed-off-by: Anton Antonov <Anton.Antonov@arm.com>
 Upstream-Status: Backport [https://github.com/OP-TEE/optee_os/pull/5499]
-
 ---
  core/arch/arm/kernel/link.mk | 13 +++++++++----
  ldelf/link.mk                |  3 +++
  2 files changed, 12 insertions(+), 4 deletions(-)
 
 diff --git a/core/arch/arm/kernel/link.mk b/core/arch/arm/kernel/link.mk
-index c39d43cb..0e96e606 100644
+index c39d43cbfc5b..0e96e606cd9d 100644
 --- a/core/arch/arm/kernel/link.mk
 +++ b/core/arch/arm/kernel/link.mk
 @@ -9,6 +9,11 @@ link-script-dep = $(link-out-dir)/.kern.ld.d
@@ -79,7 +78,7 @@ index c39d43cb..0e96e606 100644
  	      $(libgcccore)
  cleanfiles += $(link-out-dir)/init.o
 diff --git a/ldelf/link.mk b/ldelf/link.mk
-index 64c8212a..bd49551e 100644
+index 64c8212a06fa..bd49551e7065 100644
 --- a/ldelf/link.mk
 +++ b/ldelf/link.mk
 @@ -20,6 +20,9 @@ link-ldflags += -z max-page-size=4096 # OP-TEE always uses 4K alignment

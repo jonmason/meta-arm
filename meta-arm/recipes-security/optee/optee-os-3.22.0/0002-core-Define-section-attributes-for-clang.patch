@@ -1,4 +1,4 @@
-From 2449af30e09e172216ec9aa8b07502ae9ddc0a03 Mon Sep 17 00:00:00 2001
+From 6f588813a170a671ebf1d6b51cebc7bc761295dc Mon Sep 17 00:00:00 2001
 From: Emekcan Aras <emekcan.aras@arm.com>
 Date: Wed, 21 Dec 2022 10:55:58 +0000
 Subject: [PATCH] core: Define section attributes for clang
@@ -39,7 +39,7 @@ Signed-off-by: Khem Raj <raj.khem@gmail.com>
  5 files changed, 104 insertions(+), 11 deletions(-)
 
 diff --git a/core/arch/arm/kernel/thread.c b/core/arch/arm/kernel/thread.c
-index 4487ef026..f36243896 100644
+index 4487ef026df9..f3624389611b 100644
 --- a/core/arch/arm/kernel/thread.c
 +++ b/core/arch/arm/kernel/thread.c
 @@ -44,15 +44,30 @@ static size_t thread_user_kcode_size __nex_bss;
@@ -76,7 +76,7 @@ index 4487ef026..f36243896 100644
  
  #ifdef ARM32
 diff --git a/core/arch/arm/mm/core_mmu_lpae.c b/core/arch/arm/mm/core_mmu_lpae.c
-index 7e79f780a..ec4db9dc9 100644
+index 7e79f780ad28..ec4db9dc98c5 100644
 --- a/core/arch/arm/mm/core_mmu_lpae.c
 +++ b/core/arch/arm/mm/core_mmu_lpae.c
 @@ -233,19 +233,46 @@ typedef uint16_t l1_idx_t;
@@ -131,7 +131,7 @@ index 7e79f780a..ec4db9dc9 100644
   * TAs page table entry inside a level 1 page table.
   *
 diff --git a/core/arch/arm/mm/core_mmu_v7.c b/core/arch/arm/mm/core_mmu_v7.c
-index 61e703da8..1960c08ca 100644
+index 61e703da89c8..1960c08ca688 100644
 --- a/core/arch/arm/mm/core_mmu_v7.c
 +++ b/core/arch/arm/mm/core_mmu_v7.c
 @@ -204,16 +204,46 @@ typedef uint32_t l1_xlat_tbl_t[NUM_L1_ENTRIES];
@@ -185,7 +185,7 @@ index 61e703da8..1960c08ca 100644
  struct mmu_partition {
  	l1_xlat_tbl_t *l1_table;
 diff --git a/core/arch/arm/mm/pgt_cache.c b/core/arch/arm/mm/pgt_cache.c
-index 79553c6d2..b9efdf427 100644
+index 79553c6d2183..b9efdf42780b 100644
 --- a/core/arch/arm/mm/pgt_cache.c
 +++ b/core/arch/arm/mm/pgt_cache.c
 @@ -410,8 +410,18 @@ void pgt_init(void)
@@ -209,7 +209,7 @@ index 79553c6d2..b9efdf427 100644
  
  	for (n = 0; n < ARRAY_SIZE(pgt_tables); n++) {
 diff --git a/core/kernel/thread.c b/core/kernel/thread.c
-index 2a1f22dce..5516b6771 100644
+index 2a1f22dce635..5516b677141a 100644
 --- a/core/kernel/thread.c
 +++ b/core/kernel/thread.c
 @@ -39,13 +39,24 @@ static uint32_t end_canary_value = 0xababab00;

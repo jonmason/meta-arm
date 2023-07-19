@@ -1,4 +1,4 @@
-From e74d8a02edd8c431c87786e22dbceee8e1e85bb8 Mon Sep 17 00:00:00 2001
+From 162493e5b212b9d7391669a55be09b69b97a9cf8 Mon Sep 17 00:00:00 2001
 From: Emekcan Aras <emekcan.aras@arm.com>
 Date: Wed, 21 Dec 2022 10:55:58 +0000
 Subject: [PATCH] core: Define section attributes for clang
@@ -30,7 +30,6 @@ going and match the functionality with gcc.
 
 Upstream-Status: Pending
 Signed-off-by: Khem Raj <raj.khem@gmail.com>
-
 ---
  core/arch/arm/kernel/thread.c    | 19 +++++++++++++++--
  core/arch/arm/mm/core_mmu_lpae.c | 35 +++++++++++++++++++++++++++----
@@ -40,7 +39,7 @@ Signed-off-by: Khem Raj <raj.khem@gmail.com>
  5 files changed, 104 insertions(+), 11 deletions(-)
 
 diff --git a/core/arch/arm/kernel/thread.c b/core/arch/arm/kernel/thread.c
-index 1cf76a0c..1e7f9f96 100644
+index 1cf76a0ca690..1e7f9f96b558 100644
 --- a/core/arch/arm/kernel/thread.c
 +++ b/core/arch/arm/kernel/thread.c
 @@ -44,15 +44,30 @@ static size_t thread_user_kcode_size __nex_bss;
@@ -77,7 +76,7 @@ index 1cf76a0c..1e7f9f96 100644
  
  #ifdef ARM32
 diff --git a/core/arch/arm/mm/core_mmu_lpae.c b/core/arch/arm/mm/core_mmu_lpae.c
-index 3f08eec6..e6dc9261 100644
+index 3f08eec623f3..e6dc9261c41e 100644
 --- a/core/arch/arm/mm/core_mmu_lpae.c
 +++ b/core/arch/arm/mm/core_mmu_lpae.c
 @@ -233,19 +233,46 @@ typedef uint16_t l1_idx_t;
@@ -132,7 +131,7 @@ index 3f08eec6..e6dc9261 100644
   * TAs page table entry inside a level 1 page table.
   *
 diff --git a/core/arch/arm/mm/core_mmu_v7.c b/core/arch/arm/mm/core_mmu_v7.c
-index cd85bd22..3e18f54f 100644
+index cd85bd22d385..3e18f54f6cf8 100644
 --- a/core/arch/arm/mm/core_mmu_v7.c
 +++ b/core/arch/arm/mm/core_mmu_v7.c
 @@ -204,16 +204,46 @@ typedef uint32_t l1_xlat_tbl_t[NUM_L1_ENTRIES];
@@ -186,7 +185,7 @@ index cd85bd22..3e18f54f 100644
  struct mmu_partition {
  	l1_xlat_tbl_t *l1_table;
 diff --git a/core/arch/arm/mm/pgt_cache.c b/core/arch/arm/mm/pgt_cache.c
-index 79553c6d..b9efdf42 100644
+index 79553c6d2183..b9efdf42780b 100644
 --- a/core/arch/arm/mm/pgt_cache.c
 +++ b/core/arch/arm/mm/pgt_cache.c
 @@ -410,8 +410,18 @@ void pgt_init(void)
@@ -210,7 +209,7 @@ index 79553c6d..b9efdf42 100644
  
  	for (n = 0; n < ARRAY_SIZE(pgt_tables); n++) {
 diff --git a/core/kernel/thread.c b/core/kernel/thread.c
-index d1f2f382..8de124ae 100644
+index d1f2f3823be7..8de124ae5357 100644
 --- a/core/kernel/thread.c
 +++ b/core/kernel/thread.c
 @@ -38,13 +38,24 @@ struct thread_core_local thread_core_local[CFG_TEE_CORE_NB_CORE] __nex_bss;

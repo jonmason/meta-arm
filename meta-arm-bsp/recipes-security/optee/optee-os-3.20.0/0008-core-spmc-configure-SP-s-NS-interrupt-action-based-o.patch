@@ -1,8 +1,8 @@
-From cad33cffb5be17fc0654aaf03c4d5227ae682e7a Mon Sep 17 00:00:00 2001
+From e7835c526aabd8e5b6db335619a0d86165c587ed Mon Sep 17 00:00:00 2001
 From: Imre Kis <imre.kis@arm.com>
 Date: Tue, 25 Apr 2023 14:19:14 +0200
-Subject: [PATCH] core: spmc: configure SP's NS interrupt action based on
- the manifest
+Subject: [PATCH] core: spmc: configure SP's NS interrupt action based on the
+ manifest
 
 Used mandatory ns-interrupts-action SP manifest property to configure
 signaled or queued non-secure interrupt handling.
@@ -17,7 +17,7 @@ Change-Id: I843e69e5dbb9613ecd8b95654e8ca1730a594ca6
  2 files changed, 63 insertions(+), 5 deletions(-)
 
 diff --git a/core/arch/arm/include/kernel/secure_partition.h b/core/arch/arm/include/kernel/secure_partition.h
-index 290750936..3bf339d3c 100644
+index 24b0a8cc07d2..51f6b697e5eb 100644
 --- a/core/arch/arm/include/kernel/secure_partition.h
 +++ b/core/arch/arm/include/kernel/secure_partition.h
 @@ -43,6 +43,8 @@ struct sp_session {
@@ -30,7 +30,7 @@ index 290750936..3bf339d3c 100644
  };
  
 diff --git a/core/arch/arm/kernel/secure_partition.c b/core/arch/arm/kernel/secure_partition.c
-index 52365553b..e54069c17 100644
+index 740be6d22e47..b644e1c72e6a 100644
 --- a/core/arch/arm/kernel/secure_partition.c
 +++ b/core/arch/arm/kernel/secure_partition.c
 @@ -46,6 +46,10 @@
@@ -146,5 +146,3 @@ index 52365553b..e54069c17 100644
  	/* Restore rpc_target_info */
  	thread_get_tsd()->rpc_target_info = rpc_target_info;
  
--- 
-2.17.1

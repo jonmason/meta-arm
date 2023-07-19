@@ -1,4 +1,4 @@
-From 7218af04ce3af466e95d69e4995138cd2d26dd3f Mon Sep 17 00:00:00 2001
+From 0690909f07779a8f35b1f3d0baf8d4c5c9305d14 Mon Sep 17 00:00:00 2001
 From: Khem Raj <raj.khem@gmail.com>
 Date: Sat, 13 Aug 2022 19:24:55 -0700
 Subject: [PATCH] core: Define section attributes for clang
@@ -39,7 +39,7 @@ Signed-off-by: Khem Raj <raj.khem@gmail.com>
  5 files changed, 104 insertions(+), 11 deletions(-)
 
 diff --git a/core/arch/arm/kernel/thread.c b/core/arch/arm/kernel/thread.c
-index f083b159..432983c8 100644
+index f083b159e969..432983c86c9f 100644
 --- a/core/arch/arm/kernel/thread.c
 +++ b/core/arch/arm/kernel/thread.c
 @@ -44,15 +44,30 @@ static size_t thread_user_kcode_size __nex_bss;
@@ -76,7 +76,7 @@ index f083b159..432983c8 100644
  
  #ifdef ARM32
 diff --git a/core/arch/arm/mm/core_mmu_lpae.c b/core/arch/arm/mm/core_mmu_lpae.c
-index 3f08eec6..e6dc9261 100644
+index 3f08eec623f3..e6dc9261c41e 100644
 --- a/core/arch/arm/mm/core_mmu_lpae.c
 +++ b/core/arch/arm/mm/core_mmu_lpae.c
 @@ -233,19 +233,46 @@ typedef uint16_t l1_idx_t;
@@ -131,7 +131,7 @@ index 3f08eec6..e6dc9261 100644
   * TAs page table entry inside a level 1 page table.
   *
 diff --git a/core/arch/arm/mm/core_mmu_v7.c b/core/arch/arm/mm/core_mmu_v7.c
-index cd85bd22..3e18f54f 100644
+index cd85bd22d385..3e18f54f6cf8 100644
 --- a/core/arch/arm/mm/core_mmu_v7.c
 +++ b/core/arch/arm/mm/core_mmu_v7.c
 @@ -204,16 +204,46 @@ typedef uint32_t l1_xlat_tbl_t[NUM_L1_ENTRIES];
@@ -185,7 +185,7 @@ index cd85bd22..3e18f54f 100644
  struct mmu_partition {
  	l1_xlat_tbl_t *l1_table;
 diff --git a/core/arch/arm/mm/pgt_cache.c b/core/arch/arm/mm/pgt_cache.c
-index dee1d207..382cae1c 100644
+index dee1d207943f..382cae1c3f30 100644
 --- a/core/arch/arm/mm/pgt_cache.c
 +++ b/core/arch/arm/mm/pgt_cache.c
 @@ -104,8 +104,18 @@ void pgt_init(void)
@@ -209,7 +209,7 @@ index dee1d207..382cae1c 100644
  
  	for (n = 0; n < ARRAY_SIZE(pgt_tables); n++) {
 diff --git a/core/kernel/thread.c b/core/kernel/thread.c
-index 18d34e6a..086129e2 100644
+index 18d34e6adfe2..086129e282bc 100644
 --- a/core/kernel/thread.c
 +++ b/core/kernel/thread.c
 @@ -37,13 +37,24 @@ struct thread_core_local thread_core_local[CFG_TEE_CORE_NB_CORE] __nex_bss;

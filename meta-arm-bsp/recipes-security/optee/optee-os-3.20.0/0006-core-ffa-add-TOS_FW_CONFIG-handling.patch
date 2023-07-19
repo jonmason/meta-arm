@@ -1,7 +1,7 @@
-From 84f4ef4c4f2f45e2f54597f1afe80d8f8396cc57 Mon Sep 17 00:00:00 2001
+From 9da324001fd93e1b3d9bca076e4afddbb5cac289 Mon Sep 17 00:00:00 2001
 From: Balint Dobszay <balint.dobszay@arm.com>
 Date: Fri, 10 Feb 2023 11:07:27 +0100
-Subject: core: ffa: add TOS_FW_CONFIG handling
+Subject: [PATCH] core: ffa: add TOS_FW_CONFIG handling
 
 At boot TF-A passes two DT addresses (HW_CONFIG and TOS_FW_CONFIG), but
 currently only the HW_CONFIG address is saved, the other one is dropped.
@@ -23,7 +23,7 @@ Signed-off-by: Balint Dobszay <balint.dobszay@arm.com>
  6 files changed, 81 insertions(+), 8 deletions(-)
 
 diff --git a/core/arch/arm/kernel/boot.c b/core/arch/arm/kernel/boot.c
-index e02c02b60..98e13c072 100644
+index e02c02b6097d..98e13c072d8e 100644
 --- a/core/arch/arm/kernel/boot.c
 +++ b/core/arch/arm/kernel/boot.c
 @@ -1,6 +1,7 @@
@@ -118,7 +118,7 @@ index e02c02b60..98e13c072 100644
  	update_external_dt();
  	configure_console_from_dt();
 diff --git a/core/arch/arm/kernel/entry_a32.S b/core/arch/arm/kernel/entry_a32.S
-index 0f14ca2f6..3758fd8b7 100644
+index 0f14ca2f6ad9..3758fd8b7674 100644
 --- a/core/arch/arm/kernel/entry_a32.S
 +++ b/core/arch/arm/kernel/entry_a32.S
 @@ -1,7 +1,7 @@
@@ -139,7 +139,7 @@ index 0f14ca2f6..3758fd8b7 100644
  #ifndef CFG_VIRTUALIZATION
  	mov	r0, #THREAD_CLF_TMP
 diff --git a/core/arch/arm/kernel/entry_a64.S b/core/arch/arm/kernel/entry_a64.S
-index 047ae1f25..fa76437fb 100644
+index 047ae1f25cc9..fa76437fb73c 100644
 --- a/core/arch/arm/kernel/entry_a64.S
 +++ b/core/arch/arm/kernel/entry_a64.S
 @@ -1,7 +1,7 @@
@@ -178,7 +178,7 @@ index 047ae1f25..fa76437fb 100644
  #ifdef CFG_CORE_PAUTH
  	init_pauth_per_cpu
 diff --git a/core/arch/arm/kernel/link_dummies_paged.c b/core/arch/arm/kernel/link_dummies_paged.c
-index 3b8287e06..023a5f3f5 100644
+index 3b8287e06a11..023a5f3f558b 100644
 --- a/core/arch/arm/kernel/link_dummies_paged.c
 +++ b/core/arch/arm/kernel/link_dummies_paged.c
 @@ -1,6 +1,7 @@
@@ -200,7 +200,7 @@ index 3b8287e06..023a5f3f5 100644
  }
  
 diff --git a/core/arch/arm/kernel/secure_partition.c b/core/arch/arm/kernel/secure_partition.c
-index 1d36e90b1..d386f1e4d 100644
+index 1d36e90b1cf7..d386f1e4d211 100644
 --- a/core/arch/arm/kernel/secure_partition.c
 +++ b/core/arch/arm/kernel/secure_partition.c
 @@ -1212,7 +1212,7 @@ static TEE_Result fip_sp_map_all(void)
@@ -213,7 +213,7 @@ index 1d36e90b1..d386f1e4d 100644
  		EMSG("No SPMC manifest found");
  		return TEE_ERROR_GENERIC;
 diff --git a/core/include/kernel/boot.h b/core/include/kernel/boot.h
-index 260854473..941e093b2 100644
+index 260854473b8b..941e093b29a1 100644
 --- a/core/include/kernel/boot.h
 +++ b/core/include/kernel/boot.h
 @@ -1,7 +1,7 @@
@@ -244,6 +244,3 @@ index 260854473..941e093b2 100644
  /*
   * get_aslr_seed() - return a random seed for core ASLR
   * @fdt:	Pointer to a device tree if CFG_DT_ADDR=y
--- 
-2.39.1.windows.1
-

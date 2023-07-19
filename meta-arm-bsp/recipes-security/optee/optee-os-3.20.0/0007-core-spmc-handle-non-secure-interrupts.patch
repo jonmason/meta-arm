@@ -1,4 +1,4 @@
-From f4b4f5bccc1be9a709008cc8e6107302745796c8 Mon Sep 17 00:00:00 2001
+From 18ad0cce24addd45271edf3172ab9ce873186d7a Mon Sep 17 00:00:00 2001
 From: Imre Kis <imre.kis@arm.com>
 Date: Tue, 18 Apr 2023 16:41:51 +0200
 Subject: [PATCH] core: spmc: handle non-secure interrupts
@@ -18,7 +18,6 @@ Upstream-Status: Submitted [https://github.com/OP-TEE/optee_os/pull/6002]
 
 Signed-off-by: Imre Kis <imre.kis@arm.com>
 Change-Id: I577ebe86d416ee494963216a66a3bfc8206921b4
-
 ---
  core/arch/arm/include/ffa.h                   |  2 +-
  .../arch/arm/include/kernel/spmc_sp_handler.h | 11 +++++++
@@ -30,7 +29,7 @@ Change-Id: I577ebe86d416ee494963216a66a3bfc8206921b4
  7 files changed, 122 insertions(+), 2 deletions(-)
 
 diff --git a/core/arch/arm/include/ffa.h b/core/arch/arm/include/ffa.h
-index 5a19fb0c..b3d1d354 100644
+index 5a19fb0c7ff3..b3d1d354735d 100644
 --- a/core/arch/arm/include/ffa.h
 +++ b/core/arch/arm/include/ffa.h
 @@ -50,7 +50,7 @@
@@ -43,7 +42,7 @@ index 5a19fb0c..b3d1d354 100644
  #define FFA_MSG_SEND_DIRECT_REQ_32	U(0x8400006F)
  #define FFA_MSG_SEND_DIRECT_REQ_64	U(0xC400006F)
 diff --git a/core/arch/arm/include/kernel/spmc_sp_handler.h b/core/arch/arm/include/kernel/spmc_sp_handler.h
-index f5bda7bf..30c1e469 100644
+index f5bda7bfe7d0..30c1e4691273 100644
 --- a/core/arch/arm/include/kernel/spmc_sp_handler.h
 +++ b/core/arch/arm/include/kernel/spmc_sp_handler.h
 @@ -25,6 +25,8 @@ void spmc_sp_start_thread(struct thread_smc_args *args);
@@ -72,7 +71,7 @@ index f5bda7bf..30c1e469 100644
  
  #endif /* __KERNEL_SPMC_SP_HANDLER_H */
 diff --git a/core/arch/arm/kernel/secure_partition.c b/core/arch/arm/kernel/secure_partition.c
-index 1d36e90b..6e351e43 100644
+index d386f1e4d211..740be6d22e47 100644
 --- a/core/arch/arm/kernel/secure_partition.c
 +++ b/core/arch/arm/kernel/secure_partition.c
 @@ -999,6 +999,8 @@ static TEE_Result sp_enter_invoke_cmd(struct ts_session *s,
@@ -109,7 +108,7 @@ index 1d36e90b..6e351e43 100644
  
  	thread_user_clear_vfp(&ctx->uctx);
 diff --git a/core/arch/arm/kernel/spmc_sp_handler.c b/core/arch/arm/kernel/spmc_sp_handler.c
-index 5d3326fc..f4c7ff81 100644
+index 46a15646ecf0..12681151a796 100644
 --- a/core/arch/arm/kernel/spmc_sp_handler.c
 +++ b/core/arch/arm/kernel/spmc_sp_handler.c
 @@ -366,6 +366,32 @@ cleanup:
@@ -146,7 +145,7 @@ index 5d3326fc..f4c7ff81 100644
  {
  	return rxtx && rxtx->rx && rxtx->tx && rxtx->size > 0;
 diff --git a/core/arch/arm/kernel/thread.c b/core/arch/arm/kernel/thread.c
-index 1e7f9f96..8cd4dc96 100644
+index 1e7f9f96b558..8cd4dc961b02 100644
 --- a/core/arch/arm/kernel/thread.c
 +++ b/core/arch/arm/kernel/thread.c
 @@ -531,6 +531,13 @@ int thread_state_suspend(uint32_t flags, uint32_t cpsr, vaddr_t pc)
@@ -164,7 +163,7 @@ index 1e7f9f96..8cd4dc96 100644
  
  	if (IS_ENABLED(CFG_VIRTUALIZATION))
 diff --git a/core/arch/arm/kernel/thread_spmc.c b/core/arch/arm/kernel/thread_spmc.c
-index 3b4ac0b4..bc4e7687 100644
+index 3b4ac0b4e35c..bc4e7687d618 100644
 --- a/core/arch/arm/kernel/thread_spmc.c
 +++ b/core/arch/arm/kernel/thread_spmc.c
 @@ -45,7 +45,7 @@ struct mem_frag_state {
@@ -220,7 +219,7 @@ index 3b4ac0b4..bc4e7687 100644
  	case FFA_INTERRUPT:
  		itr_core_handler();
 diff --git a/core/arch/arm/kernel/thread_spmc_a64.S b/core/arch/arm/kernel/thread_spmc_a64.S
-index 21cb6251..7297005a 100644
+index 21cb62513a42..7297005a6038 100644
 --- a/core/arch/arm/kernel/thread_spmc_a64.S
 +++ b/core/arch/arm/kernel/thread_spmc_a64.S
 @@ -14,6 +14,20 @@
@@ -274,6 +273,3 @@ index 21cb6251..7297005a 100644
  	mov	x2, #FFA_PARAM_MBZ
  	mov	w3, #FFA_PARAM_MBZ
  	mov	w4, #OPTEE_FFA_YIELDING_CALL_RETURN_INTERRUPT
-
--- 
-2.17.1
