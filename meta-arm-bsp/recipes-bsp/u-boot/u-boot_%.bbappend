@@ -50,6 +50,7 @@ SRC_URI:append:corstone1000 = " \
 	file://0030-corstone1000-boot-index-from-active.patch			  \
 	file://0031-corstone1000-enable-PSCI-reset.patch			  \
 	file://0032-Enable-EFI-set-get-time-services.patch			  \
+	file://0033-Increase-the-unzipped-Kernel-size.patch			  \
         "
 
 #
