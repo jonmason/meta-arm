@@ -1,4 +1,4 @@
-From 90d705333521dd85720a17a29abf1aff1612c917 Mon Sep 17 00:00:00 2001
+From 97eb384fcc66326f93813ff14b998bb7336a4422 Mon Sep 17 00:00:00 2001
 From: Ross Burton <ross.burton@arm.com>
 Date: Thu, 16 Feb 2023 21:53:25 +0000
 Subject: [PATCH] Patch in the paths to the SBSA test suite

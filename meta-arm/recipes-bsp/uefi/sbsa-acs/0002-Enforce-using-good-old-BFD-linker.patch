@@ -1,4 +1,4 @@
-From 6673fb1de490575a414de7e4dd9442c921383019 Mon Sep 17 00:00:00 2001
+From 8ce56a02fd722833931d356c372d374845f4c626 Mon Sep 17 00:00:00 2001
 From: Khem Raj <raj.khem@gmail.com>
 Date: Wed, 7 Apr 2021 00:16:07 -0700
 Subject: [PATCH] Enforce using good old BFD linker
@@ -18,10 +18,10 @@ Signed-off-by: Khem Raj <raj.khem@gmail.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/BaseTools/Conf/tools_def.template b/BaseTools/Conf/tools_def.template
-index bca09e4648..b775391675 100755
+index 503a6687c1..5cbc5c92a5 100755
 --- a/BaseTools/Conf/tools_def.template
 +++ b/BaseTools/Conf/tools_def.template
-@@ -1858,7 +1858,7 @@ DEFINE GCC_ARM_CC_XIPFLAGS         = -mno-unaligned-access
+@@ -746,7 +746,7 @@ DEFINE GCC_ARM_CC_XIPFLAGS         = -mno-unaligned-access
  DEFINE GCC_AARCH64_CC_FLAGS        = DEF(GCC_ALL_CC_FLAGS) -mlittle-endian -fno-short-enums -fverbose-asm -funsigned-char  -ffunction-sections -fdata-sections -Wno-address -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-pic -fno-pie -ffixed-x18
  DEFINE GCC_AARCH64_CC_XIPFLAGS     = -mstrict-align -mgeneral-regs-only
  DEFINE GCC_DLINK_FLAGS_COMMON      = -nostdlib --pie

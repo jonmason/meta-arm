@@ -6,15 +6,14 @@ LIC_FILES_CHKSUM += "file://ShellPkg/Application/sbsa-acs/LICENSE.md;md5=2a94494
 
 SRC_URI += "git://github.com/ARM-software/sbsa-acs;destsuffix=edk2/ShellPkg/Application/sbsa-acs;protocol=https;branch=master;name=acs \
             git://github.com/tianocore/edk2-libc;destsuffix=edk2/edk2-libc;protocol=https;branch=master;name=libc \
-            file://0002-Patch-in-the-paths-to-the-SBSA-test-suite.patch \
-            file://0003-Enforce-using-good-old-BFD-linker.patch \
-            file://0001-Fix-function-protype-mismatches.patch;patchdir=ShellPkg/Application/sbsa-acs \
-            file://0001-Fix-for-issue-245.patch;patchdir=ShellPkg/Application/sbsa-acs \
+            file://0001-Patch-in-the-paths-to-the-SBSA-test-suite.patch \
+            file://0002-Enforce-using-good-old-BFD-linker.patch \
+            file://0001-Fix-for-mismatch-in-function-prototype.patch;patchdir=ShellPkg/Application/sbsa-acs \
             "
 
 
-SRCREV_acs = "7d7a3fe81ad7e6f05143ba17db50107f1ab6c9cd"
-SRCREV_libc = "a806ea1062c254bd6e09db7d0f7beb4d14bc3ed0"
+SRCREV_acs = "23253befbed2aee7304470fd83b78672488a7fc2"
+SRCREV_libc = "d3dea661da9ae4a3421a80905e75a8dc77aa980e"
 
 # GCC12 trips on it
 #see https://src.fedoraproject.org/rpms/edk2/blob/rawhide/f/0032-Basetools-turn-off-gcc12-warning.patch
