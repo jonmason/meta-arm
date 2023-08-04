@@ -10,7 +10,7 @@ LICENSE = "BSD-2-Clause-Patent"
 SRC_URI = "git://github.com/tianocore/edk2.git;branch=master;protocol=https"
 LIC_FILES_CHKSUM = "file://License.txt;md5=2b415520383f7964e96700ae12b4570a"
 
-SRCREV = "f80f052277c88a67c55e107b550f504eeea947d3"
+SRCREV = "ba91d0292e593df8528b66f99c1b0b14fadc8e16"
 
 S = "${WORKDIR}/git"
 
