@@ -8,8 +8,6 @@ DESCRIPTION = "Trusted Firmware-M"
 HOMEPAGE = "https://git.trustedfirmware.org/trusted-firmware-m.git"
 PROVIDES = "virtual/trusted-firmware-m"
 
-SRC_URI += "file://rwx.patch"
-
 UPSTREAM_CHECK_GITTAGREGEX = "^TF-Mv(?P<pver>\d+(\.\d+)+)$"
 
 # Note to future readers of this recipe: until the CMakeLists don't abuse

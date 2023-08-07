@@ -1,8 +1,8 @@
-From 83e423497afecc202a3a50c3e472161390056ebd Mon Sep 17 00:00:00 2001
+From 88cfce2e04913d48ec8636b6a3550d71ebdd49c4 Mon Sep 17 00:00:00 2001
 From: Emekcan Aras <emekcan.aras@arm.com>
 Date: Mon, 15 May 2023 10:47:27 +0100
-Subject: [PATCH 4/4] Platform: Corstone1000: Calculate the new CRC32 value
- after changing the metadata
+Subject: [PATCH] Platform: Corstone1000: Calculate the new CRC32 value after
+ changing the metadata
 
 Calculates the new CRC32 value for the metadata struct after chaing a value
 during the capsule update. It also updates the CRC32 field in the metadata
@@ -13,6 +13,7 @@ the boot anymore.
 
 Signed-off-by: Emekcan Aras <emekcan.aras@arm.com>
 Upstream-Status: Pending [Not submitted to upstream yet]
+
 ---
  .../arm/corstone1000/fw_update_agent/fwu_agent.c       | 10 +++++++---
  1 file changed, 7 insertions(+), 3 deletions(-)
@@ -66,6 +67,3 @@ index afd8d66e42..f564f2902c 100644
          if (priv_metadata->nv_counter[i] < security_cnt) {
              return FWU_AGENT_ERROR;
          } else if (priv_metadata->nv_counter[i] > security_cnt) {
--- 
-2.17.1
-

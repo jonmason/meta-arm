@@ -3,7 +3,7 @@
 LICENSE = "BSD-2-Clause & BSD-3-Clause & Apache-2.0"
 
 LIC_FILES_CHKSUM = "file://license.rst;md5=07f368487da347f3c7bd0fc3085f3afa \
-                    file://../tf-m-tests/license.rst;md5=02d06ffb8d9f099ff4961c0cb0183a18 \
+                    file://../tf-m-tests/license.rst;md5=4481bae2221b0cfca76a69fb3411f390 \
                     file://../mbedtls/LICENSE;md5=3b83ef96387f14655fc854ddc3c6bd57 \
                     file://../mcuboot/LICENSE;md5=b6ee33f1d12a5e6ee3de1e82fb51eeb8"
 
@@ -22,24 +22,24 @@ SRC_URI  = "${SRC_URI_TRUSTED_FIRMWARE_M};branch=${SRCBRANCH_tfm};name=tfm;dests
             "
 
 # The required dependencies are documented in tf-m/config/config_default.cmake
-# TF-Mv1.7.0
+# TF-Mv1.8.0
 SRCBRANCH_tfm ?= "master"
-SRCREV_tfm = "b725a1346cdb9ec75b1adcdc4c84705881e8fd4e"
-# TF-Mv1.7.0
+SRCREV_tfm = "35ac80c8581d483da7d18cb8bcd20aaed096550c"
+# TF-Mv1.8.0
 SRCBRANCH_tfm-tests ?= "master"
-SRCREV_tfm-tests = "4c4b58041c6c01670266690538a780b4a23d08b8"
-# mbedtls-3.2.1
+SRCREV_tfm-tests = "1273c5bcd3d8ade60d51524797e0b22b6fd7eea1"
+# mbedtls-3.4.0
 SRCBRANCH_mbedtls ?= "master"
-SRCREV_mbedtls = "869298bffeea13b205343361b7a7daf2b210e33d"
-# v1.9.0
+SRCREV_mbedtls = "1873d3bfc2da771672bd8e7e8f41f57e0af77f33"
+# mcuboot v1.10.0
 SRCBRANCH_mcuboot ?= "main"
-SRCREV_mcuboot = "c657cbea75f2bb1faf1fceacf972a0537a8d26dd"
-# qcbor
+SRCREV_mcuboot = "23d28832f02dcdc18687782c6cd8ba99e9b274d2"
+# QCBOR v1.2
 SRCBRANCH_qcbor ?= "master"
 SRCREV_qcbor = "b0e7033268e88c9f27146fa9a1415ef4c19ebaff"
-# TF-Mv1.7.0
+# TF-Mv1.8.0
 SRCBRANCH_tfm-extras ?= "master"
-SRCREV_tfm-extras = "daacaa6df3881e205bc03d75fc8fb688afe9f0f1"
+SRCREV_tfm-extras = "504ae9a9a50981e9dd4d8accec8261a1dba9e965"
 
 SRCREV_FORMAT = "tfm"
 

@@ -1,13 +1,14 @@
-From 17244ac692495c23008ff784611d0ee1d42c83dc Mon Sep 17 00:00:00 2001
+From b05fb661b3afc3ed8e3d4817df2798e9d4877b39 Mon Sep 17 00:00:00 2001
 From: Emekcan Aras <emekcan.aras@arm.com>
 Date: Mon, 15 May 2023 10:46:18 +0100
-Subject: [PATCH 3/4] Platform: Corstone1000: Increase BL2_DATA_SIZE
+Subject: [PATCH] Platform: Corstone1000: Increase BL2_DATA_SIZE
 
 Increases BL2_DATA_SIZE to accommodate the changes in
 metadata_write/read.
 
 Signed-off-by: Emekcan Aras <emekcan.aras@arm.com>
 Upstream-Status: Pending [Not submitted to upstream yet]
+
 ---
  platform/ext/target/arm/corstone1000/partition/region_defs.h | 3 ++-
  1 file changed, 2 insertions(+), 1 deletion(-)
@@ -28,6 +29,3 @@ index abfac39b62..e7f0bad2ba 100644
  #define BL2_DATA_LIMIT    (BL2_DATA_START + BL2_DATA_SIZE - 1)
  
  /* SE BL1 regions */
--- 
-2.17.1
-

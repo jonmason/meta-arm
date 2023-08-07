@@ -11,10 +11,6 @@ TFM_PLATFORM_IS_FVP ?= "FALSE"
 EXTRA_OECMAKE += "-DPLATFORM_IS_FVP=${TFM_PLATFORM_IS_FVP}"
 EXTRA_OECMAKE += "-DCC312_LEGACY_DRIVER_API_ENABLED=ON"
 
-SRCREV_tfm = "94c55967cbd1832681f07074a0945605b02ec8d0"
-SRCREV_mcuboot = "9e8eddcecba931f99297765779f8b130d808a9a3"
-SRCREV_mbedtls = "8c89224991adff88d53cd380f42a2baa36f91454"
-
 # libmetal
 LICENSE += "& BSD-3-Clause"
 LIC_FILES_CHKSUM += "file://../libmetal/LICENSE.md;md5=fe0b8a4beea8f0813b606d15a3df3d3c"
@@ -30,28 +26,12 @@ SRCREV_openamp = "347397decaa43372fc4d00f965640ebde042966d"
 EXTRA_OECMAKE += "-DLIBOPENAMP_SRC_PATH=${S}/../openamp -DLIBOPENAMP_BIN_PATH=${B}/libopenamp-build"
 
 
-SRC_URI:remove:corstone1000 =" \
-    file://rwx.patch    \
-"
-
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 SRC_URI:append:corstone1000 = " \
-    file://0001-Platform-corstone1000-make-sure-to-write-fwu-metadata-to-repl.patch      \
-    file://0002-Platform-corstone1000-get-fwu-and-private-metadata-f.patch      \
-    file://0003-Platform-corstone1000-Add-watchdog_reset_timer.patch            \
-    file://0004-Platform-corstone1000-Replace-MCUBOOT-BL1-by-TFM-s.patch        \
-    file://0005-Platform-corstone1000-Replace-MCUBOOT-BL1-by-TFM-s-B.patch      \
-    file://0006-Platform-corstone1000-Reorganize-bl2-files.patch                \
-    file://0007-Platform-corstone1000-Fix-linker-script-comment.patch           \
-    file://0008-Platform-corstone1000-Fix-linkerscripts-copyright-ye.patch      \
-    file://0009-Platform-corstone1000-fix-flash-reading-issue-for-fi.patch      \
-    file://0010-Platform-corstone1000-Adds-compiler-flags-to-FWU-age.patch      \
-    file://0011-Platform-corstone1000-adjust-PS-asset-configuration.patch       \
-    file://0012-Platform-corstone1000-Increase-number-of-assets.patch           \
-    file://0013-Platform-corstone1000-Increase-BL2-size-in-flash-lay.patch      \
-    file://0014-Platform-Corstone1000-Increase-BL2_DATA_SIZE.patch              \
-    file://0015-Platform-Corstone1000-Calculate-the-new-CRC32-value-.patch      \
-    file://corstone1000/rwx.patch                                               \
+    file://0001-Platform-corstone1000-Increase-BL2-size-in-flash-lay.patch \
+    file://0002-Platform-Corstone1000-Increase-BL2_DATA_SIZE.patch \
+    file://0003-Platform-Corstone1000-Calculate-the-new-CRC32-value-.patch \
+    file://0004-arm-trusted-firmware-m-disable-fatal-warnings.patch \
     "
 
 # TF-M ships patches for external dependencies that needs to be applied
