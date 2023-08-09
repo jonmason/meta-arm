@@ -30,6 +30,7 @@ IMAGE_NAME_SUFFIX = ""
 SERIAL_CONSOLES = "115200;ttyAMA0"
 
 EXTRA_IMAGEDEPENDS += "trusted-firmware-a optee-os"
+PREFERRED_VERSION_trusted-firmware-a ?= "2.8.%"
 # FIXME - there is signed image dependency/race with testimage.
 # This should be fixed in oe-core
 TESTIMAGEDEPENDS:append = " virtual/kernel:do_deploy"
