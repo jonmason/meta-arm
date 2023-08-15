@@ -51,6 +51,7 @@ SRC_URI:append:corstone1000 = " \
 	file://0031-corstone1000-enable-PSCI-reset.patch			  \
 	file://0032-Enable-EFI-set-get-time-services.patch			  \
 	file://0033-corstone1000-detect-inflated-kernel-size.patch			  \
+	file://0034-corstone1000-ESRT-add-unique-firmware-GUID.patch		\
         "
 
 #
