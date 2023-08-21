@@ -14,13 +14,12 @@ CLANGNATIVE:runtime-llvm = "clang-native"
 inherit deploy python3native pkgconfig ${CLANGNATIVE}
 
 SRC_URI = "gitsm://git.trustedfirmware.org/hafnium/hafnium.git;protocol=https;branch=master \
-           file://0001-define-_Noreturn-if-needed.patch \
-           file://0002-arm-hafnium-fix-kernel-tool-linking.patch  \
-           file://0003-Fix-build-with-clang-15.patch \
+           file://0001-arm-hafnium-fix-kernel-tool-linking.patch  \
+           file://0002-Fix-build-with-clang-15.patch \
            file://0001-Use-pkg-config-native-to-find-the-libssl-headers.patch;patchdir=third_party/linux \
            file://0001-work-around-visibility-issue.patch;patchdir=third_party/dtc \
           "
-SRCREV = "79e9522d26fc2a88a44af149034acc27312b73a1"
+SRCREV = "b7d27acb9c63a52f8bd8a37d1eee335d4ccfbe93"
 S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
 

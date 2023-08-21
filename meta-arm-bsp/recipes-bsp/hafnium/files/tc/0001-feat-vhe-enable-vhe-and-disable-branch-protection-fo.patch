@@ -11,21 +11,22 @@ Upstream-Status: Pending [Not submitted to upstream yet]
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/BUILD.gn b/BUILD.gn
-index 62ba763..f26ce03 100644
+index cc6a78f4fdb8..acd1f9d1634b 100644
 --- a/BUILD.gn
 +++ b/BUILD.gn
-@@ -238,7 +238,6 @@ aarch64_toolchains("secure_tc") {
-   heap_pages = 120
+@@ -245,7 +245,6 @@ aarch64_toolchains("secure_tc") {
+   heap_pages = 180
    max_cpus = 8
    max_vms = 16
 -  branch_protection = "standard"
    toolchain_args = {
      plat_ffa = "//src/arch/aarch64/plat/ffa:spmc"
      plat_psci = "//src/arch/aarch64/plat/psci:spmc"
-@@ -247,5 +246,6 @@ aarch64_toolchains("secure_tc") {
+@@ -254,6 +253,7 @@ aarch64_toolchains("secure_tc") {
      secure_world = "1"
      pl011_base_address = "0x7ff80000"
      enable_mte = "1"
 +    enable_vhe = "1"
+     plat_log_level = "LOG_LEVEL_INFO"
    }
  }
