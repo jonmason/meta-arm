@@ -53,7 +53,7 @@ new file mode 100644
 index 0000000..840683a
 --- /dev/null
 +++ b/deployments/se-proxy/opteesp/lse.S
-@@ -0,0 +1,19 @@
+@@ -0,0 +1,28 @@
 +// SPDX-License-Identifier: BSD-3-Clause
 +/*
 + * Copyright (c) 2021, Arm Limited and Contributors. All rights reserved.
@@ -61,18 +61,27 @@ index 0000000..840683a
 +
 +.text
 +.globl __aarch64_cas4_acq_rel
++.globl __aarch64_cas4_sync
 +
 +__aarch64_cas4_acq_rel:
-+	mov	w16, w0
-+	ldaxr	w0, [x2]
-+	cmp	w0, w16
-+0:	bne	1f
++       mov     w16, w0
++       ldaxr   w0, [x2]
++       cmp     w0, w16
++0:     bne     1f
 +
-+	stlxr	w17, w1, [x2]
-+	cbnz	w17, 0b
-+1:	ret
++       stlxr   w17, w1, [x2]
++       cbnz    w17, 0b
++1:     ret
 +
++__aarch64_cas4_sync:
++       mov     w16, w0
++       ldxr    w0, [x2]
++       cmp     w0, w16
++0:     bne     1f
 +
++       stlxr   w17, w1, [x2]
++       cbnz    w17, 0b
++1:     ret
 diff --git a/external/openamp/libmetal.cmake b/external/openamp/libmetal.cmake
 new file mode 100644
 index 0000000..3a647e6
