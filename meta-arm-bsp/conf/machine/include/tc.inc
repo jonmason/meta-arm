@@ -14,9 +14,9 @@ UBOOT_ENTRYPOINT = "0x80080000"
 PREFERRED_PROVIDER_virtual/kernel ?= "linux-yocto"
 
 # OP-TEE
-PREFERRED_VERSION_optee-os ?= "3.18%"
-PREFERRED_VERSION_optee-client ?= "3.18%"
-PREFERRED_VERSION_optee-test ?= "3.18%"
+PREFERRED_VERSION_optee-os ?= "3.20%"
+PREFERRED_VERSION_optee-client ?= "3.20%"
+PREFERRED_VERSION_optee-test ?= "3.20%"
 
 # Cannot use the default zImage on arm64
 KERNEL_IMAGETYPE = "Image"
