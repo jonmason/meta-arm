@@ -6,12 +6,6 @@ SRCBRANCH = "lts-v2.8"
 
 SRC_URI += "file://rwx-segments.patch"
 
-# Enable passing TOS_FW_CONFIG from FIP package to Trusted OS.
-SRC_URI:append:qemuarm64-secureboot = " \
-            file://add-spmc_manifest-for-qemu.patch \
-            file://feat-qemu-update-abi-between-spmd-and-spmc.patch \
-        "
-
 LIC_FILES_CHKSUM += "file://docs/license.rst;md5=b2c740efedc159745b9b31f88ff03dde"
 
 # mbed TLS v2.28.2
