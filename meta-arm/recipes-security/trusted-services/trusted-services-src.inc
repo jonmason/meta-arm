@@ -16,7 +16,7 @@ SRCREV_trusted-services = "08b3d39471f4914186bd23793dc920e83b0e3197"
 LIC_FILES_CHKSUM = "file://${S}/license.rst;md5=ea160bac7f690a069c608516b17997f4"
 
 S = "${WORKDIR}/git/trusted-services"
-PV ?= "0.0+git${SRCPV}"
+PV ?= "0.0+git"
 
 # DTC, tag "v1.6.1"
 SRC_URI += "git://github.com/dgibson/dtc;name=dtc;protocol=https;branch=main;destsuffix=git/dtc"

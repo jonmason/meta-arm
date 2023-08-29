@@ -2,7 +2,7 @@
 
 # Align with N1SDP-2023.06.22 Manifest
 SRCREV_tfa  = "31f60a968347497562b0129134928d7ac4767710"
-PV .= "+git${SRCPV}"
+PV .= "+git"
 
 COMPATIBLE_MACHINE = "n1sdp"
 TFA_PLATFORM       = "n1sdp"
