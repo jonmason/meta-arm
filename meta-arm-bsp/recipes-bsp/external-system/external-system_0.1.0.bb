@@ -15,6 +15,7 @@ SRCREV = "8c9dca74b104ff6c9722fb0738ba93dd3719c080"
 PV .= "+git"
 
 COMPATIBLE_MACHINE = "(corstone1000)"
+PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 # PRODUCT is passed to the Makefile to specify the platform to be used.
 PRODUCT = "corstone-1000"
