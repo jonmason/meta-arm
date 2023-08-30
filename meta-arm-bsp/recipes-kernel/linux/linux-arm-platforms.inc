@@ -20,13 +20,6 @@ SRC_URI:append:n1sdp = " ${SRC_URI_KMETA}"
 SRCREV:arm-platforms-kmeta = "6147e82375aa9df8f2a162d42ea6406c79c854c5"
 
 #
-# Corstone-500 KMACHINE
-#
-COMPATIBLE_MACHINE:corstone500 = "corstone500"
-KBUILD_DEFCONFIG:corstone500  = "multi_v7_defconfig"
-KCONFIG_MODE:corstone500 = "--alldefconfig"
-
-#
 # Corstone1000 KMACHINE
 #
 FILESEXTRAPATHS:prepend:corstone1000 := "${ARMBSPFILESPATHS}"

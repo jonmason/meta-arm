@@ -1,13 +1,6 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
 #
-# Corstone-500 MACHINE
-#
-SRC_URI:append:corstone500 = " \
-                   file://0001-armv7-adding-generic-timer-access-through-MMIO.patch \
-                   file://0002-board-arm-add-corstone500-board.patch"
-
-#
 # Corstone1000 64-bit machines
 #
 DEPENDS:append:corstone1000 = " gnutls-native"
