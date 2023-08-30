@@ -1,24 +1,24 @@
-From 376e7cc533e27f943191d44c112e3812885b8fd1 Mon Sep 17 00:00:00 2001
+From e296c84e276e8ccc39dd593442a4f3f8655b1f57 Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Wed, 8 Jan 2020 09:48:11 +0000
-Subject: [PATCH 2/2] board: arm: add corstone500 board
-
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+Subject: [PATCH] board: arm: add corstone500 board
 
 Add support for the Arm corstone500 platform, with a cortex-a5
 chip, add the default configuration, initialization and
 makefile for this system.
 
 Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 ---
  arch/arm/Kconfig                       |  10 +++
  board/armltd/corstone500/Kconfig       |  12 +++
  board/armltd/corstone500/Makefile      |   8 ++
  board/armltd/corstone500/corstone500.c |  48 ++++++++++++
  configs/corstone500_defconfig          |  41 ++++++++++
- include/configs/corstone500.h          | 102 +++++++++++++++++++++++++
- 6 files changed, 221 insertions(+)
+ include/configs/corstone500.h          | 103 +++++++++++++++++++++++++
+ 6 files changed, 222 insertions(+)
  create mode 100644 board/armltd/corstone500/Kconfig
  create mode 100644 board/armltd/corstone500/Makefile
  create mode 100644 board/armltd/corstone500/corstone500.c
@@ -26,10 +26,10 @@ Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
  create mode 100644 include/configs/corstone500.h
 
 diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
-index cac4fa09fd32..b875c1ef3d32 100644
+index 99264a64780c..522e3e549c8d 100644
 --- a/arch/arm/Kconfig
 +++ b/arch/arm/Kconfig
-@@ -1309,6 +1309,15 @@ config TARGET_CORSTONE1000
+@@ -1338,6 +1338,15 @@ config TARGET_CORSTONE1000
  	select PL01X_SERIAL
  	select DM
  
@@ -45,7 +45,7 @@ index cac4fa09fd32..b875c1ef3d32 100644
  config TARGET_TOTAL_COMPUTE
  	bool "Support Total Compute Platform"
  	select ARM64
-@@ -2264,6 +2273,7 @@ source "board/bosch/shc/Kconfig"
+@@ -2294,6 +2303,7 @@ source "board/bosch/shc/Kconfig"
  source "board/bosch/guardian/Kconfig"
  source "board/Marvell/octeontx/Kconfig"
  source "board/Marvell/octeontx2/Kconfig"
@@ -87,7 +87,7 @@ index 000000000000..6598fdd3ae0d
 +obj-y := corstone500.o
 diff --git a/board/armltd/corstone500/corstone500.c b/board/armltd/corstone500/corstone500.c
 new file mode 100644
-index 000000000000..e878f5c6a521
+index 000000000000..19ec5564291f
 --- /dev/null
 +++ b/board/armltd/corstone500/corstone500.c
 @@ -0,0 +1,48 @@
@@ -107,7 +107,7 @@ index 000000000000..e878f5c6a521
 +static const struct pl01x_serial_plat serial_platdata = {
 +	.base = V2M_UART0,
 +	.type = TYPE_PL011,
-+	.clock = CONFIG_PL011_CLOCK,
++	.clock = CFG_PL011_CLOCK,
 +};
 +
 +U_BOOT_DRVINFO(corstone500_serials) = {
@@ -188,10 +188,10 @@ index 000000000000..91661beb8d8d
 +CONFIG_OF_LIBFDT=y
 diff --git a/include/configs/corstone500.h b/include/configs/corstone500.h
 new file mode 100644
-index 000000000000..416f5fa4399d
+index 000000000000..555e0e44e432
 --- /dev/null
 +++ b/include/configs/corstone500.h
-@@ -0,0 +1,102 @@
+@@ -0,0 +1,103 @@
 +/* SPDX-License-Identifier: GPL-2.0+ */
 +/*
 + * (C) Copyright 2022 ARM Limited
@@ -250,7 +250,7 @@ index 000000000000..416f5fa4399d
 +
 +/* PL011 Serial Configuration */
 +#define CONFIG_CONS_INDEX	0
-+#define CONFIG_PL011_CLOCK	7500000
++#define CFG_PL011_CLOCK		7500000
 +
 +/* Physical Memory Map */
 +#define PHYS_SDRAM_1		(V2M_BASE)
@@ -260,11 +260,11 @@ index 000000000000..416f5fa4399d
 +#define PHYS_SDRAM_1_SIZE	(0x80000000 - DRAM_SEC_SIZE)
 +
 +/* Miscellaneous configurable options */
-+#define CONFIG_SYS_SDRAM_BASE	PHYS_SDRAM_1
++#define CFG_SYS_SDRAM_BASE	PHYS_SDRAM_1
 +
 +#define CONFIG_SYS_MMIO_TIMER
 +
-+#define CONFIG_EXTRA_ENV_SETTINGS     \
++#define CFG_EXTRA_ENV_SETTINGS     \
 +				"kernel_name=Image\0"           \
 +				"kernel_addr=0x80f00000\0"      \
 +				"initrd_name=ramdisk.img\0"     \
@@ -280,7 +280,8 @@ index 000000000000..416f5fa4399d
 +				"bootz $kernel_addr $initrd_addr:0x800000 $fdt_addr"
 +
 +/* Monitor Command Prompt */
-+#define CONFIG_SYS_FLASH_BASE		0x80000000
++#define CFG_SYS_FLASH_BASE		0x80000000
++
 +/* Store environment at top of flash */
 +#define CONFIG_ENV_ADDR			0x0a7c0000
 +#define CONFIG_ENV_SECT_SIZE		0x0040000
@@ -294,6 +295,3 @@ index 000000000000..416f5fa4399d
 +#define FLASH_MAX_SECTOR_SI		0x00040000
 +#define CONFIG_ENV_IS_IN_FLASH		1
 +#endif
--- 
-2.39.1
-

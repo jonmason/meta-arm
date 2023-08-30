@@ -1,10 +1,7 @@
-From 2bb9fb8414b8ad35ed5fc6c91a34c21cef285a01 Mon Sep 17 00:00:00 2001
+From 1f5d48695b896fcaf913eda788117b14afe84e39 Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Wed, 18 Dec 2019 21:52:34 +0000
-Subject: [PATCH 1/2] armv7: adding generic timer access through MMIO
-
-Upstream-Status: Pending [Not submitted to upstream yet]
-Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+Subject: [PATCH] armv7: adding generic timer access through MMIO
 
 This driver enables the ARMv7 generic timer.
 
@@ -20,22 +17,21 @@ the u-boot initcall level (timer_init) before u-boot relocation.
 Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
 Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 
-
-Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
+Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 ---
  arch/arm/cpu/armv7/Makefile     |  1 +
  arch/arm/cpu/armv7/mmio_timer.c | 75 +++++++++++++++++++++++++++++++++
- scripts/config_whitelist.txt    |  1 +
- 3 files changed, 77 insertions(+)
+ 2 files changed, 76 insertions(+)
  create mode 100644 arch/arm/cpu/armv7/mmio_timer.c
 
 diff --git a/arch/arm/cpu/armv7/Makefile b/arch/arm/cpu/armv7/Makefile
-index bfbd85ae64ef..1a0a24e53110 100644
+index 653eef8ad79e..5859b2e2120b 100644
 --- a/arch/arm/cpu/armv7/Makefile
 +++ b/arch/arm/cpu/armv7/Makefile
-@@ -28,6 +28,7 @@ obj-$(CONFIG_ARMV7_PSCI)	+= psci.o psci-common.o
+@@ -27,6 +27,7 @@ obj-$(CONFIG_ARMV7_PSCI)	+= psci.o psci-common.o
+ 
  obj-$(CONFIG_IPROC) += iproc-common/
- obj-$(CONFIG_KONA) += kona-common/
  obj-$(CONFIG_SYS_ARCH_TIMER) += arch_timer.o
 +obj-$(CONFIG_SYS_MMIO_TIMER) += mmio_timer.o
  
@@ -122,18 +118,3 @@ index 000000000000..edd806e06e42
 +{
 +	return gd->arch.timer_rate_hz;
 +}
-diff --git a/scripts/config_whitelist.txt b/scripts/config_whitelist.txt
-index ea71f9d23449..1496d9b88233 100644
---- a/scripts/config_whitelist.txt
-+++ b/scripts/config_whitelist.txt
-@@ -610,6 +610,7 @@ CONFIG_SYS_MMC_U_BOOT_DST
- CONFIG_SYS_MMC_U_BOOT_OFFS
- CONFIG_SYS_MMC_U_BOOT_SIZE
- CONFIG_SYS_MMC_U_BOOT_START
-+CONFIG_SYS_MMIO_TIMER
- CONFIG_SYS_MOR_VAL
- CONFIG_SYS_MRAM_BASE
- CONFIG_SYS_NAND_AMASK
--- 
-2.39.1
-
