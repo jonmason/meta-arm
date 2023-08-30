@@ -11,8 +11,7 @@ COMPATIBLE_MACHINE = "n1sdp"
 EFIDIR             = "/EFI/BOOT"
 EFI_BOOT_IMAGE     = "bootaa64.efi"
 
-FILESEXTRAPATHS:prepend := "${THISDIR}/files/edk2-platforms:"
-
+FILESEXTRAPATHS:prepend := "${THISDIR}/files/n1sdp:"
 SRC_URI:append = "\
     file://0001-Platform-ARM-N1sdp-Add-support-to-parse-NT_FW_CONFIG.patch;patchdir=edk2-platforms \
     file://0002-Platform-ARM-N1Sdp-Fix-RemoteDdrSize-cast.patch;patchdir=edk2-platforms \

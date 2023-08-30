@@ -1,4 +1,7 @@
-Platform/ARM: fix uninitialized variable FileSize in RunAxf
+From 223ad8d168df332445a7383c325845822825b972 Mon Sep 17 00:00:00 2001
+From: Ross Burton <ross.burton@arm.com>
+Date: Mon, 13 Jun 2022 18:21:15 +0100
+Subject: [PATCH] Platform/ARM: fix uninitialized variable FileSize in RunAxf
 
 Clang 14 detects a potentially uninitialized variable FileSize:
 
@@ -13,11 +16,20 @@ can keep clang happy by initialising FileSize to 0.
 
 Upstream-Status: Pending
 Signed-off-by: Ross Burton <ross.burton@arm.com>
+---
+ Platform/ARM/Library/ArmShellCmdRunAxf/RunAxf.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/Platform/ARM/Library/ArmShellCmdRunAxf/RunAxf.c b/Platform/ARM/Library/ArmShellCmdRunAxf/RunAxf.c
-index d23739ad38..fba5e0ba30 100644
+index d23739ad38d9..fba5e0ba300f 100644
 --- a/Platform/ARM/Library/ArmShellCmdRunAxf/RunAxf.c
 +++ b/Platform/ARM/Library/ArmShellCmdRunAxf/RunAxf.c
-@@ -136,1 +136,1 @@ ShellDynCmdRunAxfHandler (
+@@ -133,7 +133,7 @@ ShellDynCmdRunAxfHandler (
+   ELF_ENTRYPOINT              StartElf;
+   CONST CHAR16                *FileName;
+   EFI_FILE_INFO               *Info;
 -  UINTN                       FileSize;
 +  UINTN                       FileSize = 0;
+   VOID                        *FileData;
+   VOID                        *Entrypoint;
+   LIST_ENTRY                  LoadList;

@@ -1,10 +1,10 @@
-Upstream-Status: Submitted [https://gitlab.arm.com/arm-reference-solutions/corstone1000/external_system/rtx/-/issues/1]
-Signed-off-by: Ross Burton <ross.burton@arm.com>
-
-From 34e1c04534607f5605255f39fb46e26261fc9c4e Mon Sep 17 00:00:00 2001
+From fa5ed6204f9188134a87ac9dd569e1496759a7f6 Mon Sep 17 00:00:00 2001
 From: Ross Burton <ross.burton@arm.com>
 Date: Tue, 8 Sep 2020 11:49:08 +0100
 Subject: [PATCH] tools/gen_module_code: atomically rewrite the generated files
+
+Upstream-Status: Submitted [https://gitlab.arm.com/arm-reference-solutions/corstone1000/external_system/rtx/-/issues/1]
+Signed-off-by: Ross Burton <ross.burton@arm.com>
 
 The gen_module rule in rules.mk is marked as .PHONY, so make will
 execute it whenever it is mentioned. This results in gen_module_code
@@ -21,12 +21,13 @@ writing the generated files.
 
 Change-Id: I82d44f9ea6537a91002e1f80de8861d208571630
 Signed-off-by: Ross Burton <ross.burton@arm.com>
+
 ---
  tools/gen_module_code.py | 19 ++++++++++++++-----
  1 file changed, 14 insertions(+), 5 deletions(-)
 
 diff --git a/tools/gen_module_code.py b/tools/gen_module_code.py
-index 7b3953845..ee099b713 100755
+index 6bf50e0..92623a7 100755
 --- a/tools/gen_module_code.py
 +++ b/tools/gen_module_code.py
 @@ -17,6 +17,7 @@
@@ -37,7 +38,7 @@ index 7b3953845..ee099b713 100755
  
  DEFAULT_PATH = 'build/'
  
-@@ -53,13 +54,21 @@
+@@ -55,13 +56,21 @@ TEMPLATE_C = "/* This file was auto generated using {} */\n" \
  
  def generate_file(path, filename, content):
      full_filename = os.path.join(path, filename)
