@@ -4,4 +4,4 @@ SRCREV_edk2-platforms ?= "be2af02a3fb202756ed9855173e0d0ed878ab6be"
 # FIXME - clang is having issues with antlr
 TOOLCHAIN:aarch64 = "gcc"
 
-require edk2-firmware.inc
+require recipes-bsp/uefi/edk2-firmware.inc
