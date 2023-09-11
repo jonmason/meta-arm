@@ -1,4 +1,4 @@
-From 32ae4539865e64bcfb0c6955bdac8db5904e493d Mon Sep 17 00:00:00 2001
+From ec84afa8e74bc5df8b5794eef8f29b097adc7cb3 Mon Sep 17 00:00:00 2001
 From: Manoj Kumar <manoj.kumar3@arm.com>
 Date: Mon, 1 Feb 2021 21:36:43 +0530
 Subject: [PATCH] iommu/arm-smmu-v3: workaround for ATC_INV_SIZE_ALL in N1SDP
@@ -22,10 +22,10 @@ Signed-off-by: Adam Johnston <adam.johnston@arm.com>
  2 files changed, 2 insertions(+)
 
 diff --git a/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c b/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c
-index d4d8bfee9feb..0524bf2ec021 100644
+index 3fd83fb75722..852ed05b14a3 100644
 --- a/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c
 +++ b/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c
-@@ -1738,6 +1738,7 @@ arm_smmu_atc_inv_to_cmd(int ssid, unsigned long iova, size_t size,
+@@ -1747,6 +1747,7 @@ arm_smmu_atc_inv_to_cmd(int ssid, unsigned long iova, size_t size,
  	};
  
  	if (!size) {
@@ -34,7 +34,7 @@ index d4d8bfee9feb..0524bf2ec021 100644
  		return;
  	}
 diff --git a/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.h b/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.h
-index cd48590ada30..20892b2bfe1d 100644
+index b574c58a3487..018086b65381 100644
 --- a/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.h
 +++ b/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.h
 @@ -472,6 +472,7 @@ struct arm_smmu_cmdq_ent {
