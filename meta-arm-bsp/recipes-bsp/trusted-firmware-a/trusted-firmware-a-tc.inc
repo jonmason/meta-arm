@@ -4,6 +4,7 @@ DEPENDS += "scp-firmware util-linux-native gptfdisk-native"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files/tc:"
 SRC_URI:append = " \
+    file://0001-Revert-fix-tc-change-the-FIP-offset-to-8-KiB-boundar.patch \
     file://generate_metadata.py \
     "
 
