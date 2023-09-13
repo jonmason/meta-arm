@@ -77,6 +77,8 @@ stages:
 update-repos:
   extends: .setup
   stage: prep
+  allow_failure:
+    exit_codes: 128
   script:
     - |
       flock --verbose --timeout 60 $KAS_REPO_REF_DIR ./ci/update-repos
