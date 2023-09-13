@@ -1,9 +1,10 @@
-image: ghcr.io/siemens/kas/kas:3.3
+image: ${MIRROR_GHCR}/siemens/kas/kas:3.3
 
 variables:
   CPU_REQUEST: ""
   DEFAULT_TAG: ""
   CACHE_DIR: $CI_BUILDS_DIR/persist
+  MIRROR_GHCR: ghcr.io
   # These are needed as the k8s executor doesn't respect the container entrypoint
   # by default
   FF_KUBERNETES_HONOR_ENTRYPOINT: 1
