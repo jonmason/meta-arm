@@ -175,10 +175,10 @@ running:
     wget www.arm.com
 
 Inbound connections require an explicit port mapping from the host. By default,
-port 8022 on the host is mapped to port 22 on the FVP, so that the following
+port 2222 on the host is mapped to port 22 on the FVP, so that the following
 command will connect to an ssh server running on the FVP:
 
-    ssh root@localhost -p 8022
+    ssh root@localhost -p 2222
 
 Note that user-mode networking does not support ICMP, so `ping` will not work.
 For more information about user-mode networking, please see
