@@ -22,22 +22,22 @@ SRC_URI  = "${SRC_URI_TRUSTED_FIRMWARE_M};branch=${SRCBRANCH_tfm};name=tfm;dests
             "
 
 # The required dependencies are documented in tf-m/config/config_default.cmake
-# TF-Mv1.8.0
+# TF-Mv1.8.1
 SRCBRANCH_tfm ?= "master"
-SRCREV_tfm = "35ac80c8581d483da7d18cb8bcd20aaed096550c"
-# TF-Mv1.8.0
+SRCREV_tfm = "53aa78efef274b9e46e63b429078ae1863609728"
+# TF-Mv1.8.1
 SRCBRANCH_tfm-tests ?= "master"
 SRCREV_tfm-tests = "1273c5bcd3d8ade60d51524797e0b22b6fd7eea1"
-# mbedtls-3.4.0
+# mbedtls-3.4.1
 SRCBRANCH_mbedtls ?= "master"
-SRCREV_mbedtls = "1873d3bfc2da771672bd8e7e8f41f57e0af77f33"
+SRCREV_mbedtls = "72718dd87e087215ce9155a826ee5a66cfbe9631"
 # mcuboot v1.10.0
 SRCBRANCH_mcuboot ?= "main"
 SRCREV_mcuboot = "23d28832f02dcdc18687782c6cd8ba99e9b274d2"
 # QCBOR v1.2
 SRCBRANCH_qcbor ?= "master"
 SRCREV_qcbor = "b0e7033268e88c9f27146fa9a1415ef4c19ebaff"
-# TF-Mv1.8.0
+# TF-Mv1.8.1
 SRCBRANCH_tfm-extras ?= "master"
 SRCREV_tfm-extras = "504ae9a9a50981e9dd4d8accec8261a1dba9e965"
 
