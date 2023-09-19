@@ -4,7 +4,7 @@ LICENSE = "BSD-3-Clause"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=ad8cb685eb324d2fa2530b985a43f3e5"
 
 SRC_URI = "git://github.com/Linaro/OpenCSD;protocol=https;branch=master"
-SRCREV = "78ce8ef47c55a489b0ca575b981cd4856d03f44b"
+SRCREV = "553d74524332be146675980ef611153d1a1ab6f8"
 
 S = "${WORKDIR}/git"
 
