@@ -39,6 +39,6 @@ EXTRA_OEMAKE:append = " \
                         COT=tbbr \
                         ARM_ROTPK_LOCATION=devel_rsa  \
                         ROT_KEY=plat/arm/board/common/rotpk/arm_rotprivk_rsa.pem \
-                        BL32=${RECIPE_SYSROOT}/lib/firmware/tee-pager_v2.bin \
+                        BL32=${RECIPE_SYSROOT}/${nonarch_base_libdir}/firmware/tee-pager_v2.bin \
                         LOG_LEVEL=50 \
                         "
