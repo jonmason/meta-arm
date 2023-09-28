@@ -45,6 +45,9 @@ SRC_URI:append:corstone1000 = " \
 	file://0032-Enable-EFI-set-get-time-services.patch			  \
 	file://0033-corstone1000-detect-inflated-kernel-size.patch			  \
 	file://0034-corstone1000-ESRT-add-unique-firmware-GUID.patch		\
+	file://0035-dt-Provide-a-way-to-remove-non-compliant-nodes-and-p.patch \
+	file://0036-bootefi-Call-the-EVT_FT_FIXUP-event-handler.patch \
+	file://0037-corstone1000-purge-U-Boot-specific-DT-nodes.patch \
         "
 
 #
