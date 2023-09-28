@@ -36,6 +36,7 @@ stages:
     KAS_WORK_DIR: $CI_PROJECT_DIR/work
     KAS_REPO_REF_DIR: $CACHE_DIR/repos
     SSTATE_DIR: $CACHE_DIR/sstate
+    PERSISTENT_DIR: $CACHE_DIR/cache
     DL_DIR: $CACHE_DIR/downloads
     BB_LOGCONFIG: $CI_PROJECT_DIR/ci/logging.yml
     TOOLCHAIN_DIR: $CACHE_DIR/toolchains
@@ -44,9 +45,10 @@ stages:
   before_script:
     - echo KAS_WORK_DIR = $KAS_WORK_DIR
     - echo SSTATE_DIR = $SSTATE_DIR
+    - echo PERSISTENT_DIR = $PERSISTENT_DIR
     - echo DL_DIR = $DL_DIR
     - rm -rf $KAS_WORK_DIR
-    - mkdir --verbose --parents $KAS_WORK_DIR $KAS_REPO_REF_DIR $SSTATE_DIR $DL_DIR $TOOLCHAIN_DIR $TOOLCHAIN_LINK_DIR
+    - mkdir --verbose --parents $KAS_WORK_DIR $KAS_REPO_REF_DIR $SSTATE_DIR $PERSISTENT_DIR $DL_DIR $TOOLCHAIN_DIR $TOOLCHAIN_LINK_DIR
     # Must do this here, as it's the only way to make sure the toolchain is installed on the same builder
     - ./ci/get-binary-toolchains $DL_DIR $TOOLCHAIN_DIR $TOOLCHAIN_LINK_DIR
 

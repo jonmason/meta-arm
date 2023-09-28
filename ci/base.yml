@@ -36,6 +36,9 @@ local_conf_header:
   extrapackages: |
     CORE_IMAGE_EXTRA_INSTALL += "perf opencsd"
     CORE_IMAGE_EXTRA_INSTALL:append:aarch64 = " gator-daemon"
+  sstate: |
+    BB_HASHSERVE_UPSTREAM = "hashserv.yocto.io:8687"
+    SSTATE_MIRRORS = "file://.* http://cdn.jsdelivr.net/yocto/sstate/all/PATH;downloadfilename=PATH"
 
 machine: unset
 
