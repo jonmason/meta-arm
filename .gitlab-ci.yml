@@ -280,7 +280,14 @@ documentation:
   extends: .setup
   script:
     - |
-      sudo pip3 install -r meta-arm-bsp/documentation/requirements.txt
+      # This can be removed when the kas container has python3-venv installed
+      sudo apt-get update && sudo apt-get install --yes python3-venv
+
+      python3 -m venv venv
+      . ./venv/bin/activate
+
+      pip3 install -r meta-arm-bsp/documentation/requirements.txt
+
       for CONF in meta-*/documentation/*/conf.py ; do
         echo Building $CONF...
         SOURCE_DIR=$(dirname $CONF)
