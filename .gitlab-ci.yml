@@ -1,4 +1,4 @@
-image: ${MIRROR_GHCR}/siemens/kas/kas:3.3
+image: ${MIRROR_GHCR}/siemens/kas/kas:4.0
 
 variables:
   CPU_REQUEST: ""
