@@ -14,7 +14,6 @@ ARMBSPFILESPATHS := "${THISDIR}:${THISDIR}/files:"
 # Arm platforms kmeta
 SRC_URI_KMETA = "file://arm-platforms-kmeta;type=kmeta;name=arm-platforms-kmeta;destsuffix=arm-platforms-kmeta"
 SRC_URI:append:fvp-base = " ${SRC_URI_KMETA}"
-SRC_URI:append:fvp-baser-aemv8r64 = " ${SRC_URI_KMETA}"
 SRC_URI:append:juno = " ${SRC_URI_KMETA}"
 SRC_URI:append:n1sdp = " ${SRC_URI_KMETA}"
 SRCREV:arm-platforms-kmeta = "6147e82375aa9df8f2a162d42ea6406c79c854c5"
@@ -57,13 +56,6 @@ COMPATIBLE_MACHINE:fvp-base = "fvp-base"
 KMACHINE:fvp-base = "fvp"
 FILESEXTRAPATHS:prepend:fvp-base := "${ARMBSPFILESPATHS}"
 SRC_URI:append:fvp-base = " file://0001-arm64-dts-fvp-Enable-virtio-rng-support.patch"
-
-#
-# FVP BaseR AEMv8r64 Machine
-#
-COMPATIBLE_MACHINE:fvp-baser-aemv8r64 = "fvp-baser-aemv8r64"
-FILESEXTRAPATHS:prepend:fvp-baser-aemv8r64 := "${ARMBSPFILESPATHS}"
-SRC_URI:append:fvp-baser-aemv8r64 = " file://fvp-baser-aemv8r64.dts;subdir=git/arch/arm64/boot/dts/arm"
 
 #
 # Juno KMACHINE

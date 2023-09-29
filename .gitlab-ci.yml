@@ -125,14 +125,6 @@ fvp-base:
       - TESTING: testimage
       - FIRMWARE: edk2
 
-fvp-baser-aemv8r64:
-  extends: .build
-  parallel:
-    matrix:
-      - TESTING: testimage
-  tags:
-    - x86_64
-
 fvps:
   extends: .build
 
