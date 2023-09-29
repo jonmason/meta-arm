@@ -61,16 +61,17 @@ LIC_FILES_CHKSUM += "file://../openamp/LICENSE.md;md5=a8d8cf662ef6bf9936a1e14135
 
 SRCREV_FORMAT = "trusted-services_dtc_mbedtls_nanopb_qcbor_tcose_cpputest_libmetal_openamp"
 
-# TS ships patches for external dependencies that needs to be applied
-apply_ts_patches() {
-    ( cd ${WORKDIR}/git/qcbor;    git stash; git branch -f bf_am; git am ${S}/external/qcbor/*.patch; git reset bf_am )
-    ( cd ${WORKDIR}/git/tcose;    git stash; git branch -f bf_am; git am ${S}/external/t_cose/*.patch; git reset bf_am )
-    ( cd ${WORKDIR}/git/mbedtls;  git stash; git branch -f bf_am; git am ${S}/external/MbedTLS/*.patch; git reset bf_am )
-    ( cd ${WORKDIR}/git/cpputest; git stash; git apply ${S}/external/CppUTest/*.patch )
-    ( cd ${WORKDIR}/git/dtc;      git stash; git apply ${S}/external/libfdt/*.patch )
-    ( cd ${WORKDIR}/git/nanopb;   git stash; git apply ${S}/external/nanopb/*.patch )
+inherit apply_local_src_patches
+LOCAL_SRC_PATCHES_INPUT_DIR = "N/A"
+
+do_apply_local_src_patches() {
+    apply_local_src_patches ${S}/external/qcbor ${WORKDIR}/git/qcbor
+    apply_local_src_patches ${S}/external/t_cose ${WORKDIR}/git/tcose
+    apply_local_src_patches ${S}/external/MbedTLS ${WORKDIR}/git/mbedtls
+    apply_local_src_patches ${S}/external/CppUTest ${WORKDIR}/git/cpputest
+    apply_local_src_patches ${S}/external/libfdt ${WORKDIR}/git/dtc
+    apply_local_src_patches ${S}/external/nanopb ${WORKDIR}/git/nanopb
 }
-do_patch[postfuncs] += "apply_ts_patches"
 
 # Paths to dependencies required by some TS SPs/tools
 EXTRA_OECMAKE += "-DDTC_SOURCE_DIR=${WORKDIR}/git/dtc \
