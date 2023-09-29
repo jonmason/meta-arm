@@ -9,6 +9,7 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
 SRC_URI:append = "\
 	file://0001-Limit-nanopb-build-to-single-process.patch \
+	file://0001-LazyFetch-allow-setting-the-cmake-generator.patch \
 "
 
 #Latest on 2023 April 28
