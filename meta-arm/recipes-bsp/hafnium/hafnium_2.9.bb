@@ -15,11 +15,10 @@ inherit deploy python3native pkgconfig ${CLANGNATIVE}
 
 SRC_URI = "gitsm://git.trustedfirmware.org/hafnium/hafnium.git;protocol=https;branch=master \
            file://0001-arm-hafnium-fix-kernel-tool-linking.patch  \
-           file://0002-Fix-build-with-clang-15.patch \
            file://0001-Use-pkg-config-native-to-find-the-libssl-headers.patch;patchdir=third_party/linux \
            file://0001-work-around-visibility-issue.patch;patchdir=third_party/dtc \
           "
-SRCREV = "b7d27acb9c63a52f8bd8a37d1eee335d4ccfbe93"
+SRCREV = "0715b8e002cdfb92e6b7efb71128cb24557b70cb"
 S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
 
