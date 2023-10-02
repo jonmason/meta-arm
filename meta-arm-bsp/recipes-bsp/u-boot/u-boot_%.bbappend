@@ -3,7 +3,7 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 #
 # Corstone1000 64-bit machines
 #
-DEPENDS:append:corstone1000 = " gnutls-native"
+DEPENDS:append:corstone1000 = " gnutls-native openssl-native efitools-native"
 CORSTONE1000_DEVICE_TREE:corstone1000-mps3 = "corstone1000-mps3"
 CORSTONE1000_DEVICE_TREE:corstone1000-fvp = "corstone1000-fvp"
 EXTRA_OEMAKE:append:corstone1000 = ' DEVICE_TREE=${CORSTONE1000_DEVICE_TREE}'
@@ -48,7 +48,20 @@ SRC_URI:append:corstone1000 = " \
 	file://0035-dt-Provide-a-way-to-remove-non-compliant-nodes-and-p.patch \
 	file://0036-bootefi-Call-the-EVT_FT_FIXUP-event-handler.patch \
 	file://0037-corstone1000-purge-U-Boot-specific-DT-nodes.patch \
+	file://0038-corstone1000-add-signature-device-tree-overlay.patch	  \
+	file://0039-corstone1000-enable-authenticated-capsule-config.patch	  \
+	file://0040-corstone1000-introduce-EFI-authenticated-capsule-upd.patch	  \
         "
+
+do_configure:append:corstone1000(){
+    openssl req -x509 -sha256 -newkey rsa:2048 -subj /CN=CRT/ -keyout ${B}/CRT.key -out ${B}/CRT.crt -nodes -days 365
+    cert-to-efi-sig-list ${B}/CRT.crt ${B}/corstone1000_defconfig/CRT.esl
+}
+
+do_install:append:corstone1000() {
+   install -D -p -m 0644 ${B}/CRT.crt ${DEPLOY_DIR_IMAGE}/corstone1000_capsule_cert.crt
+   install -D -p -m 0644 ${B}/CRT.key ${DEPLOY_DIR_IMAGE}/corstone1000_capsule_key.key
+}
 
 #
 # FVP BASE
