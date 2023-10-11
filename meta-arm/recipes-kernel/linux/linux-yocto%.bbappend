@@ -15,13 +15,8 @@ SRC_URI:append:qemuarm-secureboot = " \
     file://tee.cfg \
     "
 
-FILESEXTRAPATHS:prepend:qemuarm64 = "${ARMFILESPATHS}"
-SRC_URI:append:qemuarm64 = " file://efi.cfg"
-
-FILESEXTRAPATHS:prepend:qemuarm = "${ARMFILESPATHS}"
-SRC_URI:append:qemuarm = " \
-    file://efi.cfg \
-    "
+FILESEXTRAPATHS:prepend = "${@bb.utils.contains('TFA_UEFI', '1', '${ARMFILESPATHS}', '', d)}"
+SRC_URI:append = " ${@bb.utils.contains('TFA_UEFI', '1', 'file://acpi.cfg', '', d)}"
 
 FFA_TRANSPORT_INCLUDE = "${@bb.utils.contains('MACHINE_FEATURES', 'arm-ffa', 'arm-ffa-transport.inc', '' , d)}"
 require ${FFA_TRANSPORT_INCLUDE}

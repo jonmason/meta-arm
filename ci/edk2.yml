@@ -6,7 +6,8 @@ header:
 local_conf_header:
   bootfirmware: |
     PREFERRED_PROVIDER_virtual/bootloader = "edk2-firmware"
-    MACHINE_FEATURES += "efi"
+    # qemu.inc assigns MACHINE_FEATURES after local.conf, dropping += values.
+    MACHINE_FEATURES:append = " efi"
     TFA_UBOOT = "0"
     TFA_UEFI = "1"
 
