@@ -20,6 +20,8 @@ SRC_URI:append:qemuarm = " \
     file://qemuarm-phys-virt.cfg \
     "
 
+SRC_URI:append = " ${@bb.utils.contains('TFA_UEFI', '1', 'file://acpi.cfg', '', d)}"
+
 FFA_TRANSPORT_INCLUDE = "${@bb.utils.contains('MACHINE_FEATURES', 'arm-ffa', 'arm-ffa-transport.inc', '' , d)}"
 require ${FFA_TRANSPORT_INCLUDE}
 
