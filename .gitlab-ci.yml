@@ -234,7 +234,7 @@ selftest:
   extends: .setup
   script:
     - KASFILES=./ci/qemuarm64.yml:./ci/selftest.yml:lockfile.yml
-    - kas shell --update --force-checkout $KASFILES -c 'oe-selftest --num-processes 1 --run-tests runfvp'
+    - kas shell --update --force-checkout $KASFILES -c 'oe-selftest --num-processes 2 --select-tag meta-arm --run-all-tests'
 
 # Validate layers are Yocto Project Compatible
 check-layers:
