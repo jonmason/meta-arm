@@ -52,6 +52,7 @@ SRC_URI:append:corstone1000 = " \
     file://0014-Platform-Corstone1000-Increase-BL2_DATA_SIZE.patch              \
     file://0015-Platform-Corstone1000-Calculate-the-new-CRC32-value-.patch      \
     file://corstone1000/rwx.patch                                               \
+    file://0016-platform-corstone1000-increase-ITS-max-asset-size.patch         \
     "
 
 # TF-M ships patches for external dependencies that needs to be applied
