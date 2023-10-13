@@ -7,10 +7,12 @@ import tempfile
 import unittest.mock
 
 from oeqa.selftest.case import OESelftestTestCase
+from oeqa.core.decorator import OETestTag
 
 runfvp = pathlib.Path(__file__).parents[5] / "scripts" / "runfvp"
 testdir = pathlib.Path(__file__).parent / "tests"
 
+@OETestTag("meta-arm")
 class RunFVPTests(OESelftestTestCase):
     def setUpLocal(self):
         self.assertTrue(runfvp.exists())
@@ -51,6 +53,7 @@ class RunFVPTests(OESelftestTestCase):
         # test-parameter sets one argument, add another manually
         self.run_fvp(testdir / "test-parameter.json", "--", "--parameter", "board.dog=woof")
 
+@OETestTag("meta-arm")
 class ConfFileTests(OESelftestTestCase):
     def test_no_exe(self):
         from fvp import conffile
@@ -80,6 +83,7 @@ class ConfFileTests(OESelftestTestCase):
             self.assertTrue("env" in conf)
 
 
+@OETestTag("meta-arm")
 class RunnerTests(OESelftestTestCase):
     def create_mock(self):
         return unittest.mock.patch("subprocess.Popen")
