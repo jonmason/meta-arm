@@ -2,5 +2,6 @@ header:
   version: 14
   includes:
     - ci/base.yml
+    - ci/fvp.yml
 
 machine: sgi575
