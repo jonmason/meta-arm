@@ -1,4 +1,4 @@
-From 960d022fa69568752a58b6f5d78e9759b54cff68 Mon Sep 17 00:00:00 2001
+From 4ecbafa71e7850a9e48c84acf004ca3c86e6628c Mon Sep 17 00:00:00 2001
 From: Khem Raj <raj.khem@gmail.com>
 Date: Thu, 22 Sep 2022 19:13:49 -0700
 Subject: [PATCH] Fix build with clang-15
@@ -8,6 +8,7 @@ Remove unused variable suites_in_image
 
 Upstream-Status: Pending
 Signed-off-by: Khem Raj <raj.khem@gmail.com>
+
 ---
  test/hftest/common.c                                         | 2 --
  test/vmapi/arch/aarch64/gicv3/inc/gicv3.h                    | 2 +-
@@ -18,7 +19,7 @@ Signed-off-by: Khem Raj <raj.khem@gmail.com>
  6 files changed, 5 insertions(+), 7 deletions(-)
 
 diff --git a/test/hftest/common.c b/test/hftest/common.c
-index 344ff2452c36..175230a7cfa7 100644
+index 344ff245..175230a7 100644
 --- a/test/hftest/common.c
 +++ b/test/hftest/common.c
 @@ -67,7 +67,6 @@ void hftest_json(void)
@@ -38,7 +39,7 @@ index 344ff2452c36..175230a7cfa7 100644
  			tests_in_suite = 0;
  			HFTEST_LOG("    {");
 diff --git a/test/vmapi/arch/aarch64/gicv3/inc/gicv3.h b/test/vmapi/arch/aarch64/gicv3/inc/gicv3.h
-index 28bf29d412f4..dede047a381a 100644
+index 28bf29d4..dede047a 100644
 --- a/test/vmapi/arch/aarch64/gicv3/inc/gicv3.h
 +++ b/test/vmapi/arch/aarch64/gicv3/inc/gicv3.h
 @@ -30,4 +30,4 @@ extern void *recv_buffer;
@@ -48,7 +49,7 @@ index 28bf29d412f4..dede047a381a 100644
 -void gicv3_system_setup();
 +void gicv3_system_setup(void);
 diff --git a/test/vmapi/arch/aarch64/gicv3/timer_secondary.c b/test/vmapi/arch/aarch64/gicv3/timer_secondary.c
-index 0ac07f4411df..6264a5864721 100644
+index 0ac07f44..6264a586 100644
 --- a/test/vmapi/arch/aarch64/gicv3/timer_secondary.c
 +++ b/test/vmapi/arch/aarch64/gicv3/timer_secondary.c
 @@ -55,7 +55,7 @@ TEAR_DOWN(timer_secondary_ffa)
@@ -61,7 +62,7 @@ index 0ac07f4411df..6264a5864721 100644
  	const char message[] = "loop 0099999";
  	const char expected_response[] = "Got IRQ 03.";
 diff --git a/test/vmapi/el0_partitions/services/interruptible.c b/test/vmapi/el0_partitions/services/interruptible.c
-index 85c97dc7a857..80fc61b2e5a9 100644
+index 85c97dc7..80fc61b2 100644
 --- a/test/vmapi/el0_partitions/services/interruptible.c
 +++ b/test/vmapi/el0_partitions/services/interruptible.c
 @@ -44,7 +44,7 @@ static void irq(void)
@@ -74,7 +75,7 @@ index 85c97dc7a857..80fc61b2e5a9 100644
  	struct ffa_value received;
  
 diff --git a/test/vmapi/el0_partitions/services/interruptible_echo.c b/test/vmapi/el0_partitions/services/interruptible_echo.c
-index 958d75090cce..55511d6a2bce 100644
+index 958d7509..55511d6a 100644
 --- a/test/vmapi/el0_partitions/services/interruptible_echo.c
 +++ b/test/vmapi/el0_partitions/services/interruptible_echo.c
 @@ -33,7 +33,7 @@ static void irq(void)
@@ -87,7 +88,7 @@ index 958d75090cce..55511d6a2bce 100644
  	struct ffa_value received;
  
 diff --git a/test/vmapi/primary_with_secondaries/services/interruptible.c b/test/vmapi/primary_with_secondaries/services/interruptible.c
-index 594f28ac8bc8..3888bf8b0b6e 100644
+index 594f28ac..3888bf8b 100644
 --- a/test/vmapi/primary_with_secondaries/services/interruptible.c
 +++ b/test/vmapi/primary_with_secondaries/services/interruptible.c
 @@ -41,7 +41,7 @@ static void irq(void)

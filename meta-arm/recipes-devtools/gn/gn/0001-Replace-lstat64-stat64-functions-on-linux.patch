@@ -1,4 +1,4 @@
-From 25786d356ac391124489f2e55690281c03fa83db Mon Sep 17 00:00:00 2001
+From 0eb82bde73a3f29bcf33ecbc4a6c5b4ba414db41 Mon Sep 17 00:00:00 2001
 From: Khem Raj <raj.khem@gmail.com>
 Date: Thu, 22 Dec 2022 00:30:55 -0800
 Subject: [PATCH] Replace lstat64/stat64 functions on linux
@@ -10,6 +10,7 @@ This fixes build with musl where off_t has always been 64bit
 
 Upstream-Status: Submitted [https://gn-review.googlesource.com/c/gn/+/14960]
 Signed-off-by: Khem Raj <raj.khem@gmail.com>
+
 ---
  src/base/files/file.h             | 2 +-
  src/base/files/file_posix.cc      | 2 +-
@@ -17,7 +18,7 @@ Signed-off-by: Khem Raj <raj.khem@gmail.com>
  3 files changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/src/base/files/file.h b/src/base/files/file.h
-index 2c94eb4e..99e87ed9 100644
+index 419ba870..aa63dabd 100644
 --- a/src/base/files/file.h
 +++ b/src/base/files/file.h
 @@ -23,7 +23,7 @@ namespace base {
@@ -30,7 +31,7 @@ index 2c94eb4e..99e87ed9 100644
  #elif defined(OS_POSIX) || defined(OS_FUCHSIA)
  typedef struct stat64 stat_wrapper_t;
 diff --git a/src/base/files/file_posix.cc b/src/base/files/file_posix.cc
-index b1f9f5e8..049568f0 100644
+index a1d256cb..0bfffc12 100644
 --- a/src/base/files/file_posix.cc
 +++ b/src/base/files/file_posix.cc
 @@ -26,7 +26,7 @@ namespace {
@@ -43,7 +44,7 @@ index b1f9f5e8..049568f0 100644
    return fstat(fd, sb);
  }
 diff --git a/src/base/files/file_util_posix.cc b/src/base/files/file_util_posix.cc
-index aa54731d..53be3d3b 100644
+index b6181511..c6396b4c 100644
 --- a/src/base/files/file_util_posix.cc
 +++ b/src/base/files/file_util_posix.cc
 @@ -61,7 +61,7 @@ namespace {
@@ -55,6 +56,3 @@ index aa54731d..53be3d3b 100644
  int CallStat(const char* path, stat_wrapper_t* sb) {
    return stat(path, sb);
  }
--- 
-2.39.0
-

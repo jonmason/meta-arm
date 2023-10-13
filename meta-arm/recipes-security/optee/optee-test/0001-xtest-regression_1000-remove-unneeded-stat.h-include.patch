@@ -1,4 +1,4 @@
-From ddd5ad19732c9a2a9fe236662a8d264c6b2b1a0a Mon Sep 17 00:00:00 2001
+From 9eb07e0f5f6080f24817d62e598ecf761eadde85 Mon Sep 17 00:00:00 2001
 From: Jon Mason <jon.mason@arm.com>
 Date: Sat, 15 Jul 2023 15:08:43 -0400
 Subject: [PATCH] xtest: regression_1000: remove unneeded stat.h include
@@ -16,12 +16,13 @@ Upstream-Status: Backport [https://github.com/OP-TEE/optee_test/pull/688]
 Signed-off-by: Jon Mason <jon.mason@arm.com>
 Reviewed-by: Jerome Forissier <jerome.forissier@linaro.org>
 Acked-by: Jens Wiklander <jens.wiklander@linaro.org>
+
 ---
  host/xtest/regression_1000.c | 1 -
  1 file changed, 1 deletion(-)
 
 diff --git a/host/xtest/regression_1000.c b/host/xtest/regression_1000.c
-index cd11f933ce43..8e338e59da21 100644
+index 272ab93..b56a269 100644
 --- a/host/xtest/regression_1000.c
 +++ b/host/xtest/regression_1000.c
 @@ -24,7 +24,6 @@

@@ -1,4 +1,4 @@
-From 87745a6cad0f7819ac8f8d3826f5e228ebd843c5 Mon Sep 17 00:00:00 2001
+From 38433672b642107e12845f23f0e3fbd69bc8ffec Mon Sep 17 00:00:00 2001
 From: Khem Raj <raj.khem@gmail.com>
 Date: Thu, 2 Feb 2023 16:39:26 -0800
 Subject: [PATCH] Include missing <cstdint>
@@ -11,6 +11,7 @@ for uintXX_t.
 
 Upstream-Status: Submitted [https://github.com/ARM-software/gator/pull/40]
 Signed-off-by: Khem Raj <raj.khem@gmail.com>
+
 ---
  daemon/xml/CurrentConfigXML.h | 1 +
  1 file changed, 1 insertion(+)
@@ -27,6 +28,3 @@ index 0b239fd..d9047e3 100644
  #include <set>
  #include <string>
  
--- 
-2.39.1
-
