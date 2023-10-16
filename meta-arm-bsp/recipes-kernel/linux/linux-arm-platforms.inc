@@ -89,6 +89,22 @@ SRC_URI:append:n1sdp = " \
 KCONF_AUDIT_LEVEL:n1sdp:pn-linux-yocto-rt = "0"
 
 #
+# Neoverse V2 KMACHINE
+#
+COMPATIBLE_MACHINE:rd-v2 = "rd-v2"
+KBUILD_DEFCONFIG:rd-v2 = "defconfig"
+KCONFIG_MODE:rd-v2 = "--alldefconfig"
+
+#
+#
+# Neoverse V2 KMACHINE
+#
+COMPATIBLE_MACHINE:rd-v2 = "rd-v2"
+KBUILD_DEFCONFIG:rd-v2 = "defconfig"
+KCONFIG_MODE:rd-v2 = "--alldefconfig"
+
+#
+#
 # SGI575 KMACHINE
 #
 COMPATIBLE_MACHINE:sgi575 = "sgi575"

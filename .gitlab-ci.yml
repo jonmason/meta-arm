@@ -247,6 +247,9 @@ qemuarmv5:
       - DISTRO: poky-tiny
         TESTING: testimage
 
+rd-v2:
+  extends: .build
+
 sgi575:
   extends: .build
 
