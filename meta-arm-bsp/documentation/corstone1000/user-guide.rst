@@ -1246,6 +1246,10 @@ should follow the build instructions in this document to build on Linux host
 PC, and copy the output binaries to the Windows PC where the FVP is located,
 and launch the FVP binary.
 
+Security Issue Reporting
+------------------------
+To report any security issues identified with Corstone-1000, please send an email to arm-security@arm.com.
+
 --------------
 
 *Copyright (c) 2022-2023, Arm Limited. All rights reserved.*
