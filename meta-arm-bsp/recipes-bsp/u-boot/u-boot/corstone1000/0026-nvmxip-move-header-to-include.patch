@@ -1,7 +1,7 @@
-From 050c2d8577fd98f20c8b96dab3e4c42c8508b6bc Mon Sep 17 00:00:00 2001
+From 2214be0f540121767d7b6ec4910a7389a1edd13c Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Fri, 9 Jun 2023 13:31:53 +0100
-Subject: [PATCH 28/33] nvmxip: move header to include
+Subject: [PATCH 26/38] nvmxip: move header to include
 
 Move header to include to allow external code
 to get the internal bdev structures to access

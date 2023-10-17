@@ -1,7 +1,7 @@
-From a37ab0c2578a4627111022d2d1f27f9efa1c2b76 Mon Sep 17 00:00:00 2001
+From a8ecc3ce0fcabb2414a000b7c8bfe3ce46d4392c Mon Sep 17 00:00:00 2001
 From: Sughosh Ganu <sughosh.ganu@linaro.org>
 Date: Thu, 21 Sep 2023 14:13:42 +0100
-Subject: [PATCH 35/37] dt: Provide a way to remove non-compliant nodes and
+Subject: [PATCH 33/38] dt: Provide a way to remove non-compliant nodes and
  properties
 
 Add a function which is registered to spy for a EVT_FT_FIXUP event,

@@ -1,7 +1,7 @@
-From b3c9b57d862060b7d112725a567c0ff24184c6e1 Mon Sep 17 00:00:00 2001
+From 0094eb1e6ca78988f105fefb69dd5cc9046c89fe Mon Sep 17 00:00:00 2001
 From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 Date: Mon, 5 Dec 2022 17:02:32 +0000
-Subject: [PATCH 22/33] corstone1000: enable distro booting command
+Subject: [PATCH 20/38] corstone1000: enable distro booting command
 
 enable distro_bootcmd
 

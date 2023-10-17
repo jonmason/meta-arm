@@ -1,7 +1,7 @@
-From 92f471d3195e3893f463b11d49f0db62793ca585 Mon Sep 17 00:00:00 2001
+From 62eaf5720bfe49feedf486c57ce9b9968360460c Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Mon, 17 Jul 2023 17:04:10 +0100
-Subject: [PATCH 25/33] corstone1000: add boot index
+Subject: [PATCH 23/38] corstone1000: add boot index
 
 it is expected that the firmware that runs before
 u-boot somehow provide the information of the bank

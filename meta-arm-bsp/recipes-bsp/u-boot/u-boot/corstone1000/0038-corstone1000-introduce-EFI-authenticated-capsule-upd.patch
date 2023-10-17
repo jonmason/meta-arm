@@ -1,7 +1,8 @@
-From b99a39c662b9be5f940b895efa8016f5567e1c1f Mon Sep 17 00:00:00 2001
+From 0d1975369f3c483b540818cec8a088ed35116bbb Mon Sep 17 00:00:00 2001
 From: Emekcan Aras <emekcan.aras@arm.com>
 Date: Wed, 13 Sep 2023 13:55:08 +0100
-Subject: [PATCH] corstone1000: introduce EFI authenticated capsule update
+Subject: [PATCH 38/38] corstone1000: introduce EFI authenticated capsule
+ update
 
 Introduces EFI authenticated capsule update for corstone1000. Corstone1000
 implements platform-specific capsule update mechanism in u-bootdue to the SoC
@@ -15,7 +16,7 @@ Upstream-Status: Inappropriate [Redesign of Capsule update interface is required
  1 file changed, 39 insertions(+)
 
 diff --git a/lib/efi_loader/efi_capsule.c b/lib/efi_loader/efi_capsule.c
-index 6a06605ad9..30fb7d1dd5 100644
+index 6a06605ad9..e1c78d8c1c 100644
 --- a/lib/efi_loader/efi_capsule.c
 +++ b/lib/efi_loader/efi_capsule.c
 @@ -820,6 +820,12 @@ efi_status_t __efi_runtime EFIAPI efi_update_capsule(
@@ -72,5 +73,5 @@ index 6a06605ad9..30fb7d1dd5 100644
  		efi_memcpy_runtime(corstone1000_capsule_buf, capsule, capsule->capsule_image_size);
  
 -- 
-2.17.1
+2.25.1
 

@@ -1,7 +1,7 @@
-From af1bb3af4ff7bb9486dc9489d27605b8eded45b9 Mon Sep 17 00:00:00 2001
+From ff2e0fe577c5a564a10bcc730392dd5397f6cb34 Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Mon, 17 Jul 2023 17:33:52 +0100
-Subject: [PATCH 27/33] corstone1000: add nvmxip, fwu-mdata and gpt options
+Subject: [PATCH 25/38] corstone1000: add nvmxip, fwu-mdata and gpt options
 
 Enable the newest features: nvmxip, fwu-metadata and
 gpt. Commands to print the partition info, gpt info

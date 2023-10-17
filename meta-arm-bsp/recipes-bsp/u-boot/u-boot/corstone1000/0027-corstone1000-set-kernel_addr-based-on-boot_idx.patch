@@ -1,7 +1,7 @@
-From c547f3335ddff71a7f4915dc0c99ccbcdbf24b54 Mon Sep 17 00:00:00 2001
+From c615b2e0fe9440b27b83f32c62fdc7f996237b56 Mon Sep 17 00:00:00 2001
 From: Rui Miguel Silva <rui.silva@linaro.org>
 Date: Tue, 18 Jul 2023 12:14:47 +0100
-Subject: [PATCH 29/33] corstone1000: set kernel_addr based on boot_idx
+Subject: [PATCH 27/38] corstone1000: set kernel_addr based on boot_idx
 
 We need to distinguish between boot banks and from which
 partition to load the kernel+initramfs to memory.

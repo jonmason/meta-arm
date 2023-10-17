@@ -1,7 +1,7 @@
-From 0524aa417c4989bf03366f13a2456b3bcb72fb87 Mon Sep 17 00:00:00 2001
+From af7054ffdb1f84875a652c6b968dacf9a29cdc9c Mon Sep 17 00:00:00 2001
 From: Emekcan Aras <emekcan.aras@arm.com>
 Date: Tue, 18 Jul 2023 12:19:17 +0100
-Subject: [PATCH 31/33] corstone1000: enable PSCI reset
+Subject: [PATCH 29/38] corstone1000: enable PSCI reset
 
 Even though corstone1000 does not implement entire PSCI APIs,it relies on
 PSCI reset interface for the system reset. U-boot change the config name, so we
