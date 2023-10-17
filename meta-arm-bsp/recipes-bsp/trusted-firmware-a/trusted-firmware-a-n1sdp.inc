@@ -17,6 +17,8 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/files/n1sdp:"
 
 SRC_URI:append = " \ 
     file://0001-Reserve-OP-TEE-memory-from-nwd.patch \
+    file://0002-Modify-BL32-Location-to-DDR4.patch \
+    file://0003-Modify-SPMC-Base-to-DDR4.patch \
     "
 
 TFA_ROT_KEY= "plat/arm/board/common/rotpk/arm_rotprivk_rsa.pem"
