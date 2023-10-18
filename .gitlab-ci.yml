@@ -117,6 +117,10 @@ corstone1000-fvp:
 
 corstone1000-mps3:
   extends: .build
+  parallel:
+    matrix:
+      - TESTING: [none, tftf]
+
 
 fvp-base:
   extends: .build
@@ -148,8 +152,7 @@ n1sdp:
   extends: .build
   parallel:
     matrix:
-      - TS: [none, n1sdp-ts]
-      - OPTEE: [none, n1sdp-optee]
+      - TESTING: [none, n1sdp-ts, n1sdp-optee, tftf]
 
 qemu-generic-arm64:
   extends: .build
