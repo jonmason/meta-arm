@@ -261,6 +261,9 @@ tc1:
   tags:
     - x86_64
 
+tc2:
+  extends: .build
+
 toolchains:
   extends: .build
 
