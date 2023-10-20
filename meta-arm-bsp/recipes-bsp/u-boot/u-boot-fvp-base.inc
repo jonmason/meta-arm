@@ -1,6 +1,6 @@
 # FVP base specific U-boot support
 
-SRC_URI:append = " file://bootargs.cfg \
+SRC_URI:append = " \
     file://0001-virtio-rng-Workaround-for-FVP-returning-zero-size-bu.patch \
     file://0002-vexpress64-Set-the-DM_RNG-property.patch \
     file://0003-vexpress64-Select-PSCI-RESET-by-default.patch \
