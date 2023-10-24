@@ -112,8 +112,6 @@ corstone1000-fvp:
   parallel:
     matrix:
       - TESTING: [testimage, tftf]
-  tags:
-    - x86_64
 
 corstone1000-mps3:
   extends: .build
