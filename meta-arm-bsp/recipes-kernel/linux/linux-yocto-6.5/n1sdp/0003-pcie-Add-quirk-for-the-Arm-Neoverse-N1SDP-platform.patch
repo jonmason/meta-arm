@@ -1,4 +1,4 @@
-From 268bfbcd8f16660bf5fc8e31b18b4090743c6dbe Mon Sep 17 00:00:00 2001
+From 51879bfe6b0850b3746df9f9471120a6709807cb Mon Sep 17 00:00:00 2001
 From: Deepak Pandey <Deepak.Pandey@arm.com>
 Date: Fri, 31 May 2019 16:42:43 +0100
 Subject: [PATCH] pcie: Add quirk for the Arm Neoverse N1SDP platform
@@ -24,7 +24,6 @@ Signed-off-by: Deepak Pandey <Deepak.Pandey@arm.com>
 Signed-off-by: Sudipto Paul <sudipto.paul@arm.com>
 [Andre: fix coding style issues, rewrite some parts, add DT support]
 Signed-off-by: Andre Przywara <andre.przywara@arm.com>
-
 Change-Id: I1d3a4b9bf6b3b883d262e3c4ff1f88a0eb81c1fe
 Upstream-Status: Inappropriate [will not be submitted as its a workaround to address hardware issue]
 Signed-off-by: Deepak Pandey <Deepak.Pandey@arm.com>
@@ -41,10 +40,10 @@ Signed-off-by: Adam Johnston <adam.johnston@arm.com>
  create mode 100644 drivers/pci/controller/pcie-n1sdp.c
 
 diff --git a/arch/arm64/configs/defconfig b/arch/arm64/configs/defconfig
-index a24609e14d50..cd73d1704dd2 100644
+index 02adc6ceb831..398a5429a8e2 100644
 --- a/arch/arm64/configs/defconfig
 +++ b/arch/arm64/configs/defconfig
-@@ -203,6 +203,7 @@ CONFIG_NFC_S3FWRN5_I2C=m
+@@ -207,6 +207,7 @@ CONFIG_NFC_S3FWRN5_I2C=m
  CONFIG_PCI=y
  CONFIG_PCIEPORTBUS=y
  CONFIG_PCIEAER=y
@@ -71,7 +70,7 @@ index 860014b89b8e..2d4c1c699ffe 100644
  
  #ifdef CONFIG_LOONGARCH
 diff --git a/drivers/pci/controller/Kconfig b/drivers/pci/controller/Kconfig
-index 8d49bad7f847..7bb49afbcd5b 100644
+index 0859be86e718..c51b89781472 100644
 --- a/drivers/pci/controller/Kconfig
 +++ b/drivers/pci/controller/Kconfig
 @@ -21,6 +21,17 @@ config PCIE_ALTERA
