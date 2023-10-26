@@ -46,6 +46,7 @@ SRC_URI:append = " \
     file://0036-corstone1000-add-signature-device-tree-overlay.patch \
     file://0037-corstone1000-enable-authenticated-capsule-config.patch \
     file://0038-corstone1000-introduce-EFI-authenticated-capsule-upd.patch \
+    file://0039-enables-ondisk-capsule-update-feature.patch		  \
     "
 
 do_configure:append(){
