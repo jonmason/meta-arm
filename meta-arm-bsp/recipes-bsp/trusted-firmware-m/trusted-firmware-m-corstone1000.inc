@@ -35,6 +35,7 @@ SRC_URI:append:corstone1000 = " \
     file://0005-Platform-corstone1000-add-unique-firmware-GUID.patch \
     file://0006-Platform-Corstone1000-Enable-Signed-Capsule.patch \
     file://0007-platform-corstone1000-increase-ITS-max-asset-size.patch \
+    file://0008-platform-corstone1000-align-capsule-update-structs.patch \
     "
 
 # TF-M ships patches for external dependencies that needs to be applied
