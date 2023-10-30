@@ -1,10 +1,10 @@
-require optee-os.inc
+require recipes-security/optee/optee-os.inc
 
 DEPENDS += "dtc-native"
 
-FILESEXTRAPATHS:prepend := "${THISDIR}/${P}:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
-SRCREV = "001ace6655dd6bb9cbe31aa31b4ba69746e1a1d9"
+SRCREV = "2a5b1d1232f582056184367fb58a425ac7478ec6"
 SRC_URI += " \
     file://0001-allow-setting-sysroot-for-libgcc-lookup.patch \
     file://0002-core-Define-section-attributes-for-clang.patch \
