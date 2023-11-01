@@ -488,10 +488,10 @@ certifications of SystemReady-IR. To download the repository, run command:
 ::
 
   cd <_workspace>
-  git clone https://github.com/ARM-software/arm-systemready.git -b v21.09_REL1.0
+  git clone https://github.com/ARM-software/arm-systemready.git
 
 Once the repository is successfully downloaded, the prebuilt ACS live image can be found in:
- - ``<_workspace>/arm-systemready/IR/prebuilt_images/v21.07_0.9_BETA/ir_acs_live_image.img.xz``
+ - ``<_workspace>/arm-systemready/IR/prebuilt_images/v23.03_2.0.0/ir-acs-live-image-generic-arm64.wic.xz``
 
 **NOTE**: This prebuilt ACS image includes v5.13 kernel, which doesn't provide
 USB driver support for Corstone-1000. The ACS image with newer kernel version
@@ -505,9 +505,9 @@ USB drive. Run the following commands to prepare the ACS image in USB stick:
 
 ::
 
-  cd <_workspace>/arm-systemready/IR/prebuilt_images/v21.07_0.9_BETA
-  unxz ir_acs_live_image.img.xz
-  sudo dd if=ir_acs_live_image.img of=/dev/sdb iflag=direct oflag=direct bs=1M status=progress; sync
+  cd <_workspace>/arm-systemready/IR/prebuilt_images/v23.03_2.0.0
+  unxz ir-acs-live-image-generic-arm64.wic.xz
+  sudo dd if=ir-acs-live-image-generic-arm64.wic of=/dev/sdb iflag=direct oflag=direct bs=1M status=progress; sync
 
 Once the USB stick with ACS image is prepared, the user should make sure that
 ensure that only the USB stick with the ACS image is connected to the board,
@@ -520,31 +520,30 @@ FVP instructions for ACS image and run
 ======================================
 
 Download ACS image from:
- - ``https://gitlab.arm.com/systemready/acs/arm-systemready/-/tree/linux-5.17-rc7/IR/prebuilt_images/v22.04_1.0-Linux-v5.17-rc7``
+ - ``https://gitlab.arm.com/systemready/acs/arm-systemready/-/tree/main/IR/prebuilt_images/v23.03_2.0.0``
 
 Use the below command to run the FVP with ACS image support in the
 SD card.
 
 ::
 
-  unxz ${<path-to-img>/ir_acs_live_image.img.xz}
+  unxz ${<path-to-img>/ir-acs-live-image-generic-arm64.wic.xz}
 
-  tmux
-
-  <_workspace>/meta-arm/scripts/runfvp <_workspace>/build/tmp/deploy/images/corstone1000-fvp/corstone1000-image-corstone1000-fvp.fvpconf -- -C board.msd_mmc.p_mmc_file="${<path-to-img>/ir_acs_live_image.img}"
+  <_workspace>/meta-arm/scripts/runfvp  --terminals=xterm <_workspace>/build/tmp/deploy/images/corstone1000-fvp/corstone1000-image-corstone1000-fvp.fvpconf -- -C board.msd_mmc.p_mmc_file=<path-to-img>/ir-acs-live-image-generic-arm64.wic
 
 The test results can be fetched using following commands:
 
 ::
 
   sudo mkdir /mnt/test
-  sudo mount -o rw,offset=<offset_2nd_partition> <path-to-img>/ir_acs_live_image.img /mnt/test/
-  fdisk -lu <path-to-img>/ir_acs_live_image.img
+  sudo mount -o rw,offset=<offset_3rd_partition> <path-to-img>/ir-acs-live-image-generic-arm64.wic /mnt/test/
+  fdisk -lu <path-to-img>/ir-acs-live-image-generic-arm64.wic
   ->  Device                                                     Start     End Sectors  Size Type
-      <path-to-img>/ir_acs_live_image_modified.img1    2048 1050622 1048575  512M Microsoft basic data
-      <path-to-img>/ir_acs_live_image_modified.img2 1050624 1153022  102399   50M Microsoft basic data
+       <path-to-img>/ir-acs-live-image-generic-arm64.wic1    2048  206847  204800   100M Microsoft basic data
+       <path-to-img>/ir-acs-live-image-generic-arm64.wic2  206848 1024239  817392 399.1M Linux filesystem
+       <path-to-img>/ir-acs-live-image-generic-arm64.wic3 1026048 1128447  102400    50M Microsoft basic data
 
-  ->   <offset_2nd_partition> = 1050624 * 512 (sector size) = 537919488
+  ->   <offset_3rd_partition> = 1026048 * 512 (sector size) = 525336576
 
 The FVP will reset multiple times during the test, and it might take up to 1 day to finish
 the test. At the end of test, the FVP host terminal will halt showing a shell prompt.
@@ -580,15 +579,18 @@ A positive test case capsule which boots the platform correctly until the Linux 
 incorrect capsule (corrupted or outdated) which fails to boot to the host software.
 
 Check the "Run SystemReady-IR ACS tests" section above to download and unpack the ACS image file
- - ``ir_acs_live_image.img.xz``
+ - ``ir-acs-live-image-generic-arm64.wic.xz``
 
-Download edk2 under <_workspace>:
+
+Download u-boot under <_workspace> and install tools:
 
 ::
 
-  git clone https://github.com/tianocore/edk2.git
-  cd edk2
-  git checkout f2188fe5d1553ad1896e27b2514d2f8d0308da8a
+  git clone https://github.com/u-boot/u-boot.git
+  cd u-boot
+  git checkout 83aa0ed1e93e1ffac24888d98d37a5b04ed3fb07
+  make tools-only_defconfig
+  make tools-only
 
 Download systemready-patch repo under <_workspace>:
 ::
@@ -613,13 +615,14 @@ generate a UEFI capsule.
 ::
 
    cd <_workspace>
-   edk2/BaseTools/BinWrappers/PosixLike/GenerateCapsule -e -o cs1k_cap_mps3_v6 --fw-version 6 \
-   --lsv 0 --guid    e2bb9c06-70e9-4b14-97a3-5a7913176e3f --verbose --update-image-index  0 \
-   --verbose build/tmp/deploy/images/corstone1000-mps3/corstone1000_image.nopt
 
-   edk2/BaseTools/BinWrappers/PosixLike/GenerateCapsule -e -o cs1k_cap_mps3_v5 --fw-version 5 \
-   --lsv 0 --guid    e2bb9c06-70e9-4b14-97a3-5a7913176e3f --verbose --update-image-index  0 \
-   --verbose build/tmp/deploy/images/corstone1000-mps3/corstone1000_image.nopt
+   ./u-boot/tools/mkeficapsule --monotonic-count 1 --private-key build/tmp/deploy/images/corstone1000-mps3/corstone1000_capsule_key.key \
+   --certificate build/tmp/deploy/images/corstone1000-mps3/corstone1000_capsule_cert.crt --index 1 --guid 989f3a4e-46e0-4cd0-9877-a25c70c01329 \
+   --fw-version 6 build/tmp/deploy/images/corstone1000-mps3/corstone1000_image.nopt cs1k_cap_mps3_v6
+
+   ./u-boot/tools/mkeficapsule --monotonic-count 1 --private-key build/tmp/deploy/images/corstone1000-mps3/corstone1000_capsule_key.key \
+   --certificate build/tmp/deploy/images/corstone1000-mps3/corstone1000_capsule_cert.crt --index 1 --guid 989f3a4e-46e0-4cd0-9877-a25c70c01329 \
+   --fw-version 5 build/tmp/deploy/images/corstone1000-mps3/corstone1000_image.nopt cs1k_cap_mps3_v5
 
 Generating FVP Capsules
 =======================
@@ -632,17 +635,16 @@ Generating FVP Capsules
 This will generate a file called "corstone1000_image.nopt" which will be used to
 generate a UEFI capsule.
 
-
 ::
 
    cd <_workspace>
-   edk2/BaseTools/BinWrappers/PosixLike/GenerateCapsule -e -o cs1k_cap_fvp_v6 \
-   --fw-version 6 --lsv 0 --guid    e2bb9c06-70e9-4b14-97a3-5a7913176e3f --verbose --update-image-index \
-   0 --verbose build/tmp/deploy/images/corstone1000-fvp/corstone1000_image.nopt
+   ./u-boot/tools/mkeficapsule --monotonic-count 1 --private-key build/tmp/deploy/images/corstone1000-fvp/corstone1000_capsule_key.key \
+   --certificate build/tmp/deploy/images/corstone1000-fvp/corstone1000_capsule_cert.crt --index 1 --guid 989f3a4e-46e0-4cd0-9877-a25c70c01329 \
+   --fw-version 6 build/tmp/deploy/images/corstone1000-fvp/corstone1000_image.nopt cs1k_cap_fvp_v6
 
-   edk2/BaseTools/BinWrappers/PosixLike/GenerateCapsule -e -o cs1k_cap_fvp_v5 --fw-version 5 \
-   --lsv 0 --guid    e2bb9c06-70e9-4b14-97a3-5a7913176e3f --verbose --update-image-index \
-   0 --verbose build/tmp/deploy/images/corstone1000-fvp/corstone1000_image.nopt
+   ./u-boot/tools/mkeficapsule --monotonic-count 1 --private-key build/tmp/deploy/images/corstone1000-fvp/corstone1000_capsule_key.key \
+   --certificate build/tmp/deploy/images/corstone1000-fvp/corstone1000_capsule_cert.crt --index 1 --guid 989f3a4e-46e0-4cd0-9877-a25c70c01329 \
+   --fw-version 5 build/tmp/deploy/images/corstone1000-fvp/corstone1000_image.nopt cs1k_cap_fvp_v5
 
 
 Common Notes for FVP and FPGA
@@ -681,7 +683,7 @@ First, mount the IR image:
 ::
 
    sudo mkdir /mnt/test
-   sudo mount -o rw,offset=1048576 <path-to-img>/ir_acs_live_image.img  /mnt/test
+   sudo mount -o rw,offset=1048576 <path-to-img>/ir-acs-live-image-generic-arm64.wic  /mnt/test
 
 Then, copy the capsules:
 
@@ -700,14 +702,15 @@ Then, unmount the IR image:
 **NOTE:**
 
 The size of first partition in the image file is calculated in the following way. The data is
-just an example and might vary with different ir_acs_live_image.img files.
+just an example and might vary with different ir-acs-live-image-generic-arm64.wic files.
 
 ::
 
-   fdisk -lu <path-to-img>/ir_acs_live_image.img
+   fdisk -lu <path-to-img>/ir-acs-live-image-generic-arm64.wic
    ->  Device                                                     Start     End Sectors  Size Type
-       <path-to-img>/ir_acs_live_image_modified.img1    2048 1050622 1048575  512M Microsoft basic data
-       <path-to-img>/ir_acs_live_image_modified.img2 1050624 1153022  102399   50M Microsoft basic data
+       <path-to-img>/ir-acs-live-image-generic-arm64.wic1    2048  206847  204800   100M Microsoft basic data
+       <path-to-img>/ir-acs-live-image-generic-arm64.wic2  206848 1024239  817392 399.1M Linux filesystem
+       <path-to-img>/ir-acs-live-image-generic-arm64.wic3 1026048 1128447  102400    50M Microsoft basic data
 
    ->  <offset_1st_partition> = 2048 * 512 (sector size) = 1048576
 
@@ -725,7 +728,12 @@ Run the FVP with the IR prebuilt image:
 
 ::
 
-   <_workspace>/meta-arm/scripts/runfvp --terminals=xterm <_workspace>/build/tmp/deploy/images/corstone1000-fvp/corstone1000-image-corstone1000-fvp.fvpconf -- -C "board.msd_mmc.p_mmc_file=${<path-to-img>/ir_acs_live_image.img}"
+   <_workspace>/meta-arm/scripts/runfvp --terminals=xterm <_workspace>/build/tmp/deploy/images/corstone1000-fvp/corstone1000-image-corstone1000-fvp.fvpconf -- -C board.msd_mmc.p_mmc_file=<path-to-img>/ir-acs-live-image-generic-arm64.wic
+
+**NOTE:**
+
+<path-to-img> must start from the root directory.
+make sure there are no spaces before or after of "=". board.msd_mmc.p_mmc_file=<path-to-img>/ir-acs-live-image-generic-arm64.wic.
 
 Running the FPGA with the IR prebuilt image
 ===========================================
@@ -796,7 +804,7 @@ Run the following commands in order to run the Corstone-1000 Linux kernel and be
 ::
 
    $ unzip $kernel_addr 0x90000000
-   $ loadm 0x90000000 $kernel_addr_r 0xf00000
+   $ loadm 0x90000000 $kernel_addr_r $filesize
    $ bootefi $kernel_addr_r $fdtcontroladdr
 
 
@@ -834,7 +842,7 @@ In the Linux command-line run the following:
    # cat *
     
    0x0
-   e2bb9c06-70e9-4b14-97a3-5a7913176e3f
+   989f3a4e-46e0-4cd0-9877-a25c70c01329
    0
    6
    0
@@ -843,7 +851,7 @@ In the Linux command-line run the following:
 
 .. line-block::
    capsule_flags:	0x0
-   fw_class:	e2bb9c06-70e9-4b14-97a3-5a7913176e3f
+   fw_class:	989f3a4e-46e0-4cd0-9877-a25c70c01329
    fw_type:	0
    fw_version:	6
    last_attempt_status:	0 
@@ -899,7 +907,7 @@ In the Linux command-line run the following:
    # cat *
     
    0x0
-   e2bb9c06-70e9-4b14-97a3-5a7913176e3f
+   989f3a4e-46e0-4cd0-9877-a25c70c01329
    0
    6
    1
@@ -908,7 +916,7 @@ In the Linux command-line run the following:
 
 .. line-block::
    capsule_flags:	0x0
-   fw_class:	e2bb9c06-70e9-4b14-97a3-5a7913176e3f
+   fw_class:	989f3a4e-46e0-4cd0-9877-a25c70c01329
    fw_type:	0
    fw_version:	6
    last_attempt_status:	1
