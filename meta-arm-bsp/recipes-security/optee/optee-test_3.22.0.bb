@@ -5,10 +5,6 @@ SRC_URI += " \
    "
 SRCREV = "a286b57f1721af215ace318d5807e63f40186df6"
 
-EXTRA_OEMAKE:append = " OPTEE_OPENSSL_EXPORT=${STAGING_INCDIR}"
-DEPENDS:append = " openssl"
-CFLAGS:append = " -Wno-error=deprecated-declarations"
-
 # Include ffa_spmc test group if the SPMC test is enabled.
 # Supported after op-tee v3.20
 EXTRA_OEMAKE:append = "${@bb.utils.contains('MACHINE_FEATURES', 'optee-spmc-test', \
