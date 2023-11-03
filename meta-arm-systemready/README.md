@@ -78,6 +78,28 @@ Currently, this layer only supports
 [Arm SystemReady IR ACS version v23.03_2.0.0][], which is verified on the
 [`fvp-base`][] machine.
 
+## Build and Run
+
+To build the firmware for Arm SystemReady on the supported machines (take the
+`fvp-base` machine as an example):
+
+    kas build kas/fvp-base.yml:kas/arm-systemready-firmware.yml
+
+
+To run the Arm SystemReady ACS tests on the supported machines (take running
+Arm SystemReady IR on the `fvp-base` machine as an example):
+
+    kas build kas/fvp-base.yml:kas/arm-systemready-ir-acs.yml
+
+To run the Linux distributions installation on the supported machines (take
+installing openSUSE on the `fvp-base` machine as an example):
+
+    kas build kas/fvp-base.yml:kas/arm-systemready-linux-distros-opensuse.yml
+
+    kas shell \
+        kas/fvp-base.yml:kas/arm-systemready-linux-distros-opensuse.yml \
+        -c "../scripts/runfvp --verbose --console"
+
 ## Guidelines for Reusing and Extending
 
 Currently, this layer only supports the Arm SystemReady IR band running on the
