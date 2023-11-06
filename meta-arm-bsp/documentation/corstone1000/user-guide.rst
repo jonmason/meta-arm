@@ -174,7 +174,7 @@ To build a Corstone-1000 image for MPS3 FPGA, run:
 
 ::
 
-    kas build meta-arm/kas/corstone1000-mps3.yml
+    kas build meta-arm/kas/corstone1000-mps3.yml:meta-arm/ci/debug.yml
 
 Alternatively, to build a Corstone-1000 image for FVP, you need to accept
 the EULA at https://developer.arm.com/downloads/-/arm-ecosystem-fvps/eula
@@ -188,7 +188,7 @@ then run:
 
 ::
 
-    kas build meta-arm/kas/corstone1000-fvp.yml
+    kas build meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml
 
 The initial clean build will be lengthy, given that all host utilities are to
 be built as well as the target images. This includes host executables (python,
@@ -414,7 +414,7 @@ boot. Run following commands to build such image.
   cd meta-arm
   git apply 0001-embedded-a-corstone1000-clean-secure-flash.patch
   cd ..
-  kas build meta-arm/kas/corstone1000-mps3.yml
+  kas build meta-arm/kas/corstone1000-mps3.yml:meta-arm/ci/debug.yml
 
 Replace the bl1.bin and cs1000.bin files on the SD card with following files:
   - The ROM firmware: <_workspace>/build/tmp/deploy/images/corstone1000-mps3/bl1.bin
@@ -952,7 +952,7 @@ documentation.
   cd meta-arm
   git am 0001-arm-bsp-u-boot-corstone1000-Skip-the-shim-by-booting.patch
   cd ..
-  kas shell meta-arm/kas/corstone1000-mps3.yml -c="bitbake u-boot trusted-firmware-a corstone1000-image -c cleansstate; bitbake corstone1000-image"
+  kas shell meta-arm/kas/corstone1000-mps3.yml:meta-arm/ci/debug.yml -c="bitbake u-boot trusted-firmware-a corstone1000-image -c cleansstate; bitbake corstone1000-image"
 
 Please update the cs1000.bin on the SD card with the newly generated wic file.
 
