@@ -1,4 +1,3 @@
-import asyncio
 import os
 import json
 import pathlib
@@ -17,7 +16,7 @@ class RunFVPTests(OESelftestTestCase):
     def setUpLocal(self):
         self.assertTrue(runfvp.exists())
 
-    def run_fvp(self, *args, should_succeed=True):
+    def run_fvp(self, *args, env=None, should_succeed=True):
         """
         Call runfvp passing any arguments. If check is True verify return stdout
         on exit code 0 or fail the test, otherwise return the CompletedProcess
@@ -26,7 +25,7 @@ class RunFVPTests(OESelftestTestCase):
         cli = [runfvp,] + list(args)
         print(f"Calling {cli}")
         # Set cwd to testdir so that any mock FVPs are found
-        ret = subprocess.run(cli, cwd=testdir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+        ret = subprocess.run(cli, cwd=testdir, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
         if should_succeed:
             self.assertEqual(ret.returncode, 0, f"runfvp exit {ret.returncode}, output: {ret.stdout}")
             return ret.stdout
@@ -52,6 +51,10 @@ class RunFVPTests(OESelftestTestCase):
     def test_fvp_options(self):
         # test-parameter sets one argument, add another manually
         self.run_fvp(testdir / "test-parameter.json", "--", "--parameter", "board.dog=woof")
+
+    def test_fvp_environment(self):
+        output = self.run_fvp(testdir / "test-environment.json", env={"DISPLAY": "test_fvp_environment:42"})
+        self.assertEqual(output.strip(), "Found expected DISPLAY")
 
 @OETestTag("meta-arm")
 class ConfFileTests(OESelftestTestCase):
