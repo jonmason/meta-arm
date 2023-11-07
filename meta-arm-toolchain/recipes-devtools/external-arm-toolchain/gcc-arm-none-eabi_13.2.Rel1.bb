@@ -8,12 +8,12 @@ COMPATIBLE_HOST = "(x86_64|aarch64).*-linux"
 SUMMARY = "Arm GNU Toolchain - AArch32 bare-metal target (arm-none-eabi)"
 LICENSE = "GPL-3.0-with-GCC-exception & GPL-3.0-only"
 
-LIC_FILES_CHKSUM:aarch64 = "file://share/doc/gcc/Copying.html;md5=0aef214b835259b64f026f4ad00c703e"
-LIC_FILES_CHKSUM:x86-64 = "file://share/doc/gcc/Copying.html;md5=7ba3bc8ef145b48e2756a844db2029a3"
+LIC_FILES_CHKSUM:aarch64 = "file://share/doc/gcc/Copying.html;md5=402090210d41f07263e91f760d0d1ea3"
+LIC_FILES_CHKSUM:x86-64 = "file://share/doc/gcc/Copying.html;md5=2a62a4d37ddad55da732679acd9edf03"
 
 SRC_URI = "https://developer.arm.com/-/media/Files/downloads/gnu/${PV}/binrel/arm-gnu-toolchain-${PV}-${HOST_ARCH}-${BINNAME}.tar.xz;name=gcc-${HOST_ARCH}"
-SRC_URI[gcc-aarch64.sha256sum] = "14c0487d5753f6071d24e568881f7c7e67f80dd83165dec5164b3731394af431"
-SRC_URI[gcc-x86_64.sha256sum] = "12a2815644318ebcceaf84beabb665d0924b6e79e21048452c5331a56332b309"
+SRC_URI[gcc-aarch64.sha256sum] = "8fd8b4a0a8d44ab2e195ccfbeef42223dfb3ede29d80f14dcf2183c34b8d199a"
+SRC_URI[gcc-x86_64.sha256sum] = "6cd1bbc1d9ae57312bcd169ae283153a9572bd6a8e4eeae2fedfbc33b115fdbb"
 
 S = "${WORKDIR}/arm-gnu-toolchain-${PV}-${HOST_ARCH}-${BINNAME}"
 
