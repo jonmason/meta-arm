@@ -48,6 +48,7 @@ SRC_URI:append = " \
     file://0038-corstone1000-introduce-EFI-authenticated-capsule-upd.patch \
     file://0039-enables-ondisk-capsule-update-feature.patch		  \
     file://0040-fix-runtime-capsule-update-flags-checks.patch		  \
+    file://0041-scatter-gather-flag-workaround.patch			  \
     "
 
 do_configure:append(){
