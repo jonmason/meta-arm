@@ -30,7 +30,6 @@ LINUX_KERNEL_TYPE:corstone1000 = "standard"
 KERNEL_EXTRA_ARGS:corstone1000 += "CONFIG_INITRAMFS_COMPRESSION_NONE=y"
 SRC_URI:append:corstone1000 = " \
            file://defconfig  \
-           file://0002-Adds-workaround-for-cs1k-specific-bug.patch \
         "
 
 SRC_URI:append:corstone1000 = " ${@bb.utils.contains('MACHINE_FEATURES', \
