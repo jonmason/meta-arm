@@ -927,15 +927,15 @@ Linux distros tests
 -------------------
 
 *************************************************************
-Debian install and boot preparation (applicable to FPGA only)
+Debian install and boot preparation 
 *************************************************************
 
 There is a known issue in the `Shim 15.7 <https://salsa.debian.org/efi-team/shim/-/tree/upstream/15.7?ref_type=tags>`__
 provided with the Debian installer image (see below). This bug causes a fatal
-error when attempting to boot media installer for Debian, and it resets the MPS3 before installation starts.
+error when attempting to boot media installer for Debian, and it resets the platform before installation starts.
 A patch to be applied to the Corstone-1000 stack (only applicable when
 installing Debian) is provided to
-`Skip the Shim <https://gitlab.arm.com/arm-reference-solutions/systemready-patch/-/blob/CORSTONE1000-2023.06/embedded-a/corstone1000/shim/0001-arm-bsp-u-boot-corstone1000-Skip-the-shim-by-booting.patch>`__.
+`Skip the Shim <https://gitlab.arm.com/arm-reference-solutions/systemready-patch/-/blob/CORSTONE1000-2023.11/embedded-a/corstone1000/shim/0001-arm-bsp-u-boot-corstone1000-Skip-the-shim-by-booting.patch>`__.
 This patch makes U-Boot automatically bypass the Shim and run grub and allows
 the user to proceed with a normal installation. If at the moment of reading this
 document the problem is solved in the Shim, the user is encouraged to try the
@@ -947,31 +947,36 @@ documentation.
 ::
 
   cd <_workspace>
-  git clone https://git.gitlab.arm.com/arm-reference-solutions/systemready-patch.git -b CORSTONE1000-2023.06
+  git clone https://git.gitlab.arm.com/arm-reference-solutions/systemready-patch.git -b CORSTONE1000-2023.11
   cp -f systemready-patch/embedded-a/corstone1000/shim/0001-arm-bsp-u-boot-corstone1000-Skip-the-shim-by-booting.patch meta-arm
   cd meta-arm
   git am 0001-arm-bsp-u-boot-corstone1000-Skip-the-shim-by-booting.patch
   cd ..
   kas shell meta-arm/kas/corstone1000-mps3.yml:meta-arm/ci/debug.yml -c="bitbake u-boot trusted-firmware-a corstone1000-image -c cleansstate; bitbake corstone1000-image"
 
-Please update the cs1000.bin on the SD card with the newly generated wic file.
+On FPGA, please update the cs1000.bin on the SD card with the newly generated wic file.
 
 *************************************************
-Debian/openSUSE install (applicable to FPGA only)
+Preparing the Installation Media
 *************************************************
-
-To test Linux distro install and boot, the user should prepare two empty USB
-sticks (minimum size should be 4GB and formatted with FAT32).
 
 Download one of following Linux distro images:
- - `Debian 12.0.0 installer image <https://cdimage.debian.org/debian-cd/current/arm64/iso-dvd/debian-12.0.0-arm64-DVD-1.iso>`__
- - `OpenSUSE Tumbleweed installer image <http://download.opensuse.org/ports/aarch64/tumbleweed/iso/>`__
-
+ - `Debian installer image <https://cdimage.debian.org/debian-cd/current/arm64/iso-dvd/>`__ (Tested on: debian-12.2.0-arm64-DVD-1.iso)
+ - `OpenSUSE Tumbleweed installer image <http://download.opensuse.org/ports/aarch64/tumbleweed/iso/>`__ (Tested on: openSUSE-Tumbleweed-DVD-aarch64-Snapshot20231105-Media.iso)
+  
 **NOTE:** For OpenSUSE Tumbleweed, the user should look for a DVD Snapshot like
 openSUSE-Tumbleweed-DVD-aarch64-Snapshot<date>-Media.iso
 
-Once the iso file is downloaded, the iso file needs to be flashed to your USB
-drive. This can be done with your development machine.
+Once the iso file is downloaded, it needs to be flashed to your drive as explained in the next paragraphs.
+
+FPGA
+==================================================
+
+To test Linux distro install and boot on FPGA, the user should prepare two empty USB
+sticks (minimum size should be 4GB and formatted with FAT32).
+
+The downloaded iso file needs to be flashed to your USB drive. 
+This can be done with your development machine.
 
 In the example given below, we assume the USB device is ``/dev/sdb`` (the user
 should use the `lsblk` command to confirm).
@@ -983,6 +988,33 @@ following command in the development machine:
 ::
 
   sudo dd if=<path-to-iso_file> of=/dev/sdb iflag=direct oflag=direct status=progress bs=1M; sync;
+
+
+FVP
+==================================================
+
+To test Linux distro install and boot on FVP, the user should prepare two mmc images.
+One containing the OS-DVD image and another with a minimum size of 8GB formatted with gpt.
+
+The downloaded iso file needs to be flashed to one of your mmc images. 
+
+
+::
+
+  #Generating mmc1 
+  sudo dd if=<path-to-iso_file> of=<_workspace>/mmc1.iso iflag=direct oflag=direct status=progress bs=1M; sync;
+  
+  #Generating mmc2
+  dd if=/dev/zero of=<_workspace>/mmc2_file.img bs=1 count=0 seek=8G; sync;
+  parted -s mmc2_file.img mklabel gpt
+
+
+*************************************************
+Debian/openSUSE install
+*************************************************
+
+FPGA
+==================================================
 
 Unplug the first USB stick from the development machine and connect it to the
 MSP3 board. At this moment, only the first USB stick should be connected. Open
@@ -1001,8 +1033,18 @@ the process.
 **NOTE:** Due to the performance limitation of Corstone-1000 MPS3 FPGA, the
 distro installation process can take up to 24 hours to complete.
 
+FVP
+==================================================
+
+::
+
+  <_workspace>/meta-arm/scripts/runfvp --terminals=xterm <_workspace>/build/tmp/deploy/images/corstone1000-fvp/corstone1000-image-corstone1000-fvp.fvpconf -- -C board.msd_mmc.p_mmc_file="<_workspace>/mmc1.iso" -C board.msd_mmc_2.p_mmc_file="<_workspace>/mmc2_file.img"
+
+The installer should now start.
+The os will be installed on the second mmc 'mmc2_file.img'. 
+
 *******************************************************
-Debian install clarifications (applicable to FPGA only)
+Debian install clarifications
 *******************************************************
 
 As the installation process for Debian is different than the one for openSUSE,
@@ -1040,21 +1082,44 @@ popups:
 8. At this stage, the installation should proceed as normal.
 
 *****************************************************************
-Debian/openSUSE boot after installation (applicable to FPGA only)
+Debian/openSUSE boot after installation
 *****************************************************************
 
+FPGA
+===============
 Once the installation is complete, unplug the first USB stick and reboot the
 board.
 The board will then enter recovery mode, from which the user can access a shell
-after entering the password for the root user. Proceed to edit the following
-files accordingly:
+after entering the password for the root user. 
+
+FVP
+==============
+Once the installation is complete, you will need to exit the shell instance 
+and run this command to boot into the installed OS:
+
+:: 
+
+  <_workspace>/meta-arm/scripts/runfvp --terminals=xterm <_workspace>/build/tmp/deploy/images/corstone1000-fvp/corstone1000-image-corstone1000-fvp.fvpconf -- -C board.msd_mmc.p_mmc_file="<_workspace>/mmc2_file.img"
+
+
+Once the FVP begins booting, you will need to quickly change the boot option in GRUB,
+to boot into recovery mode. 
+
+**NOTE:** This option will disappear quickly, so it's best to preempt it.
+
+Select 'Advanced Options for '<OS>' and then '<OS> (recovery mode)'. 
+
+Common
+==============
+
+Proceed to edit the following files accordingly:
 
 ::
 
   vi /etc/systemd/system.conf
   DefaultDeviceTimeoutSec=infinity
 
-The file to be editted next is different depending on the installed distro:
+The file to be edited next is different depending on the installed distro:
 
 ::
 
@@ -1068,8 +1133,9 @@ To make sure the changes are applied, please run:
 
   systemctl daemon-reload
 
-After applying the previous commands, please reboot the board. The user should
-see a login prompt after booting, for example, for debian:
+After applying the previous commands, please reboot the board or restart the runfvp command.
+
+The user should see a login prompt after booting, for example, for debian:
 
 ::
 
@@ -1077,38 +1143,6 @@ see a login prompt after booting, for example, for debian:
 
 Login with the username root and its corresponding password (already set at
 installation time).
-
-************************************************************
-OpenSUSE Raw image install and boot (applicable to FVP only)
-************************************************************
-
-Steps to download OpenSUSE Tumbleweed raw image:
-  - Under `OpenSUSE Tumbleweed appliances <http://download.opensuse.org/ports/aarch64/tumbleweed/appliances/>`__
-  - The user should look for a Tumbleweed-ARM-JeOS-efi.aarch64-* Snapshot, for example,
-    ``openSUSE-Tumbleweed-ARM-JeOS-efi.aarch64-<date>-Snapshot<date>.raw.xz``
-
-Once the .raw.xz file is downloaded, the raw image file needs to be extracted:
-
-::
-
-   unxz <file-name.raw.xz>
-
-
-The above command will generate a file ending with extension .raw image. Now, use the following command
-to run FVP with raw image installation process.
-
-::
-
-   <_workspace>/meta-arm/scripts/runfvp --terminals=xterm <_workspace>/build/tmp/deploy/images/corstone1000-fvp/corstone1000-image-corstone1000-fvp.fvpconf -- -C board.msd_mmc.p_mmc_file="${openSUSE raw image file path}"
-
-After successfully installing and booting the Linux distro, the user should see
-a openSUSE login prompt.
-
-::
-
-   localhost login:
-
-Login with the username 'root' and password 'linux'.
 
 PSA API tests
 -------------
