@@ -49,6 +49,7 @@ SRC_URI:append = " \
     file://0039-enables-ondisk-capsule-update-feature.patch		  \
     file://0040-fix-runtime-capsule-update-flags-checks.patch		  \
     file://0041-scatter-gather-flag-workaround.patch			  \
+    file://0042-corstone1000-enable-virtio-net-support.patch		  \
     "
 
 do_configure:append(){
