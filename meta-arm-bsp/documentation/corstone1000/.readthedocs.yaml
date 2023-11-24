@@ -4,9 +4,9 @@ build:
   tools:
     python: "3.9"
 sphinx:
-  configuration: conf.py
+  configuration: meta-arm-bsp/documentation/corstone1000/conf.py
 formats:
   - pdf
 python:
   install:
-    - requirements: ../requirements.txt
+    - requirements: meta-arm-bsp/documentation/requirements.txt
