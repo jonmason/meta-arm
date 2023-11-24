@@ -386,6 +386,107 @@ steps described in following section "Clean Secure Flash Before Testing" to
 erase the SecureEnclave flash cleanly and prepare a clean board environment for
 the testing.
 
+Prepare EFI System Partition
+===========================================================
+Corstone-1000 FVP and MPS3 do not have enough on-chip nonvolatile memory to host
+an EFI System Partition (ESP). Thus, Corstone-1000 uses mass storage device for
+ESP. The instructions below should be followed for both FVP and FPGA before
+running the ACS tests.
+
+**Common to FVP and FPGA:**
+
+#. Create an empty 100 MB partition:
+   ::
+
+      dd if=/dev/zero of=corstone1000-efi-partition.img iflag=fullblock bs=512 count=204800 && sync
+
+#. Use OpenSuse Raw image to copy the contents of EFI partition.
+
+   To download OpenSUSE Tumbleweed raw image:
+     - Under `OpenSUSE Tumbleweed appliances <http://download.opensuse.org/ports/aarch64/tumbleweed/appliances/>`__
+     - The user should look for a Tumbleweed-ARM-JeOS-efi.aarch64-* Snapshot, for example,
+       ``openSUSE-Tumbleweed-ARM-JeOS-efi.aarch64-<date>-Snapshot<date>.raw.xz``
+
+   Once the .raw.xz file is downloaded, the raw image file needs to be extracted:
+
+   ::
+
+      unxz <file-name.raw.xz>
+
+
+   The above command will generate a file ending with extension .raw image. Use the
+   following command to get address of the first partition
+
+   ::
+
+     fdisk -lu <path-to-img>/openSUSE-Tumbleweed-ARM-JeOS-efi.aarch64-<date>-Snapshot<date>.raw
+     ->  Device                                                                               Start     End  Sectors  Size Type
+          <path-to-img>/openSUSE-Tumbleweed-ARM-JeOS-efi.aarch64-<date>-Snapshot<date>.raw1    8192   40959    32768   16M EFI System
+          <path-to-img>/openSUSE-Tumbleweed-ARM-JeOS-efi.aarch64-<date>-Snapshot<date>.raw2   40960 1064959  1024000  500M Linux swap
+          <path-to-img>/openSUSE-Tumbleweed-ARM-JeOS-efi.aarch64-<date>-Snapshot<date>.raw3 1064960 5369822  4304863  2.1G Linux filesystem
+
+     ->   <blockaddress_1st_partition> = 8192
+     ->   <sectorsize_1st_partition> = 32768
+
+#. Copy the ESP from opensuse image to empty image:
+
+   ::
+
+     dd conv=notrunc if=openSUSE-Tumbleweed-ARM-JeOS-efi.aarch64-<date>-Snapshot<date>.raw skip=<blockaddress_1st_partition> of=corstone1000-efi-partition.img seek=<blockaddress_1st_partition> iflag=fullblock seek=<blockaddress_1st_partition> bs=512 count=<sectorsize_1s_partition> && sync
+
+
+#. Use the provided disk-layout below to label the ESP correctly.
+
+   efi_disk.layout
+   ::
+
+     label: gpt
+     label-id: AC53D121-B818-4515-9031-BE02CCEB8701
+     device: corstone1000-efi-partition.img
+     unit: sectors
+     first-lba: 34
+     last-lba: 204766
+
+     corstone1000-efi-partition.img : start=8192, size=32768, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B, uuid=792D821F-98AE-46E3-BABD-948003A650F8, name="p.UEFI"
+
+   And use the following command the label the newly created ESP.
+
+   ::
+
+      sfdisk corstone1000-efi-partition.img < efi_disk.layout
+
+   To test the image, you can now mount the disk image
+
+   ::
+
+      fdisk -lu corstone1000-efi-partition.img
+      ->  Device                          Start   End Sectors Size Type
+          corstone1000-efi-partition.img1  8192 40959   32768  16M EFI System
+
+          <offset_1st_partition> = 8192 * 512 (sector size) = 4194304
+
+      sudo mount -o loop,offset=4194304 corstone1000-efi-partition.img /mount_point
+
+**Using ESP in FPGA:**
+
+Once the ESP is created, it needs to be flashed to a second USB drive different than ACS image.
+This can be done with the development machine.
+
+::
+
+   sudo dd if=corstone1000-efi-partition.img of=/dev/sdb iflag=direct oflag=direct status=progress bs=512; sync;
+
+Now you can plug this USB stick to the board together with ACS test USB stick.
+
+**Using ESP in FVP:**
+
+The ESP disk image can directly be used in Corstone-1000 FVP by simply passing it as
+the 2nd MMC card image.
+
+::
+
+   <_workspace>/meta-arm/scripts/runfvp <_workspace>/build/tmp/deploy/images/corstone1000-fvp/corstone1000-image-corstone1000-fvp.fvpconf -- -C board.msd_mmc.p_mmc_file="${<path-to-img>/ir_acs_live_image.img}" -C board.msd_mmc_2.p_mmc_file="${<path-to-img>/corstone1000-efi-partition.img}"
+
 Clean Secure Flash Before Testing (applicable to FPGA only)
 ===========================================================
 
@@ -498,7 +599,7 @@ USB drive. Run the following commands to prepare the ACS image in USB stick:
   sudo dd if=ir-acs-live-image-generic-arm64.wic of=/dev/sdb iflag=direct oflag=direct bs=1M status=progress; sync
 
 Once the USB stick with ACS image is prepared, the user should make sure that
-ensure that only the USB stick with the ACS image is connected to the board,
+ensure that both USB sticks (ESP and ACS image) are connected to the board,
 and then boot the board.
 
 The FPGA will reset multiple times during the test, and it might take approx. 24-36 hours to finish the test.
@@ -510,14 +611,14 @@ FVP instructions for ACS image and run
 Download ACS image from:
  - ``https://gitlab.arm.com/systemready/acs/arm-systemready/-/tree/main/IR/prebuilt_images/v23.03_2.0.0``
 
-Use the below command to run the FVP with ACS image support in the
-SD card.
+Use the below command to run the FVP with EFI and ACS image support in the
+SD cards.
 
 ::
 
   unxz ${<path-to-img>/ir-acs-live-image-generic-arm64.wic.xz}
 
-  <_workspace>/meta-arm/scripts/runfvp  --terminals=xterm <_workspace>/build/tmp/deploy/images/corstone1000-fvp/corstone1000-image-corstone1000-fvp.fvpconf -- -C board.msd_mmc.p_mmc_file=<path-to-img>/ir-acs-live-image-generic-arm64.wic
+  <_workspace>/meta-arm/scripts/runfvp  --terminals=xterm <_workspace>/build/tmp/deploy/images/corstone1000-fvp/corstone1000-image-corstone1000-fvp.fvpconf -- -C board.msd_mmc.p_mmc_file=<path-to-img>/ir-acs-live-image-generic-arm64.wic -C board.msd_mmc_2.p_mmc_file="${<path-to-img>/corstone1000-efi-partition.img}"
 
 The test results can be fetched using following commands:
 
