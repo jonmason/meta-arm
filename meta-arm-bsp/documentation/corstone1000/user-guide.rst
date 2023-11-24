@@ -388,7 +388,7 @@ the testing.
 
 Prepare EFI System Partition
 ===========================================================
-Corstone-1000 FVP and MPS3 do not have enough on-chip nonvolatile memory to host
+Corstone-1000 FVP and FPGA do not have enough on-chip nonvolatile memory to host
 an EFI System Partition (ESP). Thus, Corstone-1000 uses mass storage device for
 ESP. The instructions below should be followed for both FVP and FPGA before
 running the ACS tests.
@@ -948,8 +948,8 @@ In the Linux command-line run the following:
    lowest_supported_fw_ver:	0
 
 
-Negative scenario
-=================
+Negative scenario (Applicable to FPGA only)
+===========================================
 
 In the negative case scenario (rollback the capsule version), the user should 
 see appropriate logs in the secure enclave terminal. 
@@ -1012,6 +1012,12 @@ In the Linux command-line run the following:
    last_attempt_version:	5
    lowest_supported_fw_ver:	0
 
+**Note**: This test is currently not working properly in Corstone-1000 FVP.
+However, it is not part of the System-Ready IR tests, and it won't affect the
+SR-IR certification. All the compulsory `capsule update tests for SR-IR
+<https://developer.arm.com/documentation/DUI1101/2-1/Test-SystemReady-IR/Test-UpdateCapsule>`__
+works on both Corstone-1000 FVP and FPGA.
+
 Linux distros tests
 -------------------
 
@@ -1041,7 +1047,16 @@ documentation.
   cd meta-arm
   git am 0001-arm-bsp-u-boot-corstone1000-Skip-the-shim-by-booting.patch
   cd ..
+
+**On FPGA**
+::
+
   kas shell meta-arm/kas/corstone1000-mps3.yml:meta-arm/ci/debug.yml -c="bitbake u-boot trusted-firmware-a corstone1000-image -c cleansstate; bitbake corstone1000-image"
+
+**On FVP**
+::
+
+  kas shell meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml -c="bitbake u-boot trusted-firmware-a corstone1000-image -c cleansstate; bitbake corstone1000-image"
 
 On FPGA, please update the cs1000.bin on the SD card with the newly generated wic file.
 
@@ -1051,12 +1066,11 @@ Preparing the Installation Media
 
 Download one of following Linux distro images:
  - `Debian installer image <https://cdimage.debian.org/debian-cd/current/arm64/iso-dvd/>`__ (Tested on: debian-12.2.0-arm64-DVD-1.iso)
- - `OpenSUSE Tumbleweed installer image <http://download.opensuse.org/ports/aarch64/tumbleweed/iso/>`__ (Tested on: openSUSE-Tumbleweed-DVD-aarch64-Snapshot20231105-Media.iso)
+ - `OpenSUSE Tumbleweed installer image <http://download.opensuse.org/ports/aarch64/tumbleweed/iso/>`__ (Tested on: openSUSE-Tumbleweed-DVD-aarch64-Snapshot20231120-Media.iso)
   
 **NOTE:** For OpenSUSE Tumbleweed, the user should look for a DVD Snapshot like
 openSUSE-Tumbleweed-DVD-aarch64-Snapshot<date>-Media.iso
 
-Once the iso file is downloaded, it needs to be flashed to your drive as explained in the next paragraphs.
 
 FPGA
 ==================================================
@@ -1082,17 +1096,10 @@ following command in the development machine:
 FVP
 ==================================================
 
-To test Linux distro install and boot on FVP, the user should prepare two mmc images.
-One containing the OS-DVD image and another with a minimum size of 8GB formatted with gpt.
-
-The downloaded iso file needs to be flashed to one of your mmc images. 
-
+To test Linux distro install and boot on FVP, the user should prepare an mmc image.
+With a minimum size of 8GB formatted with gpt.
 
 ::
-
-  #Generating mmc1 
-  sudo dd if=<path-to-iso_file> of=<_workspace>/mmc1.iso iflag=direct oflag=direct status=progress bs=1M; sync;
-  
   #Generating mmc2
   dd if=/dev/zero of=<_workspace>/mmc2_file.img bs=1 count=0 seek=8G; sync;
   parted -s mmc2_file.img mklabel gpt
@@ -1127,7 +1134,7 @@ FVP
 
 ::
 
-  <_workspace>/meta-arm/scripts/runfvp --terminals=xterm <_workspace>/build/tmp/deploy/images/corstone1000-fvp/corstone1000-image-corstone1000-fvp.fvpconf -- -C board.msd_mmc.p_mmc_file="<_workspace>/mmc1.iso" -C board.msd_mmc_2.p_mmc_file="<_workspace>/mmc2_file.img"
+  <_workspace>/meta-arm/scripts/runfvp --terminals=xterm <_workspace>/build/tmp/deploy/images/corstone1000-fvp/corstone1000-image-corstone1000-fvp.fvpconf -- -C board.msd_mmc.p_mmc_file="<path-to-iso_file>" -C board.msd_mmc_2.p_mmc_file="<_workspace>/mmc2_file.img"
 
 The installer should now start.
 The os will be installed on the second mmc 'mmc2_file.img'. 
@@ -1205,7 +1212,9 @@ Proceed to edit the following files accordingly:
 
 ::
 
-  vi /etc/systemd/system.conf
+  vi /etc/systemd/system.conf #Only applicable to Debian
+  DefaultDeviceTimeoutSec=infinity
+  vi /usr/lib/systemd/system.conf # Only applicable to openSUSE
   DefaultDeviceTimeoutSec=infinity
 
 The file to be edited next is different depending on the installed distro:
