@@ -68,33 +68,33 @@ Trusted Firmware-A
 ==================
 Based on `Trusted Firmware-A <https://git.trustedfirmware.org/TF-A/trusted-firmware-a.git>`__
 
-+----------+-----------------------------------------------------------------------------------------------------+
-| bbappend | <_workspace>/meta-arm/meta-arm-bsp/recipes-bsp/trusted-firmware-a/trusted-firmware-a_2.8.%.bbappend |
-+----------+-----------------------------------------------------------------------------------------------------+
-| Recipe   | <_workspace>/meta-arm/meta-arm/recipes-bsp/trusted-firmware-a/trusted-firmware-a_2.8.0.bb           |
-+----------+-----------------------------------------------------------------------------------------------------+
++----------+-------------------------------------------------------------------------------------------------+
+| bbappend | <_workspace>/meta-arm/meta-arm-bsp/recipes-bsp/trusted-firmware-a/trusted-firmware-a_%.bbappend |
++----------+-------------------------------------------------------------------------------------------------+
+| Recipe   | <_workspace>/meta-arm/meta-arm/recipes-bsp/trusted-firmware-a/trusted-firmware-a_2.9.0.bb       |
++----------+-------------------------------------------------------------------------------------------------+
 
 OP-TEE
 ======
 Based on `OP-TEE <https://git.trustedfirmware.org/OP-TEE/optee_os.git>`__
 
-+----------+------------------------------------------------------------------------------------+
-| bbappend | <_workspace>/meta-arm/meta-arm-bsp/recipes-security/optee/optee-os_3.20.0.bbappend |
-+----------+------------------------------------------------------------------------------------+
-| Recipe   | <_workspace>/meta-arm/meta-arm/recipes-security/optee/optee-os_3.20.0.bb           |
-+----------+------------------------------------------------------------------------------------+
++----------+----------------------------------------------------------------------------------------+
+| bbappend | <_workspace>/meta-arm/meta-arm-bsp/recipes-security/optee/optee-os_3.22.0.bbappend     |
++----------+----------------------------------------------------------------------------------------+
+| Recipe   | <_workspace>/meta-arm/meta-arm-bsp/recipes-security/optee/optee-os_3.22.0.bb           |
++----------+----------------------------------------------------------------------------------------+
 
 U-Boot
 ======
 Based on `U-Boot repo`_
 
-+----------+-------------------------------------------------------------------------+
-| bbappend | <_workspace>/meta-arm/meta-arm/recipes-bsp/u-boot/u-boot_%.bbappend     |
-+----------+-------------------------------------------------------------------------+
-| bbappend | <_workspace>/meta-arm/meta-arm-bsp/recipes-bsp/u-boot/u-boot_%.bbappend |
-+----------+-------------------------------------------------------------------------+
-| Recipe   | <_workspace>/poky/meta/recipes-bsp/u-boot/u-boot_2023.01.bb             |
-+----------+-------------------------------------------------------------------------+
++----------+----------------------------------------------------------------------------+
+| bbappend | <_workspace>/meta-arm/meta-arm/recipes-bsp/u-boot/u-boot_%.bbappend        |
++----------+----------------------------------------------------------------------------+
+| bbappend | <_workspace>/meta-arm/meta-arm-bsp/recipes-bsp/u-boot/u-boot_%.bbappend    |
++----------+----------------------------------------------------------------------------+
+| Recipe   | <_workspace>/meta-arm/meta-arm-bsp/recipes-bsp/u-boot/u-boot_2023.07.02.bb |
++----------+----------------------------------------------------------------------------+
 
 Linux
 =====
@@ -107,20 +107,10 @@ recipe responsible for building a tiny version of Linux is listed below.
 +-----------+----------------------------------------------------------------------------------------------+
 | bbappend  | <_workspace>/meta-arm/meta-arm-bsp/recipes-kernel/linux/linux-yocto_%.bbappend               |
 +-----------+----------------------------------------------------------------------------------------------+
-| Recipe    | <_workspace>/poky/meta/recipes-kernel/linux/linux-yocto_6.1.bb                               |
+| Recipe    | <_workspace>/poky/meta/recipes-kernel/linux/linux-yocto_6.5.bb                               |
 +-----------+----------------------------------------------------------------------------------------------+
 | defconfig | <_workspace>/meta-arm/meta-arm-bsp/recipes-kernel/linux/files/corstone1000/defconfig         |
 +-----------+----------------------------------------------------------------------------------------------+
-
-External System Tests
-=====================
-Based on `Corstone-1000/applications <https://git.gitlab.arm.com/arm-reference-solutions/corstone1000/applications>`__
-
-+------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Recipe     | <_workspace>/meta-arm/meta-arm-bsp/recipes-test/corstone1000-external-sys-tests/corstone1000-external-sys-tests_1.0.bb                                                                              |
-+------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-
-The recipe provides the systems-comms-tests command run in Linux and used for testing the External System.
 
 **************************************************
 Software for Boot Processor (a.k.a Secure Enclave)
@@ -128,9 +118,9 @@ Software for Boot Processor (a.k.a Secure Enclave)
 Based on `Trusted Firmware-M <https://git.trustedfirmware.org/TF-M/trusted-firmware-m.git>`__
 
 +----------+-----------------------------------------------------------------------------------------------------+
-| bbappend | <_workspace>/meta-arm/meta-arm-bsp/recipes-bsp/trusted-firmware-m/trusted-firmware-m_1.7.%.bbappend |
+| bbappend | <_workspace>/meta-arm/meta-arm-bsp/recipes-bsp/trusted-firmware-m/trusted-firmware-m_%.bbappend     |
 +----------+-----------------------------------------------------------------------------------------------------+
-| Recipe   | <_workspace>/meta-arm/meta-arm/recipes-bsp/trusted-firmware-m/trusted-firmware-m_1.7.0.bb           |
+| Recipe   | <_workspace>/meta-arm/meta-arm/recipes-bsp/trusted-firmware-m/trusted-firmware-m_1.8.1.bb           |
 +----------+-----------------------------------------------------------------------------------------------------+
 
 ********************************
@@ -156,7 +146,7 @@ to as ``<_workspace>`` in these instructions. To create the folder, run:
     cd <_workspace>
 
 Corstone-1000 software is based on the Yocto Project which uses kas and bitbake
-commands to build the stack. To install kas tool, run:
+commands to build the stack. kas version 4 is required. To install kas, run:
 
 ::
 
@@ -168,7 +158,7 @@ In the top directory of the workspace ``<_workspace>``, run:
 
 ::
 
-    git clone https://git.yoctoproject.org/git/meta-arm -b CORSTONE1000-2023.06
+    git clone https://git.yoctoproject.org/git/meta-arm -b CORSTONE1000-2023.11
 
 To build a Corstone-1000 image for MPS3 FPGA, run:
 
@@ -343,7 +333,7 @@ A Yocto recipe is provided and allows to download the latest supported FVP versi
 
 The recipe is located at <_workspace>/meta-arm/meta-arm/recipes-devtools/fvp/fvp-corstone1000.bb
 
-The latest supported Fixed Virtual Platform (FVP) version is 11.19_21 and is automatically downloaded and installed when using the runfvp command as detailed below. The FVP version can be checked by running the following command:
+The latest supported Fixed Virtual Platform (FVP) version is 11_23.25 and is automatically downloaded and installed when using the runfvp command as detailed below. The FVP version can be checked by running the following command:
 
 ::
 
@@ -373,8 +363,6 @@ The host will boot trusted-firmware-a, OP-TEE, U-Boot and then Linux, and presen
     corstone1000-fvp login:
 
 Login using the username root.
-
-The External System can be released out of reset on demand using the systems-comms-tests command.
 
 SystemReady-IR tests
 --------------------
@@ -408,8 +396,8 @@ boot. Run following commands to build such image.
 ::
 
   cd <_workspace>
-  git clone https://git.yoctoproject.org/git/meta-arm -b CORSTONE1000-2023.06
-  git clone https://git.gitlab.arm.com/arm-reference-solutions/systemready-patch.git -b CORSTONE1000-2023.06
+  git clone https://git.yoctoproject.org/git/meta-arm -b CORSTONE1000-2023.11
+  git clone https://git.gitlab.arm.com/arm-reference-solutions/systemready-patch.git -b CORSTONE1000-2023.11
   cp -f systemready-patch/embedded-a/corstone1000/erase_flash/0001-embedded-a-corstone1000-clean-secure-flash.patch meta-arm
   cd meta-arm
   git apply 0001-embedded-a-corstone1000-clean-secure-flash.patch
@@ -595,7 +583,7 @@ Download u-boot under <_workspace> and install tools:
 Download systemready-patch repo under <_workspace>:
 ::
 
-  git clone https://git.gitlab.arm.com/arm-reference-solutions/systemready-patch.git -b CORSTONE1000-2023.06
+  git clone https://git.gitlab.arm.com/arm-reference-solutions/systemready-patch.git -b CORSTONE1000-2023.11
 
 *******************
 Generating Capsules
@@ -1163,7 +1151,7 @@ First, load FF-A TEE kernel module:
 
 ::
 
-  insmod /lib/modules/6.1.32-yocto-standard/extra/arm-ffa-tee.ko
+  insmod /lib/modules/*-yocto-standard/extra/arm-ffa-tee.ko
 
 Then, check whether the FF-A TEE driver is loaded correctly by using the following command:
 
@@ -1188,105 +1176,16 @@ Now, run the PSA API tests in the following order:
 
 **NOTE:** The psa-crypto-api-test takes between 30 minutes to 1 hour to run.
 
-External System tests
----------------------
-
-**************************************************************
-Running the External System test command (systems-comms-tests)
-**************************************************************
-
-Test 1: Releasing the External System out of reset
-==================================================
-
-Run this command in the Linux command-line:
-
-::
-
-  systems-comms-tests 1
-
-The output on the External System terminal should be:
-
-::
-
-    ___  ___
-   |    / __|
-   |=== \___
-   |___ |___/
-   External System Cortex-M3 Processor
-   Running RTX RTOS
-   v0.1.0_2022-10-19_16-41-32-8c9dca7
-   MHUv2 module 'MHU0_H' started
-   MHUv2 module 'MHU1_H' started
-   MHUv2 module 'MHU0_SE' started
-   MHUv2 module 'MHU1_SE' started
-
-Test 2: Communication
-=====================
-
-Test 2 releases the External System out of reset if not already done. Then, it performs communication between host and External System.
-
-After running Test 1, run this command in the Linux command-line:
-
-::
-
-  systems-comms-tests 2
-
-Additional output on the External System terminal will be printed:
-
-::
-
-   MHUv2: Message from 'MHU0_H': 0xabcdef1
-   Received 'abcdef1' From Host MHU0
-   CMD: Increment and return to sender...
-   MHUv2: Message from 'MHU1_H': 0xabcdef1
-   Received 'abcdef1' From Host MHU1
-   CMD: Increment and return to sender...
-
-When running Test 2 the first, Test 1 will be run in the background.
-
-The output on the External System terminal should be:
-
-::
-
-    ___  ___
-   |    / __|
-   |=== \___
-   |___ |___/
-   External System Cortex-M3 Processor
-   Running RTX RTOS
-   v0.1.0_2022-10-19_16-41-32-8c9dca7
-   MHUv2 module 'MHU0_H' started
-   MHUv2 module 'MHU1_H' started
-   MHUv2 module 'MHU0_SE' started
-   MHUv2 module 'MHU1_SE' started
-   MHUv2: Message from 'MHU0_H': 0xabcdef1
-   Received 'abcdef1' From Host MHU0
-   CMD: Increment and return to sender...
-   MHUv2: Message from 'MHU1_H': 0xabcdef1
-   Received 'abcdef1' From Host MHU1
-   CMD: Increment and return to sender...
-
-The output on the Host terminal should be:
-
-::
-
-   Received abcdf00 from es0mhu0
-   Received abcdf00 from es0mhu1
-
-
 Tests results
 -------------
 
-As a reference for the end user, reports for various tests for `Corstone-1000 software (CORSTONE1000-2023.06) <https://git.yoctoproject.org/meta-arm/tag/?h=CORSTONE1000-2023.06>`__
+As a reference for the end user, reports for various tests for `Corstone-1000 software (CORSTONE1000-2023.11) <https://git.yoctoproject.org/meta-arm/tag/?h=CORSTONE1000-2023.11>`__
 can be found `here <https://gitlab.arm.com/arm-reference-solutions/arm-reference-solutions-test-report/-/tree/master/embedded-a/corstone1000>`__.
 
-Running the software on FVP on Windows
---------------------------------------
+Running the software on FVP on Windows or AArch64 Linux
+------------------------------------------------------------
 
-If the user needs to run the Corstone-1000 software on FVP on Windows. The user
-should follow the build instructions in this document to build on Linux host
-PC, and copy the output binaries to the Windows PC where the FVP is located,
-and launch the FVP binary.
+The user should follow the build instructions in this document to build on a Linux host machine. Then, copy the output binaries to the Windows or Aarch64 Linux machine where the FVP is located. Then, launch the FVP binary.
 
 Security Issue Reporting
 ------------------------
