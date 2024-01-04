@@ -11,18 +11,20 @@ TFM_PLATFORM_IS_FVP ?= "FALSE"
 EXTRA_OECMAKE += "-DPLATFORM_IS_FVP=${TFM_PLATFORM_IS_FVP}"
 EXTRA_OECMAKE += "-DCC312_LEGACY_DRIVER_API_ENABLED=ON"
 
-# libmetal
+# libmetal v2021.04.0
 LICENSE += "& BSD-3-Clause"
 LIC_FILES_CHKSUM += "file://../libmetal/LICENSE.md;md5=fe0b8a4beea8f0813b606d15a3df3d3c"
-SRC_URI += "git://github.com/OpenAMP/libmetal.git;protocol=https;branch=main;name=libmetal;destsuffix=git/libmetal"
-SRCREV_libmetal = "f252f0e007fbfb8b3a52b1d5901250ddac96baad"
+SRC_URI += "git://github.com/OpenAMP/libmetal.git;protocol=https;branch=main;name=libmetal;destsuffix=git/libmetal \
+            file://0001-cmake-modify-path-to-libmetal-version-file.patch;patchdir=../libmetal \
+           "
+SRCREV_libmetal = "59e2f084d31a60a95c99ab130227674fd365764b"
 EXTRA_OECMAKE += "-DLIBMETAL_SRC_PATH=${S}/../libmetal -DLIBMETAL_BIN_PATH=${B}/libmetal-build"
 
-# OpenAMP
+# OpenAMP v2021.04.0
 LICENSE += "& BSD-2-Clause & BSD-3-Clause"
 LIC_FILES_CHKSUM += "file://../openamp/LICENSE.md;md5=a8d8cf662ef6bf9936a1e1413585ecbf"
 SRC_URI += "git://github.com/OpenAMP/open-amp.git;protocol=https;branch=main;name=openamp;destsuffix=git/openamp"
-SRCREV_openamp = "347397decaa43372fc4d00f965640ebde042966d"
+SRCREV_openamp = "c3f12991991d187d47637d88e8a66076f23d0c8c"
 EXTRA_OECMAKE += "-DLIBOPENAMP_SRC_PATH=${S}/../openamp -DLIBOPENAMP_BIN_PATH=${B}/libopenamp-build"
 
 
