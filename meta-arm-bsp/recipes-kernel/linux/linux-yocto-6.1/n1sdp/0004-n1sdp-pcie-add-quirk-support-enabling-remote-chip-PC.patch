@@ -1,4 +1,4 @@
-From aa7c785aff4276aa8579a54f39347cd47eb48ebb Mon Sep 17 00:00:00 2001
+From b59e0d6c6035db80fc9044df0333f96ede53ad7a Mon Sep 17 00:00:00 2001
 From: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
 Date: Wed, 9 Feb 2022 20:37:43 +0530
 Subject: [PATCH] n1sdp: pcie: add quirk support enabling remote chip PCIe
