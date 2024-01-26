@@ -37,8 +37,7 @@ UBOOT_ARCH = "arm"
 UBOOT_EXTLINUX = "0"
 
 #optee
-PREFERRED_VERSION_optee-os ?= "4.0.%"
-PREFERRED_VERSION_optee-client ?= "3.22%"
+PREFERRED_VERSION_optee-os ?= "4.1.%"
 EXTRA_IMAGEDEPENDS += "optee-os"
 OPTEE_ARCH = "arm64"
 OPTEE_BINARY = "tee-pager_v2.bin"
