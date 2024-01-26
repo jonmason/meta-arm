@@ -11,6 +11,7 @@ variables:
   FF_USE_LEGACY_KUBERNETES_EXECUTION_STRATEGY: 0
   ACS_TEST: 0
   ACS_TAG: ""
+  EXTRA_KAS_FILES: ""
 
 stages:
   - prep
@@ -61,7 +62,7 @@ stages:
     # Catch all for everything else
     - if: '$KERNEL != "linux-yocto-dev"'
   script:
-    - KASFILES=$(./ci/jobs-to-kas "$CI_JOB_NAME"):lockfile.yml
+    - KASFILES=$(./ci/jobs-to-kas "$CI_JOB_NAME" $EXTRA_KAS_FILES):lockfile.yml
     - kas dump --update --force-checkout --resolve-refs --resolve-env $KASFILES
     - kas build $KASFILES
     - ./ci/check-warnings $KAS_WORK_DIR/build/warnings.log
