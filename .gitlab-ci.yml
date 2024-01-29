@@ -19,6 +19,8 @@ variables:
   ACS_TEST: 0
   # The list of extra Kas fragments to be used when building
   EXTRA_KAS_FILES: ""
+  # The NVD API key to use when fetching CVEs
+  NVDCVE_API_KEY: ""
 
 stages:
   - prep
