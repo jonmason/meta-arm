@@ -1,16 +1,23 @@
 image: ${MIRROR_GHCR}/siemens/kas/kas:4.0
 
 variables:
-  CPU_REQUEST: ""
-  DEFAULT_TAG: ""
-  CACHE_DIR: $CI_BUILDS_DIR/persist
-  MIRROR_GHCR: ghcr.io
-  # These are needed as the k8s executor doesn't respect the container entrypoint
-  # by default
+  # These are needed as the k8s executor doesn't respect the container
+  # entrypoint by default
   FF_KUBERNETES_HONOR_ENTRYPOINT: 1
   FF_USE_LEGACY_KUBERNETES_EXECUTION_STRATEGY: 0
-  ACS_TEST: 0
+  # The default value for KUBERNETES_CPU_REQUEST
+  CPU_REQUEST: ""
+  # The default machine tag for the build jobs
+  DEFAULT_TAG: ""
+  # The machine tag for the ACS test jobs
   ACS_TAG: ""
+  # The directory to use as the persistent cache (the root for DL_DIR, SSTATE_DIR, etc)
+  CACHE_DIR: $CI_BUILDS_DIR/persist
+  # The container mirror to use
+  MIRROR_GHCR: ghcr.io
+  # Whether to run the SystemReady ACS tests
+  ACS_TEST: 0
+  # The list of extra Kas fragments to be used when building
   EXTRA_KAS_FILES: ""
 
 stages:
