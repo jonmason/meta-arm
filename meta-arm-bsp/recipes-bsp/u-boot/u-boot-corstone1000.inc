@@ -57,7 +57,14 @@ do_configure:append(){
     cert-to-efi-sig-list ${B}/CRT.crt ${B}/corstone1000_defconfig/CRT.esl
 }
 
+FILES:${PN} += "/corstone1000_capsule_*"
 do_install:append() {
-   install -D -p -m 0644 ${B}/CRT.crt ${DEPLOY_DIR_IMAGE}/corstone1000_capsule_cert.crt
-   install -D -p -m 0644 ${B}/CRT.key ${DEPLOY_DIR_IMAGE}/corstone1000_capsule_key.key
+   install -D -p -m 0644 ${B}/CRT.crt ${D}/corstone1000_capsule_cert.crt
+   install -D -p -m 0644 ${B}/CRT.key ${D}/corstone1000_capsule_key.key
 }
+
+do_deploy:append(){
+   cp -Rf ${D}/corstone1000_capsule* ${DEPLOYDIR}/
+}
+
+addtask deploy after do_install
