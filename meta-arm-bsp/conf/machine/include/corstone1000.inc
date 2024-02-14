@@ -44,7 +44,7 @@ MACHINE_FEATURES += "arm-ffa"
 # login terminal serial port settings
 SERIAL_CONSOLES ?= "115200;ttyAMA0"
 
-WKS_FILE ?= "corstone1000-image.corstone1000.wks"
+WKS_FILE ?= "corstone1000-flash-firmware.wks.in"
 
 # making sure EXTRA_IMAGEDEPENDS will be used while creating the image
 WKS_FILE_DEPENDS:append = " ${EXTRA_IMAGEDEPENDS}"

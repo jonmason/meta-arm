@@ -38,5 +38,5 @@ local_conf_header:
     IMAGE_INSTALL += "packagegroup-ts-tests-psa"
 
 target:
-  - corstone1000-image
+  - corstone1000-flash-firmware-image
   - perf
