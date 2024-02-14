@@ -5,19 +5,35 @@ LICENSE = "MIT"
 
 COMPATIBLE_MACHINE = "corstone1000"
 
+# IMAGE_FSTYPES must be set before 'inherit image'
+# https://docs.yoctoproject.org/ref-manual/variables.html#term-IMAGE_FSTYPES
+IMAGE_FSTYPES = "wic uefi_capsule"
+
 inherit image
 inherit tfm_sign_image
-inherit  uefi_capsule
+inherit uefi_capsule
+
+DEPENDS += "external-system \
+            trusted-firmware-a \
+            trusted-firmware-m \
+"
+
+IMAGE_FEATURES = ""
+IMAGE_LINGUAS = ""
 
 PACKAGE_INSTALL = ""
 
-IMAGE_FSTYPES += "wic uefi_capsule"
-
-UEFI_FIRMWARE_BINARY = "${PN}-${MACHINE}.${CAPSULE_IMGTYPE}"
+UEFI_FIRMWARE_BINARY = "${IMAGE_LINK_NAME}.${CAPSULE_IMGTYPE}"
 UEFI_CAPSULE_CONFIG = "${THISDIR}/files/${PN}-capsule-update-image.json"
 CAPSULE_IMGTYPE = "wic"
 
-# TF-X settings for signing host images
+# TF-A settings for signing host images
+TFA_BL2_BINARY = "bl2-corstone1000.bin"
+TFA_FIP_BINARY = "fip-corstone1000.bin"
+TFA_BL2_RE_IMAGE_LOAD_ADDRESS = "0x62353000"
+TFA_BL2_RE_SIGN_BIN_SIZE = "0x2d000"
+TFA_FIP_RE_IMAGE_LOAD_ADDRESS = "0x68130000"
+TFA_FIP_RE_SIGN_BIN_SIZE = "0x00200000"
 RE_LAYOUT_WRAPPER_VERSION = "0.0.7"
 TFM_SIGN_PRIVATE_KEY = "${libdir}/tfm-scripts/root-RSA-3072_1.pem"
 RE_IMAGE_OFFSET = "0x1000"
@@ -38,6 +54,5 @@ do_sign_images() {
         ${TFA_FIP_RE_IMAGE_LOAD_ADDRESS} ${TFA_FIP_RE_SIGN_BIN_SIZE}
 }
 do_sign_images[depends] = "\
-    trusted-firmware-a:do_populate_sysroot \
     fiptool-native:do_populate_sysroot \
     "
