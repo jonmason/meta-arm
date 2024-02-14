@@ -17,6 +17,11 @@ UEFI_FIRMWARE_BINARY = "${PN}-${MACHINE}.${CAPSULE_IMGTYPE}"
 UEFI_CAPSULE_CONFIG = "${THISDIR}/files/${PN}-capsule-update-image.json"
 CAPSULE_IMGTYPE = "wic"
 
+# TF-X settings for signing host images
+RE_LAYOUT_WRAPPER_VERSION = "0.0.7"
+TFM_SIGN_PRIVATE_KEY = "${libdir}/tfm-scripts/root-RSA-3072_1.pem"
+RE_IMAGE_OFFSET = "0x1000"
+
 do_sign_images() {
     # Sign TF-A BL2
     sign_host_image ${RECIPE_SYSROOT}/firmware/${TFA_BL2_BINARY} \

@@ -1,9 +1,17 @@
 # Corstone1000 specific U-boot support
 
-DEPENDS:append = " gnutls-native openssl-native efitools-native"
+DEPENDS:append = " openssl-native efitools-native"
 CORSTONE1000_DEVICE_TREE:corstone1000-mps3 = "corstone1000-mps3"
 CORSTONE1000_DEVICE_TREE:corstone1000-fvp = "corstone1000-fvp"
 EXTRA_OEMAKE:append = ' DEVICE_TREE=${CORSTONE1000_DEVICE_TREE}'
+
+UBOOT_CONFIG ??= "EFI"
+UBOOT_CONFIG[EFI] = "corstone1000_defconfig"
+UBOOT_ENTRYPOINT  = "0x80000000"
+UBOOT_LOADADDRESS = "0x80000000"
+UBOOT_BOOTARGS = "${LINUX_KERNEL_ARGS} loglevel=9"
+UBOOT_ARCH = "arm"
+UBOOT_EXTLINUX = "0"
 
 SYSROOT_DIRS:append = " /boot"
 
@@ -52,7 +60,7 @@ SRC_URI:append = " \
     file://0042-corstone1000-enable-virtio-net-support.patch		  \
     "
 
-do_configure:append(){
+do_configure:append() {
     openssl req -x509 -sha256 -newkey rsa:2048 -subj /CN=CRT/ -keyout ${B}/CRT.key -out ${B}/CRT.crt -nodes -days 365
     cert-to-efi-sig-list ${B}/CRT.crt ${B}/corstone1000_defconfig/CRT.esl
 }
