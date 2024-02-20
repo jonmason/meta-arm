@@ -54,6 +54,7 @@ WKS_FILE:firmware ?= "corstone1000-flash-firmware.wks.in"
 # making sure EXTRA_IMAGEDEPENDS will be used while creating the image
 WKS_FILE_DEPENDS:append = " ${EXTRA_IMAGEDEPENDS}"
 
-# If not build under the firmware multiconf we need to build the actual firmware
-EXTRA_IMAGEDEPENDS = "${@bb.utils.contains('DISTROOVERRIDES', 'firmware', \
-                        '', 'firmware-deploy-image', d)}"
+# If not building under the firmware multiconf we need to build the actual firmware
+FIRMWARE_DEPLOYEMENT ?= "firmware-deploy-image"
+FIRMWARE_DEPLOYEMENT:firmware ?= ""
+EXTRA_IMAGEDEPENDS += "${FIRMWARE_DEPLOYEMENT}"
