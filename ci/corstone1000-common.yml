@@ -38,10 +38,10 @@ local_conf_header:
     RRECOMMENDS:${KERNEL_PACKAGE_NAME}-base = ""
 
     # all optee packages
-    IMAGE_INSTALL += "optee-client"
+    CORE_IMAGE_EXTRA_INSTALL += "optee-client"
 
     # TS PSA API tests commands for crypto, its, ps and iat
-    IMAGE_INSTALL += "packagegroup-ts-tests-psa"
+    CORE_IMAGE_EXTRA_INSTALL += "packagegroup-ts-tests-psa"
 
 target:
   - core-image-minimal
