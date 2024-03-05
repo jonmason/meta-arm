@@ -58,6 +58,7 @@ FILESEXTRAPATHS:prepend:fvp-base := "${ARMBSPFILESPATHS}:${ARMFILESPATHS}"
 SRC_URI:append:fvp-base = " \
     file://0001-arm64-dts-fvp-Enable-virtio-rng-support.patch \
     file://tee.cfg \
+    file://efi.cfg \
     ${@bb.utils.contains('MACHINE_FEATURES', 'ts-smm-gateway', \
                          'file://no-strict-devmem.cfg', '' , d)} \
 "
