@@ -5,9 +5,8 @@ COMPATIBLE_MACHINE = "(corstone1000)"
 FILESEXTRAPATHS:prepend := "${THISDIR}/files/corstone1000:"
 SRC_URI:append = " \
 	file://0001-Fix-FF-A-version-in-SPMC-manifest.patch \
-	file://0002-psci-SMCCC_ARCH_FEATURES-discovery-through-PSCI_FEATURES.patch \
-	file://0003-fix-corstone1000-pass-spsr-value-explicitly.patch \
-	file://0004-fix-spmd-remove-EL3-interrupt-registration.patch \
+	file://0002-fix-corstone1000-pass-spsr-value-explicitly.patch \
+	file://0003-fix-spmd-remove-EL3-interrupt-registration.patch \
        "
 
 TFA_DEBUG = "1"
