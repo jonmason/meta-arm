@@ -8,16 +8,10 @@ SRC_URI += "git://github.com/ARM-software/sbsa-acs;destsuffix=edk2/ShellPkg/Appl
             git://github.com/tianocore/edk2-libc;destsuffix=edk2/edk2-libc;protocol=https;branch=master;name=libc \
             file://0001-Patch-in-the-paths-to-the-SBSA-test-suite.patch \
             file://0002-Enforce-using-good-old-BFD-linker.patch \
-            file://0001-Fix-for-mismatch-in-function-prototype.patch;patchdir=ShellPkg/Application/sbsa-acs \
             "
 
-
-SRCREV_acs = "23253befbed2aee7304470fd83b78672488a7fc2"
-SRCREV_libc = "d3dea661da9ae4a3421a80905e75a8dc77aa980e"
-
-# GCC12 trips on it
-#see https://src.fedoraproject.org/rpms/edk2/blob/rawhide/f/0032-Basetools-turn-off-gcc12-warning.patch
-BUILD_CFLAGS += "-Wno-error=stringop-overflow"
+SRCREV_acs = "be169f0008d86341e1e48cb70d524bd1518c3acc"
+SRCREV_libc = "4667a82f0d873221f8b25ea701ce57a29270e4cb"
 
 COMPATIBLE_HOST = "aarch64.*-linux"
 COMPATIBLE_MACHINE = ""
