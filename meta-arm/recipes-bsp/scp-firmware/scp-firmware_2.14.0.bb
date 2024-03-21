@@ -12,12 +12,13 @@ SRC_URI = "${SRC_URI_SCP_FIRMWARE};branch=${SRCBRANCH} \
           "
 
 SRCBRANCH = "main"
-SRCREV  = "cc4c9e017348d92054f74026ee1beb081403c168"
+SRCREV  = "3267f2964114a56faaf46a40704be6ca78240725"
 
 PROVIDES += "virtual/control-processor-firmware"
 
 CMAKE_BUILD_TYPE    ?= "RelWithDebInfo"
 SCP_PLATFORM        ?= "${MACHINE}"
+SCP_PRODUCT_GROUP   ?= "."
 SCP_LOG_LEVEL       ?= "WARN"
 SCP_PLATFORM_FEATURE_SET ?= "0"
 
@@ -29,9 +30,6 @@ DEPENDS = "gcc-arm-none-eabi-native \
 
 # For now we only build with GCC, so stop meta-clang trying to get involved
 TOOLCHAIN = "gcc"
-
-# remove once arm-none-eabi-gcc updates to 13 or newer like poky
-DEBUG_PREFIX_MAP:remove = "-fcanon-prefix-map"
 
 inherit deploy
 
@@ -61,7 +59,7 @@ do_configure() {
     for FW in ${FW_TARGETS}; do
         for TYPE in ${FW_INSTALL}; do
             bbnote Configuring ${SCP_PLATFORM}/${FW}_${TYPE}...
-            cmake -GNinja ${EXTRA_OECMAKE} -S ${S} -B "${B}/${TYPE}/${FW}" -D SCP_FIRMWARE_SOURCE_DIR:PATH="${SCP_PLATFORM}/${FW}_${TYPE}"
+            cmake -GNinja ${EXTRA_OECMAKE} -S ${S} -B "${B}/${TYPE}/${FW}" -D SCP_FIRMWARE_SOURCE_DIR:PATH="${SCP_PRODUCT_GROUP}/${SCP_PLATFORM}/${FW}_${TYPE}"
         done
     done
 }
