@@ -13,6 +13,8 @@ SRC_URI += "git://github.com/ARM-software/sbsa-acs;destsuffix=edk2/ShellPkg/Appl
 SRCREV_acs = "be169f0008d86341e1e48cb70d524bd1518c3acc"
 SRCREV_libc = "4667a82f0d873221f8b25ea701ce57a29270e4cb"
 
+UPSTREAM_CHECK_URI = "https://github.com/ARM-software/sbsa-acs/releases"
+
 COMPATIBLE_HOST = "aarch64.*-linux"
 COMPATIBLE_MACHINE = ""
 PACKAGE_ARCH = "${TUNE_PKGARCH}"
