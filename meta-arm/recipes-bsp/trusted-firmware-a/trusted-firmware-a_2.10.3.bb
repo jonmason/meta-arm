@@ -1,7 +1,7 @@
 require recipes-bsp/trusted-firmware-a/trusted-firmware-a.inc
 
-# TF-A v2.10.2
-SRCREV_tfa = "a1be69e6c5db450f841f0edd9d734bf3cffb6621"
+# TF-A v2.10.3
+SRCREV_tfa = "0f915309c3821ce6f78f8451e5a6178d0cf07611"
 SRCBRANCH = "lts-v2.10"
 
 LIC_FILES_CHKSUM += "file://docs/license.rst;md5=b2c740efedc159745b9b31f88ff03dde"
