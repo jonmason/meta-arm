@@ -38,3 +38,8 @@ local_conf_header:
 
     # TS PSA API tests commands for crypto, its, ps and iat
     CORE_IMAGE_EXTRA_INSTALL += "packagegroup-ts-tests-psa"
+
+  capsule: |
+    CAPSULE_EXTENSION = "uefi.capsule"
+    CAPSULE_FW_VERSION = "6"
+    CAPSULE_NAME = "${MACHINE}-v${CAPSULE_FW_VERSION}"
