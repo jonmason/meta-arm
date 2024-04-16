@@ -34,8 +34,8 @@ file://${COMMON_LICENSE_DIR}/OpenSSL;md5=4eb1764f3e65fafa1a25057f9082f2ae \
 file://${COMMON_LICENSE_DIR}/Sleepycat;md5=1cbb64231c94198653282f3ccab88ffb \
 "
 
-PV = "11.7.0"
+PV = "12.4.0"
 # netinst, DVD-1
 ISO_TYPE = "netinst"
 SRC_URI = "https://cdimage.debian.org/mirror/cdimage/archive/${PV}/arm64/iso-cd/debian-${PV}-arm64-${ISO_TYPE}.iso;unpack=0;downloadfilename=${ISO_IMAGE_NAME}.iso"
-SRC_URI[sha256sum] = "174caba674fe3172938439257156b9cb8940bb5fd5ddf124256e81ec00ec460d"
+SRC_URI[sha256sum] = "d32d2c63350a932dc0d9d45665985b41413f9e01efc0eacbea981d435f553d3d"
