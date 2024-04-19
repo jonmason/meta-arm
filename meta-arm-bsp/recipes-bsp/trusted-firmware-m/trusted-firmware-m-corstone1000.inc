@@ -41,6 +41,7 @@ SRC_URI:append:corstone1000 = " \
     file://0006-Platform-Corstone1000-skip-the-first-nv-counter.patch \
     file://0007-platform-corstone1000-add-unique-guid-for-mps3.patch \    
     file://0008-Platform-Corstone1000-Enable-host-firewall-in-FVP.patch \
+    file://0009-platform-corstone1000-Increase-ITS-max-asset-size.patch \
     "
 
 # TF-M ships patches for external dependencies that needs to be applied
