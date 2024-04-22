@@ -12,7 +12,7 @@ local_conf_header:
   slirp: |
     TEST_RUNQEMUPARAMS = "slirp"
   sshd: |
-    IMAGE_FEATURES:append = " ssh-server-dropbear"
+    IMAGE_FEATURES += "ssh-server-dropbear"
   sshkeys: |
     CORE_IMAGE_EXTRA_INSTALL += "ssh-pregen-hostkeys"
   universally_failing_tests: |
