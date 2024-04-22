@@ -161,6 +161,15 @@ arm-systemready-ir-acs:
 fvps:
   extends: .build
 
+genericarm64:
+  extends: .build
+  parallel:
+    matrix:
+      - TOOLCHAINS: [gcc, clang]
+        TESTING: testimage
+      - KERNEL: linux-yocto-dev
+        TESTING: testimage
+
 generic-arm64:
   extends: .build
 
