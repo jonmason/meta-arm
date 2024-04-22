@@ -1,5 +1,3 @@
-# Only enable linux-yocto-rt for n1sdp and the Armv8-R AArch64 AEM FVP
-LINUX_YOCTO_RT_REQUIRE ?= ""
-LINUX_YOCTO_RT_REQUIRE:n1sdp = "linux-arm-platforms.inc"
+# Add support for Arm Platforms (boards or simulators)
 
-require ${LINUX_YOCTO_RT_REQUIRE}
+require linux-arm-platforms.inc
