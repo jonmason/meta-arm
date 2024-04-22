@@ -106,3 +106,10 @@ KCONFIG_MODE:sgi575 = "--alldefconfig"
 COMPATIBLE_MACHINE:tc = "(tc0|tc1)"
 KBUILD_DEFCONFIG:tc = "defconfig"
 KCONFIG_MODE:tc = "--alldefconfig"
+
+#
+# sbsa-ref KMACHINE
+#
+COMPATIBLE_MACHINE:sbsa-ref = "sbsa-ref"
+KBUILD_DEFCONFIG:sbsa-ref = "defconfig"
+KCONFIG_MODE:sbsa-ref = "--alldefconfig"

@@ -173,6 +173,16 @@ genericarm64:
 generic-arm64:
   extends: .build
 
+sbsa-ref:
+  extends: .build
+  parallel:
+    matrix:
+      - KERNEL: [linux-yocto, linux-yocto-rt]
+        TOOLCHAINS: [gcc, clang]
+        TESTING: testimage
+      - KERNEL: linux-yocto-dev
+        TESTING: testimage
+
 juno:
   extends: .build
   parallel:

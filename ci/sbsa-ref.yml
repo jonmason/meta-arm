@@ -1,0 +1,10 @@
+header:
+  version: 14
+  includes:
+    - ci/base.yml
+
+machine: sbsa-ref
+
+target:
+  - core-image-sato
+  - sbsa-acs
