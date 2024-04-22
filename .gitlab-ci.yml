@@ -170,9 +170,6 @@ genericarm64:
       - KERNEL: linux-yocto-dev
         TESTING: testimage
 
-generic-arm64:
-  extends: .build
-
 sbsa-ref:
   extends: .build
   parallel:
@@ -201,16 +198,6 @@ n1sdp:
   parallel:
     matrix:
       - TESTING: [none, n1sdp-ts, n1sdp-optee, tftf]
-
-qemu-generic-arm64:
-  extends: .build
-  parallel:
-    matrix:
-      - KERNEL: [linux-yocto, linux-yocto-rt]
-        TOOLCHAINS: [gcc, clang]
-        TESTING: testimage
-      - KERNEL: linux-yocto-dev
-        TESTING: testimage
 
 qemuarm64-secureboot:
   extends: .build
