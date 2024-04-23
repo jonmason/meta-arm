@@ -1,0 +1,30 @@
+From e1ef7c537c09972d981e09d4dbcc98e50c7d2b04 Mon Sep 17 00:00:00 2001
+From: Bence Balogh <bence.balogh@arm.com>
+Date: Tue, 28 Nov 2023 15:32:39 +0100
+Subject: [PATCH 8/9] Decrease SMM_GATEWAY_MAX_UEFI_VARIABLES
+
+This fixes the SMM gateway initialization error that was caused
+by a malloc fault in Corstone-1000.
+
+Upstream-Status: Submitted [https://review.trustedfirmware.org/c/TS/trusted-services/+/27857]
+Signed-off-by: Bence Balogh <bence.balogh@arm.com>
+---
+ platform/providers/arm/corstone1000/platform.cmake | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/platform/providers/arm/corstone1000/platform.cmake b/platform/providers/arm/corstone1000/platform.cmake
+index ff044ed7..d16cde3f 100644
+--- a/platform/providers/arm/corstone1000/platform.cmake
++++ b/platform/providers/arm/corstone1000/platform.cmake
+@@ -11,7 +11,7 @@ include(${TS_ROOT}/platform/drivers/arm/mhu_driver/component.cmake)
+ 
+ target_compile_definitions(${TGT} PRIVATE
+ 	SMM_VARIABLE_INDEX_STORAGE_UID=0x787
+-	SMM_GATEWAY_MAX_UEFI_VARIABLES=100
++	SMM_GATEWAY_MAX_UEFI_VARIABLES=80
+ )
+ 
+ add_compile_definitions(MBEDTLS_ECP_DP_SECP521R1_ENABLED)
+-- 
+2.25.1
+

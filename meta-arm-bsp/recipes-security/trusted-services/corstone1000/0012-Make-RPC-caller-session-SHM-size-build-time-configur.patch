@@ -1,0 +1,52 @@
+From 40e6b48971bbbd37edf693a8a70b76e4551fda82 Mon Sep 17 00:00:00 2001
+From: Imre Kis <imre.kis@arm.com>
+Date: Wed, 21 Feb 2024 14:24:43 +0100
+Subject: [PATCH 03/12] Make RPC caller session SHM size build-time
+ configurable
+
+Introduce RPC_CALLER_SESSION_SHARED_MEMORY_SIZE macro allow setting the
+RPC caller session shared memory size from the build system. This only
+affects RPC caller sessions created by spffa_service_context.
+
+Upstream-Status: Submitted [https://review.trustedfirmware.org/c/TS/trusted-services/+/27864]
+Signed-off-by: Imre Kis <imre.kis@arm.com>
+Signed-off-by: Bence Balogh <bence.balogh@arm.com>
+---
+ .../service/locator/sp/ffa/spffa_service_context.c       | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/components/service/locator/sp/ffa/spffa_service_context.c b/components/service/locator/sp/ffa/spffa_service_context.c
+index 0c1616fc..4ddc53af 100644
+--- a/components/service/locator/sp/ffa/spffa_service_context.c
++++ b/components/service/locator/sp/ffa/spffa_service_context.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2021-2022, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2021-2024, Arm Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -10,6 +10,10 @@
+ #include <stdlib.h>
+ #include <string.h>
+ 
++#ifndef RPC_CALLER_SESSION_SHARED_MEMORY_SIZE
++#define RPC_CALLER_SESSION_SHARED_MEMORY_SIZE	(4096)
++#endif /* RPC_CALLER_SESSION_SHARED_MEMORY_SIZE */
++
+ /* Concrete service_context methods */
+ static struct rpc_caller_session *sp_ts_service_context_open(void *context);
+ static void sp_ts_service_context_close(void *context, struct rpc_caller_session *session);
+@@ -52,7 +56,8 @@ static struct rpc_caller_session *sp_ts_service_context_open(void *context)
+ 		return NULL;
+ 
+ 	rpc_status = rpc_caller_session_find_and_open(session, &this_context->caller,
+-						      &this_context->service_uuid, 4096);
++						      &this_context->service_uuid,
++						      RPC_CALLER_SESSION_SHARED_MEMORY_SIZE);
+ 	if (rpc_status != RPC_SUCCESS) {
+ 		free(session);
+ 		return NULL;
+-- 
+2.25.1
+

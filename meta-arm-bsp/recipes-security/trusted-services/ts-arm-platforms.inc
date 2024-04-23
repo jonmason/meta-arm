@@ -11,6 +11,11 @@ SRC_URI:append:corstone1000  = " \
     file://0007-plat-corstone1000-Initialize-capsule-update-provider.patch \
     file://0008-platform-corstone1000-fix-synchronization-issue.patch \
     file://0009-plat-corstone1000-fmp-client-id.patch \
+    file://0010-Decrease-SMM_GATEWAY_MAX_UEFI_VARIABLES.patch \
+    file://0011-Fix-psa_ipc-service-s-psa_call.patch \
+    file://0012-Make-RPC-caller-session-SHM-size-build-time-configur.patch \
+    file://0013-Set-RPC-caller-session-SHM-size-for-Corstone-1000-SM.patch \
+    file://0014-Use-__packed-for-the-variable_metadata-struct.patch \
     "
 
 

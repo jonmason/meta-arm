@@ -1,0 +1,34 @@
+From 8290755eb2b6aaa857b2dca74494290c64d46fb3 Mon Sep 17 00:00:00 2001
+From: Bence Balogh <bence.balogh@arm.com>
+Date: Mon, 26 Feb 2024 16:41:03 +0100
+Subject: [PATCH] Use __packed for the variable_metadata struct
+
+This is only a temporary fix so the buffer limit in TF-M
+doesn't need to be changed. With the __packed attribute, the
+struct's size is 100 bytes instead of 104 bytes.
+The struct will be changed in later upstream commits so this
+change won't be needed, and the RSS_COMMS implementation
+will be able to handle that.
+
+Upstream-Status: Inappropriate
+[Won't be needed after newer upstream version]
+---
+ components/service/smm_variable/backend/variable_index.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/components/service/smm_variable/backend/variable_index.h b/components/service/smm_variable/backend/variable_index.h
+index 2f0197da..e82039ac 100644
+--- a/components/service/smm_variable/backend/variable_index.h
++++ b/components/service/smm_variable/backend/variable_index.h
+@@ -29,7 +29,7 @@ extern "C" {
+  *
+  * Holds metadata associated with stored variable.
+  */
+-struct variable_metadata
++struct __packed variable_metadata
+ {
+ 	EFI_GUID	guid;
+ 	size_t		name_size;
+-- 
+2.25.1
+
