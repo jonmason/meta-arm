@@ -28,9 +28,7 @@ class TrustedServicesTest(OERuntimeTestCase):
     @OEHasPackage(['ts-psa-crypto-api-test'])
     @OETestDepends(['ssh.SSHTest.test_ssh'])
     def test_03_psa_crypto_api_test(self):
-        # There are a two expected PSA Crypto tests failures testing features
-        # TS will not support.
-        self.run_test_tool('psa-crypto-api-test', expected_status=46)
+        self.run_test_tool('psa-crypto-api-test')
 
     @OEHasPackage(['ts-psa-its-api-test'])
     @OETestDepends(['ssh.SSHTest.test_ssh'])
@@ -53,13 +51,12 @@ class TrustedServicesTest(OERuntimeTestCase):
     def test_09_ts_service_grp_check(self):
         # If this test fails, available test groups in ts-service-test have changed and all
         # tests using the test executable need to be double checked to ensure test group to
-        # TS SP mapping is still valid. 
+        # TS SP mapping is still valid.
         test_grp_list="FwuServiceTests PsServiceTests ItsServiceTests AttestationProvisioningTests"
         test_grp_list+=" AttestationServiceTests CryptoKeyDerivationServicePackedcTests"
         test_grp_list+=" CryptoMacServicePackedcTests CryptoCipherServicePackedcTests"
         test_grp_list+=" CryptoHashServicePackedcTests CryptoServicePackedcTests"
         test_grp_list+=" CryptoServiceProtobufTests CryptoServiceLimitTests"
-        test_grp_list+=" DiscoveryServiceTests"
         self.run_test_tool('ts-service-test -lg', expected_output=test_grp_list)
 
     @OEHasPackage(['optee-test'])
@@ -110,11 +107,3 @@ class TrustedServicesTest(OERuntimeTestCase):
                     "CryptoCipherServicePackedcTests", "CryptoHashServicePackedcTests", \
                     "CryptoServicePackedcTests", "CryptoServiceProtobufTests CryptoServiceLimitTests"]:
             self.run_test_tool('ts-service-test -g %s'%grp)
-
-    @OEHasPackage(['ts-service-test'])
-    @OETestDepends(['ssh.SSHTest.test_ssh'])
-    def test_16_discovery_service_test(self):
-        if 'ts-crypto' not in self.tc.td['MACHINE_FEATURES'] and \
-           'ts-se-proxy' not in self.tc.td['MACHINE_FEATURES']:
-            self.skipTest('Crypto SP is not included into OPTEE')
-        self.run_test_tool('ts-service-test -g DiscoveryServiceTests')

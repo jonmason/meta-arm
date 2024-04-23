@@ -8,13 +8,12 @@ SRC_URI = "git://git.trustedfirmware.org/TS/trusted-services.git;protocol=https;
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
 SRC_URI:append = "\
-	file://0001-Limit-nanopb-build-to-single-process.patch \
-	file://0001-LazyFetch-allow-setting-the-cmake-generator.patch \
-	file://nanopb-upgrade.patch \
+	file://0001-Upgrade-nanopb-to-v0.4.7.patch \
+    file://0001-Add-boot-order-property-to-SP-manifests.patch \
 "
 
-#Latest on 2023 April 28
-SRCREV_trusted-services = "08b3d39471f4914186bd23793dc920e83b0e3197"
+# Trusted Services; Tag: v1.0.0
+SRCREV_trusted-services = "808904390eb89294d2371959a7d82dde3851ca6c"
 LIC_FILES_CHKSUM = "file://${S}/license.rst;md5=ea160bac7f690a069c608516b17997f4"
 
 S = "${WORKDIR}/git/trusted-services"
@@ -25,9 +24,9 @@ SRC_URI += "git://github.com/dgibson/dtc;name=dtc;protocol=https;branch=main;des
 SRCREV_dtc = "b6910bec11614980a21e46fbccc35934b671bd81"
 LIC_FILES_CHKSUM += "file://../dtc/README.license;md5=a1eb22e37f09df5b5511b8a278992d0e"
 
-# MbedTLS, tag "mbedtls-3.3.0"
+# MbedTLS, tag "mbedtls-3.4.0"
 SRC_URI += "git://github.com/ARMmbed/mbedtls.git;name=mbedtls;protocol=https;branch=master;destsuffix=git/mbedtls"
-SRCREV_mbedtls = "8c89224991adff88d53cd380f42a2baa36f91454"
+SRCREV_mbedtls = "1873d3bfc2da771672bd8e7e8f41f57e0af77f33"
 LIC_FILES_CHKSUM += "file://../mbedtls/LICENSE;md5=3b83ef96387f14655fc854ddc3c6bd57"
 
 # Nanopb, tag "nanopb-0.4.7" plus some further fixes
@@ -72,6 +71,11 @@ do_apply_local_src_patches() {
     apply_local_src_patches ${S}/external/CppUTest ${WORKDIR}/git/cpputest
     apply_local_src_patches ${S}/external/libfdt ${WORKDIR}/git/dtc
     apply_local_src_patches ${S}/external/nanopb ${WORKDIR}/git/nanopb
+}
+
+do_config:append:() {
+    # Fine tune MbedTLS configuration for crypto only operation.
+    sh -c "cd ${WORKDIR}/git/mbedtls; python3 scripts/config.py crypto"
 }
 
 # Paths to dependencies required by some TS SPs/tools

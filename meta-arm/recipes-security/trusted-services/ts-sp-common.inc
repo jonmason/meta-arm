@@ -1,6 +1,6 @@
 # Common part of all Trusted Services SPs recipes
 
-TS_ENV = "opteesp"
+TS_ENV ?= "opteesp"
 
 require trusted-services.inc
 require ts-uuid.inc
@@ -30,3 +30,13 @@ INSANE_SKIP:${PN}-dev += "ldflags"
 
 # Trusted Services SPs do not compile with clang
 TOOLCHAIN = "gcc"
+
+# FORTIFY_SOURCE is a glibc feature. Disable it for all SPs as these do not use glibc.
+TARGET_CFLAGS:remove = "-D_FORTIFY_SOURCE=2"
+OECMAKE_C_FLAGS:remove = "-D_FORTIFY_SOURCE=2"
+OECMAKE_CXX_FLAGS:remove = "-D_FORTIFY_SOURCE=2"
+
+# Override yoctos default linux specific toolchain file. trusted-services.inc
+# will add a proper tooclhain option.
+OECMAKE_ARGS:remove="-DCMAKE_TOOLCHAIN_FILE:FILEPATH=${WORKDIR}/toolchain.cmake"
+

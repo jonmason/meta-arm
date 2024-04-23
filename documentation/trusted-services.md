@@ -22,7 +22,7 @@ features for each [Secure Partition][^2] you would like to include:
 | Protected Storage | ts-storage      |
 | se-proxy          | ts-se-proxy     |
 | smm-gateway       | ts-smm-gateway  |
-| spm-test[1-3]     | optee-spmc-test |
+| spm-test[1-4]     | optee-spmc-test |
 
 Other steps depend on your machine/platform definition:
 

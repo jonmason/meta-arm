@@ -1,26 +1,33 @@
-From 35d16cdfd51aeca5df70732accc89e250af86b69 Mon Sep 17 00:00:00 2001
+From f3ba58b00ec967970d22dfbd71c406ccb5b2ac78 Mon Sep 17 00:00:00 2001
 From: Ross Burton <ross.burton@arm.com>
 Date: Fri, 29 Sep 2023 16:21:26 +0100
-Subject: [PATCH] Upgrade nanopb
+Subject: [PATCH 1/1] Upgrade nanopb to v4.7.0
 
-Upgrade the nanopb checkout to 0.4.7 plus some important build fixes, and
-change the build/install process to be more reliable.
-
-This should be upstreamed, but some pieces of this are not upstreamable in their
-current state.
+Upgrade the nanopb to 0.4.7 and add the following fixes:
+  - remove the nanopb patch as it has become obsolete.
+  - stop using the nanopb protoc wrapper when building the generator as
+    this seems to cause build issues.
+  - use the new nanopb_PYTHON_INSTDIR_OVERRIDE variable to set the
+    install location for the generator. Modify TS cmake script to search
+    the generator in the install content instead of the nanopb source.
+  - pass discovered python settings to nanopb build using the initial
+    cache. This speeds up the build and allows easier control of python
+    discovery for integration systems.
 
 Upstream-Status: Pending
+
 Signed-off-by: Ross Burton <ross.burton@arm.com>
+Signed-off-by: Gyorgy Szing <gyorgy.szing@arm.com>
 ---
  external/nanopb/fix-pyhon-name.patch       | 41 ----------------------
- external/nanopb/nanopb-init-cache.cmake.in |  6 +++-
- external/nanopb/nanopb.cmake               |  7 ++--
- 3 files changed, 8 insertions(+), 46 deletions(-)
+ external/nanopb/nanopb-init-cache.cmake.in |  9 ++++-
+ external/nanopb/nanopb.cmake               | 34 +++++++++---------
+ 3 files changed, 24 insertions(+), 60 deletions(-)
  delete mode 100644 external/nanopb/fix-pyhon-name.patch
 
 diff --git a/external/nanopb/fix-pyhon-name.patch b/external/nanopb/fix-pyhon-name.patch
 deleted file mode 100644
-index ab0e84c550f4..000000000000
+index ab0e84c5..00000000
 --- a/external/nanopb/fix-pyhon-name.patch
 +++ /dev/null
 @@ -1,41 +0,0 @@
@@ -66,15 +73,16 @@ index ab0e84c550f4..000000000000
 -     endforeach()
 - endif()
 diff --git a/external/nanopb/nanopb-init-cache.cmake.in b/external/nanopb/nanopb-init-cache.cmake.in
-index fb8104d64b26..8df41ddcb5eb 100644
+index fb8104d6..c53b6e5b 100644
 --- a/external/nanopb/nanopb-init-cache.cmake.in
 +++ b/external/nanopb/nanopb-init-cache.cmake.in
-@@ -12,11 +12,15 @@ set(BUILD_STATIC_LIBS On CACHE BOOL "")
+@@ -12,11 +12,18 @@ set(BUILD_STATIC_LIBS On CACHE BOOL "")
  set(nanopb_BUILD_RUNTIME On CACHE BOOL "")
  set(nanopb_BUILD_GENERATOR On CACHE BOOL "")
  set(nanopb_MSVC_STATIC_RUNTIME Off BOOL "")
 -set(nanopb_PROTOC_PATH ${CMAKE_SOURCE_DIR}/generator/protoc CACHE STRING "")
 +
++# Specify location of python binary and avoid discovery.
 +set(Python_EXECUTABLE "@Python_EXECUTABLE@" CACHE PATH "Location of python3 executable")
  
  string(TOUPPER @CMAKE_CROSSCOMPILING@ CMAKE_CROSSCOMPILING) # CMake expects TRUE
@@ -82,15 +90,42 @@ index fb8104d64b26..8df41ddcb5eb 100644
  	set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY CACHE STRING "")
  endif()
  
++# Override the install directory of the generator. TS will first look at
++# NEWLIB_INSTALL_DIR (aka. BUILD_INSTALL_DIR), then let cmake do system specific
++# search.
 +set(nanopb_PYTHON_INSTDIR_OVERRIDE "@BUILD_INSTALL_DIR@/lib/python" CACHE PATH "")
-+set(NANOPB_GENERATOR_DIR "@BUILD_INSTALL_DIR@/lib/python" CACHE PATH "")
 +
  @_cmake_fragment@
 diff --git a/external/nanopb/nanopb.cmake b/external/nanopb/nanopb.cmake
-index 36465f612d5d..57cf3d697fdd 100644
+index 36465f61..fa35d971 100644
 --- a/external/nanopb/nanopb.cmake
 +++ b/external/nanopb/nanopb.cmake
-@@ -28,7 +28,7 @@ running this module.
+@@ -10,17 +10,14 @@ NanoPB integration for cmake
+ ----------------------------
+ 
+ This module will:
+-	- download nanopb if not available locally
+-	- build the runtime static library and the generator
+-	- import the static library to the build
+-	- define a function to provide access to the generator
++	- use LazyFetch to download nanopb and build the static library and the generator.
++	  Usual LazyFetch configuration to use prefetched source or prebuilt binaries apply.
++	- run find_module() to import the static library
++	- run find_executable() import the generator to the build (extend PYTHONPATH) and
++	  define a cmake function to provide access to the generator to build nanopb files.
+ 
+-Note: the python module created by the generator build will be installed under
+-Python_SITELIB ("Third-party platform independent installation directory.")
+-This means the build may alter the state of your system. Please use virtualenv.
+-
+-Note: see requirements.txt for dependencies which need to be installed before
+-running this module.
++Note: see requirements.txt for dependencies which need to be installed in the build
++environment to use this module.
+ 
+ #]===]
+ 
+@@ -28,7 +25,7 @@ running this module.
  
  set(NANOPB_URL "https://github.com/nanopb/nanopb.git"
  		CACHE STRING "nanopb repository URL")
@@ -99,16 +134,34 @@ index 36465f612d5d..57cf3d697fdd 100644
  		CACHE STRING "nanopb git refspec")
  set(NANOPB_SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/_deps/nanopb-src"
  		CACHE PATH "nanopb source-code")
-@@ -85,7 +85,7 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter)
+@@ -65,6 +62,11 @@ if(TARGET stdlib::c)
+ 	unset_saved_properties(LIBC)
+ endif()
  
- find_file(NANOPB_GENERATOR_PATH
++# Nanopb build depends on python. Discover python here and pass the result to
++# nanopb build trough the initial cache file.
++find_package(Python3 REQUIRED COMPONENTS Interpreter)
++
++# Use LazyFetch to manage the external dependency.
+ include(${TS_ROOT}/tools/cmake/common/LazyFetch.cmake REQUIRED)
+ LazyFetch_MakeAvailable(DEP_NAME nanopb
+ 	FETCH_OPTIONS ${GIT_OPTIONS}
+@@ -80,12 +82,9 @@ if(TARGET stdlib::c)
+ endif()
+ 
+ #### Build access to the protobuf compiler
+-#TODO: verify protoc dependencies: python3-protobuf
+-find_package(Python3 REQUIRED COMPONENTS Interpreter)
+-
+-find_file(NANOPB_GENERATOR_PATH
++find_program(NANOPB_GENERATOR_PATH
  			NAMES nanopb_generator.py
 -			PATHS ${nanopb_SOURCE_DIR}/generator
-+			PATHS ${NANOPB_INSTALL_DIR}/bin
++			HINTS ${NANOPB_INSTALL_DIR}/bin ${NANOPB_INSTALL_DIR}/sbin
  			DOC "nanopb protobuf compiler"
  			NO_DEFAULT_PATH
  		)
-@@ -186,11 +186,10 @@ function(protobuf_generate)
+@@ -186,11 +185,10 @@ function(protobuf_generate)
  		target_include_directories(${PARAMS_TGT} PRIVATE ${_OUT_DIR_BASE})
  	endif()
  
@@ -121,3 +174,6 @@ index 36465f612d5d..57cf3d697fdd 100644
  					   ${Python3_EXECUTABLE} ${NANOPB_GENERATOR_PATH}
  						  -I ${PARAMS_BASE_DIR}
  						  -D ${_OUT_DIR_BASE}
+-- 
+2.34.1
+

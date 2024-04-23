@@ -1,0 +1,1005 @@
+From b8a6c54f519fce1651bd9d5d43884e62708f825d Mon Sep 17 00:00:00 2001
+From: Gabor Toth <gabor.toth2@arm.com>
+Date: Thu, 14 Mar 2024 11:09:19 +0100
+Subject: [PATCH 1/1] Add boot-order property to SP manifests
+
+Capture the boot-order in the SP manifest files for each SP to help
+portability. The legacy way to set the boot order is integration
+system, packaging method and SPMC implementation specific.
+
+The boot order of SP is dictated by service dependency and relative
+boot order of TS SPs should be as follows:
+
+1 - block-storage
+1 - se-proxy (corstone1000-opteesp)
+2 - se-proxy (default-opteesp or default-sp)
+2 - internal-trusted-storage
+3 - protected-storage
+4 - crypto
+5 - attestation
+6 - se-proxy
+7 - fwu
+8 - smm-gateway
+
+Signed-off-by: Gabor Toth <gabor.toth2@arm.com>
+Change-Id: I4b93015c68e7261fdc87434a6c7f4ec86965af54
+
+Upstream-Status: Backport 7e4babed40dc686ae38d3fe35459e7417717d880
+---
+ components/service/spm_test/spm_test.cmake               | 1 +
+ .../attestation/config/default-opteesp/CMakeLists.txt    | 2 ++
+ .../config/default-opteesp/default_attestation.dts.in    | 1 +
+ deployments/attestation/config/default-sp/CMakeLists.txt | 2 ++
+ .../config/default-sp/default_attestation.dts.in         | 1 +
+ .../block-storage/config/cfi-flash-optee/CMakeLists.txt  | 2 ++
+ .../config/cfi-flash-optee/default_block-storage.dts.in  | 1 +
+ .../block-storage/config/default-opteesp/CMakeLists.txt  | 2 ++
+ .../config/default-opteesp/default_block-storage.dts.in  | 1 +
+ .../block-storage/config/default-sp/CMakeLists.txt       | 2 ++
+ .../config/default-sp/default_block-storage.dts.in       | 1 +
+ .../config/edk2-secure-flash-opteesp/CMakeLists.txt      | 2 ++
+ .../default_block-storage.dts.in                         | 1 +
+ .../config/semihosted-opteesp/CMakeLists.txt             | 2 ++
+ .../semihosted-opteesp/default_block-storage.dts.in      | 1 +
+ deployments/crypto/config/default-opteesp/CMakeLists.txt | 2 ++
+ .../crypto/config/default-opteesp/default_crypto.dts.in  | 1 +
+ deployments/crypto/config/default-sp/CMakeLists.txt      | 2 ++
+ .../crypto/config/default-sp/default_crypto.dts.in       | 1 +
+ .../default_env-test.dts.in                              | 1 +
+ .../baremetal-fvp_base_revc-sp/default_env-test.dts.in   | 1 +
+ .../config/n1sdp-opteesp/default_env-test.dts.in         | 1 +
+ deployments/fwu/config/default-opteesp/CMakeLists.txt    | 2 ++
+ .../fwu/config/default-opteesp/default_fwu.dts.in        | 1 +
+ deployments/fwu/config/default-sp/CMakeLists.txt         | 2 ++
+ deployments/fwu/config/default-sp/default_fwu.dts.in     | 1 +
+ .../config/default-opteesp/CMakeLists.txt                | 2 ++
+ .../default_internal-trusted-storage.dts.in              | 1 +
+ .../config/default-sp/CMakeLists.txt                     | 2 ++
+ .../default-sp/default_internal-trusted-storage.dts.in   | 1 +
+ .../config/shared-flash-opteesp/CMakeLists.txt           | 2 ++
+ .../default_internal-trusted-storage.dts.in              | 1 +
+ .../config/default-opteesp/CMakeLists.txt                | 2 ++
+ .../default-opteesp/default_protected-storage.dts.in     | 1 +
+ .../protected-storage/config/default-sp/CMakeLists.txt   | 2 ++
+ .../config/default-sp/default_protected-storage.dts.in   | 1 +
+ .../config/shared-flash-opteesp/CMakeLists.txt           | 2 ++
+ .../default_protected-storage.dts.in                     | 1 +
+ .../se-proxy/config/corstone1000-opteesp/CMakeLists.txt  | 2 ++
+ .../config/corstone1000-opteesp/default_se-proxy.dts.in  | 1 +
+ .../se-proxy/config/default-opteesp/CMakeLists.txt       | 2 ++
+ .../config/default-opteesp/default_se-proxy.dts.in       | 1 +
+ deployments/se-proxy/config/default-sp/CMakeLists.txt    | 2 ++
+ .../se-proxy/config/default-sp/default_se-proxy.dts.in   | 1 +
+ deployments/sfs-demo/opteesp/default_sfs-demo.dts.in     | 1 +
+ deployments/sfs-demo/sp/default_sfs-demo.dts.in          | 1 +
+ .../smm-gateway/config/default-opteesp/CMakeLists.txt    | 2 ++
+ .../config/default-opteesp/default_smm-gateway.dts.in    | 1 +
+ deployments/smm-gateway/config/default-sp/CMakeLists.txt | 3 +++
+ .../config/default-sp/default_smm-gateway.dts.in         | 1 +
+ deployments/spm-test1/opteesp/CMakeLists.txt             | 1 +
+ deployments/spm-test1/opteesp/default_spm_test1.dts.in   | 1 +
+ deployments/spm-test2/opteesp/CMakeLists.txt             | 1 +
+ deployments/spm-test2/opteesp/default_spm_test2.dts.in   | 1 +
+ deployments/spm-test3/opteesp/CMakeLists.txt             | 2 ++
+ deployments/spm-test3/opteesp/default_spm_test3.dts.in   | 1 +
+ deployments/spm-test4/opteesp/CMakeLists.txt             | 1 +
+ deployments/spm-test4/opteesp/default_spm_test4.dts.in   | 1 +
+ tools/cmake/common/ExportSp.cmake                        | 9 ++++++++-
+ 59 files changed, 90 insertions(+), 1 deletion(-)
+
+diff --git a/components/service/spm_test/spm_test.cmake b/components/service/spm_test/spm_test.cmake
+index e8a1ccd48..7cb7e667a 100644
+--- a/components/service/spm_test/spm_test.cmake
++++ b/components/service/spm_test/spm_test.cmake
+@@ -70,4 +70,5 @@ export_sp(
+ 	MK_IN ${TS_ROOT}/environments/opteesp/sp.mk.in
+ 	DTS_IN ${TS_ROOT}/deployments/spm-test${SP_NUMBER}/opteesp/default_spm_test${SP_NUMBER}.dts.in
+ 	JSON_IN ${TS_ROOT}/environments/opteesp/sp_pkg.json.in
++	SP_BOOT_ORDER ${SP_BOOT_ORDER}
+ )
+diff --git a/deployments/attestation/config/default-opteesp/CMakeLists.txt b/deployments/attestation/config/default-opteesp/CMakeLists.txt
+index 58ecb3412..7e13465dd 100644
+--- a/deployments/attestation/config/default-opteesp/CMakeLists.txt
++++ b/deployments/attestation/config/default-opteesp/CMakeLists.txt
+@@ -23,6 +23,7 @@ target_include_directories(attestation PRIVATE "${TOP_LEVEL_INCLUDE_DIRS}")
+ set(SP_BIN_UUID_CANON "a1baf155-8876-4695-8f7c-54955e8db974")
+ set(SP_FFA_UUID_CANON "${TS_RPC_UUID_CANON}")
+ set(SP_HEAP_SIZE "32 * 1024" CACHE STRING "SP heap size in bytes")
++set(SP_BOOT_ORDER "5")
+ set(TRACE_PREFIX "ATT" CACHE STRING "Trace prefix")
+ 
+ target_include_directories(attestation PRIVATE
+@@ -90,6 +91,7 @@ include(${TS_ROOT}/tools/cmake/common/ExportSp.cmake)
+ export_sp(
+ 	SP_FFA_UUID_CANON ${SP_FFA_UUID_CANON}
+ 	SP_BIN_UUID_CANON ${SP_BIN_UUID_CANON}
++	SP_BOOT_ORDER ${SP_BOOT_ORDER}
+ 	SP_NAME "attestation"
+ 	MK_IN ${TS_ROOT}/environments/opteesp/sp.mk.in
+ 	DTS_IN ${CMAKE_CURRENT_LIST_DIR}/default_attestation.dts.in
+diff --git a/deployments/attestation/config/default-opteesp/default_attestation.dts.in b/deployments/attestation/config/default-opteesp/default_attestation.dts.in
+index 3a2ac76c9..e310cc672 100644
+--- a/deployments/attestation/config/default-opteesp/default_attestation.dts.in
++++ b/deployments/attestation/config/default-opteesp/default_attestation.dts.in
+@@ -15,6 +15,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 	elf-format = <1>;
+diff --git a/deployments/attestation/config/default-sp/CMakeLists.txt b/deployments/attestation/config/default-sp/CMakeLists.txt
+index cdcbdcd71..43d880546 100644
+--- a/deployments/attestation/config/default-sp/CMakeLists.txt
++++ b/deployments/attestation/config/default-sp/CMakeLists.txt
+@@ -28,6 +28,7 @@ set(SP_FFA_UUID_CANON "${TS_RPC_UUID_CANON}")
+ set(TRACE_PREFIX "ATT" CACHE STRING "Trace prefix")
+ set(SP_STACK_SIZE "64 * 1024" CACHE STRING "Stack size")
+ set(SP_HEAP_SIZE "32 * 1024" CACHE STRING "Heap size")
++set(SP_BOOT_ORDER "5")
+ 
+ #-------------------------------------------------------------------------------
+ #  Default deployment specific configuration
+@@ -90,6 +91,7 @@ include(${TS_ROOT}/tools/cmake/common/ExportSp.cmake)
+ export_sp(
+ 	SP_FFA_UUID_CANON ${SP_FFA_UUID_CANON}
+ 	SP_BIN_UUID_CANON ${SP_BIN_UUID_CANON}
++	SP_BOOT_ORDER ${SP_BOOT_ORDER}
+ 	SP_NAME ${SP_NAME}
+ 	DTS_IN ${CMAKE_CURRENT_LIST_DIR}/default_${SP_NAME}.dts.in
+ 	DTS_MEM_REGIONS ${SP_BIN_UUID_CANON}_memory_regions.dtsi
+diff --git a/deployments/attestation/config/default-sp/default_attestation.dts.in b/deployments/attestation/config/default-sp/default_attestation.dts.in
+index 2e16f7ed9..e8383aec1 100644
+--- a/deployments/attestation/config/default-sp/default_attestation.dts.in
++++ b/deployments/attestation/config/default-sp/default_attestation.dts.in
+@@ -15,6 +15,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 
+diff --git a/deployments/block-storage/config/cfi-flash-optee/CMakeLists.txt b/deployments/block-storage/config/cfi-flash-optee/CMakeLists.txt
+index b6501f25d..53bd07839 100644
+--- a/deployments/block-storage/config/cfi-flash-optee/CMakeLists.txt
++++ b/deployments/block-storage/config/cfi-flash-optee/CMakeLists.txt
+@@ -28,6 +28,7 @@ target_include_directories(block-storage PRIVATE "${TOP_LEVEL_INCLUDE_DIRS}")
+ set(SP_BIN_UUID_CANON "63646e80-eb52-462f-ac4f-8cdf3987519c")
+ set(SP_FFA_UUID_CANON "${TS_RPC_UUID_CANON}")
+ set(SP_HEAP_SIZE "120 * 1024" CACHE STRING "SP heap size in bytes")
++set(SP_BOOT_ORDER "1")
+ set(TRACE_PREFIX "BLOCK" CACHE STRING "Trace prefix")
+ 
+ target_include_directories(block-storage PRIVATE
+@@ -95,6 +96,7 @@ include(${TS_ROOT}/tools/cmake/common/ExportSp.cmake)
+ export_sp(
+ 	SP_FFA_UUID_CANON ${SP_FFA_UUID_CANON}
+ 	SP_BIN_UUID_CANON ${SP_BIN_UUID_CANON}
++	SP_BOOT_ORDER ${SP_BOOT_ORDER}
+ 	SP_NAME "block-storage"
+ 	MK_IN ${TS_ROOT}/environments/opteesp/sp.mk.in
+ 	DTS_IN ${CMAKE_CURRENT_LIST_DIR}/default_block-storage.dts.in
+diff --git a/deployments/block-storage/config/cfi-flash-optee/default_block-storage.dts.in b/deployments/block-storage/config/cfi-flash-optee/default_block-storage.dts.in
+index 0a97cb53e..287ecb032 100644
+--- a/deployments/block-storage/config/cfi-flash-optee/default_block-storage.dts.in
++++ b/deployments/block-storage/config/cfi-flash-optee/default_block-storage.dts.in
+@@ -15,6 +15,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 	elf-format = <1>;
+diff --git a/deployments/block-storage/config/default-opteesp/CMakeLists.txt b/deployments/block-storage/config/default-opteesp/CMakeLists.txt
+index 5592dcd0a..7702492fa 100644
+--- a/deployments/block-storage/config/default-opteesp/CMakeLists.txt
++++ b/deployments/block-storage/config/default-opteesp/CMakeLists.txt
+@@ -21,6 +21,7 @@ target_include_directories(block-storage PRIVATE "${TOP_LEVEL_INCLUDE_DIRS}")
+ set(SP_BIN_UUID_CANON "63646e80-eb52-462f-ac4f-8cdf3987519c")
+ set(SP_FFA_UUID_CANON "${TS_RPC_UUID_CANON}")
+ set(SP_HEAP_SIZE "120 * 1024" CACHE STRING "SP heap size in bytes")
++set(SP_BOOT_ORDER "1")
+ set(TRACE_PREFIX "BLOCK" CACHE STRING "Trace prefix")
+ 
+ target_include_directories(block-storage PRIVATE
+@@ -73,6 +74,7 @@ include(${TS_ROOT}/tools/cmake/common/ExportSp.cmake)
+ export_sp(
+ 	SP_FFA_UUID_CANON ${SP_FFA_UUID_CANON}
+ 	SP_BIN_UUID_CANON ${SP_BIN_UUID_CANON}
++	SP_BOOT_ORDER ${SP_BOOT_ORDER}
+ 	SP_NAME "block-storage"
+ 	MK_IN ${TS_ROOT}/environments/opteesp/sp.mk.in
+ 	DTS_IN ${CMAKE_CURRENT_LIST_DIR}/default_block-storage.dts.in
+diff --git a/deployments/block-storage/config/default-opteesp/default_block-storage.dts.in b/deployments/block-storage/config/default-opteesp/default_block-storage.dts.in
+index 0a97cb53e..287ecb032 100644
+--- a/deployments/block-storage/config/default-opteesp/default_block-storage.dts.in
++++ b/deployments/block-storage/config/default-opteesp/default_block-storage.dts.in
+@@ -15,6 +15,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 	elf-format = <1>;
+diff --git a/deployments/block-storage/config/default-sp/CMakeLists.txt b/deployments/block-storage/config/default-sp/CMakeLists.txt
+index 2241c9c46..2f9c85ca7 100644
+--- a/deployments/block-storage/config/default-sp/CMakeLists.txt
++++ b/deployments/block-storage/config/default-sp/CMakeLists.txt
+@@ -26,6 +26,7 @@ set(SP_BIN_UUID_CANON "63646e80-eb52-462f-ac4f-8cdf3987519c")
+ set(SP_FFA_UUID_CANON "${TS_RPC_UUID_CANON}")
+ set(SP_HEAP_SIZE "120 * 1024" CACHE STRING "SP heap size in bytes")
+ set(SP_STACK_SIZE "64 * 1024" CACHE STRING "Stack size")
++set(SP_BOOT_ORDER "1")
+ set(TRACE_PREFIX "BLOCK" CACHE STRING "Trace prefix")
+ 
+ #-------------------------------------------------------------------------------
+@@ -78,6 +79,7 @@ include(${TS_ROOT}/tools/cmake/common/ExportSp.cmake REQUIRED)
+ export_sp(
+ 	SP_FFA_UUID_CANON ${SP_FFA_UUID_CANON}
+ 	SP_BIN_UUID_CANON ${SP_BIN_UUID_CANON}
++	SP_BOOT_ORDER ${SP_BOOT_ORDER}
+ 	SP_NAME ${SP_NAME}
+ 	DTS_IN ${CMAKE_CURRENT_LIST_DIR}/default_${SP_NAME}.dts.in
+ 	DTS_MEM_REGIONS ${SP_BIN_UUID_CANON}_memory_regions.dtsi
+diff --git a/deployments/block-storage/config/default-sp/default_block-storage.dts.in b/deployments/block-storage/config/default-sp/default_block-storage.dts.in
+index 5d1cf5d08..916925bf3 100644
+--- a/deployments/block-storage/config/default-sp/default_block-storage.dts.in
++++ b/deployments/block-storage/config/default-sp/default_block-storage.dts.in
+@@ -15,6 +15,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 
+diff --git a/deployments/block-storage/config/edk2-secure-flash-opteesp/CMakeLists.txt b/deployments/block-storage/config/edk2-secure-flash-opteesp/CMakeLists.txt
+index 5b8bedf69..bba970cee 100644
+--- a/deployments/block-storage/config/edk2-secure-flash-opteesp/CMakeLists.txt
++++ b/deployments/block-storage/config/edk2-secure-flash-opteesp/CMakeLists.txt
+@@ -32,6 +32,7 @@ target_include_directories(block-storage PRIVATE "${TOP_LEVEL_INCLUDE_DIRS}")
+ set(SP_BIN_UUID_CANON "63646e80-eb52-462f-ac4f-8cdf3987519c")
+ set(SP_FFA_UUID_CANON "${TS_RPC_UUID_CANON}")
+ set(SP_HEAP_SIZE "120 * 1024" CACHE STRING "SP heap size in bytes")
++set(SP_BOOT_ORDER "1")
+ set(TRACE_PREFIX "BLOCK" CACHE STRING "Trace prefix")
+ 
+ target_include_directories(block-storage PRIVATE
+@@ -96,6 +97,7 @@ include(${TS_ROOT}/tools/cmake/common/ExportSp.cmake)
+ export_sp(
+ 	SP_FFA_UUID_CANON ${SP_FFA_UUID_CANON}
+ 	SP_BIN_UUID_CANON ${SP_BIN_UUID_CANON}
++	SP_BOOT_ORDER ${SP_BOOT_ORDER}
+ 	SP_NAME "block-storage"
+ 	MK_IN ${TS_ROOT}/environments/opteesp/sp.mk.in
+ 	DTS_IN ${CMAKE_CURRENT_LIST_DIR}/default_block-storage.dts.in
+diff --git a/deployments/block-storage/config/edk2-secure-flash-opteesp/default_block-storage.dts.in b/deployments/block-storage/config/edk2-secure-flash-opteesp/default_block-storage.dts.in
+index 0a97cb53e..287ecb032 100644
+--- a/deployments/block-storage/config/edk2-secure-flash-opteesp/default_block-storage.dts.in
++++ b/deployments/block-storage/config/edk2-secure-flash-opteesp/default_block-storage.dts.in
+@@ -15,6 +15,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 	elf-format = <1>;
+diff --git a/deployments/block-storage/config/semihosted-opteesp/CMakeLists.txt b/deployments/block-storage/config/semihosted-opteesp/CMakeLists.txt
+index 2be517640..fe7b48dc8 100644
+--- a/deployments/block-storage/config/semihosted-opteesp/CMakeLists.txt
++++ b/deployments/block-storage/config/semihosted-opteesp/CMakeLists.txt
+@@ -27,6 +27,7 @@ target_include_directories(block-storage PRIVATE "${TOP_LEVEL_INCLUDE_DIRS}")
+ set(SP_BIN_UUID_CANON "63646e80-eb52-462f-ac4f-8cdf3987519c")
+ set(SP_FFA_UUID_CANON "${TS_RPC_UUID_CANON}")
+ set(SP_HEAP_SIZE "120 * 1024" CACHE STRING "SP heap size in bytes")
++set(SP_BOOT_ORDER "1")
+ set(TRACE_PREFIX "BLOCK" CACHE STRING "Trace prefix")
+ 
+ target_include_directories(block-storage PRIVATE
+@@ -92,6 +93,7 @@ include(${TS_ROOT}/tools/cmake/common/ExportSp.cmake)
+ export_sp(
+ 	SP_FFA_UUID_CANON ${SP_FFA_UUID_CANON}
+ 	SP_BIN_UUID_CANON ${SP_BIN_UUID_CANON}
++	SP_BOOT_ORDER ${SP_BOOT_ORDER}
+ 	SP_NAME "block-storage"
+ 	MK_IN ${TS_ROOT}/environments/opteesp/sp.mk.in
+ 	DTS_IN ${CMAKE_CURRENT_LIST_DIR}/default_block-storage.dts.in
+diff --git a/deployments/block-storage/config/semihosted-opteesp/default_block-storage.dts.in b/deployments/block-storage/config/semihosted-opteesp/default_block-storage.dts.in
+index 0a97cb53e..287ecb032 100644
+--- a/deployments/block-storage/config/semihosted-opteesp/default_block-storage.dts.in
++++ b/deployments/block-storage/config/semihosted-opteesp/default_block-storage.dts.in
+@@ -15,6 +15,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 	elf-format = <1>;
+diff --git a/deployments/crypto/config/default-opteesp/CMakeLists.txt b/deployments/crypto/config/default-opteesp/CMakeLists.txt
+index 1e4069d66..11e2dfbb3 100644
+--- a/deployments/crypto/config/default-opteesp/CMakeLists.txt
++++ b/deployments/crypto/config/default-opteesp/CMakeLists.txt
+@@ -30,6 +30,7 @@ target_include_directories(crypto PRIVATE "${TOP_LEVEL_INCLUDE_DIRS}")
+ set(SP_BIN_UUID_CANON "d9df52d5-16a2-4bb2-9aa4-d26d3b84e8c0")
+ set(SP_FFA_UUID_CANON "${TS_RPC_UUID_CANON}")
+ set(SP_HEAP_SIZE "490 * 1024" CACHE STRING "SP heap size in bytes")
++set(SP_BOOT_ORDER "4")
+ set(TRACE_PREFIX "CRYPTO" CACHE STRING "Trace prefix")
+ 
+ target_include_directories(crypto PRIVATE
+@@ -91,6 +92,7 @@ include(${TS_ROOT}/tools/cmake/common/ExportSp.cmake)
+ export_sp(
+ 	SP_FFA_UUID_CANON ${SP_FFA_UUID_CANON}
+ 	SP_BIN_UUID_CANON ${SP_BIN_UUID_CANON}
++	SP_BOOT_ORDER ${SP_BOOT_ORDER}
+ 	SP_NAME "crypto"
+ 	MK_IN ${TS_ROOT}/environments/opteesp/sp.mk.in
+ 	DTS_IN ${CMAKE_CURRENT_LIST_DIR}/default_crypto.dts.in
+diff --git a/deployments/crypto/config/default-opteesp/default_crypto.dts.in b/deployments/crypto/config/default-opteesp/default_crypto.dts.in
+index c9006361d..729dca7f0 100644
+--- a/deployments/crypto/config/default-opteesp/default_crypto.dts.in
++++ b/deployments/crypto/config/default-opteesp/default_crypto.dts.in
+@@ -15,6 +15,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 	elf-format = <1>;
+diff --git a/deployments/crypto/config/default-sp/CMakeLists.txt b/deployments/crypto/config/default-sp/CMakeLists.txt
+index 83594c5e2..b32772820 100644
+--- a/deployments/crypto/config/default-sp/CMakeLists.txt
++++ b/deployments/crypto/config/default-sp/CMakeLists.txt
+@@ -35,6 +35,7 @@ set(SP_FFA_UUID_CANON "${TS_RPC_UUID_CANON}")
+ set(TRACE_PREFIX "CRYPTO" CACHE STRING "Trace prefix")
+ set(SP_STACK_SIZE "64 * 1024" CACHE STRING "Stack size")
+ set(SP_HEAP_SIZE "490 * 1024" CACHE STRING "Heap size")
++set(SP_BOOT_ORDER "4")
+ 
+ #-------------------------------------------------------------------------------
+ #  Components that are specific to deployment in the opteesp environment.
+@@ -91,6 +92,7 @@ include(${TS_ROOT}/tools/cmake/common/ExportSp.cmake REQUIRED)
+ export_sp(
+ 	SP_FFA_UUID_CANON ${SP_FFA_UUID_CANON}
+ 	SP_BIN_UUID_CANON ${SP_BIN_UUID_CANON}
++	SP_BOOT_ORDER ${SP_BOOT_ORDER}
+ 	SP_NAME ${SP_NAME}
+ 	DTS_IN ${CMAKE_CURRENT_LIST_DIR}/default_${SP_NAME}.dts.in
+ 	DTS_MEM_REGIONS ${SP_BIN_UUID_CANON}_memory_regions.dtsi
+diff --git a/deployments/crypto/config/default-sp/default_crypto.dts.in b/deployments/crypto/config/default-sp/default_crypto.dts.in
+index fcc7ce58e..ef63c63a0 100644
+--- a/deployments/crypto/config/default-sp/default_crypto.dts.in
++++ b/deployments/crypto/config/default-sp/default_crypto.dts.in
+@@ -15,6 +15,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 
+diff --git a/deployments/env-test/config/baremetal-fvp_base_revc-opteesp/default_env-test.dts.in b/deployments/env-test/config/baremetal-fvp_base_revc-opteesp/default_env-test.dts.in
+index 9c09689cf..c8c8c38f3 100644
+--- a/deployments/env-test/config/baremetal-fvp_base_revc-opteesp/default_env-test.dts.in
++++ b/deployments/env-test/config/baremetal-fvp_base_revc-opteesp/default_env-test.dts.in
+@@ -15,6 +15,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 	elf-format = <1>;
+diff --git a/deployments/env-test/config/baremetal-fvp_base_revc-sp/default_env-test.dts.in b/deployments/env-test/config/baremetal-fvp_base_revc-sp/default_env-test.dts.in
+index 8c741b29c..379eba332 100644
+--- a/deployments/env-test/config/baremetal-fvp_base_revc-sp/default_env-test.dts.in
++++ b/deployments/env-test/config/baremetal-fvp_base_revc-sp/default_env-test.dts.in
+@@ -13,6 +13,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 	memory-regions {
+diff --git a/deployments/env-test/config/n1sdp-opteesp/default_env-test.dts.in b/deployments/env-test/config/n1sdp-opteesp/default_env-test.dts.in
+index 9c09689cf..c8c8c38f3 100644
+--- a/deployments/env-test/config/n1sdp-opteesp/default_env-test.dts.in
++++ b/deployments/env-test/config/n1sdp-opteesp/default_env-test.dts.in
+@@ -15,6 +15,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 	elf-format = <1>;
+diff --git a/deployments/fwu/config/default-opteesp/CMakeLists.txt b/deployments/fwu/config/default-opteesp/CMakeLists.txt
+index f5087d81e..d19e4293c 100644
+--- a/deployments/fwu/config/default-opteesp/CMakeLists.txt
++++ b/deployments/fwu/config/default-opteesp/CMakeLists.txt
+@@ -23,6 +23,7 @@ target_include_directories(fwu PRIVATE "${TOP_LEVEL_INCLUDE_DIRS}")
+ set(SP_BIN_UUID_CANON "6823a838-1b06-470e-9774-0cce8bfb53fd")
+ set(SP_FFA_UUID_CANON "${TS_RPC_UUID_CANON}")
+ set(SP_HEAP_SIZE "32 * 1024" CACHE STRING "SP heap size in bytes")
++set(SP_BOOT_ORDER "7")
+ 
+ target_include_directories(fwu PRIVATE
+ 	${CMAKE_CURRENT_LIST_DIR}
+@@ -90,6 +91,7 @@ include(${TS_ROOT}/tools/cmake/common/ExportSp.cmake)
+ export_sp(
+ 	SP_FFA_UUID_CANON ${SP_FFA_UUID_CANON}
+ 	SP_BIN_UUID_CANON ${SP_BIN_UUID_CANON}
++	SP_BOOT_ORDER ${SP_BOOT_ORDER}
+ 	SP_NAME "fwu"
+ 	DTS_IN ${CMAKE_CURRENT_LIST_DIR}/default_fwu.dts.in
+ 	JSON_IN ${TS_ROOT}/environments/opteesp/sp_pkg.json.in
+diff --git a/deployments/fwu/config/default-opteesp/default_fwu.dts.in b/deployments/fwu/config/default-opteesp/default_fwu.dts.in
+index 14970d592..d62850fe8 100644
+--- a/deployments/fwu/config/default-opteesp/default_fwu.dts.in
++++ b/deployments/fwu/config/default-opteesp/default_fwu.dts.in
+@@ -15,6 +15,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 	elf-format = <1>;
+diff --git a/deployments/fwu/config/default-sp/CMakeLists.txt b/deployments/fwu/config/default-sp/CMakeLists.txt
+index f84ba8f27..9ddc7cc3f 100644
+--- a/deployments/fwu/config/default-sp/CMakeLists.txt
++++ b/deployments/fwu/config/default-sp/CMakeLists.txt
+@@ -27,6 +27,7 @@ set(SP_BIN_UUID_CANON "6823a838-1b06-470e-9774-0cce8bfb53fd")
+ set(SP_FFA_UUID_CANON "${TS_RPC_UUID_CANON}")
+ set(SP_STACK_SIZE "64 * 1024" CACHE STRING "Stack size")
+ set(SP_HEAP_SIZE "32 * 1024" CACHE STRING "Heap size")
++set(SP_BOOT_ORDER "7")
+ 
+ #-------------------------------------------------------------------------------
+ #  Configure trace output
+@@ -90,6 +91,7 @@ include(${TS_ROOT}/tools/cmake/common/ExportSp.cmake)
+ export_sp(
+ 	SP_FFA_UUID_CANON ${SP_FFA_UUID_CANON}
+ 	SP_BIN_UUID_CANON ${SP_BIN_UUID_CANON}
++	SP_BOOT_ORDER ${SP_BOOT_ORDER}
+ 	SP_NAME ${SP_NAME}
+ 	DTS_IN ${CMAKE_CURRENT_LIST_DIR}/default_${SP_NAME}.dts.in
+ 	DTS_MEM_REGIONS ${SP_BIN_UUID_CANON}_memory_regions.dtsi
+diff --git a/deployments/fwu/config/default-sp/default_fwu.dts.in b/deployments/fwu/config/default-sp/default_fwu.dts.in
+index 3f1292e1f..a30111a18 100644
+--- a/deployments/fwu/config/default-sp/default_fwu.dts.in
++++ b/deployments/fwu/config/default-sp/default_fwu.dts.in
+@@ -15,6 +15,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 
+diff --git a/deployments/internal-trusted-storage/config/default-opteesp/CMakeLists.txt b/deployments/internal-trusted-storage/config/default-opteesp/CMakeLists.txt
+index 5ae53d7f7..51040bc9b 100644
+--- a/deployments/internal-trusted-storage/config/default-opteesp/CMakeLists.txt
++++ b/deployments/internal-trusted-storage/config/default-opteesp/CMakeLists.txt
+@@ -21,6 +21,7 @@ set(SP_BIN_UUID_CANON "dc1eef48-b17a-4ccf-ac8b-dfcff7711b14")
+ set(SP_FFA_UUID_CANON "${TS_RPC_UUID_CANON}")
+ 
+ set(SP_HEAP_SIZE "32 * 1024" CACHE STRING "SP heap size in bytes")
++set(SP_BOOT_ORDER "2")
+ set(TRACE_PREFIX "ITS" CACHE STRING "Trace prefix")
+ 
+ target_include_directories(internal-trusted-storage PRIVATE
+@@ -74,6 +75,7 @@ include(${TS_ROOT}/tools/cmake/common/ExportSp.cmake)
+ export_sp(
+ 	SP_FFA_UUID_CANON ${SP_FFA_UUID_CANON}
+ 	SP_BIN_UUID_CANON ${SP_BIN_UUID_CANON}
++	SP_BOOT_ORDER ${SP_BOOT_ORDER}
+ 	SP_NAME "internal-trusted-storage"
+ 	MK_IN ${TS_ROOT}/environments/opteesp/sp.mk.in
+ 	DTS_IN ${CMAKE_CURRENT_LIST_DIR}/default_internal-trusted-storage.dts.in
+diff --git a/deployments/internal-trusted-storage/config/default-opteesp/default_internal-trusted-storage.dts.in b/deployments/internal-trusted-storage/config/default-opteesp/default_internal-trusted-storage.dts.in
+index 77d08051c..9c5c8971e 100644
+--- a/deployments/internal-trusted-storage/config/default-opteesp/default_internal-trusted-storage.dts.in
++++ b/deployments/internal-trusted-storage/config/default-opteesp/default_internal-trusted-storage.dts.in
+@@ -15,6 +15,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 	elf-format = <1>;
+diff --git a/deployments/internal-trusted-storage/config/default-sp/CMakeLists.txt b/deployments/internal-trusted-storage/config/default-sp/CMakeLists.txt
+index fd54a6389..6e68e57ae 100644
+--- a/deployments/internal-trusted-storage/config/default-sp/CMakeLists.txt
++++ b/deployments/internal-trusted-storage/config/default-sp/CMakeLists.txt
+@@ -25,6 +25,7 @@ set(SP_FFA_UUID_CANON "${TS_RPC_UUID_CANON}")
+ set(TRACE_PREFIX "ITS" CACHE STRING "Trace prefix")
+ set(SP_STACK_SIZE "64 * 1024" CACHE STRING "Stack size")
+ set(SP_HEAP_SIZE "32 * 1024" CACHE STRING "Heap size")
++set(SP_BOOT_ORDER "2")
+ 
+ #-------------------------------------------------------------------------------
+ #  Add components - this deployment uses an infrastructure that provides
+@@ -78,6 +79,7 @@ include(${TS_ROOT}/tools/cmake/common/ExportSp.cmake REQUIRED)
+ export_sp(
+ 	SP_FFA_UUID_CANON ${SP_FFA_UUID_CANON}
+ 	SP_BIN_UUID_CANON ${SP_BIN_UUID_CANON}
++	SP_BOOT_ORDER ${SP_BOOT_ORDER}
+ 	SP_NAME ${SP_NAME}
+ 	DTS_IN ${CMAKE_CURRENT_LIST_DIR}/default_${SP_NAME}.dts.in
+ 	DTS_MEM_REGIONS ${SP_BIN_UUID_CANON}_memory_regions.dtsi
+diff --git a/deployments/internal-trusted-storage/config/default-sp/default_internal-trusted-storage.dts.in b/deployments/internal-trusted-storage/config/default-sp/default_internal-trusted-storage.dts.in
+index bfe55b651..068ecc079 100644
+--- a/deployments/internal-trusted-storage/config/default-sp/default_internal-trusted-storage.dts.in
++++ b/deployments/internal-trusted-storage/config/default-sp/default_internal-trusted-storage.dts.in
+@@ -15,6 +15,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 
+diff --git a/deployments/internal-trusted-storage/config/shared-flash-opteesp/CMakeLists.txt b/deployments/internal-trusted-storage/config/shared-flash-opteesp/CMakeLists.txt
+index 7a0c20966..ab2cf1c25 100644
+--- a/deployments/internal-trusted-storage/config/shared-flash-opteesp/CMakeLists.txt
++++ b/deployments/internal-trusted-storage/config/shared-flash-opteesp/CMakeLists.txt
+@@ -21,6 +21,7 @@ set(SP_BIN_UUID_CANON "dc1eef48-b17a-4ccf-ac8b-dfcff7711b14")
+ set(SP_FFA_UUID_CANON "${TS_RPC_UUID_CANON}")
+ 
+ set(SP_HEAP_SIZE "32 * 1024" CACHE STRING "SP heap size in bytes")
++set(SP_BOOT_ORDER "2")
+ set(TRACE_PREFIX "ITS" CACHE STRING "Trace prefix")
+ 
+ target_include_directories(internal-trusted-storage PRIVATE
+@@ -74,6 +75,7 @@ include(${TS_ROOT}/tools/cmake/common/ExportSp.cmake)
+ export_sp(
+ 	SP_FFA_UUID_CANON ${SP_FFA_UUID_CANON}
+ 	SP_BIN_UUID_CANON ${SP_BIN_UUID_CANON}
++	SP_BOOT_ORDER ${SP_BOOT_ORDER}
+ 	SP_NAME "internal-trusted-storage"
+ 	MK_IN ${TS_ROOT}/environments/opteesp/sp.mk.in
+ 	DTS_IN ${CMAKE_CURRENT_LIST_DIR}/default_internal-trusted-storage.dts.in
+diff --git a/deployments/internal-trusted-storage/config/shared-flash-opteesp/default_internal-trusted-storage.dts.in b/deployments/internal-trusted-storage/config/shared-flash-opteesp/default_internal-trusted-storage.dts.in
+index 77d08051c..9c5c8971e 100644
+--- a/deployments/internal-trusted-storage/config/shared-flash-opteesp/default_internal-trusted-storage.dts.in
++++ b/deployments/internal-trusted-storage/config/shared-flash-opteesp/default_internal-trusted-storage.dts.in
+@@ -15,6 +15,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 	elf-format = <1>;
+diff --git a/deployments/protected-storage/config/default-opteesp/CMakeLists.txt b/deployments/protected-storage/config/default-opteesp/CMakeLists.txt
+index 7d6e5a0e6..e1fb3698c 100644
+--- a/deployments/protected-storage/config/default-opteesp/CMakeLists.txt
++++ b/deployments/protected-storage/config/default-opteesp/CMakeLists.txt
+@@ -21,6 +21,7 @@ set(SP_BIN_UUID_CANON "751bf801-3dde-4768-a514-0f10aeed1790")
+ set(SP_FFA_UUID_CANON "${TS_RPC_UUID_CANON}")
+ 
+ set(SP_HEAP_SIZE "32 * 1024" CACHE STRING "SP heap size in bytes")
++set(SP_BOOT_ORDER "3")
+ set(TRACE_PREFIX "PS" CACHE STRING "Trace prefix")
+ 
+ target_include_directories(protected-storage PRIVATE
+@@ -73,6 +74,7 @@ include(${TS_ROOT}/tools/cmake/common/ExportSp.cmake)
+ export_sp(
+ 	SP_FFA_UUID_CANON ${SP_FFA_UUID_CANON}
+ 	SP_BIN_UUID_CANON ${SP_BIN_UUID_CANON}
++	SP_BOOT_ORDER ${SP_BOOT_ORDER}
+ 	SP_NAME "protected-storage"
+ 	MK_IN ${TS_ROOT}/environments/opteesp/sp.mk.in
+ 	DTS_IN ${CMAKE_CURRENT_LIST_DIR}/default_protected-storage.dts.in
+diff --git a/deployments/protected-storage/config/default-opteesp/default_protected-storage.dts.in b/deployments/protected-storage/config/default-opteesp/default_protected-storage.dts.in
+index b305fbbf7..2bc74a40d 100644
+--- a/deployments/protected-storage/config/default-opteesp/default_protected-storage.dts.in
++++ b/deployments/protected-storage/config/default-opteesp/default_protected-storage.dts.in
+@@ -15,6 +15,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 	elf-format = <1>;
+diff --git a/deployments/protected-storage/config/default-sp/CMakeLists.txt b/deployments/protected-storage/config/default-sp/CMakeLists.txt
+index 1c85ef120..4ee55b84d 100644
+--- a/deployments/protected-storage/config/default-sp/CMakeLists.txt
++++ b/deployments/protected-storage/config/default-sp/CMakeLists.txt
+@@ -25,6 +25,7 @@ set(SP_FFA_UUID_CANON "${TS_RPC_UUID_CANON}")
+ set(TRACE_PREFIX "PS" CACHE STRING "Trace prefix")
+ set(SP_STACK_SIZE "64 * 1024" CACHE STRING "Stack size")
+ set(SP_HEAP_SIZE "32 * 1024" CACHE STRING "Heap size")
++set(SP_BOOT_ORDER "3")
+ 
+ #-------------------------------------------------------------------------------
+ #  Add components - this deployment uses an infrastructure that provides
+@@ -78,6 +79,7 @@ include(${TS_ROOT}/tools/cmake/common/ExportSp.cmake REQUIRED)
+ export_sp(
+ 	SP_FFA_UUID_CANON ${SP_FFA_UUID_CANON}
+ 	SP_BIN_UUID_CANON ${SP_BIN_UUID_CANON}
++	SP_BOOT_ORDER ${SP_BOOT_ORDER}
+ 	SP_NAME ${SP_NAME}
+ 	DTS_IN ${CMAKE_CURRENT_LIST_DIR}/default_${SP_NAME}.dts.in
+ 	DTS_MEM_REGIONS ${SP_BIN_UUID_CANON}_memory_regions.dtsi
+diff --git a/deployments/protected-storage/config/default-sp/default_protected-storage.dts.in b/deployments/protected-storage/config/default-sp/default_protected-storage.dts.in
+index 38c9b5849..79c001faf 100644
+--- a/deployments/protected-storage/config/default-sp/default_protected-storage.dts.in
++++ b/deployments/protected-storage/config/default-sp/default_protected-storage.dts.in
+@@ -15,6 +15,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 
+diff --git a/deployments/protected-storage/config/shared-flash-opteesp/CMakeLists.txt b/deployments/protected-storage/config/shared-flash-opteesp/CMakeLists.txt
+index 1a3480dce..31724de6a 100644
+--- a/deployments/protected-storage/config/shared-flash-opteesp/CMakeLists.txt
++++ b/deployments/protected-storage/config/shared-flash-opteesp/CMakeLists.txt
+@@ -22,6 +22,7 @@ set(SP_FFA_UUID_CANON "${TS_RPC_UUID_CANON}")
+ 
+ set(SP_HEAP_SIZE "32 * 1024" CACHE STRING "SP heap size in bytes")
+ set(TRACE_PREFIX "PS" CACHE STRING "Trace prefix")
++set(SP_BOOT_ORDER "3")
+ 
+ target_include_directories(protected-storage PRIVATE
+ 	${CMAKE_CURRENT_LIST_DIR}
+@@ -72,6 +73,7 @@ include(${TS_ROOT}/tools/cmake/common/ExportSp.cmake)
+ export_sp(
+ 	SP_FFA_UUID_CANON ${SP_FFA_UUID_CANON}
+ 	SP_BIN_UUID_CANON ${SP_BIN_UUID_CANON}
++	SP_BOOT_ORDER ${SP_BOOT_ORDER}
+ 	SP_NAME "protected-storage"
+ 	MK_IN ${TS_ROOT}/environments/opteesp/sp.mk.in
+ 	DTS_IN ${CMAKE_CURRENT_LIST_DIR}/default_protected-storage.dts.in
+diff --git a/deployments/protected-storage/config/shared-flash-opteesp/default_protected-storage.dts.in b/deployments/protected-storage/config/shared-flash-opteesp/default_protected-storage.dts.in
+index b305fbbf7..2bc74a40d 100644
+--- a/deployments/protected-storage/config/shared-flash-opteesp/default_protected-storage.dts.in
++++ b/deployments/protected-storage/config/shared-flash-opteesp/default_protected-storage.dts.in
+@@ -15,6 +15,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 	elf-format = <1>;
+diff --git a/deployments/se-proxy/config/corstone1000-opteesp/CMakeLists.txt b/deployments/se-proxy/config/corstone1000-opteesp/CMakeLists.txt
+index 2c0da0e97..3e2cef692 100644
+--- a/deployments/se-proxy/config/corstone1000-opteesp/CMakeLists.txt
++++ b/deployments/se-proxy/config/corstone1000-opteesp/CMakeLists.txt
+@@ -23,6 +23,7 @@ set(SP_BIN_UUID_CANON "46bb39d1-b4d9-45b5-88ff-040027dab249")
+ set(SP_FFA_UUID_CANON "${TS_RPC_UUID_CANON}")
+ 
+ set(SP_HEAP_SIZE "32 * 1024" CACHE STRING "SP heap size in bytes")
++set(SP_BOOT_ORDER "1")
+ set(TRACE_PREFIX "SEPROXY" CACHE STRING "Trace prefix")
+ 
+ target_include_directories(se-proxy PRIVATE
+@@ -84,6 +85,7 @@ include(${TS_ROOT}/tools/cmake/common/ExportSp.cmake)
+ export_sp(
+ 	SP_FFA_UUID_CANON ${SP_FFA_UUID_CANON}
+ 	SP_BIN_UUID_CANON ${SP_BIN_UUID_CANON}
++	SP_BOOT_ORDER ${SP_BOOT_ORDER}
+ 	SP_NAME "se-proxy"
+ 	MK_IN ${TS_ROOT}/environments/opteesp/sp.mk.in
+ 	DTS_IN ${CMAKE_CURRENT_LIST_DIR}/default_se-proxy.dts.in
+diff --git a/deployments/se-proxy/config/corstone1000-opteesp/default_se-proxy.dts.in b/deployments/se-proxy/config/corstone1000-opteesp/default_se-proxy.dts.in
+index cc42929d5..d3addedbc 100644
+--- a/deployments/se-proxy/config/corstone1000-opteesp/default_se-proxy.dts.in
++++ b/deployments/se-proxy/config/corstone1000-opteesp/default_se-proxy.dts.in
+@@ -15,6 +15,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 	elf-format = <1>;
+diff --git a/deployments/se-proxy/config/default-opteesp/CMakeLists.txt b/deployments/se-proxy/config/default-opteesp/CMakeLists.txt
+index 77ea841d2..a9b1bad17 100644
+--- a/deployments/se-proxy/config/default-opteesp/CMakeLists.txt
++++ b/deployments/se-proxy/config/default-opteesp/CMakeLists.txt
+@@ -25,6 +25,7 @@ set(SP_BIN_UUID_CANON "46bb39d1-b4d9-45b5-88ff-040027dab249")
+ set(SP_FFA_UUID_CANON "${TS_RPC_UUID_CANON}")
+ 
+ set(SP_HEAP_SIZE "32 * 1024" CACHE STRING "SP heap size in bytes")
++set(SP_BOOT_ORDER "2")
+ set(TRACE_PREFIX "SEPROXY" CACHE STRING "Trace prefix")
+ 
+ target_include_directories(se-proxy PRIVATE
+@@ -86,6 +87,7 @@ include(${TS_ROOT}/tools/cmake/common/ExportSp.cmake)
+ export_sp(
+ 	SP_FFA_UUID_CANON ${SP_FFA_UUID_CANON}
+ 	SP_BIN_UUID_CANON ${SP_BIN_UUID_CANON}
++	SP_BOOT_ORDER ${SP_BOOT_ORDER}
+ 	SP_NAME "se-proxy"
+ 	MK_IN ${TS_ROOT}/environments/opteesp/sp.mk.in
+ 	DTS_IN ${CMAKE_CURRENT_LIST_DIR}/default_se-proxy.dts.in
+diff --git a/deployments/se-proxy/config/default-opteesp/default_se-proxy.dts.in b/deployments/se-proxy/config/default-opteesp/default_se-proxy.dts.in
+index 902017c35..7c2f038a0 100644
+--- a/deployments/se-proxy/config/default-opteesp/default_se-proxy.dts.in
++++ b/deployments/se-proxy/config/default-opteesp/default_se-proxy.dts.in
+@@ -15,6 +15,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 	elf-format = <1>;
+diff --git a/deployments/se-proxy/config/default-sp/CMakeLists.txt b/deployments/se-proxy/config/default-sp/CMakeLists.txt
+index 70d40739d..59780b44d 100644
+--- a/deployments/se-proxy/config/default-sp/CMakeLists.txt
++++ b/deployments/se-proxy/config/default-sp/CMakeLists.txt
+@@ -29,6 +29,7 @@ set(SP_FFA_UUID_CANON "${TS_RPC_UUID_CANON}")
+ set(TRACE_PREFIX "SEPROXY" CACHE STRING "Trace prefix")
+ set(SP_STACK_SIZE "64 * 1024" CACHE STRING "Stack size")
+ set(SP_HEAP_SIZE "32 * 1024" CACHE STRING "Heap size")
++set(SP_BOOT_ORDER "2")
+ 
+ #-------------------------------------------------------------------------------
+ #  Components that are specific to deployment in the opteesp environment.
+@@ -85,6 +86,7 @@ include(${TS_ROOT}/tools/cmake/common/ExportSp.cmake REQUIRED)
+ export_sp(
+ 	SP_FFA_UUID_CANON ${SP_FFA_UUID_CANON}
+ 	SP_BIN_UUID_CANON ${SP_BIN_UUID_CANON}
++	SP_BOOT_ORDER ${SP_BOOT_ORDER}
+ 	SP_NAME ${SP_NAME}
+ 	DTS_IN ${CMAKE_CURRENT_LIST_DIR}/default_${SP_NAME}.dts.in
+ 	DTS_MEM_REGIONS ${SP_BIN_UUID_CANON}_memory_regions.dtsi
+diff --git a/deployments/se-proxy/config/default-sp/default_se-proxy.dts.in b/deployments/se-proxy/config/default-sp/default_se-proxy.dts.in
+index 3b66f9258..09f0dc129 100644
+--- a/deployments/se-proxy/config/default-sp/default_se-proxy.dts.in
++++ b/deployments/se-proxy/config/default-sp/default_se-proxy.dts.in
+@@ -15,6 +15,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 
+diff --git a/deployments/sfs-demo/opteesp/default_sfs-demo.dts.in b/deployments/sfs-demo/opteesp/default_sfs-demo.dts.in
+index 69c36895e..17d1dece3 100644
+--- a/deployments/sfs-demo/opteesp/default_sfs-demo.dts.in
++++ b/deployments/sfs-demo/opteesp/default_sfs-demo.dts.in
+@@ -15,6 +15,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 	elf-format = <1>;
+diff --git a/deployments/sfs-demo/sp/default_sfs-demo.dts.in b/deployments/sfs-demo/sp/default_sfs-demo.dts.in
+index 0ea2844d7..b97b5ffea 100644
+--- a/deployments/sfs-demo/sp/default_sfs-demo.dts.in
++++ b/deployments/sfs-demo/sp/default_sfs-demo.dts.in
+@@ -15,6 +15,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 
+diff --git a/deployments/smm-gateway/config/default-opteesp/CMakeLists.txt b/deployments/smm-gateway/config/default-opteesp/CMakeLists.txt
+index 0ca460601..7becb3999 100644
+--- a/deployments/smm-gateway/config/default-opteesp/CMakeLists.txt
++++ b/deployments/smm-gateway/config/default-opteesp/CMakeLists.txt
+@@ -22,6 +22,7 @@ add_executable(smm-gateway)
+ target_include_directories(smm-gateway PRIVATE "${TOP_LEVEL_INCLUDE_DIRS}")
+ set(SP_BIN_UUID_CANON "ed32d533-99e6-4209-9cc0-2d72cdd998a7")
+ set(SP_FFA_UUID_CANON "${SP_BIN_UUID_CANON}")
++set(SP_BOOT_ORDER "8")
+ 
+ set(SP_HEAP_SIZE "32 * 1024" CACHE STRING "SP heap size in bytes")
+ set(TRACE_PREFIX "SMMGW" CACHE STRING "Trace prefix")
+@@ -89,6 +90,7 @@ include(${TS_ROOT}/tools/cmake/common/ExportSp.cmake)
+ export_sp(
+ 	SP_FFA_UUID_CANON ${SP_FFA_UUID_CANON}
+ 	SP_BIN_UUID_CANON ${SP_BIN_UUID_CANON}
++	SP_BOOT_ORDER ${SP_BOOT_ORDER}
+ 	SP_NAME "smm-gateway"
+ 	MK_IN ${TS_ROOT}/environments/opteesp/sp.mk.in
+ 	DTS_IN ${CMAKE_CURRENT_LIST_DIR}/default_smm-gateway.dts.in
+diff --git a/deployments/smm-gateway/config/default-opteesp/default_smm-gateway.dts.in b/deployments/smm-gateway/config/default-opteesp/default_smm-gateway.dts.in
+index d74c2f3ee..eb5ebf592 100644
+--- a/deployments/smm-gateway/config/default-opteesp/default_smm-gateway.dts.in
++++ b/deployments/smm-gateway/config/default-opteesp/default_smm-gateway.dts.in
+@@ -15,6 +15,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 	elf-format = <1>;
+diff --git a/deployments/smm-gateway/config/default-sp/CMakeLists.txt b/deployments/smm-gateway/config/default-sp/CMakeLists.txt
+index 95c572632..e56a8559d 100644
+--- a/deployments/smm-gateway/config/default-sp/CMakeLists.txt
++++ b/deployments/smm-gateway/config/default-sp/CMakeLists.txt
+@@ -27,6 +27,8 @@ set(SP_BIN_UUID_CANON "ed32d533-99e6-4209-9cc0-2d72cdd998a7")
+ set(SP_FFA_UUID_CANON "${SP_BIN_UUID_CANON}")
+ set(TRACE_PREFIX "SMMGW" CACHE STRING "Trace prefix")
+ set(SP_STACK_SIZE "64 * 1024" CACHE STRING "Stack size")
++set(SP_BOOT_ORDER "8")
++
+ set(SP_HEAP_SIZE "32 * 1024" CACHE STRING "Heap size")
+ 
+ # Setting the MM communication buffer parameters
+@@ -88,6 +90,7 @@ include(${TS_ROOT}/tools/cmake/common/ExportSp.cmake REQUIRED)
+ export_sp(
+ 	SP_FFA_UUID_CANON ${SP_FFA_UUID_CANON}
+ 	SP_BIN_UUID_CANON ${SP_BIN_UUID_CANON}
++	SP_BOOT_ORDER ${SP_BOOT_ORDER}
+ 	SP_NAME ${SP_NAME}
+ 	DTS_IN ${CMAKE_CURRENT_LIST_DIR}/default_${SP_NAME}.dts.in
+ 	DTS_MEM_REGIONS ${SP_BIN_UUID_CANON}_memory_regions.dtsi
+diff --git a/deployments/smm-gateway/config/default-sp/default_smm-gateway.dts.in b/deployments/smm-gateway/config/default-sp/default_smm-gateway.dts.in
+index 9b8988eb1..8e41eb762 100644
+--- a/deployments/smm-gateway/config/default-sp/default_smm-gateway.dts.in
++++ b/deployments/smm-gateway/config/default-sp/default_smm-gateway.dts.in
+@@ -15,6 +15,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AArch64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 
+diff --git a/deployments/spm-test1/opteesp/CMakeLists.txt b/deployments/spm-test1/opteesp/CMakeLists.txt
+index 4558303ad..26b846ef6 100644
+--- a/deployments/spm-test1/opteesp/CMakeLists.txt
++++ b/deployments/spm-test1/opteesp/CMakeLists.txt
+@@ -18,6 +18,7 @@ set(SP_FFA_UUID_CANON "5c9edbc3-7b3a-4367-9f83-7c191ae86a37")
+ set(SP_NUMBER 1)
+ set(SP_HEAP_SIZE "32 * 1024" CACHE STRING "SP heap size in bytes")
+ set(TRACE_PREFIX "SPM-TEST${SP_NUMBER}" CACHE STRING "Trace prefix")
++set(SP_BOOT_ORDER "0" CACHE STRING "Boot-order.")
+ 
+ #-------------------------------------------------------------------------------
+ #  Components that are spm-test specific to deployment in the opteesp
+diff --git a/deployments/spm-test1/opteesp/default_spm_test1.dts.in b/deployments/spm-test1/opteesp/default_spm_test1.dts.in
+index 0cc220798..a672ee19c 100644
+--- a/deployments/spm-test1/opteesp/default_spm_test1.dts.in
++++ b/deployments/spm-test1/opteesp/default_spm_test1.dts.in
+@@ -17,6 +17,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AARCH64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 	elf-format = <1>;
+diff --git a/deployments/spm-test2/opteesp/CMakeLists.txt b/deployments/spm-test2/opteesp/CMakeLists.txt
+index ea82a4ae1..3781567bb 100644
+--- a/deployments/spm-test2/opteesp/CMakeLists.txt
++++ b/deployments/spm-test2/opteesp/CMakeLists.txt
+@@ -18,6 +18,7 @@ set(SP_FFA_UUID_CANON "7817164c-c40c-4d1a-867a-9bb2278cf41a")
+ set(SP_NUMBER 2)
+ set(SP_HEAP_SIZE "32 * 1024" CACHE STRING "SP heap size in bytes")
+ set(TRACE_PREFIX "SPM-TEST${SP_NUMBER}" CACHE STRING "Trace prefix")
++set(SP_BOOT_ORDER "0" CACHE STRING "Boot-order.")
+ 
+ #-------------------------------------------------------------------------------
+ #  Components that are spm-test specific to deployment in the opteesp
+diff --git a/deployments/spm-test2/opteesp/default_spm_test2.dts.in b/deployments/spm-test2/opteesp/default_spm_test2.dts.in
+index f75bd9e7e..2364ded72 100644
+--- a/deployments/spm-test2/opteesp/default_spm_test2.dts.in
++++ b/deployments/spm-test2/opteesp/default_spm_test2.dts.in
+@@ -17,6 +17,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AARCH64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 	elf-format = <1>;
+diff --git a/deployments/spm-test3/opteesp/CMakeLists.txt b/deployments/spm-test3/opteesp/CMakeLists.txt
+index c448673d6..7d9ae0b42 100644
+--- a/deployments/spm-test3/opteesp/CMakeLists.txt
++++ b/deployments/spm-test3/opteesp/CMakeLists.txt
+@@ -18,6 +18,8 @@ set(SP_FFA_UUID_CANON "23eb0100-e32a-4497-9052-2f11e584afa6")
+ set(SP_NUMBER 3)
+ set(SP_HEAP_SIZE "32 * 1024" CACHE STRING "SP heap size in bytes")
+ set(TRACE_PREFIX "SPM-TEST${SP_NUMBER}" CACHE STRING "Trace prefix")
++set(SP_BOOT_ORDER "0" CACHE STRING "Boot-order.")
++
+ 
+ #-------------------------------------------------------------------------------
+ #  Components that are spm-test specific to deployment in the opteesp
+diff --git a/deployments/spm-test3/opteesp/default_spm_test3.dts.in b/deployments/spm-test3/opteesp/default_spm_test3.dts.in
+index c3c768fb5..17e9a47b8 100644
+--- a/deployments/spm-test3/opteesp/default_spm_test3.dts.in
++++ b/deployments/spm-test3/opteesp/default_spm_test3.dts.in
+@@ -17,6 +17,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AARCH64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 	elf-format = <1>;
+diff --git a/deployments/spm-test4/opteesp/CMakeLists.txt b/deployments/spm-test4/opteesp/CMakeLists.txt
+index 4e572ecd2..09cb70944 100644
+--- a/deployments/spm-test4/opteesp/CMakeLists.txt
++++ b/deployments/spm-test4/opteesp/CMakeLists.txt
+@@ -18,6 +18,7 @@ set(SP_FFA_UUID_CANON "23eb0100-e32a-4497-9052-2f11e584afa6")
+ set(SP_NUMBER 4)
+ set(SP_HEAP_SIZE "32 * 1024" CACHE STRING "SP heap size in bytes")
+ set(TRACE_PREFIX "SPM-TEST${SP_NUMBER}" CACHE STRING "Trace prefix")
++set(SP_BOOT_ORDER "0" CACHE STRING "Boot-order.")
+ 
+ #-------------------------------------------------------------------------------
+ #  Components that are spm-test specific to deployment in the opteesp
+diff --git a/deployments/spm-test4/opteesp/default_spm_test4.dts.in b/deployments/spm-test4/opteesp/default_spm_test4.dts.in
+index fffc31f45..ac57dcdfb 100644
+--- a/deployments/spm-test4/opteesp/default_spm_test4.dts.in
++++ b/deployments/spm-test4/opteesp/default_spm_test4.dts.in
+@@ -17,6 +17,7 @@
+ 	exception-level = <1>; /* S-EL0 */
+ 	execution-state = <0>; /* AARCH64 */
+ 	xlat-granule = <0>; /* 4KiB */
++	boot-order = /bits/ 16 <@EXPORT_SP_BOOT_ORDER@>;
+ 	messaging-method = <3>; /* Direct messaging only */
+ 	ns-interrupts-action = <2>; /* Non-secure interrupts are signaled */
+ 	elf-format = <1>;
+diff --git a/tools/cmake/common/ExportSp.cmake b/tools/cmake/common/ExportSp.cmake
+index 78701b933..ceb770046 100644
+--- a/tools/cmake/common/ExportSp.cmake
++++ b/tools/cmake/common/ExportSp.cmake
+@@ -15,6 +15,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/Uuid.cmake)
+ 		export_sp(
+ 			SP_FFA_UUID_CANON <uuid_str_canon>
+ 			SP_NAME <name> MK_IN <.mk path>
++			SP_BOOT_ORDER <number>
+ 			DTS_IN <DTS path>
+ 			DTS_MEM_REGIONS <Memory region manifest path>
+ 			JSON_IN <JSON path>
+@@ -29,6 +30,9 @@ include(${CMAKE_CURRENT_LIST_DIR}/Uuid.cmake)
+ 	The UUID of the SP binary a canonical string. When not set use the
+ 	SP_FFA_UUID_CANON as the SP_BIN_UUID_CANON.
+ 
++	``SP_BOOT_ORDER``
++	Boot-order of the SP. 0 will be booted first.
++
+ 	``SP_NAME``
+ 	The name of the SP.
+ 
+@@ -47,7 +51,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/Uuid.cmake)
+ #]===]
+ function (export_sp)
+ 	set(options)
+-	set(oneValueArgs SP_FFA_UUID_CANON SP_BIN_UUID_CANON SP_NAME MK_IN DTS_IN DTS_MEM_REGIONS JSON_IN)
++	set(oneValueArgs SP_FFA_UUID_CANON SP_BIN_UUID_CANON SP_BOOT_ORDER SP_NAME MK_IN DTS_IN DTS_MEM_REGIONS JSON_IN)
+ 	set(multiValueArgs)
+ 	cmake_parse_arguments(EXPORT "${options}" "${oneValueArgs}"
+ 						"${multiValueArgs}" ${ARGN} )
+@@ -59,6 +63,9 @@ function (export_sp)
+ 		# We use the same UUID for the binary and FF-A if the UUID of the SP binary is not set
+ 		set(EXPORT_SP_BIN_UUID_CANON ${EXPORT_SP_FFA_UUID_CANON})
+ 	endif()
++	if(NOT DEFINED EXPORT_SP_BOOT_ORDER)
++		message(FATAL_ERROR "export_sp: mandatory parameter SP_BOOT_ORDER not defined!")
++	endif()
+ 	if(NOT DEFINED EXPORT_SP_NAME)
+ 		message(FATAL_ERROR "export_sp: mandatory parameter SP_NAME not defined!")
+ 	endif()
+-- 
+2.34.1
+
