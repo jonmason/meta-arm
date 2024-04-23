@@ -10,13 +10,13 @@ SRC_URI = "git://gitlab.arm.com/linux-arm/linux-trusted-services;protocol=https;
           "
 S = "${WORKDIR}/git"
 
-# Tag tee-v1.1.2
-SRCREV = "8a81f5d2406f146b15a705d49b256efaa5fa3ba9"
+# Tag tee-v2.0.0
+SRCREV = "a2d7349a96c3b3afb44bf1555d53f1c46e45a23d"
 
 COMPATIBLE_HOST = "(arm|aarch64).*-linux"
-KERNEL_MODULE_AUTOLOAD += "arm-ffa-tee"
+KERNEL_MODULE_AUTOLOAD += "arm-tstee"
 
 do_install:append() {
     install -d ${D}${includedir}
-    install -m 0644 ${S}/uapi/arm_ffa_tee.h ${D}${includedir}/
+    install -m 0644 ${S}/uapi/arm_tstee.h ${D}${includedir}/
 }

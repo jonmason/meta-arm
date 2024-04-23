@@ -1,4 +1,4 @@
-obj-m := arm-ffa-tee.o
+obj-m := arm-tstee.o
 
 SRC := $(shell pwd)
 

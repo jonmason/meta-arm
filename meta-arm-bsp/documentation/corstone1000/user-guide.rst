@@ -1295,19 +1295,19 @@ First, load FF-A TEE kernel module:
 
 ::
 
-  insmod /lib/modules/*-yocto-standard/updates/arm-ffa-tee.ko
+  insmod /lib/modules/6.1.32-yocto-standard/extra/arm-tstee.ko
 
 Then, check whether the FF-A TEE driver is loaded correctly by using the following command:
 
 ::
 
-  cat /proc/modules | grep arm_ffa_tee
+  cat /proc/modules | grep arm_tstee
 
 The output should be:
 
 ::
 
-   arm_ffa_tee <ID> - - Live <address> (O)
+   arm_tstee 16384 - - Live 0xffffffc000510000 (O)
 
 Now, run the PSA API tests in the following order:
 

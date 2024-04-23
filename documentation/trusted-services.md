@@ -28,7 +28,7 @@ Other steps depend on your machine/platform definition:
 
 1. For communications between Secure and Normal Words Linux kernel option `CONFIG_ARM_FFA_TRANSPORT=y`
    is required. If your platform doesn't include it already you can add `arm-ffa` into MACHINE_FEATURES.
-   (Please see ` meta-arm/recipes-kernel/arm-ffa-tee`.)
+   (Please see ` meta-arm/recipes-kernel/arm-tstee`.)
 
    For running the `uefi-test` or the `xtest -t ffa_spmc` tests under Linux the `arm-ffa-user` drivel is required. This is
    enabled if the `ts-smm-gateway` and/or the `optee-spmc-test` machine features are enabled.
