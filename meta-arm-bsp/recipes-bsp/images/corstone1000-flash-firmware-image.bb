@@ -12,12 +12,10 @@ IMAGE_FSTYPES = "wic uefi_capsule"
 inherit image
 inherit tfm_sign_image
 inherit uefi_capsule
-inherit deploy
 
 DEPENDS += "external-system \
             trusted-firmware-a \
             trusted-firmware-m \
-            u-boot \
 "
 
 IMAGE_FEATURES = ""
@@ -25,21 +23,9 @@ IMAGE_LINGUAS = ""
 
 PACKAGE_INSTALL = ""
 
-# The generated ${MACHINE}_image.nopt is used instead of the default wic image
-# for the capsule generation. The uefi.capsule image type doesn't have to
-# depend on the wic because of this.
-#
-# The corstone1000_capsule_cert.crt and corstone1000_capsule_key.key are installed
-# by the U-Boot recipe so this recipe has to depend on that.
-CAPSULE_IMGTYPE = ""
-CAPSULE_CERTIFICATE_PATH = "${DEPLOY_DIR_IMAGE}/corstone1000_capsule_cert.crt"
-CAPSULE_GUID:corstone1000-fvp ?= "989f3a4e-46e0-4cd0-9877-a25c70c01329"
-CAPSULE_GUID:corstone1000-mps3 ?= "df1865d1-90fb-4d59-9c38-c9f2c1bba8cc"
-CAPSULE_IMGLOCATION = "${DEPLOY_DIR_IMAGE}"
-CAPSULE_INDEX = "1"
-CAPSULE_MONOTONIC_COUNT = "1"
-CAPSULE_PRIVATE_KEY_PATH = "${DEPLOY_DIR_IMAGE}/corstone1000_capsule_key.key"
-UEFI_FIRMWARE_BINARY = "${B}/${MACHINE}_image.nopt"
+UEFI_FIRMWARE_BINARY = "${IMAGE_LINK_NAME}.${CAPSULE_IMGTYPE}"
+UEFI_CAPSULE_CONFIG = "${THISDIR}/files/${PN}-capsule-update-image.json"
+CAPSULE_IMGTYPE = "wic"
 
 # TF-A settings for signing host images
 TFA_BL2_BINARY = "bl2-corstone1000.bin"
@@ -87,9 +73,3 @@ create_nopt_image() {
 }
 create_nopt_image[depends] += "mc:firmware:linux-yocto:do_deploy"
 do_image_uefi_capsule[prefuncs] += "create_nopt_image"
-
-do_deploy() {
-    install -m 0755 ${B}/${MACHINE}_image.nopt  ${DEPLOYDIR}
-}
-
-addtask deploy after do_image_uefi_capsule
