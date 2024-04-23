@@ -6,6 +6,7 @@ require trusted-services.inc
 require ts-uuid.inc
 
 DEPENDS += "dtc-native ts-newlib"
+DEPENDS += "${@oe.utils.conditional('TS_ENV','sp','python3-pyelftools-native','', d)}"
 
 FILES:${PN}-dev = "${TS_INSTALL}"
 

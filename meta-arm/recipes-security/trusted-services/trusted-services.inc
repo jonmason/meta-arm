@@ -23,7 +23,7 @@ TS_PLATFORM ?= "ts/mock"
 # FIP packaging is not supported yet
 SP_PACKAGING_METHOD ?= "embedded"
 
-SYSROOT_DIRS += "/usr/opteesp /usr/arm-linux"
+SYSROOT_DIRS += "/usr/${TS_ENV} /usr/opteesp /usr/arm-linux"
 
 # TS cmake files use find_file() to search through source code and build dirs.
 # Yocto cmake class limits CMAKE_FIND_ROOT_PATH and find_file() fails.
@@ -54,5 +54,5 @@ EXTRA_OECMAKE += "${@get_ts_toolchain_option(d)}"
 
 # Paths to pre-built dependencies required by some TS SPs/tools
 EXTRA_OECMAKE += "-Dlibts_ROOT=${STAGING_DIR_HOST}${TS_INSTALL}/lib/cmake/libts/ \
-                  -DNEWLIB_INSTALL_DIR=${STAGING_DIR_HOST}${TS_INSTALL}/newlib \
+                  -DNEWLIB_INSTALL_DIR=${STAGING_DIR_HOST}/usr/opteesp/newlib \
                  "

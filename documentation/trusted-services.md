@@ -44,6 +44,9 @@ Other steps depend on your machine/platform definition:
    and in `meta-arm-bsp/recipes-bsp/trusted-firmware-a/trusted-firmware-a-n1sdp.inc` and
    `meta-arm-bsp/recipes-bsp/trusted-firmware-a/trusted-firmware-a-corstone1000.inc` for N1SDP and Corstone1000 platforms.
 
+4. Trusted Services supports an SPMC agonistic binary format. To build SPs to this format the `TS_ENV` variable is to be
+   set to `sp`. The resulting SP binaries should be able to boot under any FF-A v1.1 compliant SPMC implementation.
+
 ## Normal World applications
 
 Optionally for testing purposes you can add `packagegroup-ts-tests` into your image. It includes 
