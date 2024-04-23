@@ -48,8 +48,14 @@ KERNEL_FEATURES:corstone1000 = ""
 #
 COMPATIBLE_MACHINE:fvp-base = "fvp-base"
 KMACHINE:fvp-base = "fvp"
-FILESEXTRAPATHS:prepend:fvp-base := "${ARMBSPFILESPATHS}"
-SRC_URI:append:fvp-base = " file://0001-arm64-dts-fvp-Enable-virtio-rng-support.patch"
+FILESEXTRAPATHS:prepend:fvp-base := "${ARMBSPFILESPATHS}:${ARMFILESPATHS}"
+SRC_URI:append:fvp-base = " \
+    file://0001-arm64-dts-fvp-Enable-virtio-rng-support.patch \
+    file://tee.cfg \
+    ${@bb.utils.contains('MACHINE_FEATURES', 'ts-smm-gateway', \
+                         'file://no-strict-devmem.cfg', '' , d)} \
+"
+
 
 #
 # Juno KMACHINE

@@ -15,3 +15,6 @@ SRC_URI:append:corstone1000  = " \
 
 
 COMPATIBLE_MACHINE:n1sdp = "n1sdp"
+
+COMPATIBLE_MACHINE:fvp-base = "fvp-base"
+TS_PLATFORM:fvp-base = "arm/fvp/fvp_base_revc-2xaemv8a"

@@ -140,7 +140,8 @@ fvp-base:
   extends: .build
   parallel:
     matrix:
-      - TESTING: testimage
+      - TS: [none, fvp-base-ts]
+        TESTING: testimage
       - FIRMWARE: edk2
       - SYSTEMREADY_FIRMWARE: arm-systemready-firmware
 
