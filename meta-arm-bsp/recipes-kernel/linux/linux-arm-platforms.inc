@@ -37,6 +37,13 @@ SRC_URI:append:corstone1000 = " ${@bb.utils.contains('MACHINE_FEATURES', \
                                                             '', \
                                                              d)}"
 
+SRC_URI:append:corstone1000 = " \
+    file://extsys.cfg \
+    file://0001-remoteproc-Add-Arm-remoteproc-driver.patch \
+    file://0002-arm64-dts-Add-corstone1000-external-system-device-no.patch \
+    file://0003-dt-bindings-remoteproc-Add-Arm-remoteproc.patch \
+    "
+
 # Default kernel features not needed for corstone1000
 # otherwise the extra kernel modules will increase the rootfs size
 # corstone1000 has limited flash memory constraints
