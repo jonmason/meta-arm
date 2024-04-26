@@ -72,6 +72,7 @@ stages:
     - if: '$KERNEL != "linux-yocto-dev"'
   script:
     - KASFILES=$(./ci/jobs-to-kas "$CI_JOB_NAME" $EXTRA_KAS_FILES):lockfile.yml
+    - echo KASFILES=$KASFILES
     - kas dump --update --force-checkout --resolve-refs --resolve-env $KASFILES
     - kas build $KASFILES
     - ./ci/check-warnings $KAS_WORK_DIR/build/warnings.log
