@@ -75,7 +75,7 @@ class TrustedServicesTest(OERuntimeTestCase):
     def test_11_ps_service_tests(self):
         if 'ts-storage' not in self.tc.td['MACHINE_FEATURES'] and \
            'ts-se-proxy' not in self.tc.td['MACHINE_FEATURES']:
-            self.skipTest('Storage SP is not included into OPTEE')
+            self.skipTest('Storage SP is not deployed in the system.')
         self.run_test_tool('ts-service-test -g PsServiceTests')
 
     @OEHasPackage(['ts-service-test'])
@@ -83,7 +83,7 @@ class TrustedServicesTest(OERuntimeTestCase):
     def test_12_its_service_tests(self):
         if 'ts-its' not in self.tc.td['MACHINE_FEATURES'] and \
            'ts-se-proxy' not in self.tc.td['MACHINE_FEATURES']:
-            self.skipTest('Internal Storage SP is not included into OPTEE')
+            self.skipTest('Internal Storage SP is not deployed in the system.')
         self.run_test_tool('ts-service-test -g ItsServiceTests')
 
     @OEHasPackage(['ts-service-test'])
@@ -91,9 +91,8 @@ class TrustedServicesTest(OERuntimeTestCase):
     def test_14_attestation_service_tests(self):
         if 'ts-attestation' not in self.tc.td['MACHINE_FEATURES'] and \
            'ts-se-proxy' not in self.tc.td['MACHINE_FEATURES']:
-            self.skipTest('Attestation SP is not included into OPTEE')
-        for grp in ["AttestationProvisioningTests", "AttestationServiceTests"]:
-            self.run_test_tool('ts-service-test -g %s'%grp)
+            self.skipTest('Attestation SP is not deployed in the system.')
+        self.run_test_tool('ts-service-test -g Attestation')
 
     @OEHasPackage(['ts-service-test'])
     @skipIfNotInDataVar('MACHINE_FEATURES', 'ts-crypto', 'Crypto SP is not included')
@@ -101,8 +100,5 @@ class TrustedServicesTest(OERuntimeTestCase):
     def test_15_crypto_service_tests(self):
         if 'ts-crypto' not in self.tc.td['MACHINE_FEATURES'] and \
            'ts-se-proxy' not in self.tc.td['MACHINE_FEATURES']:
-            self.skipTest('Crypto SP is not included into OPTEE')
-        for grp in ["CryptoKeyDerivationServicePackedcTests", "CryptoMacServicePackedcTests", \
-                    "CryptoCipherServicePackedcTests", "CryptoHashServicePackedcTests", \
-                    "CryptoServicePackedcTests", "CryptoServiceProtobufTests CryptoServiceLimitTests"]:
-            self.run_test_tool('ts-service-test -g %s'%grp)
+            self.skipTest('Crypto SP is not deployed in the system.')
+        self.run_test_tool('ts-service-test -g Crypto')
