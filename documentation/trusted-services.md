@@ -18,6 +18,7 @@ features for each [Secure Partition][^2] you would like to include:
 | ----------------- | --------------- |
 | Attestation       | ts-attesation   |
 | Crypto            | ts-crypto       |
+| Firmware Update   | ts-fwu
 | Internal Storage  | ts-its          |
 | Protected Storage | ts-storage      |
 | se-proxy          | ts-se-proxy     |
@@ -47,9 +48,10 @@ Other steps depend on your machine/platform definition:
 4. Trusted Services supports an SPMC agonistic binary format. To build SPs to this format the `TS_ENV` variable is to be
    set to `sp`. The resulting SP binaries should be able to boot under any FF-A v1.1 compliant SPMC implementation.
 
+
 ## Normal World applications
 
-Optionally for testing purposes you can add `packagegroup-ts-tests` into your image. It includes 
+Optionally for testing purposes you can add `packagegroup-ts-tests` into your image. It includes
 [Trusted Services test and demo tools][^3] and [xtest][^4] configured to include the `ffa_spmc` tests.
 
 ## OEQA Trusted Services tests

@@ -12,7 +12,7 @@ local_conf_header:
     # Include all Secure Partitions into the image
     MACHINE_FEATURES:append = " arm-ffa ts-crypto ts-storage ts-its"
     MACHINE_FEATURES:append = " ts-attestation ts-smm-gateway optee-spmc-test"
-    MACHINE_FEATURES:append = " ts-block-storage"
+    MACHINE_FEATURES:append = " ts-block-storage ts-fwu"
     # Include TS demo/test tools into image
     IMAGE_INSTALL:append = " packagegroup-ts-tests"
     # Include TS PSA Arch tests into image
@@ -20,3 +20,13 @@ local_conf_header:
     CORE_IMAGE_EXTRA_INSTALL += "optee-test"
     # Set the TS environment
     TS_ENV="sp"
+    # Enable and configure semihosting
+    FVP_CONFIG[cluster0.cpu0.semihosting-cwd] = "${DEPLOY_DIR_IMAGE}"
+    FVP_CONFIG[cluster0.cpu1.semihosting-cwd] = "${DEPLOY_DIR_IMAGE}"
+    FVP_CONFIG[cluster0.cpu2.semihosting-cwd] = "${DEPLOY_DIR_IMAGE}"
+    FVP_CONFIG[cluster0.cpu3.semihosting-cwd] = "${DEPLOY_DIR_IMAGE}"
+    FVP_CONFIG[cluster1.cpu0.semihosting-cwd] = "${DEPLOY_DIR_IMAGE}"
+    FVP_CONFIG[cluster1.cpu1.semihosting-cwd] = "${DEPLOY_DIR_IMAGE}"
+    FVP_CONFIG[cluster1.cpu2.semihosting-cwd] = "${DEPLOY_DIR_IMAGE}"
+    FVP_CONFIG[cluster1.cpu3.semihosting-cwd] = "${DEPLOY_DIR_IMAGE}"
+    FVP_CONFIG[semihosting-enable] = "True"

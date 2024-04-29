@@ -67,6 +67,12 @@ SP_PATHS:append = "${@bb.utils.contains('MACHINE_FEATURES', 'optee-spmc-test', \
 EXTRA_OEMAKE:append = "${@bb.utils.contains('MACHINE_FEATURES', 'optee-spmc-test', \
                                         ' CFG_SPMC_TESTS=y', '' , d)}"
 
+# Firmware Update SP
+DEPENDS:append  = "${@bb.utils.contains('MACHINE_FEATURES', 'ts-fwu', \
+                                        ' ts-sp-fwu', '' , d)}"
+SP_PATHS:append = "${@bb.utils.contains('MACHINE_FEATURES', 'ts-fwu', \
+                                        ' ${TS_BIN}/${FWU_UUID}${SP_EXT}', '', d)}"
+
 # Block Storage SP
 DEPENDS:append  = "${@bb.utils.contains('MACHINE_FEATURES', 'ts-block-storage', \
                                         ' ts-sp-block-storage', '' , d)}"

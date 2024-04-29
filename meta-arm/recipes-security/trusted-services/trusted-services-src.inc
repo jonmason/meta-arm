@@ -10,6 +10,7 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 SRC_URI:append = "\
 	file://0001-Upgrade-nanopb-to-v0.4.7.patch \
     file://0001-Add-boot-order-property-to-SP-manifests.patch \
+    file://0001-Allow-configuring-flash-image-files-compile-time.patch \
 "
 
 # Trusted Services; Tag: v1.0.0
