@@ -35,13 +35,13 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 SRC_URI:append:corstone1000 = " \
     file://0001-platform-corstone1000-Update-MPU-configuration.patch \
     file://0002-platform-corstone1000-Cover-S_DATA-with-MPU.patch \
-    file://0003-Platform-corstone1000-Fix-issues-due-to-adjustment-M.patch \
-    file://0004-platform-corstone1000-align-capsule-update-structs.patch \
-    file://0005-platform-corstone1000-fix-synchronization-issue-on-o.patch \
-    file://0006-Platform-Corstone1000-skip-the-first-nv-counter.patch \
-    file://0007-platform-corstone1000-add-unique-guid-for-mps3.patch \    
-    file://0008-Platform-Corstone1000-Enable-host-firewall-in-FVP.patch \
-    file://0009-platform-corstone1000-Increase-ITS-max-asset-size.patch \
+    file://0003-platform-corstone1000-align-capsule-update-structs.patch \
+    file://0004-Platform-Corstone1000-skip-the-first-nv-counter.patch \
+    file://0005-platform-corstone1000-add-unique-guid-for-mps3.patch \
+    file://0006-Platform-Corstone1000-Enable-host-firewall-in-FVP.patch \
+    file://0007-platform-corstone1000-Increase-ITS-max-asset-size.patch \
+    file://0008-Platform-CS1000-Replace-OpenAMP-with-RSE_COMMS.patch \
+    file://0009-platform-CS1000-Increase-RSE_COMMS-buffer-size.patch \
     "
 
 # TF-M ships patches for external dependencies that needs to be applied
