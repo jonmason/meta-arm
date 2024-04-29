@@ -2,19 +2,17 @@
 
 LICENSE = "Apache-2.0 & BSD-3-Clause & BSD-2-Clause & Zlib"
 
-SRC_URI = "git://git.trustedfirmware.org/TS/trusted-services.git;protocol=https;branch=integration;name=trusted-services;destsuffix=git/trusted-services \
+SRC_URI = "git://git.trustedfirmware.org/TS/trusted-services.git;protocol=https;branch=main;name=trusted-services;destsuffix=git/trusted-services \
 "
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
 SRC_URI:append = "\
-	file://0001-Upgrade-nanopb-to-v0.4.7.patch \
-    file://0001-Add-boot-order-property-to-SP-manifests.patch \
     file://0001-Allow-configuring-flash-image-files-compile-time.patch \
 "
 
-# Trusted Services; Tag: v1.0.0
-SRCREV_trusted-services = "808904390eb89294d2371959a7d82dde3851ca6c"
+# Trusted Services; aka. 2024 April 19
+SRCREV_trusted-services = "602be607198ea784bc5ab1c0c9d3ac4e2c67f1d9"
 LIC_FILES_CHKSUM = "file://${S}/license.rst;md5=ea160bac7f690a069c608516b17997f4"
 
 S = "${WORKDIR}/git/trusted-services"
@@ -25,10 +23,10 @@ SRC_URI += "git://github.com/dgibson/dtc;name=dtc;protocol=https;branch=main;des
 SRCREV_dtc = "b6910bec11614980a21e46fbccc35934b671bd81"
 LIC_FILES_CHKSUM += "file://../dtc/README.license;md5=a1eb22e37f09df5b5511b8a278992d0e"
 
-# MbedTLS, tag "mbedtls-3.4.0"
+# MbedTLS, tag "v3.5.1"
 SRC_URI += "git://github.com/ARMmbed/mbedtls.git;name=mbedtls;protocol=https;branch=master;destsuffix=git/mbedtls"
-SRCREV_mbedtls = "1873d3bfc2da771672bd8e7e8f41f57e0af77f33"
-LIC_FILES_CHKSUM += "file://../mbedtls/LICENSE;md5=3b83ef96387f14655fc854ddc3c6bd57"
+SRCREV_mbedtls = "15254759342494c7e969766d5424d78d7deb9bfa"
+LIC_FILES_CHKSUM += "file://../mbedtls/LICENSE;md5=379d5819937a6c2f1ef1630d341e026d"
 
 # Nanopb, tag "nanopb-0.4.7" plus some further fixes
 SRC_URI += "git://github.com/nanopb/nanopb.git;name=nanopb;protocol=https;branch=master;destsuffix=git/nanopb"

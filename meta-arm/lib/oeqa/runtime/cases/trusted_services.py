@@ -38,8 +38,7 @@ class TrustedServicesTest(OERuntimeTestCase):
     @OEHasPackage(['ts-psa-ps-api-test'])
     @OETestDepends(['ssh.SSHTest.test_ssh'])
     def test_05_psa_ps_api_test(self):
-        # There are a few expected PSA Storage tests failing
-        self.run_test_tool('psa-ps-api-test', expected_status=46)
+        self.run_test_tool('psa-ps-api-test')
 
     @OEHasPackage(['ts-psa-iat-api-test'])
     @OETestDepends(['ssh.SSHTest.test_ssh'])
