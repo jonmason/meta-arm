@@ -1,5 +1,8 @@
 require recipes-bsp/trusted-firmware-a/trusted-firmware-a.inc
 
+FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
+SRC_URI:append = " file://0001-refactor-layerscape-remove-bc-dependency.patch"
+
 # TF-A v2.15.0
 SRC_URI_TRUSTED_FIRMWARE_A = "gitsm://review.trustedfirmware.org/TF-A/trusted-firmware-a;protocol=https"
 SRCREV = "da738d5eae93af342fdc4995dd3c05acb4c9d757"
