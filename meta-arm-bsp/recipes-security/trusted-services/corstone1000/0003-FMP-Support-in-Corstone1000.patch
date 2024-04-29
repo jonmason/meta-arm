@@ -1,7 +1,7 @@
-From 33dae70ae2786cf12070d063ff74cfe0df1f4f50 Mon Sep 17 00:00:00 2001
+From ef6b4fef7b7a740d6df8dab12aa7c73d06bb9f3b Mon Sep 17 00:00:00 2001
 From: Satish Kumar <satish.kumar01@arm.com>
 Date: Fri, 8 Jul 2022 09:48:06 +0100
-Subject: [PATCH] FMP Support in Corstone1000.
+Subject: [PATCH 3/8] FMP Support in Corstone1000.
 
 The FMP support is used by u-boot to pupolate ESRT information
 for the kernel.
@@ -22,7 +22,7 @@ Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
  create mode 100644 components/service/capsule_update/provider/corstone1000_fmp_service.h
 
 diff --git a/components/service/capsule_update/provider/capsule_update_provider.c b/components/service/capsule_update/provider/capsule_update_provider.c
-index f35c272d..bfeb7301 100644
+index f35c272d2..bfeb7301a 100644
 --- a/components/service/capsule_update/provider/capsule_update_provider.c
 +++ b/components/service/capsule_update/provider/capsule_update_provider.c
 @@ -11,6 +11,7 @@
@@ -59,7 +59,7 @@ index f35c272d..bfeb7301 100644
  		default:
  			EMSG("%s unsupported opcode", __func__);
 diff --git a/components/service/capsule_update/provider/component.cmake b/components/service/capsule_update/provider/component.cmake
-index 1d412eb2..6b060149 100644
+index 1d412eb23..6b0601494 100644
 --- a/components/service/capsule_update/provider/component.cmake
 +++ b/components/service/capsule_update/provider/component.cmake
 @@ -10,4 +10,5 @@ endif()
@@ -70,7 +70,7 @@ index 1d412eb2..6b060149 100644
  	)
 diff --git a/components/service/capsule_update/provider/corstone1000_fmp_service.c b/components/service/capsule_update/provider/corstone1000_fmp_service.c
 new file mode 100644
-index 00000000..56ce3857
+index 000000000..56ce38579
 --- /dev/null
 +++ b/components/service/capsule_update/provider/corstone1000_fmp_service.c
 @@ -0,0 +1,307 @@
@@ -86,7 +86,7 @@ index 00000000..56ce3857
 +#include <psa/storage_common.h>
 +#include <trace.h>
 +
-+#include <service/smm_variable/backend/variable_index.h>
++#include <service/uefi/smm_variable/backend/variable_index.h>
 +
 +#define VARIABLE_INDEX_STORAGE_UID			(0x787)
 +
@@ -383,7 +383,7 @@ index 00000000..56ce3857
 +}
 diff --git a/components/service/capsule_update/provider/corstone1000_fmp_service.h b/components/service/capsule_update/provider/corstone1000_fmp_service.h
 new file mode 100644
-index 00000000..d0023dc0
+index 000000000..d0023dc07
 --- /dev/null
 +++ b/components/service/capsule_update/provider/corstone1000_fmp_service.h
 @@ -0,0 +1,26 @@

@@ -1,7 +1,7 @@
-From b07d29440b5ca8d1f3b9a4f03786bb3127930a64 Mon Sep 17 00:00:00 2001
+From c2edcd8bd3d8817765f280708eae894d6cd8d974 Mon Sep 17 00:00:00 2001
 From: Emekcan Aras <emekcan.aras@arm.com>
 Date: Sun, 18 Jun 2023 14:38:42 +0100
-Subject: [PATCH] plat: corstone1000: Use the stateless platform service
+Subject: [PATCH 6/8] plat: corstone1000: Use the stateless platform service
  calls Calls to psa_connect is not needed and psa_call can be called directly
  with a pre defined handle.
 
@@ -18,7 +18,7 @@ Upstream-Status: Inappropriate [Design is to revisted]
  4 files changed, 17 insertions(+), 27 deletions(-)
 
 diff --git a/components/service/capsule_update/provider/capsule_update_provider.c b/components/service/capsule_update/provider/capsule_update_provider.c
-index bfeb7301..12c552da 100644
+index bfeb7301a..12c552dae 100644
 --- a/components/service/capsule_update/provider/capsule_update_provider.c
 +++ b/components/service/capsule_update/provider/capsule_update_provider.c
 @@ -63,7 +63,6 @@ void capsule_update_provider_deinit(struct capsule_update_provider *context)
@@ -67,7 +67,7 @@ index bfeb7301..12c552da 100644
  		default:
  			EMSG("%s unsupported opcode", __func__);
 diff --git a/components/service/capsule_update/provider/corstone1000_fmp_service.c b/components/service/capsule_update/provider/corstone1000_fmp_service.c
-index 56ce3857..bebdf859 100644
+index 56ce38579..bebdf859f 100644
 --- a/components/service/capsule_update/provider/corstone1000_fmp_service.c
 +++ b/components/service/capsule_update/provider/corstone1000_fmp_service.c
 @@ -238,8 +238,7 @@ static psa_status_t unpack_image_info(void *buffer, uint32_t size)
@@ -105,7 +105,7 @@ index 56ce3857..bebdf859 100644
  	return;
      }
 diff --git a/components/service/capsule_update/provider/corstone1000_fmp_service.h b/components/service/capsule_update/provider/corstone1000_fmp_service.h
-index d0023dc0..486fa10b 100644
+index d0023dc07..486fa10b4 100644
 --- a/components/service/capsule_update/provider/corstone1000_fmp_service.h
 +++ b/components/service/capsule_update/provider/corstone1000_fmp_service.h
 @@ -16,8 +16,7 @@ extern "C" {
@@ -119,7 +119,7 @@ index d0023dc0..486fa10b 100644
  #ifdef __cplusplus
  } /* extern "C" */
 diff --git a/components/service/common/include/psa/sid.h b/components/service/common/include/psa/sid.h
-index 5aaa659d..fc3a4fb0 100644
+index 5aaa659d4..fc3a4fb06 100644
 --- a/components/service/common/include/psa/sid.h
 +++ b/components/service/common/include/psa/sid.h
 @@ -40,6 +40,13 @@ extern "C" {

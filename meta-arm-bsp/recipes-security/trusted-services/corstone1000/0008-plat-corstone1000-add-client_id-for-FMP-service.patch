@@ -1,7 +1,7 @@
-From 8aef83efaa03f92b35ab68bc6da2bd26722eedfd Mon Sep 17 00:00:00 2001
+From f6ed75939f0b57e6b0e50ab11cdc3304098456dd Mon Sep 17 00:00:00 2001
 From: Bence Balogh <bence.balogh@arm.com>
 Date: Fri, 5 Apr 2024 17:31:03 +0200
-Subject: [PATCH] plat: corstone1000: add client_id for FMP service
+Subject: [PATCH 8/8] plat: corstone1000: add client_id for FMP service
 
 Corstone1000 uses trusted-firmware-m as secure enclave software component. Due
 to the changes in TF-M 2.0, psa services requires a seperate client_id now.
@@ -46,5 +46,4 @@ index bebdf859f..1b4813d62 100644
  
 -- 
 2.25.1
-
 

@@ -1,7 +1,7 @@
-From e44a317a5ae283207926311cc71b18c117899c4a Mon Sep 17 00:00:00 2001
+From 1ba2a22575c1b73b5ab09e040a00f370eca4b758 Mon Sep 17 00:00:00 2001
 From: Julian Hall <julian.hall@arm.com>
 Date: Tue, 12 Oct 2021 15:45:41 +0100
-Subject: [PATCH] Add stub capsule update service components
+Subject: [PATCH 1/8] Add stub capsule update service components
 
 To facilitate development of a capsule update service provider,
 stub components are added to provide a starting point for an
@@ -34,7 +34,7 @@ Signed-off-by: Rui Miguel Silva <rui.silva@linaro.org>
 
 diff --git a/components/service/capsule_update/backend/capsule_update_backend.h b/components/service/capsule_update/backend/capsule_update_backend.h
 new file mode 100644
-index 00000000..f3144ff1
+index 000000000..f3144ff1d
 --- /dev/null
 +++ b/components/service/capsule_update/backend/capsule_update_backend.h
 @@ -0,0 +1,24 @@
@@ -64,7 +64,7 @@ index 00000000..f3144ff1
 +#endif /* CAPSULE_UPDATE_BACKEND_H */
 diff --git a/components/service/capsule_update/provider/capsule_update_provider.c b/components/service/capsule_update/provider/capsule_update_provider.c
 new file mode 100644
-index 00000000..f35c272d
+index 000000000..f35c272d2
 --- /dev/null
 +++ b/components/service/capsule_update/provider/capsule_update_provider.c
 @@ -0,0 +1,135 @@
@@ -205,7 +205,7 @@ index 00000000..f35c272d
 +}
 diff --git a/components/service/capsule_update/provider/capsule_update_provider.h b/components/service/capsule_update/provider/capsule_update_provider.h
 new file mode 100644
-index 00000000..71131417
+index 000000000..5dc5535d6
 --- /dev/null
 +++ b/components/service/capsule_update/provider/capsule_update_provider.h
 @@ -0,0 +1,51 @@
@@ -262,7 +262,7 @@ index 00000000..71131417
 +#endif /* CAPSULE_UPDATE_PROVIDER_H */
 diff --git a/components/service/capsule_update/provider/component.cmake b/components/service/capsule_update/provider/component.cmake
 new file mode 100644
-index 00000000..1d412eb2
+index 000000000..1d412eb23
 --- /dev/null
 +++ b/components/service/capsule_update/provider/component.cmake
 @@ -0,0 +1,13 @@
@@ -280,7 +280,7 @@ index 00000000..1d412eb2
 +	"${CMAKE_CURRENT_LIST_DIR}/capsule_update_provider.c"
 +	)
 diff --git a/deployments/se-proxy/infra/corstone1000/infra.cmake b/deployments/se-proxy/infra/corstone1000/infra.cmake
-index 4e7e2bd5..e60b5400 100644
+index a52a1b711..4658c9662 100644
 --- a/deployments/se-proxy/infra/corstone1000/infra.cmake
 +++ b/deployments/se-proxy/infra/corstone1000/infra.cmake
 @@ -21,6 +21,7 @@ add_components(TARGET "se-proxy"
@@ -292,7 +292,7 @@ index 4e7e2bd5..e60b5400 100644
  )
  
 diff --git a/deployments/se-proxy/se_proxy_interfaces.h b/deployments/se-proxy/se_proxy_interfaces.h
-index 48908f84..3d4a7c20 100644
+index 48908f846..3d4a7c204 100644
 --- a/deployments/se-proxy/se_proxy_interfaces.h
 +++ b/deployments/se-proxy/se_proxy_interfaces.h
 @@ -8,9 +8,10 @@
@@ -312,7 +312,7 @@ index 48908f84..3d4a7c20 100644
  #endif /* SE_PROXY_INTERFACES_H */
 diff --git a/protocols/service/capsule_update/capsule_update_proto.h b/protocols/service/capsule_update/capsule_update_proto.h
 new file mode 100644
-index 00000000..8f326cd3
+index 000000000..8f326cd38
 --- /dev/null
 +++ b/protocols/service/capsule_update/capsule_update_proto.h
 @@ -0,0 +1,13 @@
@@ -331,7 +331,7 @@ index 00000000..8f326cd3
 +#endif /* CAPSULE_UPDATE_PROTO_H */
 diff --git a/protocols/service/capsule_update/opcodes.h b/protocols/service/capsule_update/opcodes.h
 new file mode 100644
-index 00000000..8185a090
+index 000000000..8185a0902
 --- /dev/null
 +++ b/protocols/service/capsule_update/opcodes.h
 @@ -0,0 +1,17 @@
@@ -354,7 +354,7 @@ index 00000000..8185a090
 +#endif /* CAPSULE_UPDATE_OPCODES_H */
 diff --git a/protocols/service/capsule_update/parameters.h b/protocols/service/capsule_update/parameters.h
 new file mode 100644
-index 00000000..285d9241
+index 000000000..285d92418
 --- /dev/null
 +++ b/protocols/service/capsule_update/parameters.h
 @@ -0,0 +1,15 @@
