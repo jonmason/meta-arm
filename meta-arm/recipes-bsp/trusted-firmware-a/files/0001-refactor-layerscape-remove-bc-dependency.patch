@@ -1,0 +1,80 @@
+From 185d57230989d31d6c8a64d152c6f3373c48d168 Mon Sep 17 00:00:00 2001
+From: Jon Mason <jon.mason@arm.com>
+Date: Mon, 29 Apr 2024 11:26:43 -0400
+Subject: [PATCH] refactor(layerscape): remove bc dependency
+
+Current implementation has a build dependency on the host having bc
+installed.  Remove this by using the shell's printf to have the same
+effect.
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending [Not submitted to upstream yet]
+---
+ plat/nxp/soc-ls1028a/soc.def | 2 +-
+ plat/nxp/soc-ls1043a/soc.def | 2 +-
+ plat/nxp/soc-ls1046a/soc.def | 2 +-
+ plat/nxp/soc-lx2160a/soc.def | 4 ++--
+ 4 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/plat/nxp/soc-ls1028a/soc.def b/plat/nxp/soc-ls1028a/soc.def
+index 93275b3ba427..182b449ab41d 100644
+--- a/plat/nxp/soc-ls1028a/soc.def
++++ b/plat/nxp/soc-ls1028a/soc.def
+@@ -61,7 +61,7 @@ NXP_ROM_RSVD	:=	0xa000
+ BL2_BASE_ADDR	:=	$(shell echo $$(( $(OCRAM_START_ADDR) + $(NXP_ROM_RSVD) + $(CSF_HDR_SZ) )))
+ 
+ # Covert to HEX to be used by create_pbl.mk
+-BL2_BASE	:=	$(shell echo "0x"$$(echo "obase=16; ${BL2_BASE_ADDR}" | bc))
++BL2_BASE	:=	$(shell echo $(shell printf "0x%x" $(BL2_BASE_ADDR)))
+ 
+ # BL2_HDR_LOC is at  (BL2_BASE + NXP_ROM_RSVD)
+ # This value BL2_HDR_LOC + CSF_HDR_SZ should not
+diff --git a/plat/nxp/soc-ls1043a/soc.def b/plat/nxp/soc-ls1043a/soc.def
+index b174bd6a2459..cd121c7af667 100644
+--- a/plat/nxp/soc-ls1043a/soc.def
++++ b/plat/nxp/soc-ls1043a/soc.def
+@@ -70,7 +70,7 @@ BL2_BASE		:=	0x10000000
+ # Input to CST create_hdr_isbc tool
+ BL2_HDR_LOC_HDR		?=	$(shell echo $$(( $(OCRAM_START_ADDR) + $(OCRAM_SIZE) - $(NXP_ROM_RSVD) - $(CSF_HDR_SZ))))
+ # Covert to HEX to be used by create_pbl.mk
+-BL2_HDR_LOC		:=	$$(echo "obase=16; ${BL2_HDR_LOC_HDR}" | bc)
++BL2_HDR_LOC		:=      $(shell echo $(shell printf "0x%x" $(BL2_HDR_LOC_HDR)))
+ 
+ # Core Errata
+ ERRATA_A53_855873	:=	1
+diff --git a/plat/nxp/soc-ls1046a/soc.def b/plat/nxp/soc-ls1046a/soc.def
+index 50fc9c99719f..928aec020278 100644
+--- a/plat/nxp/soc-ls1046a/soc.def
++++ b/plat/nxp/soc-ls1046a/soc.def
+@@ -70,7 +70,7 @@ BL2_BASE		:=	0x10000000
+ # Input to CST create_hdr_isbc tool
+ BL2_HDR_LOC_HDR		?=	$(shell echo $$(( $(OCRAM_START_ADDR) + $(OCRAM_SIZE) - $(NXP_ROM_RSVD) - $(CSF_HDR_SZ))))
+ # Covert to HEX to be used by create_pbl.mk
+-BL2_HDR_LOC		:=	$$(echo "obase=16; ${BL2_HDR_LOC_HDR}" | bc)
++BL2_HDR_LOC		:=      $(shell echo $(shell printf "0x%x" $(BL2_HDR_LOC_HDR)))
+ 
+ # Core Errata
+ ERRATA_A72_859971	:=	1
+diff --git a/plat/nxp/soc-lx2160a/soc.def b/plat/nxp/soc-lx2160a/soc.def
+index 0442962951db..5895cbb25baa 100644
+--- a/plat/nxp/soc-lx2160a/soc.def
++++ b/plat/nxp/soc-lx2160a/soc.def
+@@ -91,13 +91,13 @@ OCRAM_SIZE := 0x40000
+ # Location of BL2 on OCRAM
+ BL2_BASE_ADDR	:=	$(shell echo $$(( $(OCRAM_START_ADDR) + $(NXP_ROM_RSVD) + $(CSF_HDR_SZ) )))
+ # Covert to HEX to be used by create_pbl.mk
+-BL2_BASE	:=	$(shell echo "0x"$$(echo "obase=16; ${BL2_BASE_ADDR}" | bc))
++BL2_BASE	:=	$(shell echo $(shell printf "0x%x" $(BL2_BASE_ADDR)))
+ 
+ # BL2_HDR_LOC is at  (OCRAM_ADDR + NXP_ROM_RSVD)
+ # This value BL2_HDR_LOC + CSF_HDR_SZ should not overalp with BL2_BASE
+ BL2_HDR_LOC_HDR	?=	$(shell echo $$(( $(OCRAM_START_ADDR) + $(NXP_ROM_RSVD) )))
+ # Covert to HEX to be used by create_pbl.mk
+-BL2_HDR_LOC	:=	$$(echo "obase=16; ${BL2_HDR_LOC_HDR}" | bc)
++BL2_HDR_LOC	:=      $(shell echo $(shell printf "0x%x" $(BL2_HDR_LOC_HDR)))
+ 
+ # SoC ERRATAS to be enabled
+ #
+-- 
+2.30.2
+
