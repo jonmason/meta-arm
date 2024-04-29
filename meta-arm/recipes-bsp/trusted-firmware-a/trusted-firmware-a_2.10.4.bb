@@ -4,6 +4,9 @@ require recipes-bsp/trusted-firmware-a/trusted-firmware-a.inc
 SRCREV_tfa = "569e16caad976a0684147da1ecc6333fd9b7f813"
 SRCBRANCH = "lts-v2.10"
 
+FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
+SRC_URI:append = " file://0001-refactor-layerscape-remove-bc-dependency.patch"
+
 LIC_FILES_CHKSUM += "file://docs/license.rst;md5=b2c740efedc159745b9b31f88ff03dde"
 
 # in TF-A src, docs/getting_started/prerequisites.rst lists the expected version mbedtls
