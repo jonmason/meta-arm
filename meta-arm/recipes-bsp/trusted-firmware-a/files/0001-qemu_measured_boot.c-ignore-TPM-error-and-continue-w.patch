@@ -1,4 +1,4 @@
-From 1d1425bde8435d6e2b3e4f2b7bcb2eb293ef9601 Mon Sep 17 00:00:00 2001
+From 7f737dd336428fda869615a273b1bff10dac316b Mon Sep 17 00:00:00 2001
 From: Mikko Rapeli <mikko.rapeli@linaro.org>
 Date: Mon, 15 Jan 2024 09:26:56 +0000
 Subject: [PATCH] qemu_measured_boot.c: ignore TPM error and continue with boot
@@ -18,7 +18,7 @@ Signed-off-by: Mikko Rapeli <mikko.rapeli@linaro.org>
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/plat/qemu/qemu/qemu_measured_boot.c b/plat/qemu/qemu/qemu_measured_boot.c
-index 122bb23b14..731b081c47 100644
+index 077f7a486..ce9473b51 100644
 --- a/plat/qemu/qemu/qemu_measured_boot.c
 +++ b/plat/qemu/qemu/qemu_measured_boot.c
 @@ -79,7 +79,8 @@ void bl2_plat_mboot_finish(void)
@@ -31,6 +31,3 @@ index 122bb23b14..731b081c47 100644
  	}
  
  	/* Copy Event Log to Non-secure memory */
--- 
-2.34.1
-

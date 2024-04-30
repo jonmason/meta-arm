@@ -1,4 +1,4 @@
-From 56874ab381b0f0beade2d200147245e157b4aff6 Mon Sep 17 00:00:00 2001
+From f2b6e742f7b83de7e4e02eba1a64c8a698aaa855 Mon Sep 17 00:00:00 2001
 From: Gyorgy Szing <Gyorgy.Szing@arm.com>
 Date: Mon, 13 Mar 2023 21:15:59 +0100
 Subject: [PATCH] Add spmc_manifest for qemu
@@ -18,7 +18,7 @@ Signed-off-by: Gyorgy Szing <Gyorgy.Szing@arm.com>
 
 diff --git a/plat/qemu/fdts/optee_spmc_manifest.dts b/plat/qemu/fdts/optee_spmc_manifest.dts
 new file mode 100644
-index 000000000000..ae2ae3d951de
+index 000000000..ae2ae3d95
 --- /dev/null
 +++ b/plat/qemu/fdts/optee_spmc_manifest.dts
 @@ -0,0 +1,40 @@
