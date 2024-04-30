@@ -85,7 +85,8 @@ create_nopt_image() {
     dd conv=notrunc bs=1 if=${DEPLOY_DIR_IMAGE}/signed_fip-corstone1000.bin of=${B}/${MACHINE}_image.nopt seek=${FIP_OFFSET}
     dd conv=notrunc bs=1 if=${DEPLOY_DIR_IMAGE}/Image.gz-initramfs-${MACHINE}.bin of=${B}/${MACHINE}_image.nopt seek=${KERNEL_OFFSET}
 }
-create_nopt_image[depends] += "mc:firmware:linux-yocto:do_deploy"
+do_image_uefi_capsule[depends] += " linux-yocto:do_deploy"
+do_image_uefi_capsule[mcdepends] += " ${@bb.utils.contains('BBMULTICONFIG', 'firmware', 'mc::firmware:linux-yocto:do_deploy', '', d)}"
 do_image_uefi_capsule[prefuncs] += "create_nopt_image"
 
 do_deploy() {
