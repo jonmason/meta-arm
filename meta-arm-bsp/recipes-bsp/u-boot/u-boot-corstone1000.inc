@@ -63,6 +63,7 @@ SRC_URI:append = " \
     file://0045-efi-corstone1000-fwu-update-RPC-ABI.patch			  \
     file://0046-Corstone1000-Change-MMCOMM-buffer-location.patch		  \
     file://0047-corstone1000-dts-add-external-system-node.patch \
+    file://0048-corstone1000-Enable-UEFI-Secure-boot.patch 			  \
     "
 
 do_configure:append() {
