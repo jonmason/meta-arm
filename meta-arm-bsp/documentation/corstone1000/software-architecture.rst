@@ -53,7 +53,7 @@ hardware for enhanced security. Communication with the Secure Encalve
 is achieved using Message Handling Units (MHUs) and shared memory.
 On system power on, the Secure Enclave boots first. Its software
 comprises of a  ROM code (TF-M BL1), Mcuboot BL2, and
-TrustedFirmware-M(`TF-M`_) as runtime software. The software design on 
+TrustedFirmware-M(`TF-M`_) as runtime software. The software design on
 Secure Enclave follows Firmware Framework for M class
 processor (`FF-M`_) specification.
 
@@ -140,10 +140,13 @@ flow path for such calls.
 
 The SE Proxy SP (Secure Enclave Proxy Secure Partition) is a proxy partition
 managed by OPTEE which forwards such calls to the secure enclave. The
-solution relies on OpenAMP which uses shared memory and MHU interrupts as
-a doorbell for communication between two cores. Corstone-1000 implements
-isolation level 2. Cortex-M0+ MPU (Memory Protection Unit) is used to implement
-isolation level 2.
+solution relies on the `RSE communication protocol
+<https://tf-m-user-guide.trustedfirmware.org/platform/arm/rse/rse_comms.html>`_
+which is a lightweight serialization of the psa_call() API. It can use shared
+memory and MHU interrupts as a doorbell for communication between two cores
+but currently the whole message is forwarded through the MHU channels in Corstone-1000.
+Corstone-1000 implements isolation level 2. Cortex-M0+ MPU (Memory Protection
+Unit) is used to implement isolation level 2.
 
 For a user to define its own secure service, both the options of the host
 secure world or secure encalve are available. It's a trade-off between
