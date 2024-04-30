@@ -33,6 +33,7 @@ env:
 local_conf_header:
   base: |
     CONF_VERSION = "2"
+    BB_SERVER_TIMEOUT = "300"
   setup: |
     PACKAGE_CLASSES = "package_ipk"
     PACKAGECONFIG:remove:pn-qemu-system-native = "gtk+ sdl"
