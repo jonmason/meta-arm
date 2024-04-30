@@ -41,3 +41,8 @@ local_conf_header:
 
     # external system firmware
     CORE_IMAGE_EXTRA_INSTALL:firmware += "external-system-elf"
+
+  capsule: |
+    CAPSULE_EXTENSION = "uefi.capsule"
+    CAPSULE_FW_VERSION = "6"
+    CAPSULE_NAME = "${MACHINE}-v${CAPSULE_FW_VERSION}"
