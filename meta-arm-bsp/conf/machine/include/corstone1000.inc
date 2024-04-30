@@ -59,5 +59,7 @@ FIRMWARE_DEPLOYMENT ?= "firmware-deploy-image"
 FIRMWARE_DEPLOYMENT:firmware ?= ""
 EXTRA_IMAGEDEPENDS += "${FIRMWARE_DEPLOYMENT}"
 
-ARM_SYSTEMREADY_FIRMWARE = "${FIRMWARE_DEPLOYMENT}:do_deploy"
+ARM_SYSTEMREADY_FIRMWARE = "${FIRMWARE_DEPLOYMENT}:do_deploy \
+                            corstone1000-esp-image:do_image_complete \
+                           "
 ARM_SYSTEMREADY_ACS_CONSOLE ?= "default"
