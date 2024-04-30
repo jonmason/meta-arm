@@ -692,24 +692,6 @@ incorrect capsule (corrupted or outdated) which fails to boot to the host softwa
 Check the "Run SystemReady-IR ACS tests" section above to download and unpack the ACS image file
  - ``ir-acs-live-image-generic-arm64.wic.xz``
 
-
-Download u-boot under <_workspace> and install tools:
-
-::
-
-  git clone https://github.com/u-boot/u-boot.git
-  cd u-boot
-  git checkout 83aa0ed1e93e1ffac24888d98d37a5b04ed3fb07
-  make tools-only_defconfig
-  make tools-only
-
-**NOTE:** The following error could happen if the linux build system does not have "libgnutls28-dev".
- **error: "tools/mkeficapsule.c:21:10: fatal error: gnutls/gnutls.h: No such file or directory"**. If that's the case please install libgnutls28-dev and its dependencies by using the following command.
-
-::
-
-  sudo apt-get install -y libgnutls28-dev
-
 Download systemready-patch repo under <_workspace>:
 ::
 
@@ -719,51 +701,48 @@ Download systemready-patch repo under <_workspace>:
 Generating Capsules
 *******************
 
-Generating FPGA Capsules
-========================
+A no-partition image is created during the Yocto build. An update capsule is generated using this ``.nopt`` image.
+This can be found in ``build/tmp_corstone1000-<fvp/mps3>/deploy/images/corstone1000-<fvp/mps3>/corstone1000-<fvp/mps3>_image.nopt``.
+The capsule's default metadata (name, version, etc.) can be found in ``meta-arm/meta-arm-bsp/recipes-bsp/images/corstone1000-flash-firmware-image.bb``
+and ``meta-arm/kas/corstone1000-image-configuration.yml``.
 
-::
+FPGA Capsules
+=============
 
-   cd <_workspace>/build/tmp/deploy/images/corstone1000-mps3/
-   sh <_workspace>/systemready-patch/embedded-a/corstone1000/capsule_gen/capsule_gen.sh -d mps3
+The generated capsule can be found in ``build/tmp_corstone1000-mps3/deploy/images/corstone1000-mps3/corstone1000-mps3-v6.uefi.capsule``.
+If a new capsule has to be generated with different metadata, then it can be done by using the ``u-boot-tools`` and the previously
+created ``.nopt`` image.
 
-This will generate a file called "corstone1000_image.nopt" which will be used to
-generate a UEFI capsule.
-
+For example a capsule for the negative update test scenario, if the host's architecture is x86_64:
 ::
 
    cd <_workspace>
 
-   ./u-boot/tools/mkeficapsule --monotonic-count 1 --private-key build/tmp/deploy/images/corstone1000-mps3/corstone1000_capsule_key.key \
+   ./build/tmp/sysroots-components/x86_64/u-boot-tools-native/usr/bin/mkeficapsule --monotonic-count 1 \
+   --private-key build/tmp/deploy/images/corstone1000-mps3/corstone1000_capsule_key.key \
    --certificate build/tmp/deploy/images/corstone1000-mps3/corstone1000_capsule_cert.crt --index 1 --guid df1865d1-90fb-4d59-9c38-c9f2c1bba8cc \
-   --fw-version 6 build/tmp/deploy/images/corstone1000-mps3/corstone1000_image.nopt cs1k_cap_mps3_v6
+   --fw-version 5 build/tmp_corstone1000-mps3/deploy/images/corstone1000-mps3/corstone1000-mps3_image.nopt corstone1000-mps3-v5.uefi.capsule
 
-   ./u-boot/tools/mkeficapsule --monotonic-count 1 --private-key build/tmp/deploy/images/corstone1000-mps3/corstone1000_capsule_key.key \
-   --certificate build/tmp/deploy/images/corstone1000-mps3/corstone1000_capsule_cert.crt --index 1 --guid df1865d1-90fb-4d59-9c38-c9f2c1bba8cc \
-   --fw-version 5 build/tmp/deploy/images/corstone1000-mps3/corstone1000_image.nopt cs1k_cap_mps3_v5
+This command will put the newly generated capsule to the ``<_workspace>`` directory.
 
 Generating FVP Capsules
 =======================
 
-::
+The generated capsule can be found in ``build/tmp_corstone1000-fvp/deploy/images/corstone1000-fvp/corstone1000-fvp-v6.uefi.capsule``.
+If a new capsule has to be generated with different metadata, then it can be done by using the ``u-boot-tools`` and the previously
+created ``.nopt`` image.
 
-   cd <_workspace>/build/tmp/deploy/images/corstone1000-fvp/
-   sh <_workspace>/systemready-patch/embedded-a/corstone1000/capsule_gen/capsule_gen.sh -d fvp
-
-This will generate a file called "corstone1000_image.nopt" which will be used to
-generate a UEFI capsule.
-
+For example a capsule for the negative update test scenario, if the host's architecture is x86_64:
 ::
 
    cd <_workspace>
-   ./u-boot/tools/mkeficapsule --monotonic-count 1 --private-key build/tmp/deploy/images/corstone1000-fvp/corstone1000_capsule_key.key \
-   --certificate build/tmp/deploy/images/corstone1000-fvp/corstone1000_capsule_cert.crt --index 1 --guid 989f3a4e-46e0-4cd0-9877-a25c70c01329 \
-   --fw-version 6 build/tmp/deploy/images/corstone1000-fvp/corstone1000_image.nopt cs1k_cap_fvp_v6
 
-   ./u-boot/tools/mkeficapsule --monotonic-count 1 --private-key build/tmp/deploy/images/corstone1000-fvp/corstone1000_capsule_key.key \
+   ./build/tmp/sysroots-components/x86_64/u-boot-tools-native/usr/bin/mkeficapsule --monotonic-count 1 \
+   --private-key build/tmp/deploy/images/corstone1000-fvp/corstone1000_capsule_key.key \
    --certificate build/tmp/deploy/images/corstone1000-fvp/corstone1000_capsule_cert.crt --index 1 --guid 989f3a4e-46e0-4cd0-9877-a25c70c01329 \
-   --fw-version 5 build/tmp/deploy/images/corstone1000-fvp/corstone1000_image.nopt cs1k_cap_fvp_v5
+   --fw-version 5 build/tmp_corstone1000-fvp/deploy/images/corstone1000-fvp/corstone1000-fvp_image.nopt corstone1000-fvp-v5.uefi.capsule
 
+This command will put the newly generated capsule to the ``<_workspace>`` directory.
 
 Common Notes for FVP and FPGA
 =============================
@@ -782,15 +761,15 @@ Copying the FPGA capsules
 =========================
 
 The user should prepare a USB stick as explained in ACS image section `FPGA instructions for ACS image`_.
-Place the generated ``cs1k_cap`` files in the root directory of the boot partition
-in the USB stick. Note: As we are running the direct method, the ``cs1k_cap`` file
+Place the generated ``corstone1000-mps3-v<5/6>.uefi.capsule`` files in the root directory of the boot partition
+in the USB stick. Note: As we are running the direct method, the ``corstone1000-mps3-v<5/6>.uefi.capsule`` files
 should not be under the EFI/UpdateCapsule directory as this may or may not trigger
 the on disk method.
 
 ::
 
-   sudo cp cs1k_cap_mps3_v6 <mounting path>/BOOT/
-   sudo cp cs1k_cap_mps3_v5 <mounting path>/BOOT/
+   sudo cp <capsule path>/corstone1000-mps3-v6.uefi.capsule <mounting path>/BOOT/
+   sudo cp <capsule path>/corstone1000-mps3-v5.uefi.capsule <mounting path>/BOOT/
    sync
 
 Copying the FVP capsules
@@ -807,8 +786,8 @@ Then, copy the capsules:
 
 ::
 
-   sudo cp cs1k_cap_fvp_v6 /mnt/test/
-   sudo cp cs1k_cap_fvp_v5 /mnt/test/
+   sudo cp <capsule path>/corstone1000-fvp-v6.uefi.capsule /mnt/test/
+   sudo cp <capsule path>/corstone1000-fvp-v5.uefi.capsule /mnt/test/
    sync
 
 Then, unmount the IR image:
@@ -823,8 +802,13 @@ Then, unmount the IR image:
 Performing the capsule update
 ******************************
 
-During this section we will be using the capsule with the higher version (cs1k_cap_<fvp/mps3>_v6) for the positive scenario
-and the capsule with the lower version (cs1k_cap_<fvp/mps3>_v5) for the negative scenario.
+During this section we will be using the capsule with the higher version (``corstone1000-<fvp/mps3>-v6.uefi.capsule``) for the positive scenario
+and the capsule with the lower version (``corstone1000-<fvp/mps3>-v5.uefi.capsule``) for the negative scenario.
+
+Running the FPGA with the IR prebuilt image
+===========================================
+
+Insert the prepared USB stick then Power cycle the MPS3 board.
 
 Running the FVP with the IR prebuilt image
 ==========================================
@@ -836,11 +820,6 @@ Run the FVP with the IR prebuilt image:
    kas shell meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml -c "../meta-arm/scripts/runfvp --terminals=xterm -- -C board.msd_mmc.p_mmc_file=<path-to-img>/ir-acs-live-image-generic-arm64.wic"
 
 **NOTE:** <path-to-img> must start from the root directory. make sure there are no spaces before or after of "=". board.msd_mmc.p_mmc_file=<path-to-img>/ir-acs-live-image-generic-arm64.wic.
-
-Running the FPGA with the IR prebuilt image
-===========================================
-
-Insert the prepared USB stick then Power cycle the MPS3 board.
 
 Executing capsule update for FVP and FPGA
 =========================================
@@ -861,7 +840,7 @@ In case of the positive scenario run the update with the higher version capsule 
 
 ::
 
-  EFI/BOOT/app/CapsuleApp.efi cs1k_cap_<fvp/mps3>_v6
+  EFI/BOOT/app/CapsuleApp.efi corstone1000-<fvp/mps3>-v6.uefi.capsule
 
 After successfully updating the capsule the system will reset.
 
@@ -869,7 +848,7 @@ In case of the negative scenario run the update with the lower version capsule a
 
 ::
 
-  EFI/BOOT/app/CapsuleApp.efi cs1k_cap_<fvp/mps3>_v5
+  EFI/BOOT/app/CapsuleApp.efi corstone1000-<fvp/mps3>-v5.uefi.capsule
 
 The command above should fail and in the TF-M logs the following message should appear:
 
