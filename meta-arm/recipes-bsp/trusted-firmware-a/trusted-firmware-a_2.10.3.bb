@@ -11,3 +11,8 @@ SRC_URI_MBEDTLS = "git://github.com/ARMmbed/mbedtls.git;name=mbedtls;protocol=ht
 SRCREV_mbedtls = "72718dd87e087215ce9155a826ee5a66cfbe9631"
 
 LIC_FILES_CHKSUM_MBEDTLS = "file://mbedtls/LICENSE;md5=3b83ef96387f14655fc854ddc3c6bd57"
+
+# continue to boot also without TPM
+SRC_URI += "\
+    file://0001-qemu_measured_boot.c-ignore-TPM-error-and-continue-w.patch \
+"
