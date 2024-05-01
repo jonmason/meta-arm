@@ -1,6 +1,6 @@
 require recipes-security/optee/optee-test.inc
 
-SRCREV = "2e1e7a9c9d659585566a75fc8802f4758c42bcb2"
+SRCREV = "526d5bac1b65f907f67c05cd07beca72fbab88dd"
 SRC_URI += "file://0001-xtest-stats-remove-unneeded-stat.h-include.patch"
 
 # Include ffa_spmc test group if the SPMC test is enabled.
