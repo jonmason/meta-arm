@@ -7,3 +7,7 @@ header:
     - ci/fvp.yml
 
 machine: fvp-base
+
+target:
+  - core-image-sato
+  - boot-wrapper-aarch64
