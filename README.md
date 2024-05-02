@@ -8,7 +8,7 @@ This repository contains the Arm layers for OpenEmbedded.
 
 * meta-arm-bsp
 
-  This layer contains machines for Arm reference platforms, for example FVP Base, N1SDP, and Juno.
+  This layer contains machines for Arm reference platforms, for example FVP Base, Corstone1000, and Juno.
 
 * meta-arm-toolchain
 

@@ -247,12 +247,6 @@ musca-b1:
 musca-s1:
   extends: .build
 
-n1sdp:
-  extends: .build
-  parallel:
-    matrix:
-      - TESTING: [none, n1sdp-ts, n1sdp-optee, tftf]
-
 pending-updates:
   extends: .setup
   artifacts:

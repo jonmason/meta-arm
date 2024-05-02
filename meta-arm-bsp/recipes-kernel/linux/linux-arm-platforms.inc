@@ -15,7 +15,6 @@ ARMBSPFILESPATHS := "${THISDIR}:${THISDIR}/files:"
 SRC_URI_KMETA = "file://arm-platforms-kmeta;type=kmeta;name=arm-platforms-kmeta;destsuffix=arm-platforms-kmeta"
 SRC_URI:append:fvp-base = " ${SRC_URI_KMETA}"
 SRC_URI:append:juno = " ${SRC_URI_KMETA}"
-SRC_URI:append:n1sdp = " ${SRC_URI_KMETA}"
 
 #
 # Corstone1000 KMACHINE
@@ -75,30 +74,6 @@ FILESEXTRAPATHS:prepend:juno := "${ARMBSPFILESPATHS}"
 #
 COMPATIBLE_MACHINE:musca-b1 = "(^$)"
 COMPATIBLE_MACHINE:musca-s1 = "(^$)"
-
-#
-# N1SDP KMACHINE
-#
-FILESEXTRAPATHS:prepend:n1sdp := "${THISDIR}/linux-yocto-6.6/n1sdp:"
-COMPATIBLE_MACHINE:n1sdp = "n1sdp"
-KBUILD_DEFCONFIG:n1sdp = "defconfig"
-KCONFIG_MODE:n1sdp = "--alldefconfig"
-FILESEXTRAPATHS:prepend:n1sdp := "${ARMBSPFILESPATHS}"
-SRC_URI:append:n1sdp = " \
-    file://0001-iommu-arm-smmu-v3-workaround-for-ATC_INV_SIZE_ALL-in.patch \
-    file://0002-n1sdp-pci_quirk-add-acs-override-for-PCI-devices.patch \
-    file://0003-pcie-Add-quirk-for-the-Arm-Neoverse-N1SDP-platform.patch \
-    file://0004-n1sdp-pcie-add-quirk-support-enabling-remote-chip-PC.patch \
-    file://0005-arm64-kpti-Whitelist-early-Arm-Neoverse-N1-revisions.patch \
-    file://0006-arm64-defconfig-disable-config-options-that-does-not.patch \
-    file://enable-nvme.cfg \
-    file://enable-realtek-R8169.cfg \
-    file://enable-usb_conn_gpio.cfg \
-    file://usb_xhci_pci_renesas.cfg \
-    "
-# Since we use the intree defconfig and the preempt-rt turns off some configs
-# do_kernel_configcheck will display warnings. So, lets disable it.
-KCONF_AUDIT_LEVEL:n1sdp:pn-linux-yocto-rt = "0"
 
 #
 # SGI575 KMACHINE
