@@ -44,17 +44,24 @@ https://www.openembedded.org/wiki/How_to_submit_a_patch_to_OpenEmbedded
 
 E-mail meta-arm@lists.yoctoproject.org with patches created using this process. You can configure git-send-email to automatically use this address for the meta-arm repository with the following git command:
 
-$ git config --local --add sendemail.to meta-arm@lists.yoctoproject.org
+`$ git config --local --add sendemail.to meta-arm@lists.yoctoproject.org`
 
 Commits and patches added should follow the OpenEmbedded patch guidelines:
 
 https://www.openembedded.org/wiki/Commit_Patch_Message_Guidelines
 
 The component being changed in the shortlog should be prefixed with the layer name (without the meta- prefix), for example:
+>  arm-bsp/trusted-firmware-a: decrease frobbing level
 
-  arm-bsp/trusted-firmware-a: decrease frobbing level
+>  arm-toolchain/gcc: enable foobar v2
 
-  arm-toolchain/gcc: enable foobar v2
+Backporting
+--------------
+Backporting patches to older releases may be done upon request, but only after a version of the patch has been accepted into the master branch.  This is done by adding the branch name to email subject line.  This should be between the square brackets (e.g., "[" and "]"), and before or after the "PATCH".  For example,
+> [nanbield PATCH] arm/linux-yocto: backport patch to fix 6.5.13 networking issues
+
+Automatic backporting will be done to all branches if the "Fixes: <SHA>" wording is added to the patch commit message.  This is similar to how the Linux kernel community does their LTS kernel backporting.  For more information see the "Fixes" portion of
+https://www.kernel.org/doc/html/latest/process/submitting-patches.html#submittingpatches
 
 Releases and Release Schedule
 --------------
