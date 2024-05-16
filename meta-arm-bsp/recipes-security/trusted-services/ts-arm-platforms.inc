@@ -11,6 +11,7 @@ SRC_URI:append:corstone1000  = " \
     file://0007-plat-corstone1000-Initialize-capsule-update-provider.patch \
     file://0008-plat-corstone1000-add-client_id-for-FMP-service.patch \
     file://0009-Remove-Werror-flag.patch \
+    file://0010-Remove-PLATFORM_HAS_ATTEST_PK-define-from-IAT-test.patch \
     "
 
 COMPATIBLE_MACHINE:fvp-base = "fvp-base"
