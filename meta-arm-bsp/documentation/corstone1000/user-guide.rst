@@ -1221,6 +1221,174 @@ Now, run the PSA API tests in the following order:
 
 **NOTE:** The psa-crypto-api-test takes between 30 minutes to 1 hour to run.
 
+UEFI Secureboot test
+--------------------
+
+Before running the secureboot test, the user should make sure that the `FVP and FPGA software has been compiled and the ESP image for both the FVP and FPGA has been created` as mentioned in the previous sections and user should use the same workspace directory under which sources have been compiled. 
+The secureboot tests is applicable on both the FVP and the FPGA and this involves testing both the signed and unsigned kernel images. Successful test results in executing the signed image correctly and not allowing the unsigned image to run at all.
+
+***********************************************************
+Below steps are applicable to FVP as well as FPGA
+***********************************************************
+In order to achieve this for FVP and FPGA, a bash script is available in the systemready-patch repo which is responsible in creating the relevant keys, sign the respective kernel images, and copy the same in their corresponding ESP images.
+
+Clone the systemready-patch repo under <_workspace. Then, change directory to where the script `create_keys_and_sign.sh` is and execute the script as follows:
+
+::
+
+  git clone https://git.gitlab.arm.com/arm-reference-solutions/systemready-patch.git -b CORSTONE1000-2024.06
+  cd systemready-patch/embedded-a/corstone1000/secureboot/
+
+The script is responsible to create the required UEFI secureboot keys, sign the kernel images and copy the public keys and the kernel images (both signed and unsigned) to the ESP image for both the FVP and FPGA. 
+
+::
+  
+  ./create_keys_and_sign.sh -w <Absolute path to _workspace/meta-arm directory under which sources have been compiled> -v <certification validity in days>
+  For ex: ./create_keys_and_sign.sh -w "/home/xyz/workspace/meta-arm" -v 365
+  For help: ./create_keys_and_sign.sh -h
+
+**NOTE:** The above script is interactive and contains some commands that would require sudo password/permissions.
+
+After executing the above script, the relevant keys and the signed/unsigned kernel images will be copied to the ESP images for both the FVP and FGPA. The modified ESP images can be found at the same location i.e. 
+
+::
+
+  For MPS3 FPGA : _workspace/meta-arm/build/tmp/deploy/images/corstone1000-mps3/corstone1000-esp-image-corstone1000-mps3.wic
+  For FVP       : _workspace/meta-arm/build/tmp/deploy/images/corstone1000-fvp/corstone1000-esp-image-corstone1000-fvp.wic
+
+Now, it is time to test the UEFI secureboot for the Corstone-1000
+
+***********************************************************
+Steps to test Secureboot on FVP
+***********************************************************
+Now, as mentioned in the previous section **Prepare EFI System Partition**, the ESP image will be used automatically in the Corstone-1000 FVP as the 2nd MMC card image. Change directory to your workspace and run the FVP as follows:
+
+::
+
+  kas shell meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml -c "../meta-arm/scripts/runfvp --terminals=xterm"
+
+When the script is executed, three terminal instances will be launched, one for the boot processor (aka Secure Enclave) processing element and two for the Host processing element. On the host side, stop the execution at the U-Boot prompt which looks like `corstone1000#`. There is a timeout of 3 seconds to stop the execution at the U-Boot prompt. At the U-Boot prompt, run the following commands:
+
+Set the current mmc device
+
+::
+
+  corstone1000# mmc dev 1
+
+Enroll the four UEFI Secureboot authenticated variables
+
+::
+
+  corstone1000# load mmc 1:1 ${loadaddr} corstone1000_secureboot_keys/PK.auth && setenv -e -nv -bs -rt -at -i ${loadaddr}:$filesize PK
+  corstone1000# load mmc 1:1 ${loadaddr} corstone1000_secureboot_keys/KEK.auth && setenv -e -nv -bs -rt -at -i ${loadaddr}:$filesize KEK
+  corstone1000# load mmc 1:1 ${loadaddr} corstone1000_secureboot_keys/db.auth && setenv -e -nv -bs -rt -at -i ${loadaddr}:$filesize db
+  corstone1000# load mmc 1:1 ${loadaddr} corstone1000_secureboot_keys/dbx.auth && setenv -e -nv -bs -rt -at -i ${loadaddr}:$filesize dbx
+
+Now, load the unsigned FVP kernel image and execute it. This unsigned kernel image should not boot and result as follows
+
+::
+
+  corstone1000# load mmc 1:1 ${loadaddr} corstone1000_secureboot_fvp_images/Image_fvp
+  corstone1000# loadm $loadaddr $kernel_addr_r $filesize
+  corstone1000# bootefi $kernel_addr_r $fdtcontroladdr
+
+  Booting /MemoryMapped(0x0,0x88200000,0x236aa00)
+  Image not authenticated
+  Loading image failed
+
+The next step is to verify the signed linux kernel image. Load the signed kernel image and execute it as follows:
+
+::
+
+  corstone1000# load mmc 1:1 ${loadaddr} corstone1000_secureboot_fvp_images/Image_fvp.signed
+  corstone1000# loadm $loadaddr $kernel_addr_r $filesize
+  corstone1000# bootefi $kernel_addr_r $fdtcontroladdr
+
+The above set of commands should result in booting of signed linux kernel image successfully.
+
+
+***********************************************************
+Steps to test Secureboot on MPS3 FPGA
+***********************************************************
+Now, as mentioned in the previous section **Prepare EFI System Partition**, the ESP image for MPS3 FPGA needs to be copied to the USB drive. follow the steps mentioned in the same section for MPS3 FPGA to prepare the USB drive with the ESP image. The modified ESP image corresponds to MPS3 FPGA can be found at the location as mentioned before i.e. `_workspace/meta-arm/build/tmp/deploy/images/corstone1000-mps3/corstone1000-esp-image-corstone1000-mps3.wic`.  
+Insert this USB drive to the MPS3 FPGA and boot, and stop the execution at the U-Boot prompt similar to the FVP. At the U-Boot prompt, run the following commands:
+
+Reset the USB
+
+::
+
+  corstone1000# usb reset
+  resetting USB...
+  Bus usb@40200000: isp1763 bus width: 16, oc: not available
+  USB ISP 1763 HW rev. 32 started
+  scanning bus usb@40200000 for devices... port 1 high speed
+  3 USB Device(s) found
+         scanning usb for storage devices... 1 Storage Device(s) found
+
+**NOTE:** Sometimes, the usb reset doesn't recognize the USB device. It is recomended to rerun the usb reset command.
+
+Set the current USB device
+
+::
+
+  corstone1000# usb dev 0
+
+Enroll the four UEFI Secureboot authenticated variables
+
+::
+
+  corstone1000# load usb 0 $loadaddr corstone1000_secureboot_keys/PK.auth && setenv -e -nv -bs -rt -at -i $loadaddr:$filesize PK
+  corstone1000# load usb 0 $loadaddr corstone1000_secureboot_keys/KEK.auth && setenv -e -nv -bs -rt -at -i $loadaddr:$filesize KEK
+  corstone1000# load usb 0 $loadaddr corstone1000_secureboot_keys/db.auth && setenv -e -nv -bs -rt -at -i $loadaddr:$filesize db
+  corstone1000# load usb 0 $loadaddr corstone1000_secureboot_keys/dbx.auth && setenv -e -nv -bs -rt -at -i $loadaddr:$filesize dbx
+
+
+Now, load the unsigned MPS3 FPGA linux kernel image and execute it. This unsigned kernel image should not boot and result as follows
+
+::
+
+  corstone1000# load usb 0 $loadaddr corstone1000_secureboot_mps3_images/Image_mps3
+  corstone1000# loadm $loadaddr $kernel_addr_r $filesize
+  corstone1000# bootefi $kernel_addr_r $fdtcontroladdr
+
+  Booting /MemoryMapped(0x0,0x88200000,0x236aa00)
+  Image not authenticated
+  Loading image failed
+
+The next step is to verify the signed linux kernel image. Load the signed kernel image and execute it as follows:
+
+::
+
+  corstone1000# load usb 0 $loadaddr corstone1000_secureboot_mps3_images/Image_mps3.signed
+  corstone1000# loadm $loadaddr $kernel_addr_r $filesize
+  corstone1000# bootefi $kernel_addr_r $fdtcontroladdr
+
+The above set of commands should result in booting of signed linux kernel image successfully.
+
+***********************************************************
+Steps to disable Secureboot on both FVP and MPS3 FPGA
+***********************************************************
+Now, after testing the secureboot, UEFI authenticated variables get stored in the secure flash. When you try to reboot, the U-Boot will automatically read the UEFI authenticated variables and authenticates the images before executing them. In normal booting scenario, the linux kernel images will not be signed and hence this will not allow the system to boot, as image authentication will fail. We need to delete the Platform Key (one of the UEFI authenticated variable for Secureboot) in order to disable the secureboot. At the U-Boot prompt, run the following commands. 
+
+On the FVP
+
+::
+
+  corstone1000# mmc dev 1
+  corstone1000# load mmc 1:1 $loadaddr corstone1000_secureboot_keys/PK_delete.auth && setenv -e -nv -bs -rt -at -i $loadaddr:$filesize PK
+  corstone1000# boot
+
+On the MPS3 FPGA
+
+::
+
+  corstone1000# usb reset
+  corstone1000# usb dev 0
+  corstone1000# load usb 0 $loadaddr corstone1000_secureboot_keys/PK_delete.auth && setenv -e -nv -bs -rt -at -i $loadaddr:$filesize PK
+  corstone1000# boot
+
+The above commands will delete the Platform key (PK) and allow the normal system boot flow without secure boot. 
+
 Tests results
 -------------
 
