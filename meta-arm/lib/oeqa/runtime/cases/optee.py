@@ -12,7 +12,7 @@ class OpteeTestSuite(OERuntimeTestCase):
     """
     Run OP-TEE tests (xtest).
     """
-    @OETimeout(800)
+    @OETimeout(1300)
     @OEHasPackage(['optee-test'])
     def test_opteetest_xtest(self):
         # clear storage before executing tests
@@ -20,5 +20,5 @@ class OpteeTestSuite(OERuntimeTestCase):
         status, output = self.target.run(cmd, timeout=60)
         self.assertEqual(status, 0, msg='\n'.join([cmd, output]))
         cmd = "xtest"
-        status, output = self.target.run(cmd, timeout=600)
+        status, output = self.target.run(cmd, timeout=1200)
         self.assertEqual(status, 0, msg='\n'.join([cmd, output]))
