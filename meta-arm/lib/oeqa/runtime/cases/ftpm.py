@@ -11,12 +11,12 @@ class FtpmTestSuite(OERuntimeTestCase):
     """
     Minimal test for optee-ftpm and ftpm kernel driver interfaces
     """
-    @OETimeout(200)
+    @OETimeout(360)
     def test_ftpm(self):
         # device files, need tee-supplicant fully initialized which takes some time
         # and tests seem to run before boot is complete
-        cmd = "ls -l /dev/tpm0 /dev/tpmrm0 || ( runlevel; sleep 10; ls -l /dev/tpm0 /dev/tpmrm0 )"
-        status, output = self.target.run(cmd, timeout=60)
+        cmd = "ls -l /dev/tpm0 /dev/tpmrm0 || ( runlevel; sleep 60; ls -l /dev/tpm0 /dev/tpmrm0 )"
+        status, output = self.target.run(cmd, timeout=90)
         self.assertEqual(status, 0, msg='\n'.join([cmd, output]))
 
         # tpm version
