@@ -15,6 +15,10 @@ SRC_URI:append:corstone1000  = " \
     file://0011-Fix-Avoid-redefinition-of-variables.patch \
     file://0012-Fix-GetNextVariableName-NameSize-input.patch \
     file://0013-Fix-error-handling-of-variable-index-loading.patch \
+    file://0014-Provide-crypto-api-to-create-uefi-priv-var-fingerpri.patch \
+    file://0015-Add-timestamp-validation-for-uefi-variables.patch \
+    file://0016-Isolate-common-uefi-variable-authentication-steps.patch \
+    file://0017-Implement-Private-Authenticated-Variable-verificatio.patch \
     "
 
 COMPATIBLE_MACHINE:fvp-base = "fvp-base"
