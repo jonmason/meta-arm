@@ -19,6 +19,7 @@ SRC_URI:append:corstone1000  = " \
     file://0015-Add-timestamp-validation-for-uefi-variables.patch \
     file://0016-Isolate-common-uefi-variable-authentication-steps.patch \
     file://0017-Implement-Private-Authenticated-Variable-verificatio.patch \
+    file://0018-Change-RSS_COMMS-cmake-variables-to-cahce-vars.patch \
     "
 
 
