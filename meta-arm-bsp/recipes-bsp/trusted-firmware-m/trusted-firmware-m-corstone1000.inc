@@ -25,7 +25,7 @@ SRC_URI:append:corstone1000 = " \
     file://0006-Platform-Corstone1000-Enable-host-firewall-in-FVP.patch \
     file://0007-platform-corstone1000-Increase-ITS-max-asset-size.patch \
     file://0008-Platform-CS1000-Replace-OpenAMP-with-RSE_COMMS.patch \
-    file://0009-platform-CS1000-Increase-RSE_COMMS-buffer-size.patch \
+    file://0009-platform-corstone1000-Increase-RSE_COMMS-buffer-size.patch \
     file://0010-CC312-alignment-of-cc312-differences-between-fvp-and.patch \
     file://0011-Platform-corstone1000-Increase-buffers-for-EFI-vars.patch \
     "
