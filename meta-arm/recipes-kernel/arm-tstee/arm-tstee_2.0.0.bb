@@ -12,6 +12,7 @@ S = "${WORKDIR}/git"
 
 # Tag tee-v2.0.0
 SRCREV = "a2d7349a96c3b3afb44bf1555d53f1c46e45a23d"
+UPSTREAM_CHECK_GITTAGREGEX = "^tee-v(?P<pver>\d+(\.\d+)+)$"
 
 COMPATIBLE_HOST = "(arm|aarch64).*-linux"
 KERNEL_MODULE_AUTOLOAD += "arm-tstee"
