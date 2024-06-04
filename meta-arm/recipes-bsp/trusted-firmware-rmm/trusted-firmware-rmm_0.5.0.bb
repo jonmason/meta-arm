@@ -3,10 +3,9 @@ DESCRIPTION = "RMM Firmware for Arm reference platforms"
 LICENSE = "BSD-3-Clause & MIT"
 
 SRC_URI = "gitsm://git.trustedfirmware.org/TF-RMM/tf-rmm.git;protocol=https;branch=main \
-           file://0001-build-lib-Add-extra-repositories-for-system-includes.patch \
           "
 
-SRCREV = "0a02656945d69757b0779192cebb9b41dd9037d1"
+SRCREV = "6184a730bd4bc80d59eeff7f0752f8423500202c"
 UPSTREAM_CHECK_GITTAGREGEX = "^tf-rmm-v(?P<pver>\d+(\.\d+)+)$"
 
 LIC_FILES_CHKSUM += "file://docs/about/license.rst;md5=1375c7c641558198ffe401c2a799d79b"
