@@ -7,6 +7,7 @@ SRC_URI = "gitsm://git.trustedfirmware.org/TF-RMM/tf-rmm.git;protocol=https;bran
           "
 
 SRCREV = "0a02656945d69757b0779192cebb9b41dd9037d1"
+UPSTREAM_CHECK_GITTAGREGEX = "^tf-rmm-v(?P<pver>\d+(\.\d+)+)$"
 
 LIC_FILES_CHKSUM += "file://docs/about/license.rst;md5=1375c7c641558198ffe401c2a799d79b"
 
