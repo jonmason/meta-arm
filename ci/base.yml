@@ -7,7 +7,7 @@ distro: poky
 
 defaults:
   repos:
-    branch: scarthgap
+    branch: master
 
 repos:
   meta-arm:
