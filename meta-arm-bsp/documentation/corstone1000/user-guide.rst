@@ -3,9 +3,9 @@
  #
  # SPDX-License-Identifier: MIT
 
-##########
-User Guide
-##########
+#####################################
+User Guide: Build & run the software
+#####################################
 
 Notice
 ------
@@ -43,7 +43,7 @@ Targets
 Yocto stable branch
 -------------------
 
-Corstone-1000 software stack is built on top of Yocto mickledore.
+Corstone-1000 software stack is built on top of Yocto scarthgap.
 
 Provided components
 -------------------
@@ -364,6 +364,22 @@ The host will boot trusted-firmware-a, OP-TEE, U-Boot and then Linux, and presen
 
 Login using the username root.
 
+Using FVP on Windows or AArch64 Linux
+-------------------------------------
+
+The user should follow the build instructions in this document to build on a Linux host machine.
+Then, copy the output binaries to the Windows or Aarch64 Linux machine where the FVP is located.
+Then, launch the FVP binary.
+
+Security Issue Reporting
+------------------------
+
+To report any security issues identified with Corstone-1000, please send an email to psirt@arm.com.
+
+###########################
+User Guide: Provided tests
+###########################
+
 SystemReady-IR tests
 --------------------
 
@@ -419,11 +435,8 @@ Now you can plug this USB stick to the board together with ACS test USB stick.
 
 **Using ESP in FVP:**
 
-The ESP disk image once created will be used automatically in the Corstone-1000 FVP as the 2nd MMC card image.
+The ESP disk image once created will be used automatically in the Corstone-1000 FVP as the 2nd MMC card image. It will be used when the SystemReady-IR tests will be performed on the FVP in the later section.
 
-::
-
-   kas shell meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml -c "../meta-arm/scripts/runfvp -- -C board.msd_mmc.p_mmc_file="${<path-to-img>/ir_acs_live_image.img}"
 
 Clean Secure Flash Before Testing (applicable to FPGA only)
 ===========================================================
@@ -469,7 +482,7 @@ includes a set of examples of the invariant behaviors that are provided by a
 set of specifications for enterprise systems (For example: SBSA, SBBR, etc.),
 so that implementers can verify if these behaviours have been interpreted correctly.
 
-ACS image contains two partitions. BOOT partition and RESULT partition.
+The ACS image contains a BOOT partition.
 Following test suites and bootable applications are under BOOT partition:
 
  * SCT
@@ -495,11 +508,14 @@ BOOT partition contains the following:
     ├── grub
     ├── grub.cfg
     ├── Image
-    └── ramdisk-busybox.img
+    ├── ramdisk-busybox.img
+    └── acs_results
 
-RESULT partition is used to store the test results.
-**NOTE**: PLEASE MAKE SURE THAT "acs_results" FOLDER UNDER THE RESULT PARTITION IS EMPTY BEFORE YOU START THE TESTING. OTHERWISE THE TEST RESULTS
-WILL NOT BE CONSISTENT
+The BOOT partition is also used to store the test results. The
+results are stored in the `acs_results` folder.
+
+**NOTE**: PLEASE ENSURE THAT the `acs_results` FOLDER UNDER THE BOOT PARTITION IS
+EMPTY BEFORE YOU START TESTING. OTHERWISE THE TEST RESULTS WILL NOT BE CONSISTENT.
 
 FPGA instructions for ACS image
 ===============================
@@ -563,19 +579,6 @@ The details of how this layer works can be found in : ``<_workspace>/meta-arm-sy
 
 **NOTE:** These test might take up to 1 day to finish
 
-**NOTE:** A rare issue has been noticed (5-6% occurence) during which the FVP hangs during booting the system while running ACS tests.
-If this happens, please apply the following patch, rebuild the software stack for FVP and re-run the ACS tests.
-
-::
-
-  cd <_workspace>
-  git clone https://git.gitlab.arm.com/arm-reference-solutions/systemready-patch.git -b CORSTONE1000-2024.06
-  cp -f systemready-patch/embedded-a/corstone1000/sr_ir_workaround/0001-embedded-a-corstone1000-sr-ir-workaround.patch meta-arm
-  cd meta-arm
-  git am 0001-embedded-a-corstone1000-sr-ir-workaround.patch
-  cd ..
-  kas shell meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml -c "bitbake u-boot -c cleanall; bitbake trusted-firmware-a -c cleanall; bitbake corstone1000-flash-firmware-image -c cleanall; bitbake corstone1000-flash-firmware-image"
-
 
 Common to FVP and FPGA
 ======================
@@ -588,88 +591,70 @@ automatically in the following sequence:
  - UEFI BSA
  - FWTS
 
-The results can be fetched from the ``acs_results`` folder in the RESULT partition of the USB stick (FPGA) / SD Card (FVP).
+The results can be fetched from the `acs_results` folder in the BOOT partition of the USB stick (FPGA) / SD Card (FVP).
+
+**NOTE:** The FVP uses the ``<_workspace>/build/tmp-glibc/work/corstone1000_fvp-oe-linux/arm-systemready-ir-acs/2.0.0/deploy-arm-systemready-ir-acs/arm-systemready-ir-acs-corstone1000-fvp.wic`` image if the meta-arm-systemready layer is used.
+The result can be checked in this image.
 
 #####################################################
 
 Manual capsule update and ESRT checks
 -------------------------------------
 
-The following section describes running manual capsule update.
+The following section describes running manual capsule updates by going through
+a negative and positive test. Two capsules are needed to perform the positive
+and negative updates. The steps also show how to use the EFI System Resource Table
+(ESRT) to retrieve the installed capsule details.
 
-The steps described in this section perform manual capsule update and show how to use the ESRT feature
-to retrieve the installed capsule details.
+In the positive test, a valid capsule is used and the platform boots correctly
+until the Linux prompt after the update. In the negative test, an outdated
+capsule is used that has a smaller version number. This capsule gets rejected
+because of being outdated and the previous firmware will be used instead.
 
-For the following tests two capsules are needed to perform 2 capsule updates. A positive update and a negative update.
-
-A positive test case capsule which boots the platform correctly until the Linux prompt, and a negative test case with an
-incorrect capsule (corrupted or outdated) which fails to boot to the host software.
-
-Check the "Run SystemReady-IR ACS tests" section above to download and unpack the ACS image file
- - ``ir-acs-live-image-generic-arm64.wic.xz``
-
-Download systemready-patch repo under <_workspace>:
-
-::
-
-  git clone https://git.gitlab.arm.com/arm-reference-solutions/systemready-patch.git -b CORSTONE1000-2024.06
 
 *******************
 Generating Capsules
 *******************
 
-A no-partition image is created during the Yocto build. An update capsule is generated using this ``.nopt`` image.
-This can be found in ``build/tmp/deploy/images/corstone1000-<fvp/mps3>/corstone1000-<fvp/mps3>_image.nopt``.
-The capsule's default metadata (name, version, etc.) can be found in ``meta-arm/meta-arm-bsp/recipes-bsp/images/corstone1000-flash-firmware-image.bb``
-and ``meta-arm/kas/corstone1000-image-configuration.yml``.
+A no-partition image is needed for the capsule generation. This image is
+created automatically during a clean Yocto build and it can be found in
+``build/tmp/deploy/images/corstone1000-<fvp/mps3>/corstone1000-<fvp/mps3>_image.nopt``.
+A capsule is also automatically generated with U-Boot's ``mkeficapsule`` tool
+during the Yocto build that uses this ``corstone1000-<fvp/mps3>_image.nopt``. The
+capsule's default metadata, that is passed to the ``mkeficapsule`` tool,
+can be found in the ``meta-arm/meta-arm-bsp/recipes-bsp/images/corstone1000-flash-firmware-image.bb``
+and ``meta-arm/kas/corstone1000-image-configuration.yml`` files. These
+data can be modified before the Yocto build if it is needed. It is
+assumed that the default values are used in the following steps.
 
-FPGA Capsules
-=============
+The automatically generated capsule can be found in
+``build/tmp/deploy/images/corstone1000-<fvp/mps3>/corstone1000-<fvp/mps3>-v6.uefi.capsule``.
+This capsule will be used as the positive capsule during the test in the following
+steps.
 
-The generated capsule can be found in ``build/tmp/deploy/images/corstone1000-mps3/corstone1000-mps3-v6.uefi.capsule``.
-If a new capsule has to be generated with different metadata, then it can be done by using the ``u-boot-tools`` and the previously
-created ``.nopt`` image.
+Generating Capsules Manually
+============================
 
-For example a capsule for the negative update test scenario, if the host's architecture is x86_64:
+If a new capsule has to be generated with different metadata after the build
+process, then it can be done manually by using the ``u-boot-tools``'s
+``mkeficapsule`` and the previously created ``.nopt`` image. The
+``mkeficapsule`` tool is built automatically for the host machine
+during the Yocto build.
 
-::
-
-   cd <_workspace>
-
-   ./build/tmp/sysroots-components/x86_64/u-boot-tools-native/usr/bin/mkeficapsule --monotonic-count 1 \
-   --private-key build/tmp/deploy/images/corstone1000-mps3/corstone1000_capsule_key.key \
-   --certificate build/tmp/deploy/images/corstone1000-mps3/corstone1000_capsule_cert.crt --index 1 --guid df1865d1-90fb-4d59-9c38-c9f2c1bba8cc \
-   --fw-version 5 build/tmp/deploy/images/corstone1000-mps3/corstone1000-mps3_image.nopt corstone1000-mps3-v5.uefi.capsule
-
-This command will put the newly generated capsule to the ``<_workspace>`` directory.
-
-Generating FVP Capsules
-=======================
-
-The generated capsule can be found in ``build/tmp/deploy/images/corstone1000-fvp/corstone1000-fvp-v6.uefi.capsule``.
-If a new capsule has to be generated with different metadata, then it can be done by using the ``u-boot-tools`` and the previously
-created ``.nopt`` image.
-
-For example a capsule for the negative update test scenario, if the host's architecture is x86_64:
+The negative capsule needs a lower ``fw-version`` than the positive
+capsule. For example if the host's architecture is x86_64, this can
+be generated by using the following command:
 
 ::
 
    cd <_workspace>
 
    ./build/tmp/sysroots-components/x86_64/u-boot-tools-native/usr/bin/mkeficapsule --monotonic-count 1 \
-   --private-key build/tmp/deploy/images/corstone1000-fvp/corstone1000_capsule_key.key \
-   --certificate build/tmp/deploy/images/corstone1000-fvp/corstone1000_capsule_cert.crt --index 1 --guid 989f3a4e-46e0-4cd0-9877-a25c70c01329 \
-   --fw-version 5 build/tmp/deploy/images/corstone1000-fvp/corstone1000-fvp_image.nopt corstone1000-fvp-v5.uefi.capsule
+   --private-key build/tmp/deploy/images/corstone1000-<fvp/mps3>/corstone1000_capsule_key.key \
+   --certificate build/tmp/deploy/images/corstone1000-<fvp/mps3>/corstone1000_capsule_cert.crt --index 1 --guid df1865d1-90fb-4d59-9c38-c9f2c1bba8cc \
+   --fw-version 5 build/tmp/deploy/images/corstone1000-<fvp/mps3>/corstone1000-<fvp/mps3>_image.nopt corstone1000-<fvp/mps3>-v5.uefi.capsule
 
-This command will put the newly generated capsule to the ``<_workspace>`` directory.
-
-Common Notes for FVP and FPGA
-=============================
-
-The capsule binary size (wic file) should be less than 15 MB.
-
-Based on the user's requirement, the user can change the firmware version
-number given to ``--fw-version`` option (the version number needs to be >= 1).
+This command will put the negative capsule to the ``<_workspace>`` directory.
 
 
 ****************
@@ -694,19 +679,26 @@ the on disk method.
 Copying the FVP capsules
 ========================
 
-First, Find the 1st partition offset:
+The ACS image should be used for the FVP as well. Downloaded and extract the
+image the same way as for the FPGA `FPGA instructions for ACS image`_.
+Creating an USB stick with the image is not needed for the FVP.
+
+After getting the ACS image, find the 1st partition's offset of the
+``ir-acs-live-image-generic-arm64.wic`` image. The partition table can be
+listed using the ``fdisk`` tool.
 
 ::
 
   fdisk -lu <path-to-img>/ir-acs-live-image-generic-arm64.wic
-  ->  Device                                                     Start     End Sectors  Size Type
-       <path-to-img>/ir-acs-live-image-generic-arm64.wic1    2048  206847  204800   100M Microsoft basic data
-       <path-to-img>/ir-acs-live-image-generic-arm64.wic2  206848 1024239  817392 399.1M Linux filesystem
-       <path-to-img>/ir-acs-live-image-generic-arm64.wic3 1026048 1128447  102400    50M Microsoft basic data
+      Device                                Start     End Sectors  Size Type
+         <path-to-img>/ir-acs-live-image-generic-arm64.wic1   2048  309247  307200  150M Microsoft basic data
+         <path-to-img>/ir-acs-live-image-generic-arm64.wic2 309248 1343339 1034092  505M Linux filesystem
 
-  ->   <offset_3rd_partition> = 2048 * 512 (sector size) = 1048576
 
-Next, mount the IR image:
+The first partition starts at the 2048th sector. This has to be multiplied
+by the sector size which is 512 so the offset is 2048 * 512 = 1048576.
+
+Next, mount the IR image using the previously calculated offset:
 
 ::
 
@@ -731,13 +723,17 @@ Then, unmount the IR image:
 Performing the capsule update
 ******************************
 
-During this section we will be using the capsule with the higher version (``corstone1000-<fvp/mps3>-v6.uefi.capsule``) for the positive scenario
-and the capsule with the lower version (``corstone1000-<fvp/mps3>-v5.uefi.capsule``) for the negative scenario.
+During this section we will be using the capsule with the higher version
+(``corstone1000-<fvp/mps3>-v6.uefi.capsule``) for the positive scenario
+and then the capsule with the lower version (``corstone1000-<fvp/mps3>-v5.uefi.capsule``)
+for the negative scenario. The two tests have to be done after each other
+in the correct order to make sure that the negative capsule will get rejected.
 
 Running the FPGA with the IR prebuilt image
 ===========================================
 
-Insert the prepared USB stick then Power cycle the MPS3 board.
+Insert the prepared USB stick which has the IR prebuilt image and two capsules,
+then Power cycle the MPS3 board.
 
 Running the FVP with the IR prebuilt image
 ==========================================
@@ -749,11 +745,14 @@ Run the FVP with the IR prebuilt image:
    kas shell meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml -c "../meta-arm/scripts/runfvp --terminals=xterm -- -C board.msd_mmc.p_mmc_file=<path-to-img>/ir-acs-live-image-generic-arm64.wic"
 
 **NOTE:** <path-to-img> must start from the root directory. make sure there are no spaces before or after of "=". board.msd_mmc.p_mmc_file=<path-to-img>/ir-acs-live-image-generic-arm64.wic.
+**NOTE:** Do not restart the FVP between the positive and negative test because it will start from a clean state.
 
 Executing capsule update for FVP and FPGA
 =========================================
 
-Reach U-Boot then interrupt the boot  to reach the EFI shell.
+Wait until U-boot loads EFI from the ACS image stick and interrupt the EFI
+shell by pressing ESC when the following prompt is displayed in the Host
+terminal (ttyUSB2).
 
 ::
 
@@ -765,15 +764,26 @@ Then, type FS0: as shown below:
 
   FS0:
 
-In case of the positive scenario run the update with the higher version capsule as shown below:
+Then start the CapsuleApp application. Use the positive capsule
+(corstone1000-<fvp/mps3>-v6.uefi.capsule) first.
 
 ::
 
   EFI/BOOT/app/CapsuleApp.efi corstone1000-<fvp/mps3>-v6.uefi.capsule
 
-After successfully updating the capsule the system will reset.
+The capsule update will be started.
 
-In case of the negative scenario run the update with the lower version capsule as shown below:
+**NOTE:**  On the FVP it takes around 15-30 minutes, on the FPGA it takes less time.
+
+After successfully updating the capsule the system will reset. Make sure the
+Corstone-1000's Poky Distro is booted after the reset so the ESRT can be checked.
+It is described in the `Select Corstone-1000 Linux kernel boot`_ section how to
+boot the Poky distro after the capsule update.
+The `Positive scenario`_ sections describes how the result should be inspected.
+After the result is checked, the system can be rebooted with the ``reboot`` command in the Host
+terminal (ttyUSB2).
+
+Interrupt the EFI shell again and now start the capsule update with the negative capsule:
 
 ::
 
@@ -791,15 +801,12 @@ Then, reboot manually:
 
    Shell> reset
 
-FPGA: Select Corstone-1000 Linux kernel boot
-============================================
+Make sure the Corstone-1000's Poky Distro is booted again
+(`Select Corstone-1000 Linux kernel boot`_) in order to check the results
+`Negative scenario`_.
 
-Remove the USB stick before U-Boot is reached so the Corstone-1000 kernel will be detected and used for booting.
-
-**NOTE:** Otherwise, the execution ends up in the ACS live image.
-
-FVP: Select Corstone-1000 Linux kernel boot
-===========================================
+Select Corstone-1000 Linux kernel boot
+======================================
 
 Interrupt the U-Boot shell.
 
@@ -825,9 +832,12 @@ Capsule update status
 Positive scenario
 =================
 
-In the positive case scenario, the user should see following log in TF-M log,
-indicating the new capsule image is successfully applied, and the board boots
-correctly.
+In the positive case scenario, the software stack copies the capsule to the
+External Flash, which is shared between the Secure Enclave and Host,
+then a reboot is triggered. The TF-M accepts the capsule.
+The user should see following TF-M log in the Secure Enclave terminal (ttyUSB1)
+before the system reboots automatically, indicating the new capsule
+image is successfully applied, and the board boots correctly.
 
 ::
 
@@ -839,6 +849,18 @@ correctly.
   metadata_write: success: active = 1, previous = 0
   flash_full_capsule: exit
   corstone1000_fwu_flash_image: exit: ret = 0
+  ...
+
+And after the reboot:
+
+::
+
+  ...
+  fmp_set_image_info:133 Enter
+  FMP image update: image id = 0
+  FMP image update: status = 0version=6 last_attempt_version=6.
+  fmp_set_image_info:157 Exit.
+  corstone1000_fwu_host_ack: exit: ret = 0
   ...
 
 
@@ -869,11 +891,14 @@ In the Linux command-line run the following:
    lowest_supported_fw_ver:	0
 
 
-Negative scenario (Applicable to FPGA only)
-===========================================
+Negative scenario
+=================
 
-In the negative case scenario (rollback the capsule version), the user should
-see appropriate logs in the secure enclave terminal.
+In the negative case scenario (rollback the capsule version),
+the TF-M detects that the new capsule's version number is
+smaller then the current version. The capsule is rejected because
+of this.
+The user should see appropriate logs in the Secure Enclave terminal (ttyUSB1) before the system reboots itself.
 
 ::
 
@@ -897,7 +922,7 @@ see appropriate logs in the secure enclave terminal.
 
 
 If capsule pass initial verification, but fails verifications performed during
-boot time, secure enclave will try new images predetermined number of times
+boot time, Secure Enclave will try new images predetermined number of times
 (defined in the code), before reverting back to the previous good bank.
 
 ::
@@ -933,11 +958,6 @@ In the Linux command-line run the following:
    last_attempt_version:	5
    lowest_supported_fw_ver:	0
 
-**Note**: This test is currently not working properly in Corstone-1000 FVP.
-However, it is not part of the System-Ready IR tests, and it won't affect the
-SR-IR certification. All the compulsory `capsule update tests for SR-IR
-<https://developer.arm.com/documentation/DUI1101/2-1/Test-SystemReady-IR/Test-UpdateCapsule>`__
-works on both Corstone-1000 FVP and FPGA.
 
 Linux distros tests
 -------------------
@@ -1033,9 +1053,9 @@ With a minimum size of 8GB formatted with gpt.
 
 ::
 
-  #Generating mmc2
-  dd if=/dev/zero of=<_workspace>/mmc2_file.img bs=1 count=0 seek=10G; sync;
-  parted -s mmc2_file.img mklabel gpt
+  #Generating os_file
+  dd if=/dev/zero of=<_workspace>/os_file.img bs=1 count=0 seek=10G; sync;
+  parted -s os_file.img mklabel gpt
 
 
 *************************************************
@@ -1067,10 +1087,10 @@ FVP
 
 ::
 
-  kas shell meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml -c "../meta-arm/scripts/runfvp --terminals=xterm -- -C board.msd_mmc.p_mmc_file=<path-to-iso_file> -C board.msd_mmc_2.p_mmc_file=<_workspace>/mmc2_file.img"
+  kas shell meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml -c "../meta-arm/scripts/runfvp --terminals=xterm -- -C board.msd_mmc.p_mmc_file=<_workspace>/os_file.img -C board.msd_mmc_2.p_mmc_file=<path-to-iso_file>"
 
 The installer should now start.
-The os will be installed on the second mmc 'mmc2_file.img'.
+The OS will be installed on 'os_file.img'.
 
 *******************************************************
 Debian install clarifications
@@ -1123,17 +1143,22 @@ after entering the password for the root user.
 
 FVP
 ==============
-Once the installation is complete, you will need to exit the shell instance
-and run this command to boot into the installed OS:
+The platform should automatically boot into the installed OS image.
 
-::
+To cold boot:
 
-  kas shell meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml -c "../meta-arm/scripts/runfvp --terminals=xterm -- -C board.msd_mmc.p_mmc_file=<path-to-iso_file> -C board.msd_mmc.p_mmc_file=<_workspace>/mmc2_file.img"
+ ::
 
-Once the FVP begins booting, you will need to quickly change the boot option in grub,
-to boot into recovery mode.
+  kas shell meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml -c "../meta-arm/scripts/runfvp --terminals=xterm -- -C board.msd_mmc.p_mmc_file=<_workspace>/os_file.img"
 
-**NOTE:** This option will disappear quickly, so it's best to preempt it.
+
+The board will then enter recovery mode, from which the user can access a shell
+after entering the password for the root user.
+
+
+**NOTE:** To manually enter recovery mode, once the FVP begins booting, you can quickly
+change the boot option in grub, to boot into recovery mode. This option will disappear
+quickly, so it's best to preempt it.
 
 Select 'Advanced Options for '<OS>' and then '<OS> (recovery mode)'.
 
@@ -1213,7 +1238,7 @@ Then, check whether the FF-A TEE driver is loaded correctly by using the followi
 
   cat /proc/modules | grep arm_tstee
 
-The output should be:
+The output should be similar to:
 
 ::
 
@@ -1229,16 +1254,31 @@ Now, run the PSA API tests in the following order:
   psa-ps-api-test
 
 
-UEFI Secureboot test
---------------------
+UEFI Secureboot (SB) test
+-------------------------
 
-Before running the secureboot test, the user should make sure that the `FVP and FPGA software has been compiled and the ESP image for both the FVP and FPGA has been created` as mentioned in the previous sections and user should use the same workspace directory under which sources have been compiled. 
-The secureboot tests is applicable on both the FVP and the FPGA and this involves testing both the signed and unsigned kernel images. Successful test results in executing the signed image correctly and not allowing the unsigned image to run at all.
+Before running the SB test, the user should make sure that the `FVP and FPGA software has been compiled and the ESP image for both the FVP and FPGA has been created` as mentioned in the previous sections and user should use the same workspace directory under which sources have been compiled.
+The SB test is applicable on both the FVP and the FPGA and this involves testing both the signed and unsigned kernel images. Successful test results in executing the signed image correctly and not allowing the unsigned image to run at all.
 
 ***********************************************************
 Below steps are applicable to FVP as well as FPGA
 ***********************************************************
-In order to achieve this for FVP and FPGA, a bash script is available in the systemready-patch repo which is responsible in creating the relevant keys, sign the respective kernel images, and copy the same in their corresponding ESP images.
+Firstly, the flash firmware image has to be built for both the FVP and FPGA as follows:
+
+For FVP,
+
+::
+
+  kas shell meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml -c bitbake -c build corstone1000-flash-firmware-image"
+
+
+For FPGA,
+
+::
+
+  kas shell meta-arm/kas/corstone1000-mps3.yml:meta-arm/ci/debug.yml -c bitbake -c build corstone1000-flash-firmware-image"
+
+In order to test SB for FVP and FPGA, a bash script is available in the systemready-patch repo which is responsible in creating the relevant keys, sign the respective kernel images, and copy the same in their corresponding ESP images.
 
 Clone the systemready-patch repo under <_workspace. Then, change directory to where the script `create_keys_and_sign.sh` is and execute the script as follows:
 
@@ -1247,27 +1287,30 @@ Clone the systemready-patch repo under <_workspace. Then, change directory to wh
   git clone https://git.gitlab.arm.com/arm-reference-solutions/systemready-patch.git -b CORSTONE1000-2024.06
   cd systemready-patch/embedded-a/corstone1000/secureboot/
 
-The script is responsible to create the required UEFI secureboot keys, sign the kernel images and copy the public keys and the kernel images (both signed and unsigned) to the ESP image for both the FVP and FPGA. 
+**NOTE:** The efitools package is required to execute the script. Install the efitools package on your system, if it doesn't exist.
+
+The script is responsible to create the required UEFI secureboot keys, sign the kernel images and copy the public keys and the kernel images (both signed and unsigned) to the ESP image for both the FVP and FPGA.
 
 ::
-  
-  ./create_keys_and_sign.sh -w <Absolute path to _workspace/meta-arm directory under which sources have been compiled> -v <certification validity in days>
+
+  ./create_keys_and_sign.sh -w <Absolute path to <workdir> directory under which sources have been compiled> -v <certification validity in days>
   For ex: ./create_keys_and_sign.sh -w "/home/xyz/workspace/meta-arm" -v 365
   For help: ./create_keys_and_sign.sh -h
 
 **NOTE:** The above script is interactive and contains some commands that would require sudo password/permissions.
 
-After executing the above script, the relevant keys and the signed/unsigned kernel images will be copied to the ESP images for both the FVP and FGPA. The modified ESP images can be found at the same location i.e. 
+After executing the above script, the relevant keys and the signed/unsigned kernel images will be copied to the ESP images for both the FVP and FGPA. The modified ESP images can be found at the same location i.e.
 
 ::
 
   For MPS3 FPGA : _workspace/meta-arm/build/tmp/deploy/images/corstone1000-mps3/corstone1000-esp-image-corstone1000-mps3.wic
   For FVP       : _workspace/meta-arm/build/tmp/deploy/images/corstone1000-fvp/corstone1000-esp-image-corstone1000-fvp.wic
 
-Now, it is time to test the UEFI secureboot for the Corstone-1000
+Now, it is time to test the SB for the Corstone-1000
+
 
 ***********************************************************
-Steps to test Secureboot on FVP
+Steps to test SB on FVP
 ***********************************************************
 Now, as mentioned in the previous section **Prepare EFI System Partition**, the ESP image will be used automatically in the Corstone-1000 FVP as the 2nd MMC card image. Change directory to your workspace and run the FVP as follows:
 
@@ -1316,9 +1359,10 @@ The above set of commands should result in booting of signed linux kernel image 
 
 
 ***********************************************************
-Steps to test Secureboot on MPS3 FPGA
+Steps to test SB on MPS3 FPGA
 ***********************************************************
-Now, as mentioned in the previous section **Prepare EFI System Partition**, the ESP image for MPS3 FPGA needs to be copied to the USB drive. follow the steps mentioned in the same section for MPS3 FPGA to prepare the USB drive with the ESP image. The modified ESP image corresponds to MPS3 FPGA can be found at the location as mentioned before i.e. `_workspace/meta-arm/build/tmp/deploy/images/corstone1000-mps3/corstone1000-esp-image-corstone1000-mps3.wic`.  
+Now, as mentioned in the previous section **Prepare EFI System Partition**, the ESP image for MPS3 FPGA needs to be copied to the USB drive.
+Follow the steps mentioned in the same section for MPS3 FPGA to prepare the USB drive with the ESP image. The modified ESP image corresponds to MPS3 FPGA can be found at the location as mentioned before i.e. `_workspace/meta-arm/build/tmp/deploy/images/corstone1000-mps3/corstone1000-esp-image-corstone1000-mps3.wic`.
 Insert this USB drive to the MPS3 FPGA and boot, and stop the execution at the U-Boot prompt similar to the FVP. At the U-Boot prompt, run the following commands:
 
 Reset the USB
@@ -1376,7 +1420,7 @@ The above set of commands should result in booting of signed linux kernel image 
 ***********************************************************
 Steps to disable Secureboot on both FVP and MPS3 FPGA
 ***********************************************************
-Now, after testing the secureboot, UEFI authenticated variables get stored in the secure flash. When you try to reboot, the U-Boot will automatically read the UEFI authenticated variables and authenticates the images before executing them. In normal booting scenario, the linux kernel images will not be signed and hence this will not allow the system to boot, as image authentication will fail. We need to delete the Platform Key (one of the UEFI authenticated variable for Secureboot) in order to disable the secureboot. At the U-Boot prompt, run the following commands. 
+Now, after testing the SB, UEFI authenticated variables get stored in the secure flash. When you try to reboot, the U-Boot will automatically read the UEFI authenticated variables and authenticates the images before executing them. In normal booting scenario, the linux kernel images will not be signed and hence this will not allow the system to boot, as image authentication will fail. We need to delete the Platform Key (one of the UEFI authenticated variable for SB) in order to disable the SB. At the U-Boot prompt, run the following commands.
 
 On the FVP
 
@@ -1395,13 +1439,7 @@ On the MPS3 FPGA
   corstone1000# load usb 0 $loadaddr corstone1000_secureboot_keys/PK_delete.auth && setenv -e -nv -bs -rt -at -i $loadaddr:$filesize PK
   corstone1000# boot
 
-The above commands will delete the Platform key (PK) and allow the normal system boot flow without secure boot. 
-
-Tests results
--------------
-
-As a reference for the end user, reports for various tests for `Corstone-1000 software (CORSTONE1000-2024.06) <https://git.yoctoproject.org/meta-arm/tag/?h=CORSTONE1000-2024.06>`__
-can be found `here <https://gitlab.arm.com/arm-reference-solutions/arm-reference-solutions-test-report/-/tree/master/embedded-a/corstone1000>`__.
+The above commands will delete the Platform key (PK) and allow the normal system boot flow without SB.
 
 
 Testing the External System
@@ -1420,18 +1458,11 @@ The external system can be switched on/off on demand with the following commands
 
   echo start > /sys/class/remoteproc/remoteproc0/state
 
+Tests results
+-------------
 
-Using FVP on Windows or AArch64 Linux
--------------------------------------
-
-The user should follow the build instructions in this document to build on a Linux host machine.
-Then, copy the output binaries to the Windows or Aarch64 Linux machine where the FVP is located.
-Then, launch the FVP binary.
-
-Security Issue Reporting
-------------------------
-
-To report any security issues identified with Corstone-1000, please send an email to psirt@arm.com.
+As a reference for the end user, reports for various tests for `Corstone-1000 software (CORSTONE1000-2024.06) <https://git.yoctoproject.org/meta-arm/tag/?h=CORSTONE1000-2024.06>`__
+can be found `here <https://gitlab.arm.com/arm-reference-solutions/arm-reference-solutions-test-report/-/tree/CORSTONE1000-2024.06/embedded-a/corstone1000/CORSTONE1000-2024.06?ref_type=tags>`__.
 
 --------------
 
