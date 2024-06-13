@@ -93,30 +93,60 @@ and loads the following software in the chain. For the boot chain
 process to work, the start of the chain should be trusted, forming the
 Root of Trust (RoT) of the device. The RoT of the device is immutable in
 nature and encoded into the device by the device owner before it
-is deployed into the field. In Corstone-1000, the BL1 image of the secure
-enclave and content of the CC312 OTP (One Time Programmable) memory
-forms the RoT. The BL1 image exists in ROM (Read Only Memory).
+is deployed into the field. In Corstone-1000, the content of the ROM
+and CC312 OTP (One Time Programmable) memory forms the RoT.
+
+Verification of an image can happen either by comparing the computed and
+stored hashes, or by checking the signature of the image if the image
+is signed.
 
 .. image:: images/SecureBootChain.png
    :width: 870
    :alt: SecureBootChain
 
 It is a lengthy chain to boot the software on Corstone-1000. On power on,
-the secure enclave starts executing BL1 code from the ROM which is the RoT
-of the device. Authentication of an image involves the steps listed below:
+the Secure Enclave starts executing BL1_1 code from the ROM which is the RoT
+of the device. The BL1_1 is the immutable bootloader of the system, it handles
+the provisioning on the first boot, hardware initialization and verification
+of the next stage.
 
-- Load image from flash to dynamic RAM.
+The BL1_2 code, hashes and keys are written into the OTP during the provisioning.
+The next bootstage is the BL1_2 which is copied from the OTP into the RAM. The
+BL1_1 also compares the BL1_2 hash with the hash saved to the OTP. The BL1_2
+verifies and transfers control to the next bootstage which is the BL2. During the
+verification, the BL1_2 compares the BL2 image's computed hash with the BL2 hash in
+the OTP. The BL2 is MCUBoot in the system. BL2 can provision additional keys on the
+first boot and it authenticates the initial bootloader of the host (Host TF-A BL2)
+and TF-M by checking the signatures of the images.
+The MCUBoot handles the image verification the following way:
+
+- Load image from a non-volatile memory to dynamic RAM.
 - The public key present in the image header is validated by comparing with the hash.
   Depending on the image, the hash of the public key is either stored in the OTP or part
   of the software which is being already verified in the previous stages.
 - The image is validated using the public key.
 
-In the secure enclave, BL1 authenticates the BL2 and passes the execution
-control. BL2 authenticates the initial boot loader of the host (Host TF-A BL2)
-and TF-M. The execution control is now passed to TF-M. TF-M being the runtime
-executable of secure enclave which initializes itself and, at the end,
-brings the host CPU out of rest. The host follows the boot standard defined
-in the `TBBR`_ to authenticate the secure and non-secure software.
+
+The execution control is passed to TF-M after the verification. TF-M being
+the runtime executable of the Secure Enclave which initializes itself and, at the end,
+brings the host CPU out of rest.
+
+The TF-M BL1 design details and reasoning can be found in the `TF-M design documents
+<https://tf-m-user-guide.trustedfirmware.org/design_docs/booting/bl1.html>`_.
+
+The Corstone-1000 has some differences compared to this design due to memory (OTP/ROM)
+limitations:
+
+- The provisioning bundle that contains the BL1_2 code is located in the ROM.
+  This means the BL1_2 cannot be updated during provisioning time.
+- The BL1_1 handles most of the hardware initialization instead of the BL1_2. This
+  results in a bigger BL1_1 code size than needed.
+- The BL1_2 does not use the post-quantum LMS verification. The BL2 is verified by
+  comparing the computed hash to the hash which is stored in the OTP. This means the
+  BL2 is not updatable.
+
+The host follows the boot standard defined in the `TBBR`_ to authenticate the
+secure and non-secure software.
 
 For UEFI Secure Boot, authenticated variables can be accessed from the secure flash.
 The feature has been integrated in U-Boot, which authenticates the images as per the UEFI
@@ -128,11 +158,11 @@ Secure Services
 
 Corstone-1000 is unique in providing a secure environment to run a secure
 workload. The platform has TrustZone technology in the Host subsystem but
-it also has hardware isolated secure enclave environment to run such secure
+it also has hardware isolated Secure Enclave environment to run such secure
 workloads. In Corstone-1000, known Secure Services such as Crypto, Protected
 Storage, Internal Trusted Storage and Attestation are available via PSA
 Functional APIs in TF-M. There is no difference for a user communicating to
-these services which are running on a secure enclave instead of the
+these services which are running on a Secure Enclave instead of the
 secure world of the host subsystem. The below diagram presents the data
 flow path for such calls.
 
@@ -143,7 +173,7 @@ flow path for such calls.
 
 
 The SE Proxy SP (Secure Enclave Proxy Secure Partition) is a proxy partition
-managed by OPTEE which forwards such calls to the secure enclave. The
+managed by OPTEE which forwards such calls to the Secure Enclave. The
 solution relies on the `RSE communication protocol
 <https://tf-m-user-guide.trustedfirmware.org/platform/arm/rse/rse_comms.html>`_
 which is a lightweight serialization of the psa_call() API. It can use shared
@@ -154,7 +184,7 @@ Unit) is used to implement isolation level 2.
 
 For a user to define its own secure service, both the options of the host
 secure world or secure encalve are available. It's a trade-off between
-lower latency vs higher security. Services running on a secure enclave are
+lower latency vs higher security. Services running on a Secure Enclave are
 secure by real hardware isolation but have a higher latency path. In the
 second scenario, the services running on the secure world of the host
 subsystem have lower latency but virtual hardware isolation created by
@@ -217,7 +247,7 @@ service. The below diagram presents the data flow to store UEFI variables.
 The U-Boot implementation of the UEFI subsystem uses the U-Boot FF-A driver to
 communicate with the SMM Service in the secure world. The backend of the
 SMM service uses the proxy PS from the SE Proxy SP. From there on, the PS
-calls are forwarded to the secure enclave as explained above.
+calls are forwarded to the Secure Enclave as explained above.
 
 
 .. image:: images/UEFISupport.png
