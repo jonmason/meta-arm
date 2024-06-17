@@ -16,3 +16,4 @@ target:
   - arm-systemready-ir-acs
   - arm-systemready-linux-distros-debian
   - arm-systemready-linux-distros-opensuse
+  - arm-systemready-linux-distros-fedora
