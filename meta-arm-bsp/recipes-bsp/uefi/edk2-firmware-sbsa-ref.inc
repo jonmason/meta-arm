@@ -1,5 +1,11 @@
 COMPATIBLE_MACHINE:sbsa-ref = "sbsa-ref"
 
+FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
+
+SRC_URI:append = " file://0001-BootLogoLib-align-logo-coords-to-be-even.patch"
+# Need to use git as the BootLogo fix includes a binary patch, which quilt cannot handle
+PATCHTOOL = "git"
+
 DEPENDS:append:sbsa-ref     = " trusted-firmware-a coreutils-native"
 
 EDK2_PLATFORM:sbsa-ref      = "SbsaQemu"
@@ -17,3 +23,4 @@ do_install:append:sbsa-ref() {
     # QEMU requires that the images be minimum of 256M in size
     truncate -s 256M ${D}/firmware/SBSA_FLASH*.fd
 }
+
