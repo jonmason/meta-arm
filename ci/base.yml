@@ -21,10 +21,6 @@ repos:
     layers:
       meta:
       meta-poky:
-    patches:
-      procps:
-        path: 0001-procps-fix-build-with-new-glibc-but-old-kernel-heade.patch
-        repo: meta-arm
 
 env:
   BB_LOGCONFIG: ""
