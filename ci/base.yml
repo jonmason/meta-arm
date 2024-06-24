@@ -21,6 +21,10 @@ repos:
     layers:
       meta:
       meta-poky:
+    patches:
+      fvp-base-ssh-retry:
+        path: 0001-oeqa-runtime-ssh-add-retry-logic-and-sleeps-to-allow.patch
+        repo: meta-arm
 
 env:
   BB_LOGCONFIG: ""
