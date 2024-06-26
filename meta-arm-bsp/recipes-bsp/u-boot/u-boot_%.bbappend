@@ -7,4 +7,3 @@ MACHINE_U-BOOT_REQUIRE:juno = "u-boot-juno.inc"
 MACHINE_U-BOOT_REQUIRE:tc = "u-boot-tc.inc"
 
 require ${MACHINE_U-BOOT_REQUIRE}
-

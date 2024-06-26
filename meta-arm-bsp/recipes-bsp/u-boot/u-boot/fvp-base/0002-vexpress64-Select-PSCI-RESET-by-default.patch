@@ -1,4 +1,4 @@
-From fdf67502a8112bb54cb1d25657cb35a37035f3e9 Mon Sep 17 00:00:00 2001
+From c8fc6ef35f50443cefd94482d64f4300ea13e5da Mon Sep 17 00:00:00 2001
 From: Diego Sueiro <diego.sueiro@arm.com>
 Date: Wed, 4 Oct 2023 06:31:50 +0100
 Subject: [PATCH] vexpress64: Select PSCI RESET by default
@@ -16,7 +16,7 @@ Signed-off-by: Diego Sueiro <diego.sueiro@arm.com>
  2 files changed, 2 insertions(+), 5 deletions(-)
 
 diff --git a/board/armltd/vexpress64/Kconfig b/board/armltd/vexpress64/Kconfig
-index 7ae5055f59b1..b8aead6cc35c 100644
+index 7ae5055f59..b8aead6cc3 100644
 --- a/board/armltd/vexpress64/Kconfig
 +++ b/board/armltd/vexpress64/Kconfig
 @@ -30,6 +30,8 @@ config TARGET_VEXPRESS64_BASE_FVP
@@ -29,7 +29,7 @@ index 7ae5055f59b1..b8aead6cc35c 100644
  config TARGET_VEXPRESS64_BASER_FVP
  	bool "Support Versatile Express ARMv8r64 FVP BASE model"
 diff --git a/board/armltd/vexpress64/vexpress64.c b/board/armltd/vexpress64/vexpress64.c
-index ee65a596838a..f73de56464fa 100644
+index ee65a59683..f73de56464 100644
 --- a/board/armltd/vexpress64/vexpress64.c
 +++ b/board/armltd/vexpress64/vexpress64.c
 @@ -207,11 +207,6 @@ void *board_fdt_blob_setup(int *err)
