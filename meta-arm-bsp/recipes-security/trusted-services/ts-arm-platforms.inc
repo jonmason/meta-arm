@@ -22,5 +22,8 @@ SRC_URI:append:corstone1000  = " \
     file://0018-Change-RSS_COMMS-cmake-variables-to-cahce-vars.patch \
     "
 
+# The patches above introduce errors with GCC 14.1, silence them for now
+CFLAGS:append:corstone1000 = " -Wno-int-conversion -Wno-implicit-function-declaration"
+
 COMPATIBLE_MACHINE:fvp-base = "fvp-base"
 TS_PLATFORM:fvp-base = "arm/fvp/fvp_base_revc-2xaemv8a"
