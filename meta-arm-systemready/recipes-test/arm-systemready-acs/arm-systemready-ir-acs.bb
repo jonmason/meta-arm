@@ -58,4 +58,6 @@ SRC_URI[acs-img.sha256sum] = "ea52f84dab44bde97de3e2d2224d883acaae35724dd8e2bdfb
 # Revision pointing to v2023.04 tag
 SRCREV_sr-ir-template = "c714db178ddf72e5ae5017f15421095297d5bf0e"
 
+S = "${WORKDIR}/sources-unpack"
+
 inherit arm-systemready-acs
