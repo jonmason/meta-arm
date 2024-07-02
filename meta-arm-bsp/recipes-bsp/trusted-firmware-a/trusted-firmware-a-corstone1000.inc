@@ -10,6 +10,7 @@ SRC_URI:append = " \
 	file://0004-fix-corstone1000-remove-unused-NS_SHARED_RAM-region.patch \
 	file://0005-fix-corstone1000-clean-the-cache-and-disable-interru.patch \
 	file://0006-feat-corstone1000-Add-multicore-support-for-FVP-plat.patch \
+	file://0007-feat-corstone1000-include-platform-header-file.patch \
        "
 
 TFA_DEBUG = "1"
