@@ -1458,6 +1458,33 @@ The external system can be switched on/off on demand with the following commands
 
   echo start > /sys/class/remoteproc/remoteproc0/state
 
+
+Testing FVP in SMP mode
+-----------------------
+
+Symmetric multiprocessing (SMP) mode is only supported on FVP. It can be enabled by using `corstone1000-fvp-multicore.yml`
+
+1. Rebuild the platform with SMP mode enabled:
+
+::
+
+  kas build meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml:meta-arm/kas/corstone1000-fvp-multicore.yml
+
+2. Once rebuilt, boot the platform with SMP mode enabled:
+
+::
+
+  kas shell meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml:meta-arm/kas/corstone1000-fvp-multicore.yml -c "../meta-arm/scripts/runfvp"
+
+
+3. Validating SMP mode using the nproc command which should return the number of cores:
+
+::
+
+  nproc
+  #output: 4
+
+
 Tests results
 -------------
 
