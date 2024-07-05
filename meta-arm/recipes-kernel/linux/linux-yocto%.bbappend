@@ -1,5 +1,9 @@
 ARMFILESPATHS := "${THISDIR}/files:"
 
+COMPATIBLE_MACHINE:qemuarm-m3 = "${MACHINE}"
+KBUILD_DEFCONFIG:qemuarm-m3 = "mps2_defconfig"
+KCONFIG_MODE:qemuarm-m3 = "--alldefconfig"
+
 FILESEXTRAPATHS:prepend:qemuarm64-secureboot = "${ARMFILESPATHS}"
 SRC_URI:append:qemuarm64-secureboot = " \
     file://tee.cfg \
