@@ -1,0 +1,235 @@
+From 748e0b4acbd9e1dce3450beffe2d54565df9ee8d Mon Sep 17 00:00:00 2001
+From: Emekcan Aras <Emekcan.Aras@arm.com>
+Date: Mon, 8 Apr 2024 16:04:45 +0100
+Subject: [PATCH] Plaform: Corstone1000: Switch to metadata v2
+
+This upgrades metadata data structs from v1 to v2 as described in psa
+fwu spec: https://developer.arm.com/documentation/den0118/latest/
+
+The TrustedFirmware-A v2.11 release supports only the metadata v2. The
+structs in TF-M side had to be aligned to keep the compatibility.
+
+Signed-off-by: Emekcan Aras <Emekcan.Aras@arm.com>
+Signed-off-by: Bence Balogh <bence.balogh@arm.com>
+Upstream-Status: Pending [Not submitted to upstream yet]
+---
+ .../corstone1000/fw_update_agent/fwu_agent.c  | 94 ++++++++++++++-----
+ 1 file changed, 72 insertions(+), 22 deletions(-)
+
+diff --git a/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c b/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c
+index be04e0e5df..9f942cb23a 100644
+--- a/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c
++++ b/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c
+@@ -26,6 +26,13 @@
+ #include "platform.h"
+ #endif
+ 
++#define FWU_METADATA_VERSION		2
++#define FWU_FW_STORE_DESC_OFFSET	0x20
++#define NR_OF_MAX_FW_BANKS		4
++
++/*Metadata version 2 data structures defined by PSA_FW update specification;
++ *https://developer.arm.com/documentation/den0118/latest/ */
++
+ /* Properties of image in a bank */
+ struct fwu_image_properties {
+ 
+@@ -58,6 +65,28 @@ struct fwu_image_entry {
+ 
+ } __packed;
+ 
++struct fwu_fw_store_descriptor {
++
++       /* Number of Banks */
++       uint8_t num_banks;
++
++       /* Reserved */
++       uint8_t reserved;
++
++       /* Number of images per bank */
++       uint16_t num_images;
++
++       /* Size of image_entry(all banks) in bytes */
++       uint16_t img_entry_size;
++
++       /* Size of image bank info structure in bytes */
++       uint16_t bank_info_entry_size;
++
++       /* Array of fwu_image_entry structs */
++       struct fwu_image_entry img_entry[NR_OF_IMAGES_IN_FW_BANK];
++
++} __packed;
++
+ struct fwu_metadata {
+ 
+         /* Metadata CRC value */
+@@ -72,8 +101,23 @@ struct fwu_metadata {
+         /* Previous bank index with which device booted successfully */
+         uint32_t previous_active_index;
+ 
+-        /* Image entry information */
+-        struct fwu_image_entry img_entry[NR_OF_IMAGES_IN_FW_BANK];
++        /* Size of the entire metadata in bytes */
++        uint32_t metadata_size;
++
++        /* Offset of the image descriptor structure */
++        uint16_t desc_offset;
++
++        /* Reserved */
++        uint16_t reserved1;
++
++        /* Bank state: It's not used in corstone1000 at the moment.Currently
++	     * not used by any sw componenets such as u-boot and TF-A */
++        uint8_t bank_state[NR_OF_MAX_FW_BANKS];
++
++        /* Reserved */
++        uint32_t reserved2;
++
++        struct fwu_fw_store_descriptor fw_desc;
+ 
+ } __packed;
+ 
+@@ -284,7 +328,7 @@ static enum fwu_agent_error_t metadata_validate(struct fwu_metadata *p_metadata)
+     }
+ 
+     uint32_t calculated_crc32 = crc32((uint8_t *)&(p_metadata->version),
+-                                      sizeof(struct fwu_metadata) - sizeof(uint32_t));
++                                      sizeof(struct fwu_metadata) - sizeof(p_metadata->crc_32));
+ 
+     if (p_metadata->crc_32 != calculated_crc32) {
+         FWU_LOG_MSG("%s: failed: crc32 calculated: 0x%x, given: 0x%x\n\r", __func__,
+@@ -618,25 +662,31 @@ enum fwu_agent_error_t fwu_metadata_provision(void)
+ 
+     memset(&_metadata, 0, sizeof(struct fwu_metadata));
+ 
+-    _metadata.version = 1;
++    _metadata.version = FWU_METADATA_VERSION;
+     _metadata.active_index = BANK_0;
+     _metadata.previous_active_index = BANK_1;
++    _metadata.desc_offset= FWU_FW_STORE_DESC_OFFSET;
+ 
++    _metadata.fw_desc.num_banks = NR_OF_FW_BANKS;
++    _metadata.fw_desc.num_images = NR_OF_IMAGES_IN_FW_BANK;
++    _metadata.fw_desc.img_entry_size = sizeof(struct fwu_image_entry) * NR_OF_IMAGES_IN_FW_BANK;
++    _metadata.fw_desc.bank_info_entry_size = sizeof(struct fwu_image_properties) * NR_OF_FW_BANKS;
+     /* bank 0 is the place where images are located at the
+      * start of device lifecycle */
+ 
+     for (int i = 0; i < NR_OF_IMAGES_IN_FW_BANK; i++) {
+ 
+-        _metadata.img_entry[i].img_props[BANK_0].accepted = IMAGE_ACCEPTED;
+-        _metadata.img_entry[i].img_props[BANK_0].version = image_version;
++        _metadata.fw_desc.img_entry[i].img_props[BANK_0].accepted = IMAGE_ACCEPTED;
++        _metadata.fw_desc.img_entry[i].img_props[BANK_0].version = image_version;
+ 
+-        _metadata.img_entry[i].img_props[BANK_1].accepted = IMAGE_NOT_ACCEPTED;
+-        _metadata.img_entry[i].img_props[BANK_1].version = INVALID_VERSION;
++        _metadata.fw_desc.img_entry[i].img_props[BANK_1].accepted = IMAGE_NOT_ACCEPTED;
++        _metadata.fw_desc.img_entry[i].img_props[BANK_1].version = INVALID_VERSION;
+     }
+ 
+-    /* Calculate CRC32 for fwu metadata */
++    /* Calculate CRC32 for fwu metadata. The first filed in the _metadata has to be the crc_32.
++     * This should be omited from the calculation. */
+     _metadata.crc_32 = crc32((uint8_t *)&_metadata.version,
+-                             sizeof(struct fwu_metadata) - sizeof(uint32_t));
++                             sizeof(struct fwu_metadata) - sizeof(_metadata.crc_32));
+ 
+     ret = metadata_write(&_metadata);
+     if (ret) {
+@@ -696,7 +746,7 @@ static enum fwu_agent_state_t get_fwu_agent_state(
+     }
+ 
+     for (int i = 0; i < NR_OF_IMAGES_IN_FW_BANK; i++) {
+-        if ((metadata_ptr->img_entry[i].img_props[boot_index].accepted)
++        if ((metadata_ptr->fw_desc.img_entry[i].img_props[boot_index].accepted)
+                 == (IMAGE_NOT_ACCEPTED)) {
+             return FWU_AGENT_STATE_TRIAL;
+         }
+@@ -771,7 +821,7 @@ static enum fwu_agent_error_t flash_full_capsule(
+     }
+ 
+     if (version <=
+-            (metadata->img_entry[IMAGE_0].img_props[active_index].version)) {
++            (metadata->fw_desc.img_entry[IMAGE_0].img_props[active_index].version)) {
+         FWU_LOG_MSG("ERROR: %s: version error\n\r",__func__);
+         return FWU_AGENT_ERROR;
+     }
+@@ -802,14 +852,14 @@ static enum fwu_agent_error_t flash_full_capsule(
+ 
+     /* Change system state to trial bank state */
+     for (int i = 0; i < NR_OF_IMAGES_IN_FW_BANK; i++) {
+-        metadata->img_entry[i].img_props[previous_active_index].accepted =
++        metadata->fw_desc.img_entry[i].img_props[previous_active_index].accepted =
+                                                         IMAGE_NOT_ACCEPTED;
+-        metadata->img_entry[i].img_props[previous_active_index].version = version;
++        metadata->fw_desc.img_entry[i].img_props[previous_active_index].version = version;
+     }
+     metadata->active_index = previous_active_index;
+     metadata->previous_active_index = active_index;
+     metadata->crc_32 = crc32((uint8_t *)&metadata->version,
+-                              sizeof(struct fwu_metadata) - sizeof(uint32_t));
++                              sizeof(struct fwu_metadata) - sizeof(metadata->crc_32));
+ 
+     ret = metadata_write(metadata);
+     if (ret) {
+@@ -911,7 +961,7 @@ static enum fwu_agent_error_t accept_full_capsule(
+     FWU_LOG_MSG("%s: enter\n\r", __func__);
+ 
+     for (int i = 0; i < NR_OF_IMAGES_IN_FW_BANK; i++) {
+-        metadata->img_entry[i].img_props[active_index].accepted =
++        metadata->fw_desc.img_entry[i].img_props[active_index].accepted =
+                                                             IMAGE_ACCEPTED;
+     }
+ 
+@@ -922,7 +972,7 @@ static enum fwu_agent_error_t accept_full_capsule(
+         return ret;
+     }
+     metadata->crc_32 = crc32((uint8_t *)&metadata->version,
+-                              sizeof(struct fwu_metadata) - sizeof(uint32_t));
++                              sizeof(struct fwu_metadata) - sizeof(metadata->crc_32));
+ 
+     ret = metadata_write(metadata);
+     if (ret) {
+@@ -1001,7 +1051,7 @@ static enum fwu_agent_error_t fwu_select_previous(
+ 
+     index = metadata->previous_active_index;
+     for (int i = 0; i < NR_OF_IMAGES_IN_FW_BANK; i++) {
+-        if (metadata->img_entry[i].img_props[index].accepted != IMAGE_ACCEPTED)
++        if (metadata->fw_desc.img_entry[i].img_props[index].accepted != IMAGE_ACCEPTED)
+         {
+             FWU_ASSERT(0);
+         }
+@@ -1018,7 +1068,7 @@ static enum fwu_agent_error_t fwu_select_previous(
+         return ret;
+     }
+     metadata->crc_32 = crc32((uint8_t *)&metadata->version,
+-                              sizeof(struct fwu_metadata) - sizeof(uint32_t));
++                              sizeof(struct fwu_metadata) - sizeof(metadata->crc_32));
+ 
+     ret = metadata_write(metadata);
+     if (ret) {
+@@ -1218,7 +1268,7 @@ enum fwu_agent_error_t corstone1000_fwu_host_ack(void)
+         /* firmware update failed, revert back to previous bank */
+ 
+         priv_metadata.fmp_last_attempt_version =
+-         _metadata.img_entry[IMAGE_0].img_props[_metadata.active_index].version;
++         _metadata.fw_desc.img_entry[IMAGE_0].img_props[_metadata.active_index].version;
+ 
+         priv_metadata.fmp_last_attempt_status = LAST_ATTEMPT_STATUS_ERROR_UNSUCCESSFUL;
+ 
+@@ -1229,9 +1279,9 @@ enum fwu_agent_error_t corstone1000_fwu_host_ack(void)
+         /* firmware update successful */
+ 
+         priv_metadata.fmp_version =
+-         _metadata.img_entry[IMAGE_0].img_props[_metadata.active_index].version;
++         _metadata.fw_desc.img_entry[IMAGE_0].img_props[_metadata.active_index].version;
+         priv_metadata.fmp_last_attempt_version =
+-         _metadata.img_entry[IMAGE_0].img_props[_metadata.active_index].version;
++         _metadata.fw_desc.img_entry[IMAGE_0].img_props[_metadata.active_index].version;
+ 
+         priv_metadata.fmp_last_attempt_status = LAST_ATTEMPT_STATUS_SUCCESS;
+ 
+-- 
+2.25.1
+
