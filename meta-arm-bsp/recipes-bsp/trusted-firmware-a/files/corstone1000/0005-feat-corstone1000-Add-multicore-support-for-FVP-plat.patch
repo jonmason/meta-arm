@@ -1,4 +1,4 @@
-From bd975fbcff8886b3d3ed3268d7b6fa41bd7fba2d Mon Sep 17 00:00:00 2001
+From dcc9cf5111c41edc691f007bd97548d96f5efddb Mon Sep 17 00:00:00 2001
 From: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
 Date: Thu, 9 May 2024 16:59:34 +0000
 Subject: [PATCH] feat(corstone1000): add multicore support for fvp
@@ -13,8 +13,8 @@ Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
  .../common/corstone1000_helpers.S             | 26 +++++++++++
  .../corstone1000/common/corstone1000_pm.c     | 43 ++++++++++++++++++-
  .../common/include/platform_def.h             | 15 ++++++-
- plat/arm/board/corstone1000/platform.mk       |  8 ++++
- 4 files changed, 90 insertions(+), 2 deletions(-)
+ plat/arm/board/corstone1000/platform.mk       |  7 +++
+ 4 files changed, 89 insertions(+), 2 deletions(-)
 
 diff --git a/plat/arm/board/corstone1000/common/corstone1000_helpers.S b/plat/arm/board/corstone1000/common/corstone1000_helpers.S
 index cbe27c3b5..90dc4fee6 100644
@@ -56,10 +56,10 @@ index cbe27c3b5..90dc4fee6 100644
  
  	/* ---------------------------------------------------------------------
 diff --git a/plat/arm/board/corstone1000/common/corstone1000_pm.c b/plat/arm/board/corstone1000/common/corstone1000_pm.c
-index 4b0a791e7..9cd384e18 100644
+index a52e945bf..979243317 100644
 --- a/plat/arm/board/corstone1000/common/corstone1000_pm.c
 +++ b/plat/arm/board/corstone1000/common/corstone1000_pm.c
-@@ -24,10 +24,51 @@ static void __dead2 corstone1000_system_reset(void)
+@@ -33,10 +33,51 @@ static void __dead2 corstone1000_system_reset(void)
  		wfi();
  	}
  }
@@ -80,7 +80,7 @@ index 4b0a791e7..9cd384e18 100644
 +{
 +	int core_index = plat_core_pos_by_mpidr(mpidr);
 +	uint64_t *secondary_core_hold_base = (uint64_t *)CORSTONE1000_SECONDARY_CORE_HOLD_BASE;
-+
+ 
 +	/* Validate the core index */
 +	if ((core_index < 0) || (core_index > PLATFORM_CORE_COUNT)) {
 +		return PSCI_E_INVALID_PARAMS;
@@ -91,7 +91,7 @@ index 4b0a791e7..9cd384e18 100644
 +
 +	return PSCI_E_SUCCESS;
 +}
- 
++
 +void corstone1000_pwr_domain_on_finish(const psci_power_state_t *target_state)
 +{
 +	(void)target_state;
@@ -113,10 +113,10 @@ index 4b0a791e7..9cd384e18 100644
  
  const plat_psci_ops_t *plat_arm_psci_override_pm_ops(plat_psci_ops_t *ops)
 diff --git a/plat/arm/board/corstone1000/common/include/platform_def.h b/plat/arm/board/corstone1000/common/include/platform_def.h
-index 35bb6ad5c..56e124f96 100644
+index b9a1d43df..c4839ccf3 100644
 --- a/plat/arm/board/corstone1000/common/include/platform_def.h
 +++ b/plat/arm/board/corstone1000/common/include/platform_def.h
-@@ -251,7 +251,20 @@
+@@ -249,7 +249,20 @@
   */
  #define ARM_LOCAL_STATE_OFF	U(2)
  
@@ -139,11 +139,11 @@ index 35bb6ad5c..56e124f96 100644
  
  #define PLAT_ARM_NS_IMAGE_BASE		(BL33_BASE)
 diff --git a/plat/arm/board/corstone1000/platform.mk b/plat/arm/board/corstone1000/platform.mk
-index dcd0df844..71b7f324c 100644
+index fd08803e8..45092ace9 100644
 --- a/plat/arm/board/corstone1000/platform.mk
 +++ b/plat/arm/board/corstone1000/platform.mk
-@@ -31,6 +31,14 @@ override NEED_BL31	:=	yes
- NEED_BL32		:=	yes
+@@ -31,6 +31,13 @@ override NEED_BL31	:=	yes
+ NEED_BL32		?=	yes
  override NEED_BL33	:=	yes
  
 +ENABLE_MULTICORE	:=	0
@@ -153,10 +153,9 @@ index dcd0df844..71b7f324c 100644
 +endif
 +endif
 +
-+
- # Include GICv2 driver files
- include drivers/arm/gic/v2/gicv2.mk
- 
+ # Add CORSTONE1000_WITH_BL32 as a preprocessor define (-D option)
+ ifeq (${NEED_BL32},yes)
+ $(eval $(call add_define,CORSTONE1000_WITH_BL32))
 -- 
-2.34.1
+2.25.1
 
