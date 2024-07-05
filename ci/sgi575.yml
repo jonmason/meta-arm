@@ -5,4 +5,9 @@ header:
   includes:
     - ci/base.yml
 
+local_conf_header:
+  sshpregen: |
+    # Allow the use of the pregen keys as this is CI so safe
+    COMPATIBLE_MACHINE:pn-ssh-pregen-hostkeys:sgi575 = "sgi575"
+
 machine: sgi575
