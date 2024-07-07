@@ -244,6 +244,12 @@ tc1:
   tags:
     - x86_64
 
+tc2:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
 toolchains:
   extends: .build
 

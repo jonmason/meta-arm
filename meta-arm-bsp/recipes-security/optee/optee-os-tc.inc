@@ -11,6 +11,7 @@ SRC_URI:append:tc = " file://sp_layout.json \
 COMPATIBLE_MACHINE = "(tc?)"
 
 OPTEEMACHINE:tc1 = "totalcompute-tc1"
+OPTEEMACHINE:tc2 = "totalcompute-tc2"
 
 # Enable optee memory layout and boot logs
 EXTRA_OEMAKE += " CFG_TEE_CORE_LOG_LEVEL=3"

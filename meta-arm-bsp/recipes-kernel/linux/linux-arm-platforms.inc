@@ -96,8 +96,8 @@ KBUILD_DEFCONFIG:sgi575 = "defconfig"
 KCONFIG_MODE:sgi575 = "--alldefconfig"
 
 #
-# Total Compute (TC0/TC1) KMACHINE
+# Total Compute (TC0/TC1/TC2) KMACHINE
 #
-COMPATIBLE_MACHINE:tc = "(tc0|tc1)"
+COMPATIBLE_MACHINE:tc = "(tc0|tc1|tc2)"
 KBUILD_DEFCONFIG:tc = "defconfig"
 KCONFIG_MODE:tc = "--alldefconfig"
