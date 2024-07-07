@@ -346,5 +346,11 @@ selftest:
 sgi575:
   extends: .build
 
+tc2:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
 toolchains:
   extends: .build
