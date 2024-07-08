@@ -14,7 +14,7 @@ TFA_BL2_BINARY = "bl2-corstone1000.bin"
 TFA_FIP_BINARY = "fip-corstone1000.bin"
 
 # optee
-PREFERRED_VERSION_optee-os ?= "4.1.%"
+PREFERRED_VERSION_optee-os ?= "4.2.%"
 
 # Trusted Services
 TS_PLATFORM = "arm/corstone1000"
