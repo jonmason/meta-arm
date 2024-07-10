@@ -111,7 +111,7 @@ update-repos:
 # Build stage, the actual build jobs
 #
 # Available options for building are
-#  DISTRO: [poky, poky-tiny]
+#  DISTRO: [poky, poky-altcfg, poky-tiny]
 #  KERNEL: [linux-yocto, linux-yocto-dev, linux-yocto-rt]
 #  TOOLCHAINS: [gcc, clang, external-gccarm]
 #  TCLIBC: [glibc, musl]
@@ -332,6 +332,8 @@ sbsa-ref:
     matrix:
       - KERNEL: [linux-yocto, linux-yocto-rt]
         TOOLCHAINS: [gcc, clang]
+        TESTING: testimage
+      - DISTRO: poky-altcfg
         TESTING: testimage
       - KERNEL: linux-yocto-dev
         TESTING: testimage
