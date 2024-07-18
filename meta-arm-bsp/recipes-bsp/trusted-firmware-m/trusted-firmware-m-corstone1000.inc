@@ -32,6 +32,7 @@ SRC_URI:append:corstone1000 = " \
     file://0012-corstone1000-Remove-reset-after-capsule-update.patch \
     file://0013-platform-CS1000-Add-multicore-support-for-FVP.patch \
     file://0014-Platform-Corstone1000-switch-to-metadata-v2.patch \
+    file://0015-platform-corstone1000-Increase-flash-PS-area-size.patch \
     "
 
 # TF-M ships patches for external dependencies that needs to be applied
