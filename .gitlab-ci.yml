@@ -21,6 +21,8 @@ variables:
   EXTRA_KAS_FILES: ""
   # The NVD API key to use when fetching CVEs
   NVDCVE_API_KEY: ""
+  # Set the bitbake server timeout for CI, as this is build env specific
+  BB_SERVER_TIMEOUT: "300"
 
 stages:
   - prep
