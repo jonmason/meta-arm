@@ -43,7 +43,7 @@ for i in arm aarch64; do
 			continue
 		fi
 
-		tar -C $TOOLCHAIN_DIR -axvf $DOWNLOAD_DIR/$BASENAME-$VER-$HOST_ARCH-$i-none-linux-gnu*.tar.xz
+		tar -C $TOOLCHAIN_DIR --checkpoint -axf $DOWNLOAD_DIR/$BASENAME-$VER-$HOST_ARCH-$i-none-linux-gnu*.tar.xz
 	fi
 
 	# Setup a link for the toolchain to use local to the building machine (e.g., not in a shared location)
