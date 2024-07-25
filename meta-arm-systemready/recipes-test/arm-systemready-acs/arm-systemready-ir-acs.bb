@@ -39,7 +39,7 @@ file://${COMMON_LICENSE_DIR}/Unicode-DFS-2016;md5=907371994d651afe53e98adc278246
 file://${COMMON_LICENSE_DIR}/Unicode-TOU;md5=666362dc5dba74f477af0f44fb85bd22 \
 file://${COMMON_LICENSE_DIR}/Zlib;md5=87f239f408daca8a157858e192597633 \
 "
-IMAGE_CLASSES:remove = "license_image"
+IMAGE_CLASSES:remove = "license_image create-spdx-image-3.0"
 
 COMPATIBLE_MACHINE = "(fvp-.+|.+-fvp)"
 

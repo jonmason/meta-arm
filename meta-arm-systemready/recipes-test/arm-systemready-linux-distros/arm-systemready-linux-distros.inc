@@ -2,7 +2,8 @@ SUMMARY = "Arm SystemReady Linux distros installation"
 DESCRIPTION = "Arm SystemReady Linux distro CD/DVD images and installation \
                target disk image"
 
-IMAGE_CLASSES:remove = "license_image testimage"
+IMAGE_CLASSES:remove = "license_image testimage create-spdx-image-3.0"
+
 BUILDHISTORY_FEATURES:remove = "image"
 
 INHIBIT_DEFAULT_DEPS = "1"
