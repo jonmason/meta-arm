@@ -29,3 +29,5 @@ BBCLASSEXTEND = "native nativesdk"
 # nothing provides libcrypt.so.1()(64bit) needed by nativesdk-gcc-arm-none-eabi 
 # when packaged as RPM for SDK.
 SKIP_FILEDEPS="1"
+
+IMAGE_CLASSES:remove = "create-spdx-image-3.0"
