@@ -8,5 +8,4 @@ kconf hardware fvp/fvp-net.cfg
 kconf hardware fvp/fvp-rtc.cfg
 kconf hardware fvp/fvp-serial.cfg
 kconf hardware fvp/fvp-cfi.cfg
-kconf hardware fvp/fvp-drm.cfg
 kconf hardware fvp/fvp-watchdog.cfg

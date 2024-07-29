@@ -192,6 +192,8 @@ fvp-base:
         TESTING: testimage
       - FIRMWARE: [u-boot, edk2]
         TESTING: testimage
+      - DISTRO: poky-altcfg
+        TESTING: testimage
       - SYSTEMREADY_FIRMWARE: arm-systemready-firmware
 
 arm-systemready-ir-acs:
