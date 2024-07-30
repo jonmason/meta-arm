@@ -24,6 +24,7 @@ EXTRA_OEMAKE += " \
     CFG_${OPTEE_CORE}_core=y \
     CROSS_COMPILE_core=${HOST_PREFIX} \
     CROSS_COMPILE_ta_${OPTEE_ARCH}=${HOST_PREFIX} \
+    AFLAGS="${CFLAGS}" \
     ta-targets=ta_${OPTEE_ARCH} \
     O=${B} \
 "
