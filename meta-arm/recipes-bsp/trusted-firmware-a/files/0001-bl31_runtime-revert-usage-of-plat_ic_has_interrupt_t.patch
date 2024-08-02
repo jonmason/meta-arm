@@ -1,4 +1,4 @@
-From fd13a4d304da4233cb954329bf287ec9dfbb7367 Mon Sep 17 00:00:00 2001
+From 29fbd6207d1fcd357c59db124c9983b30b5ccaed Mon Sep 17 00:00:00 2001
 From: Jon Mason <jon.mason@arm.com>
 Date: Mon, 4 Dec 2023 10:20:21 -0500
 Subject: [PATCH] bl31_runtime: revert usage of plat_ic_has_interrupt_type
@@ -18,7 +18,7 @@ Upstream-Status: Pending
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/bl31/interrupt_mgmt.c b/bl31/interrupt_mgmt.c
-index 68c7f10add21..8e888b676b35 100644
+index a2b2c06859b6..1bcaaf56f912 100644
 --- a/bl31/interrupt_mgmt.c
 +++ b/bl31/interrupt_mgmt.c
 @@ -47,9 +47,9 @@ static intr_type_desc_t intr_type_descs[MAX_INTR_TYPES];
@@ -33,6 +33,3 @@ index 68c7f10add21..8e888b676b35 100644
  
  	return -EINVAL;
  }
--- 
-2.30.2
-
