@@ -9,4 +9,7 @@ SRC_URI += " \
     file://0003-optee-enable-clang-support.patch \
     file://0001-checkconf.mk-do-not-use-full-path-to-generate-guard-.patch \
     file://0001-mk-compile.mk-remove-absolute-build-time-paths.patch \
+    file://0001-compile.mk-use-CFLAGS-from-environment.patch \
+    file://0002-link.mk-use-CFLAGS-with-version.o.patch \
+    file://0003-link.mk-generate-version.o-in-link-out-dir.patch \
 "
