@@ -9,7 +9,7 @@ before the reset. This causes a race condition especially in FVP after reset.
 This adds proper sequence before resetting the platform.
 
 Signed-off-by: Emekcan Aras <Emekcan.Aras@arm.com>
-Upstream-Status: Pending
+Upstream-Status: Submitted [https://review.trustedfirmware.org/c/TF-A/trusted-firmware-a/+/30118/2]
 ---
  plat/arm/board/corstone1000/common/corstone1000_pm.c | 9 +++++++++
  1 file changed, 9 insertions(+)

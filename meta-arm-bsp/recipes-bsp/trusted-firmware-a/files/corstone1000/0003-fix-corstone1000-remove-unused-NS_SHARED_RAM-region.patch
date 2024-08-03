@@ -9,7 +9,7 @@ for BL32 image, this patch removes NS_SHARED_RAM region which is not currently u
 corstone1000 platform.
 
 Signed-off-by: Emekcan Aras <Emekcan.Aras@arm.com>
-Upstream-Status: Pending
+Upstream-Status: Submitted [https://review.trustedfirmware.org/c/TF-A/trusted-firmware-a/+/30117/2]
 ---
  .../corstone1000/common/corstone1000_plat.c   |  1 -
  .../common/include/platform_def.h             | 19 +------------------
