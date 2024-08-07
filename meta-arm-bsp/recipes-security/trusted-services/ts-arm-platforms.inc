@@ -20,6 +20,7 @@ SRC_URI:append:corstone1000  = " \
     file://0016-Isolate-common-uefi-variable-authentication-steps.patch \
     file://0017-Implement-Private-Authenticated-Variable-verificatio.patch \
     file://0018-Change-RSS_COMMS-cmake-variables-to-cahce-vars.patch \
+    file://0019-Align-PSA-Crypto-structs-with-TF-Mv2.1.patch \
     "
 
 # The patches above introduce errors with GCC 14.1, silence them for now
