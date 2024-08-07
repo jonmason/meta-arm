@@ -1,7 +1,7 @@
-From d7725e629c9ba93523589cc9d8af3186db19d4e8 Mon Sep 17 00:00:00 2001
+From 9dd3287693c259a88d81140c26f9c792d808dd7c Mon Sep 17 00:00:00 2001
 From: Bence Balogh <bence.balogh@arm.com>
 Date: Wed, 15 May 2024 22:37:51 +0200
-Subject: [PATCH] Platform: corstone1000: Increase buffers for EFI vars
+Subject: [PATCH 08/10] Platform: corstone1000: Increase buffers for EFI vars
 
 The UEFI variables are stored in the Protected Storage. The size of
 the variables metadata have been increased so the related buffer sizes

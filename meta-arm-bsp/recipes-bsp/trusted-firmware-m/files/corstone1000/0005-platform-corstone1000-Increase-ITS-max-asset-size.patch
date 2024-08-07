@@ -1,7 +1,7 @@
-From 2edf197735bd0efb1428c1710443dddcb376d930 Mon Sep 17 00:00:00 2001
+From 5b5c190ff91f387e4709950b6c734cda16c4b32d Mon Sep 17 00:00:00 2001
 From: Emekcan Aras <emekcan.aras@arm.com>
 Date: Wed, 17 Apr 2024 11:34:45 +0000
-Subject: [PATCH] platform: corstone1000: Increase ITS max asset size
+Subject: [PATCH 05/10] platform: corstone1000: Increase ITS max asset size
 
 Increases the max asset size for ITS to enable parsec services & tests
 ​
@@ -25,3 +25,6 @@ index 2c7341afd4..2eb0924770 100644
 +#define ITS_MAX_ASSET_SIZE   2048
 +
  #endif /* __CONFIG_TFM_TARGET_H__ */
+-- 
+2.25.1
+

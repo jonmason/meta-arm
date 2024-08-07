@@ -1,7 +1,7 @@
-From 3d35eb08fe0cea5c4b882c448f44530bb45c05f0 Mon Sep 17 00:00:00 2001
+From a32e7195a4fc1c9d890f9e22a795443d01dc1e8f Mon Sep 17 00:00:00 2001
 From: Anusmita Dutta Mazumder <anusmita.duttamazumder@arm.com>
 Date: Tue, 2 Apr 2024 13:04:56 +0000
-Subject: [PATCH] platform: corstone1000: add unique guid for mps3
+Subject: [PATCH 03/10] platform: corstone1000: add unique guid for mps3
 
 This patch sets unique GUID for Corstone1000 FVP and MPS3
 
@@ -12,7 +12,7 @@ Signed-off-by: Anusmita Dutta Mazumder <anusmita.duttamazumder@arm.com>
  1 file changed, 7 insertions(+), 1 deletion(-)
 
 diff --git a/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c b/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c
-index 2e6cf80470..be04e0e5df 100644
+index 003ab9faf8..5768df19b8 100644
 --- a/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c
 +++ b/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c
 @@ -113,13 +113,19 @@ enum fwu_agent_state_t {
@@ -37,5 +37,5 @@ index 2e6cf80470..be04e0e5df 100644
  #define IMAGE_NOT_ACCEPTED      (0)
  #define BANK_0                  (0)
 -- 
-2.38.1
+2.25.1
 

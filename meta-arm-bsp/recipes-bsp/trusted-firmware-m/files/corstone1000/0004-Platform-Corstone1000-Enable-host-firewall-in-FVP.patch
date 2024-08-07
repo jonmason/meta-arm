@@ -1,7 +1,7 @@
-From 1410dc5504d60219279581b1cf6442f81551cfe7 Mon Sep 17 00:00:00 2001
+From a4e037b3bcf34982b8bdaf8693fd0f89d4f7fc87 Mon Sep 17 00:00:00 2001
 From: Emekcan Aras <Emekcan.Aras@arm.com>
 Date: Wed, 3 Apr 2024 13:37:40 +0100
-Subject: [PATCH] Platform: Corstone1000: Enable host firewall in FVP
+Subject: [PATCH 04/10] Platform: Corstone1000: Enable host firewall in FVP
 
 Enables host firewall and mpu setup for FVP. It also fixes secure-ram
 configuration and disable access rights to secure ram from both normal world
@@ -16,7 +16,7 @@ Upstream-Status: Pending [Not submitted to upstream yet]
  3 files changed, 11 insertions(+), 35 deletions(-)
 
 diff --git a/platform/ext/target/arm/corstone1000/Device/Include/platform_base_address.h b/platform/ext/target/arm/corstone1000/Device/Include/platform_base_address.h
-index 416f0ebcd..101cad9e7 100644
+index 416f0ebcdb..101cad9e7c 100644
 --- a/platform/ext/target/arm/corstone1000/Device/Include/platform_base_address.h
 +++ b/platform/ext/target/arm/corstone1000/Device/Include/platform_base_address.h
 @@ -67,7 +67,7 @@
@@ -29,7 +29,7 @@ index 416f0ebcd..101cad9e7 100644
  #define CORSTONE1000_HOST_BASE_SYSTEM_CONTROL_BASE (0x7A010000U) /* Host SCB                          */
  #define CORSTONE1000_EXT_SYS_RESET_REG             (0x7A010310U) /* external system (cortex-M3)       */
 diff --git a/platform/ext/target/arm/corstone1000/bl1/boot_hal_bl1_1.c b/platform/ext/target/arm/corstone1000/bl1/boot_hal_bl1_1.c
-index a5fee66af..7988c2392 100644
+index 45d6768215..2f693d2b1b 100644
 --- a/platform/ext/target/arm/corstone1000/bl1/boot_hal_bl1_1.c
 +++ b/platform/ext/target/arm/corstone1000/bl1/boot_hal_bl1_1.c
 @@ -35,7 +35,7 @@ REGION_DECLARE(Image$$, ER_DATA, $$Base)[];
@@ -159,7 +159,7 @@ index a5fee66af..7988c2392 100644
  #if defined(TFM_BL1_LOGGING) || defined(TEST_BL1_1) || defined(TEST_BL1_2)
      stdio_init();
 diff --git a/platform/ext/target/arm/corstone1000/bl2/flash_map_bl2.c b/platform/ext/target/arm/corstone1000/bl2/flash_map_bl2.c
-index 2b1cdfa19..06cc3f0f5 100644
+index 2b1cdfa199..06cc3f0f52 100644
 --- a/platform/ext/target/arm/corstone1000/bl2/flash_map_bl2.c
 +++ b/platform/ext/target/arm/corstone1000/bl2/flash_map_bl2.c
 @@ -70,7 +70,7 @@ int boot_get_image_exec_ram_info(uint32_t image_id,
@@ -173,5 +173,4 @@ index 2b1cdfa19..06cc3f0f5 100644
      }
 -- 
 2.25.1
-
 

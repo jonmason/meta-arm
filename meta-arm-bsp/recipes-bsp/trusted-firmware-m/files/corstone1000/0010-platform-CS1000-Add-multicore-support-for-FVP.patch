@@ -1,7 +1,7 @@
-From 1120957e74a1a0727a215188813cab3e47602e71 Mon Sep 17 00:00:00 2001
+From 1eb9bc330bf387ff26a6df93d3b8c843174dc40b Mon Sep 17 00:00:00 2001
 From: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
 Date: Thu, 9 May 2024 13:20:57 +0000
-Subject: [PATCH] platform: CS1000: Add multicore support for FVP
+Subject: [PATCH 10/10] platform: CS1000: Add multicore support for FVP
 
 This changeset adds the support to enable the secondary cores for
 the Corstone-1000 FVP
@@ -15,10 +15,10 @@ Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
  3 files changed, 48 insertions(+), 2 deletions(-)
 
 diff --git a/platform/ext/target/arm/corstone1000/CMakeLists.txt b/platform/ext/target/arm/corstone1000/CMakeLists.txt
-index e2a7ac302..a269251aa 100644
+index 95e3f57b4f..e46123cc6f 100644
 --- a/platform/ext/target/arm/corstone1000/CMakeLists.txt
 +++ b/platform/ext/target/arm/corstone1000/CMakeLists.txt
-@@ -374,6 +374,12 @@ target_sources(tfm_psa_rot_partition_ns_agent_mailbox
+@@ -381,6 +381,12 @@ target_sources(tfm_psa_rot_partition_ns_agent_mailbox
          tfm_hal_multi_core.c
  )
  
@@ -32,7 +32,7 @@ index e2a7ac302..a269251aa 100644
  
  target_sources(tfm_spm
 diff --git a/platform/ext/target/arm/corstone1000/Device/Config/device_cfg.h b/platform/ext/target/arm/corstone1000/Device/Config/device_cfg.h
-index 222905d3d..9d48f119e 100644
+index 222905d3dd..9d48f119ed 100644
 --- a/platform/ext/target/arm/corstone1000/Device/Config/device_cfg.h
 +++ b/platform/ext/target/arm/corstone1000/Device/Config/device_cfg.h
 @@ -45,5 +45,11 @@
@@ -48,7 +48,7 @@ index 222905d3d..9d48f119e 100644
  
  #endif  /* __DEVICE_CFG_H__ */
 diff --git a/platform/ext/target/arm/corstone1000/tfm_hal_multi_core.c b/platform/ext/target/arm/corstone1000/tfm_hal_multi_core.c
-index f0e2bc333..ce72e50c9 100644
+index f0e2bc333a..ce72e50c9b 100644
 --- a/platform/ext/target/arm/corstone1000/tfm_hal_multi_core.c
 +++ b/platform/ext/target/arm/corstone1000/tfm_hal_multi_core.c
 @@ -11,9 +11,14 @@
@@ -115,5 +115,5 @@ index f0e2bc333..ce72e50c9 100644
  
  #ifdef EXTERNAL_SYSTEM_SUPPORT
 -- 
-2.34.1
+2.25.1
 
