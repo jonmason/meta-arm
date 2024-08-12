@@ -30,6 +30,7 @@ SRC_URI:append:corstone1000 = " \
     file://0010-platform-CS1000-Add-multicore-support-for-FVP.patch \
     file://0011-Platform-Corstone1000-switch-to-metadata-v2.patch \
     file://0012-platform-corstone1000-Increase-flash-PS-area-size.patch \
+    file://0013-Platform-CS1000-Fix-Bank-offsets.patch \
     "
 
 # TF-M ships patches for external dependencies that needs to be applied
