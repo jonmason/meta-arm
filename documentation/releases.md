@@ -24,10 +24,10 @@ To minimize the additional work of maintaining multiple branches it is assumed t
 Named branch release will coincide with Yocto Project releases. These non-LTS branches will be bug fix only and will be EOLed on the next release (similar to the YP branching behavior).
 
 ### **Branch transitions**
-When YP is approaching release, meta-arm will attempt to stabilize master so that the releases can coincide. 
-* T-6 weeks - Email is sent to meta-arm mailing list notifying of upcoming code freeze of features to meta-arm
-* T-4 weeks - Code freeze to meta-arm. Only bug fixes are taken at this point.
-* T-0 - Official upstream release occurs. With no outstanding critical bugs, a new named branch is created based on the current meta-arm master branch. Previous named branches are now frozen and will not accept new patches (but will continue to be present for reference and legacy usage).
+When YP is approaching release, meta-arm will attempt to stabilize master so that the releases can coincide.  We will use the upstream Yocto Project M3 and projected M4 releases to track and align on this.
+* Yocto Project M3 tagged release - Email is sent to meta-arm mailing list notifying of upcoming code freeze of features to meta-arm
+* 4 weeks before M4 - Code freeze to meta-arm. Only bug fixes are taken at this point.
+* Yocto Project M4 tagged release - With no outstanding critical bugs, a new named branch is created based on the current meta-arm master branch. Previous named branches are now frozen and will not accept new patches (but will continue to be present for reference and legacy usage).
 
 ## **Tagging**
 ### **Branch Tagging**
