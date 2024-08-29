@@ -1484,6 +1484,72 @@ Symmetric multiprocessing (SMP) mode is only supported on FVP. It can be enabled
   nproc
   #output: 4
 
+Testing Secure Debug feature
+----------------------------
+
+The Corstone-1000 MPS3 based build supports Authenticated Debug Access Control (ADAC), using the CoreSight SDC-600 IP. For more information about this, see the following resources:
+`CoreSight SDC-600 <https://developer.arm.com/Processors/CoreSight%20SDC-600>`__
+`Authenticated Debug Access Control Specification <https://developer.arm.com/documentation/den0101/latest/>`__
+`Arm Corstone-1000 for MPS3 Application Note AN550, Chapter 7 <https://developer.arm.com/documentation/dai0550/latest/>`__
+
+The Secure Debug Manager API is implemented in the `secure-debug-manager <https://github.com/ARM-software/secure-debug-manager>`__ repository. This repository also contains the necessary files for the Arm Development Studio support.
+The build and integration instructions can be found in `its README <https://github.com/ARM-software/secure-debug-manager/blob/master/README.md>`__. The `secure-debug-manager` also contains the private key and chain certificate to be used during the tests. The private key's public pair is provisioned into the OTP in TF-M. These are dummy keys that should not be used in production.
+
+A debug probe (DSTREAM family) and an Arm Development Studio 2022.2 and 2022.c (or later) are needed to test the Secure Debug feature with the Corstone-1000 MPS3.
+
+****************
+Running the test
+****************
+
+The debugger host side preparations are not described here, follow `secure-debug-manager` README for that. The Secure Debug feature for Corstone-1000 can be enabled by using the `secure-debug.yml` kas configuration file.
+
+1. Build the software stack with Secure Debug enabled. For more information see the previous `Building the software stack`_ section:
+
+::
+
+  kas build meta-arm/kas/corstone1000-mps3.yml:meta-arm/ci/debug.yml:meta-arm/ci/secure-debug.yml
+
+
+2. Flash the firmware binaries on the FPGA, see `Flash the firmware image on FPGA`_ section for this.
+
+3. Run the software on the FPGA, see `Running the software on FPGA`_.
+
+4. Wait until the Secure Enclave terminal (ttyUSB1) prints the following prompts:
+
+::
+
+  IComPortInit                  :  382 : warn  : init       : IComPortInit: Blocked reading of LPH2RA is active.
+  IComPortInit                  :  383 : warn  : init       : IComPortInit: Blocked reading LPH2RA
+
+
+5. Connect the debug probe to the MPS3 board. Use the 20-pin 1.27mm connector with the CS_20W_1.27MM silkscreen label.
+
+6. Create a debug configuration in Arm Development Studio as it is described in `secure-debug-manager README <https://github.com/ARM-software/secure-debug-manager?tab=readme-ov-file#arm-development-studio-integration>`__.
+
+7. Connect to the target, using the debug configuration which was created in the previous step.
+
+8. The Arm Development Studio Console will ask for the private key and trust chain certificate. Provide the paths that are located in the `secure-debug-manager` repository.
+
+::
+
+  ...
+
+  Please provide private key file path:
+  Enter file path > <secure-debug-manager repository>\example\data\keys\EcdsaP256Key-3.pem
+
+  Please provide trust chain file path:
+  Enter file path > <secure-debug-manager repository>\example\data\chains\chain.EcdsaP256-3
+
+  ...
+
+9. In case of a successful authentication, the Arm Development Studio will connect to the running target and the debug features can be used. The following prompt should appear in the Secure Enclave terminal (ttyUSB1):
+
+::
+
+  ...
+  boot_platform_init: Corstone-1000 Secure Debug is a success.
+  ...
+
 
 Tests results
 -------------
