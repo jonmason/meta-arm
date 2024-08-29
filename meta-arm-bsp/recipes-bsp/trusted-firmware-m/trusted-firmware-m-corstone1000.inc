@@ -11,6 +11,8 @@ TFM_PLATFORM_IS_FVP ?= "FALSE"
 EXTRA_OECMAKE += "-DPLATFORM_IS_FVP=${TFM_PLATFORM_IS_FVP}"
 EXTRA_OECMAKE += "-DCC312_LEGACY_DRIVER_API_ENABLED=OFF"
 EXTRA_OECMAKE:append:corstone1000-fvp = " -DENABLE_MULTICORE=${@bb.utils.contains('MACHINE_FEATURES', 'corstone1000_fvp_smp', 'TRUE', 'FALSE', d)}"
+EXTRA_OECMAKE:append:corstone1000-mps3 = " -DPLATFORM_PSA_ADAC_SECURE_DEBUG=${@bb.utils.contains('MACHINE_FEATURES', 'secure-debug', 'ON', 'OFF', d)}"
+EXTRA_OECMAKE:append:corstone1000-mps3 = " -DPLATFORM_PSA_ADAC_SOURCE_PATH=${S}/../tfm-psa-adac -DPLATFORM_PSA_ADAC_BUILD_PATH=${B}/tfm-psa-adac-build"
 
 SRC_URI += " \
             file://0001-arm-trusted-firmware-m-disable-address-warnings-into.patch \
@@ -31,6 +33,17 @@ SRC_URI:append:corstone1000 = " \
     file://0011-Platform-Corstone1000-switch-to-metadata-v2.patch \
     file://0012-platform-corstone1000-Increase-flash-PS-area-size.patch \
     file://0013-Platform-CS1000-Fix-Bank-offsets.patch \
+    file://0014-Platform-CS1000-Increase-BL2-partition-size.patch \
+    file://0015-CC312-ADAC-Add-PSA_WANT_ALG_SHA_256-definition.patch \
+    file://0016-Platform-CS1000-Add-crypto-configs-for-ADAC.patch \
+    file://0017-Platform-CS1000-Fix-platform-name-in-logs.patch \
+    "
+
+FILESEXTRAPATHS:prepend:corstone1000-mps3 := "${THISDIR}/files/corstone1000/psa-adac:"
+SRC_URI:append:corstone1000-mps3 = " \
+    file://0001-PSA-revert-header-versions.patch;patchdir=../tfm-psa-adac \
+    file://0002-ADAC-Link-psa_interface-instead-of-tfm_sprt.patch;patchdir=../tfm-psa-adac \
+    file://0003-Fix-psa_key_handle_t-initialization.patch;patchdir=../tfm-psa-adac \
     "
 
 # TF-M ships patches for external dependencies that needs to be applied
