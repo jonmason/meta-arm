@@ -119,6 +119,7 @@ update-repos:
 #  TS: [none, trusted-services]
 #  VIRT: [none, xen]
 #  TESTING: testimage
+#  SECUREDEBUG: [none, secure-debug]
 
 arm-systemready-ir-acs:
   extends: .build
@@ -160,6 +161,7 @@ corstone1000-mps3:
       - FIRMWARE: corstone1000-firmware-only
         TESTING: [none, tftf]
       - FIRMWARE: none
+        SECUREDEBUG: [none, secure-debug]
 
 documentation:
   extends: .setup
