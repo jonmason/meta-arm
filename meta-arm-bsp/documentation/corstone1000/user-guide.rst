@@ -1284,24 +1284,36 @@ For FPGA,
 
   kas shell meta-arm/kas/corstone1000-mps3.yml:meta-arm/ci/debug.yml -c bitbake -c build corstone1000-flash-firmware-image"
 
-In order to test SB for FVP and FPGA, a bash script is available in the systemready-patch repo which is responsible in creating the relevant keys, sign the respective kernel images, and copy the same in their corresponding ESP images.
+In order to test SB for FVP and FPGA, a bash script is available in the systemready-patch repo which is responsible for creating the relevant keys, sign the respective kernel images, and copy the same in their corresponding ESP images.
 
-Clone the systemready-patch repo under <_workspace. Then, change directory to where the script `create_keys_and_sign.sh` is and execute the script as follows:
+The script does the following:
+
+* Create the required UEFI SB keys.
+
+* Sign the kernel images.
+
+* Copy the public keys and the kernel images (both signed and unsigned) to the ESP image for both the FVP and FPGA.
+
+Before executing the script, clone the systemready-patch repository under <_workspace> and set the current working directory to the subdirectory where images are built.
+
+**NOTE:** The `efitools <https://github.com/vathpela/efitools />`__  package is required to execute the script. Install the efitools package on your system, if it is missing.
 
 ::
 
+  cd <_workspace>
   git clone https://git.gitlab.arm.com/arm-reference-solutions/systemready-patch.git -b CORSTONE1000-2024.06
-  cd systemready-patch/embedded-a/corstone1000/secureboot/
+  cd meta-arm/build/tmp/deploy/images/corstone1000-<fvp,mps3>/
+  ../../../../../../systemready-patch/embedded-a/corstone1000/secureboot/create_keys_and_sign.sh -d <device type (fvp or mps3)> -v <certification validity in days (optional)> -m <mount point (optional)>
 
-**NOTE:** The efitools package is required to execute the script. Install the efitools package on your system, if it doesn't exist.
-
-The script is responsible to create the required UEFI secureboot keys, sign the kernel images and copy the public keys and the kernel images (both signed and unsigned) to the ESP image for both the FVP and FPGA.
-
+For example:
 ::
 
-  ./create_keys_and_sign.sh -w <Absolute path to <workdir> directory under which sources have been compiled> -v <certification validity in days>
-  For ex: ./create_keys_and_sign.sh -w "/home/xyz/workspace/meta-arm" -v 365
-  For help: ./create_keys_and_sign.sh -h
+  ../../../../../../systemready-patch/embedded-a/corstone1000/secureboot/create_keys_and_sign.sh -d fvp -v 365 -m /mnt/secureboot_test
+
+For help:
+::
+
+  ../../../../../../systemready-patch/embedded-a/corstone1000/secureboot/create_keys_and_sign.sh -h
 
 **NOTE:** The above script is interactive and contains some commands that would require sudo password/permissions.
 
