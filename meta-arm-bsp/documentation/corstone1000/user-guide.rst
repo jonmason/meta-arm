@@ -1236,25 +1236,24 @@ When running the tests on the Corstone-1000 FVP, the user should follow the
 instructions in `Running the software on FVP`_ section to boot Linux in FVP
 host_terminal_0, and login using the username ``root``.
 
-First, load FF-A TEE kernel module:
+The tests use the `arm_tstee` driver to access Trusted Services Secure Partitions from user space.
+This driver is included in the Linux Kernel, starting from v6.10.
+
+Run the following command in the Host terminal (ttyUSB2) to verify that the driver is present:
 
 ::
 
-  insmod /lib/modules/*-yocto-standard/updates/arm-tstee.ko
+  ls /sys/bus/arm_ffa/drivers | grep arm_tstee
 
-Then, check whether the FF-A TEE driver is loaded correctly by using the following command:
 
-::
-
-  cat /proc/modules | grep arm_tstee
-
-The output should be similar to:
+The output should be:
 
 ::
 
-   arm_tstee 16384 - - Live 0xffffffc000510000 (O)
+  arm_tstee
 
-Now, run the PSA API tests in the following order:
+
+Run the PSA API tests in the following order:
 
 ::
 
