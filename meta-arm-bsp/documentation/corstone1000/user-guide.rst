@@ -36,9 +36,13 @@ Please follow the steps described in the Yocto mega manual:
 
 Targets
 -------
+The Corstone-1000 software stack can be run on:
 
 - `Arm Corstone-1000 Ecosystem FVP (Fixed Virtual Platform) <https://developer.arm.com/downloads/-/arm-ecosystem-fvps>`__
 - `Arm Corstone-1000 for MPS3 <https://developer.arm.com/documentation/dai0550/latest/>`__
+
+.. warning::
+    Arm Corstone-1000 for MPS3 requires an additional 32 MB QSPI flash PMOD module. For more information see the `Application Note AN550 document <https://developer.arm.com/documentation/dai0550/latest/>`__.
 
 Yocto stable branch
 -------------------
