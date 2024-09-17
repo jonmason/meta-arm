@@ -37,6 +37,7 @@ SRC_URI:append:corstone1000 = " \
     file://0015-CC312-ADAC-Add-PSA_WANT_ALG_SHA_256-definition.patch \
     file://0016-Platform-CS1000-Add-crypto-configs-for-ADAC.patch \
     file://0017-Platform-CS1000-Fix-platform-name-in-logs.patch \
+    file://0018-Platform-corstone1000-Fix-isolation-L2-memory-protection.patch \
     "
 
 FILESEXTRAPATHS:prepend:corstone1000-mps3 := "${THISDIR}/files/corstone1000/psa-adac:"
