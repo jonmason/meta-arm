@@ -1,19 +1,22 @@
-From e8b577d02d1d4ed2492bb0b6c3a5bb7d2656f13a Mon Sep 17 00:00:00 2001
+From 6e7e3f2f1cb96eb1c895e8573fae8c141e9b64c8 Mon Sep 17 00:00:00 2001
 From: Bence Balogh <bence.balogh@arm.com>
 Date: Fri, 17 May 2024 13:21:07 +0200
-Subject: [PATCH] Change RSS_COMMS cmake variables to cahce vars
+Subject: [PATCH] Make RSS and MHU sizes compile-time definitions
+ user-configurable
 
-This way they can be set externally as well for the corstone1000
-platform.
+Replace the hardcoded RSS and MHU compile definitions values with CMake
+cache variables that users can configure to change the size of the RSS
+communication payload and the MHU message.
 
+Upstream-Status: Submitted [https://review.trustedfirmware.org/c/TS/trusted-services/+/31178/1]
 Signed-off-by: Bence Balogh <bence.balogh@arm.com>
-Upstream-Status: Pending
+Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
 ---
  platform/providers/arm/corstone1000/platform.cmake | 6 ++++--
  1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/platform/providers/arm/corstone1000/platform.cmake b/platform/providers/arm/corstone1000/platform.cmake
-index 16139c80e..82ac14f0b 100644
+index e811c25..8997155 100644
 --- a/platform/providers/arm/corstone1000/platform.cmake
 +++ b/platform/providers/arm/corstone1000/platform.cmake
 @@ -9,11 +9,13 @@
@@ -29,9 +32,9 @@ index 16139c80e..82ac14f0b 100644
 -	COMMS_MHU_MSG_SIZE=0x3500
 +	PLAT_RSS_COMMS_PAYLOAD_MAX_SIZE=${PLAT_RSS_COMMS_PAYLOAD_MAX_SIZE}
 +	COMMS_MHU_MSG_SIZE=${COMMS_MHU_MSG_SIZE}
+ 	MBEDTLS_ECP_DP_SECP521R1_ENABLED
  )
  
- get_property(_platform_driver_dependencies TARGET ${TGT}
 -- 
 2.25.1
 

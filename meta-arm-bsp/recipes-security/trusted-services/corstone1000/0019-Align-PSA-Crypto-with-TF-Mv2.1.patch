@@ -1,9 +1,9 @@
 From 3bb579379bcfe32ae0b81f721b370afcb58e9693 Mon Sep 17 00:00:00 2001
 From: Bence Balogh <bence.balogh@arm.com>
 Date: Wed, 10 Jul 2024 11:07:09 +0200
-Subject: [PATCH] Align PSA Crypto structs with TF-Mv2.1
+Subject: [PATCH] Align PSA Crypto with TF-Mv2.1
 
-The files were updated using the TF-Mv2.1 release (0c4c99b) commit.
+Update following files using the TF-Mv2.1 release (0c4c99b) commit.
 
 * crypto_sid.h
 This is derived from TF-M's tfm_crypto_defs.h file. The crypto function
@@ -21,7 +21,7 @@ The psa_client_key_attributes_s struct had to be aligned with the
 psa_key_attributes_s struct in TF-M. (psa_crypto.c)
 
 Signed-off-by: Bence Balogh <bence.balogh@arm.com>
-Upstream-Status: Pending
+Upstream-Status: Submitted [https://review.trustedfirmware.org/c/TS/trusted-services/+/31179/1]
 ---
  .../service/common/include/psa/crypto_sid.h   | 168 +++++-------------
  .../backend/psa_ipc/crypto_ipc_backend.h      |   9 +-
