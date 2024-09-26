@@ -6,6 +6,7 @@ header:
 repos:
   meta-clang:
     url: https://github.com/kraj/meta-clang
+    branch: master
 
 local_conf_header:
   toolchain: |
