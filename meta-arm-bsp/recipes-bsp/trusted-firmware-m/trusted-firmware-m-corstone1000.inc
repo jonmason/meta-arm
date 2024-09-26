@@ -38,6 +38,10 @@ SRC_URI:append:corstone1000 = " \
     file://0016-Platform-CS1000-Add-crypto-configs-for-ADAC.patch \
     file://0017-Platform-CS1000-Fix-platform-name-in-logs.patch \
     file://0018-Platform-corstone1000-Fix-isolation-L2-memory-protection.patch \
+    file://0019-Platform-CS1000-Remove-unused-BL1-files.patch \
+    file://0020-Platform-CS1000-Remove-duplicated-metadata-write.patch \
+    file://0021-Platform-CS1000-Fix-compiler-switch-in-BL1.patch \
+    file://0022-Platform-CS1000-Validate-both-metadata-replicas.patch \
     "
 
 FILESEXTRAPATHS:prepend:corstone1000-mps3 := "${THISDIR}/files/corstone1000/psa-adac:"
