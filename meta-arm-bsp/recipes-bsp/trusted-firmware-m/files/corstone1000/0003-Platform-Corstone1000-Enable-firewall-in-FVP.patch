@@ -1,14 +1,15 @@
-From a4e037b3bcf34982b8bdaf8693fd0f89d4f7fc87 Mon Sep 17 00:00:00 2001
+From 4b5a9546205e484ac7f53cee369b1db9a7bf2279 Mon Sep 17 00:00:00 2001
 From: Emekcan Aras <Emekcan.Aras@arm.com>
 Date: Wed, 3 Apr 2024 13:37:40 +0100
-Subject: [PATCH 04/10] Platform: Corstone1000: Enable host firewall in FVP
+Subject: [PATCH 3/9] Platform: Corstone1000: Enable firewall in FVP
 
-Enables host firewall and mpu setup for FVP. It also fixes secure-ram
-configuration and disable access rights to secure ram from both normal world
-for both mps3 and fvp.
+Enables host firewall and MPU setup for FVP. It also fixes secure RAM
+configuration and disables access rights to secure RAM from normal world
+for both MPS3 and FVP.
 
 Signed-off-by: Emekcan Aras <Emekcan.Aras@arm.com>
-Upstream-Status: Pending [Not submitted to upstream yet]
+Signed-off-by: Bence Balogh <bence.balogh@arm.com>
+Upstream-Status: Backport [4b5a9546205e484ac7f53cee369b1db9a7bf2279]
 ---
  .../Device/Include/platform_base_address.h    |  2 +-
  .../arm/corstone1000/bl1/boot_hal_bl1_1.c     | 42 ++++---------------

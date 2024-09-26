@@ -4,7 +4,7 @@ Date: Wed, 31 Jul 2024 19:57:33 +0200
 Subject: [PATCH] Platform: CS1000: Fix platform name in logs
 
 Signed-off-by: Bence Balogh <bence.balogh@arm.com>
-Upstream-Status: Pending [Not submitted to upstream yet]
+Upstream-Status: Backport [c3fa68995b247c802589890c6ea3e721127b0c78]
 ---
  platform/ext/target/arm/corstone1000/bl2/boot_hal_bl2.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
