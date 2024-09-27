@@ -34,13 +34,14 @@ stages:
   interruptible: true
   variables:
     KAS_WORK_DIR: $CI_PROJECT_DIR/work
+    KAS_BUILD_DIR: $KAS_WORK_DIR/build
     KAS_REPO_REF_DIR: $CACHE_DIR/repos
     SSTATE_DIR: $CACHE_DIR/sstate
     DL_DIR: $CACHE_DIR/downloads
     BB_LOGCONFIG: $CI_PROJECT_DIR/ci/logging.yml
     TOOLCHAIN_DIR: $CACHE_DIR/toolchains
-    IMAGE_DIR: $CI_PROJECT_DIR/work/build/tmp/deploy/images
-    TOOLCHAIN_LINK_DIR: $CI_PROJECT_DIR/work/build/toolchains
+    IMAGE_DIR: $KAS_BUILD_DIR/tmp/deploy/images
+    TOOLCHAIN_LINK_DIR: $KAS_BUILD_DIR/toolchains
   before_script:
     - echo KAS_WORK_DIR = $KAS_WORK_DIR
     - echo SSTATE_DIR = $SSTATE_DIR
@@ -75,13 +76,13 @@ stages:
     - echo KASFILES=$KASFILES
     - kas dump --update --force-checkout --resolve-refs --resolve-env $KASFILES
     - kas build $KASFILES
-    - ./ci/check-warnings $KAS_WORK_DIR/build/warnings.log
+    - ./ci/check-warnings $KAS_BUILD_DIR/warnings.log
   artifacts:
     name: "logs"
     when: always
     paths:
-      - $CI_PROJECT_DIR/work/build/tmp*/work*/**/temp/log.do_*.*
-      - $CI_PROJECT_DIR/work/build/tmp*/work*/**/testimage/*
+      - $KAS_BUILD_DIR/tmp*/work*/**/temp/log.do_*.*
+      - $KAS_BUILD_DIR/tmp*/work*/**/testimage/*
 
 #
 # Prep stage, update repositories once.
