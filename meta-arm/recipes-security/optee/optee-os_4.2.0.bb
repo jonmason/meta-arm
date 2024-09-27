@@ -12,4 +12,6 @@ SRC_URI += " \
     file://0001-compile.mk-use-CFLAGS-from-environment.patch \
     file://0002-link.mk-use-CFLAGS-with-version.o.patch \
     file://0003-link.mk-generate-version.o-in-link-out-dir.patch \
+    file://0001-arm64.h-fix-compile-error-with-Clang.patch \
+    file://0002-libutils-zlib-fix-Clang-warnings.patch \
 "
