@@ -77,12 +77,16 @@ stages:
     - kas dump --update --force-checkout --resolve-refs --resolve-env $KASFILES
     - kas build $KASFILES
     - ./ci/check-warnings $KAS_BUILD_DIR/warnings.log
+    - kas shell ci/base.yml:lockfile.yml --command "$CI_PROJECT_DIR/ci/junit.sh $KAS_WORK_DIR/build"
+
   artifacts:
     name: "logs"
     when: always
     paths:
       - $KAS_BUILD_DIR/tmp*/work*/**/temp/log.do_*.*
       - $KAS_BUILD_DIR/tmp*/work*/**/testimage/*
+    reports:
+      junit: $KAS_BUILD_DIR/tmp/log/oeqa/junit.xml
 
 #
 # Prep stage, update repositories once.
