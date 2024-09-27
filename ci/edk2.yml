@@ -14,4 +14,4 @@ local_conf_header:
     EFI_PROVIDER ?= "grub-efi"
 
     QB_DEFAULT_BIOS = "QEMU_EFI.fd"
-    WKS_FILE ?= "efi-disk.wks.in"
+    WKS_FILE ?= "mkefidisk.wks"
