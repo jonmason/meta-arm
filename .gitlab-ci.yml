@@ -130,7 +130,7 @@ arm-systemready-ir-acs:
       # arm-systemready-ir-acs must be specified after fvp-base for ordering
       # purposes for the jobs-to-kas output. It is not enough to just have it
       # in the job name because fvp-base.yml overwrites the target.
-      - PLATFORM: fvp-base
+      - PLATFORM: [fvp-base, corstone1000-fvp]
         ARM_SYSTEMREADY_IR_ACS: arm-systemready-ir-acs
   tags:
     - ${ACS_TAG}
@@ -196,19 +196,6 @@ fvp-base:
       - FIRMWARE: [u-boot, edk2]
         TESTING: testimage
       - SYSTEMREADY_FIRMWARE: arm-systemready-firmware
-
-arm-systemready-ir-acs:
-  extends: .build
-  timeout: 12h
-  parallel:
-    matrix:
-      # arm-systemready-ir-acs must be specified after fvp-base for ordering
-      # purposes for the jobs-to-kas output. It is not enough to just have it
-      # in the job name because fvp-base.yml overwrites the target.
-      - PLATFORM: [fvp-base, corstone1000-fvp]
-        ARM_SYSTEMREADY_IR_ACS: arm-systemready-ir-acs
-  tags:
-    - ${ACS_TAG}
 
 fvps:
   extends: .build
