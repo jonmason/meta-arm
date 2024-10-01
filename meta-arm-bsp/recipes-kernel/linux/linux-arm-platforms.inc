@@ -66,7 +66,6 @@ KMACHINE:fvp-base = "fvp"
 FILESEXTRAPATHS:prepend:fvp-base := "${ARMBSPFILESPATHS}:${ARMFILESPATHS}"
 SRC_URI:append:fvp-base = " \
     file://0001-arm64-dts-fvp-Enable-virtio-rng-support.patch \
-    file://0001-net-tighten-bad-gso-csum-offset-check-in-virtio_net_.patch \
     file://tee.cfg \
     ${@bb.utils.contains('MACHINE_FEATURES', 'ts-smm-gateway', \
                          'file://no-strict-devmem.cfg', '' , d)} \
