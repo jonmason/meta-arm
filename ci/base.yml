@@ -7,7 +7,7 @@ distro: poky
 
 defaults:
   repos:
-    branch: styhead
+    branch: master
 
 repos:
   meta-arm:
