@@ -11,8 +11,8 @@ SRC_URI = "git://gitlab.arm.com/linux-arm/linux-trusted-services;protocol=https;
           "
 S = "${WORKDIR}/git"
 
-# Tag debugfs-v5.0.1
-SRCREV = "18e3be71f65a405dfb5d97603ae71b3c11759861"
+# Tag debugfs-v5.0.2
+SRCREV = "885af0d1c3bf11aba12320d5484429160a9b9f26"
 
 COMPATIBLE_HOST = "(arm|aarch64).*-linux"
 KERNEL_MODULE_AUTOLOAD += "arm-ffa-user"
