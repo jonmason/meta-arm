@@ -7,6 +7,7 @@ Conflicts=shutdown.target
 Before=tpm2.target sysinit.target shutdown.target
 
 [Service]
+Type=notify
 EnvironmentFile=-@sysconfdir@/default/tee-supplicant
 ExecStart=@sbindir@/tee-supplicant $OPTARGS
 ExecStop=-/bin/sh -c "/sbin/modprobe -v -r tpm_ftpm_tee ; /bin/kill $MAINPID"
