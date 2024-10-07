@@ -4,6 +4,8 @@ SRC_URI += "file://uefi-secureboot.cfg"
 
 inherit sbsign
 
+require ${@bb.utils.contains('MACHINE_FEATURES', 'uefi-http-boot', 'u-boot-uefi-http-boot.inc', '', d)}
+
 DEPENDS += 'python3-pyopenssl-native'
 
 do_compile:prepend() {

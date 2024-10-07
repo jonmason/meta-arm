@@ -23,7 +23,7 @@ local_conf_header:
     WKS_FILE = "efi-disk.wks.in"
     KERNEL_IMAGETYPE = "Image"
 
-    MACHINE_FEATURES:append = " efi uefi-secureboot"
+    MACHINE_FEATURES:append = " efi uefi-secureboot uefi-http-boot"
 
     EFI_PROVIDER = "systemd-boot"
 
