@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/siemens/kas/master/kas/schema-kas.json
+
+header:
+  version: 14
+
+local_conf_header:
+  versions: |
+    PREFERRED_VERSION_trusted-firmware-a = "git"
+    TFA_DEBUG = "1"
+    PREFERRED_VERSION_trusted-firmware-m = "git"
+    TFM_DEBUG = "1"
+    PREFERRED_VERSION_scp-firmware = "git"
