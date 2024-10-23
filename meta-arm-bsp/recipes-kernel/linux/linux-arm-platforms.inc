@@ -91,13 +91,6 @@ KBUILD_DEFCONFIG:sgi575 = "defconfig"
 KCONFIG_MODE:sgi575 = "--alldefconfig"
 
 #
-# Total Compute (TC0/TC1) KMACHINE
-#
-COMPATIBLE_MACHINE:tc = "(tc0|tc1)"
-KBUILD_DEFCONFIG:tc = "defconfig"
-KCONFIG_MODE:tc = "--alldefconfig"
-
-#
 # sbsa-ref KMACHINE
 #
 COMPATIBLE_MACHINE:sbsa-ref = "sbsa-ref"
