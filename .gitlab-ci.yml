@@ -295,7 +295,8 @@ qemuarm-secureboot:
         TOOLCHAINS: [gcc, clang]
         TCLIBC: [glibc, musl]
         TESTING: testimage
-      - TOOLCHAINS: external-gccarm
+      - DISTRO: [poky, poky-altcfg]
+        TOOLCHAINS: external-gccarm
         TESTING: testimage
       - KERNEL: linux-yocto-dev
         TESTING: testimage
