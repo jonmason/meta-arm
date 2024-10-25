@@ -554,7 +554,6 @@ FILES:${PN} += "\
 	${base_libdir}/ld*.so.* \
 	${base_libdir}/ld-*.so \
 	${base_libdir}/libpthread*.so.* \
-	${base_libdir}/libpthread*.so \
 	${base_libdir}/libpthread-*.so \
 	${base_libdir}/libresolv*.so.* \
 	${base_libdir}/libresolv-*.so \
