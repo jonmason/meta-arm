@@ -19,7 +19,7 @@ python () {
 
 unpackiso() {
     # Unpack the ISO image
-    bsdtar -xf ${WORKDIR}/${ISO_IMAGE_NAME}.iso -C ${EXTRACTED_ISO_TEMP_DIR}
+    bsdtar -xf ${UNPACKDIR}/${ISO_IMAGE_NAME}.iso -C ${EXTRACTED_ISO_TEMP_DIR}
     chmod -R u+rw ${EXTRACTED_ISO_TEMP_DIR}
 }
 
@@ -34,7 +34,7 @@ repackiso() {
             -boot-load-size 4 -boot-info-table -J -R -V ${ISO_LABEL} -eltorito-alt-boot \
             -eltorito-boot ${EFI_IMAGE} -no-emul-boot ${EXTRACTED_ISO_TEMP_DIR}
 
-    mv -f ${NEW_ISO_TEMP_DIR}/${ISO_IMAGE_NAME}.iso ${WORKDIR}
+    mv -f ${NEW_ISO_TEMP_DIR}/${ISO_IMAGE_NAME}.iso ${UNPACKDIR}
 }
 
 # Write the test data in IMAGE_POSTPROCESS_COMMAND
