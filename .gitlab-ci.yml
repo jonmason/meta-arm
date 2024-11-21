@@ -115,16 +115,16 @@ update-repos:
 #
 # Build stage, the actual build jobs
 #
-# Available options for building are
+# Available options for building are (VIRT _must_ be last for ssh override)
 #  DISTRO: [poky, poky-altcfg, poky-tiny]
 #  KERNEL: [linux-yocto, linux-yocto-dev, linux-yocto-rt]
 #  TOOLCHAINS: [gcc, clang, external-gccarm]
 #  TCLIBC: [glibc, musl]
 #  FIRMWARE: [u-boot, edk2]
 #  TS: [none, trusted-services]
-#  VIRT: [none, xen]
 #  TESTING: testimage
 #  SECUREDEBUG: [none, secure-debug]
+#  VIRT: [none, xen]
 
 arm-systemready-ir-acs:
   extends: .build
