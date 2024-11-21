@@ -7,11 +7,11 @@ LICENSE = "BSD-3-Clause"
 
 SRC_URI_TRUSTED_FIRMWARE_A ?= "git://git.trustedfirmware.org/TF-A/trusted-firmware-a.git;protocol=https"
 SRC_URI = "${SRC_URI_TRUSTED_FIRMWARE_A};destsuffix=fiptool-${PV};branch=${SRCBRANCH}"
-LIC_FILES_CHKSUM = "file://docs/license.rst;md5=b5fbfdeb6855162dded31fadcd5d4dc5"
+LIC_FILES_CHKSUM = "file://docs/license.rst;md5=b2c740efedc159745b9b31f88ff03dde"
 
-# Use fiptool from TF-A v2.11.0
-SRCREV = "f2735ebccf5173f74c0458736ec526276106097e"
-SRCBRANCH = "master"
+# Use fiptool from TF-A v2.10.9
+SRCREV = "7e63213601425c7a6d83e47dc936b264deb9df2b"
+SRCBRANCH = "lts-v2.10"
 
 DEPENDS += "openssl-native"
 

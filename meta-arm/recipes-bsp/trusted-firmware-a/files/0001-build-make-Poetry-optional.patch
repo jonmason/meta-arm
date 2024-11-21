@@ -1,0 +1,237 @@
+From d28673971623b33d6078f62362e91d66cb6fd05b Mon Sep 17 00:00:00 2001
+From: Chris Kay <chris.kay@arm.com>
+Date: Thu, 26 Sep 2024 14:18:04 +0000
+Subject: [PATCH] build: make Poetry optional
+
+The Yocto team has requested that we do not use Poetry from within the
+Makefile, as Yocto does not have network access during the build
+process.
+
+We want to maintain the current behaviour, so this change makes our use
+of Poetry contigent on it being available in the environment.
+
+Additionally, explicitly passing an empty toolchain parameter now allows
+a tool to be *disabled* (e.g. passing `POETRY=` will prevent the build
+system from trying to use Poetry).
+
+Change-Id: Ibf552a3fee1eaadee767a1b948b559700083b401
+Signed-off-by: Chris Kay <chris.kay@arm.com>
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Backport [d28673971623b33d6078f62362e91d66cb6fd05b]
+---
+ Makefile                        |  4 +-
+ make_helpers/toolchain.mk       | 75 ++++++++++++++++++++-------------
+ make_helpers/toolchains/host.mk |  5 +++
+ make_helpers/utilities.mk       | 20 +++++++++
+ plat/arm/common/arm_common.mk   |  4 +-
+ 5 files changed, 75 insertions(+), 33 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index c2ed9eefe872..e9e0f59202de 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1733,8 +1733,8 @@ endif
+ 
+ tl: ${BUILD_PLAT}/tl.bin
+ ${BUILD_PLAT}/tl.bin: ${HW_CONFIG}
+-	$(q)poetry -q install
+-	$(q)poetry run tlc create --fdt $< -s ${FW_HANDOFF_SIZE} $@
++	$(if $(host-poetry),$(q)poetry -q install)
++	$(q)$(if $(host-poetry),poetry run )tlc create --fdt $< -s ${FW_HANDOFF_SIZE} $@
+ 
+ doc:
+ 	$(s)echo "  BUILD DOCUMENTATION"
+diff --git a/make_helpers/toolchain.mk b/make_helpers/toolchain.mk
+index 243e18ffb1b5..2ab577cd1059 100644
+--- a/make_helpers/toolchain.mk
++++ b/make_helpers/toolchain.mk
+@@ -118,6 +118,9 @@ ifndef toolchain-mk
+         toolchain-tool-classes += dtc
+         toolchain-tool-class-name-dtc := device tree compiler
+ 
++        toolchain-tool-classes += poetry
++        toolchain-tool-class-name-poetry := Python Poetry package manager
++
+         #
+         # Configure tools that we recognize.
+         #
+@@ -175,6 +178,9 @@ ifndef toolchain-mk
+         toolchain-tools += generic-dtc
+         toolchain-tool-name-generic-dtc := Device Tree Compiler (`dtc`)
+ 
++        toolchain-tools += generic-poetry
++        toolchain-tool-name-generic-poetry := Poetry (`poetry`)
++
+         #
+         # Assign tools to tool classes.
+         #
+@@ -199,6 +205,7 @@ ifndef toolchain-mk
+ 
+         # Other tools
+         toolchain-tools-dtc := generic-dtc # Device tree compilers
++        toolchain-tools-poetry := generic-poetry # Python Poetry package manager
+ 
+         #
+         # Helper functions to identify toolchain tools.
+@@ -256,9 +263,10 @@ ifndef toolchain-mk
+ 
+         # Other tools
+         toolchain-guess-tool-generic-dtc = $(shell $(1) --version 2>&1 <$(nul) | grep -o "Version: DTC")
++        toolchain-guess-tool-generic-poetry = $(shell $(1) --version 2>&1 <$(nul))
+ 
+-        toolchain-guess-tool = $(firstword $(foreach candidate,$(1), \
+-                $(if $(call toolchain-guess-tool-$(candidate),$(2)),$(candidate))))
++        toolchain-guess-tool = $(if $(2),$(firstword $(foreach candidate,$(1),$\
++                $(if $(call toolchain-guess-tool-$(candidate),$(2)),$(candidate)))))
+ 
+         #
+         # Warn the user that a tool could not be identified.
+@@ -313,26 +321,28 @@ ifndef toolchain-mk
+         # toolchain.
+         #
+ 
+-        toolchain-guess-arm-clang-cpp = $(1)
+-        toolchain-guess-arm-clang-as = $(1)
+-        toolchain-guess-arm-clang-ld = # Fall back to `$(toolchain)-ld-default`
+-        toolchain-guess-arm-clang-oc = # Fall back to `$(toolchain)-oc-default`
+-        toolchain-guess-arm-clang-od = # Fall back to `$(toolchain)-od-default`
+-        toolchain-guess-arm-clang-ar = # Fall back to `$(toolchain)-ar-default`
++        toolchain-derive-arm-clang-cpp = $(1)
++        toolchain-derive-arm-clang-as = $(1)
++        toolchain-derive-arm-clang-ld = # Fall back to `$(toolchain)-ld-default`
++        toolchain-derive-arm-clang-oc = # Fall back to `$(toolchain)-oc-default`
++        toolchain-derive-arm-clang-od = # Fall back to `$(toolchain)-od-default`
++        toolchain-derive-arm-clang-ar = # Fall back to `$(toolchain)-ar-default`
+ 
+-        toolchain-guess-llvm-clang-cpp = $(1)
+-        toolchain-guess-llvm-clang-as = $(1)
+-        toolchain-guess-llvm-clang-ld = $(shell $(1) --print-prog-name ld.lld 2>$(nul))
+-        toolchain-guess-llvm-clang-oc = $(shell $(1) --print-prog-name llvm-objcopy 2>$(nul))
+-        toolchain-guess-llvm-clang-od = $(shell $(1) --print-prog-name llvm-objdump 2>$(nul))
+-        toolchain-guess-llvm-clang-ar = $(shell $(1) --print-prog-name llvm-ar 2>$(nul))
++        toolchain-derive-llvm-clang-cpp = $(1)
++        toolchain-derive-llvm-clang-as = $(1)
++        toolchain-derive-llvm-clang-ld = $(shell $(1) --print-prog-name ld.lld 2>$(nul))
++        toolchain-derive-llvm-clang-oc = $(shell $(1) --print-prog-name llvm-objcopy 2>$(nul))
++        toolchain-derive-llvm-clang-od = $(shell $(1) --print-prog-name llvm-objdump 2>$(nul))
++        toolchain-derive-llvm-clang-ar = $(shell $(1) --print-prog-name llvm-ar 2>$(nul))
+ 
+-        toolchain-guess-gnu-gcc-cpp = $(1)
+-        toolchain-guess-gnu-gcc-as = $(1)
+-        toolchain-guess-gnu-gcc-ld = $(1)
+-        toolchain-guess-gnu-gcc-oc = $(shell $(1) --print-prog-name objcopy 2>$(nul))
+-        toolchain-guess-gnu-gcc-od = $(shell $(1) --print-prog-name objdump 2>$(nul))
+-        toolchain-guess-gnu-gcc-ar = $(shell $(1) --print-prog-name ar 2>$(nul))
++        toolchain-derive-gnu-gcc-cpp = $(1)
++        toolchain-derive-gnu-gcc-as = $(1)
++        toolchain-derive-gnu-gcc-ld = $(1)
++        toolchain-derive-gnu-gcc-oc = $(shell $(1) --print-prog-name objcopy 2>$(nul))
++        toolchain-derive-gnu-gcc-od = $(shell $(1) --print-prog-name objdump 2>$(nul))
++        toolchain-derive-gnu-gcc-ar = $(shell $(1) --print-prog-name ar 2>$(nul))
++
++        toolchain-derive = $(if $3,$(call toolchain-derive-$1-$2,$3))
+ 
+         #
+         # Configure a toolchain.
+@@ -393,25 +403,32 @@ ifndef toolchain-mk
+         #
+ 
+         define toolchain-determine-tool
+-                toolchain-$1-$2-guess-from-cc = $$(if $$(filter-out cc,$2),$\
+-                        $$(call toolchain-guess-$$($1-cc-id)-$2,$$($1-cc)))
++                toolchain-$1-$2-derive-from-cc = $$(if $$(filter-out cc,$2),$\
++                        $$(call toolchain-derive,$$($1-cc-id),$2,$$($1-cc)))
+ 
+-                toolchain-$1-$2-shell = $$(or $$($$($1-$2-parameter)),$\
+-                        $$(toolchain-$1-$2-guess-from-cc),$\
+-                        $$(toolchain-$1-$2-default))
++                toolchain-$1-$2-shell = $\
++                        $$(if $$(call defined,$$($1-$2-parameter)),$\
++                                $$($$($1-$2-parameter)),$\
++                                $$(or $$(toolchain-$1-$2-derive-from-cc),$\
++                                        $$(toolchain-$1-$2-default)))
+ 
+                 toolchain-$1-$2-default = $$(firstword $\
+                         $$(foreach default,$$($1-$2-default),$\
+                                 $$(if $$(call which,$$(default)),$$(default))) $\
+                         $$($1-$2-default))
+ 
+-                $1-$2 := $(if $(call which,$$(toolchain-$1-$2-shell)),$\
++                $1-$2 := $$(if $$(call which,$$(toolchain-$1-$2-shell)),$\
+                         $$(call escape-shell,$$(toolchain-$1-$2-shell)),$\
+                         $$(toolchain-$1-$2-shell))
+ 
+-                $1-$2-id := $$(or \
+-                        $$(call toolchain-guess-tool,$$(toolchain-tools-$2),$$($1-$2)),$\
+-                        $$(strip $$(call toolchain-warn-unrecognized,$1,$2)$$($1-$2-default-id)))
++                $1-$2-id := $$(if $$($1-$2),$$(or $\
++                        $$(call toolchain-guess-tool,$$\
++                                $$(toolchain-tools-$2),$$($1-$2)),$\
++                        $$($1-$2-default-id)))
++
++                ifeq ($$(or $$($1-$2-id),$$(call bool,$$($1-$2-optional))),)
++                        $$(call toolchain-warn-unrecognized,$1,$2)
++                endif
+         endef
+ 
+         $(foreach toolchain,$(toolchains), \
+diff --git a/make_helpers/toolchains/host.mk b/make_helpers/toolchains/host.mk
+index 00a9dd627a99..dc538c641606 100644
+--- a/make_helpers/toolchains/host.mk
++++ b/make_helpers/toolchains/host.mk
+@@ -37,3 +37,8 @@ host-ar-default := gcc-ar
+ host-dtc-parameter := HOSTDTC
+ host-dtc-default-id := generic-dtc
+ host-dtc-default := dtc
++
++host-poetry-parameter := POETRY
++host-poetry-optional := yes
++host-poetry-default-id := generic-poetry
++host-poetry-default := poetry
+diff --git a/make_helpers/utilities.mk b/make_helpers/utilities.mk
+index 45ef12e75938..efa0ab90afd9 100644
+--- a/make_helpers/utilities.mk
++++ b/make_helpers/utilities.mk
+@@ -100,3 +100,23 @@ bool = $(filter-out 0 n no f false,$(call lowercase,$(1)))
+ #
+ 
+ bool-01 = $(if $(call bool,$(1)),1,0)
++
++#
++# Determine whether a variable is defined or not.
++#
++# Parameters:
++#
++#   - $(1): The variable to check.
++#
++# Example usage:
++#
++#     xyz-defined := $(call defined,xyz) # <empty>
++#
++#     xyz :=
++#     xyz-defined := $(call defined,xyz) # <non-empty>
++#
++#     xyz := hello
++#     xyz-defined := $(call defined,xyz) # <non-empty>
++#
++
++defined = $(call bool,$(filter-out undefined,$(origin $(1))))
+diff --git a/plat/arm/common/arm_common.mk b/plat/arm/common/arm_common.mk
+index 0c9b94389008..7f0c9cbd65d8 100644
+--- a/plat/arm/common/arm_common.mk
++++ b/plat/arm/common/arm_common.mk
+@@ -484,8 +484,8 @@ ifneq ($(COTDTPATH),)
+ 		$(q)$($(ARCH)-cpp) $(cot-dt-cpp-flags)
+ 
+         $(BUILD_PLAT)/$(COTDTPATH:.dtsi=.c): $(BUILD_PLAT)/$(COTDTPATH:.dtsi=.dts) | $$(@D)/
+-		$(q)poetry -q install
+-		$(q)poetry run cot-dt2c convert-to-c $< $@
++		$(if $(host-poetry),$(q)poetry -q install)
++		$(q)$(if $(host-poetry),poetry run )cot-dt2c convert-to-c $< $@
+ 
+         BL2_SOURCES += $(BUILD_PLAT)/$(COTDTPATH:.dtsi=.c)
+ endif
+-- 
+2.39.5
+
