@@ -29,8 +29,6 @@ local_conf_header:
 
     # Use systemd as the init system
     INIT_MANAGER = "systemd"
-    DISTRO_FEATURES:append = " systemd"
-    DISTRO_FEATURES_NATIVE:append = " systemd"
 
     IMAGE_INSTALL:append = " systemd systemd-boot util-linux coreutils"
 
