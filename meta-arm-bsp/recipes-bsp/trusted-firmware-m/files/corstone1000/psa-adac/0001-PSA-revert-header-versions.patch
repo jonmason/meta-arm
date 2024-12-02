@@ -14,28 +14,25 @@ certificate/token versions.
 Signed-off-by: Emekcan Aras <emekcan.aras@arm.com>
 Upstream-Status: Inappropriate [Add newer dummy token and cert]
 ---
- psa-adac/core/include/psa_adac.h | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ psa-adac/core/include/psa_adac.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/psa-adac/core/include/psa_adac.h b/psa-adac/core/include/psa_adac.h
-index b190992..b026607 100644
+index b190992..6c3feb2 100644
 --- a/psa-adac/core/include/psa_adac.h
 +++ b/psa-adac/core/include/psa_adac.h
-@@ -30,10 +30,10 @@ extern "C" {
+@@ -30,8 +30,8 @@ extern "C" {
   *
   * Current version numbers for certificate and token format.
   */
 -#define ADAC_CERT_MAJOR 1u
 -#define ADAC_CERT_MINOR 0u
--#define ADAC_TOKEN_MAJOR 1u
--#define ADAC_TOKEN_MINOR 0u
 +#define ADAC_CERT_MAJOR 0u
 +#define ADAC_CERT_MINOR 1u
-+#define ADAC_TOKEN_MAJOR 0u
-+#define ADAC_TOKEN_MINOR 1u
+ #define ADAC_TOKEN_MAJOR 1u
+ #define ADAC_TOKEN_MINOR 0u
  
- /** \brief Key options
-  *
 -- 
-2.17.1
+2.25.1
+
 
