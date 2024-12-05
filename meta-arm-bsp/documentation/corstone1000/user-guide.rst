@@ -18,16 +18,17 @@ for more information.
 Prerequisites
 -------------
 
-This guide assumes that your host machine is running Ubuntu 20.04 LTS, with at least
+This guide assumes that your host machine is running Ubuntu 20.04 LTS ( with ``sudo`` rights), with at least
 32GB of free disk space and 16GB of RAM as minimum requirement.
 
 The following prerequisites must be available on the host system:
 
-- Git 1.8.3.1 or greater
+- Git 1.8.3.1 or greater.
 - Python 3.8.0 or greater.
-- GNU Tar 1.28 or greater
+- GNU Tar 1.28 or greater.
 - GNU Compiler Collection 8.0 or greater.
-- GNU Make 4.0 or greater
+- GNU Make 4.0 or greater.
+- tmux.
 
 Please follow the steps described in the Yocto mega manual:
 
@@ -49,7 +50,7 @@ The Corstone-1000 software stack can be run on:
 Yocto Stable Branch
 -------------------
 
-Corstone-1000 software stack is built on top of Yocto scarthgap release.
+Corstone-1000 software stack is built on top of Yocto styhead release.
 
 Software Components
 -------------------
@@ -58,7 +59,7 @@ a `BitBake recipe <https://docs.yoctoproject.org/bitbake/2.2/bitbake-user-manual
 The recipes specific to the Corstone-1000 BSP are located at:
 ``$WORKSPACE/meta-arm/meta-arm-bsp/``.
 
-.. note::
+.. important::
 
     ``$WORKSPACE`` refers to the absolute path to your workspace where the `meta-arm` repository will be cloned.
 
@@ -83,8 +84,41 @@ Host Processor Components
 +----------+-----------------------------------------------------------------------------------------------------+
 | bbappend | ``$WORKSPACE/meta-arm/meta-arm-bsp/recipes-bsp/trusted-firmware-a/trusted-firmware-a_%.bbappend``   |
 +----------+-----------------------------------------------------------------------------------------------------+
-| Recipe   | ``$WORKSPACE/meta-arm/meta-arm/recipes-bsp/trusted-firmware-a/trusted-firmware-a_2.10.4.bb``        |
+| Recipe   | ``$WORKSPACE/meta-arm/meta-arm/recipes-bsp/trusted-firmware-a/trusted-firmware-a_2.11.0.bb``        |
 +----------+-----------------------------------------------------------------------------------------------------+
+
+`Trusted Services <https://trusted-services.readthedocs.io/en/latest/index.html>`__
+====================================================================================
+
++----------+-----------------------------------------------------------------------------------------------------------+
+| bbappend | ``$WORKSPACE/meta-arm/meta-arm-bsp/recipes-security/trusted-services/libts_%.bbappend``                   |
++----------+-----------------------------------------------------------------------------------------------------------+
+| bbappend | ``$WORKSPACE/meta-arm/meta-arm-bsp/recipes-security/trusted-services/ts-psa-crypto-api-test_%.bbappend``  |
++----------+-----------------------------------------------------------------------------------------------------------+
+| bbappend | ``$WORKSPACE/meta-arm/meta-arm-bsp/recipes-security/trusted-services/ts-psa-iat-api-test_%.bbappend``     |
++----------+-----------------------------------------------------------------------------------------------------------+
+| bbappend | ``$WORKSPACE/meta-arm/meta-arm-bsp/recipes-security/trusted-services/ts-psa-its-api-test_%.bbappend``     |
++----------+-----------------------------------------------------------------------------------------------------------+
+| bbappend | ``$WORKSPACE/meta-arm/meta-arm-bsp/recipes-security/trusted-services/ts-psa-ps-api-test_%.bbappend``      |
++----------+-----------------------------------------------------------------------------------------------------------+
+| bbappend | ``$WORKSPACE/meta-arm/meta-arm-bsp/recipes-security/trusted-services/ts-sp-se-proxy_%.bbappend``          |
++----------+-----------------------------------------------------------------------------------------------------------+
+| bbappend | ``$WORKSPACE/meta-arm/meta-arm-bsp/recipes-security/trusted-services/ts-sp-smm-gateway_%.bbappend``       |
++----------+-----------------------------------------------------------------------------------------------------------+
+| Recipe   | ``$WORKSPACE/meta-arm/meta-arm/recipes-security/trusted-services/libts_git.bb``                           |
++----------+-----------------------------------------------------------------------------------------------------------+
+| Recipe   | ``$WORKSPACE/meta-arm/meta-arm/recipes-security/trusted-services/ts-psa-crypto-api-test_git.bb``          |
++----------+-----------------------------------------------------------------------------------------------------------+
+| Recipe   | ``$WORKSPACE/meta-arm/meta-arm/recipes-security/trusted-services/ts-psa-iat-api-test_git.bb``             |
++----------+-----------------------------------------------------------------------------------------------------------+
+| Recipe   | ``$WORKSPACE/meta-arm/meta-arm/recipes-security/trusted-services/ts-psa-its-api-test_git.bb``             |
++----------+-----------------------------------------------------------------------------------------------------------+
+| Recipe   | ``$WORKSPACE/meta-arm/meta-arm/recipes-security/trusted-services/ts-psa-ps-api-test_git.bb``              |
++----------+-----------------------------------------------------------------------------------------------------------+
+| Recipe   | ``$WORKSPACE/meta-arm/meta-arm/recipes-security/trusted-services/ts-sp-smm-gateway.bb``                   |
++----------+-----------------------------------------------------------------------------------------------------------+
+| Recipe   | ``$WORKSPACE/meta-arm/meta-arm/recipes-security/trusted-services/ts-sp-se-proxy.bb``                      |
++----------+-----------------------------------------------------------------------------------------------------------+
 
 `OP-TEE <https://git.trustedfirmware.org/OP-TEE/optee_os.git>`__
 ================================================================
@@ -92,7 +126,7 @@ Host Processor Components
 +----------+----------------------------------------------------------------------------------------+
 | bbappend | ``$WORKSPACE/meta-arm/meta-arm-bsp/recipes-security/optee/optee-os_4.%.bbappend``      |
 +----------+----------------------------------------------------------------------------------------+
-| Recipe   | ``$WORKSPACE/meta-arm/meta-arm/recipes-security/optee/optee-os_4.1.0.bb``              |
+| Recipe   | ``$WORKSPACE/meta-arm/meta-arm/recipes-security/optee/optee-os_4.2.0.bb``              |
 +----------+----------------------------------------------------------------------------------------+
 
 `U-Boot <https://github.com/u-boot/u-boot.git>`__
@@ -116,7 +150,7 @@ The provided distribution is based on `BusyBox <https://www.busybox.net/>`__ and
 +-----------+----------------------------------------------------------------------------------------------+
 | bbappend  | ``$WORKSPACE/meta-arm/meta-arm-bsp/recipes-kernel/linux/linux-yocto_%.bbappend``             |
 +-----------+----------------------------------------------------------------------------------------------+
-| Recipe    | ``$WORKSPACE/poky/meta/recipes-kernel/linux/linux-yocto_6.6.bb``                             |
+| Recipe    | ``$WORKSPACE/poky/meta/recipes-kernel/linux/linux-yocto_6.10.bb``                            |
 +-----------+----------------------------------------------------------------------------------------------+
 | defconfig | ``$WORKSPACE/meta-arm/meta-arm-bsp/recipes-kernel/linux/files/corstone1000/defconfig``       |
 +-----------+----------------------------------------------------------------------------------------------+
@@ -131,7 +165,7 @@ Secure Enclave Components
 +----------+-----------------------------------------------------------------------------------------------------+
 | bbappend | ``$WORKSPACE/meta-arm/meta-arm-bsp/recipes-bsp/trusted-firmware-m/trusted-firmware-m_%.bbappend``   |
 +----------+-----------------------------------------------------------------------------------------------------+
-| Recipe   | ``$WORKSPACE/meta-arm/meta-arm/recipes-bsp/trusted-firmware-m/trusted-firmware-m_2.0.0.bb``         |
+| Recipe   | ``$WORKSPACE/meta-arm/meta-arm/recipes-bsp/trusted-firmware-m/trusted-firmware-m_2.1.0.bb``         |
 +----------+-----------------------------------------------------------------------------------------------------+
 
 ************************************
@@ -182,7 +216,7 @@ Build
     .. code-block:: console
 
         cd $WORKSPACE
-        git clone https://git.yoctoproject.org/git/meta-arm -b CORSTONE1000-2024.06
+        git clone https://git.yoctoproject.org/git/meta-arm -b CORSTONE1000-2024.11
 
 #. Build a Corstone-1000 image:
 
@@ -414,7 +448,7 @@ instructions of the installer to setup the FVP.
     .. code-block:: console
 
         kas shell meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml \
-        -c "../meta-arm/scripts/runfvp --terminals=xterm"
+        -c "../meta-arm/scripts/runfvp --terminals=tmux"
 
     When the script is executed, three terminal instances will be launched:
 
@@ -460,14 +494,13 @@ Clean Secure Flash
     .. code-block:: console
 
         cd $WORKSPACE
-        git clone https://git.gitlab.arm.com/arm-reference-solutions/systemready-patch.git -b CORSTONE1000-2024.06
+        git clone https://git.gitlab.arm.com/arm-reference-solutions/systemready-patch.git -b CORSTONE1000-2024.11
 
 #. Copy the secure flash cleaning Git patch file to your copy of `meta-arm`.
 
     .. code-block:: console
 
         cp -f systemready-patch/embedded-a/corstone1000/erase_flash/0001-embedded-a-corstone1000-clean-secure-flash.patch meta-arm
-        cd meta-arm
 
 #. Apply the Git patch to `meta-arm`.
 
@@ -481,7 +514,9 @@ Clean Secure Flash
     .. code-block:: console
 
         cd $WORKSPACE
-        kas build meta-arm/kas/corstone1000-mps3.yml:meta-arm/ci/debug.yml
+        kas shell meta-arm/kas/corstone1000-mps3.yml:meta-arm/ci/debug.yml
+        bitbake -c cleansstate trusted-firmware-m corstone1000-flash-firmware-image
+        bitbake -c build corstone1000-flash-firmware-image
 
 #. Replace the ``bl1.bin`` file on the SD card with ``$WORKSPACE/build/tmp/deploy/images/corstone1000-mps3/bl1.bin``.
 
@@ -495,6 +530,15 @@ Clean Secure Flash
         NOW YOU CAN FLASH THE ACTUAL CORSTONE1000 IMAGE
         PLEASE REMOVE THE LATEST ERASE SECURE FLASH PATCH AND BUILD THE IMAGE AGAIN
 
+#. Whilst still in the ``kas`` shell, revert the changes the patch introduced by running the following commands:
+
+    .. code-block:: console
+
+        cd $WORKSPACE/meta-arm
+        git reset --hard
+        cd ..
+        bitbake -c cleansstate trusted-firmware-m corstone1000-flash-firmware-image
+        exit
 
 #. Follow the `instructions <building-the-software-stack_>`__ to build a clean software stack and flash the MPS3 with it.
 
@@ -561,7 +605,7 @@ MPS3
     .. code-block:: console
 
         sudo dd \
-        if=$WORKSPACE/build/tmp/deploy/images/corstone1000-mps3/corstone1000-esp-image-costickrstone1000-mps3.wic \
+        if=$WORKSPACE/build/tmp/deploy/images/corstone1000-mps3/corstone1000-esp-image-corstone1000-mps3.wic \
         of=/dev/sdb \
         iflag=direct oflag=direct status=progress bs=512; sync;
 
@@ -625,8 +669,6 @@ This sections below describe how to build and run ACS tests on Corstone-1000.
 
 .. _mps3-instructions-for-acs-image:
 
-MPS3
-====
 
 #. On your host development machine, clone the `Arm SystemReady ACS repository <https://github.com/ARM-software/arm-systemready/>`_.
 
@@ -647,6 +689,16 @@ MPS3
         and full USB support for Corstone-1000 will be available in the repository with the next
         SystemReady release.
 
+#. Decompress the pre-built ACS live image.
+
+    .. code-block:: console
+
+        cd $WORKSPACE/arm-systemready/IR/prebuilt_images/v23.09_2.1.0
+        unxz ir-acs-live-image-generic-arm64.wic.xz
+
+MPS3
+====
+
 #. Connect a USB drive (other than the one used for the ESP) to the host development machine.
 
 #. Run the following command to discover which device is your USB drive:
@@ -666,7 +718,6 @@ MPS3
     .. code-block:: console
 
         cd $WORKSPACE/arm-systemready/IR/prebuilt_images/v23.09_2.1.0
-        unxz ir-acs-live-image-generic-arm64.wic.xz
         sudo dd if=ir-acs-live-image-generic-arm64.wic of=/dev/sdc iflag=direct oflag=direct bs=1M status=progress; sync
 
 #. Plug the USB drive to the MPS3. At this point you should have both the USB drive with the ESP and the USB drive with the ACS image plugged to the MPS3.
@@ -679,28 +730,47 @@ The MPS3 will reset multiple times during the test, and it might take approximat
 
     Unplug the ESP USB drive from the MPS3 if it is preventing GRUB
     from finding the bootable partition. Leave only the ACS image USB drive
-    plugged in to run the ACS tests. The ESP USB drive can be plugged in again after
-    the platform is booted to Linux at the end of the ACS tests.
+    plugged in to run the ACS tests.
 
+    The ESP USB drive can be plugged in again after
+    selecting the `Linux Boot` option in the GRUB menu at the end of the ACS tests.
+
+.. warning::
+
+    A timeout issue has been observed while booting Linux during the ACS tests, causing the system to boot into emergency mode.
+    Booting Linux is necessary to run certain tests, such as `dt-validation`.
+    The following workaround is required to enable Linux to boot properly and perform all Linux-based tests:
+
+    #. Press Enter at the Linux prompt.
+    #. Open the file `/etc/systemd/system.conf` and set `DefaultDeviceTimeoutSec=infinity`.
+    #. Reboot the platform using the `reboot` command.
+    #. Select the `Linux Boot` option from the GRUB menu.
+    #. Allow Linux to boot and run the remaining ACS tests until completion.
 
 .. _fvp-instructions-for-acs-image:
 
 FVP
 ===
 
-FVP has been integrated in the `meta-arm-systemready Yocto layer <https://git.yoctoproject.org/meta-arm/plain/meta-arm-systemready>`__.
 
-Find more details about the `meta-arm-systemready` Yocto layer from its `README <https://git.yoctoproject.org/meta-arm/plain/meta-arm-systemready/README.md>`__ file.
-
-Run the following command to build the firmware image with the specific kas configuration file for building an image with the ACS tests baked in:
+Run the commands below to run the ACS test on FVP using the built firmware image and the pre-built ACS image identified above:
 
 .. code-block:: console
 
-    kas build meta-arm/ci/corstone1000-fvp.yml:meta-arm/ci/debug.yml:meta-arm/kas/arm-systemready-ir-acs.yml
+    cd $WORKSPACE
+    tmux
+    ./meta-arm/scripts/runfvp \
+    --terminals=tmux \
+    ./build/tmp/deploy/images/corstone1000-fvp/corstone1000-flash-firmware-image-corstone1000-fvp.fvpconf \
+    -- -C board.msd_mmc.p_mmc_file=$WORKSPACE/arm-systemready/IR/prebuilt_images/v23.09_2.1.0/ir-acs-live-image-generic-arm64.wic
 
 
 .. note::
+    The FVP will reset multiple times during the test.
     The ACS tests might take up to 1 day to complete when run on FVP.
+
+The message `ACS run is completed` will be displayed on the FVP host terminal when the test runs to completion.
+You will be prompted to press the Enter key to access the Linux prompt.
 
 
 Test Sequence and Results
@@ -718,8 +788,14 @@ The results can be fetched from the `acs_results` folder in the ``BOOT`` partiti
 
 .. note::
 
-    The FVP uses the ``$WORKSPACE/build/tmp-glibc/work/corstone1000_fvp-oe-linux/arm-systemready-ir-acs/2.0.0/deploy-arm-systemready-ir-acs/arm-systemready-ir-acs-corstone1000-fvp.wic``
-    image if the `meta-arm-systemready` Yocto layer is used. The results can be checked in this image.
+    Access the `acs_results` folder in FVP by running the following commands:
+
+    .. code-block:: console
+
+        sudo mkdir /mnt/test
+        sudo mount -o rw,offset=1048576 \
+        $WORKSPACE/arm-systemready/IR/prebuilt_images/v23.09_2.1.0/ir-acs-live-image-generic-arm64.wic \
+        /mnt/test
 
 #####################################################
 
@@ -781,9 +857,17 @@ Run the following commands to generate an invalid capsule with a ``fw-version`` 
    --private-key build/tmp/deploy/images/corstone1000-$TARGET/corstone1000_capsule_key.key \
    --certificate build/tmp/deploy/images/corstone1000-$TARGET/corstone1000_capsule_cert.crt \
    --index 1 \
-   --guid df1865d1-90fb-4d59-9c38-c9f2c1bba8cc \
+   --guid $TARGET_GUID \
    --fw-version 5 build/tmp/deploy/images/corstone1000-$TARGET/corstone1000-$TARGET_image.nopt \
    corstone1000-$TARGET-v5.uefi.capsule
+
+
+.. important::
+
+    ``$TARGET_GUID`` is different depending on whether the capsule is built for the ``fvp`` or ``mps3`` ``$TARGET``.
+
+    - ``fvp`` ``$TARGET_GUID`` is ``989f3a4e-46e0-4cd0-9877-a25c70c01329``
+    - ``mps3`` ``$TARGET_GUID`` is ``df1865d1-90fb-4d59-9c38-c9f2c1bba8cc``
 
 The invalid capsule will be located in the ``$WORKSPACE`` directory.
 
@@ -889,7 +973,7 @@ Positive Capsule Update Test
       .. code-block:: console
 
         kas shell meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml \
-        -c "../meta-arm/scripts/runfvp --terminals=xterm \
+        -c "../meta-arm/scripts/runfvp --terminals=tmux \
         -- -C board.msd_mmc.p_mmc_file=$ACS_IMAGE_PATH/ir-acs-live-image-generic-arm64.wic"
 
       .. warning::
@@ -911,9 +995,17 @@ Positive Capsule Update Test
 
 #. Run the ``CapsuleApp`` application with the valid capsule file:
 
-    .. code-block:: console
+    - MPS3:
 
-        EFI/BOOT/app/CapsuleApp.efi corstone1000-$TARGET-v6.uefi.capsule
+        .. code-block:: console
+
+            EFI/BOOT/app/CapsuleApp.efi EFI/BOOT/corstone1000-mps3-v6.uefi.capsule
+
+    - FVP:
+
+        .. code-block:: console
+
+            EFI/BOOT/app/CapsuleApp.efi corstone1000-fvp-v6.uefi.capsule
 
     The capsule update will be started.
 
@@ -1013,11 +1105,25 @@ Negative Capsule Update Test
 
         Press ESC in 4 seconds to skip startup.nsh or any other key to continue.
 
-#. Run the ``CapsuleApp`` application with the invalid capsule file:
+#. Access the content of the first file system (``File System 0``) where we copied the capsule files by running the following command:
 
     .. code-block:: console
 
-        EFI/BOOT/app/CapsuleApp.efi corstone1000-$TARGET-v5.uefi.capsule
+        FS0:
+
+#. Run the ``CapsuleApp`` application with the invalid capsule file:
+
+    - MPS3:
+
+        .. code-block:: console
+
+            EFI/BOOT/app/CapsuleApp.efi EFI/BOOT/corstone1000-mps3-v5.uefi.capsule
+
+    - FVP:
+
+        .. code-block:: console
+
+            EFI/BOOT/app/CapsuleApp.efi corstone1000-fvp-v5.uefi.capsule
 
 
 #. TrustedFirmware-M should reject the capsule due to having a lower firmware version and display the following log on the Secure Enclave terminal (``ttyUSB1``):
@@ -1107,83 +1213,6 @@ The Linux distributions to be installed are:
 
 Follow the instructions below to install the Linux distributions to the Corstone-1000 software stack.
 
-***********************************
-Apply Patch for Debian Installation
-***********************************
-
-.. warning::
-    **!!Debian ONLY!!**
-
-    There is a known issue in `Shim 15.7 <https://salsa.debian.org/efi-team/shim/-/tree/upstream/15.7?ref_type=tags>`__
-    provided with the Debian installer image.
-    This bug causes a fatal error when attempting to boot media installer for Debian, and resets the platform before installation starts.
-    
-    A `patch <debian-skip-shim-patch>`__ to be applied to the Corstone-1000 software stack is provided to skip the Shim.
-    This patch makes U-Boot automatically bypass the Shim and run GRUB to allow
-    the user to proceed with a normal installation.
-    
-    You are encourage to try a new installer if at the moment of reading this document the Shim problem has been solved.
-    Otherwise, please apply the patch as indicated by the instructions below.
-
-#. Clone the repository containing the patch in your ``$WORKSPACE``:
-
-    .. code-block:: console
-
-        cd $WORKSPACE
-        git clone https://git.gitlab.arm.com/arm-reference-solutions/systemready-patch.git -b CORSTONE1000-2024.06
-
-#. Copy the Git patch file to your local copy of `meta-arm` in your workspace:
-
-    .. code-block:: console
-
-        cp -f systemready-patch/embedded-a/corstone1000/shim/0001-arm-bsp-u-boot-corstone1000-Skip-the-shim-by-booting.patch meta-arm
-
-#. Change the current working directory to your local copy of the `meta-arm` repository to apply the Git patch:
-
-    .. code-block:: console
-
-        cd meta-arm
-        git am 0001-arm-bsp-u-boot-corstone1000-Skip-the-shim-by-booting.patch
-
-#. Change the current working directory back to your ``$WORKSPACE``:
-
-    .. code-block:: console
-
-        cd $WORKSPACE
-
-#. Initialize a kas shell environment using the debug configuration file for your target to:
-
-   - remove build artefacts (for ``u-boot``, ``trusted-firmware-a``, and ``corstone1000-flash-firmware-image``)
-   - reset the state of those recipes
-   - re-build the ``corstone1000-flash-firmware-image`` recipe from scratch
-
-    .. code-block:: console
-    
-        kas shell meta-arm/kas/corstone1000-$TARGET.yml:meta-arm/ci/debug.yml \
-        -c="bitbake u-boot trusted-firmware-a corstone1000-flash-firmware-image -c cleansstate; \
-        bitbake corstone1000-flash-firmware-image"
-
-.. important::
-
-    On MPS3, replace the ``cs1000.bin`` on the SD card with the newly generated ``*.wic`` file.
-
-.. warning::
-
-    The Corstone-1000 patch for Debian installation must be removed from `meta-arm` before running the software to boot openSUSE or
-    executing any other tests in this user guide.
-    
-    Remove the patch and rebuild the ``corstone1000-flash-firmware-image`` recipe by running the following commands:
-
-    .. code-block:: console
-
-        cd $WORKSPACE/meta-arm
-        git reset --hard HEAD~1
-        cd $WORKSPACE
-        kas shell meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml \
-        -c="bitbake u-boot -c cleanall; bitbake trusted-firmware-a -c cleanall; \
-        bitbake corstone1000-flash-firmware-image -c cleanall; \
-        bitbake corstone1000-flash-firmware-image"
-
 **************************
 Prepare Installation Media
 **************************
@@ -1194,7 +1223,7 @@ Follow the instructions below to create the installation media.
 
 #. Using your development machine, download one of following Linux distribution images:
 
-    - `Debian installer image <https://cdimage.debian.org/mirror/cdimage/archive/12.4.0/arm64/iso-dvd/>`__
+    - `Debian installer image <https://cdimage.debian.org/mirror/cdimage/archive/12.7.0/arm64/iso-dvd/>`__
     - `OpenSUSE Tumbleweed installer image <http://download.opensuse.org/ports/aarch64/tumbleweed/iso/>`__ 
 
     .. note::
@@ -1246,7 +1275,7 @@ Corstone-1000 on-board non-volatile storage size is insufficient for installing 
         #. Do not yet connect this blank USB drive to the MPS3. It will be used as the primary drive to boot the distribution.
 
     - FVP:
-        #. Create an 8GB GUID Partition Table (GPT) formatted MultiMediaCard (MMC) image.
+        #. Create an 10 GB GUID Partition Table (GPT) formatted MultiMediaCard (MMC) image.
 
             .. code-block:: console
 
@@ -1295,7 +1324,7 @@ FVP
     .. code-block:: console
 
         kas shell meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml \
-        -c "../meta-arm/scripts/runfvp --terminals=xterm -- \
+        -c "../meta-arm/scripts/runfvp --terminals=tmux -- \
         -C board.msd_mmc.p_mmc_file=$WORKSPACE/fvp_distro_system_drive.img \
         -C board.msd_mmc_2.p_mmc_file=$DISTRO_INSTALLER_ISO_PATH"
 
@@ -1361,8 +1390,8 @@ Boot Distribution
     .. code-block:: console
 
         kas shell meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml \
-        -c "../meta-arm/scripts/runfvp --terminals=xterm -- \
-        -C board.msd_mmc.p_mmc_file=$WORKSPACE/fvp_distro_system_drive.img.img"
+        -c "../meta-arm/scripts/runfvp --terminals=tmux -- \
+        -C board.msd_mmc.p_mmc_file=$WORKSPACE/fvp_distro_system_drive.img"
 
     .. warning::
 
@@ -1460,7 +1489,7 @@ Generate Keys, Signed Image and Unsigned Image
         cd $WORKSPACE
 
         git clone https://git.gitlab.arm.com/arm-reference-solutions/systemready-patch.git \
-        -b CORSTONE1000-2024.06
+        -b CORSTONE1000-2024.11
 
 #. Set the current working directory to build directory's subdirectory containing the software stack build images.
 
@@ -1718,14 +1747,6 @@ The steps below are applicable to both MPS3 and FVP).
 
 #. Start the Corstone-1000 and wait until it boots to Linux on the Host Processor terminal (``ttyUSB2``).
 
-#. Verify that the `arm_tstee` driver is present.
-
-    .. code-block:: console
-
-        ls /sys/bus/arm_ffa/drivers | grep arm_tstee
-
-    ``arm_tstee`` should be printed on the terminal to confirm that the driver is present.
-
 #. Run the PSA API tests by running the commands below in the order shown:
 
     .. code-block:: console
@@ -1747,13 +1768,13 @@ External System Processor
 The Linux operating system running on the Host Processor starts the ``remoteproc`` framework to manage the External System Processor.
 
 
-#. Start the External System Processor with the following command:
+#. Stop the External System Processor with the following command:
 
     .. code-block:: console
 
         echo stop > /sys/class/remoteproc/remoteproc0/state
 
-#. Stop the External System Processor with the following command:
+#. Start the External System Processor with the following command:
 
     .. code-block:: console
 
@@ -1811,7 +1832,7 @@ The build and integration instructions can be found in its `README <secure-debug
 The `secure-debug-manager` repository also contains the private key and chain certificate to be used during the tests.
 The private key's public pair is provisioned into the One-Time Programmable memory in TrustedFirmware-M. These are dummy keys that should not be used in production.
 
-A debug probe (DSTREAM family) and an Arm Development Studio 2022.2 and 2022.c (or later) are needed to test the Secure Debug feature.
+To test the Secure Debug feature, you'll need a debug probe from the DSTREAM family and Arm Development Studio versions 2022.2, 2022.c, or 2023.a.
 
 
 #. Clone the `secure-debug-manager` repository to your workspace.
@@ -1820,6 +1841,13 @@ A debug probe (DSTREAM family) and an Arm Development Studio 2022.2 and 2022.c (
 
         cd $WORKSPACE
         git clone https://github.com/ARM-software/secure-debug-manager.git
+
+#. Navigate into the repository directory and checkout the specific commit in the listing below.
+
+    .. code-block:: console
+
+        cd $WORKSPACE/secure-debug-manager
+        git checkout b30d6496ca749123e86b39b161b9f70ef76106d6
 
 #. Follow the steps in the `secure-debug-manager`'s `README <secure-debug-manager-repo-readme_>`__ for the development machine setup.
 
@@ -1873,8 +1901,8 @@ A debug probe (DSTREAM family) and an Arm Development Studio 2022.2 and 2022.c (
 
 Reports
 -------
-Various test reports for the `Corstone-1000 software (CORSTONE1000-2024.06) <https://git.yoctoproject.org/meta-arm/tag/?h=CORSTONE1000-2024.06>`__ 
-release version are available for reference `here <https://gitlab.arm.com/arm-reference-solutions/arm-reference-solutions-test-report/-/tree/CORSTONE1000-2024.06/embedded-a/corstone1000/CORSTONE1000-2024.06?ref_type=tags>`__.
+Various test reports for the `Corstone-1000 software (CORSTONE1000-2024.11) <https://git.yoctoproject.org/meta-arm/tag/?h=CORSTONE1000-2024.11>`__
+release version are available for reference `here <https://gitlab.arm.com/arm-reference-solutions/arm-reference-solutions-test-report/-/tree/CORSTONE1000-2024.11/embedded-a/corstone1000/CORSTONE1000-2024.11?ref_type=tags>`__.
 
 
 --------------
@@ -1882,5 +1910,4 @@ release version are available for reference `here <https://gitlab.arm.com/arm-re
 *Copyright (c) 2022-2024, Arm Limited. All rights reserved.*
 
 .. _Arm Ecosystem FVPs: https://developer.arm.com/tools-and-software/open-source-software/arm-platforms-software/arm-ecosystem-fvps
-.. _debian-skip-shim-patch: https://gitlab.arm.com/arm-reference-solutions/systemready-patch/-/blob/CORSTONE1000-2024.06/embedded-a/corstone1000/shim/0001-arm-bsp-u-boot-corstone1000-Skip-the-shim-by-booting.patch
 .. _secure-debug-manager-repo-readme: https://github.com/ARM-software/secure-debug-manager/blob/master/README.md
