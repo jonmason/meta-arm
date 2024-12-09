@@ -29,8 +29,7 @@ def cli_from_config(config, terminal_choice):
         if terminal_choice != "none" and name:
             # TODO if raw mode
             # cli.extend(["--parameter", f"{terminal}.mode=raw"])
-            # TODO put name into terminal title
-            cli.extend(["--parameter", f"{terminal}.terminal_command={terminals[terminal_choice].command}"])
+            cli.extend(["--parameter", f"{terminal}.terminal_command={terminals[terminal_choice].command.format(name=name)}"])
         else:
             # Disable terminal
             cli.extend(["--parameter", f"{terminal}.start_telnet=0"])
