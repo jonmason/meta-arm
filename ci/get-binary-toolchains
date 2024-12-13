@@ -2,12 +2,12 @@
 set -u -e
 
 BASENAME=arm-gnu-toolchain
-VER=${VER:-13.3.rel1}
+VER=${VER:-14.2.rel1}
 HOST_ARCH=${HOST_ARCH:-$(uname -m)}
 
 # Use the standard kas container locations if nothing is passed into the script
 DOWNLOAD_DIR="${1:-/builds/persist/downloads/}"
-TOOLCHAIN_DIR="${2:-/builds/persist//toolchains/}"
+TOOLCHAIN_DIR="${2:-/builds/persist/toolchains/}"
 TOOLCHAIN_LINK_DIR="${3:-build/toolchains/}"
 
 # These should be already created by .gitlab-ci.yml, but do here if run outside of that env
@@ -19,14 +19,7 @@ download() {
 	wget -P $DOWNLOAD_DIR -nc $URL
 }
 
-if [ $HOST_ARCH = "aarch64" ]; then
-	# AArch64 Linux hosted cross compilers
-
-	# AArch32 target with hard float
-	download arm-none-linux-gnueabihf
-elif [ $HOST_ARCH = "x86_64" ]; then
-	# x86_64 Linux hosted cross compilers
-
+if [ $HOST_ARCH = "aarch64" ] || [ $HOST_ARCH = "x86_64" ]; then
 	# AArch32 target with hard float
 	download arm-none-linux-gnueabihf
 
