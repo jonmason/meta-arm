@@ -63,3 +63,6 @@ ARM_SYSTEMREADY_FIRMWARE = "${FIRMWARE_DEPLOYMENT}:do_deploy \
                             corstone1000-esp-image:do_image_complete \
                            "
 ARM_SYSTEMREADY_ACS_CONSOLE ?= "default"
+
+# Workaround IMAGE_ROOTFS_EXTRA_SPACE being ignored when images are repacked
+IMAGE_ROOTFS_EXTRA_ARGS += "--extra-space ${@${IMAGE_ROOTFS_EXTRA_SPACE}}K"
