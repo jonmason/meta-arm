@@ -269,6 +269,9 @@ qemuarm64-secureboot:
         TS: [none, qemuarm64-secureboot-ts]
         UEFISB: [none, uefi-secureboot]
         TESTING: testimage
+      - DISTRO: [poky, poky-altcfg]
+        TOOLCHAINS: external-gccarm
+        TESTING: testimage
       - KERNEL: linux-yocto-dev
         TESTING: testimage
 
