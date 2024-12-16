@@ -12,8 +12,8 @@ LIC_FILES_CHKSUM:aarch64 = "file://share/doc/gcc/Copying.html;md5=402090210d41f0
 LIC_FILES_CHKSUM:x86-64 = "file://share/doc/gcc/Copying.html;md5=2a62a4d37ddad55da732679acd9edf03"
 
 SRC_URI = "https://developer.arm.com/-/media/Files/downloads/gnu/${PV}/binrel/arm-gnu-toolchain-${PV}-${HOST_ARCH}-${BINNAME}.tar.xz;name=gcc-${HOST_ARCH}"
-SRC_URI[gcc-aarch64.sha256sum] = "299c56db1644c135670afabbf801b97a42e5ef6069d73157ab869458cbda2096"
-SRC_URI[gcc-x86_64.sha256sum] = "47aeefc02b0ee39f6d4d1812110952975542d365872a7474b5306924bca4faa1"
+SRC_URI[gcc-aarch64.sha256sum] = "c4f0daab43f78e0d56ec2bdad76b98a0223ce12ce7fc51a6ce82f9cc6c6dfba0"
+SRC_URI[gcc-x86_64.sha256sum] = "eb54c4727440d03199a6af9a6d021e77f45410cad39effce4e5a1c10a88b7f04"
 
 S = "${WORKDIR}/arm-gnu-toolchain-${PV}-${HOST_ARCH}-${BINNAME}"
 
