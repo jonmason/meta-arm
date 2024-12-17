@@ -1,0 +1,27 @@
+From 7e9becc03933badaee673457ebf970aea6af8792 Mon Sep 17 00:00:00 2001
+From: Jon Mason <jdmason@kudzu.us>
+Date: Tue, 17 Dec 2024 13:38:30 -0500
+Subject: [PATCH] Fix implicit declaration
+
+Signed-off-by: Jon Mason <jdmason@kudzu.us>
+Upstream-Status: Pending
+---
+ platform/ext/target/arm/corstone1000/rse_comms/rse_comms_hal.h | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/platform/ext/target/arm/corstone1000/rse_comms/rse_comms_hal.h b/platform/ext/target/arm/corstone1000/rse_comms/rse_comms_hal.h
+index c4676cb2ef74..29be08ddb36e 100644
+--- a/platform/ext/target/arm/corstone1000/rse_comms/rse_comms_hal.h
++++ b/platform/ext/target/arm/corstone1000/rse_comms/rse_comms_hal.h
+@@ -49,6 +49,8 @@ enum tfm_plat_err_t tfm_multi_core_hal_receive(void *mhu_receiver_dev,
+  */
+ enum tfm_plat_err_t tfm_multi_core_hal_reply(struct client_request_t *req);
+ 
++int32_t tfm_hal_client_id_translate(void *owner, int32_t client_id_in);
++
+ #ifdef __cplusplus
+ }
+ #endif
+-- 
+2.39.5
+

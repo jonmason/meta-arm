@@ -1,0 +1,212 @@
+From e7c09a080f8f689bf38313d4a88630a794acad82 Mon Sep 17 00:00:00 2001
+From: Antonio de Angelis <Antonio.deAngelis@arm.com>
+Date: Wed, 7 Aug 2024 13:27:04 +0200
+Subject: [PATCH] Platform: Corstone1000: Fix several build warnings
+
+Mostly unused variables or functions, missing include
+headers, and a BL1_2 function which should not return
+is instead returning on an error case.
+
+Signed-off-by: Antonio de Angelis <antonio.deangelis@arm.com>
+Change-Id: Idbf3ff6731f0e92c21a27c75f01662a2e2d4f761
+
+Upstream-Status: Backport
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+---
+ .../arm/corstone1000/bl1/boot_hal_bl1_1.c     |  2 --
+ .../arm/corstone1000/bl1/boot_hal_bl1_2.c     |  2 +-
+ .../arm/corstone1000/bl2/boot_hal_bl2.c       | 22 ++++++++++---------
+ .../ci_regression_tests/s_io_storage_test.c   |  4 ++--
+ .../corstone1000/fw_update_agent/fwu_agent.c  |  2 --
+ .../arm/corstone1000/partition/flash_layout.h |  5 -----
+ .../ext/target/arm/corstone1000/platform.c    |  4 ++--
+ 7 files changed, 17 insertions(+), 24 deletions(-)
+
+diff --git a/platform/ext/target/arm/corstone1000/bl1/boot_hal_bl1_1.c b/platform/ext/target/arm/corstone1000/bl1/boot_hal_bl1_1.c
+index 45d6768215d7..0f00956757f6 100644
+--- a/platform/ext/target/arm/corstone1000/bl1/boot_hal_bl1_1.c
++++ b/platform/ext/target/arm/corstone1000/bl1/boot_hal_bl1_1.c
+@@ -585,8 +585,6 @@ static void setup_host_firewall(void)
+ int32_t boot_platform_init(void)
+ {
+     int32_t result;
+-    uint32_t image_offset;
+-
+ 
+     result = corstone1000_watchdog_init();
+     if (result != ARM_DRIVER_OK) {
+diff --git a/platform/ext/target/arm/corstone1000/bl1/boot_hal_bl1_2.c b/platform/ext/target/arm/corstone1000/bl1/boot_hal_bl1_2.c
+index e6dd5b0277d2..36658f534f5f 100644
+--- a/platform/ext/target/arm/corstone1000/bl1/boot_hal_bl1_2.c
++++ b/platform/ext/target/arm/corstone1000/bl1/boot_hal_bl1_2.c
+@@ -93,7 +93,7 @@ void boot_platform_quit(struct boot_arm_vector_table *vt)
+ 
+     result = FLASH_DEV_NAME.Uninitialize();
+     if (result != ARM_DRIVER_OK) {
+-        return 1;
++        while (1);
+     }
+ 
+     result = corstone1000_watchdog_reset_timer();
+diff --git a/platform/ext/target/arm/corstone1000/bl2/boot_hal_bl2.c b/platform/ext/target/arm/corstone1000/bl2/boot_hal_bl2.c
+index 8aacd877e401..f22d776582af 100644
+--- a/platform/ext/target/arm/corstone1000/bl2/boot_hal_bl2.c
++++ b/platform/ext/target/arm/corstone1000/bl2/boot_hal_bl2.c
+@@ -6,17 +6,18 @@
+  */
+ 
+ #include <stdio.h>
++#include <string.h>
+ #include "tfm_hal_device_header.h"
+ #include "region.h"
+ #include "boot_hal.h"
+ #include "Driver_Flash.h"
++#include "flash_common.h"
+ #include "flash_layout.h"
+ #include "fih.h"
+ #include "bootutil/bootutil_log.h"
+ #include "fip_parser.h"
+ #include "flash_map/flash_map.h"
+ #include "watchdog.h"
+-#include <string.h>
+ #include "tfm_plat_otp.h"
+ #include "tfm_plat_provisioning.h"
+ #include "fwu_agent.h"
+@@ -34,9 +35,10 @@
+ #include "partition.h"
+ #include "platform.h"
+ 
+-static const uint8_t * const tfm_part_names[] = {"tfm_primary", "tfm_secondary"};
+-static const uint8_t * const fip_part_names[] = {"FIP_A", "FIP_B"};
+-
++static const char* const tfm_part_names[] = {"tfm_primary", "tfm_secondary"};
++#ifndef TFM_S_REG_TEST
++static const char* const fip_part_names[] = {"FIP_A", "FIP_B"};
++#endif /* !TFM_S_REG_TEST */
+ 
+ /* Flash device name must be specified by target */
+ extern ARM_DRIVER_FLASH FLASH_DEV_NAME;
+@@ -54,7 +56,7 @@ static bool fill_flash_map_with_tfm_data(uint8_t boot_index) {
+                      boot_index, ARRAY_SIZE(tfm_part_names));
+         return false;
+     }
+-    partition_entry_t *tfm_entry =
++    const partition_entry_t *tfm_entry =
+         get_partition_entry(tfm_part_names[boot_index]);
+     if (tfm_entry == NULL) {
+         BOOT_LOG_ERR("Could not find partition %s", tfm_part_names[boot_index]);
+@@ -65,9 +67,10 @@ static bool fill_flash_map_with_tfm_data(uint8_t boot_index) {
+     return true;
+ }
+ 
++#ifndef TFM_S_REG_TEST
+ static bool fill_flash_map_with_fip_data(uint8_t boot_index) {
+     uint32_t tfa_offset = 0;
+-    size_t tfa_size = 0;
++    uint32_t tfa_size = 0;
+     uint32_t fip_offset = 0;
+     size_t fip_size = 0;
+     int result;
+@@ -77,7 +80,7 @@ static bool fill_flash_map_with_fip_data(uint8_t boot_index) {
+                      boot_index, ARRAY_SIZE(fip_part_names));
+         return false;
+     }
+-    partition_entry_t *fip_entry =
++    const partition_entry_t *fip_entry =
+         get_partition_entry(fip_part_names[boot_index]);
+     if (fip_entry == NULL) {
+         BOOT_LOG_ERR("Could not find partition %s", fip_part_names[boot_index]);
+@@ -105,6 +108,7 @@ static bool fill_flash_map_with_fip_data(uint8_t boot_index) {
+ 
+     return true;
+ }
++#endif /* !TFM_S_REG_TEST */
+ 
+ #ifdef PLATFORM_PSA_ADAC_SECURE_DEBUG
+ int psa_adac_to_tfm_apply_permissions(uint8_t permissions_mask[16])
+@@ -129,8 +133,7 @@ int psa_adac_to_tfm_apply_permissions(uint8_t permissions_mask[16])
+ }
+ 
+ uint8_t secure_debug_rotpk[32];
+-
+-#endif
++#endif /* PLATFORM_PSA_ADAC_SECURE_DEBUG */
+ 
+ int32_t boot_platform_init(void)
+ {
+@@ -167,7 +170,6 @@ int32_t boot_platform_init(void)
+ int32_t boot_platform_post_init(void)
+ {
+     int32_t result;
+-    uint32_t bank_offset;
+     enum tfm_plat_err_t plat_err;
+ 
+ #ifdef CRYPTO_HW_ACCELERATOR
+diff --git a/platform/ext/target/arm/corstone1000/ci_regression_tests/s_io_storage_test.c b/platform/ext/target/arm/corstone1000/ci_regression_tests/s_io_storage_test.c
+index f8be384a74cd..fb589c9d2976 100644
+--- a/platform/ext/target/arm/corstone1000/ci_regression_tests/s_io_storage_test.c
++++ b/platform/ext/target/arm/corstone1000/ci_regression_tests/s_io_storage_test.c
+@@ -5,8 +5,8 @@
+  *
+  */
+ 
++#include <string.h>
+ #include "s_io_storage_test.h"
+-
+ #include "Driver_Flash.h"
+ #include "flash_layout.h"
+ #include "io_block.h"
+@@ -144,4 +144,4 @@ void s_test_io_storage_multiple_flash_simultaneous(struct test_result_t *ret) {
+ 
+     LOG_INFFMT("PASS: %s\n\r", __func__);
+     ret->val = TEST_PASSED;
+-}
+\ No newline at end of file
++}
+diff --git a/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c b/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c
+index a4747f221291..9a9926a3ded2 100644
+--- a/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c
++++ b/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c
+@@ -269,8 +269,6 @@ static enum fwu_agent_error_t private_metadata_write(
+ 
+ static enum fwu_agent_error_t metadata_validate(struct fwu_metadata *p_metadata)
+ {
+-    int ret;
+-
+     FWU_LOG_MSG("%s: enter:\n\r", __func__);
+ 
+     if (!p_metadata) {
+diff --git a/platform/ext/target/arm/corstone1000/partition/flash_layout.h b/platform/ext/target/arm/corstone1000/partition/flash_layout.h
+index 73c430ce57ca..da2aabd576c4 100644
+--- a/platform/ext/target/arm/corstone1000/partition/flash_layout.h
++++ b/platform/ext/target/arm/corstone1000/partition/flash_layout.h
+@@ -165,11 +165,6 @@
+ #define FLASH_AREA_4_ID                 (FLASH_AREA_3_ID + 1)
+ #define FLASH_AREA_5_ID                 (FLASH_AREA_4_ID + 1)
+ 
+-#define BL1_FLASH_AREA_IMAGE_PRIMARY(x)     (((x) == 0) ? FLASH_AREA_0_ID : \
+-                                                          255 )
+-#define BL1_FLASH_AREA_IMAGE_SECONDARY(x)   (((x) == 0) ? FLASH_AREA_1_ID : \
+-                                                          255 )
+-
+ #define BL1_FLASH_AREA_IMAGE_SCRATCH        255
+ 
+ /* Macros needed to imgtool.py, used when creating TF-M signed image */
+diff --git a/platform/ext/target/arm/corstone1000/platform.c b/platform/ext/target/arm/corstone1000/platform.c
+index 6add0d7e1be0..c686b403ff10 100644
+--- a/platform/ext/target/arm/corstone1000/platform.c
++++ b/platform/ext/target/arm/corstone1000/platform.c
+@@ -50,8 +50,8 @@ static platform_image_source_t platform_image_source[] = {
+ int32_t plat_io_storage_init(void)
+ {
+     int rc = -1;
+-    uintptr_t flash_dev_handle = NULL;
+-    uintptr_t flash_handle = NULL;
++    uintptr_t flash_dev_handle = (uintptr_t)NULL;
++    uintptr_t flash_handle = (uintptr_t)NULL;
+ 
+     rc = register_io_dev_flash((const io_dev_connector_t **) &flash_dev_con);
+     if (rc != 0) {
+-- 
+2.39.5
+

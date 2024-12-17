@@ -13,6 +13,7 @@ EXTRA_OECMAKE += "-DCC312_LEGACY_DRIVER_API_ENABLED=OFF"
 EXTRA_OECMAKE:append:corstone1000-fvp = " -DENABLE_MULTICORE=${@bb.utils.contains('MACHINE_FEATURES', 'corstone1000_fvp_smp', 'TRUE', 'FALSE', d)}"
 EXTRA_OECMAKE:append:corstone1000-mps3 = " -DPLATFORM_PSA_ADAC_SECURE_DEBUG=${@bb.utils.contains('MACHINE_FEATURES', 'secure-debug', 'ON', 'OFF', d)}"
 EXTRA_OECMAKE:append:corstone1000-mps3 = " -DPLATFORM_PSA_ADAC_SOURCE_PATH=${S}/../tfm-psa-adac -DPLATFORM_PSA_ADAC_BUILD_PATH=${B}/tfm-psa-adac-build"
+OECMAKE_CXX_FLAGS:append = "-Wno-discarded-qualifiers -Wno-unused-function -Wno-error=int-conversion"
 
 SRC_URI += " \
             file://0001-arm-trusted-firmware-m-disable-address-warnings-into.patch \
@@ -42,6 +43,8 @@ SRC_URI:append:corstone1000 = " \
     file://0020-Platform-CS1000-Validate-both-metadata-replicas.patch \
     file://0021-platform-corstone1000-add-unique-guid-for-mps3.patch \
     file://0022-CC312-alignment-of-cc312-differences.patch \
+    file://0001-Platform-Corstone1000-Fix-several-build-warnings.patch \
+    file://0001-Fix-implicit-declaration.patch \
     "
 
 FILESEXTRAPATHS:prepend:corstone1000-mps3 := "${THISDIR}/files/corstone1000/psa-adac:"
