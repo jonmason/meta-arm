@@ -9,6 +9,7 @@ LIC_FILES_CHKSUM = "file://license.md;beginline=5;md5=9db9e3d2fb8d9300a6c3d15101
 SRC_URI_SCP_FIRMWARE ?= "gitsm://git.gitlab.arm.com/firmware/SCP-firmware.git;protocol=https"
 SRC_URI = "${SRC_URI_SCP_FIRMWARE};branch=${SRCBRANCH} \
            file://0001-OPTEE-Private-Includes.patch \
+           file://0001-ci-gcc-version-Update-tests-and-fix-compiler-warning.patch \
           "
 
 SRCBRANCH = "main"

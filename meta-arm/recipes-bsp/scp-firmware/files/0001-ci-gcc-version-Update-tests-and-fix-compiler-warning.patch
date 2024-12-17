@@ -1,0 +1,75 @@
+From ce74cb08dca8e68e42c55f89a1eeab3e6afa7aac Mon Sep 17 00:00:00 2001
+From: Emma Ballantyne <emma.ballantyne2@arm.com>
+Date: Tue, 22 Oct 2024 11:54:56 +0100
+Subject: [PATCH] ci/gcc-version: Update tests and fix compiler warnings
+
+This patch allows SCP to be built using gcc-13 without errors, fixing a
+test case where a struct was uninitialised as well as other instances of
+uninitialised variables being used throughout the code.
+
+Signed-off-by: emma ballantyne <emma.ballantyne2@arm.com>
+
+Upstream-Status: Backport [ce74cb08dca8e68e42c55f89a1eeab3e6afa7aac]
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+---
+ framework/src/fwk_io.c                                 |  2 +-
+ module/scmi_power_capping/src/mod_scmi_power_capping.c |  2 +-
+ .../test/mod_scmi_power_capping_unit_test.c            | 10 +++++-----
+ 3 files changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/framework/src/fwk_io.c b/framework/src/fwk_io.c
+index f0aed888ea18..b5b2c7604dbc 100644
+--- a/framework/src/fwk_io.c
++++ b/framework/src/fwk_io.c
+@@ -388,7 +388,7 @@ int fwk_io_vprintf(
+         return FWK_E_STATE;
+     }
+ 
+-    buffer = fwk_mm_alloc_notrap(sizeof(buffer[0]), (size_t)(length + 1));
++    buffer = fwk_mm_alloc_notrap((size_t)(length + 1), sizeof(buffer[0]));
+     if (buffer == NULL) { /* Not enough memory for the string buffer */
+         return FWK_E_NOMEM;
+     }
+diff --git a/module/scmi_power_capping/src/mod_scmi_power_capping.c b/module/scmi_power_capping/src/mod_scmi_power_capping.c
+index 1d9574dd66f8..5aecea23839e 100644
+--- a/module/scmi_power_capping/src/mod_scmi_power_capping.c
++++ b/module/scmi_power_capping/src/mod_scmi_power_capping.c
+@@ -81,7 +81,7 @@ static int scmi_power_capping_init(
+         return FWK_E_SUPPORT;
+     }
+ 
+-    struct mod_scmi_power_capping_context ctx;
++    struct mod_scmi_power_capping_context ctx = { 0 };
+ 
+     ctx.power_capping_domain_ctx_table = fwk_mm_calloc(
+         element_count, sizeof(struct mod_scmi_power_capping_domain_context));
+diff --git a/module/scmi_power_capping/test/mod_scmi_power_capping_unit_test.c b/module/scmi_power_capping/test/mod_scmi_power_capping_unit_test.c
+index c574a187e20b..2164f148e71a 100644
+--- a/module/scmi_power_capping/test/mod_scmi_power_capping_unit_test.c
++++ b/module/scmi_power_capping/test/mod_scmi_power_capping_unit_test.c
+@@ -50,17 +50,17 @@ void utest_scmi_power_capping_init_success(void)
+     struct mod_scmi_power_capping_domain_context *domain_table =
+         (struct mod_scmi_power_capping_domain_context *)__LINE__;
+ 
+-    struct mod_scmi_power_capping_context expected_ctx = { 0 };
+-
+-    expected_ctx.power_capping_domain_ctx_table = domain_table,
+-    expected_ctx.domain_count = domain_count,
+-
+     fwk_mm_calloc_ExpectAndReturn(
+         domain_count,
+         sizeof(struct mod_scmi_power_capping_domain_context),
+         domain_table);
+ 
+ #ifdef BUILD_HAS_SCMI_POWER_CAPPING_STD_COMMANDS
++    struct mod_scmi_power_capping_context expected_ctx = { 0 };
++
++    expected_ctx.power_capping_domain_ctx_table = domain_table,
++    expected_ctx.domain_count = domain_count,
++
+     pcapping_protocol_init_ExpectWithArray(&expected_ctx, 1);
+ #endif
+ 
+-- 
+2.39.5
+
