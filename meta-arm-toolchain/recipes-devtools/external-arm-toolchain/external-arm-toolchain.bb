@@ -136,6 +136,9 @@ do_install() {
 		ln -sf ../../lib/libnss_compat.so.2 ${D}${libdir}/libnss_compat.so
 		ln -sf ../../lib/libm.so.6 ${D}${libdir}/libm.so
 		ln -sf ../../lib/libc_malloc_debug.so.0 ${D}${libdir}/libc_malloc_debug.so
+		if [ -f ${D}${base_libdir}/libmvec.so.1 ]; then
+			ln -sf ../../lib/libmvec.so.1 ${D}${libdir}/libmvec.so
+		fi
 
 		# remove potential .so duplicates from base_libdir
 		# for all symlinks created above in libdir
@@ -154,6 +157,7 @@ do_install() {
 		rm -f ${D}${base_libdir}/libnss_files.so
 		rm -f ${D}${base_libdir}/libnss_compat.so
 		rm -f ${D}${base_libdir}/libm.so
+		rm -f ${D}${base_libdir}/libmvec.so
 
 		# Move these completely to ${libdir} and delete duplicates in ${base_libdir}
 		for lib in asan hwasan atomic gfortran gomp itm lsan sanitizer stdc++ tsan ubsan; do
@@ -184,6 +188,9 @@ do_install() {
 		ln -sf libnss_compat.so.2 ${D}${libdir}/libnss_compat.so
 		ln -sf libm.so.6 ${D}${libdir}/libm.so
 		ln -sf libc_malloc_debug.so.0 ${D}${libdir}/libc_malloc_debug.so
+		if [ -f ${D}${libdir}/libmvec.so.1 ]; then
+			ln -sf libmvec.so.1 ${D}${libdir}/libmvec.so
+		fi
 	fi
 
 	# Besides ld-${EAT_VER_LIBC}.so, other libs can have duplicates like lib*-${EAT_VER_LIBC}.so
