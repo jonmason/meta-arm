@@ -118,24 +118,25 @@ do_install() {
 	else
 		cp ${CP_ARGS} ${EXTERNAL_TOOLCHAIN}/${EAT_TARGET_SYS}/libc/lib/${linker_name} ${D}${base_libdir}/
 	fi
-	ln -sf ../../lib/librt.so.1 ${D}${libdir}/librt.so
-	ln -sf ../../lib/libcrypt.so.1 ${D}${libdir}/libcrypt.so
-	ln -sf ../../lib/libresolv.so.2 ${D}${libdir}/libresolv.so
-	ln -sf ../../lib/libnss_hesiod.so.2 ${D}${libdir}/libnss_hesiod.so
-	ln -sf ../../lib/libutil.so.1 ${D}${libdir}/libutil.so
-	ln -sf ../../lib/libBrokenLocale.so.1 ${D}${libdir}/libBrokenLocale.so
-	ln -sf ../../lib/libpthread.so.0 ${D}${libdir}/libpthread.so
-	ln -sf ../../lib/libthread_db.so.1 ${D}${libdir}/libthread_db.so
-	ln -sf ../../lib/libanl.so.1 ${D}${libdir}/libanl.so
-	ln -sf ../../lib/libdl.so.2 ${D}${libdir}/libdl.so
-	ln -sf ../../lib/libnss_db.so.2 ${D}${libdir}/libnss_db.so
-	ln -sf ../../lib/libnss_dns.so.2 ${D}${libdir}/libnss_dns.so
-	ln -sf ../../lib/libnss_files.so.2 ${D}${libdir}/libnss_files.so
-	ln -sf ../../lib/libnss_compat.so.2 ${D}${libdir}/libnss_compat.so
-	ln -sf ../../lib/libm.so.6 ${D}${libdir}/libm.so
-	ln -sf ../../lib/libc_malloc_debug.so.0 ${D}${libdir}/libc_malloc_debug.so
 
 	if ${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', 'false', 'true', d)}; then
+		ln -sf ../../lib/librt.so.1 ${D}${libdir}/librt.so
+		ln -sf ../../lib/libcrypt.so.1 ${D}${libdir}/libcrypt.so
+		ln -sf ../../lib/libresolv.so.2 ${D}${libdir}/libresolv.so
+		ln -sf ../../lib/libnss_hesiod.so.2 ${D}${libdir}/libnss_hesiod.so
+		ln -sf ../../lib/libutil.so.1 ${D}${libdir}/libutil.so
+		ln -sf ../../lib/libBrokenLocale.so.1 ${D}${libdir}/libBrokenLocale.so
+		ln -sf ../../lib/libpthread.so.0 ${D}${libdir}/libpthread.so
+		ln -sf ../../lib/libthread_db.so.1 ${D}${libdir}/libthread_db.so
+		ln -sf ../../lib/libanl.so.1 ${D}${libdir}/libanl.so
+		ln -sf ../../lib/libdl.so.2 ${D}${libdir}/libdl.so
+		ln -sf ../../lib/libnss_db.so.2 ${D}${libdir}/libnss_db.so
+		ln -sf ../../lib/libnss_dns.so.2 ${D}${libdir}/libnss_dns.so
+		ln -sf ../../lib/libnss_files.so.2 ${D}${libdir}/libnss_files.so
+		ln -sf ../../lib/libnss_compat.so.2 ${D}${libdir}/libnss_compat.so
+		ln -sf ../../lib/libm.so.6 ${D}${libdir}/libm.so
+		ln -sf ../../lib/libc_malloc_debug.so.0 ${D}${libdir}/libc_malloc_debug.so
+
 		# remove potential .so duplicates from base_libdir
 		# for all symlinks created above in libdir
 		rm -f ${D}${base_libdir}/librt.so
@@ -167,6 +168,22 @@ do_install() {
 
 		# Clean up duplicate libs that are both in base_libdir and libdir
 		rm -f ${D}${libdir}/libgcc*
+	else
+		ln -sf libcrypt.so.1 ${D}${libdir}/libcrypt.so
+		ln -sf libresolv.so.2 ${D}${libdir}/libresolv.so
+		ln -sf libnss_hesiod.so.2 ${D}${libdir}/libnss_hesiod.so
+		ln -sf libutil.so.1 ${D}${libdir}/libutil.so
+		ln -sf libBrokenLocale.so.1 ${D}${libdir}/libBrokenLocale.so
+		ln -sf libpthread.so.0 ${D}${libdir}/libpthread.so
+		ln -sf libthread_db.so.1 ${D}${libdir}/libthread_db.so
+		ln -sf libanl.so.1 ${D}${libdir}/libanl.so
+		ln -sf libdl.so.2 ${D}${libdir}/libdl.so
+		ln -sf libnss_db.so.2 ${D}${libdir}/libnss_db.so
+		ln -sf libnss_dns.so.2 ${D}${libdir}/libnss_dns.so
+		ln -sf libnss_files.so.2 ${D}${libdir}/libnss_files.so
+		ln -sf libnss_compat.so.2 ${D}${libdir}/libnss_compat.so
+		ln -sf libm.so.6 ${D}${libdir}/libm.so
+		ln -sf libc_malloc_debug.so.0 ${D}${libdir}/libc_malloc_debug.so
 	fi
 
 	# Besides ld-${EAT_VER_LIBC}.so, other libs can have duplicates like lib*-${EAT_VER_LIBC}.so
