@@ -135,37 +135,39 @@ do_install() {
 	ln -sf ../../lib/libm.so.6 ${D}${libdir}/libm.so
 	ln -sf ../../lib/libc_malloc_debug.so.0 ${D}${libdir}/libc_malloc_debug.so
 
-	# remove potential .so duplicates from base_libdir
-	# for all symlinks created above in libdir
-	rm -f ${D}${base_libdir}/librt.so
-	rm -f ${D}${base_libdir}/libcrypt.so
-	rm -f ${D}${base_libdir}/libresolv.so
-	rm -f ${D}${base_libdir}/libnss_hesiod.so
-	rm -f ${D}${base_libdir}/libutil.so
-	rm -f ${D}${base_libdir}/libBrokenLocale.so
-	rm -f ${D}${base_libdir}/libpthread.so
-	rm -f ${D}${base_libdir}/libthread_db.so
-	rm -f ${D}${base_libdir}/libanl.so
-	rm -f ${D}${base_libdir}/libdl.so
-	rm -f ${D}${base_libdir}/libnss_db.so
-	rm -f ${D}${base_libdir}/libnss_dns.so
-	rm -f ${D}${base_libdir}/libnss_files.so
-	rm -f ${D}${base_libdir}/libnss_compat.so
-	rm -f ${D}${base_libdir}/libm.so
+	if ${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', 'false', 'true', d)}; then
+		# remove potential .so duplicates from base_libdir
+		# for all symlinks created above in libdir
+		rm -f ${D}${base_libdir}/librt.so
+		rm -f ${D}${base_libdir}/libcrypt.so
+		rm -f ${D}${base_libdir}/libresolv.so
+		rm -f ${D}${base_libdir}/libnss_hesiod.so
+		rm -f ${D}${base_libdir}/libutil.so
+		rm -f ${D}${base_libdir}/libBrokenLocale.so
+		rm -f ${D}${base_libdir}/libpthread.so
+		rm -f ${D}${base_libdir}/libthread_db.so
+		rm -f ${D}${base_libdir}/libanl.so
+		rm -f ${D}${base_libdir}/libdl.so
+		rm -f ${D}${base_libdir}/libnss_db.so
+		rm -f ${D}${base_libdir}/libnss_dns.so
+		rm -f ${D}${base_libdir}/libnss_files.so
+		rm -f ${D}${base_libdir}/libnss_compat.so
+		rm -f ${D}${base_libdir}/libm.so
 
-	# Move these completely to ${libdir} and delete duplicates in ${base_libdir}
-	for lib in asan hwasan atomic gfortran gomp itm lsan sanitizer stdc++ tsan ubsan; do
-		if [ -e ${D}${base_libdir}/lib${lib}.spec ] ; then
-			mv ${D}${base_libdir}/lib${lib}.spec ${D}${libdir}
-		fi
-		if [ -e ${D}${base_libdir}/lib${lib}.a ] ; then
-			mv ${D}${base_libdir}/lib${lib}.a ${D}${libdir}
-		fi
-		rm -f ${D}${base_libdir}/lib${lib}*
-	done
+		# Move these completely to ${libdir} and delete duplicates in ${base_libdir}
+		for lib in asan hwasan atomic gfortran gomp itm lsan sanitizer stdc++ tsan ubsan; do
+			if [ -e ${D}${base_libdir}/lib${lib}.spec ] ; then
+				mv ${D}${base_libdir}/lib${lib}.spec ${D}${libdir}
+			fi
+			if [ -e ${D}${base_libdir}/lib${lib}.a ] ; then
+				mv ${D}${base_libdir}/lib${lib}.a ${D}${libdir}
+			fi
+			rm -f ${D}${base_libdir}/lib${lib}*
+		done
 
-	# Clean up duplicate libs that are both in base_libdir and libdir
-	rm -f ${D}${libdir}/libgcc*
+		# Clean up duplicate libs that are both in base_libdir and libdir
+		rm -f ${D}${libdir}/libgcc*
+	fi
 
 	# Besides ld-${EAT_VER_LIBC}.so, other libs can have duplicates like lib*-${EAT_VER_LIBC}.so
 	# Only remove them if both are regular files and are identical
