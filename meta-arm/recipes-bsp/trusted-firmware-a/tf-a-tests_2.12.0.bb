@@ -11,7 +11,7 @@ SRC_URI_TRUSTED_FIRMWARE_A_TESTS ?= "git://git.trustedfirmware.org/TF-A/tf-a-tes
 SRC_URI = "${SRC_URI_TRUSTED_FIRMWARE_A_TESTS};branch=${SRCBRANCH} \
           "
 SRCBRANCH = "master"
-SRCREV = "fd053b75cde9c2aa1a5b979a2b544890510d4f52"
+SRCREV = "6a113621a9efdc143e9270b1789046cd7d9cdfb1"
 
 DEPENDS += "optee-os"
 
