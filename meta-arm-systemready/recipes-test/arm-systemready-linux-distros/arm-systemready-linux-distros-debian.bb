@@ -105,6 +105,8 @@ SRC_URI = "\
     "
 SRC_URI[debian_iso_image.sha256sum] = "8891fe48bb5a58ae54176eaa6440059bf852044d6b9ae77219e78f9ef8d65149"
 
+TEST_SUITES = "${@oe.utils.vartrue("DISTRO_UNATTENDED_INST_TESTS", "arm_systemready_debian_unattended", "", d)}"
+
 ISO_LABEL = "${@oe.utils.vartrue("DISTRO_UNATTENDED_INST_TESTS", "debian-12.8.0-arm64-1", "", d)}"
 BOOT_CATALOG = "${@oe.utils.vartrue("DISTRO_UNATTENDED_INST_TESTS", "boot.catalog", "", d)}"
 BOOT_IMAGE = "${@oe.utils.vartrue("DISTRO_UNATTENDED_INST_TESTS", "EFI/boot/bootaa64.efi", "", d)}"
