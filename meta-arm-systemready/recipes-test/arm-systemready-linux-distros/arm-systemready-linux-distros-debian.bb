@@ -100,10 +100,12 @@ file://${COMMON_LICENSE_DIR}/PD;md5=b3597d12946881e13cb3b548d1173851 \
 
 PV = "12.8.0"
 SRC_URI = "\
-    https://cdimage.debian.org/debian-cd/12.8.0/arm64/iso-dvd/debian-12.8.0-arm64-DVD-1.iso;unpack=0;downloadfilename=${ISO_IMAGE_NAME}.iso;name=debian_iso_image \
+    https://cdimage.debian.org/mirror/cdimage/archive/12.8.0/arm64/iso-dvd/debian-12.8.0-arm64-DVD-1.iso;unpack=0;downloadfilename=${ISO_IMAGE_NAME}.iso;name=debian_iso_image \
     file://unattended-boot-conf/Debian/preseed.cfg \
     "
 SRC_URI[debian_iso_image.sha256sum] = "8891fe48bb5a58ae54176eaa6440059bf852044d6b9ae77219e78f9ef8d65149"
+
+TEST_SUITES = "${@oe.utils.vartrue("DISTRO_UNATTENDED_INST_TESTS", "arm_systemready_debian_unattended", "", d)}"
 
 ISO_LABEL = "${@oe.utils.vartrue("DISTRO_UNATTENDED_INST_TESTS", "debian-12.8.0-arm64-1", "", d)}"
 BOOT_CATALOG = "${@oe.utils.vartrue("DISTRO_UNATTENDED_INST_TESTS", "boot.catalog", "", d)}"
