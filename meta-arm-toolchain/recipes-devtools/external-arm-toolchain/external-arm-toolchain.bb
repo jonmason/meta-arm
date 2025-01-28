@@ -11,12 +11,10 @@ LIC_FILES_CHKSUM = "\
 
 PROVIDES += "\
 	linux-libc-headers \
-	virtual/${TARGET_PREFIX}gcc \
-	virtual/${TARGET_PREFIX}g++ \
-	virtual/${TARGET_PREFIX}gcc-initial \
-	virtual/${TARGET_PREFIX}binutils \
-	virtual/${TARGET_PREFIX}libc-for-gcc \
-	virtual/${TARGET_PREFIX}compilerlibs \
+	virtual/cross-cc \
+	virtual/cross-c++ \
+	virtual/binutils \
+	virtual/compilerlibs \
 	virtual/libc \
 	virtual/libintl \
 	virtual/libiconv \
