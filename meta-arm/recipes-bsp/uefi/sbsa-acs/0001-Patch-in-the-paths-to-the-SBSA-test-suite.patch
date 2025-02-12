@@ -10,7 +10,7 @@ Signed-off-by: Ross Burton <ross.burton@arm.com>
  1 file changed, 3 insertions(+)
 
 diff --git a/ShellPkg/ShellPkg.dsc b/ShellPkg/ShellPkg.dsc
-index 557b0ec0f3d6..85b3f4fc65d0 100644
+index 7e985f8280a7..ca7a716fadc7 100644
 --- a/ShellPkg/ShellPkg.dsc
 +++ b/ShellPkg/ShellPkg.dsc
 @@ -23,6 +23,8 @@
@@ -22,7 +22,7 @@ index 557b0ec0f3d6..85b3f4fc65d0 100644
    UefiApplicationEntryPoint|MdePkg/Library/UefiApplicationEntryPoint/UefiApplicationEntryPoint.inf
    UefiDriverEntryPoint|MdePkg/Library/UefiDriverEntryPoint/UefiDriverEntryPoint.inf
    UefiBootServicesTableLib|MdePkg/Library/UefiBootServicesTableLib/UefiBootServicesTableLib.inf
-@@ -88,6 +90,7 @@
+@@ -79,6 +81,7 @@
    # Build all the libraries when building this package.
    # This helps developers test changes and how they affect the package.
    #
