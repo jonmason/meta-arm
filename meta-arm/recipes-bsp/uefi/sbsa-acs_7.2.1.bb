@@ -1,4 +1,4 @@
-require recipes-bsp/uefi/edk2-firmware_202408.bb
+require recipes-bsp/uefi/edk2-firmware_202411.bb
 PROVIDES:remove = "virtual/bootloader"
 
 LICENSE += "& Apache-2.0"
@@ -10,8 +10,9 @@ SRC_URI += "git://github.com/ARM-software/sbsa-acs;destsuffix=edk2/ShellPkg/Appl
             file://0002-Enforce-using-good-old-BFD-linker.patch \
             "
 
-SRCREV_acs = "be169f0008d86341e1e48cb70d524bd1518c3acc"
-SRCREV_libc = "4667a82f0d873221f8b25ea701ce57a29270e4cb"
+SRCREV_acs = "b9ebc6c869d4dd79a07e18a2d294bb3782f986ef"
+# Tag v3.6.8.1
+SRCREV_libc = "caea801aac338aa60f85a7c10148ca0b4440fff3"
 
 UPSTREAM_CHECK_URI = "https://github.com/ARM-software/sbsa-acs/releases"
 
