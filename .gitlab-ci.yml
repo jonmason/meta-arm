@@ -250,9 +250,6 @@ pending-updates:
     # This configuration has all of the layers we need enabled
     - kas shell --update --force-checkout ci/qemuarm64.yml:ci/meta-openembedded.yml:ci/meta-secure-core.yml:lockfile.yml --command \
       "$CI_PROJECT_DIR/scripts/machine-summary.py -t report -o $CI_PROJECT_DIR/update-report $($CI_PROJECT_DIR/ci/listmachines.py meta-arm meta-arm-bsp)"
-  # Do this on x86 whilst the compilers are x86-only
-  tags:
-    - x86_64
 
 qemuarm64-secureboot:
   extends: .build
