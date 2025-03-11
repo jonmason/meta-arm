@@ -30,6 +30,8 @@ stages:
 .setup:
   tags:
     - $DEFAULT_TAG
+  variables:
+    KUBERNETES_CPU_REQUEST: $CPU_REQUEST
   stage: build
   interruptible: true
   variables:
@@ -52,8 +54,6 @@ stages:
 # Generalised fragment to do a Kas build
 .build:
   extends: .setup
-  variables:
-    KUBERNETES_CPU_REQUEST: $CPU_REQUEST
   rules:
     # Don't run MR pipelines
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
