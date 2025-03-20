@@ -30,11 +30,10 @@ stages:
 .setup:
   tags:
     - $DEFAULT_TAG
-  variables:
-    KUBERNETES_CPU_REQUEST: $CPU_REQUEST
   stage: build
   interruptible: true
   variables:
+    KUBERNETES_CPU_REQUEST: $CPU_REQUEST
     KAS_WORK_DIR: $CI_PROJECT_DIR/work
     KAS_BUILD_DIR: $KAS_WORK_DIR/build
     KAS_REPO_REF_DIR: $CACHE_DIR/repos
