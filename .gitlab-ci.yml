@@ -10,7 +10,7 @@ variables:
   # The default machine tag for the build jobs
   DEFAULT_TAG: ""
   # The machine tag for the ACS test jobs
-  ACS_TAG: ""
+  ACS_TAG: "$DEFAULT_TAG"
   # The directory to use as the persistent cache (the root for DL_DIR, SSTATE_DIR, etc)
   CACHE_DIR: $CI_BUILDS_DIR/persist
   # The container mirror to use
