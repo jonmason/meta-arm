@@ -96,7 +96,13 @@ update-repos:
     exit_codes: 128
   script:
     - |
-      flock --verbose --timeout 60 $KAS_REPO_REF_DIR ./ci/update-repos
+      exit_code=0
+      if [ -n "$KAS_REPO_REF_DIR" ]; then
+        flock --verbose --timeout 60 $KAS_REPO_REF_DIR --command ./ci/update-repos || exit_code=$?
+        # Exit now if that failed, unless the status was 128 (fetch failed)
+        test $exit_code != 0 -a $exit_code != 128 && exit 1
+      fi
+
       # Only generate if doesn't already exist, to allow feature branches to drop one in.
       if test -f lockfile.yml; then
         echo Using existing lockfile.yml
@@ -104,6 +110,7 @@ update-repos:
         # Be sure that this is the complete list of layers being fetched
         kas dump --lock --update ci/qemuarm64.yml:ci/meta-openembedded.yml:ci/clang.yml:ci/meta-virtualization.yml | tee lockfile.yml
       fi
+      exit $exit_code
   artifacts:
     name: "lockfile"
     paths:
