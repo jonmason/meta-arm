@@ -36,7 +36,8 @@ stages:
     KUBERNETES_CPU_REQUEST: $CPU_REQUEST
     KAS_WORK_DIR: $CI_PROJECT_DIR/work
     KAS_BUILD_DIR: $KAS_WORK_DIR/build
-    KAS_REPO_REF_DIR: $CACHE_DIR/repos
+    # Set this in the environment to enable local repository caches
+    KAS_REPO_REF_DIR: ""
     SSTATE_DIR: $CACHE_DIR/sstate
     DL_DIR: $CACHE_DIR/downloads
     BB_LOGCONFIG: $CI_PROJECT_DIR/ci/logging.yml
