@@ -5,3 +5,7 @@ SRCREV_edk2-platforms ?= "2d66a9e048285af8ba4bfe4bdaab37a8e98288b3"
 TOOLCHAIN:aarch64 = "gcc"
 
 require recipes-bsp/uefi/edk2-firmware.inc
+
+SRC_URI += "\
+    file://edk2_fix_epoch.patch \
+"
