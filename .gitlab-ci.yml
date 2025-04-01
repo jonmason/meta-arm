@@ -45,10 +45,6 @@ stages:
     IMAGE_DIR: $KAS_BUILD_DIR/tmp/deploy/images
     TOOLCHAIN_LINK_DIR: $KAS_BUILD_DIR/toolchains
   before_script:
-    - echo KAS_WORK_DIR = $KAS_WORK_DIR
-    - echo SSTATE_DIR = $SSTATE_DIR
-    - echo DL_DIR = $DL_DIR
-    - echo KAS_PREMIRRORS = $KAS_PREMIRRORS
     - rm -rf $KAS_WORK_DIR
     - mkdir --verbose --parents $KAS_WORK_DIR $KAS_REPO_REF_DIR $SSTATE_DIR $DL_DIR $TOOLCHAIN_DIR $TOOLCHAIN_LINK_DIR
 
@@ -99,6 +95,11 @@ update-repos:
   script:
     - |
       exit_code=0
+
+      # Dump the environment for reference
+      printenv
+
+      # Update the reference repositories if needed
       if [ -n "$KAS_REPO_REF_DIR" ]; then
         flock --verbose --timeout 60 $KAS_REPO_REF_DIR --command ./ci/update-repos || exit_code=$?
         # Exit now if that failed, unless the status was 128 (fetch failed)
