@@ -114,6 +114,7 @@ update-repos:
       exit $exit_code
   artifacts:
     name: "lockfile"
+    when: always
     paths:
       - lockfile.yml
 
