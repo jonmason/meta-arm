@@ -18,14 +18,16 @@ S = "${WORKDIR}/git"
 
 EXTRA_OECMAKE = " \
     -DBUILD_SHARED_LIBS=ON \
+    -DCFG_USE_PKGCONFIG=ON \
 "
+
+EXTRA_OECMAKE += " -DCFG_ENABLE_SYSTEMD=On -DSYSTEMD_UNIT_DIR=${systemd_system_unitdir}/"
+EXTRA_OECMAKE += " -DCFG_ENABLE_UDEV=On -DUDEV_UDEV_DIR=${nonarch_base_libdir}/udev/rules.d/"
+EXTRA_OECMAKE += " -DCFG_TEE_GROUP=tee -DCFG_TEEPRIV_GROUP=teepriv"
+
 EXTRA_OECMAKE:append:toolchain-clang = " -DCFG_WERROR=0"
 
 do_install:append() {
-    # installed by default
-    if ! ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
-        rm -rf ${D}${libdir}/systemd
-    fi
     if ${@bb.utils.contains('DISTRO_FEATURES', 'sysvinit', 'true', 'false', d)}; then
         install -D -p -m0755 ${UNPACKDIR}/tee-supplicant.sh ${D}${sysconfdir}/init.d/tee-supplicant
         sed -i -e s:@sysconfdir@:${sysconfdir}:g \
@@ -40,6 +42,8 @@ SYSTEMD_SERVICE:${PN} = "tee-supplicant@.service"
 INITSCRIPT_PACKAGES = "${PN}"
 INITSCRIPT_NAME:${PN} = "tee-supplicant"
 INITSCRIPT_PARAMS:${PN} = "start 10 1 2 3 4 5 . stop 90 0 6 ."
+
+FILES:${PN} += "${nonarch_base_libdir}/udev/rules.d/"
 
 # Users and groups:
 # tee group to access /dev/tee*
