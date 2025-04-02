@@ -21,9 +21,12 @@ EXTRA_OECMAKE = " \
     -DCFG_USE_PKGCONFIG=ON \
 "
 
+# libts uses /dev/tee devices too. Add a common variable to allow configuring the same group.
+TEE_GROUP_NAME ?= "tee"
+
 EXTRA_OECMAKE += " -DCFG_ENABLE_SYSTEMD=On -DSYSTEMD_UNIT_DIR=${systemd_system_unitdir}/"
 EXTRA_OECMAKE += " -DCFG_ENABLE_UDEV=On -DUDEV_UDEV_DIR=${nonarch_base_libdir}/udev/rules.d/"
-EXTRA_OECMAKE += " -DCFG_TEE_GROUP=tee -DCFG_TEEPRIV_GROUP=teepriv"
+EXTRA_OECMAKE += " -DCFG_TEE_GROUP=${TEE_GROUP_NAME} -DCFG_TEEPRIV_GROUP=teepriv"
 
 EXTRA_OECMAKE:append:toolchain-clang = " -DCFG_WERROR=0"
 
@@ -48,9 +51,9 @@ INITSCRIPT_PARAMS:${PN} = "start 10 1 2 3 4 5 . stop 90 0 6 ."
 FILES:${PN} += "${nonarch_base_libdir}/udev/rules.d/"
 
 # Users and groups:
-# tee group to access /dev/tee*
+# TEE_GROUP_NAME group to access /dev/tee*
 # teepriv group to acess /dev/teepriv*, only tee-supplicant
 # teesuppl user and group teesuppl to run tee-supplicant
 USERADD_PACKAGES = "${PN}"
-GROUPADD_PARAM:${PN} = "--system tee; --system teepriv; --system teesuppl"
+GROUPADD_PARAM:${PN} = "--system ${TEE_GROUP_NAME}; --system teepriv; --system teesuppl"
 USERADD_PARAM:${PN} = "--system -g teesuppl --groups teepriv --home-dir ${localstatedir}/lib/tee -M --shell /sbin/nologin teesuppl;"
