@@ -32,6 +32,8 @@ do_install:append() {
         install -D -p -m0755 ${UNPACKDIR}/tee-supplicant.sh ${D}${sysconfdir}/init.d/tee-supplicant
         sed -i -e s:@sysconfdir@:${sysconfdir}:g \
                -e s:@sbindir@:${sbindir}:g \
+               -e s:@supluser@:teesuppl:g \
+               -e s:@suplgroup@:teesuppl:g \
                   ${D}${sysconfdir}/init.d/tee-supplicant
     fi
     install -o teesuppl -g teesuppl -m 0700 -d ${D}${localstatedir}/lib/tee
