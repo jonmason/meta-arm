@@ -9,9 +9,7 @@ inherit systemd update-rc.d cmake useradd
 
 SRC_URI = " \
     git://github.com/OP-TEE/optee_client.git;branch=master;protocol=https \
-    file://tee-supplicant@.service \
     file://tee-supplicant.sh \
-    file://optee-udev.rules \
 "
 
 UPSTREAM_CHECK_GITTAGREGEX = "^(?P<pver>\d+(\.\d+)+)$"
@@ -20,20 +18,21 @@ S = "${WORKDIR}/git"
 
 EXTRA_OECMAKE = " \
     -DBUILD_SHARED_LIBS=ON \
-    -DCFG_TEE_FS_PARENT_PATH='${localstatedir}/lib/tee' \
 "
 EXTRA_OECMAKE:append:toolchain-clang = " -DCFG_WERROR=0"
 
 do_install:append() {
-    install -D -p -m0644 ${UNPACKDIR}/tee-supplicant@.service ${D}${systemd_system_unitdir}/tee-supplicant@.service
-    install -D -p -m0755 ${UNPACKDIR}/tee-supplicant.sh ${D}${sysconfdir}/init.d/tee-supplicant
-    install -d ${D}${sysconfdir}/udev/rules.d
-    install -m 0644 ${UNPACKDIR}/optee-udev.rules ${D}${sysconfdir}/udev/rules.d/optee.rules
-
-    sed -i -e s:@sysconfdir@:${sysconfdir}:g \
-           -e s:@sbindir@:${sbindir}:g \
-              ${D}${systemd_system_unitdir}/tee-supplicant@.service \
-              ${D}${sysconfdir}/init.d/tee-supplicant
+    # installed by default
+    if ! ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
+        rm -rf ${D}${libdir}/systemd
+    fi
+    if ${@bb.utils.contains('DISTRO_FEATURES', 'sysvinit', 'true', 'false', d)}; then
+        install -D -p -m0755 ${UNPACKDIR}/tee-supplicant.sh ${D}${sysconfdir}/init.d/tee-supplicant
+        sed -i -e s:@sysconfdir@:${sysconfdir}:g \
+               -e s:@sbindir@:${sbindir}:g \
+                  ${D}${sysconfdir}/init.d/tee-supplicant
+    fi
+    install -o teesuppl -g teesuppl -m 0700 -d ${D}${localstatedir}/lib/tee
 }
 
 SYSTEMD_SERVICE:${PN} = "tee-supplicant@.service"
@@ -42,5 +41,10 @@ INITSCRIPT_PACKAGES = "${PN}"
 INITSCRIPT_NAME:${PN} = "tee-supplicant"
 INITSCRIPT_PARAMS:${PN} = "start 10 1 2 3 4 5 . stop 90 0 6 ."
 
+# Users and groups:
+# tee group to access /dev/tee*
+# teepriv group to acess /dev/teepriv*, only tee-supplicant
+# teesuppl user and group teesuppl to run tee-supplicant
 USERADD_PACKAGES = "${PN}"
-GROUPADD_PARAM:${PN} = "--system teeclnt"
+GROUPADD_PARAM:${PN} = "--system tee; --system teepriv; --system teesuppl"
+USERADD_PARAM:${PN} = "--system -g teesuppl --groups teepriv --home-dir ${localstatedir}/lib/tee -M --shell /sbin/nologin teesuppl;"
