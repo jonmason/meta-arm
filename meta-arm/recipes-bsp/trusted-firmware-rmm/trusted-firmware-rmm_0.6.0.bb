@@ -31,7 +31,7 @@ EXTRA_OECMAKE += "-DCMAKE_INCLUDE_PATH=${STAGING_INCDIR}"
 
 # When compiling for Aarch64 on non-native hosts, the RMM code base gets its
 # toolchain from CROSS_COMPILE rather than CMAKE_TOOLCHAIN_FILE
-export CROSS_COMPILE="${TARGET_PREFIX}"
+export CROSS_COMPILE = "${TARGET_PREFIX}"
 
 do_install() {
     install -d -m 755 ${D}/firmware

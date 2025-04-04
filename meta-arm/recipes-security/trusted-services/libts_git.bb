@@ -10,7 +10,7 @@ SRC_URI += "file://0001-Remove-TEE-driver-external-component.patch \
 # If optee-client is not included, take care of udev and related configuration.
 require ${@bb.utils.contains('IMAGE_INSTALL', 'optee-client', '', 'libts-udev.inc', d)}
 
-OECMAKE_SOURCEPATH="${S}/deployments/libts/${TS_ENV}"
+OECMAKE_SOURCEPATH = "${S}/deployments/libts/${TS_ENV}"
 
 DEPENDS           += "arm-ffa-user"
 
