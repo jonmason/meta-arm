@@ -23,8 +23,9 @@ EXTRA_OEMAKE:append:qemuarm64-secureboot = "${@bb.utils.contains('MACHINE_FEATUR
 # The SPD SPMC component should run at the S-EL1 execution state.
 TFA_SPMD_SPM_AT_SEL2:qemuarm64-secureboot = "0"
 
-TFA_UBOOT:qemuarm64-secureboot = "1"
-TFA_UBOOT:qemuarm-secureboot = "1"
+TFA_DEBUG:qemuarm64-secureboot = "1"
+TFA_DEBUG:qemuarm-secureboot = "1"
+
 TFA_BUILD_TARGET:aarch64:qemuall = "all fip"
 TFA_BUILD_TARGET:arm:qemuall = "all fip"
 
@@ -50,10 +51,11 @@ EXTRA_OEMAKE:append:arm:qemuall = " \
     BL32_RAM_LOCATION=tdram \
     AARCH32_SP=optee \
     "
+
 # When using OP-TEE SPMC specify the SPMC manifest file.
 EXTRA_OEMAKE:append:qemuarm64-secureboot = "${@bb.utils.contains('MACHINE_FEATURES', 'arm-ffa', \
     'QEMU_TOS_FW_CONFIG_DTS=${S}/plat/qemu/fdts/optee_spmc_manifest.dts', '', d)}"
-     
+
 do_compile:append:qemuarm64-secureboot() {
     # Create a secure flash image for booting AArch64 Qemu. See:
     # https://git.trustedfirmware.org/TF-A/trusted-firmware-a.git/tree/docs/plat/qemu.rst

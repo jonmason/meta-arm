@@ -276,6 +276,8 @@ qemuarm64-secureboot:
         TESTING: testimage
       - KERNEL: linux-yocto-dev
         TESTING: testimage
+      - FIRMWARE: [u-boot, edk2]
+        TESTING: testimage
 
 qemuarm64:
   extends: .build
@@ -303,6 +305,8 @@ qemuarm-secureboot:
       - DISTRO: [poky, poky-altcfg]
         TESTING: testimage
       - KERNEL: linux-yocto-dev
+        TESTING: testimage
+      - FIRMWARE: [u-boot, edk2]
         TESTING: testimage
 
 qemuarm:
