@@ -12,7 +12,7 @@ SRC_URI = "${SRC_URI_SCP_FIRMWARE};branch=${SRCBRANCH} \
           "
 
 SRCBRANCH = "main"
-SRCREV  = "25681b34bdc838b7231e0056e3ef5164e8005382"
+SRCREV  = "190e938c2da3631b4834a90448516423099c79f7"
 
 PROVIDES += "virtual/control-processor-firmware"
 
