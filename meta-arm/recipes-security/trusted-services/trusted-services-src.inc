@@ -17,6 +17,7 @@ LIC_FILES_CHKSUM = "file://${S}/license.rst;md5=ea160bac7f690a069c608516b17997f4
 
 S = "${WORKDIR}/git/trusted-services"
 PV ?= "0.0+git"
+UPSTREAM_CHECK_COMMITS = "1"
 
 # DTC, tag "v1.6.1"
 SRC_URI += "git://github.com/dgibson/dtc;name=dtc;protocol=https;branch=main;destsuffix=git/dtc"
