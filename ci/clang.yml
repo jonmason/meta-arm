@@ -10,3 +10,5 @@ repos:
 local_conf_header:
   toolchain: |
     TOOLCHAIN = "clang"
+    PREFERRED_PROVIDER_llvm-native = "clang-native"
+    PROVIDES:pn-clang-native = "llvm-native"
