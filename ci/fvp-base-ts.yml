@@ -21,7 +21,7 @@ local_conf_header:
     IMAGE_INSTALL:append = " packagegroup-ts-tests-psa"
     CORE_IMAGE_EXTRA_INSTALL += "optee-test"
     # Set the TS environment
-    TS_ENV="sp"
+    TS_ENV = "sp"
     # Enable and configure semihosting
     FVP_CONFIG[cluster0.cpu0.semihosting-cwd] = "${DEPLOY_DIR_IMAGE}"
     FVP_CONFIG[cluster0.cpu1.semihosting-cwd] = "${DEPLOY_DIR_IMAGE}"
