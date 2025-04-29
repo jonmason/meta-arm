@@ -27,30 +27,30 @@ SRC_URI  = "${SRC_URI_TRUSTED_FIRMWARE_M};branch=${SRCBRANCH_tfm};name=tfm;dests
             "
 
 # The required dependencies are documented in tf-m/config/config_base.cmake
-# TF-Mv2.1.1
-SRCBRANCH_tfm ?= "release/2.1.x"
-SRCREV_tfm = "02bf279913439a07082dd581df033f370a8fbb92"
-# TF-Mv2.1.1
-SRCBRANCH_tfm-extras ?= "release/2.1.x"
-SRCREV_tfm-extras = "95add8abb15879f48f1069a0952dd9abdffbc1f8"
-# TF-Mv2.1.1
-SRCBRANCH_tfm-tests ?= "release/2.1.x"
-SRCREV_tfm-tests = "6f642014a8c255e163ae0bc4d21e327de694d6a2"
-# CMSIS v6.0.0+ (intermediate SHA), CMSIS_TAG from lib/ext/cmsis/CMakeLists.txt
+# TF-Mv2.2.0
+SRCBRANCH_tfm ?= "release/2.2.x"
+SRCREV_tfm = "dd2b7de197742beeebd12197c14d9d3cb1b9ec68"
+# TF-Mv2.2.0
+SRCBRANCH_tfm-extras ?= "release/2.2.x"
+SRCREV_tfm-extras = "88a4bd39284bb497dd8b362f20cd2b7f704ac390"
+# TF-Mv2.2.0
+SRCBRANCH_tfm-tests ?= "release/2.2.x"
+SRCREV_tfm-tests = "e0a433c67c37138cd9dce23657ae82c5cbdcf51f"
+# CMSIS v6.1.0, CMSIS_TAG from lib/ext/cmsis/CMakeLists.txt
 SRCBRANCH_cmsis ?= "main"
-SRCREV_cmsis = "d0c460c1697d210b49a4b90998195831c0cd325c"
-# mbedtls-3.6.2, value from MBEDCRYPTO_VERSION
+SRCREV_cmsis = "b0bbb0423b278ca632cfe1474eb227961d835fd2"
+# mbedtls-3.6.3, value from MBEDCRYPTO_VERSION
 SRCBRANCH_mbedtls ?= "mbedtls-3.6"
-SRCREV_mbedtls = "107ea89daaefb9867ea9121002fbbdf926780e98"
-# mcuboot v2.1.0, value from MCUBOOT_VERSION
+SRCREV_mbedtls = "22098d41c6620ce07cf8a0134d37302355e1e5ef"
+# mcuboot v2.2.0-rc1+ (intermediate SHA), value from MCUBOOT_VERSION
 SRCBRANCH_mcuboot ?= "main"
-SRCREV_mcuboot = "9c99326b9756dbcc35b524636d99ed5f3e6cb29b"
+SRCREV_mcuboot = "6071ceb1d0d955b6ff4745499a0ff3ac7d79f24b"
 # QCBOR v1.2, value from QCBOR_VERSION in lib/ext/qcbor/CMakeLists.txt
 SRCBRANCH_qcbor ?= "master"
-SRCREV_qcbor = "b0e7033268e88c9f27146fa9a1415ef4c19ebaff"
+SRCREV_qcbor = "92d3f89030baff4af7be8396c563e6c8ef263622"
 # PSA-ADAC (intermediate SHA), value from PLATFORM_PSA_ADAC_VERSION
 SRCBRANCH_tfm-psa-adac = "master"
-SRCREV_tfm-psa-adac = "5f5490cebe66ae997f316f83c3fbf1f97deef625"
+SRCREV_tfm-psa-adac = "819a254af6fb5eefdcef194ec85d2c7627451351"
 
 SRCREV_FORMAT = "tfm"
 
