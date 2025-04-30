@@ -22,7 +22,6 @@ target:
   # Architecture Envelope Models (AEM) FVPs
   - fvp-base-a-aem
   - nativesdk-fvp-base-a-aem
-
   # Arm Lumex CSS (Total Compute) FVPs
   # These are x86 only... :(
   - nativesdk-fvp-tc3
@@ -40,6 +39,7 @@ target:
   - nativesdk-fvp-rdn2
 
   # IoT FVPs
+  - nativesdk-fvp-corstone500
   - fvp-corstone1000
   - nativesdk-fvp-corstone1000
   - fvp-corstone1000-a320
