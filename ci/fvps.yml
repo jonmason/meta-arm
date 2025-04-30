@@ -23,6 +23,7 @@ target:
   - fvp-v3-r1
   # Nativesdk to test x86-64
   - nativesdk-fvp-base-a-aem
+  - nativesdk-fvp-corstone500
   - nativesdk-fvp-corstone1000
   - nativesdk-fvp-rd1-ae
   - nativesdk-fvp-v3-r1

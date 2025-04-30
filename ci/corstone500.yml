@@ -1,0 +1,15 @@
+header:
+  version: 14
+  includes:
+    - ci/base.yml
+    - ci/fvp.yml
+    - ci/poky-tiny.yml
+
+local_conf_header:
+  sshpregen: |
+    # Allow the use of the pregen keys as this is CI so safe
+    COMPATIBLE_MACHINE:pn-ssh-pregen-hostkeys:corstone500 = "corstone500"
+  fvp-config: |
+    IMAGE_FEATURES:remove = " ssh-server-dropbear"
+
+machine: corstone500
