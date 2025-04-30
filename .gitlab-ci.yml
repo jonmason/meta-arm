@@ -158,6 +158,14 @@ check-layers:
     matrix:
       - LAYER: [meta-arm, meta-arm-bsp, meta-arm-toolchain]
 
+corstone500:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+  tags:
+    - x86_64
+
 corstone1000-fvp:
   extends: .build
   parallel:
