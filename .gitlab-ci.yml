@@ -162,8 +162,6 @@ corstone500:
   parallel:
     matrix:
       - TESTING: testimage
-  tags:
-    - x86_64
 
 corstone1000-fvp:
   extends: .build
