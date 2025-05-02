@@ -18,6 +18,7 @@ local_conf_header:
 target:
   # Target packages to test aarch64
   - fvp-base-a-aem
+  - fvp-corstone500
   - fvp-corstone1000
   - fvp-rd1-ae
   - fvp-v3-r1
