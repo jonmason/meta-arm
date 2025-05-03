@@ -34,8 +34,11 @@ target:
   - nativesdk-fvp-sgi575
 
   # IoT FVPs
-  - fvp-corstone1000
   - nativesdk-fvp-corstone1000
+  - fvp-corstone700
+  - nativesdk-fvp-corstone700
+  - fvp-corstone500
+  - nativesdk-fvp-corstone500
   
   # Morello FVPs
   # TBD
