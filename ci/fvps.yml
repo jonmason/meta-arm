@@ -43,3 +43,6 @@ target:
   # Total Compute FVPs
   # These are x86 only... :(
   - nativesdk-fvp-tc3
+  - nativesdk-fvp-tc2
+  - nativesdk-fvp-tc1
+  - nativesdk-fvp-tc0
