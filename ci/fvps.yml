@@ -37,10 +37,16 @@ target:
   # Infrastructure FVPs
   - fvp-rdv3-r1
   - nativesdk-fvp-rdv3-r1
+  - fvp-rdv3
+  - nativesdk-fvp-rdv3
   - fvp-rdv2
   - nativesdk-fvp-rdv2
   - fvp-rdn2
   - nativesdk-fvp-rdn2
+  # These are x86 only... :(
+  - nativesdk-fvp-rdv1
+  - nativesdk-fvp-rdn1-edge
+  - nativesdk-fvp-rde1-edge
 
   # IoT FVPs
   - fvp-corstone1000
