@@ -26,6 +26,9 @@ target:
   # Arm Lumex CSS (Total Compute) FVPs
   # These are x86 only... :(
   - nativesdk-fvp-tc3
+  - nativesdk-fvp-tc2
+  - nativesdk-fvp-tc1
+  - nativesdk-fvp-tc0
 
   # Automotive FVPs
   - fvp-rd1-ae
