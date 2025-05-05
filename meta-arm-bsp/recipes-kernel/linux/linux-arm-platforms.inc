@@ -84,6 +84,13 @@ COMPATIBLE_MACHINE:musca-b1 = "(^$)"
 COMPATIBLE_MACHINE:musca-s1 = "(^$)"
 
 #
+# RDV1 KMACHINE
+#
+COMPATIBLE_MACHINE:rdv1 = "rdv1"
+KBUILD_DEFCONFIG:rdv1 = "defconfig"
+KCONFIG_MODE:rdv1 = "--alldefconfig"
+
+#
 # SGI575 KMACHINE
 #
 COMPATIBLE_MACHINE:sgi575 = "sgi575"
