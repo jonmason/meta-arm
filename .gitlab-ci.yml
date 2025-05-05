@@ -336,6 +336,15 @@ qemuarmv5:
       - DISTRO: poky-tiny
         TESTING: testimage
 
+rdv1:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+  # FVP binary is x86-only
+  tags:
+    - x86_64
+
 sbsa-ref:
   extends: .build
   parallel:
