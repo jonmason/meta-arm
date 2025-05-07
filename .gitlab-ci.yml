@@ -351,6 +351,9 @@ rdv1:
 rdv2:
   extends: .build
 
+rdv3:
+  extends: .build
+
 sbsa-ref:
   extends: .build
   parallel:
