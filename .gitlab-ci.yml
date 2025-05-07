@@ -338,6 +338,12 @@ rdv1:
   tags:
     - x86_64
 
+rdv2:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
 sbsa-ref:
   extends: .build
   parallel:
