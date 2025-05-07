@@ -351,6 +351,12 @@ rdv2:
     matrix:
       - TESTING: testimage
 
+rdv3:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
 sbsa-ref:
   extends: .build
   parallel:
