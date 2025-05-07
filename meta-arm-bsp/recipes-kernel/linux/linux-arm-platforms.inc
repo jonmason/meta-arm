@@ -123,6 +123,13 @@ KBUILD_DEFCONFIG:rdv2 = "defconfig"
 KCONFIG_MODE:rdv2 = "--alldefconfig"
 
 #
+# RDV3 KMACHINE
+#
+COMPATIBLE_MACHINE:rdv3 = "rdv3"
+KBUILD_DEFCONFIG:rdv3 = "defconfig"
+KCONFIG_MODE:rdv3 = "--alldefconfig"
+
+#
 # SGI575 KMACHINE
 #
 COMPATIBLE_MACHINE:sgi575 = "sgi575"
