@@ -102,6 +102,13 @@ COMPATIBLE_MACHINE:musca-b1 = "(^$)"
 COMPATIBLE_MACHINE:musca-s1 = "(^$)"
 
 #
+# RDN2 KMACHINE
+#
+COMPATIBLE_MACHINE:rdn2 = "rdn2"
+KBUILD_DEFCONFIG:rdn2 = "defconfig"
+KCONFIG_MODE:rdn2 = "--alldefconfig"
+
+#
 # RDV1 KMACHINE
 #
 COMPATIBLE_MACHINE:rdv1 = "rdv1"

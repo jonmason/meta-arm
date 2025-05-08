@@ -1,0 +1,25 @@
+# RD N2 specific TFA support
+
+COMPATIBLE_MACHINE = "rdn2"
+TFA_PLATFORM       = "rdn2"
+TFA_BUILD_TARGET   = "all fip"
+TFA_INSTALL_TARGET = "bl1 fip"
+TFA_DEBUG          = "1"
+TFA_MBEDTLS        = "1"
+TFA_UBOOT          = "0"
+TFA_UEFI           = "1"
+
+EXTRA_OEMAKE += "TRUSTED_BOARD_BOOT=1 GENERATE_COT=1 ARM_ROTPK_LOCATION=devel_rsa \
+                     ROT_KEY=plat/arm/board/common/rotpk/arm_rotprivk_rsa.pem"
+
+# If GENERATE_COT is set, then tf-a will try to use local poetry install
+# to run the python cot-dt2c command.  Disable the local poetry and use
+# the provided cot-dt2c.
+EXTRA_OEMAKE += "POETRY=''"
+DEPENDS += "cot-dt2c-native"
+
+SRC_URI_TRUSTED_FIRMWARE_A = "git://gitlab.arm.com/infra-solutions/reference-design/platsw/trusted-firmware-a.git;protocol=https"
+SRCBRANCH = "refinfra"
+# SHA not in any branches.  so use RD-INFRA-2025.07.03
+#SRCREV_tfa = "e1b365678946de9112a787fbbcb6adb616c4b676"
+SRCREV_tfa = "a4b376b128bb5b91771002f7808566f53c8d9f3a"

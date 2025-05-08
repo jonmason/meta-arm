@@ -1,0 +1,1 @@
+arch_timer: Failed to initialize memory-mapped timer.
