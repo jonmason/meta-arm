@@ -13,6 +13,8 @@ PV = "0+git"
 S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
 
+CFLAGS += "-Wno-maybe-uninitialized"
+
 # Map from our _OS strings to the GN's platform values.
 def gn_platform(variable, d):
     os = d.getVar(variable)
