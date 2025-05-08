@@ -336,6 +336,9 @@ qemuarmv5:
       - DISTRO: poky-tiny
         TESTING: testimage
 
+rdn2:
+  extends: .build
+
 rdv1:
   extends: .build
   parallel:
