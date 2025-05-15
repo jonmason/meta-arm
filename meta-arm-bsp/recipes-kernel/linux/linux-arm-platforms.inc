@@ -119,13 +119,6 @@ KBUILD_DEFCONFIG:sgi575 = "defconfig"
 KCONFIG_MODE:sgi575 = "--alldefconfig"
 
 #
-# SGI575 KMACHINE
-#
-COMPATIBLE_MACHINE:sgi575 = "sgi575"
-KBUILD_DEFCONFIG:sgi575 = "defconfig"
-KCONFIG_MODE:sgi575 = "--alldefconfig"
-
-#
 # sbsa-ref KMACHINE
 #
 COMPATIBLE_MACHINE:sbsa-ref = "sbsa-ref"

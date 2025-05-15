@@ -1,4 +1,4 @@
-# SGI575 specific TFA support
+# RD N2 specific TFA support
 
 COMPATIBLE_MACHINE = "rdn2"
 TFA_PLATFORM       = "rdn2"

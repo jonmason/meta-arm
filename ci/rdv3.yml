@@ -5,7 +5,7 @@ header:
   includes:
     - ci/base.yml
     - ci/fvp.yml
-    - ci/poky-tiny.yml
+    - ci/meta-openembedded.yml
 
 local_conf_header:
   sshpregen: |
