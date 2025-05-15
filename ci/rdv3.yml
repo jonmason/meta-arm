@@ -5,7 +5,7 @@ header:
   includes:
     - ci/base.yml
     - ci/fvp.yml
-    - ci/poky-tiny.yml
+    - ci/meta-openembedded.yml
 
 local_conf_header:
   sshpregen: |
@@ -13,3 +13,6 @@ local_conf_header:
     COMPATIBLE_MACHINE:pn-ssh-pregen-hostkeys:rdv3 = "rdv3"
 
 machine: rdv3
+
+target:
+  - core-image-full-cmdline

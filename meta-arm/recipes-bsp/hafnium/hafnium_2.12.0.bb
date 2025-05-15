@@ -1,12 +1,11 @@
 SUMMARY = "Hafnium"
 DESCRIPTION = "A reference Secure Partition Manager (SPM) for systems that implement the Armv8.4-A Secure-EL2 extension"
-DEPENDS = "gn-native ninja-native bison-native bc-native dtc-native openssl-native"
+DEPENDS = "gn-native ninja-native bison-native bc-native dtc-native openssl-native python3-fdt-native clang-native"
 
 LICENSE = "BSD-3-Clause & GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=782b40c14bad5294672c500501edc103"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
-
 
 CLANGNATIVE = ""
 CLANGNATIVE:runtime-llvm = "clang-native"
@@ -15,7 +14,6 @@ inherit deploy python3native pkgconfig ${CLANGNATIVE}
 
 SRC_URI = "gitsm://git.trustedfirmware.org/hafnium/hafnium.git;protocol=https;branch=master \
            file://0001-arm-hafnium-fix-kernel-tool-linking.patch  \
-           file://0001-Use-pkg-config-native-to-find-the-libssl-headers.patch;patchdir=third_party/linux \
           "
 SRCREV = "2cf2ca7c4b81ab18e9cd363d9a5c8288e2a94fda"
 S = "${WORKDIR}/git"
@@ -36,7 +34,7 @@ HAFNIUM_PLATFORM:qemuarm64 = "qemu_aarch64"
 HAFNIUM_INSTALL_TARGET ?= "hafnium"
 
 # set project to build
-EXTRA_OEMAKE += "PROJECT=${HAFNIUM_PROJECT}"
+EXTRA_OEMAKE += "PROJECT=${HAFNIUM_PROJECT} PLATFORM=${HAFNIUM_PLATFORM}"
 
 EXTRA_OEMAKE += "OUT_DIR=${B}"
 
@@ -69,11 +67,5 @@ do_deploy() {
     cp -rf ${D}/firmware/* ${DEPLOYDIR}/
 }
 addtask deploy after do_install
-
-python() {
-    # https://developer.trustedfirmware.org/T898
-    if d.getVar("BUILD_ARCH") != "x86_64":
-        raise bb.parse.SkipRecipe("Cannot be built on non-x86-64 hosts")
-}
 
 EXCLUDE_FROM_WORLD = "1"
