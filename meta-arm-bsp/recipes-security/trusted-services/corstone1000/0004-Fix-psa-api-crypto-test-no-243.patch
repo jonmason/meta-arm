@@ -1,7 +1,7 @@
-From 372d6e9e5827486841ffe15a1b050569fff762b6 Mon Sep 17 00:00:00 2001
+From c74d0d62fede8ef0207a909fb4157dbbb4830dc9 Mon Sep 17 00:00:00 2001
 From: Bence Balogh <bence.balogh@arm.com>
 Date: Wed, 10 Apr 2024 09:17:39 +0200
-Subject: [PATCH 5/8] Fix psa-api-crypto-test no 243
+Subject: [PATCH 04/12] Fix psa-api-crypto-test no 243
 
 Enable MbedTLS ECP DP SECP521R1 ECC algorithm to pass
 PSA-API tests's `psa-api-crypto-test` number 243 as it is
@@ -15,12 +15,12 @@ Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/platform/providers/arm/corstone1000/platform.cmake b/platform/providers/arm/corstone1000/platform.cmake
-index d944acf..e811c25 100644
+index d39b79033..0c7c51b6e 100644
 --- a/platform/providers/arm/corstone1000/platform.cmake
 +++ b/platform/providers/arm/corstone1000/platform.cmake
 @@ -14,6 +14,7 @@ target_compile_definitions(${TGT} PRIVATE
  	SMM_VARIABLE_INDEX_STORAGE_UID=0x787
- 	PLAT_RSS_COMMS_PAYLOAD_MAX_SIZE=0x2080
+ 	PLAT_RSE_COMMS_PAYLOAD_MAX_SIZE=0x2080
  	COMMS_MHU_MSG_SIZE=0x3500
 +	MBEDTLS_ECP_DP_SECP521R1_ENABLED
  )

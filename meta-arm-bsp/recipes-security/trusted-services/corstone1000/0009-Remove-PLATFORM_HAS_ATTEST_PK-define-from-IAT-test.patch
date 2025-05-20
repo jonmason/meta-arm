@@ -1,7 +1,7 @@
-From a94bcd8af80c42adf99a7114174afea4000e6647 Mon Sep 17 00:00:00 2001
+From cee283641224d2a6660cde0ad83e59bdddbc2f37 Mon Sep 17 00:00:00 2001
 From: Bence Balogh <bence.balogh@arm.com>
 Date: Tue, 14 May 2024 15:58:15 +0200
-Subject: [PATCH] Remove PLATFORM_HAS_ATTEST_PK define from IAT test
+Subject: [PATCH 09/12] Remove PLATFORM_HAS_ATTEST_PK define from IAT test
 
 Signed-off-by: Bence Balogh <bence.balogh@arm.com>
 Upstream-Status: Inappropriate [Should remove the flag only for CS1000]
@@ -10,7 +10,7 @@ Upstream-Status: Inappropriate [Should remove the flag only for CS1000]
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/deployments/psa-api-test/initial_attestation/iat-api-test.cmake b/deployments/psa-api-test/initial_attestation/iat-api-test.cmake
-index 4d1d2b1a9..eb4db223c 100644
+index 807faf67a..c1b2ba6ed 100644
 --- a/deployments/psa-api-test/initial_attestation/iat-api-test.cmake
 +++ b/deployments/psa-api-test/initial_attestation/iat-api-test.cmake
 @@ -15,7 +15,7 @@ set(TS_ARCH_TEST_SUITE INITIAL_ATTESTATION CACHE STRING "Arch test suite")

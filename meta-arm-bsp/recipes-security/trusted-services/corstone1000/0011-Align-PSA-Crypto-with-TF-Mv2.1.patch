@@ -1,7 +1,7 @@
-From 3bb579379bcfe32ae0b81f721b370afcb58e9693 Mon Sep 17 00:00:00 2001
-From: Bence Balogh <bence.balogh@arm.com>
-Date: Wed, 10 Jul 2024 11:07:09 +0200
-Subject: [PATCH] Align PSA Crypto with TF-Mv2.1
+From 111c15d7bf79e023bfb8bdcf631dfa95503f5f4e Mon Sep 17 00:00:00 2001
+From: Gyorgy Szing <gyorgy.szing@arm.com>
+Date: Fri, 18 Oct 2024 11:40:29 +0000
+Subject: [PATCH 11/12] Align PSA Crypto with TF-Mv2.1
 
 Update following files using the TF-Mv2.1 release (0c4c99b) commit.
 
@@ -23,20 +23,19 @@ psa_key_attributes_s struct in TF-M. (psa_crypto.c)
 Signed-off-by: Bence Balogh <bence.balogh@arm.com>
 Upstream-Status: Submitted [https://review.trustedfirmware.org/c/TS/trusted-services/+/31179/1]
 ---
- .../service/common/include/psa/crypto_sid.h   | 168 +++++-------------
+ .../service/common/include/psa/crypto_sid.h   | 166 +++++-------------
  .../backend/psa_ipc/crypto_ipc_backend.h      |   9 +-
  .../crypto/include/psa/crypto_client_struct.h |   4 +-
- 3 files changed, 55 insertions(+), 126 deletions(-)
+ 3 files changed, 54 insertions(+), 125 deletions(-)
 
 diff --git a/components/service/common/include/psa/crypto_sid.h b/components/service/common/include/psa/crypto_sid.h
-index 5b05f46d7..fe057ce40 100644
+index 5b05f46d7..e1fbb15e2 100644
 --- a/components/service/common/include/psa/crypto_sid.h
 +++ b/components/service/common/include/psa/crypto_sid.h
-@@ -18,22 +18,24 @@ extern "C" {
-  *        nine groups (Random, Key management, Hash, MAC, Cipher, AEAD,
+@@ -19,21 +19,23 @@ extern "C" {
   *        Asym sign, Asym encrypt, Key derivation).
   */
--enum tfm_crypto_group_id {
+ enum tfm_crypto_group_id {
 -    TFM_CRYPTO_GROUP_ID_RANDOM = 0x0,
 -    TFM_CRYPTO_GROUP_ID_KEY_MANAGEMENT,
 -    TFM_CRYPTO_GROUP_ID_HASH,
@@ -46,7 +45,6 @@ index 5b05f46d7..fe057ce40 100644
 -    TFM_CRYPTO_GROUP_ID_ASYM_SIGN,
 -    TFM_CRYPTO_GROUP_ID_ASYM_ENCRYPT,
 -    TFM_CRYPTO_GROUP_ID_KEY_DERIVATION,
-+enum tfm_crypto_group_id_t {
 +    TFM_CRYPTO_GROUP_ID_RANDOM          = UINT8_C(1),
 +    TFM_CRYPTO_GROUP_ID_KEY_MANAGEMENT  = UINT8_C(2),
 +    TFM_CRYPTO_GROUP_ID_HASH            = UINT8_C(3),
@@ -74,14 +72,14 @@ index 5b05f46d7..fe057ce40 100644
      X(TFM_CRYPTO_AEAD_ABORT)
  
 -#define ASYMMETRIC_SIGN_FUNCS                      \
-+#define ASYM_SIGN_FUNCS                            \
++#define ASYM_SIGN_FUNCS                      \
      X(TFM_CRYPTO_ASYMMETRIC_SIGN_MESSAGE)          \
      X(TFM_CRYPTO_ASYMMETRIC_VERIFY_MESSAGE)        \
      X(TFM_CRYPTO_ASYMMETRIC_SIGN_HASH)             \
      X(TFM_CRYPTO_ASYMMETRIC_VERIFY_HASH)
  
 -#define AYSMMETRIC_ENCRYPT_FUNCS                   \
-+#define ASYM_ENCRYPT_FUNCS                         \
++#define ASYM_ENCRYPT_FUNCS                   \
      X(TFM_CRYPTO_ASYMMETRIC_ENCRYPT)               \
      X(TFM_CRYPTO_ASYMMETRIC_DECRYPT)
  
@@ -250,7 +248,7 @@ index 5b05f46d7..fe057ce40 100644
  #ifdef __cplusplus
  }
 diff --git a/components/service/crypto/backend/psa_ipc/crypto_ipc_backend.h b/components/service/crypto/backend/psa_ipc/crypto_ipc_backend.h
-index 27ac59837..d7e733b89 100644
+index f9bbf84d6..27fe3496a 100644
 --- a/components/service/crypto/backend/psa_ipc/crypto_ipc_backend.h
 +++ b/components/service/crypto/backend/psa_ipc/crypto_ipc_backend.h
 @@ -30,10 +30,9 @@ struct psa_ipc_crypto_aead_pack_input {
@@ -269,7 +267,7 @@ index 27ac59837..d7e733b89 100644
                                *   See tfm_crypto_func_sid for detail
                                */
      uint16_t step;           /*!< Key derivation step */
--}__packed;
+-} __attribute__((__packed__));
 +    union {
 +        size_t capacity;     /*!< Key derivation capacity */
 +        uint64_t value;      /*!< Key derivation integer for update*/
