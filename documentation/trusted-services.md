@@ -24,6 +24,7 @@ features for each [Secure Partition][^2] you would like to include:
 | se-proxy          | ts-se-proxy     |
 | smm-gateway       | ts-smm-gateway  |
 | spm-test[1-4]     | optee-spmc-test |
+| Logging           | ts-logging      |
 
 Other steps depend on your machine/platform definition:
 

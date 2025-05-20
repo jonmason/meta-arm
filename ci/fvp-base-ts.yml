@@ -14,7 +14,7 @@ local_conf_header:
     # Include all Secure Partitions into the image
     MACHINE_FEATURES:append = " arm-ffa ts-crypto ts-storage ts-its"
     MACHINE_FEATURES:append = " ts-attestation ts-smm-gateway optee-spmc-test"
-    MACHINE_FEATURES:append = " ts-block-storage ts-fwu"
+    MACHINE_FEATURES:append = " ts-block-storage ts-fwu ts-logging"
     MACHINE_FEATURES:append = " arm-branch-protection"
     SMMGW_AUTH_VAR = "1"
     # Include TS demo/test tools into image
