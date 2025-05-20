@@ -13,9 +13,11 @@ SRC_URI:append:corstone1000  = " \
     file://0009-Remove-PLATFORM_HAS_ATTEST_PK-define-from-IAT-test.patch \
     file://0010-Make-RSS-and-MHU-sizes-compile-time-definitions-user.patch \
     file://0011-Align-PSA-Crypto-with-TF-Mv2.1.patch \
+    file://0012-Revert-Make-variable-index-usage-robust-with-redunda.patch \
+    file://0013-Revert-Load-and-store-UEFI-variable-index-in-chunks.patch \
+    file://0014-Revert-Make-constraints-of-NV-UEFI-variables-persist.patch \
     file://0015-se-proxy-protobuf-change.patch \
     "
-
 # The patches above introduce errors with GCC 14.1, silence them for now
 CFLAGS:append:corstone1000 = " -Wno-int-conversion -Wno-implicit-function-declaration"
 
