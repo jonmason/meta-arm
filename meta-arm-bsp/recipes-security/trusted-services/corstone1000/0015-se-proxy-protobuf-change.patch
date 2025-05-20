@@ -1,6 +1,6 @@
-From e5a4487e2b757d0063148691c7d06ae1c7e15b9a Mon Sep 17 00:00:00 2001
+From dd9a51bde0608989e01de5369eaa0eef2bab7c43 Mon Sep 17 00:00:00 2001
 From: Emekcan Aras <emekcan.aras@arm.com>
-Date: Tue, 18 Jun 2024 11:52:43 +0100
+Date: Wed, 22 Jan 2025 00:54:30 +0000
 Subject: [PATCH] protobuf fix
 
 Upstream-Status: Pending (not yet submitted to upstream)
@@ -10,7 +10,7 @@ Signed-off-by: Emekcan Aras <emekcan.aras@arm.com>
  1 file changed, 24 insertions(+), 1 deletion(-)
 
 diff --git a/deployments/se-proxy/env/commonsp/se_proxy_sp.c b/deployments/se-proxy/env/commonsp/se_proxy_sp.c
-index a0eb03b6f..e2774c135 100644
+index 88e4cf17e..7da489ca8 100644
 --- a/deployments/se-proxy/env/commonsp/se_proxy_sp.c
 +++ b/deployments/se-proxy/env/commonsp/se_proxy_sp.c
 @@ -13,6 +13,7 @@
@@ -25,12 +25,12 @@ index a0eb03b6f..e2774c135 100644
  		goto fatal_error;
  	}
  
--	rpc_status = ts_rpc_endpoint_sp_init(&rpc_endpoint, 5, 16);
-+	rpc_status = ts_rpc_endpoint_sp_init(&rpc_endpoint, 6, 16);
+-	rpc_status = ts_rpc_endpoint_sp_init(&rpc_endpoint, 6, 16);
++	rpc_status = ts_rpc_endpoint_sp_init(&rpc_endpoint, 7, 16);
  	if (rpc_status != RPC_SUCCESS) {
  		EMSG("Failed to initialize RPC endpoint: %d", rpc_status);
  		goto fatal_error;
-@@ -129,6 +130,28 @@ void __noreturn sp_main(union ffa_boot_info *boot_info)
+@@ -118,6 +119,28 @@ void __noreturn sp_main(union ffa_boot_info *boot_info)
  		goto fatal_error;
  	}
  
@@ -56,10 +56,9 @@ index a0eb03b6f..e2774c135 100644
 +		goto fatal_error;
 +	}
 +
-	while (1) {
-		ts_rpc_endpoint_sp_receive(&rpc_endpoint, &req_msg, &resp_msg);
-
+ 	/* End of boot phase */
+ 	result = sp_msg_wait(&req_msg);
+ 	if (result != SP_RESULT_OK) {
 -- 
-2.25.1
-
+2.43.0
 

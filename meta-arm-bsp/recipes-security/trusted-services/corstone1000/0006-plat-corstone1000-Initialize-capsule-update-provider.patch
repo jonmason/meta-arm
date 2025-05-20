@@ -1,7 +1,7 @@
-From 925a07093fa571ee1d2f2e59affcd2c52f1d5b54 Mon Sep 17 00:00:00 2001
+From 8a6542231613d5f1b60bc209a7ad8f8cf72bc95a Mon Sep 17 00:00:00 2001
 From: Bence Balogh <bence.balogh@arm.com>
 Date: Wed, 29 Nov 2023 15:40:21 +0100
-Subject: [PATCH 7/8] plat: corstone1000: Initialize capsule update provider
+Subject: [PATCH 06/12] plat: corstone1000: Initialize capsule update provider
 
 Initializes the capsule update service provider in se-proxy-sp.c deployment
 for corstone1000.
@@ -15,15 +15,15 @@ Upstream-Status: Inappropriate [Design is to revisted]
  3 files changed, 42 insertions(+), 1 deletion(-)
 
 diff --git a/deployments/se-proxy/env/commonsp/se_proxy_sp.c b/deployments/se-proxy/env/commonsp/se_proxy_sp.c
-index 155e94863..a0eb03b6f 100644
+index 485d76493..88e4cf17e 100644
 --- a/deployments/se-proxy/env/commonsp/se_proxy_sp.c
 +++ b/deployments/se-proxy/env/commonsp/se_proxy_sp.c
 @@ -39,7 +39,7 @@ void __noreturn sp_main(union ffa_boot_info *boot_info)
  		goto fatal_error;
  	}
  
--	rpc_status = ts_rpc_endpoint_sp_init(&rpc_endpoint, 4, 16);
-+	rpc_status = ts_rpc_endpoint_sp_init(&rpc_endpoint, 5, 16);
+-	rpc_status = ts_rpc_endpoint_sp_init(&rpc_endpoint, 5, 16);
++	rpc_status = ts_rpc_endpoint_sp_init(&rpc_endpoint, 6, 16);
  	if (rpc_status != RPC_SUCCESS) {
  		EMSG("Failed to initialize RPC endpoint: %d", rpc_status);
  		goto fatal_error;
@@ -43,24 +43,24 @@ index 155e94863..a0eb03b6f 100644
 +		goto fatal_error;
 +	}
 +
- 	/* End of boot phase */
- 	result = sp_msg_wait(&req_msg);
- 	if (result != SP_RESULT_OK) {
+ 	rpc_iface = fwu_proxy_create();
+ 	if (!rpc_iface) {
+ 		EMSG("Failed to create FWU proxy");
 diff --git a/deployments/se-proxy/infra/corstone1000/service_proxy_factory.c b/deployments/se-proxy/infra/corstone1000/service_proxy_factory.c
-index b3b93cfd6..fc179b3c1 100644
+index 759983b46..185a6cd97 100644
 --- a/deployments/se-proxy/infra/corstone1000/service_proxy_factory.c
 +++ b/deployments/se-proxy/infra/corstone1000/service_proxy_factory.c
 @@ -11,6 +11,7 @@
- #include <rpc/rss_comms/caller/sp/rss_comms_caller.h>
+ #include <rpc/rse_comms/caller/sp/rse_comms_caller.h>
  #include <service/attestation/provider/attest_provider.h>
  #include <service/attestation/provider/serializer/packed-c/packedc_attest_provider_serializer.h>
 +#include <service/capsule_update/provider/capsule_update_provider.h>
  #include <service/crypto/factory/crypto_provider_factory.h>
- #include <service/secure_storage/frontend/secure_storage_provider/secure_storage_provider.h>
- #include "service/secure_storage/frontend/secure_storage_provider/secure_storage_uuid.h"
-@@ -129,3 +130,30 @@ struct rpc_service_interface *its_proxy_create(void)
+ #include "service/fwu/psa_fwu_m/agent/psa_fwu_m_update_agent.h"
+ #include "service/fwu/provider/fwu_provider.h"
+@@ -141,3 +142,30 @@ struct rpc_service_interface *fwu_proxy_create(void)
  
- 	return secure_storage_provider_init(&its_provider, backend, &its_uuid);
+ 	return fwu_provider_init(&fwu_provider, agent);
  }
 +
 +struct rpc_service_interface *capsule_update_proxy_create(void)
@@ -70,14 +70,14 @@ index b3b93cfd6..fc179b3c1 100644
 +	rpc_status_t rpc_status = RPC_ERROR_INTERNAL;
 +
 +	/* Static objects for proxy instance */
-+	static struct rpc_caller_interface rss_comms = { 0 };
++	static struct rpc_caller_interface rse_comms = { 0 };
 +	static struct rpc_caller_session rpc_session = { 0 };
 +
-+	rpc_status = rss_comms_caller_init(&rss_comms);
++	rpc_status = rse_comms_caller_init(&rse_comms);
 +	if (rpc_status != RPC_SUCCESS)
 +		return NULL;
 +
-+	rpc_status = rpc_caller_session_open(&rpc_session, &rss_comms, &dummy_uuid, 0, 0);
++	rpc_status = rpc_caller_session_open(&rpc_session, &rse_comms, &dummy_uuid, 0, 0);
 +	if (rpc_status != RPC_SUCCESS)
 +		return NULL;
 +
@@ -90,13 +90,13 @@ index b3b93cfd6..fc179b3c1 100644
 +	return capsule_update_provider_init(&capsule_update_provider);
 +}
 diff --git a/deployments/se-proxy/infra/service_proxy_factory.h b/deployments/se-proxy/infra/service_proxy_factory.h
-index caaea79ed..b981754b7 100644
+index be83319b8..88b377063 100644
 --- a/deployments/se-proxy/infra/service_proxy_factory.h
 +++ b/deployments/se-proxy/infra/service_proxy_factory.h
-@@ -17,6 +17,7 @@ struct rpc_service_interface *attest_proxy_create(void);
- struct rpc_service_interface *crypto_proxy_create(void);
+@@ -18,6 +18,7 @@ struct rpc_service_interface *crypto_proxy_create(void);
  struct rpc_service_interface *ps_proxy_create(void);
  struct rpc_service_interface *its_proxy_create(void);
+ struct rpc_service_interface *fwu_proxy_create(void);
 +struct rpc_service_interface *capsule_update_proxy_create(void);
  
  #ifdef __cplusplus

@@ -1,7 +1,7 @@
-From c2edcd8bd3d8817765f280708eae894d6cd8d974 Mon Sep 17 00:00:00 2001
+From 81d1dbe3f04195c0ad26790e127d61149e4f5b78 Mon Sep 17 00:00:00 2001
 From: Emekcan Aras <emekcan.aras@arm.com>
 Date: Sun, 18 Jun 2023 14:38:42 +0100
-Subject: [PATCH 6/8] plat: corstone1000: Use the stateless platform service
+Subject: [PATCH 05/12] plat: corstone1000: Use the stateless platform service
  calls Calls to psa_connect is not needed and psa_call can be called directly
  with a pre defined handle.
 
@@ -67,7 +67,7 @@ index bfeb7301a..12c552dae 100644
  		default:
  			EMSG("%s unsupported opcode", __func__);
 diff --git a/components/service/capsule_update/provider/corstone1000_fmp_service.c b/components/service/capsule_update/provider/corstone1000_fmp_service.c
-index 56ce38579..bebdf859f 100644
+index 2222251a7..2ed0f33c5 100644
 --- a/components/service/capsule_update/provider/corstone1000_fmp_service.c
 +++ b/components/service/capsule_update/provider/corstone1000_fmp_service.c
 @@ -238,8 +238,7 @@ static psa_status_t unpack_image_info(void *buffer, uint32_t size)
