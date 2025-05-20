@@ -41,3 +41,5 @@ OECMAKE_CXX_FLAGS:remove = "-D_FORTIFY_SOURCE=2"
 # will add a proper tooclhain option.
 OECMAKE_ARGS:remove = "-DCMAKE_TOOLCHAIN_FILE:FILEPATH=${WORKDIR}/toolchain.cmake"
 
+# Set BranchProtection to standard
+EXTRA_OECMAKE += "${@bb.utils.contains('MACHINE_FEATURES', 'arm-branch-protection', ' -DBRANCH_PROTECTION=1', '', d)}"
