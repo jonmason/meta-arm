@@ -54,5 +54,5 @@ EXTRA_OECMAKE += "${@get_ts_toolchain_option(d)}"
 
 # Paths to pre-built dependencies required by some TS SPs/tools
 EXTRA_OECMAKE += "-Dlibts_ROOT=${STAGING_DIR_HOST}${TS_INSTALL}/lib/cmake/libts/ \
-                  -DNEWLIB_INSTALL_DIR=${STAGING_DIR_HOST}/usr/opteesp/newlib \
+
                  "
