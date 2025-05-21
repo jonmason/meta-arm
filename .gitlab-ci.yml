@@ -76,7 +76,8 @@ stages:
 
   artifacts:
     name: "logs"
-    when: always
+    when: on_failure
+    expire_in: 1 week
     paths:
       - $KAS_BUILD_DIR/tmp*/work*/**/temp/log.do_*.*
       - $KAS_BUILD_DIR/tmp*/work*/**/testimage/*
