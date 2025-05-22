@@ -7,7 +7,7 @@ distro: poky
 
 defaults:
   repos:
-    branch: walnascar
+    branch: master
 
 repos:
   meta-arm:
