@@ -69,6 +69,6 @@ ARM_SYSTEMREADY_ACS_CONSOLE ?= "default"
 IMAGE_ROOTFS_EXTRA_ARGS += "--extra-space ${@${IMAGE_ROOTFS_EXTRA_SPACE}}K"
 
 # Enable Authenticated variable support in SmmGW
-SMMGW_AUTH_VAR="1"
+SMMGW_AUTH_VAR = "1"
 # Use MbedTLS build into SmmGW for authentication related crypto operations.
-SMMGW_INTERNAL_CRYPTO="1"
+SMMGW_INTERNAL_CRYPTO = "1"
