@@ -5,9 +5,9 @@ TS_ENV = "arm-linux"
 
 require trusted-services.inc
 
-OECMAKE_SOURCEPATH="${S}/deployments/libpsats/${TS_ENV}"
+OECMAKE_SOURCEPATH = "${S}/deployments/libpsats/${TS_ENV}"
 
-DEPENDS           += "libts"
+DEPENDS += "libts"
 
 do_install:append () {
     # Move the dynamic libraries into the standard place.
