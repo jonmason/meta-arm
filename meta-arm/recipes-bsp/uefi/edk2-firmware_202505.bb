@@ -6,4 +6,6 @@ SRCREV_edk2-platforms ?= "564f6509e89f45b25d97db2772ca9b3bec8b3ed5"
 # FIXME - clang is having issues with antlr
 TOOLCHAIN:aarch64 = "gcc"
 
-SRC_URI += " file://edk2_fix_epoch.patch"
+SRC_URI += " file://edk2_fix_epoch.patch \
+             file://0001-OvmfPkg-GenericQemuLoadImageLib-fix-cmdline-initrd-h.patch \
+           "
