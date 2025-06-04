@@ -1,6 +1,6 @@
 require recipes-bsp/trusted-firmware-a/trusted-firmware-a.inc
 
-# TF-A master
+# TF-A v2.13.0
 SRCREV_tfa = "c17351450c8a513ca3f30f936e26a71db693a145"
 SRCBRANCH = "master"
 
@@ -13,7 +13,3 @@ SRC_URI_MBEDTLS = "git://github.com/ARMmbed/mbedtls.git;name=mbedtls;protocol=ht
 SRCREV_mbedtls = "22098d41c6620ce07cf8a0134d37302355e1e5ef"
 
 LIC_FILES_CHKSUM_MBEDTLS = "file://mbedtls/LICENSE;md5=379d5819937a6c2f1ef1630d341e026d"
-
-# Not a release recipe, try our hardest to not pull this in implicitly
-DEFAULT_PREFERENCE = "-1"
-UPSTREAM_CHECK_COMMITS = "1"
