@@ -9,8 +9,8 @@ SRC_URI_TRUSTED_FIRMWARE_A ?= "git://git.trustedfirmware.org/TF-A/trusted-firmwa
 SRC_URI = "${SRC_URI_TRUSTED_FIRMWARE_A};destsuffix=fiptool-${PV};branch=${SRCBRANCH}"
 LIC_FILES_CHKSUM = "file://docs/license.rst;md5=b2c740efedc159745b9b31f88ff03dde"
 
-# Use fiptool from TF-A v2.10.9
-SRCREV = "7e63213601425c7a6d83e47dc936b264deb9df2b"
+# Use fiptool from TF-A v2.10.17
+SRCREV = "4b1f6671b0cbddad7577fea5fcd7027f5533dc71"
 SRCBRANCH = "lts-v2.10"
 
 DEPENDS += "openssl-native"
