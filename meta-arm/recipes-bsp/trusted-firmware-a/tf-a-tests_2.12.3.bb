@@ -8,10 +8,9 @@ inherit deploy
 COMPATIBLE_MACHINE ?= "invalid"
 
 SRC_URI_TRUSTED_FIRMWARE_A_TESTS ?= "git://git.trustedfirmware.org/TF-A/tf-a-tests.git;protocol=https"
-SRC_URI = "${SRC_URI_TRUSTED_FIRMWARE_A_TESTS};branch=${SRCBRANCH} \
-          "
-SRCBRANCH = "master"
-SRCREV = "6a113621a9efdc143e9270b1789046cd7d9cdfb1"
+SRC_URI = "${SRC_URI_TRUSTED_FIRMWARE_A_TESTS};branch=${SRCBRANCH}"
+SRCBRANCH = "lts-v2.12"
+SRCREV = "3650d9cdfaa8eda20eba4b0c366c7c213a356557"
 
 EXTRA_OEMAKE += "USE_NVM=0"
 EXTRA_OEMAKE += "SHELL_COLOR=1"
