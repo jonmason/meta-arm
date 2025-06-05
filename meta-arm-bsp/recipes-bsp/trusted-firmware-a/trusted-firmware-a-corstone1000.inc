@@ -5,11 +5,6 @@ COMPATIBLE_MACHINE = "(corstone1000)"
 FILESEXTRAPATHS:prepend := "${THISDIR}/files/corstone1000:"
 SRC_URI:append = " \
 	file://0001-Fix-FF-A-version-in-SPMC-manifest.patch \
-	file://0002-fix-corstone1000-pass-spsr-value-explicitly.patch \
-	file://0003-fix-corstone1000-remove-unused-NS_SHARED_RAM-region.patch \
-	file://0004-fix-corstone1000-clean-the-cache-and-disable-interru.patch \
-	file://0005-feat-corstone1000-Add-multicore-support-for-FVP-plat.patch \
-	file://0006-feat-corstone1000-include-platform-header-file.patch \
        "
 
 TFA_DEBUG = "1"
