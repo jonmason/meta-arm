@@ -56,3 +56,9 @@ EXTRA_OEMAKE:append = " \
                         FVP_USE_GIC_DRIVER=FVP_GICV2 \
                         "
 EXTRA_OEMAKE:append:corstone1000-fvp = "${@bb.utils.contains('MACHINE_FEATURES', 'corstone1000_fvp_smp', ' ENABLE_MULTICORE=1', '', d)}"
+
+# If GENERATE_COT is set, then TF-A will try to use local poetry install
+# to run the python cot-dt2c command.  Disable the local poetry and use
+# the provided cot-dt2c.
+EXTRA_OEMAKE += "POETRY=''"
+DEPENDS += "cot-dt2c-native"
