@@ -8,7 +8,9 @@ inherit deploy
 COMPATIBLE_MACHINE ?= "invalid"
 
 SRC_URI_TRUSTED_FIRMWARE_A_TESTS ?= "git://git.trustedfirmware.org/TF-A/tf-a-tests.git;protocol=https"
-SRC_URI = "${SRC_URI_TRUSTED_FIRMWARE_A_TESTS};branch=${SRCBRANCH}"
+SRC_URI = "${SRC_URI_TRUSTED_FIRMWARE_A_TESTS};branch=${SRCBRANCH} \
+          file://0001-fix-realm-make-PCIe-tests-default-for-testing.patch \
+          "
 SRCBRANCH = "lts-v2.12"
 SRCREV = "3650d9cdfaa8eda20eba4b0c366c7c213a356557"
 
