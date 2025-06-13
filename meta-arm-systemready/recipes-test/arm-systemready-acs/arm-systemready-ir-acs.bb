@@ -45,16 +45,15 @@ COMPATIBLE_MACHINE = "(fvp-.+|.+-fvp)"
 
 TEST_SUITES = "arm_systemready_ir_acs"
 
-PV = "2.0.0"
-PV_DATE = "23.03"
-FULL_PV = "v${PV_DATE}_${PV}"
-ARM_SYSTEMREADY_IR_ACS_BRANCH ?= "legacy_systemready"
+PV = "3.0.1"
+PV_DATE = "25.04"
+FULL_PV = "v${PV_DATE}_DT_${PV}"
 IMAGE_FILENAME = "ir-acs-live-image-generic-arm64-${PV}.wic"
 SRC_URI = " \
-    https://github.com/ARM-software/arm-systemready/raw/${ARM_SYSTEMREADY_IR_ACS_BRANCH}/IR/prebuilt_images/${FULL_PV}/ir-acs-live-image-generic-arm64.wic.xz;name=acs-img;downloadfilename=${IMAGE_FILENAME}.xz \
+    https://github.com/ARM-software/arm-systemready/releases/download/${FULL_PV}/systemready-dt_acs_live_image.wic.xz;name=acs-img;downloadfilename=${IMAGE_FILENAME}.xz \
     git://git.gitlab.arm.com/systemready/systemready-ir-template.git;protocol=https;nobranch=1;destsuffix=systemready-ir-template;name=sr-ir-template \
 "
-SRC_URI[acs-img.sha256sum] = "ea52f84dab44bde97de3e2d2224d883acaae35724dd8e2bdfb125de49040f9b3"
+SRC_URI[acs-img.sha256sum] = "5ebdc7051c3c25bcd413fdc35186a461862eddcc5dd1477e54cbdc01bd8e9ee7"
 # Revision pointing to v2023.04 tag
 SRCREV_sr-ir-template = "c714db178ddf72e5ae5017f15421095297d5bf0e"
 
