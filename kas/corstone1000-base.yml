@@ -5,7 +5,7 @@ distro: poky
 
 defaults:
   repos:
-    branch: master
+    branch: walnascar
 
 repos:
   meta-arm:
@@ -16,14 +16,14 @@ repos:
 
   poky:
     url: https://git.yoctoproject.org/git/poky
-    # commit: 5465094be9a61a1639e1dab6d2b4ebea2bee7440
+    commit: ee0d8d8a61d8e22a3dd00c32cde58ee6e8ec458f
     layers:
       meta:
       meta-poky:
 
   meta-openembedded:
     url: https://git.openembedded.org/meta-openembedded
-    # commit: 461d85a1831318747af5abe86da193bcde3fd9b4
+    commit: 2169c9afcc0945045bea49f58011080942d4ddb4
     layers:
       meta-oe:
       meta-python:
@@ -31,7 +31,7 @@ repos:
 
   meta-secure-core:
     url: https://github.com/wind-river/meta-secure-core.git
-    # commit: 59d7e90542947c342098863b9998693ac79352b0
+    commit: 423bc85b050594cc42fe3f2e0d0229960e70b94e
     layers:
       meta-secure-core-common:
       meta-signing-key:
