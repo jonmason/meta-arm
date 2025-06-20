@@ -56,3 +56,6 @@ EXTRA_OECMAKE += "${@get_ts_toolchain_option(d)}"
 EXTRA_OECMAKE += "-Dlibts_ROOT=${STAGING_DIR_HOST}${TS_INSTALL}/lib/cmake/libts/ \
                   -Dlibpsats_ROOT=${STAGING_DIR_HOST}${TS_INSTALL}/lib/cmake/libpsats/ \
                  "
+
+INSANE_SKIP:${PN} += "buildpaths"
+INSANE_SKIP:${PN}-dbg += "buildpaths"

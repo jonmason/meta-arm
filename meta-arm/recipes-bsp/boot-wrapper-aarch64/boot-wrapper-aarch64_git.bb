@@ -11,8 +11,6 @@ UPSTREAM_CHECK_COMMITS = "1"
 
 PV = "0+git"
 
-S = "${WORKDIR}/git"
-
 inherit autotools deploy
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
