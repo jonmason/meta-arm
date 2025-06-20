@@ -57,7 +57,6 @@ DEPENDS += "util-linux-native iasl-native"
 
 inherit deploy
 
-S = "${WORKDIR}/edk2"
 B = "${WORKDIR}/build"
 
 LDFLAGS[unexport] = "1"
