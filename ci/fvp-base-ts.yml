@@ -5,7 +5,6 @@ header:
   includes:
     - ci/fvp-base.yml
     - ci/meta-openembedded.yml
-    - ci/testimage.yml
 
 local_conf_header:
   trusted_services: |
