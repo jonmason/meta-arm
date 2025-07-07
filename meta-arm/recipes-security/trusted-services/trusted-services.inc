@@ -13,8 +13,8 @@ require trusted-services-src.inc
 
 # By default bitbake includes only ${S} (i.e git/trusted-services) in the maps.
 # We also need to include the TS dependencies source trees.
-DEBUG_PREFIX_MAP:append = "-fmacro-prefix-map=${WORKDIR}/git=/usr/src/debug/${PN}/${EXTENDPE}${PV}-${PR} \
- -fdebug-prefix-map=${WORKDIR}/git=/usr/src/debug/${PN}/${EXTENDPE}${PV}-${PR} \
+DEBUG_PREFIX_MAP:append = "-fmacro-prefix-map=${UNPACKDIR}=${TARGET_DBGSRC_DIR} \
+ -fdebug-prefix-map=${UNPACKDIR}=${TARGET_DBGSRC_DIR} \
 "
 
 TS_PLATFORM ?= "ts/mock"
