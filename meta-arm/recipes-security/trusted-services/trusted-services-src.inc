@@ -56,19 +56,19 @@ inherit apply_local_src_patches
 LOCAL_SRC_PATCHES_INPUT_DIR = "N/A"
 
 do_apply_local_src_patches() {
-    apply_local_src_patches ${S}/external/qcbor ${WORKDIR}/sources/qcbor
-    apply_local_src_patches ${S}/external/t_cose ${WORKDIR}/sources/tcose
-    apply_local_src_patches ${S}/external/MbedTLS ${WORKDIR}/sources/mbedtls
-    apply_local_src_patches ${S}/external/CppUTest ${WORKDIR}/sources/cpputest
-    apply_local_src_patches ${S}/external/libfdt ${WORKDIR}/sources/dtc
-    apply_local_src_patches ${S}/external/nanopb ${WORKDIR}/sources/nanopb
+    apply_local_src_patches ${S}/external/qcbor ${UNPACKDIR}/qcbor
+    apply_local_src_patches ${S}/external/t_cose ${UNPACKDIR}/tcose
+    apply_local_src_patches ${S}/external/MbedTLS ${UNPACKDIR}/mbedtls
+    apply_local_src_patches ${S}/external/CppUTest ${UNPACKDIR}/cpputest
+    apply_local_src_patches ${S}/external/libfdt ${UNPACKDIR}/dtc
+    apply_local_src_patches ${S}/external/nanopb ${UNPACKDIR}/nanopb
 }
 
 # Paths to dependencies required by some TS SPs/tools
-EXTRA_OECMAKE += "-DDTC_SOURCE_DIR=${WORKDIR}/sources/dtc \
-                  -DCPPUTEST_SOURCE_DIR=${WORKDIR}/sources/cpputest \
-                  -DNANOPB_SOURCE_DIR=${WORKDIR}/sources/nanopb \
-                  -DT_COSE_SOURCE_DIR=${WORKDIR}/sources/tcose \
-                  -DQCBOR_SOURCE_DIR=${WORKDIR}/sources/qcbor \
-                  -DMBEDTLS_SOURCE_DIR=${WORKDIR}/sources/mbedtls \
+EXTRA_OECMAKE += "-DDTC_SOURCE_DIR=${UNPACKDIR}/dtc \
+                  -DCPPUTEST_SOURCE_DIR=${UNPACKDIR}/cpputest \
+                  -DNANOPB_SOURCE_DIR=${UNPACKDIR}/nanopb \
+                  -DT_COSE_SOURCE_DIR=${UNPACKDIR}/tcose \
+                  -DQCBOR_SOURCE_DIR=${UNPACKDIR}/qcbor \
+                  -DMBEDTLS_SOURCE_DIR=${UNPACKDIR}/mbedtls \
                  "
