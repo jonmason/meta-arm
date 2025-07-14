@@ -35,8 +35,8 @@ SRC_URI = "\
 # As per optee-ftpm TA documentation, we have to use this SHA of MS TPM reference
 SRCREV_ms-tpm   ?= "98b60a44aba79b15fcce1c0d1e46cf5918400f6a"
 
-# v4.6.0
-SRCREV_optee-ta ?= "6f99e783eb9bb57c314a881433d4ec970de87959"
+# v4.6.0 + fix for CVE-2025-46733
+SRCREV_optee-ta ?= "ce33372ab772e879826361a1ca91126260bd9be1"
 
 SRCREV_FORMAT    = "ms-tpm_optee-ta"
 
