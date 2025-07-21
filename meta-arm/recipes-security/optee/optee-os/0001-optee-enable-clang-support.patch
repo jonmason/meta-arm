@@ -7,7 +7,7 @@ When compiling with clang, the LIBGCC_LOCATE_CFLAG variable used
 to provide a sysroot wasn't included, which results in not locating
 compiler-rt. This is mitigated by including the variable as ammended.
 
-Upstream-Status: Pending
+Upstream-Status: Inappropriate
 ChangeId: 8ba69a4b2eb8ebaa047cb266c9aa6c2c3da45701
 Signed-off-by: Brett Warren <brett.warren@arm.com>
 ---
