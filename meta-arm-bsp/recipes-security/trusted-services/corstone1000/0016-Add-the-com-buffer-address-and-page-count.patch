@@ -3,7 +3,7 @@ From: Michael Safwat <michael.safwat@arm.com>
 Date: Mon, 23 Jun 2025 13:06:10 +0000
 Subject: [PATCH] Plat: Corstone-1000: Add MM communication buffer configs to
  CMake
-Upstream-Status: Pending
+Upstream-Status: Submitted [https://review.trustedfirmware.org/c/TS/trusted-services/+/40893]
 
 Two variables are added into the Corstone-1000 platform
 CMake file so the MM communication buffer address and

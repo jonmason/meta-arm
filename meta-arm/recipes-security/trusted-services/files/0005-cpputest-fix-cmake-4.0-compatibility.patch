@@ -1,0 +1,81 @@
+From 5c75ba6cdbc1746438a748841a5327fa29840a4e Mon Sep 17 00:00:00 2001
+From: Gyorgy Szing <gyorgy.szing@arm.com>
+Date: Fri, 18 Jul 2025 12:23:25 +0200
+Subject: [PATCH 1/1] cpputest: fix cmake 4.0 compatibility
+
+Add a new patch to solve the mentioned issue. For details, see the
+header of the patch file.
+
+Also update the component to use git am instead of apply.
+
+Upstream-Status: Submitted [https://review.trustedfirmware.org/c/TS/trusted-services/+/40925]
+Signed-off-by: Gyorgy Szing <gyorgy.szing@arm.com>
+Change-Id: I68291f4573fee3c64dd19c348bd8a30aa99b0c35
+---
+ ...ix.patch => 0001-cpputest-cmake-fix.patch} |  0
+ .../0002-Fix-cmake-4.0-compatibility.patch    | 29 +++++++++++++++++++
+ external/CppUTest/CppUTest.cmake              |  8 +++--
+ 3 files changed, 35 insertions(+), 2 deletions(-)
+ rename external/CppUTest/{cpputest-cmake-fix.patch => 0001-cpputest-cmake-fix.patch} (100%)
+ create mode 100644 external/CppUTest/0002-Fix-cmake-4.0-compatibility.patch
+
+diff --git a/external/CppUTest/cpputest-cmake-fix.patch b/external/CppUTest/0001-cpputest-cmake-fix.patch
+similarity index 100%
+rename from external/CppUTest/cpputest-cmake-fix.patch
+rename to external/CppUTest/0001-cpputest-cmake-fix.patch
+diff --git a/external/CppUTest/0002-Fix-cmake-4.0-compatibility.patch b/external/CppUTest/0002-Fix-cmake-4.0-compatibility.patch
+new file mode 100644
+index 00000000..8aa9ff2c
+--- /dev/null
++++ b/external/CppUTest/0002-Fix-cmake-4.0-compatibility.patch
+@@ -0,0 +1,29 @@
++From 1147a71cfa5657b13c13d10194d8a5b4c28e1709 Mon Sep 17 00:00:00 2001
++From: Gyorgy Szing <gyorgy.szing@arm.com>
++Date: Fri, 18 Jul 2025 12:17:46 +0200
++Subject: [PATCH 1/1] Fix cmake 4.0 compatibility
++
++Cmake 4.0 dropped compatibility to cmake versions below 3.5. Update the
++required version on the cmake file as a workaround.
++
++Signed-off-by: Gyorgy Szing <gyorgy.szing@arm.com>
++---
++ CMakeLists.txt | 2 +-
++ 1 file changed, 1 insertion(+), 1 deletion(-)
++
++diff --git a/CMakeLists.txt b/CMakeLists.txt
++index d9ca865f..b30e7d77 100644
++--- a/CMakeLists.txt
+++++ b/CMakeLists.txt
++@@ -4,7 +4,7 @@ set(CppUTest_version_major 3)
++ set(CppUTest_version_minor 8)
++ 
++ # 2.6.3 is needed for ctest support
++-cmake_minimum_required(VERSION 2.8.7)
+++cmake_minimum_required(VERSION 3.8...3.31)
++ 
++ # Check for functions before setting a lot of stuff
++ include(CheckFunctionExists)
++-- 
++2.34.1
++
+diff --git a/external/CppUTest/CppUTest.cmake b/external/CppUTest/CppUTest.cmake
+index 7b916d52..f323ad8e 100644
+--- a/external/CppUTest/CppUTest.cmake
++++ b/external/CppUTest/CppUTest.cmake
+@@ -16,8 +16,12 @@ set(GIT_OPTIONS
+ 	GIT_REPOSITORY ${CPPUTEST_URL}
+ 	GIT_TAG ${CPPUTEST_REFSPEC}
+ 	GIT_SHALLOW FALSE
+-	PATCH_COMMAND git stash
+-	COMMAND git apply ${CMAKE_CURRENT_LIST_DIR}/cpputest-cmake-fix.patch
++	PATCH_COMMAND
++		git stash
++		COMMAND git branch -f bf-am
++		COMMAND git am ${CMAKE_CURRENT_LIST_DIR}/0001-cpputest-cmake-fix.patch
++		COMMAND git am ${CMAKE_CURRENT_LIST_DIR}/0002-Fix-cmake-4.0-compatibility.patch
++		COMMAND git reset bf-am
+ 	)
+ 
+ include(${TS_ROOT}/tools/cmake/common/LazyFetch.cmake REQUIRED)
+-- 
+2.34.1

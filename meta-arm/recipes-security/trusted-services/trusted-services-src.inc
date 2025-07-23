@@ -10,6 +10,7 @@ SRC_URI:append = "\
     file://0001-Allow-configuring-flash-image-files-compile-time.patch \
     file://0002-Fix-MbedTLS-3.6-and-GCC-14-compatibility.patch \
     file://0001-Relax-pyelftools-dependency.patch \
+    file://0005-cpputest-fix-cmake-4.0-compatibility.patch \
 "
 
 # Trusted Services; aka. v1.1.0
