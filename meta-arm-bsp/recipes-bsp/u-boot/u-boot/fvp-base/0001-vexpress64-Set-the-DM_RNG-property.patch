@@ -1,4 +1,4 @@
-From ddb132d10952366c359bdd04482c1a8c0ba08b8f Mon Sep 17 00:00:00 2001
+From 6813b56a11f423f3faa0e960bb044534e11d0104 Mon Sep 17 00:00:00 2001
 From: Debbie Martin <Debbie.Martin@arm.com>
 Date: Fri, 25 Aug 2023 15:09:33 +0100
 Subject: [PATCH] vexpress64: Set the DM_RNG property
@@ -15,7 +15,7 @@ Signed-off-by: Debbie Martin <Debbie.Martin@arm.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/board/armltd/vexpress64/Kconfig b/board/armltd/vexpress64/Kconfig
-index cf998096e45f..7ae5055f59b1 100644
+index 7e8709444fe3..f413c51ac43b 100644
 --- a/board/armltd/vexpress64/Kconfig
 +++ b/board/armltd/vexpress64/Kconfig
 @@ -21,6 +21,7 @@ config VEXPRESS64_BASE_MODEL
