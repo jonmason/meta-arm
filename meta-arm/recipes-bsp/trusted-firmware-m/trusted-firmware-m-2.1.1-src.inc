@@ -55,3 +55,14 @@ SRCREV_tfm-psa-adac = "5f5490cebe66ae997f316f83c3fbf1f97deef625"
 SRCREV_FORMAT = "tfm"
 
 S = "${WORKDIR}/git/tfm"
+
+# Apply patches
+inherit apply_local_src_patches
+LOCAL_SRC_PATCHES_INPUT_DIR = "N/A"
+
+do_apply_local_src_patches() {
+    apply_local_src_patches ${S}/lib/ext/qcbor ${WORKDIR}/git/qcbor
+    apply_local_src_patches ${S}/lib/ext/mbedcrypto ${WORKDIR}/git/mbedtls
+    apply_local_src_patches ${S}/lib/ext/mcuboot ${WORKDIR}/git/mcuboot
+    apply_local_src_patches ${S}/lib/ext/tf-m-tests ${WORKDIR}/git/tf-m-tests
+}
