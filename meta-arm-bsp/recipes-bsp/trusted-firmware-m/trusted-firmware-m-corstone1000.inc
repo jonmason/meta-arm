@@ -46,6 +46,7 @@ SRC_URI:append:corstone1000 = " \
     file://0025-FWU-Make-platform-specific-TFM_FWU_BOOTLOADER_LIB-se.patch \
     file://0026-Platform-CS1000-Enable-FWU-partition.patch \
     file://0027-Platform-Corstone1000-Implement-Bootloader-Abstracti.patch \
+    file://0028-Platform-Corstone1000-Increase-buffer-sizes.patch \
     "
 
 FILESEXTRAPATHS:prepend:corstone1000-mps3 := "${THISDIR}/files/corstone1000/psa-adac:"
