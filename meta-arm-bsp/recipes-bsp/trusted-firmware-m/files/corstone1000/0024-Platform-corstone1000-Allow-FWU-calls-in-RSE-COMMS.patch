@@ -1,0 +1,60 @@
+From 47593ccd1b2a2210c0860d1670005780836f120b Mon Sep 17 00:00:00 2001
+From: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
+Date: Mon, 18 Nov 2024 11:40:25 +0000
+Subject: [PATCH] Platform: corstone1000: Permit FWU calls in RSE-COMMS
+
+Allow FWU calls to be dispatched by the RSE-COMMS for Corstone-1000.
+This change is required to allow the transmission of PSA FWU related
+calls between Cortex A and Cortex M side on Corstone-1000.
+For every PSA call from A side, the RSE-COMMS at M side validates, if the
+call is allowed or not.
+
+Upstream-Status: Backport [b1123e3bf99000dd45992c0638c8f9ae7dba2ed8]
+Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
+---
+ .../corstone1000/rse_comms_permissions_hal.c  | 22 +++++++++++++++++++
+ 1 file changed, 22 insertions(+)
+
+diff --git a/platform/ext/target/arm/corstone1000/rse_comms_permissions_hal.c b/platform/ext/target/arm/corstone1000/rse_comms_permissions_hal.c
+index 59724bc94..58ade2026 100644
+--- a/platform/ext/target/arm/corstone1000/rse_comms_permissions_hal.c
++++ b/platform/ext/target/arm/corstone1000/rse_comms_permissions_hal.c
+@@ -33,6 +33,9 @@
+ #ifdef TFM_PARTITION_INTERNAL_TRUSTED_STORAGE
+ #include "tfm_its_defs.h"
+ #endif /* TFM_PARTITION_INTERNAL_TRUSTED_STORAGE */
++#ifdef TFM_PARTITION_FIRMWARE_UPDATE
++#include "tfm_fwu_defs.h"
++#endif /* TFM_PARTITION_FIRMWARE_UPDATE */
+ 
+ #define INVALID_REGION_COUNTER_MAX  128
+ #define INVALID_SERVICE_COUNTER_MAX 64
+@@ -165,6 +168,25 @@ enum tfm_plat_err_t comms_permissions_service_check(psa_handle_t handle,
+     case TFM_DPE_SERVICE_HANDLE:
+         return TFM_PLAT_ERR_SUCCESS;
+ #endif /* TFM_PARTITION_DPE */
++
++#ifdef TFM_PARTITION_FIRMWARE_UPDATE
++    case TFM_FIRMWARE_UPDATE_SERVICE_HANDLE:
++        switch(type) {
++        case TFM_FWU_START:
++        case TFM_FWU_WRITE:
++        case TFM_FWU_FINISH:
++        case TFM_FWU_CANCEL:
++        case TFM_FWU_INSTALL:
++        case TFM_FWU_CLEAN:
++        case TFM_FWU_REJECT:
++        case TFM_FWU_REQUEST_REBOOT:
++        case TFM_FWU_ACCEPT:
++        case TFM_FWU_QUERY:
++            return TFM_PLAT_ERR_SUCCESS;
++        default:
++            goto out_err;
++	}
++#endif /* TFM_PARTITION_FIRMWARE_UPDATE */
+     default:
+         goto out_err;
+     }
+-- 
+2.25.1
+
