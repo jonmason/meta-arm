@@ -43,6 +43,9 @@ SRC_URI:append:corstone1000 = " \
     file://0022-CC312-alignment-of-cc312-differences.patch \
     file://0023-Platform-CS1000-Remove-duplicate-configuration-parameters.patch \
     file://0024-Platform-corstone1000-Allow-FWU-calls-in-RSE-COMMS.patch \
+    file://0025-FWU-Make-platform-specific-TFM_FWU_BOOTLOADER_LIB-se.patch \
+    file://0026-Platform-CS1000-Enable-FWU-partition.patch \
+    file://0027-Platform-Corstone1000-Implement-Bootloader-Abstracti.patch \
     "
 
 FILESEXTRAPATHS:prepend:corstone1000-mps3 := "${THISDIR}/files/corstone1000/psa-adac:"

@@ -1,0 +1,73 @@
+From 5afc6fde140e4033c4b69450daed42c6a3dea2bc Mon Sep 17 00:00:00 2001
+From: Ali Can Ozaslan <ali.oezaslan@arm.com>
+Date: Wed, 30 Oct 2024 09:54:49 +0000
+Subject: [PATCH] FWU: Make platform specific TFM_FWU_BOOTLOADER_LIB selectable
+ to add
+
+Prepare the environment where partition firmware update can be
+enabled and platform specific bootloader configuration can be used.
+
+FWU implementation provides an abstraction for the bootloader.
+This bootloader abstraction layer is implemented for MCUBoot.
+It can be used after making changes that can handle platform
+specific behaviors. But the implementation limits it.
+
+When TFM_PARTITION_FIRMWARE_UPDATE is enabled, the configuration
+becomes invalid. Therefore, the invalid configuration is limited
+to the case where TFM_FWU_BOOTLOADER_LIB is used for MCUboot.
+This makes the configuration valid when a platform specific
+configuration is used.
+
+TFM_FWU_BOOTLOADER_LIB can only be added from a subdirectory, which
+prevents the use of platform-specific bootloader configurations.
+The logic has been changed to allow the use of platform-specific
+bootloader configurations.
+
+Signed-off-by: Ali Can Ozaslan <ali.oezaslan@arm.com>
+
+Upstream-Status: Backport [3357369d7b878b8e8ad9515f821ac2226ec7fb18]
+---
+ config/check_config.cmake                           |  2 +-
+ secure_fw/partitions/firmware_update/CMakeLists.txt | 12 ++++++++----
+ 2 files changed, 9 insertions(+), 5 deletions(-)
+
+diff --git a/config/check_config.cmake b/config/check_config.cmake
+index 1039b22f9..d1929f6da 100644
+--- a/config/check_config.cmake
++++ b/config/check_config.cmake
+@@ -63,7 +63,7 @@ tfm_invalid_config(TFM_NS_NV_COUNTER_AMOUNT GREATER 3)
+ 
+ tfm_invalid_config(NOT PLATFORM_HAS_FIRMWARE_UPDATE_SUPPORT AND TFM_PARTITION_FIRMWARE_UPDATE)
+ tfm_invalid_config(TFM_PARTITION_FIRMWARE_UPDATE AND NOT TFM_PARTITION_PLATFORM)
+-tfm_invalid_config((MCUBOOT_UPGRADE_STRATEGY STREQUAL "DIRECT_XIP" OR MCUBOOT_UPGRADE_STRATEGY STREQUAL "RAM_LOAD") AND TFM_PARTITION_FIRMWARE_UPDATE)
++tfm_invalid_config((MCUBOOT_UPGRADE_STRATEGY STREQUAL "DIRECT_XIP" OR MCUBOOT_UPGRADE_STRATEGY STREQUAL "RAM_LOAD") AND TFM_PARTITION_FIRMWARE_UPDATE AND TFM_FWU_BOOTLOADER_LIB STREQUAL "mcuboot")
+ tfm_invalid_config(TFM_PARTITION_FIRMWARE_UPDATE AND NOT MCUBOOT_DATA_SHARING)
+ 
+ ####################### Protected Storage Partition ###############################
+diff --git a/secure_fw/partitions/firmware_update/CMakeLists.txt b/secure_fw/partitions/firmware_update/CMakeLists.txt
+index b249597b9..ecb90e0f0 100644
+--- a/secure_fw/partitions/firmware_update/CMakeLists.txt
++++ b/secure_fw/partitions/firmware_update/CMakeLists.txt
+@@ -37,11 +37,15 @@ target_sources(tfm_partitions
+         ${CMAKE_BINARY_DIR}/generated/secure_fw/partitions/firmware_update/auto_generated/load_info_tfm_firmware_update.c
+ )
+ 
+-# The bootloader specific configuration.
+-if ((NOT TFM_FWU_BOOTLOADER_LIB) OR (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/bootloader/${TFM_FWU_BOOTLOADER_LIB}))
+-    message(FATAL_ERROR "TFM_FWU_BOOTLOADER_LIB invalid")
++# Use platform specific bootloader configuration if present.
++if ((TFM_FWU_BOOTLOADER_LIB) AND (EXISTS ${TFM_FWU_BOOTLOADER_LIB}))
++    add_subdirectory(${TFM_FWU_BOOTLOADER_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${TFM_FWU_BOOTLOADER_LIB})
++else()
++    if ((NOT TFM_FWU_BOOTLOADER_LIB) OR (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/bootloader/${TFM_FWU_BOOTLOADER_LIB}))
++        message(FATAL_ERROR "TFM_FWU_BOOTLOADER_LIB invalid")
++    endif()
++    add_subdirectory(bootloader/${TFM_FWU_BOOTLOADER_LIB})
+ endif()
+-add_subdirectory(bootloader/${TFM_FWU_BOOTLOADER_LIB})
+ 
+ target_link_libraries(tfm_psa_rot_partition_fwu
+     PRIVATE
+-- 
+2.34.1
+
