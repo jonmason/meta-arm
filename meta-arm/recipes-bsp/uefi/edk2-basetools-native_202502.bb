@@ -20,5 +20,5 @@ RDEPENDS:${PN} += "python3-core"
 
 do_install () {
     mkdir -p ${D}${bindir}/edk2-BaseTools
-    cp -r ${WORKDIR}/git/BaseTools/* ${D}${bindir}/edk2-BaseTools/
+    cp -r ${S}/BaseTools/* ${D}${bindir}/edk2-BaseTools/
 }
