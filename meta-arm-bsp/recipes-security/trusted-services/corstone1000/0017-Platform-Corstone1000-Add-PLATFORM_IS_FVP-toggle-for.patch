@@ -1,0 +1,77 @@
+From 00cbde17d3e38de385a6f0897cdd6d9bfe8250c7 Mon Sep 17 00:00:00 2001
+From: Ali Can Ozaslan <ali.oezaslan@arm.com>
+Date: Thu, 27 Feb 2025 14:06:07 +0000
+Subject: [PATCH 03/10] Platform: Corstone1000: Add PLATFORM_IS_FVP toggle for
+ FVP/FPGA builds
+
+Introduces PLATFORM_IS_FVP to differentiate between FVP and FPGA builds.
+Adds platform-specific CMake files for corstone1000-fvp and corstone1000-mps3,
+and updates platform.cmake to use this toggle.
+
+Upstream-Status: Pending
+Signed-off-by: Ali Can Ozaslan <ali.oezaslan@arm.com>
+Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
+---
+ .../providers/arm/corstone1000-fvp/platform.cmake     | 11 +++++++++++
+ .../providers/arm/corstone1000-mps3/platform.cmake    | 11 +++++++++++
+ platform/providers/arm/corstone1000/platform.cmake    |  3 ++-
+ 3 files changed, 24 insertions(+), 1 deletion(-)
+ create mode 100644 platform/providers/arm/corstone1000-fvp/platform.cmake
+ create mode 100644 platform/providers/arm/corstone1000-mps3/platform.cmake
+
+diff --git a/platform/providers/arm/corstone1000-fvp/platform.cmake b/platform/providers/arm/corstone1000-fvp/platform.cmake
+new file mode 100644
+index 00000000..9a281e7a
+--- /dev/null
++++ b/platform/providers/arm/corstone1000-fvp/platform.cmake
+@@ -0,0 +1,11 @@
++#-------------------------------------------------------------------------------
++# Copyright (c) 2025, Arm Limited and Contributors. All rights reserved.
++#
++# SPDX-License-Identifier: BSD-3-Clause
++#
++# Platform definition for the Corstone-1000-MPS3 platform.
++#-------------------------------------------------------------------------------
++
++set(PLATFORM_IS_FVP 1 CACHE BOOL "Whether to enable FVP or FPGA build of the platform.")
++
++include(${TS_PLATFORM_ROOT}/arm/corstone1000/platform.cmake)
+diff --git a/platform/providers/arm/corstone1000-mps3/platform.cmake b/platform/providers/arm/corstone1000-mps3/platform.cmake
+new file mode 100644
+index 00000000..ec92d1e5
+--- /dev/null
++++ b/platform/providers/arm/corstone1000-mps3/platform.cmake
+@@ -0,0 +1,11 @@
++#-------------------------------------------------------------------------------
++# Copyright (c) 2025, Arm Limited and Contributors. All rights reserved.
++#
++# SPDX-License-Identifier: BSD-3-Clause
++#
++# Platform definition for the Corstone-1000-FVP platform.
++#-------------------------------------------------------------------------------
++
++set(PLATFORM_IS_FVP 0 CACHE BOOL "Whether to enable FVP or FPGA build of the platform.")
++
++include(${TS_PLATFORM_ROOT}/arm/corstone1000/platform.cmake)
+diff --git a/platform/providers/arm/corstone1000/platform.cmake b/platform/providers/arm/corstone1000/platform.cmake
+index 04c8138f..60bc208b 100644
+--- a/platform/providers/arm/corstone1000/platform.cmake
++++ b/platform/providers/arm/corstone1000/platform.cmake
+@@ -1,5 +1,5 @@
+ #-------------------------------------------------------------------------------
+-# Copyright (c) 2021-2024, Arm Limited and Contributors. All rights reserved.
++# Copyright (c) 2021-2025, Arm Limited and Contributors. All rights reserved.
+ #
+ # SPDX-License-Identifier: BSD-3-Clause
+ #
+@@ -17,6 +17,7 @@ target_compile_definitions(${TGT} PRIVATE
+ 	PLAT_RSE_COMMS_PAYLOAD_MAX_SIZE=${PLAT_RSE_COMMS_PAYLOAD_MAX_SIZE}
+  	COMMS_MHU_MSG_SIZE=${COMMS_MHU_MSG_SIZE}
+ 	MBEDTLS_ECP_DP_SECP521R1_ENABLED
++	PLATFORM_IS_FVP=${PLATFORM_IS_FVP}
+ )
+ 
+ get_property(_platform_driver_dependencies TARGET ${TGT}
+-- 
+2.34.1
+
