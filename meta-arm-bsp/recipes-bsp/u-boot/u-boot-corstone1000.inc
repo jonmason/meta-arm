@@ -42,6 +42,27 @@ SRC_URI:append = " \
     file://0023-fwu_arm_psa-corstone1000-Notify-SE-Proxy-SP-on-ExitB.patch \
     file://0024-fwu_arm_psa-corstone1000-Set-Boot0001-for-on-disk-FW.patch \
     "
+# Other features
+SRC_URI:append = " \
+    file://0025-corstone1000-set-CONFIG_FFA_SHARED_MM_BUF_ADDR.patch \
+    file://0026-corstone1000-Enable-MMC-for-FVP.patch \
+    file://0027-corstone1000-Enable-secure-boot-configs.patch \
+    file://0028-corstone1000-Enable-EFI-set_time-config.patch \
+    file://0029-corstone1000-Enable-set-print-EFI-variables.patch \
+    file://0030-corstone1000-Enable-virtio-net-support.patch \
+    file://0031-arm-corstone1000-Fix-unrecognized-filesystem-type.patch \
+    file://0032-corstone1000-dts-Add-external-system-node.patch \
+    file://0033-arm-bsp-u-boot-dts-Reserve-memory-for-RSS-comm-point.patch \
+    "
+
+# Purging device tree nodes
+SRC_URI:append = " \
+    file://0034-dt-Provide-a-way-to-remove-non-compliant-nodes-and-p.patch \
+    file://0035-bootefi-Call-the-EVT_FT_FIXUP-event-handler.patch          \
+    file://0036-corstone1000-Purge-U-Boot-specific-DT-nodes.patch          \
+    ${@bb.utils.contains('MACHINE_FEATURES', 'corstone1000-extsys', \
+                         '', 'file://0037-corstone1000-purge-remoteproc-DTS-node.patch' , d)} \
+    "
 
 do_configure:append() {
    openssl req -x509 -sha256 -newkey rsa:2048 -subj /CN=CRT/ -keyout ${B}/CRT.key -out ${B}/corstone1000_defconfig/CRT.crt -nodes -days 365
