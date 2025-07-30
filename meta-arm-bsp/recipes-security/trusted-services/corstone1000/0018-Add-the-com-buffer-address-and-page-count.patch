@@ -1,38 +1,31 @@
-From 0423349ec142bd1c4a6cc452eed9a0f5e43c8539 Mon Sep 17 00:00:00 2001
-From: Michael Safwat <michael.safwat@arm.com>
-Date: Mon, 23 Jun 2025 13:06:10 +0000
+From 2eef8097c6411fb54b2d0203159e120d192315c7 Mon Sep 17 00:00:00 2001
+From: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
+Date: Thu, 24 Jul 2025 10:33:41 +0000
 Subject: [PATCH] Plat: Corstone-1000: Add MM communication buffer configs to
  CMake
-Upstream-Status: Submitted [https://review.trustedfirmware.org/c/TS/trusted-services/+/40893]
 
 Two variables are added into the Corstone-1000 platform
 CMake file so the MM communication buffer address and
 the page count can be configured.
 
+Upstream-Status: Submitted [https://review.trustedfirmware.org/c/TS/trusted-services/+/40893]
 Change-Id: I6bbdc90231b0417d4318d6709568113ab1f2c8ce
 Signed-off-by: Michael Safwat <michael.safwat@arm.com>
+Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
 ---
- platform/providers/arm/corstone1000/platform.cmake | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ platform/providers/arm/corstone1000/platform.cmake | 2 ++
+ 1 file changed, 2 insertions(+)
 
 diff --git a/platform/providers/arm/corstone1000/platform.cmake b/platform/providers/arm/corstone1000/platform.cmake
-index 2afcdea8..37c6accf 100644
+index db1e9743..88113c9d 100644
 --- a/platform/providers/arm/corstone1000/platform.cmake
 +++ b/platform/providers/arm/corstone1000/platform.cmake
-@@ -1,5 +1,5 @@
- #-------------------------------------------------------------------------------
--# Copyright (c) 2021-2024, Arm Limited and Contributors. All rights reserved.
-+# Copyright (c) 2021-2025, Arm Limited and Contributors. All rights reserved.
- #
- # SPDX-License-Identifier: BSD-3-Clause
- #
-@@ -11,6 +11,9 @@ set(SMM_RPC_CALLER_SESSION_SHARED_MEMORY_SIZE 4*4096 CACHE STRING "RPC caller bu
- set(SMM_SP_HEAP_SIZE 80*1024 CACHE STRING "SMM gateway SP heap size")
+@@ -18,6 +18,8 @@ set(SMM_SP_HEAP_SIZE 80*1024 CACHE STRING "SMM gateway SP heap size")
  set(PLAT_RSE_COMMS_PAYLOAD_MAX_SIZE 0x43C0 CACHE STRING "Size of the RSE_COMMS_PAYLOAD buffer")
  set(COMMS_MHU_MSG_SIZE 0x4500 CACHE STRING "Max message size that can be transfered via MHU")
+ set(TFM_FWU_MAX_DIGEST_SIZE ${TOTAL_ESRT_SIZE} CACHE STRING "Maximum size of ESRT entries of all the images in a bank")
 +set(MM_COMM_BUFFER_ADDRESS "0x00000000 0x81FFF000" CACHE STRING "MM Communication buffer start address")
 +set(MM_COMM_BUFFER_PAGE_COUNT 0x1 CACHE STRING "MM Communication buffer page count")
-+
  
  target_compile_definitions(${TGT} PRIVATE
  	SMM_VARIABLE_INDEX_STORAGE_UID=0x787

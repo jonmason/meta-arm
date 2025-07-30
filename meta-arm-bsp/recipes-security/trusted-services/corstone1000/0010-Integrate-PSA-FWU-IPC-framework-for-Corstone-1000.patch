@@ -1,7 +1,7 @@
-From fcc7701baf4246e5ceebe4d50db223cb70a0c00f Mon Sep 17 00:00:00 2001
+From f385ddacc8cc62842f7c9c91622d59959c41e718 Mon Sep 17 00:00:00 2001
 From: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
 Date: Thu, 28 Nov 2024 12:02:28 +0000
-Subject: [PATCH 1/8] Integrate PSA FWU IPC framework for Corstone-1000
+Subject: [PATCH 04/11] Integrate PSA FWU IPC framework for Corstone-1000
 
 Integrate IPC framework for PSA FWU calls between Cortex-A side and Cortex-M subsystems.
 
@@ -26,7 +26,7 @@ Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
  create mode 100644 components/service/fwu/psa_fwu_m/interface/psa_ipc/psa_fwu_ipc.h
 
 diff --git a/components/service/common/include/psa/sid.h b/components/service/common/include/psa/sid.h
-index fc3a4fb0..4830f438 100644
+index 5aaa659d..0235764d 100644
 --- a/components/service/common/include/psa/sid.h
 +++ b/components/service/common/include/psa/sid.h
 @@ -1,5 +1,5 @@
@@ -36,7 +36,7 @@ index fc3a4fb0..4830f438 100644
   *
   * SPDX-License-Identifier: BSD-3-Clause
   *
-@@ -65,6 +65,10 @@ extern "C" {
+@@ -58,6 +58,10 @@ extern "C" {
  #define TFM_ATTEST_GET_TOKEN_SIZE  1002
  
  /******** TFM_SP_FWU ********/
@@ -381,7 +381,7 @@ index 00000000..867a1c9c
 +#endif /* PSA_FWU_IPC_H */
 +
 diff --git a/deployments/se-proxy/infra/corstone1000/infra.cmake b/deployments/se-proxy/infra/corstone1000/infra.cmake
-index 27af8a33..0b04149a 100644
+index 3830f9d6..2bf6b36e 100644
 --- a/deployments/se-proxy/infra/corstone1000/infra.cmake
 +++ b/deployments/se-proxy/infra/corstone1000/infra.cmake
 @@ -26,7 +26,7 @@ add_components(TARGET "se-proxy"
@@ -390,14 +390,14 @@ index 27af8a33..0b04149a 100644
  		"components/service/fwu/psa_fwu_m/agent"
 -		"components/service/fwu/psa_fwu_m/interface/stub"
 +		"components/service/fwu/psa_fwu_m/interface/psa_ipc"
- 		"components/service/capsule_update/provider"
  		"components/service/secure_storage/backend/secure_storage_ipc"
  )
+ 
 diff --git a/deployments/se-proxy/infra/corstone1000/service_proxy_factory.c b/deployments/se-proxy/infra/corstone1000/service_proxy_factory.c
-index 8872abcb..ef91efe0 100644
+index 759983b4..547e84bc 100644
 --- a/deployments/se-proxy/infra/corstone1000/service_proxy_factory.c
 +++ b/deployments/se-proxy/infra/corstone1000/service_proxy_factory.c
-@@ -15,6 +15,7 @@
+@@ -14,6 +14,7 @@
  #include <service/crypto/factory/crypto_provider_factory.h>
  #include "service/fwu/psa_fwu_m/agent/psa_fwu_m_update_agent.h"
  #include "service/fwu/provider/fwu_provider.h"
@@ -405,7 +405,7 @@ index 8872abcb..ef91efe0 100644
  #include <service/secure_storage/frontend/secure_storage_provider/secure_storage_provider.h>
  #include "service/secure_storage/frontend/secure_storage_provider/secure_storage_uuid.h"
  #include <trace.h>
-@@ -135,10 +136,25 @@ struct rpc_service_interface *its_proxy_create(void)
+@@ -134,10 +135,25 @@ struct rpc_service_interface *its_proxy_create(void)
  
  struct rpc_service_interface *fwu_proxy_create(void)
  {
@@ -432,5 +432,5 @@ index 8872abcb..ef91efe0 100644
  	return fwu_provider_init(&fwu_provider, agent);
  }
 -- 
-2.25.1
+2.34.1
 

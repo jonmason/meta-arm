@@ -1,7 +1,7 @@
-From dde0ca3260ae3b7e7c3390ef03f9f484e9189626 Mon Sep 17 00:00:00 2001
+From 7953806fd3fdb743c40b76e363b917fac786c636 Mon Sep 17 00:00:00 2001
 From: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
 Date: Tue, 11 Mar 2025 13:33:36 +0000
-Subject: [PATCH 7/8] platform: corstone1000: Add event provider proxy
+Subject: [PATCH 10/11] platform: corstone1000: Add event provider proxy
 
 Normal world needs to send boot confirmation event
 to Secure Enclave and Trusted-Services is responsible
@@ -14,17 +14,38 @@ This change is introduced for Corstone-1000
 Upstream-Status: Pending
 Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
 ---
+ components/service/common/include/psa/sid.h   |  9 ++
  .../se-proxy/env/commonsp/se_proxy_sp.c       | 16 +++-
  .../corstone1000_event_handling.c             | 91 +++++++++++++++++++
  .../corstone1000_event_handling.h             | 42 +++++++++
  .../se-proxy/infra/corstone1000/infra.cmake   |  1 +
  .../corstone1000/service_proxy_factory.c      | 27 ++++++
- 5 files changed, 175 insertions(+), 2 deletions(-)
+ 6 files changed, 184 insertions(+), 2 deletions(-)
  create mode 100644 deployments/se-proxy/infra/corstone1000/corstone1000_event_handling.c
  create mode 100644 deployments/se-proxy/infra/corstone1000/corstone1000_event_handling.h
 
+diff --git a/components/service/common/include/psa/sid.h b/components/service/common/include/psa/sid.h
+index 0235764d..9f5ea05e 100644
+--- a/components/service/common/include/psa/sid.h
++++ b/components/service/common/include/psa/sid.h
+@@ -40,6 +40,15 @@ extern "C" {
+ #define TFM_CRYPTO_VERSION                                         (1U)
+ #define TFM_CRYPTO_HANDLE                                          (0x40000100U)
+ 
++/******** TFM_PLATFORM_SERVICE *******/
++#define TFM_PLATFORM_API_ID_IOCTL         (1013)
++#define TFM_PLATFORM_SERVICE_HANDLE       (0x40000105U)
++
++/**
++ * \brief Define a progressive numerical value for each SID which can be used
++ *        when dispatching the requests to the service
++*/
++
+ /******** TFM_SP_PLATFORM ********/
+ #define TFM_SP_PLATFORM_SYSTEM_RESET_SID                           (0x00000040U)
+ #define TFM_SP_PLATFORM_SYSTEM_RESET_VERSION                       (1U)
 diff --git a/deployments/se-proxy/env/commonsp/se_proxy_sp.c b/deployments/se-proxy/env/commonsp/se_proxy_sp.c
-index 7da489ca..7d2ade5e 100644
+index 9f94092b..ce1410b2 100644
 --- a/deployments/se-proxy/env/commonsp/se_proxy_sp.c
 +++ b/deployments/se-proxy/env/commonsp/se_proxy_sp.c
 @@ -1,6 +1,6 @@
@@ -35,16 +56,16 @@ index 7da489ca..7d2ade5e 100644
   */
  
  #include "components/rpc/common/endpoint/rpc_service_interface.h"
-@@ -40,7 +40,7 @@ void __noreturn sp_main(union ffa_boot_info *boot_info)
+@@ -42,7 +42,7 @@ void __noreturn sp_main(union ffa_boot_info *boot_info)
  		goto fatal_error;
  	}
  
--	rpc_status = ts_rpc_endpoint_sp_init(&rpc_endpoint, 7, 16);
-+	rpc_status = ts_rpc_endpoint_sp_init(&rpc_endpoint, 8, 16);
+-	rpc_status = ts_rpc_endpoint_sp_init(&rpc_endpoint, 6, 16);
++	rpc_status = ts_rpc_endpoint_sp_init(&rpc_endpoint, 7, 16);
  	if (rpc_status != RPC_SUCCESS) {
  		EMSG("Failed to initialize RPC endpoint: %d", rpc_status);
  		goto fatal_error;
-@@ -95,6 +95,18 @@ void __noreturn sp_main(union ffa_boot_info *boot_info)
+@@ -97,6 +97,18 @@ void __noreturn sp_main(union ffa_boot_info *boot_info)
  		goto fatal_error;
  	}
  
@@ -60,9 +81,9 @@ index 7da489ca..7d2ade5e 100644
 +		goto fatal_error;
 +	}
 +
- 	rpc_iface = capsule_update_proxy_create();
+ 	rpc_iface = fwu_proxy_create();
  	if (!rpc_iface) {
- 		EMSG("Failed to create Capsule Update proxy");
+ 		EMSG("Failed to create FWU proxy");
 diff --git a/deployments/se-proxy/infra/corstone1000/corstone1000_event_handling.c b/deployments/se-proxy/infra/corstone1000/corstone1000_event_handling.c
 new file mode 100644
 index 00000000..faf450f2
@@ -209,20 +230,20 @@ index 00000000..e8e60dae
 +
 +#endif /* CORSTONE1000_EVENT_HANDLING_H */
 diff --git a/deployments/se-proxy/infra/corstone1000/infra.cmake b/deployments/se-proxy/infra/corstone1000/infra.cmake
-index 0b04149a..b95801de 100644
+index 2bf6b36e..1ec43700 100644
 --- a/deployments/se-proxy/infra/corstone1000/infra.cmake
 +++ b/deployments/se-proxy/infra/corstone1000/infra.cmake
-@@ -34,4 +34,5 @@ add_components(TARGET "se-proxy"
+@@ -33,4 +33,5 @@ add_components(TARGET "se-proxy"
  target_sources(se-proxy PRIVATE
  
  	${CMAKE_CURRENT_LIST_DIR}/service_proxy_factory.c
 +	${CMAKE_CURRENT_LIST_DIR}/corstone1000_event_handling.c
  )
 diff --git a/deployments/se-proxy/infra/corstone1000/service_proxy_factory.c b/deployments/se-proxy/infra/corstone1000/service_proxy_factory.c
-index f0a4853e..ed42e2cb 100644
+index a754ace7..6d8c3855 100644
 --- a/deployments/se-proxy/infra/corstone1000/service_proxy_factory.c
 +++ b/deployments/se-proxy/infra/corstone1000/service_proxy_factory.c
-@@ -21,6 +21,7 @@
+@@ -20,6 +20,7 @@
  #include <protocols/service/fwu/fwu_proto.h>
  #include <trace.h>
  #include "corstone1000_config.h"
@@ -230,7 +251,7 @@ index f0a4853e..ed42e2cb 100644
  
  /* backends */
  #include <service/crypto/backend/psa_ipc/crypto_ipc_backend.h>
-@@ -165,6 +166,32 @@ struct rpc_service_interface *its_proxy_create(void)
+@@ -164,6 +165,32 @@ struct rpc_service_interface *its_proxy_create(void)
  	return secure_storage_provider_init(&its_provider, backend, &its_uuid);
  }
  
@@ -264,5 +285,5 @@ index f0a4853e..ed42e2cb 100644
  {
  	rpc_status_t rpc_status = RPC_ERROR_INTERNAL;
 -- 
-2.25.1
+2.34.1
 
