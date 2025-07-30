@@ -20,33 +20,26 @@ SRC_URI += " \
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 SRC_URI:append:corstone1000 = " \
-    file://0001-Platform-Corstone1000-Align-capsule-UEFI-structs.patch \
-    file://0002-Platform-Corstone1000-Fix-NV-counter-writing.patch \
-    file://0003-Platform-Corstone1000-Enable-firewall-in-FVP.patch \
-    file://0004-Platform-CS1000-Increase-ITS-max-asset-size.patch \
-    file://0005-Platform-CS1000-Increase-RSE_COMMS-buffer-size.patch \
-    file://0006-Platform-CS1000-Increase-buffers-for-EFI-vars.patch \
-    file://0007-Plaform-Corstone1000-Switch-to-metadata-v2.patch \
-    file://0008-Platform-CS1000-Increase-flash-PS-area-size.patch \
-    file://0009-corstone1000-Remove-reset-after-capsule-update.patch \
-    file://0010-platform-CS1000-Add-multicore-support-for-FVP.patch \
-    file://0011-Platform-CS1000-Fix-Bank-offsets.patch \
-    file://0012-Platform-CS1000-Increase-BL2-partition-size.patch \
-    file://0013-CC312-ADAC-Add-PSA_WANT_ALG_SHA_256-definition.patch \
-    file://0014-Platform-CS1000-Add-crypto-configs-for-ADAC.patch \
-    file://0015-Platform-CS1000-Fix-platform-name-in-logs.patch \
-    file://0017-Platform-CS1000-Remove-unused-BL1-files.patch \
-    file://0018-Platform-CS1000-Remove-duplicated-metadata-write.patch \
-    file://0019-Platform-CS1000-Fix-compiler-switch-in-BL1.patch \
-    file://0020-Platform-CS1000-Validate-both-metadata-replicas.patch \
-    file://0021-platform-corstone1000-add-unique-guid-for-mps3.patch \
-    file://0022-CC312-alignment-of-cc312-differences.patch \
+    file://0001-Platform-Corstone1000-Enable-firewall-in-FVP.patch \
+    file://0002-Platform-CS1000-Increase-ITS-max-asset-size.patch \
+    file://0003-Platform-CS1000-Increase-RSE_COMMS-buffer-size.patch \
+    file://0004-Platform-CS1000-Increase-buffers-for-EFI-vars.patch \
+    file://0005-Platform-CS1000-Increase-flash-PS-area-size.patch \
+    file://0006-platform-CS1000-Add-multicore-support-for-FVP.patch \
+    file://0007-Platform-CS1000-Fix-Bank-offsets.patch \
+    file://0008-Platform-CS1000-Increase-BL2-partition-size.patch \
+    file://0009-CC312-ADAC-Add-PSA_WANT_ALG_SHA_256-definition.patch \
+    file://0010-Platform-CS1000-Add-crypto-configs-for-ADAC.patch \
+    file://0011-Platform-CS1000-Fix-platform-name-in-logs.patch \
+    file://0012-Platform-CS1000-Remove-unused-BL1-files.patch \
+    file://0013-Platform-CS1000-Fix-compiler-switch-in-BL1.patch \
+    file://0014-CC312-alignment-of-cc312-differences.patch \
+    file://0015-Platform-corstone1000-Allow-FWU-calls-in-RSE-COMMS.patch \
+    file://0016-FWU-Make-platform-specific-TFM_FWU_BOOTLOADER_LIB-se.patch \
+    file://0017-Platform-CS1000-Enable-FWU-partition.patch \
+    file://0018-Platform-Corstone1000-Implement-Bootloader-Abstracti.patch \
+    file://0019-Platform-Corstone1000-Increase-buffer-sizes.patch \
     file://0023-Platform-CS1000-Remove-duplicate-configuration-parameters.patch \
-    file://0024-Platform-corstone1000-Allow-FWU-calls-in-RSE-COMMS.patch \
-    file://0025-FWU-Make-platform-specific-TFM_FWU_BOOTLOADER_LIB-se.patch \
-    file://0026-Platform-CS1000-Enable-FWU-partition.patch \
-    file://0027-Platform-Corstone1000-Implement-Bootloader-Abstracti.patch \
-    file://0028-Platform-Corstone1000-Increase-buffer-sizes.patch \
     "
 
 FILESEXTRAPATHS:prepend:corstone1000-mps3 := "${THISDIR}/files/corstone1000/psa-adac:"
