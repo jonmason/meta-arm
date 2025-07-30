@@ -1,0 +1,31 @@
+From d43ec82f7e419e6f1e9f5bd002c324b788ee901f Mon Sep 17 00:00:00 2001
+From: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
+Date: Thu, 6 Feb 2025 11:32:04 +0000
+Subject: [PATCH 4/8] Fix PSA FWU IPC psa_fwu_install() return value check
+
+This change adds support to validate if the return type in psa_fwu_install()
+is either PSA_SUCCESS or PSA_SUCCESS_REBOOT. Both the return values are expected.
+Earlier, only PSA_SUCCESS is validated.
+
+Upstream-Status: Pending
+Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
+---
+ .../service/fwu/psa_fwu_m/interface/psa_ipc/psa_fwu_ipc.c       | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/components/service/fwu/psa_fwu_m/interface/psa_ipc/psa_fwu_ipc.c b/components/service/fwu/psa_fwu_m/interface/psa_ipc/psa_fwu_ipc.c
+index a47ae539..3947a809 100644
+--- a/components/service/fwu/psa_fwu_m/interface/psa_ipc/psa_fwu_ipc.c
++++ b/components/service/fwu/psa_fwu_m/interface/psa_ipc/psa_fwu_ipc.c
+@@ -190,7 +190,7 @@ psa_status_t psa_fwu_install(void)
+ 	status = psa_call(caller, TFM_FIRMWARE_UPDATE_SERVICE_HANDLE,
+ 			  TFM_FWU_INSTALL, in_vec, 0,
+ 			  NULL, 0);
+-	if (status != PSA_SUCCESS)
++	if (status != PSA_SUCCESS && status != PSA_SUCCESS_REBOOT)
+ 		EMSG("failed to psa_call: %d", status);
+ 
+ 	return status;
+-- 
+2.25.1
+

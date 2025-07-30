@@ -20,6 +20,14 @@ SRC_URI:append:corstone1000  = " \
     file://0021-Align-PSA-Crypto-structs-with-TF-Mv2.1.1.patch \
     file://0016-Add-the-com-buffer-address-and-page-count.patch \
     file://0017-Platform-Corstone1000-Add-PLATFORM_IS_FVP-toggle-for.patch \
+    file://0018-Integrate-PSA-FWU-IPC-framework-for-Corstone-1000.patch \
+    file://0019-Load-initial-image-state-in-PSA-FWU-M-update-agent.patch \
+    file://0020-Corstone1000-Define-PSA-FWU-image-mapping-structure.patch \
+    file://0021-Fix-PSA-FWU-IPC-psa_fwu_install-return-value-check.patch \
+    file://0022-fwu-Add-EFI-ESRT-v1-support.patch \
+    file://0023-platform-corstone1000-Enable-ESRT-support.patch \
+    file://0024-platform-corstone1000-Add-event-provider-proxy.patch \
+    file://0025-platform-corstone1000-Define-GUID-for-each-payloads.patch \
     "
 # The patches above introduce errors with GCC 14.1, silence them for now
 CFLAGS:append:corstone1000 = " -Wno-int-conversion -Wno-implicit-function-declaration"

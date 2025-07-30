@@ -1,0 +1,141 @@
+From 6a26d67c0b531af07537aefcbe7a46fc71471d4f Mon Sep 17 00:00:00 2001
+From: Ali Can Ozaslan <ali.oezaslan@arm.com>
+Date: Thu, 27 Mar 2025 13:42:03 +0000
+Subject: [PATCH 8/8] platform: corstone1000: Define GUID for FWU payloads
+
+Specify the Global Unique Identifiers (GUIDs) for firmware update (FWU)
+payloads, which include BL2, TFM_S, FIP, and INITRAMFS.
+Note that the GUIDs differ between FVP and MPS3 platforms.
+
+Upstream-Status: Pending
+Signed-off-by: Ali Can Ozaslan <ali.oezaslan@arm.com>
+Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
+---
+ .../infra/corstone1000/corstone1000_config.h  | 43 ++++++++++++++++---
+ .../corstone1000/service_proxy_factory.c      | 41 +++++++++++++++---
+ 2 files changed, 73 insertions(+), 11 deletions(-)
+
+diff --git a/deployments/se-proxy/infra/corstone1000/corstone1000_config.h b/deployments/se-proxy/infra/corstone1000/corstone1000_config.h
+index 4a68c2fa..c4bd9c2c 100644
+--- a/deployments/se-proxy/infra/corstone1000/corstone1000_config.h
++++ b/deployments/se-proxy/infra/corstone1000/corstone1000_config.h
+@@ -11,17 +11,48 @@
+ /* Maximum payload size to be transferred at once to Secure Enclave */
+ #define MAX_PAYLOAD_SIZE 4096
+ 
+-#define CORSTONE1000_FVP_FULL_CAPSULE_UUID  \
+-{ 0x4e, 0x3a, 0x9f, 0x98, 0xe0, 0x46, 0xd0, 0x4c, 0x98, 0x77, 0xa2, 0x5c, 0x70, 0xc0, 0x13, 0x29, }
++/*
++ * GUIDs for capsule updatable firmware images
++ *
++ * The GUIDs are generated with the UUIDv5 format with the following configurations:
++ * Namespace (for FVP GUIDs): 989f3a4e-46e0-4cd0-9877-a25c70c01329
++ * Namespace (for MPS3 GUIDs): df1865d1-90fb-4d59-9c38-c9f2c1bba8cc
++ * Names: in the `fw_name` field: `BL2`, `TFM_S`, `FIP`, `INITRAMFS`
++ * Note: Using the same namespace and `fw_name` values should generate the same GUIDs.
++ */
++
++#define FWU_FVP_BL2_CAPSULE_UUID  \
++{ 0xf9, 0x83, 0xd8, 0xf1, 0xeb, 0xdf, 0x63, 0x53, 0x98, 0xd8, 0x68, 0x6e, 0xe3, 0xb6, 0x9f, 0x4f, }
++
++#define FWU_FVP_TFM_S_CAPSULE_UUID  \
++{ 0x0e, 0x47, 0xad, 0x7f, 0xc5, 0x5e, 0x03, 0x5c, 0xa2, 0xc1, 0x47, 0x56, 0xb4, 0x95, 0xde, 0x61, }
++
++#define FWU_FVP_FIP_CAPSULE_UUID  \
++{ 0x75, 0x36, 0x93, 0xf1, 0x8c, 0x5a, 0x6d, 0x5b, 0x9e, 0xf4, 0x84, 0x67, 0x39, 0xe8, 0x9b, 0xc8, }
++
++#define FWU_FVP_INITRAMFS_CAPSULE_UUID  \
++{ 0xf9, 0xaf, 0x71, 0xf7, 0xe9, 0xc7, 0x99, 0x5f, 0x9e, 0xda, 0x23, 0x69, 0xdd, 0x69, 0x4f, 0x61, }
++
++#define FWU_MPS3_BL2_CAPSULE_UUID  \
++{ 0xaa, 0xef, 0xfb, 0xfb, 0x56, 0x0a, 0xd5, 0x50, 0xb6, 0x51, 0x74, 0x09, 0x1d, 0x3d, 0x62, 0xcf, }
++
++#define FWU_MPS3_TFM_S_CAPSULE_UUID  \
++{ 0xad, 0xc7, 0x4c, 0xaf, 0x2e, 0xee, 0x39, 0x5a, 0xaa, 0xd5, 0xfa, 0xc8, 0xa1, 0xe6, 0x17, 0x3c, }
++
++#define FWU_MPS3_FIP_CAPSULE_UUID  \
++{ 0x96, 0x2f, 0x30, 0x55, 0xf0, 0xc4, 0xf9, 0x5c, 0x86, 0x24, 0xe7, 0xcc, 0x38, 0x8f, 0x2b, 0x68, }
+ 
+-#define CORSTONE1000_MPS3_FULL_CAPSULE_UUID  \
+-{ 0xd1, 0x65, 0x18, 0xdf, 0xfb, 0x90, 0x59, 0x4d, 0x9c, 0x38, 0xc9, 0xf2, 0xc1, 0xbb, 0xa8, 0xcc, }
++#define FWU_MPS3_INITRAMFS_CAPSULE_UUID  \
++{ 0x72, 0xc9, 0x8a, 0x3e, 0x3c, 0xc3, 0xc9, 0x5c, 0x90, 0xa0, 0xcd, 0xd3, 0x15, 0x96, 0x83, 0xea, }
+ 
+ /* Image indexes in the UEFI capsule */
+ enum fwu_image_index
+ {
+-	FWU_IMAGE_INDEX_FULL_CAPSULE = 1,
+-	FWU_IMAGE_INDEX_ESRT,
++	FWU_IMAGE_INDEX_CAPSULE_BL2 = 1,
++	FWU_IMAGE_INDEX_CAPSULE_TFM_S,
++	FWU_IMAGE_INDEX_CAPSULE_FIP,
++	FWU_IMAGE_INDEX_CAPSULE_INITRAMFS,
++	FWU_IMAGE_INDEX_ESRT ,
+ };
+ 
+ #endif /* CORSTONE1000_CONFIG_H */
+diff --git a/deployments/se-proxy/infra/corstone1000/service_proxy_factory.c b/deployments/se-proxy/infra/corstone1000/service_proxy_factory.c
+index ed42e2cb..43a9ac37 100644
+--- a/deployments/se-proxy/infra/corstone1000/service_proxy_factory.c
++++ b/deployments/se-proxy/infra/corstone1000/service_proxy_factory.c
+@@ -28,7 +28,14 @@
+ #include <service/secure_storage/backend/secure_storage_ipc/secure_storage_ipc.h>
+ #include <service/attestation/client/psa/iat_client.h>
+ 
+-/* IMAGE_MAPPING_ELEMENT_COUNT includes the number of images to be updated and ESRT image */
++/* IMAGE_MAPPING_ELEMENT_COUNT includes the number of images to be updated and ESRT image.
++ * It includes:
++ * - BL2
++ * - TFM_S
++ * - FIP
++ * - INITRAMFS
++ * - ESRT
++ */
+ #define IMAGE_MAPPING_ELEMENT_COUNT (FWU_IMAGE_CAPSULE_COUNT + 1)
+ 
+ /* The index to access the ESRT image in the psa_fwu_m_image_mapping structure
+@@ -41,13 +48,37 @@ static const struct rpc_uuid dummy_uuid = { 0 };
+ static struct psa_fwu_m_image_mapping img_mapping[IMAGE_MAPPING_ELEMENT_COUNT] = {
+ #if PLATFORM_IS_FVP
+ 	{
+-		.uuid = CORSTONE1000_FVP_FULL_CAPSULE_UUID,
+-		.component = FWU_IMAGE_INDEX_FULL_CAPSULE
++		.uuid = FWU_FVP_BL2_CAPSULE_UUID,
++		.component = FWU_IMAGE_INDEX_CAPSULE_BL2
++	},
++	{
++		.uuid = FWU_FVP_TFM_S_CAPSULE_UUID,
++		.component = FWU_IMAGE_INDEX_CAPSULE_TFM_S
++	},
++	{
++		.uuid = FWU_FVP_FIP_CAPSULE_UUID,
++		.component = FWU_IMAGE_INDEX_CAPSULE_FIP
++	},
++	{
++		.uuid = FWU_FVP_INITRAMFS_CAPSULE_UUID,
++		.component = FWU_IMAGE_INDEX_CAPSULE_INITRAMFS
+ 	},
+ #else
+ 	{
+-		.uuid = CORSTONE1000_MPS3_FULL_CAPSULE_UUID,
+-		.component = FWU_IMAGE_INDEX_FULL_CAPSULE
++		.uuid = FWU_MPS3_BL2_CAPSULE_UUID,
++		.component = FWU_IMAGE_INDEX_CAPSULE_BL2
++	},
++	{
++		.uuid = FWU_MPS3_TFM_S_CAPSULE_UUID,
++		.component = FWU_IMAGE_INDEX_CAPSULE_TFM_S
++	},
++	{
++		.uuid = FWU_MPS3_FIP_CAPSULE_UUID,
++		.component = FWU_IMAGE_INDEX_CAPSULE_FIP
++	},
++	{
++		.uuid = FWU_MPS3_INITRAMFS_CAPSULE_UUID,
++		.component = FWU_IMAGE_INDEX_CAPSULE_INITRAMFS
+ 	},
+ #endif
+ };
+-- 
+2.25.1
+
