@@ -27,7 +27,7 @@ HAFNIUM_PROJECT ?= "reference"
 
 # Platform must be set for each machine
 HAFNIUM_PLATFORM ?= "invalid"
-HAFNIUM_PLATFORM:qemuarm64 = "qemu_aarch64"
+HAFNIUM_PLATFORM:qemuarm64 = "secure_qemu_aarch64"
 
 # do_deploy will install everything listed in this variable. It is set by
 # default to hafnium
@@ -37,6 +37,8 @@ HAFNIUM_INSTALL_TARGET ?= "hafnium"
 EXTRA_OEMAKE += "PROJECT=${HAFNIUM_PROJECT}"
 
 EXTRA_OEMAKE += "OUT_DIR=${B}"
+
+EXTRA_OEMAKE += "PLATFORM=${HAFNIUM_PLATFORM}"
 
 # Don't use prebuilt binaries for gn and ninja
 EXTRA_OEMAKE += "GN=${STAGING_BINDIR_NATIVE}/gn NINJA=${STAGING_BINDIR_NATIVE}/ninja"
