@@ -68,10 +68,4 @@ do_deploy() {
 }
 addtask deploy after do_install
 
-python() {
-    # https://developer.trustedfirmware.org/T898
-    if d.getVar("BUILD_ARCH") != "x86_64":
-        raise bb.parse.SkipRecipe("Cannot be built on non-x86-64 hosts")
-}
-
 EXCLUDE_FROM_WORLD = "1"
