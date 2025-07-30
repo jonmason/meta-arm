@@ -41,6 +41,7 @@ local_conf_header:
     CORE_IMAGE_EXTRA_INSTALL:firmware += "packagegroup-ts-tests-psa"
 
   capsule: |
+    # These variables are set here since they are not defined in the arm-systemready-firmware recipe or under multiconfig mode.
     CAPSULE_EXTENSION = "uefi.capsule"
-    CAPSULE_FW_VERSION = "6"
-    CAPSULE_NAME = "${MACHINE}-v${CAPSULE_FW_VERSION}"
+    CAPSULE_VERSION = "6"
+    CAPSULE_NAME = "${MACHINE}-v${CAPSULE_VERSION}"
