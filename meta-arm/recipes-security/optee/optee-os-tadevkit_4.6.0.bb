@@ -5,6 +5,7 @@ DESCRIPTION = "OP-TEE TA devkit for build TAs"
 HOMEPAGE = "https://www.op-tee.org/"
 
 DEPENDS += "python3-pycryptodome-native"
+DEPENDS:append:toolchain-clang = " lld-native"
 
 do_install() {
     #install TA devkit

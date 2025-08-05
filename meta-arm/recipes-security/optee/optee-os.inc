@@ -12,7 +12,7 @@ CVE_PRODUCT = "linaro:op-tee op-tee:op-tee_os"
 
 DEPENDS = "python3-pyelftools-native python3-cryptography-native"
 
-DEPENDS:append:toolchain-clang = " compiler-rt"
+DEPENDS:append:toolchain-clang = " lld-native compiler-rt"
 
 SRC_URI = "git://github.com/OP-TEE/optee_os.git;branch=master;protocol=https"
 

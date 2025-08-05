@@ -9,6 +9,7 @@ inherit deploy
 require optee.inc
 
 DEPENDS = "optee-client optee-os-tadevkit python3-cryptography-native openssl"
+DEPENDS:append:toolchain-clang = " lld-native"
 
 SRC_URI = "git://github.com/OP-TEE/optee_test.git;branch=master;protocol=https \
            file://run-ptest \
