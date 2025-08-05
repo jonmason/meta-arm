@@ -1,0 +1,33 @@
+From 328bfd8cd95bb0973e4966dcb4e3efa05d62f3f9 Mon Sep 17 00:00:00 2001
+From: Christophe Thiblot <christophe.thiblot@arm.com>
+Date: Wed, 2 Jul 2025 15:03:55 +0000
+Subject: [PATCH] fix: exclude Boot requirement tests for Corstone-1000
+
+A test compares the value of the Generic Timer register CNTFRQ visible in
+two frames CNTBaseN and CNTCTLBase that are linked in Armv8-A and reflect
+the same value.
+    
+An issue in Corstone-1000 (errata 2142118) makes the CNTFRQ views
+inconsistents and the then test fails. There is no workaround and
+the test is skipped.
+    
+Errata: https://developer.arm.com/documentation/sden2142076/0002/?lang=en
+
+Signed-off-by: Christophe Thiblot <christophe.thiblot@arm.com>
+Upstream-Status: Submitted [https://review.trustedfirmware.org/c/TF-A/tf-a-tests/+/40810]
+---
+ plat/arm/corstone1000/tests_to_skip.txt | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/plat/arm/corstone1000/tests_to_skip.txt b/plat/arm/corstone1000/tests_to_skip.txt
+index d937e42..afa3992 100644
+--- a/plat/arm/corstone1000/tests_to_skip.txt
++++ b/plat/arm/corstone1000/tests_to_skip.txt
+@@ -16,3 +16,4 @@ PSCI CPU Suspend in OSI mode
+ PSCI STAT/for valid composite state CPU suspend
+ FF-A Setup and Discovery/FF-A RXTX remap unmapped region success
+ FF-A Memory Sharing/Normal World VM retrieve request into SPMC
++Boot requirement tests
+-- 
+2.43.0
+
