@@ -66,5 +66,3 @@ do_deploy() {
     cp -rf ${D}/firmware/* ${DEPLOYDIR}/
 }
 addtask deploy after do_install
-
-EXCLUDE_FROM_WORLD = "1"
