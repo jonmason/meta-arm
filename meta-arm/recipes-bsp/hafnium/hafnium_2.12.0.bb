@@ -20,14 +20,14 @@ SRCREV = "2cf2ca7c4b81ab18e9cd363d9a5c8288e2a94fda"
 B = "${WORKDIR}/build"
 
 COMPATIBLE_MACHINE ?= "invalid"
-COMPATIBLE_MACHINE:qemuarm64 = "qemuarm64"
+COMPATIBLE_MACHINE:qemuarm64-secureboot = "qemuarm64"
 
 # Default build 'reference'
 HAFNIUM_PROJECT ?= "reference"
 
 # Platform must be set for each machine
 HAFNIUM_PLATFORM ?= "invalid"
-HAFNIUM_PLATFORM:qemuarm64 = "secure_qemu_aarch64"
+HAFNIUM_PLATFORM:qemuarm64-secureboot = "secure_qemu_aarch64"
 
 # do_deploy will install everything listed in this variable. It is set by
 # default to hafnium
