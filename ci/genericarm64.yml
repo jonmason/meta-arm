@@ -17,5 +17,7 @@ local_conf_header:
   sshpregen: |
     # Allow the use of the pregen keys as this is CI so safe
     COMPATIBLE_MACHINE:pn-ssh-pregen-hostkeys:genericarm64 = "genericarm64"
+  compressed-wic-workaround:
+    IMAGE_FSTYPES += "wic"
 
 machine: genericarm64
