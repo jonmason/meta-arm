@@ -6,7 +6,7 @@ Subject: [PATCH 1/5] Platform: CS1000: Remove unused BL1 files
 These files are not referenced anywhere so removed them to prevent
 confusion.
 Signed-off-by: Bence Balogh <bence.balogh@arm.com>
-Upstream-Status: Pending [Not submitted to upstream yet]
+Upstream-Status: Backport [9a7bdf9ef595196e1e518a27d3c79079aedb5bda]
 ---
  .../arm/corstone1000/bl1/CMakeLists.txt       | 345 ------------------
  .../arm/corstone1000/bl1/bl1_security_cnt.c   |  75 ----

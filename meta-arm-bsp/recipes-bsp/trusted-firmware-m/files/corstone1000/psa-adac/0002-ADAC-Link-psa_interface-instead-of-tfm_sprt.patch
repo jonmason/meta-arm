@@ -12,7 +12,7 @@ tfm_hal_output_spm_log which relies on an SPM, which might not be
 initialized at that point.
 
 Signed-off-by: Bence Balogh <bence.balogh@arm.com>
-Upstream-Status: Pending [Not submitted to upstream yet]
+Upstream-Status: Backport [af0acd1af3e2cc81b12931b31367fb95e49e8272]
 ---
  psa_crypto/CMakeLists.txt | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)

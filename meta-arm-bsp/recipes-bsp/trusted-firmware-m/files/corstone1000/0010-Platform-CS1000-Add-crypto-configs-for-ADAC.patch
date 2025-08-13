@@ -8,7 +8,7 @@ MBEDTLS_PSA_CRYPTO_CONFIG_FILE defines in order to build correctly.
 The default crypto config files are used here.
 
 Signed-off-by: Bence Balogh <bence.balogh@arm.com>
-Upstream-Status: Submitted [https://review.trustedfirmware.org/c/TF-M/trusted-firmware-m/+/31132]
+Upstream-Status: Backport [06c0515a508ccbf60620e9337d5283bd00cd218c]
 ---
  platform/ext/target/arm/corstone1000/CMakeLists.txt | 12 ++++++++++++
  1 file changed, 12 insertions(+)

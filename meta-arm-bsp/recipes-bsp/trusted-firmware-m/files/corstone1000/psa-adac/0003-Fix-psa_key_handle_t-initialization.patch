@@ -9,7 +9,7 @@ struct. In this case, it is defined in the used configuration header
 so the struct cannot be initialized with -1.
 
 Signed-off-by: Bence Balogh <bence.balogh@arm.com>
-Upstream-Status: Pending [Not submitted to upstream yet]
+Upstream-Status: Inappropriate [mbedcrypto configs have to be fixed to build secure-debug mps3 without this patch]
 ---
  psa_crypto/adac_crypto_psa_mac.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)

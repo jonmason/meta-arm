@@ -6,7 +6,7 @@ Subject: [PATCH 10/10] platform: CS1000: Add multicore support for FVP
 This changeset adds the support to enable the secondary cores for
 the Corstone-1000 FVP
 
-Upstream-Status: Submitted [https://review.trustedfirmware.org/c/TF-M/trusted-firmware-m/+/29242]
+Upstream-Status: Backport [86383bb0ee5a99343c23c0b6fb9a1d161857a75c]
 Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
 ---
  .../target/arm/corstone1000/CMakeLists.txt    |  6 +++

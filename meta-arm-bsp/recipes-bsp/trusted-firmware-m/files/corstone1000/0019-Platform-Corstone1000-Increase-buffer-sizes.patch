@@ -11,7 +11,7 @@ EFI variables. These ACS tests started failing after introducing new
 version of U-Boot, Trusted-Services and Trusted-Firmware-M while
 implementing PSA FWU support.
 
-Upstream-Status: Submitted [https://review.trustedfirmware.org/c/TF-M/trusted-firmware-m/+/39517/1]
+Upstream-Status: Backport [bd80dee733e792eadfd2115f4bfa6bad748e5ce5]
 Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
 ---
  platform/ext/target/arm/corstone1000/config_tfm_target.h | 4 ++--

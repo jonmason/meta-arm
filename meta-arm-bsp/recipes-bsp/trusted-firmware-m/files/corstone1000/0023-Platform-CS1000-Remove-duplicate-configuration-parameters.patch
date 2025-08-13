@@ -11,7 +11,7 @@ The whole rationale behind this is for the vendor to be able
 to override the configuration using the cmake file.
 
 Signed-off-by: Yogesh Wani <yogesh.wani@arm.com>
-Upstream-Status: Submitted [https://review.trustedfirmware.org/c/TF-M/trusted-firmware-m/+/39598]
+Upstream-Status: Backport [948cb8e7601dcf1fe822d855c77749287fe6d9bd]
 ---
  platform/ext/target/arm/corstone1000/config.cmake | 1 -
  1 file changed, 1 deletion(-)

@@ -78,7 +78,7 @@ with the following changes:
 -> Add image offsets and sizes for each payload to facilitate
    accurate image management during updates.
 
-Upstream-Status: Submitted [https://review.trustedfirmware.org/c/TF-M/trusted-firmware-m/+/39516/1]
+Upstream-Status: Backport [fb790fc19904a0ca9bacba7e58cf4dff5576b1d0]
 Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
 Signed-off-by: Ali Can Ozaslan <ali.oezaslan@arm.com>
 ---

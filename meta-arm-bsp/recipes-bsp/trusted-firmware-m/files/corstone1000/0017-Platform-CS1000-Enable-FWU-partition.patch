@@ -9,7 +9,7 @@ Increase the necessary flags to enable firmware update partition.
 Set TFM_FWU_BOOTLOADER_LIB to use Corstone-1000 specific bootloader
 configuration. Fix linker issues caused by enablement.
 
-Upstream-Status: Submitted [https://review.trustedfirmware.org/c/TF-M/trusted-firmware-m/+/39515]
+Upstream-Status: Backport [0107057d1411ec68e374fbd0ddc0e12abd5754ec]
 Signed-off-by: Ali Can Ozaslan <ali.oezaslan@arm.com>
 
 ---

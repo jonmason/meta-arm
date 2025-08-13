@@ -25,7 +25,7 @@ This commit:
   loaded during the runtime TFM_S execution, only in BL2.
 
 Signed-off-by: Bence Balogh <bence.balogh@arm.com>
-Upstream-Status: Pending [Not submitted to upstream yet]
+Upstream-Status: Backport [f25649cc0de56f360069c6128670f7533ba5e14d]
 ---
  .../target/arm/corstone1000/CMakeLists.txt    |  7 ++++
  .../corstone1000/fw_update_agent/fwu_agent.c  | 33 +++++++++----------
