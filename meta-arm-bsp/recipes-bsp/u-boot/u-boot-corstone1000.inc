@@ -1,8 +1,8 @@
 # Corstone1000 specific U-boot support
 
 DEPENDS:append = " openssl-native efitools-native"
-CORSTONE1000_DEVICE_TREE:corstone1000-mps3 = "corstone1000-mps3"
-CORSTONE1000_DEVICE_TREE:corstone1000-fvp = "corstone1000-fvp"
+CORSTONE1000_DEVICE_TREE:corstone1000-mps3 = "arm/corstone1000-mps3"
+CORSTONE1000_DEVICE_TREE:corstone1000-fvp = "arm/corstone1000-fvp"
 EXTRA_OEMAKE:append = ' DEVICE_TREE=${CORSTONE1000_DEVICE_TREE}'
 
 UBOOT_CONFIG ??= "EFI"
@@ -63,6 +63,11 @@ SRC_URI:append = " \
     ${@bb.utils.contains('MACHINE_FEATURES', 'corstone1000-extsys', \
                          '', 'file://0037-corstone1000-purge-remoteproc-DTS-node.patch' , d)} \
     "
+
+# Add OF_UPSTREAM support
+SRC_URI:append = " \
+    file://0038-corstone1000-enable-OF_UPSTREAM-device-tree-support.patch \
+"
 
 do_configure:append() {
    openssl req -x509 -sha256 -newkey rsa:2048 -subj /CN=CRT/ -keyout ${B}/CRT.key -out ${B}/corstone1000_defconfig/CRT.crt -nodes -days 365
