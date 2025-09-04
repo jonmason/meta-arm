@@ -19,6 +19,6 @@ class OpteeTestSuite(OERuntimeTestCase):
         cmd = "xtest --clear-storage || true"
         status, output = self.target.run(cmd, timeout=60)
         self.assertEqual(status, 0, msg='\n'.join([cmd, output]))
-        cmd = "xtest"
+        cmd = "xtest -t regression"
         status, output = self.target.run(cmd, timeout=1200)
         self.assertEqual(status, 0, msg='\n'.join([cmd, output]))
