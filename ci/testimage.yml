@@ -17,5 +17,3 @@ local_conf_header:
     IMAGE_FEATURES += "ssh-server-dropbear"
   sshkeys: |
     CORE_IMAGE_EXTRA_INSTALL += "ssh-pregen-hostkeys"
-  universally_failing_tests: |
-    TEST_SUITES:remove = "opkg"
