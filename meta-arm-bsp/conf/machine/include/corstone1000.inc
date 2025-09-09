@@ -66,7 +66,7 @@ ARM_SYSTEMREADY_FIRMWARE = "${FIRMWARE_DEPLOYMENT}:do_deploy \
 ARM_SYSTEMREADY_ACS_CONSOLE ?= "default"
 
 # Workaround IMAGE_ROOTFS_EXTRA_SPACE being ignored when images are repacked
-IMAGE_ROOTFS_EXTRA_ARGS += "--extra-space ${@${IMAGE_ROOTFS_EXTRA_SPACE}}K"
+IMAGE_ROOTFS_EXTRA_ARGS += "--extra-filesystem-space ${@${IMAGE_ROOTFS_EXTRA_SPACE}}K"
 
 # Enable Authenticated variable support in SmmGW
 SMMGW_AUTH_VAR = "1"
