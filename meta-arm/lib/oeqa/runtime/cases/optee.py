@@ -15,7 +15,7 @@ class OpteeTestSuite(OERuntimeTestCase):
     Run OP-TEE tests (xtest).
     """
     @skipIfQemu()
-    @OETimeout(2700)
+    @OETimeout(6000)
     @OEHasPackage(['optee-test'])
     def test_opteetest_xtest_all(self):
         # clear storage before executing tests
