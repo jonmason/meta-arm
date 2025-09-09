@@ -21,6 +21,7 @@ local_conf_header:
     # Include TS PSA Arch tests into image
     IMAGE_INSTALL:append = " packagegroup-ts-tests-psa"
     CORE_IMAGE_EXTRA_INSTALL += "optee-test"
+    TEST_SUITES:append = " optee"
     # Set the TS environment
     TS_ENV = "sp"
     # Enable and configure semihosting
