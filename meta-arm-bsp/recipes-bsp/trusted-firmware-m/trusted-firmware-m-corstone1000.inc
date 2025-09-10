@@ -6,6 +6,10 @@ TFM_PLATFORM = "arm/corstone1000"
 
 TFM_DEBUG = "1"
 
+# These dependencies are needed for TF-M v2.2.0 and above
+# https://github.com/TrustedFirmware-M/trusted-firmware-m/blob/TF-Mv2.2.0/tools/requirements.txt
+DEPENDS:append = " clang-native python3-rich-native python3-pyelftools-native"
+
 ## Default is the MPS3 board
 TFM_PLATFORM_IS_FVP ?= "FALSE"
 EXTRA_OECMAKE += "-DPLATFORM_IS_FVP=${TFM_PLATFORM_IS_FVP}"
@@ -20,26 +24,15 @@ SRC_URI += " \
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 SRC_URI:append:corstone1000 = " \
-    file://0001-Platform-Corstone1000-Enable-firewall-in-FVP.patch \
-    file://0002-Platform-CS1000-Increase-ITS-max-asset-size.patch \
-    file://0003-Platform-CS1000-Increase-RSE_COMMS-buffer-size.patch \
-    file://0004-Platform-CS1000-Increase-buffers-for-EFI-vars.patch \
-    file://0005-Platform-CS1000-Increase-flash-PS-area-size.patch \
-    file://0006-platform-CS1000-Add-multicore-support-for-FVP.patch \
-    file://0007-Platform-CS1000-Fix-Bank-offsets.patch \
-    file://0008-Platform-CS1000-Increase-BL2-partition-size.patch \
-    file://0009-CC312-ADAC-Add-PSA_WANT_ALG_SHA_256-definition.patch \
-    file://0010-Platform-CS1000-Add-crypto-configs-for-ADAC.patch \
-    file://0011-Platform-CS1000-Fix-platform-name-in-logs.patch \
-    file://0012-Platform-CS1000-Remove-unused-BL1-files.patch \
-    file://0013-Platform-CS1000-Fix-compiler-switch-in-BL1.patch \
-    file://0014-CC312-alignment-of-cc312-differences.patch \
-    file://0015-Platform-corstone1000-Allow-FWU-calls-in-RSE-COMMS.patch \
-    file://0016-FWU-Make-platform-specific-TFM_FWU_BOOTLOADER_LIB-se.patch \
-    file://0017-Platform-CS1000-Enable-FWU-partition.patch \
-    file://0018-Platform-Corstone1000-Implement-Bootloader-Abstracti.patch \
-    file://0019-Platform-Corstone1000-Increase-buffer-sizes.patch \
-    file://0023-Platform-CS1000-Remove-duplicate-configuration-parameters.patch \
+    file://0001-Platform-CS1000-Remove-unused-BL1-files.patch \
+    file://0002-Platform-Corstone1000-Fix-BL1-compiler-switch-and-re.patch \
+    file://0003-CC312-alignment-of-cc312-differences-between-fvp-and.patch \
+    file://0004-Platform-Corstone1000-Enable-FWU-partition.patch \
+    file://0005-Platform-Corstone1000-Implement-Bootloader-Abstracti.patch \
+    file://0006-Platform-Corstone1000-Increase-buffer-sizes.patch \
+    file://0007-Platform-Corstone1000-Remove-duplicate-configuration.patch \
+    file://0008-Platform-Corstone1000-Increase-BL1-size-and-align-bi.patch \
+    file://0009-Platform-CS1K-Adapt-ADAC-enabled-build-to-the-new-BL.patch \
     "
 
 FILESEXTRAPATHS:prepend:corstone1000-mps3 := "${THISDIR}/files/corstone1000/psa-adac:"
@@ -58,6 +51,7 @@ do_install() {
 
 create_bl1_image(){
     dd conv=notrunc bs=1 if=${D}/firmware/bl1_1.bin of=${D}/firmware/bl1.bin seek=0
-    dd conv=notrunc bs=1 if=${D}/firmware/bl1_provisioning_bundle.bin of=${D}/firmware/bl1.bin seek=40960
+    # Size of bl1_1.bin is 58KB (59392 bytes)  
+    dd conv=notrunc bs=1 if=${D}/firmware/bl1_provisioning_bundle.bin of=${D}/firmware/bl1.bin seek=59392
 }
 do_install[postfuncs] += "create_bl1_image"

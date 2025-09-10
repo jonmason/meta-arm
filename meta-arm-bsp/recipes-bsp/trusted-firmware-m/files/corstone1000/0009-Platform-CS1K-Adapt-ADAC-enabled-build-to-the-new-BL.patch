@@ -1,0 +1,45 @@
+From 31d3a21a2012d64c7acff55183477c7593ef4b31 Mon Sep 17 00:00:00 2001
+From: Antonio de Angelis <Antonio.deAngelis@arm.com>
+Date: Fri, 18 Apr 2025 21:00:55 +0100
+Subject: [PATCH] Platform: CS1K: Adapt ADAC enabled build to the new BL2 build
+ restructure
+
+The BL2 build was restructured in order to always migrate to use
+MCUBOOT_USE_PSA_CRYPTO and then support hardware crypto drivers
+through the PSA driver interface instead of the _ALT interface
+which will be deprecated in newer versions of Mbed TLS. The ADAC
+enabled library will then use PSA Crypto APIs through the thin
+PSA Crypto core which is available in the BL2 build, without the
+need to link the old driver through psa_adac_cc312.
+
+Upstream-Status: Backport [36cc3a7cda2356d3a256e1271b75a93f35531b2f]
+Signed-off-by: Antonio de Angelis <antonio.deangelis@arm.com>
+Change-Id: I413116406ee18506ed3bcfe83ce7709542ea6f47
+Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
+---
+ platform/ext/target/arm/corstone1000/CMakeLists.txt | 9 ---------
+ 1 file changed, 9 deletions(-)
+
+diff --git a/platform/ext/target/arm/corstone1000/CMakeLists.txt b/platform/ext/target/arm/corstone1000/CMakeLists.txt
+index 6105c951b..ca5a034e3 100644
+--- a/platform/ext/target/arm/corstone1000/CMakeLists.txt
++++ b/platform/ext/target/arm/corstone1000/CMakeLists.txt
+@@ -436,15 +436,6 @@ if (${PLATFORM_PSA_ADAC_SECURE_DEBUG})
+             trusted-firmware-m-psa-adac
+     )
+ 
+-    target_link_libraries(trusted-firmware-m-psa-adac
+-        PRIVATE
+-            psa_adac_cc312
+-    )
+-
+-    target_link_libraries(psa_adac_psa_crypto
+-        PRIVATE
+-            bl2_mbedcrypto_config
+-    )
+ endif()
+ 
+ 
+-- 
+2.43.0
+

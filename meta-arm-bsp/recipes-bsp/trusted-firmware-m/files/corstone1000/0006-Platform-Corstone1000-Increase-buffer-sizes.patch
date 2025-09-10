@@ -1,7 +1,7 @@
-From e3d94988f14b3004606c247b39bda5ade119545f Mon Sep 17 00:00:00 2001
+From def9095e7bfd5a82ba6cd4756e990cd9ae7307ab Mon Sep 17 00:00:00 2001
 From: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
-Date: Wed, 12 Mar 2025 13:10:47 +0000
-Subject: [PATCH 2/2] Platform: Corstone1000: Increase buffer sizes
+Date: Mon, 16 Jun 2025 14:44:39 +0100
+Subject: [PATCH 6/7] Platform: Corstone1000: Increase buffer sizes
 
 Increase PSA_MAX_ASSET_SIZE and CRYPTO_IOVEC_BUFFER_SIZE
 to accommodate large size EFI variables set by new U-Boot version.
@@ -14,14 +14,21 @@ implementing PSA FWU support.
 Upstream-Status: Backport [bd80dee733e792eadfd2115f4bfa6bad748e5ce5]
 Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
 ---
- platform/ext/target/arm/corstone1000/config_tfm_target.h | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ platform/ext/target/arm/corstone1000/config_tfm_target.h | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/platform/ext/target/arm/corstone1000/config_tfm_target.h b/platform/ext/target/arm/corstone1000/config_tfm_target.h
-index 0b410dfd4..a65305bd4 100644
+index 4920f6708..cf13712a1 100644
 --- a/platform/ext/target/arm/corstone1000/config_tfm_target.h
 +++ b/platform/ext/target/arm/corstone1000/config_tfm_target.h
-@@ -24,11 +24,11 @@
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2022-2024, Arm Limited. All rights reserved.
++ * SPDX-FileCopyrightText: Copyright The TrustedFirmware-M Contributors
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  *
+@@ -27,13 +27,13 @@
  #define ITS_MAX_ASSET_SIZE   2048
  
  /* The maximum asset size to be stored in the Protected Storage */
@@ -34,7 +41,9 @@ index 0b410dfd4..a65305bd4 100644
  /* This is also has to be increased to fit the EFI variables into the iovecs. */
 -#define CRYPTO_IOVEC_BUFFER_SIZE    6000
 +#define CRYPTO_IOVEC_BUFFER_SIZE    7200
- #endif /* __CONFIG_TFM_TARGET_H__ */
+ 
+ /* The Mailbox partition is used as an NS Agent so its stack size is used to
+  * determine the PSP and PSPLIM during the SFN backend initialization. It has to
 -- 
-2.25.1
+2.43.0
 

@@ -1,7 +1,7 @@
-From 929ac4fdf22bdc84f7363be3f9604c586800e2c1 Mon Sep 17 00:00:00 2001
+From ed7dc0b54d8a654916c62fed4a201872e94233cc Mon Sep 17 00:00:00 2001
 From: Ali Can Ozaslan <ali.oezaslan@arm.com>
 Date: Tue, 15 Oct 2024 12:50:16 +0000
-Subject: [PATCH 5/6] Platform: Corstone1000: Implement Bootloader Abstraction
+Subject: [PATCH 5/8] Platform: Corstone1000: Implement Bootloader Abstraction
  Layer
 
 This commit introduces the Bootloader Abstraction Layer (BAL) for
@@ -82,9 +82,9 @@ Upstream-Status: Backport [fb790fc19904a0ca9bacba7e58cf4dff5576b1d0]
 Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
 Signed-off-by: Ali Can Ozaslan <ali.oezaslan@arm.com>
 ---
- .../target/arm/corstone1000/CMakeLists.txt    |   36 +-
- .../arm/corstone1000/bl1/provisioning.c       |    4 +-
- .../arm/corstone1000/bl2/security_cnt_bl2.c   |    6 +-
+ .../target/arm/corstone1000/CMakeLists.txt    |   34 +-
+ .../arm/corstone1000/bl1/provisioning.c       |    2 +-
+ .../arm/corstone1000/bl2/security_cnt_bl2.c   |    5 +-
  .../arm/corstone1000/bootloader/fwu_agent.h   |  123 +
  .../corstone1000/bootloader/fwu_config.h.in   |   58 +
  .../bootloader/mcuboot/CMakeLists.txt         |   52 +
@@ -92,13 +92,13 @@ Signed-off-by: Ali Can Ozaslan <ali.oezaslan@arm.com>
  .../mcuboot}/uefi_fmp.c                       |  111 +-
  .../tfm_bootloader_fwu_abstraction.h          |  189 ++
  .../uefi_fmp.h                                |    7 +-
- .../ext/target/arm/corstone1000/config.cmake  |    5 +-
- .../corstone1000/fw_update_agent/fwu_agent.c  | 1350 ----------
+ .../ext/target/arm/corstone1000/config.cmake  |   11 +-
+ .../corstone1000/fw_update_agent/fwu_agent.c  | 1405 ----------
  .../corstone1000/fw_update_agent/fwu_agent.h  |   73 -
- .../fw_update_agent/uefi_capsule_parser.c     |  175 --
+ .../fw_update_agent/uefi_capsule_parser.c     |  176 --
  .../fw_update_agent/uefi_capsule_parser.h     |   33 -
  .../arm/corstone1000/partition/flash_layout.h |   14 +-
- 16 files changed, 2882 insertions(+), 1699 deletions(-)
+ 16 files changed, 2883 insertions(+), 1755 deletions(-)
  create mode 100644 platform/ext/target/arm/corstone1000/bootloader/fwu_agent.h
  create mode 100644 platform/ext/target/arm/corstone1000/bootloader/fwu_config.h.in
  create mode 100644 platform/ext/target/arm/corstone1000/bootloader/mcuboot/CMakeLists.txt
@@ -112,16 +112,9 @@ Signed-off-by: Ali Can Ozaslan <ali.oezaslan@arm.com>
  delete mode 100644 platform/ext/target/arm/corstone1000/fw_update_agent/uefi_capsule_parser.h
 
 diff --git a/platform/ext/target/arm/corstone1000/CMakeLists.txt b/platform/ext/target/arm/corstone1000/CMakeLists.txt
-index 3323cb8ce..e49dca49c 100644
+index 3573c8492..6105c951b 100644
 --- a/platform/ext/target/arm/corstone1000/CMakeLists.txt
 +++ b/platform/ext/target/arm/corstone1000/CMakeLists.txt
-@@ -1,5 +1,5 @@
- #-------------------------------------------------------------------------------
--# Copyright (c) 2020-2024, Arm Limited. All rights reserved.
-+# Copyright (c) 2020-2025, Arm Limited. All rights reserved.
- # Copyright (c) 2022 Cypress Semiconductor Corporation (an Infineon company)
- # or an affiliate of Cypress Semiconductor Corporation. All rights reserved.
- #
 @@ -115,7 +115,7 @@ target_include_directories(platform_s
          ${PLATFORM_DIR}/ext/target/arm/drivers/usart/pl011
      INTERFACE
@@ -138,24 +131,24 @@ index 3323cb8ce..e49dca49c 100644
 -        fw_update_agent/uefi_capsule_parser.c
 -        fw_update_agent/fwu_agent.c
 -        fw_update_agent/uefi_fmp.c
-+	bootloader/mcuboot/tfm_mcuboot_fwu.c
-+	bootloader/mcuboot/uefi_fmp.c
++        bootloader/mcuboot/tfm_mcuboot_fwu.c
++        bootloader/mcuboot/uefi_fmp.c
          soft_crc/soft_crc.c
          io/io_block.c
          io/io_flash.c
-@@ -201,9 +200,8 @@ target_sources(platform_bl1_1
+@@ -199,9 +198,8 @@ target_sources(platform_bl1_1
          ./Native_Driver/watchdog.c
          ./bl1/boot_hal_bl1_1.c
          ./bl1/provisioning.c
 -        ./fw_update_agent/fwu_agent.c
 -        ./fw_update_agent/uefi_capsule_parser.c
 -        ./fw_update_agent/uefi_fmp.c
-+	./bootloader/mcuboot/tfm_mcuboot_fwu.c
-+	./bootloader/mcuboot/uefi_fmp.c
++        ./bootloader/mcuboot/tfm_mcuboot_fwu.c
++        ./bootloader/mcuboot/uefi_fmp.c
          ./soft_crc/soft_crc.c
          $<$<NOT:$<BOOL:${PLATFORM_DEFAULT_OTP}>>:${PLATFORM_DIR}/ext/accelerator/cc312/otp_cc312.c>
          $<$<NOT:$<BOOL:${TFM_BL1_SOFTWARE_CRYPTO}>>:${CMAKE_CURRENT_SOURCE_DIR}/bl1/cc312_rom_crypto.c>
-@@ -233,7 +231,7 @@ target_include_directories(platform_bl1_1_interface
+@@ -232,7 +230,7 @@ target_include_directories(platform_bl1_1_interface
          ./Device/Config
          ./Native_Driver
          ./CMSIS_Driver/Config
@@ -164,16 +157,16 @@ index 3323cb8ce..e49dca49c 100644
          ./soft_crc
          ${PLATFORM_DIR}/ext/target/arm/drivers/flash/cfi
          ${PLATFORM_DIR}/ext/target/arm/drivers/flash/common
-@@ -245,6 +243,7 @@ target_include_directories(platform_bl1_1_interface
+@@ -244,6 +242,7 @@ target_include_directories(platform_bl1_1_interface
          ${PLATFORM_DIR}/ext/target/arm/drivers/usart/pl011
          $<$<BOOL:${CRYPTO_HW_ACCELERATOR}>:${CMAKE_SOURCE_DIR}/platform/ext/accelerator/interface>
          ${PLATFORM_DIR}/ext/accelerator/cc312/
-+        ${CMAKE_SOURCE_DIR}/lib/fih/inc/
++	${CMAKE_SOURCE_DIR}/lib/fih/inc/
  )
  
  target_link_libraries(platform_bl1_1
-@@ -252,6 +251,11 @@ target_link_libraries(platform_bl1_1
-         $<$<NOT:$<BOOL:${TFM_BL1_SOFTWARE_CRYPTO}>>:cc312_rom>
+@@ -251,6 +250,11 @@ target_link_libraries(platform_bl1_1
+         $<$<NOT:$<BOOL:${TFM_BL1_SOFTWARE_CRYPTO}>>:cc3xx>
  )
  
 +target_include_directories(platform_bl1_1
@@ -206,24 +199,24 @@ index 3323cb8ce..e49dca49c 100644
          Native_Driver/arm_watchdog_drv.c
          fip_parser/fip_parser.c
 -        fw_update_agent/fwu_agent.c
-+	bootloader/mcuboot/tfm_mcuboot_fwu.c
++        bootloader/mcuboot/tfm_mcuboot_fwu.c
          bl2/security_cnt_bl2.c
          $<$<NOT:$<BOOL:${PLATFORM_DEFAULT_OTP}>>:${PLATFORM_DIR}/ext/accelerator/cc312/otp_cc312.c>
          io/io_block.c
-@@ -358,6 +363,12 @@ target_compile_definitions(bl2
+@@ -356,6 +361,12 @@ target_compile_definitions(bl2
          $<$<BOOL:${CRYPTO_HW_ACCELERATOR_OTP_PROVISIONING}>:CRYPTO_HW_ACCELERATOR_OTP_PROVISIONING>
          $<$<BOOL:${PLATFORM_PSA_ADAC_SECURE_DEBUG}>:PLATFORM_PSA_ADAC_SECURE_DEBUG>
  )
 +
 +target_include_directories(bl2
 +    PRIVATE
-+	${CMAKE_SOURCE_DIR}/interface/include # for psa/error.h
++       ${CMAKE_SOURCE_DIR}/interface/include # for psa/error.h
 +)
 +
  target_compile_definitions(bootutil
      PRIVATE
          MULTIPLE_EXECUTABLE_RAM_REGIONS
-@@ -369,7 +380,7 @@ target_include_directories(platform_bl2
+@@ -367,7 +378,7 @@ target_include_directories(platform_bl2
          Device/Include
          fip_parser
          Native_Driver
@@ -232,7 +225,7 @@ index 3323cb8ce..e49dca49c 100644
          soft_crc
          io
          ${PLATFORM_DIR}/ext/target/arm/drivers/flash/common
-@@ -388,6 +399,7 @@ target_include_directories(platform_bl2
+@@ -386,6 +397,7 @@ target_include_directories(platform_bl2
          ${MCUBOOT_PATH}/boot/bootutil/include # for fault_injection_hardening.h only
          ${CMAKE_BINARY_DIR}/bl2/ext/mcuboot # for mcuboot_config.h only
          $<BUILD_INTERFACE:${BL2_SOURCE}/ext/mcuboot/include>
@@ -241,17 +234,10 @@ index 3323cb8ce..e49dca49c 100644
  
  #========================= ns_agent_mailbox ===================================#
 diff --git a/platform/ext/target/arm/corstone1000/bl1/provisioning.c b/platform/ext/target/arm/corstone1000/bl1/provisioning.c
-index cc42bc0a1..1afa9d542 100644
+index b8b03ad55..b28c840f8 100644
 --- a/platform/ext/target/arm/corstone1000/bl1/provisioning.c
 +++ b/platform/ext/target/arm/corstone1000/bl1/provisioning.c
-@@ -1,5 +1,5 @@
- /*
-- * Copyright (c) 2021-2023, Arm Limited. All rights reserved.
-+ * Copyright (c) 2021-2023, 2025, Arm Limited. All rights reserved.
-  *
-  * SPDX-License-Identifier: BSD-3-Clause
-  *
-@@ -100,7 +100,7 @@ enum tfm_plat_err_t provision_assembly_and_test(void)
+@@ -92,7 +92,7 @@ enum tfm_plat_err_t provision_assembly_and_test(void)
      }
  
      err = fwu_metadata_provision();
@@ -261,26 +247,20 @@ index cc42bc0a1..1afa9d542 100644
      }
  
 diff --git a/platform/ext/target/arm/corstone1000/bl2/security_cnt_bl2.c b/platform/ext/target/arm/corstone1000/bl2/security_cnt_bl2.c
-index da9f74e1c..c74c67d89 100644
+index da9f74e1c..850ed46ac 100644
 --- a/platform/ext/target/arm/corstone1000/bl2/security_cnt_bl2.c
 +++ b/platform/ext/target/arm/corstone1000/bl2/security_cnt_bl2.c
-@@ -1,5 +1,5 @@
- /*
-- * Copyright (c) 2019-2021, Arm Limited. All rights reserved.
-+ * Copyright (c) 2019-2021, 2025, Arm Limited. All rights reserved.
-  *
-  * SPDX-License-Identifier: BSD-3-Clause
-  *
-@@ -76,7 +76,7 @@ int32_t boot_nv_security_counter_update(uint32_t image_id,
+@@ -76,7 +76,8 @@ int32_t boot_nv_security_counter_update(uint32_t image_id,
  {
      enum tfm_nv_counter_t nv_counter;
      enum tfm_plat_err_t err;
 -    enum fwu_agent_error_t fwu_err;
++    bool provisioning_required;
 +    psa_status_t fwu_err;
  
      nv_counter = get_nv_counter_from_image_id(image_id);
      if (nv_counter >= TFM_BOOT_NV_COUNTER_MAX) {
-@@ -100,7 +100,7 @@ int32_t boot_nv_security_counter_update(uint32_t image_id,
+@@ -100,7 +101,7 @@ int32_t boot_nv_security_counter_update(uint32_t image_id,
              return -1;
          }
  
@@ -291,12 +271,12 @@ index da9f74e1c..c74c67d89 100644
  
 diff --git a/platform/ext/target/arm/corstone1000/bootloader/fwu_agent.h b/platform/ext/target/arm/corstone1000/bootloader/fwu_agent.h
 new file mode 100644
-index 000000000..6b3a38b64
+index 000000000..aa5af15b2
 --- /dev/null
 +++ b/platform/ext/target/arm/corstone1000/bootloader/fwu_agent.h
 @@ -0,0 +1,123 @@
 +/*
-+ * Copyright (c) 2021-2023, 2025, Arm Limited. All rights reserved.
++ * Copyright (c) 2021-2023, Arm Limited. All rights reserved.
 + *
 + * SPDX-License-Identifier: BSD-3-Clause
 + *
@@ -328,10 +308,10 @@ index 000000000..6b3a38b64
 +
 +#define EFI_SYSTEM_RESOURCE_TABLE_FIRMWARE_RESOURCE_VERSION  1
 +typedef struct {
-+    uint32_t                signature;
-+    uint32_t                header_size;
-+    uint32_t                fw_version;
-+    uint32_t                lowest_supported_version;
++    uint32_t signature;
++    uint32_t header_size;
++    uint32_t fw_version;
++    uint32_t lowest_supported_version;
 +} __packed fmp_payload_header_t;
 +
 +typedef struct {
@@ -354,20 +334,20 @@ index 000000000..6b3a38b64
 +
 +/* ESRT v1 */
 +struct __attribute__((__packed__)) efi_system_resource_entry {
-+	struct efi_guid fw_class;
-+	uint32_t fw_type;
-+	uint32_t fw_version;
-+	uint32_t lowest_supported_fw_version;
-+	uint32_t capsule_flags;
-+	uint32_t last_attempt_version;
-+	uint32_t last_attempt_status;
++    struct   efi_guid fw_class;
++    uint32_t fw_type;
++    uint32_t fw_version;
++    uint32_t lowest_supported_fw_version;
++    uint32_t capsule_flags;
++    uint32_t last_attempt_version;
++    uint32_t last_attempt_status;
 +};
 +
 +struct __attribute__((__packed__)) efi_system_resource_table {
-+	uint32_t fw_resource_count;
-+	uint32_t fw_resource_count_max;
-+	uint64_t fw_resource_version;
-+	struct efi_system_resource_entry entries[];
++    uint32_t fw_resource_count;
++    uint32_t fw_resource_count_max;
++    uint64_t fw_resource_version;
++    struct   efi_system_resource_entry entries[];
 +};
 +
 +psa_status_t fwu_metadata_provision(void);
@@ -420,12 +400,12 @@ index 000000000..6b3a38b64
 +#endif /* FWU_AGENT_H */
 diff --git a/platform/ext/target/arm/corstone1000/bootloader/fwu_config.h.in b/platform/ext/target/arm/corstone1000/bootloader/fwu_config.h.in
 new file mode 100644
-index 000000000..79e310e29
+index 000000000..acb8de05e
 --- /dev/null
 +++ b/platform/ext/target/arm/corstone1000/bootloader/fwu_config.h.in
 @@ -0,0 +1,58 @@
 +/*
-+ * Copyright (c) 2025, Arm Limited. All rights reserved.
++ * SPDX-FileCopyrightText: Copyright The TrustedFirmware-M Contributors
 + *
 + * SPDX-License-Identifier: BSD-3-Clause
 + *
@@ -484,12 +464,12 @@ index 000000000..79e310e29
 +#endif /* __FWU_CONFIG_H__ */
 diff --git a/platform/ext/target/arm/corstone1000/bootloader/mcuboot/CMakeLists.txt b/platform/ext/target/arm/corstone1000/bootloader/mcuboot/CMakeLists.txt
 new file mode 100644
-index 000000000..7d57a57c7
+index 000000000..13a3caf54
 --- /dev/null
 +++ b/platform/ext/target/arm/corstone1000/bootloader/mcuboot/CMakeLists.txt
 @@ -0,0 +1,52 @@
 +#-------------------------------------------------------------------------------
-+# Copyright (c) 2021-2022, 2025, Arm Limited. All rights reserved.
++# SPDX-FileCopyrightText: Copyright The TrustedFirmware-M Contributors
 +#
 +# SPDX-License-Identifier: BSD-3-Clause
 +#
@@ -505,7 +485,7 @@ index 000000000..7d57a57c7
 +        ${CMAKE_SOURCE_DIR}/bl2/src/flash_map.c
 +        ${CMAKE_SOURCE_DIR}/bl2/ext/mcuboot/flash_map_extended.c
 +        ./tfm_mcuboot_fwu.c
-+	./uefi_fmp.c
++        ./uefi_fmp.c
 +        $<$<BOOL:${DEFAULT_MCUBOOT_FLASH_MAP}>:${CMAKE_SOURCE_DIR}/bl2/src/default_flash_map.c>
 +)
 +
@@ -542,12 +522,12 @@ index 000000000..7d57a57c7
 +)
 diff --git a/platform/ext/target/arm/corstone1000/bootloader/mcuboot/tfm_mcuboot_fwu.c b/platform/ext/target/arm/corstone1000/bootloader/mcuboot/tfm_mcuboot_fwu.c
 new file mode 100644
-index 000000000..32fe44516
+index 000000000..a458b5478
 --- /dev/null
 +++ b/platform/ext/target/arm/corstone1000/bootloader/mcuboot/tfm_mcuboot_fwu.c
 @@ -0,0 +1,2345 @@
 +/*
-+ * Copyright (c) 2021-2025, Arm Limited. All rights reserved.
++ * SPDX-FileCopyrightText: Copyright The TrustedFirmware-M Contributors
 + *
 + * SPDX-License-Identifier: BSD-3-Clause
 + *
@@ -1371,14 +1351,14 @@ index 000000000..32fe44516
 +    psa_status_t ret;
 +    ARM_FLASH_INFO* flash_info;
 +
++#ifndef BL1_BUILD
++    plat_io_storage_init();
++    partition_init(PLATFORM_GPT_IMAGE);
++#endif
++
 +    if (is_initialized) {
 +        return PSA_SUCCESS;
 +    }
-+
-+    #ifndef BL1_BUILD
-+    plat_io_storage_init();
-+    partition_init(PLATFORM_GPT_IMAGE);
-+    #endif
 +
 +    /* Code assumes everything fits into a sector */
 +    if (sizeof(struct fwu_metadata) > FWU_METADATA_FLASH_SECTOR_SIZE) {
@@ -2895,13 +2875,13 @@ diff --git a/platform/ext/target/arm/corstone1000/fw_update_agent/uefi_fmp.c b/p
 similarity index 66%
 rename from platform/ext/target/arm/corstone1000/fw_update_agent/uefi_fmp.c
 rename to platform/ext/target/arm/corstone1000/bootloader/mcuboot/uefi_fmp.c
-index 896658995..30956a440 100644
+index 896658995..aef9c9a20 100644
 --- a/platform/ext/target/arm/corstone1000/fw_update_agent/uefi_fmp.c
 +++ b/platform/ext/target/arm/corstone1000/bootloader/mcuboot/uefi_fmp.c
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2022-2024, Arm Limited. All rights reserved.
-+ * Copyright (c) 2022-2025, Arm Limited. All rights reserved.
++ * SPDX-FileCopyrightText: Copyright The TrustedFirmware-M Contributors
   *
   * SPDX-License-Identifier: BSD-3-Clause
   *
@@ -3098,12 +3078,12 @@ index 896658995..30956a440 100644
 -
 diff --git a/platform/ext/target/arm/corstone1000/bootloader/tfm_bootloader_fwu_abstraction.h b/platform/ext/target/arm/corstone1000/bootloader/tfm_bootloader_fwu_abstraction.h
 new file mode 100644
-index 000000000..571f61be3
+index 000000000..909b4857b
 --- /dev/null
 +++ b/platform/ext/target/arm/corstone1000/bootloader/tfm_bootloader_fwu_abstraction.h
 @@ -0,0 +1,189 @@
 +/*
-+ * Copyright (c) 2021-2022, Arm Limited. All rights reserved.
++ * SPDX-FileCopyrightText: Copyright The TrustedFirmware-M Contributors
 + *
 + * SPDX-License-Identifier: BSD-3-Clause
 + *
@@ -3295,13 +3275,13 @@ diff --git a/platform/ext/target/arm/corstone1000/fw_update_agent/uefi_fmp.h b/p
 similarity index 89%
 rename from platform/ext/target/arm/corstone1000/fw_update_agent/uefi_fmp.h
 rename to platform/ext/target/arm/corstone1000/bootloader/uefi_fmp.h
-index d876bd7cf..a555d851f 100644
+index d876bd7cf..36c604714 100644
 --- a/platform/ext/target/arm/corstone1000/fw_update_agent/uefi_fmp.h
 +++ b/platform/ext/target/arm/corstone1000/bootloader/uefi_fmp.h
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2022, Arm Limited. All rights reserved.
-+ * Copyright (c) 2022, 2025, Arm Limited. All rights reserved.
++ * SPDX-FileCopyrightText: Copyright The TrustedFirmware-M Contributors
   *
   * SPDX-License-Identifier: BSD-3-Clause
   *
@@ -3323,32 +3303,33 @@ index d876bd7cf..a555d851f 100644
 +psa_status_t fmp_get_image_info(void *buffer, uint32_t size);
  #endif /* UEFI_FMP_H */
 diff --git a/platform/ext/target/arm/corstone1000/config.cmake b/platform/ext/target/arm/corstone1000/config.cmake
-index 1ba43a006..108d16f57 100644
+index e45b56b2f..f1de066e5 100644
 --- a/platform/ext/target/arm/corstone1000/config.cmake
 +++ b/platform/ext/target/arm/corstone1000/config.cmake
-@@ -1,5 +1,5 @@
- #-------------------------------------------------------------------------------
--# Copyright (c) 2020-2023, Arm Limited. All rights reserved.
-+# Copyright (c) 2020-2023, 2025, Arm Limited. All rights reserved.
- # Copyright (c) 2022 Cypress Semiconductor Corporation (an Infineon company)
- # or an affiliate of Cypress Semiconductor Corporation. All rights reserved.
- #
-@@ -60,6 +60,9 @@ set(TFM_PARTITION_FIRMWARE_UPDATE         ON        CACHE BOOL      "Enable firm
- set(PLATFORM_HAS_FIRMWARE_UPDATE_SUPPORT ON         CACHE BOOL      "Wheter the platform has firmware update support")
- set(MCUBOOT_DATA_SHARING                 ON         CACHE BOOL      "Enable Data Sharing")
- set(TFM_FWU_BOOTLOADER_LIB                "${CMAKE_CURRENT_LIST_DIR}/bootloader/mcuboot"   CACHE STRING    "Bootloader configure file for Firmware Update partition")
-+set(TFM_CONFIG_FWU_MAX_MANIFEST_SIZE      0         CACHE STRING    "The maximum permitted size for manifest in psa_fwu_start(), in bytes.")
-+set(TFM_CONFIG_FWU_MAX_WRITE_SIZE         4096        CACHE STRING    "The maximum permitted size for block in psa_fwu_write, in bytes.")
-+set(FWU_SUPPORT_TRIAL_STATE              ON         CACHE BOOL      "Device support TRIAL component state.")
+@@ -55,10 +55,13 @@ set(TFM_PARTITION_CRYPTO                ON          CACHE BOOL      "Enable Cryp
+ set(TFM_PARTITION_INITIAL_ATTESTATION   ON          CACHE BOOL      "Enable Initial Attestation partition")
+ set(TFM_PARTITION_INTERNAL_TRUSTED_STORAGE ON       CACHE BOOL      "Enable Internal Trusted Storage partition")
+ 
+-set(TFM_PARTITION_FIRMWARE_UPDATE         ON        CACHE BOOL      "Enable firmware update partition")
+-set(PLATFORM_HAS_FIRMWARE_UPDATE_SUPPORT ON         CACHE BOOL      "Wheter the platform has firmware update support")
+-set(MCUBOOT_DATA_SHARING                 ON         CACHE BOOL      "Enable Data Sharing")
+-set(TFM_FWU_BOOTLOADER_LIB                "${CMAKE_CURRENT_LIST_DIR}/bootloader/mcuboot"   CACHE STRING    "Bootloader configure file for Firmware Update partition")
++set(TFM_PARTITION_FIRMWARE_UPDATE         ON         CACHE BOOL      "Enable firmware update partition")
++set(PLATFORM_HAS_FIRMWARE_UPDATE_SUPPORT  ON         CACHE BOOL      "Whether the platform has firmware update support")
++set(MCUBOOT_DATA_SHARING                  ON         CACHE BOOL      "Enable Data Sharing")
++set(TFM_FWU_BOOTLOADER_LIB                "${CMAKE_CURRENT_LIST_DIR}/bootloader/mcuboot"   CACHE STRING    "Bootloader configuration file for Firmware Update partition")
++set(TFM_CONFIG_FWU_MAX_MANIFEST_SIZE      0          CACHE STRING    "The maximum permitted size for manifest in psa_fwu_start(), in bytes.")
++set(TFM_CONFIG_FWU_MAX_WRITE_SIZE         4096       CACHE STRING    "The maximum permitted size for block in psa_fwu_write, in bytes.")
++set(FWU_SUPPORT_TRIAL_STATE               ON         CACHE BOOL      "Device support TRIAL component state.")
  
  if (${CMAKE_BUILD_TYPE} STREQUAL Debug OR ${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
    set(ENABLE_FWU_AGENT_DEBUG_LOGS     TRUE          CACHE BOOL      "Enable Firmware update agent debug logs.")
 diff --git a/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c b/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c
 deleted file mode 100644
-index c9b3e4844..000000000
+index 29c7be9a3..000000000
 --- a/platform/ext/target/arm/corstone1000/fw_update_agent/fwu_agent.c
 +++ /dev/null
-@@ -1,1350 +0,0 @@
+@@ -1,1405 +0,0 @@
 -/*
 - * Copyright (c) 2021-2024, Arm Limited. All rights reserved.
 - *
@@ -3372,10 +3353,19 @@ index c9b3e4844..000000000
 -#include "uefi_fmp.h"
 -#include "uart_stdout.h"
 -#include "soft_crc.h"
--#ifndef BL1_BUILD
+-#if !BL1
 -#include "partition.h"
 -#include "platform.h"
 -#endif
+-
+-#define FWU_METADATA_VERSION		2
+-#define FWU_FW_STORE_DESC_OFFSET	0x20
+-#define NR_OF_MAX_FW_BANKS		4
+-
+-/*
+- * Metadata version 2 data structures defined by PSA_FW update specification
+- * at https://developer.arm.com/documentation/den0118/latest/
+- */
 -
 -/* Properties of image in a bank */
 -struct fwu_image_properties {
@@ -3409,6 +3399,28 @@ index c9b3e4844..000000000
 -
 -} __packed;
 -
+-struct fwu_fw_store_descriptor {
+-
+-       /* Number of Banks */
+-       uint8_t num_banks;
+-
+-       /* Reserved */
+-       uint8_t reserved;
+-
+-       /* Number of images per bank */
+-       uint16_t num_images;
+-
+-       /* Size of image_entry(all banks) in bytes */
+-       uint16_t img_entry_size;
+-
+-       /* Size of image bank info structure in bytes */
+-       uint16_t bank_info_entry_size;
+-
+-       /* Array of fwu_image_entry structs */
+-       struct fwu_image_entry img_entry[NR_OF_IMAGES_IN_FW_BANK];
+-
+-} __packed;
+-
 -struct fwu_metadata {
 -
 -        /* Metadata CRC value */
@@ -3423,8 +3435,23 @@ index c9b3e4844..000000000
 -        /* Previous bank index with which device booted successfully */
 -        uint32_t previous_active_index;
 -
--        /* Image entry information */
--        struct fwu_image_entry img_entry[NR_OF_IMAGES_IN_FW_BANK];
+-        /* Size of the entire metadata in bytes */
+-        uint32_t metadata_size;
+-
+-        /* Offset of the image descriptor structure */
+-        uint16_t desc_offset;
+-
+-        /* Reserved */
+-        uint16_t reserved1;
+-
+-        /* Bank state: It's not used in corstone1000 at the moment.Currently
+-	     * not used by any sw componenets such as u-boot and TF-A */
+-        uint8_t bank_state[NR_OF_MAX_FW_BANKS];
+-
+-        /* Reserved */
+-        uint32_t reserved2;
+-
+-        struct fwu_fw_store_descriptor fw_desc;
 -
 -} __packed;
 -
@@ -3498,7 +3525,7 @@ index c9b3e4844..000000000
 -
 -#define HOST_ACK_TIMEOUT_SEC    (6 * 60) /* ~seconds, not exact */
 -
--#ifdef BL1_BUILD
+-#if BL1
 -static enum fwu_agent_error_t private_metadata_read(
 -        struct fwu_private_metadata* p_metadata)
 -{
@@ -3511,8 +3538,8 @@ index c9b3e4844..000000000
 -    }
 -
 -    ret = FWU_METADATA_FLASH_DEV.ReadData(FWU_PRIVATE_METADATA_REPLICA_1_OFFSET, p_metadata,
--                                          sizeof(struct fwu_private_metadata));
--    if (ret < 0 || ret != sizeof(struct fwu_private_metadata)) {
+-                                          sizeof(*p_metadata));
+-    if (ret < 0 || ret != sizeof(*p_metadata)) {
 -        return FWU_AGENT_ERROR;
 -    }
 -
@@ -3521,7 +3548,7 @@ index c9b3e4844..000000000
 -
 -    return FWU_AGENT_SUCCESS;
 -}
--#else
+-#elif
 -static enum fwu_agent_error_t private_metadata_read(
 -        struct fwu_private_metadata* p_metadata)
 -{
@@ -3542,8 +3569,8 @@ index c9b3e4844..000000000
 -    }
 -
 -    ret = FWU_METADATA_FLASH_DEV.ReadData(part->start, p_metadata,
--                                          sizeof(struct fwu_private_metadata));
--    if (ret < 0 || ret != sizeof(struct fwu_private_metadata)) {
+-                                          sizeof(*p_metadata));
+-    if (ret < 0 || ret != sizeof(*p_metadata)) {
 -        return FWU_AGENT_ERROR;
 -    }
 -
@@ -3554,7 +3581,7 @@ index c9b3e4844..000000000
 -}
 -#endif
 -
--#ifdef BL1_BUILD
+-#if BL1
 -static enum fwu_agent_error_t private_metadata_write(
 -        struct fwu_private_metadata* p_metadata)
 -{
@@ -3573,15 +3600,15 @@ index c9b3e4844..000000000
 -    }
 -
 -    ret = FWU_METADATA_FLASH_DEV.ProgramData(FWU_PRIVATE_METADATA_REPLICA_1_OFFSET,
--                                p_metadata, sizeof(struct fwu_private_metadata));
--    if (ret < 0 || ret != sizeof(struct fwu_private_metadata)) {
+-                                p_metadata, sizeof(*p_metadata));
+-    if (ret < 0 || ret != sizeof(*p_metadata)) {
 -        return FWU_AGENT_ERROR;
 -    }
 -
 -    FWU_LOG_MSG("%s: success\n\r", __func__);
 -    return FWU_AGENT_SUCCESS;
 -}
--#else
+-#elif
 -static enum fwu_agent_error_t private_metadata_write(
 -        struct fwu_private_metadata* p_metadata)
 -{
@@ -3608,8 +3635,8 @@ index c9b3e4844..000000000
 -    }
 -
 -    ret = FWU_METADATA_FLASH_DEV.ProgramData(part->start,
--                                p_metadata, sizeof(struct fwu_private_metadata));
--    if (ret < 0 || ret != sizeof(struct fwu_private_metadata)) {
+-                                p_metadata, sizeof(*p_metadata));
+-    if (ret < 0 || ret != sizeof(*p_metadata)) {
 -        return FWU_AGENT_ERROR;
 -    }
 -
@@ -3620,8 +3647,6 @@ index c9b3e4844..000000000
 -
 -static enum fwu_agent_error_t metadata_validate(struct fwu_metadata *p_metadata)
 -{
--    int ret;
--
 -    FWU_LOG_MSG("%s: enter:\n\r", __func__);
 -
 -    if (!p_metadata) {
@@ -3629,7 +3654,7 @@ index c9b3e4844..000000000
 -    }
 -
 -    uint32_t calculated_crc32 = crc32((uint8_t *)&(p_metadata->version),
--                                      sizeof(struct fwu_metadata) - sizeof(uint32_t));
+-                                      sizeof(*p_metadata) - sizeof(p_metadata->crc_32));
 -
 -    if (p_metadata->crc_32 != calculated_crc32) {
 -        FWU_LOG_MSG("%s: failed: crc32 calculated: 0x%x, given: 0x%x\n\r", __func__,
@@ -3642,21 +3667,21 @@ index c9b3e4844..000000000
 -    return FWU_AGENT_SUCCESS;
 -}
 -
--#ifdef BL1_BUILD
+-#if BL1
 -static enum fwu_agent_error_t metadata_read_without_validation(struct fwu_metadata *p_metadata)
 -{
 -    int ret;
 -
 -    FWU_LOG_MSG("%s: enter: flash addr = %u, size = %d\n\r", __func__,
--                  FWU_METADATA_REPLICA_1_OFFSET, sizeof(struct fwu_metadata));
+-                  FWU_METADATA_REPLICA_1_OFFSET, sizeof(*p_metadata));
 -
 -    if (!p_metadata) {
 -        return FWU_AGENT_ERROR;
 -    }
 -
 -    ret = FWU_METADATA_FLASH_DEV.ReadData(FWU_METADATA_REPLICA_1_OFFSET,
--                                p_metadata, sizeof(struct fwu_metadata));
--    if (ret < 0 || ret != sizeof(struct fwu_metadata)) {
+-                                p_metadata, sizeof(*p_metadata));
+-    if (ret < 0 || ret != sizeof(*p_metadata)) {
 -        return FWU_AGENT_ERROR;
 -    }
 -
@@ -3665,7 +3690,7 @@ index c9b3e4844..000000000
 -
 -    return FWU_AGENT_SUCCESS;
 -}
--#else
+-#elif
 -static enum fwu_agent_error_t metadata_read_without_validation(struct fwu_metadata *p_metadata)
 -{
 -    uuid_t metadata_uuid = FWU_METADATA_TYPE_UUID;
@@ -3683,12 +3708,12 @@ index c9b3e4844..000000000
 -    }
 -
 -    FWU_LOG_MSG("%s: enter: flash addr = %u, size = %d\n\r", __func__,
--                  part->start, sizeof(struct fwu_metadata));
+-                  part->start, sizeof(*p_metadata));
 -
 -
 -    ret = FWU_METADATA_FLASH_DEV.ReadData(part->start,
--                                p_metadata, sizeof(struct fwu_metadata));
--    if (ret < 0 || ret != sizeof(struct fwu_metadata)) {
+-                                p_metadata, sizeof(*p_metadata));
+-    if (ret < 0 || ret != sizeof(*p_metadata)) {
 -        return FWU_AGENT_ERROR;
 -    }
 -
@@ -3699,21 +3724,21 @@ index c9b3e4844..000000000
 -}
 -#endif
 -
--#ifdef BL1_BUILD
+-#if BL1
 -static enum fwu_agent_error_t metadata_read(struct fwu_metadata *p_metadata)
 -{
 -    int ret;
 -
 -    FWU_LOG_MSG("%s: enter: flash addr = %u, size = %d\n\r", __func__,
--                  FWU_METADATA_REPLICA_1_OFFSET, sizeof(struct fwu_metadata));
+-                  FWU_METADATA_REPLICA_1_OFFSET, sizeof(*p_metadata));
 -
 -    if (!p_metadata) {
 -        return FWU_AGENT_ERROR;
 -    }
 -
 -    ret = FWU_METADATA_FLASH_DEV.ReadData(FWU_METADATA_REPLICA_1_OFFSET,
--                                p_metadata, sizeof(struct fwu_metadata));
--    if (ret < 0 || ret != sizeof(struct fwu_metadata)) {
+-                                p_metadata, sizeof(*p_metadata));
+-    if (ret < 0 || ret != sizeof(*p_metadata)) {
 -        return FWU_AGENT_ERROR;
 -    }
 -
@@ -3726,7 +3751,7 @@ index c9b3e4844..000000000
 -
 -    return FWU_AGENT_SUCCESS;
 -}
--#else
+-#elif
 -static enum fwu_agent_error_t metadata_read(struct fwu_metadata *p_metadata)
 -{
 -    uuid_t metadata_uuid = FWU_METADATA_TYPE_UUID;
@@ -3744,11 +3769,11 @@ index c9b3e4844..000000000
 -    }
 -
 -    FWU_LOG_MSG("%s: enter: flash addr = %u, size = %d\n\r", __func__,
--                  part->start, sizeof(struct fwu_metadata));
+-                  part->start, sizeof(*p_metadata));
 -
 -    ret = FWU_METADATA_FLASH_DEV.ReadData(part->start,
--                                p_metadata, sizeof(struct fwu_metadata));
--    if (ret < 0 || ret != sizeof(struct fwu_metadata)) {
+-                                p_metadata, sizeof(*p_metadata));
+-    if (ret < 0 || ret != sizeof(*p_metadata)) {
 -        return FWU_AGENT_ERROR;
 -    }
 -
@@ -3764,14 +3789,14 @@ index c9b3e4844..000000000
 -#endif
 -
 -
--#ifdef BL1_BUILD
+-#if BL1
 -static enum fwu_agent_error_t metadata_write(
 -                        struct fwu_metadata *p_metadata)
 -{
 -    int ret;
 -
 -    FWU_LOG_MSG("%s: enter: flash addr = %u, size = %d\n\r", __func__,
--                  FWU_METADATA_REPLICA_1_OFFSET, sizeof(struct fwu_metadata));
+-                  FWU_METADATA_REPLICA_1_OFFSET, sizeof(*p_metadata));
 -
 -    if (!p_metadata) {
 -        return FWU_AGENT_ERROR;
@@ -3783,13 +3808,13 @@ index c9b3e4844..000000000
 -    }
 -
 -    ret = FWU_METADATA_FLASH_DEV.ProgramData(FWU_METADATA_REPLICA_1_OFFSET,
--                                p_metadata, sizeof(struct fwu_metadata));
--    if (ret < 0 || ret != sizeof(struct fwu_metadata)) {
+-                                p_metadata, sizeof(*p_metadata));
+-    if (ret < 0 || ret != sizeof(*p_metadata)) {
 -        return FWU_AGENT_ERROR;
 -    }
 -
 -    FWU_LOG_MSG("%s: enter: flash addr = %u, size = %d\n\r", __func__,
--                  FWU_METADATA_REPLICA_2_OFFSET, sizeof(struct fwu_metadata));
+-                  FWU_METADATA_REPLICA_2_OFFSET, sizeof(*p_metadata));
 -
 -    ret = FWU_METADATA_FLASH_DEV.EraseSector(FWU_METADATA_REPLICA_2_OFFSET);
 -    if (ret != ARM_DRIVER_OK) {
@@ -3797,13 +3822,13 @@ index c9b3e4844..000000000
 -    }
 -
 -    ret = FWU_METADATA_FLASH_DEV.ProgramData(FWU_METADATA_REPLICA_2_OFFSET,
--                                p_metadata, sizeof(struct fwu_metadata));
--    if (ret < 0 || ret != sizeof(struct fwu_metadata)) {
+-                                p_metadata, sizeof(*p_metadata));
+-    if (ret < 0 || ret != sizeof(*p_metadata)) {
 -        return FWU_AGENT_ERROR;
 -    }
 -
 -    FWU_LOG_MSG("%s: enter: flash addr = %u, size = %d\n\r", __func__,
--                  FWU_METADATA_REPLICA_2_OFFSET, sizeof(struct fwu_metadata));
+-                  FWU_METADATA_REPLICA_2_OFFSET, sizeof(*p_metadata));
 -
 -    ret = FWU_METADATA_FLASH_DEV.EraseSector(FWU_METADATA_REPLICA_2_OFFSET);
 -    if (ret != ARM_DRIVER_OK) {
@@ -3811,8 +3836,8 @@ index c9b3e4844..000000000
 -    }
 -
 -    ret = FWU_METADATA_FLASH_DEV.ProgramData(FWU_METADATA_REPLICA_2_OFFSET,
--                                p_metadata, sizeof(struct fwu_metadata));
--    if (ret < 0 || ret != sizeof(struct fwu_metadata)) {
+-                                p_metadata, sizeof(*p_metadata));
+-    if (ret < 0 || ret != sizeof(*p_metadata)) {
 -        return FWU_AGENT_ERROR;
 -    }
 -
@@ -3820,7 +3845,7 @@ index c9b3e4844..000000000
 -                  p_metadata->active_index, p_metadata->previous_active_index);
 -    return FWU_AGENT_SUCCESS;
 -}
--#else
+-#elif
 -static enum fwu_agent_error_t metadata_write(
 -                        struct fwu_metadata *p_metadata)
 -{
@@ -3839,7 +3864,7 @@ index c9b3e4844..000000000
 -    }
 -
 -    FWU_LOG_MSG("%s: enter: flash addr = %u, size = %d\n\r", __func__,
--                  part->start, sizeof(struct fwu_metadata));
+-                  part->start, sizeof(*p_metadata));
 -
 -    ret = FWU_METADATA_FLASH_DEV.EraseSector(part->start);
 -    if (ret != ARM_DRIVER_OK) {
@@ -3847,8 +3872,8 @@ index c9b3e4844..000000000
 -    }
 -
 -    ret = FWU_METADATA_FLASH_DEV.ProgramData(part->start,
--                                p_metadata, sizeof(struct fwu_metadata));
--    if (ret < 0 || ret != sizeof(struct fwu_metadata)) {
+-                                p_metadata, sizeof(*p_metadata));
+-    if (ret < 0 || ret != sizeof(*p_metadata)) {
 -        return FWU_AGENT_ERROR;
 -    }
 -
@@ -3859,7 +3884,7 @@ index c9b3e4844..000000000
 -    }
 -
 -    FWU_LOG_MSG("%s: enter: flash addr = %u, size = %d\n\r", __func__,
--                  part->start, sizeof(struct fwu_metadata));
+-                  part->start, sizeof(*p_metadata));
 -
 -    ret = FWU_METADATA_FLASH_DEV.EraseSector(part->start);
 -    if (ret != ARM_DRIVER_OK) {
@@ -3867,13 +3892,13 @@ index c9b3e4844..000000000
 -    }
 -
 -    ret = FWU_METADATA_FLASH_DEV.ProgramData(part->start,
--                                p_metadata, sizeof(struct fwu_metadata));
--    if (ret < 0 || ret != sizeof(struct fwu_metadata)) {
+-                                p_metadata, sizeof(*p_metadata));
+-    if (ret < 0 || ret != sizeof(*p_metadata)) {
 -        return FWU_AGENT_ERROR;
 -    }
 -
 -    FWU_LOG_MSG("%s: enter: flash addr = %u, size = %d\n\r", __func__,
--                  FWU_METADATA_REPLICA_2_OFFSET, sizeof(struct fwu_metadata));
+-                  FWU_METADATA_REPLICA_2_OFFSET, sizeof(*p_metadata));
 -
 -    ret = FWU_METADATA_FLASH_DEV.EraseSector(FWU_METADATA_REPLICA_2_OFFSET);
 -    if (ret != ARM_DRIVER_OK) {
@@ -3881,8 +3906,8 @@ index c9b3e4844..000000000
 -    }
 -
 -    ret = FWU_METADATA_FLASH_DEV.ProgramData(FWU_METADATA_REPLICA_2_OFFSET,
--                                p_metadata, sizeof(struct fwu_metadata));
--    if (ret < 0 || ret != sizeof(struct fwu_metadata)) {
+-                                p_metadata, sizeof(*p_metadata));
+-    if (ret < 0 || ret != sizeof(*p_metadata)) {
 -        return FWU_AGENT_ERROR;
 -    }
 -
@@ -3898,17 +3923,13 @@ index c9b3e4844..000000000
 -    enum fwu_agent_error_t ret;
 -    ARM_FLASH_INFO* flash_info;
 -
+-
 -    if (is_initialized) {
 -        return FWU_AGENT_SUCCESS;
 -    }
 -
--    #ifndef BL1_BUILD
--    plat_io_storage_init();
--    partition_init(PLATFORM_GPT_IMAGE);
--    #endif
--
 -    /* Code assumes everything fits into a sector */
--    if (sizeof(struct fwu_metadata) > FWU_METADATA_FLASH_SECTOR_SIZE) {
+-    if (sizeof(_metadata) > FWU_METADATA_FLASH_SECTOR_SIZE) {
 -        return FWU_AGENT_ERROR;
 -    }
 -
@@ -3940,6 +3961,11 @@ index c9b3e4844..000000000
 -
 -    FWU_LOG_MSG("%s: enter\n\r", __func__);
 -
+-#if !BL1
+-    plat_io_storage_init();
+-    partition_init(PLATFORM_GPT_IMAGE);
+-#endif
+-
 -    ret = fwu_metadata_init();
 -    if (ret) {
 -        return ret;
@@ -3957,34 +3983,40 @@ index c9b3e4844..000000000
 -    }
 -    /* Provision FWU Agent Metadata */
 -
--    memset(&_metadata, 0, sizeof(struct fwu_metadata));
+-    memset(&_metadata, 0, sizeof(_metadata));
 -
--    _metadata.version = 1;
+-    _metadata.version = FWU_METADATA_VERSION;
 -    _metadata.active_index = BANK_0;
 -    _metadata.previous_active_index = BANK_1;
+-    _metadata.desc_offset= FWU_FW_STORE_DESC_OFFSET;
 -
+-    _metadata.fw_desc.num_banks = NR_OF_FW_BANKS;
+-    _metadata.fw_desc.num_images = NR_OF_IMAGES_IN_FW_BANK;
+-    _metadata.fw_desc.img_entry_size = sizeof(struct fwu_image_entry) * NR_OF_IMAGES_IN_FW_BANK;
+-    _metadata.fw_desc.bank_info_entry_size = sizeof(struct fwu_image_properties) * NR_OF_FW_BANKS;
 -    /* bank 0 is the place where images are located at the
 -     * start of device lifecycle */
 -
 -    for (int i = 0; i < NR_OF_IMAGES_IN_FW_BANK; i++) {
 -
--        _metadata.img_entry[i].img_props[BANK_0].accepted = IMAGE_ACCEPTED;
--        _metadata.img_entry[i].img_props[BANK_0].version = image_version;
+-        _metadata.fw_desc.img_entry[i].img_props[BANK_0].accepted = IMAGE_ACCEPTED;
+-        _metadata.fw_desc.img_entry[i].img_props[BANK_0].version = image_version;
 -
--        _metadata.img_entry[i].img_props[BANK_1].accepted = IMAGE_NOT_ACCEPTED;
--        _metadata.img_entry[i].img_props[BANK_1].version = INVALID_VERSION;
+-        _metadata.fw_desc.img_entry[i].img_props[BANK_1].accepted = IMAGE_NOT_ACCEPTED;
+-        _metadata.fw_desc.img_entry[i].img_props[BANK_1].version = INVALID_VERSION;
 -    }
 -
--    /* Calculate CRC32 for fwu metadata */
+-    /* Calculate CRC32 for fwu metadata. The first filed in the _metadata has to be the crc_32.
+-     * This should be omited from the calculation. */
 -    _metadata.crc_32 = crc32((uint8_t *)&_metadata.version,
--                             sizeof(struct fwu_metadata) - sizeof(uint32_t));
+-                             sizeof(_metadata) - sizeof(_metadata.crc_32));
 -
 -    ret = metadata_write(&_metadata);
 -    if (ret) {
 -        return ret;
 -    }
 -
--    memset(&_metadata, 0, sizeof(struct fwu_metadata));
+-    memset(&_metadata, 0, sizeof(_metadata));
 -    ret = metadata_read(&_metadata);
 -    if (ret) {
 -        return ret;
@@ -3996,7 +4028,7 @@ index c9b3e4844..000000000
 -    /* Provision Private metadata for update agent which is shared
 -       beween BL1 and tf-m of secure enclave */
 -
--    memset(&priv_metadata, 0, sizeof(struct fwu_private_metadata));
+-    memset(&priv_metadata, 0, sizeof(priv_metadata));
 -
 -    priv_metadata.boot_index = BANK_0;
 -    priv_metadata.boot_attempted = 0;
@@ -4010,7 +4042,7 @@ index c9b3e4844..000000000
 -        return ret;
 -    }
 -
--    memset(&priv_metadata, 0, sizeof(struct fwu_private_metadata));
+-    memset(&priv_metadata, 0, sizeof(priv_metadata));
 -    ret = private_metadata_read(&priv_metadata);
 -    if (ret) {
 -        return ret;
@@ -4037,7 +4069,7 @@ index c9b3e4844..000000000
 -    }
 -
 -    for (int i = 0; i < NR_OF_IMAGES_IN_FW_BANK; i++) {
--        if ((metadata_ptr->img_entry[i].img_props[boot_index].accepted)
+-        if ((metadata_ptr->fw_desc.img_entry[i].img_props[boot_index].accepted)
 -                == (IMAGE_NOT_ACCEPTED)) {
 -            return FWU_AGENT_STATE_TRIAL;
 -        }
@@ -4049,7 +4081,7 @@ index c9b3e4844..000000000
 -
 -static int get_image_info_in_bank(struct efi_guid* guid, uint32_t* image_bank_offset)
 -{
--    if ((memcmp(guid, &full_capsule_image_guid, sizeof(struct efi_guid))) == 0) {
+-    if ((memcmp(guid, &full_capsule_image_guid, sizeof(*guid))) == 0) {
 -        *image_bank_offset = 0;
 -        return IMAGE_ALL;
 -    }
@@ -4112,7 +4144,7 @@ index c9b3e4844..000000000
 -    }
 -
 -    if (version <=
--            (metadata->img_entry[IMAGE_0].img_props[active_index].version)) {
+-            (metadata->fw_desc.img_entry[IMAGE_0].img_props[active_index].version)) {
 -        FWU_LOG_MSG("ERROR: %s: version error\n\r",__func__);
 -        return FWU_AGENT_ERROR;
 -    }
@@ -4143,14 +4175,14 @@ index c9b3e4844..000000000
 -
 -    /* Change system state to trial bank state */
 -    for (int i = 0; i < NR_OF_IMAGES_IN_FW_BANK; i++) {
--        metadata->img_entry[i].img_props[previous_active_index].accepted =
+-        metadata->fw_desc.img_entry[i].img_props[previous_active_index].accepted =
 -                                                        IMAGE_NOT_ACCEPTED;
--        metadata->img_entry[i].img_props[previous_active_index].version = version;
+-        metadata->fw_desc.img_entry[i].img_props[previous_active_index].version = version;
 -    }
 -    metadata->active_index = previous_active_index;
 -    metadata->previous_active_index = active_index;
 -    metadata->crc_32 = crc32((uint8_t *)&metadata->version,
--                              sizeof(struct fwu_metadata) - sizeof(uint32_t));
+-                              sizeof(*metadata) - sizeof(metadata->crc_32));
 -
 -    ret = metadata_write(metadata);
 -    if (ret) {
@@ -4196,7 +4228,7 @@ index c9b3e4844..000000000
 -        goto out;
 -    }
 -
--    memset(&capsule_info, 0, sizeof(capsule_image_info_t));
+-    memset(&capsule_info, 0, sizeof(capsule_info));
 -    if (uefi_capsule_retrieve_images(capsule_ptr, &capsule_info)) {
 -        ret =  FWU_AGENT_ERROR;
 -        goto out;
@@ -4252,7 +4284,7 @@ index c9b3e4844..000000000
 -    FWU_LOG_MSG("%s: enter\n\r", __func__);
 -
 -    for (int i = 0; i < NR_OF_IMAGES_IN_FW_BANK; i++) {
--        metadata->img_entry[i].img_props[active_index].accepted =
+-        metadata->fw_desc.img_entry[i].img_props[active_index].accepted =
 -                                                            IMAGE_ACCEPTED;
 -    }
 -
@@ -4263,7 +4295,7 @@ index c9b3e4844..000000000
 -        return ret;
 -    }
 -    metadata->crc_32 = crc32((uint8_t *)&metadata->version,
--                              sizeof(struct fwu_metadata) - sizeof(uint32_t));
+-                              sizeof(*metadata) - sizeof(metadata->crc_32));
 -
 -    ret = metadata_write(metadata);
 -    if (ret) {
@@ -4342,7 +4374,7 @@ index c9b3e4844..000000000
 -
 -    index = metadata->previous_active_index;
 -    for (int i = 0; i < NR_OF_IMAGES_IN_FW_BANK; i++) {
--        if (metadata->img_entry[i].img_props[index].accepted != IMAGE_ACCEPTED)
+-        if (metadata->fw_desc.img_entry[i].img_props[index].accepted != IMAGE_ACCEPTED)
 -        {
 -            FWU_ASSERT(0);
 -        }
@@ -4359,7 +4391,7 @@ index c9b3e4844..000000000
 -        return ret;
 -    }
 -    metadata->crc_32 = crc32((uint8_t *)&metadata->version,
--                              sizeof(struct fwu_metadata) - sizeof(uint32_t));
+-                              sizeof(*metadata) - sizeof(metadata->crc_32));
 -
 -    ret = metadata_write(metadata);
 -    if (ret) {
@@ -4472,12 +4504,13 @@ index c9b3e4844..000000000
 -
 -    FWU_LOG_MSG("%s: enter\n\r", __func__);
 -
--    for (int i = 0; i <= FWU_MAX_NV_COUNTER_INDEX; i++) {
+-    /* The FWU_BL2_NV_COUNTER (0) is not mirrored in the private metadata. It is
+-     * directly updated in the bl1_2_validate_image_at_addr() function, in
+-     * tfm/bl1/bl1_2/main.c.
+-     * Because of this, the index starts from FWU_TFM_NV_COUNTER (1). */
+-    for (int i = FWU_TFM_NV_COUNTER; i <= FWU_MAX_NV_COUNTER_INDEX; i++) {
 -
 -        switch (i) {
--            case FWU_BL2_NV_COUNTER:
--                tfm_nv_counter_i = PLAT_NV_COUNTER_BL1_0;
--                break;
 -            case FWU_TFM_NV_COUNTER:
 -                tfm_nv_counter_i = PLAT_NV_COUNTER_BL2_0;
 -                break;
@@ -4492,18 +4525,21 @@ index c9b3e4844..000000000
 -        err = tfm_plat_read_nv_counter(tfm_nv_counter_i,
 -                        sizeof(security_cnt), (uint8_t *)&security_cnt);
 -        if (err != TFM_PLAT_ERR_SUCCESS) {
+-            FWU_LOG_MSG("%s: couldn't read NV counter\n\r", __func__);
 -            return FWU_AGENT_ERROR;
 -        }
 -
 -        if (priv_metadata->nv_counter[i] < security_cnt) {
+-            FWU_LOG_MSG("%s: staged NV counter is smaller than current value\n\r", __func__);
 -            return FWU_AGENT_ERROR;
 -        } else if (priv_metadata->nv_counter[i] > security_cnt) {
--            FWU_LOG_MSG("%s: updaing index = %u nv counter = %u->%u\n\r",
+-            FWU_LOG_MSG("%s: updating index = %u nv counter = %u->%u\n\r",
 -                        __func__, i, security_cnt,
--                        priv_metadata->nv_counter[FWU_BL2_NV_COUNTER]);
+-                        priv_metadata->nv_counter[i]);
 -            err = tfm_plat_set_nv_counter(tfm_nv_counter_i,
--                                    priv_metadata->nv_counter[FWU_BL2_NV_COUNTER]);
+-                                    priv_metadata->nv_counter[i]);
 -            if (err != TFM_PLAT_ERR_SUCCESS) {
+-                FWU_LOG_MSG("%s: couldn't write NV counter\n\r", __func__);
 -                return FWU_AGENT_ERROR;
 -            }
 -        }
@@ -4559,7 +4595,7 @@ index c9b3e4844..000000000
 -        /* firmware update failed, revert back to previous bank */
 -
 -        priv_metadata.fmp_last_attempt_version =
--         _metadata.img_entry[IMAGE_0].img_props[_metadata.active_index].version;
+-         _metadata.fw_desc.img_entry[IMAGE_0].img_props[_metadata.active_index].version;
 -
 -        priv_metadata.fmp_last_attempt_status = LAST_ATTEMPT_STATUS_ERROR_UNSUCCESSFUL;
 -
@@ -4570,9 +4606,9 @@ index c9b3e4844..000000000
 -        /* firmware update successful */
 -
 -        priv_metadata.fmp_version =
--         _metadata.img_entry[IMAGE_0].img_props[_metadata.active_index].version;
+-         _metadata.fw_desc.img_entry[IMAGE_0].img_props[_metadata.active_index].version;
 -        priv_metadata.fmp_last_attempt_version =
--         _metadata.img_entry[IMAGE_0].img_props[_metadata.active_index].version;
+-         _metadata.fw_desc.img_entry[IMAGE_0].img_props[_metadata.active_index].version;
 -
 -        priv_metadata.fmp_last_attempt_status = LAST_ATTEMPT_STATUS_SUCCESS;
 -
@@ -4780,17 +4816,18 @@ index 701f20558..000000000
 -#endif /* FWU_AGENT_H */
 diff --git a/platform/ext/target/arm/corstone1000/fw_update_agent/uefi_capsule_parser.c b/platform/ext/target/arm/corstone1000/fw_update_agent/uefi_capsule_parser.c
 deleted file mode 100644
-index c706c040a..000000000
+index 44566e08d..000000000
 --- a/platform/ext/target/arm/corstone1000/fw_update_agent/uefi_capsule_parser.c
 +++ /dev/null
-@@ -1,175 +0,0 @@
+@@ -1,176 +0,0 @@
 -/*
-- * Copyright (c) 2021, Arm Limited. All rights reserved.
+- * Copyright (c) 2021-2024, Arm Limited. All rights reserved.
 - *
 - * SPDX-License-Identifier: BSD-3-Clause
 - *
 - */
 -
+-#include "cmsis_compiler.h"
 -#include "uefi_capsule_parser.h"
 -#include "fwu_agent.h"
 -#include <string.h>
@@ -4815,21 +4852,21 @@ index c706c040a..000000000
 -            Payload n (item_offset[embedded_driver_count + payload_item_count -1])
 -*/
 -
--typedef struct {
+-typedef __PACKED_STRUCT {
 -    struct efi_guid         capsule_guid;
 -    uint32_t                header_size;
 -    uint32_t                flags;
 -    uint32_t                capsule_image_size;
 -} efi_capsule_header_t;
 -
--typedef struct {
+-typedef __PACKED_STRUCT {
 -    uint32_t                version;
 -    uint16_t                embedded_driver_count;
 -    uint16_t                payload_item_count;
 -    uint64_t                item_offset_list[];
 -} efi_firmware_management_capsule_header_t;
 -
--typedef struct {
+-typedef __PACKED_STRUCT {
 -    uint32_t                version;
 -    struct efi_guid         update_image_type_id;
 -    uint8_t                 update_image_index;
@@ -4840,7 +4877,7 @@ index c706c040a..000000000
 -    uint64_t                image_capsule_support; //introduced in v3
 -} efi_firmware_management_capsule_image_header_t;
 -
--typedef struct {
+-typedef __PACKED_STRUCT {
 -    uint32_t                signature;
 -    uint32_t                header_size;
 -    uint32_t                fw_version;
@@ -4849,20 +4886,20 @@ index c706c040a..000000000
 -
 -#define ANYSIZE_ARRAY 0
 -
--typedef struct {
+-typedef __PACKED_STRUCT {
 -    uint32_t                dwLength;
 -    uint16_t                wRevision;
 -    uint16_t                wCertificateType;
 -    uint8_t                 bCertificate[ANYSIZE_ARRAY];
 -} WIN_CERTIFICATE;
 -
--typedef struct {
+-typedef __PACKED_STRUCT {
 -    WIN_CERTIFICATE         hdr;
 -    struct efi_guid         cert_type;
 -    uint8_t                 cert_data[ANYSIZE_ARRAY];
 -} win_certificate_uefi_guid_t;
 -
--typedef struct {
+-typedef __PACKED_STRUCT {
 -    uint64_t                    monotonic_count;
 -    win_certificate_uefi_guid_t   auth_info;
 -} efi_firmware_image_authentication_t;
@@ -4999,13 +5036,13 @@ index a31cd8a3a..000000000
 -
 -#endif /* UEFI_CAPSULE_PARSER_H */
 diff --git a/platform/ext/target/arm/corstone1000/partition/flash_layout.h b/platform/ext/target/arm/corstone1000/partition/flash_layout.h
-index b183d1242..58b02229b 100644
+index f42dda809..e2219d80a 100644
 --- a/platform/ext/target/arm/corstone1000/partition/flash_layout.h
 +++ b/platform/ext/target/arm/corstone1000/partition/flash_layout.h
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2017-2024 Arm Limited. All rights reserved.
-+ * Copyright (c) 2017-2025 Arm Limited. All rights reserved.
++ * SPDX-FileCopyrightText: Copyright The TrustedFirmware-M Contributors
   *
   * Licensed under the Apache License, Version 2.0 (the "License");
   * you may not use this file except in compliance with the License.
@@ -5014,7 +5051,7 @@ index b183d1242..58b02229b 100644
  
  /* Bank configurations */
 -#define BANK_PARTITION_SIZE             (0xFE0000)   /* 15.875 MB */
--#define TFM_PARTITION_SIZE              (0x50000)    /* 320 KB */
+-#define TFM_PARTITION_SIZE              (0x50000)    /* 320 KiB */
 +#define BANK_PARTITION_SIZE               (0xFE0000)   /* 15.875 MB */
 +#define SE_BL2_PARTITION_BANK_OFFSET      (0)
 +#define TFM_PARTITION_SIZE                (0x50000)    /* 320 KB */
@@ -5029,5 +5066,5 @@ index b183d1242..58b02229b 100644
  /************************************************************/
  /* Bank : Images flash offsets are with respect to the bank */
 -- 
-2.25.1
+2.43.0
 

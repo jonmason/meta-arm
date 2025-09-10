@@ -1,10 +1,11 @@
-From 67e5aa83efce5f75df1c5d027e2d52f0da2eaba0 Mon Sep 17 00:00:00 2001
-From: Bence Balogh <bence.balogh@arm.com>
-Date: Thu, 5 Sep 2024 17:21:50 +0200
-Subject: [PATCH 1/5] Platform: CS1000: Remove unused BL1 files
+From 778d62d8ebe91212363cdab2fa1eef6a977ae6e2 Mon Sep 17 00:00:00 2001
+From: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
+Date: Wed, 13 Aug 2025 14:02:57 +0000
+Subject: [PATCH 1/7] Platform: CS1000: Remove unused BL1 files
 
 These files are not referenced anywhere so removed them to prevent
 confusion.
+
 Signed-off-by: Bence Balogh <bence.balogh@arm.com>
 Upstream-Status: Backport [9a7bdf9ef595196e1e518a27d3c79079aedb5bda]
 ---
@@ -16,7 +17,7 @@ Upstream-Status: Backport [9a7bdf9ef595196e1e518a27d3c79079aedb5bda]
 
 diff --git a/platform/ext/target/arm/corstone1000/bl1/CMakeLists.txt b/platform/ext/target/arm/corstone1000/bl1/CMakeLists.txt
 deleted file mode 100644
-index 5e140eecf6..0000000000
+index d85b0611d..000000000
 --- a/platform/ext/target/arm/corstone1000/bl1/CMakeLists.txt
 +++ /dev/null
 @@ -1,345 +0,0 @@
@@ -53,14 +54,14 @@ index 5e140eecf6..0000000000
 -
 -add_convert_to_bin_target(bl1)
 -
--# bl2_mbedcrypto reused as it is, but it pulls the MCUBOOT_IMAGE_NUMBER=${MCUBOOT_IMAGE_NUMBER}
+-# bl2_crypto reused as it is, but it pulls the MCUBOOT_IMAGE_NUMBER=${MCUBOOT_IMAGE_NUMBER}
 -# configuration, where image number is 3. (Coming from BL2 build). To not to collide with BL1's
 -# build where image number is 1 mbedcrypto library is separated from the build of other source
 -# files.
 -target_link_libraries(bl1
 -    PRIVATE
 -        bl1_main
--        bl2_mbedcrypto
+-        bl2_crypto
 -        cmsis_stack_override
 -        cmsis
 -)
@@ -159,7 +160,7 @@ index 5e140eecf6..0000000000
 -target_link_libraries(bl1_main
 -    PRIVATE
 -        mcuboot_config
--        bl2_mbedcrypto_config
+-        bl2_crypto_config
 -)
 -
 -target_include_directories(bl1_main
@@ -367,7 +368,7 @@ index 5e140eecf6..0000000000
 -)
 diff --git a/platform/ext/target/arm/corstone1000/bl1/bl1_security_cnt.c b/platform/ext/target/arm/corstone1000/bl1/bl1_security_cnt.c
 deleted file mode 100644
-index 32c1481cca..0000000000
+index 32c1481cc..000000000
 --- a/platform/ext/target/arm/corstone1000/bl1/bl1_security_cnt.c
 +++ /dev/null
 @@ -1,75 +0,0 @@
@@ -447,5 +448,5 @@ index 32c1481cca..0000000000
 -    return 0;
 -}
 -- 
-2.25.1
+2.43.0
 
