@@ -1,0 +1,134 @@
+From 57a1a4cbbc40342c88a6fe2f4eaeadbd15dcbfa6 Mon Sep 17 00:00:00 2001
+From: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
+Date: Fri, 22 Aug 2025 20:34:10 +0000
+Subject: [PATCH 2/2] Add checks for BL2 and TF-M binary address alignment
+
+Add relevant checks in GCC linker scripts to validate if the
+BL2 and TF-M binary addresses are aligned to 0x100 byte boundary
+for Cortex-M0+ based platforms.
+
+Upstream-Status: Backport [069a9b5a3acece140369ff07281b26e25bc50026]
+Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
+---
+ platform/ext/common/gcc/tfm_common_bl2.ld           | 12 +++++++++++-
+ platform/ext/common/gcc/tfm_common_s.ld.template    | 13 ++++++++++++-
+ platform/ext/common/gcc/tfm_isolation_s.ld.template | 13 ++++++++++++-
+ platform/ext/common/tfm_s_linker_alignments.h       |  9 ++++++++-
+ 4 files changed, 43 insertions(+), 4 deletions(-)
+
+diff --git a/platform/ext/common/gcc/tfm_common_bl2.ld b/platform/ext/common/gcc/tfm_common_bl2.ld
+index eee915210..65d75980b 100644
+--- a/platform/ext/common/gcc/tfm_common_bl2.ld
++++ b/platform/ext/common/gcc/tfm_common_bl2.ld
+@@ -1,5 +1,7 @@
+ ;/*
+-; * Copyright (c) 2022-2024 Arm Limited. All rights reserved.
++; * SPDX-FileCopyrightText: Copyright The TrustedFirmware-M Contributors
++; *
++; * SPDX-License-Identifier: BSD-3-Clause
+ ; *
+ ; * Licensed under the Apache License, Version 2.0 (the "License");
+ ; * you may not use this file except in compliance with the License.
+@@ -33,6 +35,14 @@ MEMORY
+     RAM   (rwx) : ORIGIN = BL2_DATA_START, LENGTH = BL2_DATA_SIZE
+ }
+ 
++/* For Cortex-M0+ VTOR: 256-byte vector table is at the offset 0x00 of the image.
++ * To keep that table in one block, the image base must be a multiple of 0x100.
++ * For reference: https://developer.arm.com/documentation/ddi0419/latest/
++ */
++#if defined(__ARM_ARCH_6M__)
++CHECK_ALIGNMENT_256(BL2_CODE_START)
++#endif
++
+ __heap_size__  = BL2_HEAP_SIZE;
+ __msp_stack_size__ = BL2_MSP_STACK_SIZE;
+ 
+diff --git a/platform/ext/common/gcc/tfm_common_s.ld.template b/platform/ext/common/gcc/tfm_common_s.ld.template
+index 023f2224e..db6a2d570 100644
+--- a/platform/ext/common/gcc/tfm_common_s.ld.template
++++ b/platform/ext/common/gcc/tfm_common_s.ld.template
+@@ -1,5 +1,8 @@
+ ;/*
+-; * Copyright (c) 2009-2024 Arm Limited
++; * SPDX-FileCopyrightText: Copyright The TrustedFirmware-M Contributors
++; *
++; * SPDX-License-Identifier: BSD-3-Clause
++; *
+ ; * Copyright (c) 2022-2024 Cypress Semiconductor Corporation (an Infineon company)
+ ; * or an affiliate of Cypress Semiconductor Corporation. All rights reserved.
+ ; *
+@@ -38,6 +41,14 @@ MEMORY
+ #endif
+ }
+ 
++/* For Cortex-M0+ VTOR: 256-byte vector table is at the offset 0x00 of the image.
++ * To keep that table in one block, the image base must be a multiple of 0x100.
++ * For reference: https://developer.arm.com/documentation/ddi0419/latest/
++ */
++#if defined(__ARM_ARCH_6M__)
++CHECK_ALIGNMENT_256(S_CODE_START)
++#endif
++
+ #ifndef TFM_LINKER_VENEERS_START
+ #define TFM_LINKER_VENEERS_START ALIGN(TFM_LINKER_VENEERS_ALIGNMENT)
+ #endif
+diff --git a/platform/ext/common/gcc/tfm_isolation_s.ld.template b/platform/ext/common/gcc/tfm_isolation_s.ld.template
+index 00693a19d..6c4f13efa 100644
+--- a/platform/ext/common/gcc/tfm_isolation_s.ld.template
++++ b/platform/ext/common/gcc/tfm_isolation_s.ld.template
+@@ -1,5 +1,8 @@
+ ;/*
+-; * Copyright (c) 2009-2024 Arm Limited
++; * SPDX-FileCopyrightText: Copyright The TrustedFirmware-M Contributors
++; *
++; * SPDX-License-Identifier: BSD-3-Clause
++; *
+ ; * Copyright (c) 2022-2024 Cypress Semiconductor Corporation (an Infineon company)
+ ; * or an affiliate of Cypress Semiconductor Corporation. All rights reserved.
+ ; *
+@@ -47,6 +50,14 @@ MEMORY
+ #endif
+ }
+ 
++/* For Cortex-M0+ VTOR: 256-byte vector table is at the offset 0x00 of the image.
++ * To keep that table in one block, the image base must be a multiple of 0x100.
++ * For reference: https://developer.arm.com/documentation/ddi0419/latest/
++ */
++#if defined(__ARM_ARCH_6M__)
++CHECK_ALIGNMENT_256(S_CODE_START)
++#endif
++
+ #ifndef TFM_LINKER_VENEERS_START
+ #define TFM_LINKER_VENEERS_START ALIGN(TFM_LINKER_VENEERS_ALIGNMENT)
+ #endif
+diff --git a/platform/ext/common/tfm_s_linker_alignments.h b/platform/ext/common/tfm_s_linker_alignments.h
+index 0d115575c..fb96938c9 100644
+--- a/platform/ext/common/tfm_s_linker_alignments.h
++++ b/platform/ext/common/tfm_s_linker_alignments.h
+@@ -1,7 +1,8 @@
+ /*
+  * Copyright (c) 2022 Cypress Semiconductor Corporation (an Infineon company)
+  * or an affiliate of Cypress Semiconductor Corporation. All rights reserved.
+- * Copyright (c) 2024, Arm Limited. All rights reserved.
++ *
++ * SPDX-FileCopyrightText: Copyright The TrustedFirmware-M Contributors
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  *
+@@ -21,6 +22,12 @@
+ 
+ #define CHECK_ALIGNMENT_4(size) ASSERT((size) % 4 == 0, #size)
+ 
++/* For Cortex-M0+ VTOR: 256-byte vector table is at the offset 0x00 of the image.
++ * To keep that table in one block, the image base must be a multiple of 0x100.
++ * For reference: https://developer.arm.com/documentation/ddi0419/latest/
++ */
++#define CHECK_ALIGNMENT_256(addr) ASSERT((addr % 256) == 0, #addr)
++
+ /* Default alignment for linker file sections is set to 32 because ARM TrustZone
+  * protection units (SAU and MPU) require regions to be 32 bytes aligned. */
+ #ifndef TFM_LINKER_DEFAULT_ALIGNMENT
+-- 
+2.43.0
+
