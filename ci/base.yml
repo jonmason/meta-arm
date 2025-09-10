@@ -30,11 +30,9 @@ local_conf_header:
   base: |
     CONF_VERSION = "2"
     BB_SERVER_TIMEOUT = "300"
-  setup: |
-    PACKAGECONFIG:append:pn-perf = " coresight"
     INHERIT += "rm_work"
   extrapackages: |
-    CORE_IMAGE_EXTRA_INSTALL += "perf opencsd"
+    CORE_IMAGE_EXTRA_INSTALL += "perf"
     CORE_IMAGE_EXTRA_INSTALL:append:aarch64 = " gator-daemon"
 
 machine: unset
