@@ -1,5 +1,10 @@
 ARMFILESPATHS := "${THISDIR}/files:"
 
+FILESEXTRAPATHS:prepend:aarch64 = "${ARMFILESPATHS}"
+SRC_URI:append:aarch64 = " \
+    file://0001-defconfig-cleanup-orphaned-CONFIG_SCHED_DEBUG.patch \
+    "
+
 FILESEXTRAPATHS:prepend:qemuarm64-secureboot = "${ARMFILESPATHS}"
 SRC_URI:append:qemuarm64-secureboot = " \
     file://tee.cfg \
