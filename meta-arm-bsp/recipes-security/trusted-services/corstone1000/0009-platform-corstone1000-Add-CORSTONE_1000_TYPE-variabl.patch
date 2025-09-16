@@ -1,0 +1,72 @@
+From a644191e6f184e39fbe60a8fd79bf34a9a88eb17 Mon Sep 17 00:00:00 2001
+From: Hugues KAMBA MPIANA <hugues.kambampiana@arm.com>
+Date: Thu, 11 Sep 2025 14:25:04 +0100
+Subject: [PATCH] platform: corstone1000: Add CORSTONE_1000_TYPE variable for
+ platform selection
+
+This change introduces a CORSTONE_1000_TYPE variable in both CMake
+and C code to differentiate between Corstone-1000 platform types:
+* `CORSTONE_1000_TYPE_CORTEX_A35_FVP`
+* `CORSTONE_1000_TYPE_CORTEX_A35_MPS3`
+
+The default platform type (`CORSTONE_1000_TYPE_CORTEX_A35_FVP`) is
+set in CMake and can be overridden via the `-DCORSTONE_1000_TYPE`
+option at configure time.
+
+This variable will be used to select the correct FWU image UUIDs at
+compile time, as the UUIDs differ depending on the target platform.
+
+Upstream-Status: Backport [2cd4db9828f244de77e402ad31c52d9c4ba3c600]
+Signed-off-by: Hugues KAMBA MPIANA <hugues.kambampiana@arm.com>
+Signed-off-by: Ali Can Ozaslan <ali.oezaslan@arm.com>
+Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
+---
+ .../providers/arm/corstone1000/platform.cmake | 21 ++++++++++++++++++-
+ 1 file changed, 20 insertions(+), 1 deletion(-)
+
+diff --git a/platform/providers/arm/corstone1000/platform.cmake b/platform/providers/arm/corstone1000/platform.cmake
+index d39b7903..478a394d 100644
+--- a/platform/providers/arm/corstone1000/platform.cmake
++++ b/platform/providers/arm/corstone1000/platform.cmake
+@@ -1,11 +1,29 @@
+ #-------------------------------------------------------------------------------
+-# Copyright (c) 2021-2024, Arm Limited and Contributors. All rights reserved.
++# Copyright (c) 2021-2025, Arm Limited and Contributors. All rights reserved.
+ #
+ # SPDX-License-Identifier: BSD-3-Clause
+ #
+ # Platform definition for the Corstone-1000 platform.
+ #-------------------------------------------------------------------------------
+ 
++# Important: The order and index of values must match C code expectations
++set(_corstone_1000_valid_types
++    CORSTONE_1000_TYPE_CORTEX_A35_FVP
++    CORSTONE_1000_TYPE_CORTEX_A35_MPS3
++)
++set(CORSTONE_1000_TYPE "CORSTONE_1000_TYPE_CORTEX_A35_FVP" CACHE STRING
++    "Corstone-1000 platform type. Valid values are: ${_corstone_1000_valid_types}"
++)
++set_property(CACHE CORSTONE_1000_TYPE PROPERTY STRINGS ${_corstone_1000_valid_types})
++list(FIND _corstone_1000_valid_types "${CORSTONE_1000_TYPE}" CORSTONE_1000_TYPE_INT)
++if(CORSTONE_1000_TYPE_INT EQUAL -1)
++    message(FATAL_ERROR
++        "Invalid CORSTONE_1000_TYPE: ${CORSTONE_1000_TYPE}.
++         Valid values are: ${_corstone_1000_valid_types}"
++    )
++endif()
++unset(_corstone_1000_valid_types)
++
+ set(SMM_GATEWAY_MAX_UEFI_VARIABLES 80 CACHE STRING "Maximum UEFI variable count")
+ set(SMM_RPC_CALLER_SESSION_SHARED_MEMORY_SIZE 4*4096 CACHE STRING "RPC caller buffer size in SMMGW")
+ set(SMM_SP_HEAP_SIZE 80*1024 CACHE STRING "SMM gateway SP heap size")
+@@ -14,6 +32,7 @@ target_compile_definitions(${TGT} PRIVATE
+ 	SMM_VARIABLE_INDEX_STORAGE_UID=0x787
+ 	PLAT_RSE_COMMS_PAYLOAD_MAX_SIZE=0x2080
+ 	COMMS_MHU_MSG_SIZE=0x3500
++	CORSTONE_1000_TYPE=${CORSTONE_1000_TYPE_INT}
+ )
+ 
+ get_property(_platform_driver_dependencies TARGET ${TGT}
+-- 
+2.43.0
+

@@ -10,7 +10,7 @@ SRC_URI:append:corstone1000  = " \
     file://0006-Align-PSA-Crypto-with-TF-Mv2.1.patch \
     file://0007-Revert-Load-and-store-UEFI-variable-index-in-chunks.patch \
     file://0008-se-proxy-protobuf-change.patch \
-    file://0009-Platform-Corstone1000-Add-PLATFORM_IS_FVP-toggle-for.patch \
+    file://0009-platform-corstone1000-Add-CORSTONE_1000_TYPE-variabl.patch \
     file://0010-Integrate-PSA-FWU-IPC-framework-for-Corstone-1000.patch \
     file://0011-Load-initial-image-state-in-PSA-FWU-M-update-agent.patch \
     file://0012-Corstone1000-Define-PSA-FWU-image-mapping-structure.patch \
@@ -27,3 +27,7 @@ CFLAGS:append:corstone1000 = " -Wno-int-conversion -Wno-implicit-function-declar
 
 COMPATIBLE_MACHINE:fvp-base = "fvp-base"
 TS_PLATFORM:fvp-base = "arm/fvp/fvp_base_revc-2xaemv8a"
+
+EXTRA_OECMAKE:append:corstone1000 = " \
+    -DCORSTONE_1000_TYPE=${CORSTONE_1000_TYPE} \
+"
