@@ -1,7 +1,7 @@
 From ca3870a123f3449407d460dcbc6bc0ba0d135e1e Mon Sep 17 00:00:00 2001
 From: Gyorgy Szing <gyorgy.szing@arm.com>
 Date: Tue, 26 Aug 2025 15:01:44 +0200
-Subject: [PATCH 7/7] fwu-proxy: refactor image mapping
+Subject: [PATCH] fwu-proxy: refactor image mapping
 
 Stop defining the size of the image mapping and the number of mappings
 at different places (C code vs cmake). Move the number of images to the

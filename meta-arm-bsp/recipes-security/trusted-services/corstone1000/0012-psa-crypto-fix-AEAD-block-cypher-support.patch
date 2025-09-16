@@ -1,7 +1,7 @@
 From 85c8535f448466cdbd773f7072a42203ebc6ae64 Mon Sep 17 00:00:00 2001
 From: Gabor Abonyi <gabor.abonyi@arm.com>
 Date: Fri, 4 Apr 2025 11:43:09 +0000
-Subject: [PATCH 01/25] psa-crypto: fix AEAD block cypher support
+Subject: [PATCH] psa-crypto: fix AEAD block cypher support
 
 This change enables support for block cyphers that require input data
 to be processed in whole block-sized chunks.

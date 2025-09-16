@@ -1,7 +1,7 @@
 From d5ca8c5b73c3ff3bc5c137828932e440c6a7f187 Mon Sep 17 00:00:00 2001
 From: Hugues KAMBA MPIANA <hugues.kambampiana@arm.com>
 Date: Tue, 5 Aug 2025 15:05:33 +0100
-Subject: [PATCH 5/7] fwu: Add support for ESRT v1 in PSA FWU-M agent
+Subject: [PATCH] fwu: Add support for ESRT v1 in PSA FWU-M agent
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

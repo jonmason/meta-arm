@@ -1,7 +1,7 @@
 From 2cd4db9828f244de77e402ad31c52d9c4ba3c600 Mon Sep 17 00:00:00 2001
 From: Hugues KAMBA MPIANA <hugues.kambampiana@arm.com>
 Date: Tue, 5 Aug 2025 14:05:49 +0100
-Subject: [PATCH 1/7] platform: corstone1000: Add CORSTONE_1000_TYPE variable
+Subject: [PATCH] platform: corstone1000: Add CORSTONE_1000_TYPE variable
  for platform selection
 
 This change introduces a CORSTONE_1000_TYPE variable in both CMake

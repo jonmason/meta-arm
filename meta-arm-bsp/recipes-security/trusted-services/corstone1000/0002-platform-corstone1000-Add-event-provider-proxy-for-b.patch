@@ -1,7 +1,7 @@
 From 6a4cedce9d433bc42a71ac77c3cd90dde4242951 Mon Sep 17 00:00:00 2001
 From: Hugues KAMBA MPIANA <hugues.kambampiana@arm.com>
 Date: Tue, 5 Aug 2025 15:22:44 +0100
-Subject: [PATCH 2/7] platform: corstone1000: Add event provider proxy for boot
+Subject: [PATCH] platform: corstone1000: Add event provider proxy for boot
  confirmation handling
 
 This patch introduces an event forwarding framework to support

@@ -1,7 +1,7 @@
 From a518c74b7ce050bba2d0aaece701086dc50ffa53 Mon Sep 17 00:00:00 2001
 From: Hugues KAMBA MPIANA <hugues.kambampiana@arm.com>
 Date: Tue, 5 Aug 2025 13:54:13 +0100
-Subject: [PATCH 3/7] fwu:se-proxy: Allow platform override of FWU mapping and
+Subject: [PATCH] fwu:se-proxy: Allow platform override of FWU mapping and
  payload size
 
 Allow platform override of FWU mapping and payload size

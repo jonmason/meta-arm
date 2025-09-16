@@ -1,7 +1,7 @@
 From 44e56b28f6a5ea9caab0bcccce3d02c59bb5d0ce Mon Sep 17 00:00:00 2001
 From: Gyorgy Szing <gyorgy.szing@arm.com>
 Date: Tue, 19 Aug 2025 11:07:39 +0200
-Subject: [PATCH 1/8] Make treating warnings as errors configurable
+Subject: [PATCH] Make treating warnings as errors configurable
 
 Introduce the CMAKE_COMPILE_WARNING_AS_ERROR build option to control
 whether the project treats compiler warnings as errors. This option is

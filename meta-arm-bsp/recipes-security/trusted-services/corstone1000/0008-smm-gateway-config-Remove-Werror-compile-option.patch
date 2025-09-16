@@ -1,7 +1,7 @@
 From c50ad182f8375eacb315b894229eec7f4cad1b30 Mon Sep 17 00:00:00 2001
 From: Hugues KAMBA MPIANA <hugues.kambampiana@arm.com>
 Date: Fri, 18 Oct 2024 11:50:32 +0000
-Subject: [PATCH 6/7] smm-gateway/config: Remove `Werror` compile option
+Subject: [PATCH] smm-gateway/config: Remove `Werror` compile option
 
 Adding `-Werror` to CMakeLists.txt unintended when
 originally committed.

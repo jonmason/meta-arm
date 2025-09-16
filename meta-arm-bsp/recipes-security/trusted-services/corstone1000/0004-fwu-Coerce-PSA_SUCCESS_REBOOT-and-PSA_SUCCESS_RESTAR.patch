@@ -1,7 +1,7 @@
 From 8b8eb4a2d512de06d3ee8a17dd9295cd38efd68d Mon Sep 17 00:00:00 2001
 From: Hugues KAMBA MPIANA <hugues.kambampiana@arm.com>
 Date: Tue, 5 Aug 2025 14:42:17 +0100
-Subject: [PATCH 4/7] fwu: Coerce PSA_SUCCESS_REBOOT and PSA_SUCCESS_RESTART to
+Subject: [PATCH] fwu: Coerce PSA_SUCCESS_REBOOT and PSA_SUCCESS_RESTART to
  PSA_SUCCESS
 
 Map `PSA_SUCCESS_REBOOT` and `PSA_SUCCESS_RESTART` (returned by
