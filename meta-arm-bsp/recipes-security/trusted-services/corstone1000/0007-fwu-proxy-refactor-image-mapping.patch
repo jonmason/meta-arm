@@ -1,0 +1,856 @@
+From ca3870a123f3449407d460dcbc6bc0ba0d135e1e Mon Sep 17 00:00:00 2001
+From: Gyorgy Szing <gyorgy.szing@arm.com>
+Date: Tue, 26 Aug 2025 15:01:44 +0200
+Subject: [PATCH 7/7] fwu-proxy: refactor image mapping
+
+Stop defining the size of the image mapping and the number of mappings
+at different places (C code vs cmake). Move the number of images to the
+image mapping structure of the FWU proxy. This simplifies the API and
+makes consistent configuration easier.
+
+Upstream-Status: Backport [ca3870a123f3449407d460dcbc6bc0ba0d135e1e]
+Signed-off-by: Gyorgy Szing <gyorgy.szing@arm.com>
+Signed-off-by: Hugues KAMBA MPIANA <hugues.kambampiana@arm.com>
+---
+ .../psa_fwu_m/agent/psa_fwu_m_update_agent.c  |  24 +-
+ .../psa_fwu_m/agent/psa_fwu_m_update_agent.h  |  14 +-
+ .../test/test_psa_fwu_m_update_agent.cpp      | 214 +++++++++---------
+ .../infra/corstone1000/corstone1000_config.c  |  71 +++---
+ .../infra/corstone1000/corstone1000_config.h  |   2 +
+ deployments/se-proxy/infra/rse/spf_fwu.c      |  27 +--
+ .../infra/stub/service_proxy_factory.c        |   2 +-
+ .../providers/arm/corstone1000/platform.cmake |  16 +-
+ 8 files changed, 191 insertions(+), 179 deletions(-)
+
+diff --git a/components/service/fwu/psa_fwu_m/agent/psa_fwu_m_update_agent.c b/components/service/fwu/psa_fwu_m/agent/psa_fwu_m_update_agent.c
+index 26972fc0..650a6d04 100644
+--- a/components/service/fwu/psa_fwu_m/agent/psa_fwu_m_update_agent.c
++++ b/components/service/fwu/psa_fwu_m/agent/psa_fwu_m_update_agent.c
+@@ -646,7 +646,7 @@ static const struct update_agent_interface interface = {
+ };
+ 
+ struct update_agent *psa_fwu_m_update_agent_init(
+-	const struct psa_fwu_m_image_mapping image_mapping[], size_t image_count,
++	const struct psa_fwu_m_image_mapping *image_mapping,
+ 	uint32_t max_payload_size)
+ {
+ 	psa_status_t psa_status = PSA_ERROR_GENERIC_ERROR;
+@@ -658,8 +658,11 @@ struct update_agent *psa_fwu_m_update_agent_init(
+ 	uint8_t esrt_image_uuid[OSF_UUID_OCTET_LEN];
+ 	size_t i = 0;
+ 
++	if (!image_mapping)
++		return NULL;
++
+ 	/* Allocate +1 image for the Image directory */
+-	images = (struct psa_fwu_m_image *)calloc(image_count + 1, sizeof(*images));
++	images = (struct psa_fwu_m_image *)calloc(image_mapping->count + 1, sizeof(*images));
+ 	if (!images)
+ 		return NULL; /* LCOV_EXCL_LINE */
+ 
+@@ -680,8 +683,8 @@ struct update_agent *psa_fwu_m_update_agent_init(
+ 		/* LCOV_EXCL_STOP */
+ 	}
+ 
+-	for (i = 0; i < image_count; i++) {
+-		psa_status = psa_fwu_query(image_mapping[i].component, &info);
++	for (i = 0; i < image_mapping->count; i++) {
++		psa_status = psa_fwu_query(image_mapping->images[i].component, &info);
+ 		if (psa_status != PSA_SUCCESS) {
+ 			free(images);
+ 			free(context);
+@@ -689,8 +692,8 @@ struct update_agent *psa_fwu_m_update_agent_init(
+ 			return NULL;
+ 		}
+ 
+-		images[i].uuid = image_mapping[i].uuid;
+-		images[i].component = image_mapping[i].component;
++		images[i].uuid = image_mapping->images[i].uuid;
++		images[i].component = image_mapping->images[i].component;
+ 		if (info.state == PSA_FWU_TRIAL) {
+ 			images[i].selected_for_staging = true;
+ 			state = trial;
+@@ -711,14 +714,15 @@ struct update_agent *psa_fwu_m_update_agent_init(
+ 	}
+ 
+ 	/* Insert Image directory as the last image */
+-	uuid_octets_from_canonical(&images[image_count].uuid, FWU_DIRECTORY_CANONICAL_UUID);
+-	images[image_count].component = 0;
+-	images[image_count].selected_for_staging = false;
++	uuid_octets_from_canonical(&images[image_mapping->count].uuid,
++				   FWU_DIRECTORY_CANONICAL_UUID);
++	images[image_mapping->count].component = 0;
++	images[image_mapping->count].selected_for_staging = false;
+ 	images[i].read = image_directory_read;
+ 	images[i].write = NULL; /* Cannot write Images directory */
+ 
+ 	context->images = images;
+-	context->image_count = image_count + 1;
++	context->image_count = image_mapping->count + 1;
+ 	context->max_payload_size = max_payload_size;
+ 	context->state = state;
+ 
+diff --git a/components/service/fwu/psa_fwu_m/agent/psa_fwu_m_update_agent.h b/components/service/fwu/psa_fwu_m/agent/psa_fwu_m_update_agent.h
+index 6354b8ba..ca5f9949 100644
+--- a/components/service/fwu/psa_fwu_m/agent/psa_fwu_m_update_agent.h
++++ b/components/service/fwu/psa_fwu_m/agent/psa_fwu_m_update_agent.h
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2024, Arm Limited. All rights reserved.
++ * Copyright (c) 2024-2025, Arm Limited. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  *
+@@ -17,21 +17,23 @@ extern "C" {
+ #endif
+ 
+ struct psa_fwu_m_image_mapping {
+-	struct uuid_octets uuid;
+-	psa_fwu_component_t component;
++	size_t count;
++	struct {
++		struct uuid_octets uuid;
++		psa_fwu_component_t component;
++	} images[];
+ };
+ 
+ /**
+  * \brief Initialise the PSA FWU M update_agent
+  *
+  * \param[in]  image_mapping    Component mapping array
+- * \param[in]  image_count      Component mapping count
+  * \param[in]  max_payload_size The maximum number of bytes that a payload can contain
+  *
+  * \return  The update_agent
+  */
+ struct update_agent *psa_fwu_m_update_agent_init(
+-	const struct psa_fwu_m_image_mapping image_mapping[], size_t image_count,
++	const struct psa_fwu_m_image_mapping *image_mapping,
+ 	uint32_t max_payload_size);
+ 
+ /**
+@@ -42,7 +44,7 @@ struct update_agent *psa_fwu_m_update_agent_init(
+ void psa_fwu_m_update_agent_deinit(struct update_agent *update_agent);
+ 
+ /* This should be defined by the platform */
+-extern struct psa_fwu_m_image_mapping img_mapping[];
++extern struct psa_fwu_m_image_mapping img_mapping;
+ 
+ #ifdef __cplusplus
+ }
+diff --git a/components/service/fwu/psa_fwu_m/agent/test/test_psa_fwu_m_update_agent.cpp b/components/service/fwu/psa_fwu_m/agent/test/test_psa_fwu_m_update_agent.cpp
+index 3805d182..919ce897 100644
+--- a/components/service/fwu/psa_fwu_m/agent/test/test_psa_fwu_m_update_agent.cpp
++++ b/components/service/fwu/psa_fwu_m/agent/test/test_psa_fwu_m_update_agent.cpp
+@@ -12,12 +12,37 @@
+ #include <CppUTest/TestHarness.h>
+ #include <CppUTestExt/MockSupport.h>
+ 
++static const psa_fwu_m_image_mapping * get_image_mapping()
++{
++	static const psa_fwu_m_image_mapping image_mapping = {
++		.count = 2,
++		.images = {
++			{
++				.uuid = {
++					0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
++					0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f
++				},
++				.component = 3
++			},
++			{
++				.uuid = {
++					0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a, 0x09, 0x08,
++					0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00
++				},
++				.component = 2
++			},
++		}
++	};
++	return &image_mapping;
++}
++
+ TEST_GROUP(psa_fwu_m_update_agent) {
+ 	TEST_SETUP() {
+ 		psa_fwu_component_info_t info = {0};
+-		expect_mock_psa_fwu_query(mapping[0].component, &info, PSA_SUCCESS);
+-		expect_mock_psa_fwu_query(mapping[1].component, &info, PSA_SUCCESS);
+-		agent = psa_fwu_m_update_agent_init(mapping, 2, 4096);
++		mapping = get_image_mapping();
++		expect_mock_psa_fwu_query(mapping->images[0].component, &info, PSA_SUCCESS);
++		expect_mock_psa_fwu_query(mapping->images[1].component, &info, PSA_SUCCESS);
++		agent = psa_fwu_m_update_agent_init(mapping, 4096);
+ 		handle = 0;
+ 		progress = 0;
+ 		total_work = 0;
+@@ -31,14 +56,14 @@ TEST_GROUP(psa_fwu_m_update_agent) {
+ 	}
+ 
+ 	void begin_staging() {
+-		expect_mock_psa_fwu_start(mapping[0].component, NULL, 0, PSA_SUCCESS);
+-		expect_mock_psa_fwu_start(mapping[1].component, NULL, 0, PSA_SUCCESS);
++		expect_mock_psa_fwu_start(mapping->images[0].component, NULL, 0, PSA_SUCCESS);
++		expect_mock_psa_fwu_start(mapping->images[1].component, NULL, 0, PSA_SUCCESS);
+ 		LONGS_EQUAL(FWU_STATUS_SUCCESS, update_agent_begin_staging(agent, 0, 0, NULL));
+ 	}
+ 
+ 	void end_staging() {
+-		expect_mock_psa_fwu_finish(mapping[0].component, PSA_SUCCESS);
+-		expect_mock_psa_fwu_finish(mapping[1].component, PSA_SUCCESS);
++		expect_mock_psa_fwu_finish(mapping->images[0].component, PSA_SUCCESS);
++		expect_mock_psa_fwu_finish(mapping->images[1].component, PSA_SUCCESS);
+ 
+ 		expect_mock_psa_fwu_install(PSA_SUCCESS);
+ 
+@@ -47,11 +72,11 @@ TEST_GROUP(psa_fwu_m_update_agent) {
+ 
+ 	void open() {
+ 		LONGS_EQUAL(FWU_STATUS_SUCCESS,
+-			    update_agent_open(agent, &mapping[0].uuid, FWU_OP_TYPE_WRITE, &handle));
++			    update_agent_open(agent, &mapping->images[0].uuid, FWU_OP_TYPE_WRITE, &handle));
+ 	}
+ 
+ 	void write(const uint8_t *data, size_t data_len) {
+-		expect_mock_psa_fwu_write(mapping[0].component, 0, NULL, 0, PSA_SUCCESS);
++		expect_mock_psa_fwu_write(mapping->images[0].component, 0, NULL, 0, PSA_SUCCESS);
+ 		LONGS_EQUAL(FWU_STATUS_SUCCESS,
+ 			    update_agent_write_stream(agent, handle, data, data_len));
+ 	}
+@@ -61,27 +86,12 @@ TEST_GROUP(psa_fwu_m_update_agent) {
+ 	uint32_t progress;
+ 	uint32_t total_work;
+ 
+-	const psa_fwu_m_image_mapping mapping[2] = {
+-		{
+-			.uuid = {
+-				0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+-				0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f
+-			},
+-			.component = 3
+-		},
+-		{
+-			.uuid = {
+-				0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a, 0x09, 0x08,
+-				0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00
+-			},
+-			.component = 2
+-		},
+-	};
+-
+ 	const struct uuid_octets image_directory_uuid = {
+ 		0xde, 0xee, 0x58, 0xd9, 0x51, 0x47, 0x4a, 0xd3,
+ 		0xa2, 0x90, 0x77, 0x66, 0x6e, 0x23, 0x41, 0xa5
+ 	};
++
++	const psa_fwu_m_image_mapping *mapping;
+ };
+ 
+ TEST(psa_fwu_m_update_agent, discover)
+@@ -98,16 +108,16 @@ TEST(psa_fwu_m_update_agent, discover)
+ 
+ TEST(psa_fwu_m_update_agent, begin_staging_start_fail)
+ {
+-	expect_mock_psa_fwu_start(mapping[0].component, NULL, 0, PSA_ERROR_GENERIC_ERROR);
+-	expect_mock_psa_fwu_clean(mapping[0].component, PSA_SUCCESS);
+-	expect_mock_psa_fwu_clean(mapping[1].component, PSA_SUCCESS);
++	expect_mock_psa_fwu_start(mapping->images[0].component, NULL, 0, PSA_ERROR_GENERIC_ERROR);
++	expect_mock_psa_fwu_clean(mapping->images[0].component, PSA_SUCCESS);
++	expect_mock_psa_fwu_clean(mapping->images[1].component, PSA_SUCCESS);
+ 	LONGS_EQUAL(FWU_STATUS_UNKNOWN, update_agent_begin_staging(agent, 0, 0, NULL));
+ }
+ 
+ TEST(psa_fwu_m_update_agent, begin_staging_start_and_clean_fail)
+ {
+-	expect_mock_psa_fwu_start(mapping[0].component, NULL, 0, PSA_ERROR_GENERIC_ERROR);
+-	expect_mock_psa_fwu_clean(mapping[0].component, PSA_ERROR_GENERIC_ERROR);
++	expect_mock_psa_fwu_start(mapping->images[0].component, NULL, 0, PSA_ERROR_GENERIC_ERROR);
++	expect_mock_psa_fwu_clean(mapping->images[0].component, PSA_ERROR_GENERIC_ERROR);
+ 	LONGS_EQUAL(FWU_STATUS_DENIED, update_agent_begin_staging(agent, 0, 0, NULL));
+ }
+ 
+@@ -115,42 +125,42 @@ TEST(psa_fwu_m_update_agent, begin_staging_partial_invalid_uuid)
+ {
+ 	const struct uuid_octets update_guid = { 0 };
+ 
+-	expect_mock_psa_fwu_clean(mapping[0].component, PSA_SUCCESS);
+-	expect_mock_psa_fwu_clean(mapping[1].component, PSA_SUCCESS);
++	expect_mock_psa_fwu_clean(mapping->images[0].component, PSA_SUCCESS);
++	expect_mock_psa_fwu_clean(mapping->images[1].component, PSA_SUCCESS);
+ 
+ 	LONGS_EQUAL(FWU_STATUS_UNKNOWN, update_agent_begin_staging(agent, 0, 1, &update_guid));
+ }
+ 
+ TEST(psa_fwu_m_update_agent, begin_staging_partial_image_directory_uuid)
+ {
+-	expect_mock_psa_fwu_clean(mapping[0].component, PSA_SUCCESS);
+-	expect_mock_psa_fwu_clean(mapping[1].component, PSA_SUCCESS);
++	expect_mock_psa_fwu_clean(mapping->images[0].component, PSA_SUCCESS);
++	expect_mock_psa_fwu_clean(mapping->images[1].component, PSA_SUCCESS);
+ 
+ 	LONGS_EQUAL(FWU_STATUS_UNKNOWN, update_agent_begin_staging(agent, 0, 1, &image_directory_uuid));
+ }
+ 
+ TEST(psa_fwu_m_update_agent, begin_staging_partial_start_fail)
+ {
+-	expect_mock_psa_fwu_start(mapping[0].component, NULL, 0, PSA_ERROR_GENERIC_ERROR);
+-	expect_mock_psa_fwu_clean(mapping[0].component, PSA_SUCCESS);
+-	expect_mock_psa_fwu_clean(mapping[1].component, PSA_SUCCESS);
++	expect_mock_psa_fwu_start(mapping->images[0].component, NULL, 0, PSA_ERROR_GENERIC_ERROR);
++	expect_mock_psa_fwu_clean(mapping->images[0].component, PSA_SUCCESS);
++	expect_mock_psa_fwu_clean(mapping->images[1].component, PSA_SUCCESS);
+ 
+-	LONGS_EQUAL(FWU_STATUS_UNKNOWN, update_agent_begin_staging(agent, 0, 1, &mapping[0].uuid));
++	LONGS_EQUAL(FWU_STATUS_UNKNOWN, update_agent_begin_staging(agent, 0, 1, &mapping->images[0].uuid));
+ }
+ 
+ TEST(psa_fwu_m_update_agent, begin_staging_partial_start_and_clean_fail)
+ {
+-	expect_mock_psa_fwu_start(mapping[0].component, NULL, 0, PSA_ERROR_GENERIC_ERROR);
+-	expect_mock_psa_fwu_clean(mapping[0].component, PSA_ERROR_GENERIC_ERROR);
++	expect_mock_psa_fwu_start(mapping->images[0].component, NULL, 0, PSA_ERROR_GENERIC_ERROR);
++	expect_mock_psa_fwu_clean(mapping->images[0].component, PSA_ERROR_GENERIC_ERROR);
+ 
+-	LONGS_EQUAL(FWU_STATUS_DENIED, update_agent_begin_staging(agent, 0, 1, &mapping[0].uuid));
++	LONGS_EQUAL(FWU_STATUS_DENIED, update_agent_begin_staging(agent, 0, 1, &mapping->images[0].uuid));
+ }
+ 
+ TEST(psa_fwu_m_update_agent, begin_staging_partial)
+ {
+-	expect_mock_psa_fwu_start(mapping[0].component, NULL, 0, PSA_SUCCESS);
++	expect_mock_psa_fwu_start(mapping->images[0].component, NULL, 0, PSA_SUCCESS);
+ 
+-	LONGS_EQUAL(FWU_STATUS_SUCCESS, update_agent_begin_staging(agent, 0, 1, &mapping[0].uuid));
++	LONGS_EQUAL(FWU_STATUS_SUCCESS, update_agent_begin_staging(agent, 0, 1, &mapping->images[0].uuid));
+ }
+ 
+ TEST(psa_fwu_m_update_agent, begin_staging)
+@@ -162,11 +172,11 @@ TEST(psa_fwu_m_update_agent, begin_staging_repeated_cancel_fail)
+ {
+ 	begin_staging();
+ 
+-	expect_mock_psa_fwu_cancel(mapping[0].component, PSA_SUCCESS);
+-	expect_mock_psa_fwu_cancel(mapping[1].component, PSA_ERROR_GENERIC_ERROR);
++	expect_mock_psa_fwu_cancel(mapping->images[0].component, PSA_SUCCESS);
++	expect_mock_psa_fwu_cancel(mapping->images[1].component, PSA_ERROR_GENERIC_ERROR);
+ 
+-	expect_mock_psa_fwu_clean(mapping[0].component, PSA_SUCCESS);
+-	expect_mock_psa_fwu_clean(mapping[1].component, PSA_SUCCESS);
++	expect_mock_psa_fwu_clean(mapping->images[0].component, PSA_SUCCESS);
++	expect_mock_psa_fwu_clean(mapping->images[1].component, PSA_SUCCESS);
+ 
+ 	LONGS_EQUAL(FWU_STATUS_UNKNOWN, update_agent_begin_staging(agent, 0, 0, NULL));
+ }
+@@ -175,10 +185,10 @@ TEST(psa_fwu_m_update_agent, begin_staging_repeated_clean_fail)
+ {
+ 	begin_staging();
+ 
+-	expect_mock_psa_fwu_cancel(mapping[0].component, PSA_SUCCESS);
+-	expect_mock_psa_fwu_cancel(mapping[1].component, PSA_SUCCESS);
++	expect_mock_psa_fwu_cancel(mapping->images[0].component, PSA_SUCCESS);
++	expect_mock_psa_fwu_cancel(mapping->images[1].component, PSA_SUCCESS);
+ 
+-	expect_mock_psa_fwu_clean(mapping[0].component, PSA_ERROR_GENERIC_ERROR);
++	expect_mock_psa_fwu_clean(mapping->images[0].component, PSA_ERROR_GENERIC_ERROR);
+ 
+ 	LONGS_EQUAL(FWU_STATUS_DENIED, update_agent_begin_staging(agent, 0, 0, NULL));
+ }
+@@ -187,14 +197,14 @@ TEST(psa_fwu_m_update_agent, begin_staging_repeated)
+ {
+ 	begin_staging();
+ 
+-	expect_mock_psa_fwu_cancel(mapping[0].component, PSA_SUCCESS);
+-	expect_mock_psa_fwu_cancel(mapping[1].component, PSA_SUCCESS);
++	expect_mock_psa_fwu_cancel(mapping->images[0].component, PSA_SUCCESS);
++	expect_mock_psa_fwu_cancel(mapping->images[1].component, PSA_SUCCESS);
+ 
+-	expect_mock_psa_fwu_clean(mapping[0].component, PSA_SUCCESS);
+-	expect_mock_psa_fwu_clean(mapping[1].component, PSA_SUCCESS);
++	expect_mock_psa_fwu_clean(mapping->images[0].component, PSA_SUCCESS);
++	expect_mock_psa_fwu_clean(mapping->images[1].component, PSA_SUCCESS);
+ 
+-	expect_mock_psa_fwu_start(mapping[0].component, NULL, 0, PSA_SUCCESS);
+-	expect_mock_psa_fwu_start(mapping[1].component, NULL, 0, PSA_SUCCESS);
++	expect_mock_psa_fwu_start(mapping->images[0].component, NULL, 0, PSA_SUCCESS);
++	expect_mock_psa_fwu_start(mapping->images[1].component, NULL, 0, PSA_SUCCESS);
+ 	LONGS_EQUAL(FWU_STATUS_SUCCESS, update_agent_begin_staging(agent, 0, 0, NULL));
+ }
+ 
+@@ -214,8 +224,8 @@ TEST(psa_fwu_m_update_agent, end_staging_finish_fail)
+ {
+ 	begin_staging();
+ 
+-	expect_mock_psa_fwu_finish(mapping[0].component, PSA_SUCCESS);
+-	expect_mock_psa_fwu_finish(mapping[1].component, PSA_ERROR_GENERIC_ERROR);
++	expect_mock_psa_fwu_finish(mapping->images[0].component, PSA_SUCCESS);
++	expect_mock_psa_fwu_finish(mapping->images[1].component, PSA_ERROR_GENERIC_ERROR);
+ 
+ 	LONGS_EQUAL(FWU_STATUS_DENIED, update_agent_end_staging(agent));
+ }
+@@ -224,8 +234,8 @@ TEST(psa_fwu_m_update_agent, end_staging_install_fail)
+ {
+ 	begin_staging();
+ 
+-	expect_mock_psa_fwu_finish(mapping[0].component, PSA_SUCCESS);
+-	expect_mock_psa_fwu_finish(mapping[1].component, PSA_SUCCESS);
++	expect_mock_psa_fwu_finish(mapping->images[0].component, PSA_SUCCESS);
++	expect_mock_psa_fwu_finish(mapping->images[1].component, PSA_SUCCESS);
+ 
+ 	expect_mock_psa_fwu_install(PSA_ERROR_GENERIC_ERROR);
+ 
+@@ -254,17 +264,17 @@ TEST(psa_fwu_m_update_agent, end_staging_all_accepted_accept_fail)
+ 	begin_staging();
+ 
+ 	LONGS_EQUAL(FWU_STATUS_SUCCESS,
+-		    update_agent_open(agent, &mapping[0].uuid, FWU_OP_TYPE_WRITE, &handle));
++		    update_agent_open(agent, &mapping->images[0].uuid, FWU_OP_TYPE_WRITE, &handle));
+ 	LONGS_EQUAL(FWU_STATUS_SUCCESS,
+ 		    update_agent_commit(agent, handle, true, 0, &progress, &total_work));
+ 
+ 	LONGS_EQUAL(FWU_STATUS_SUCCESS,
+-		    update_agent_open(agent, &mapping[1].uuid, FWU_OP_TYPE_WRITE, &handle));
++		    update_agent_open(agent, &mapping->images[1].uuid, FWU_OP_TYPE_WRITE, &handle));
+ 	LONGS_EQUAL(FWU_STATUS_SUCCESS,
+ 		    update_agent_commit(agent, handle, true, 0, &progress, &total_work));
+ 
+-	expect_mock_psa_fwu_finish(mapping[0].component, PSA_SUCCESS);
+-	expect_mock_psa_fwu_finish(mapping[1].component, PSA_SUCCESS);
++	expect_mock_psa_fwu_finish(mapping->images[0].component, PSA_SUCCESS);
++	expect_mock_psa_fwu_finish(mapping->images[1].component, PSA_SUCCESS);
+ 
+ 	expect_mock_psa_fwu_install(PSA_SUCCESS);
+ 
+@@ -278,12 +288,12 @@ TEST(psa_fwu_m_update_agent, end_staging_all_accepted)
+ 	begin_staging();
+ 
+ 	LONGS_EQUAL(FWU_STATUS_SUCCESS,
+-		    update_agent_open(agent, &mapping[0].uuid, FWU_OP_TYPE_WRITE, &handle));
++		    update_agent_open(agent, &mapping->images[0].uuid, FWU_OP_TYPE_WRITE, &handle));
+ 	LONGS_EQUAL(FWU_STATUS_SUCCESS,
+ 		    update_agent_commit(agent, handle, true, 0, &progress, &total_work));
+ 
+ 	LONGS_EQUAL(FWU_STATUS_SUCCESS,
+-		    update_agent_open(agent, &mapping[1].uuid, FWU_OP_TYPE_WRITE, &handle));
++		    update_agent_open(agent, &mapping->images[1].uuid, FWU_OP_TYPE_WRITE, &handle));
+ 	LONGS_EQUAL(FWU_STATUS_SUCCESS,
+ 		    update_agent_commit(agent, handle, true, 0, &progress, &total_work));
+ 
+@@ -303,7 +313,7 @@ TEST(psa_fwu_m_update_agent, cancel_staging_cancel_fail)
+ {
+ 	begin_staging();
+ 
+-	expect_mock_psa_fwu_cancel(mapping[0].component, PSA_ERROR_GENERIC_ERROR);
++	expect_mock_psa_fwu_cancel(mapping->images[0].component, PSA_ERROR_GENERIC_ERROR);
+ 
+ 	LONGS_EQUAL(FWU_STATUS_DENIED, update_agent_cancel_staging(agent));
+ }
+@@ -312,15 +322,15 @@ TEST(psa_fwu_m_update_agent, cancel_staging)
+ {
+ 	begin_staging();
+ 
+-	expect_mock_psa_fwu_cancel(mapping[0].component, PSA_SUCCESS);
+-	expect_mock_psa_fwu_cancel(mapping[1].component, PSA_SUCCESS);
++	expect_mock_psa_fwu_cancel(mapping->images[0].component, PSA_SUCCESS);
++	expect_mock_psa_fwu_cancel(mapping->images[1].component, PSA_SUCCESS);
+ 
+ 	LONGS_EQUAL(FWU_STATUS_SUCCESS, update_agent_cancel_staging(agent));
+ }
+ 
+ TEST(psa_fwu_m_update_agent, open_for_write_not_staging)
+ {
+-	LONGS_EQUAL(FWU_STATUS_DENIED, update_agent_open(agent, &mapping[0].uuid,
++	LONGS_EQUAL(FWU_STATUS_DENIED, update_agent_open(agent, &mapping->images[0].uuid,
+ 		    FWU_OP_TYPE_WRITE, &handle));
+ }
+ 
+@@ -345,12 +355,12 @@ TEST(psa_fwu_m_update_agent, open_for_write_image_directory)
+ 
+ TEST(psa_fwu_m_update_agent, open_for_write_partial_not_staging)
+ {
+-	expect_mock_psa_fwu_start(mapping[0].component, NULL, 0, PSA_SUCCESS);
++	expect_mock_psa_fwu_start(mapping->images[0].component, NULL, 0, PSA_SUCCESS);
+ 
+-	LONGS_EQUAL(FWU_STATUS_SUCCESS, update_agent_begin_staging(agent, 0, 1, &mapping[0].uuid));
++	LONGS_EQUAL(FWU_STATUS_SUCCESS, update_agent_begin_staging(agent, 0, 1, &mapping->images[0].uuid));
+ 
+ 	LONGS_EQUAL(FWU_STATUS_DENIED,
+-		    update_agent_open(agent, &mapping[1].uuid, FWU_OP_TYPE_WRITE, &handle));
++		    update_agent_open(agent, &mapping->images[1].uuid, FWU_OP_TYPE_WRITE, &handle));
+ }
+ 
+ TEST(psa_fwu_m_update_agent, open_for_read)
+@@ -358,7 +368,7 @@ TEST(psa_fwu_m_update_agent, open_for_read)
+ 	begin_staging();
+ 
+ 	LONGS_EQUAL(FWU_STATUS_NOT_AVAILABLE,
+-		    update_agent_open(agent, &mapping[0].uuid, FWU_OP_TYPE_READ, &handle));
++		    update_agent_open(agent, &mapping->images[0].uuid, FWU_OP_TYPE_READ, &handle));
+ }
+ 
+ TEST(psa_fwu_m_update_agent, open)
+@@ -374,7 +384,7 @@ TEST(psa_fwu_m_update_agent, open_too_many)
+ 	while (1) {
+ 		int result = FWU_STATUS_DENIED;
+ 
+-		result = update_agent_open(agent, &mapping[0].uuid, FWU_OP_TYPE_WRITE, &handle);
++		result = update_agent_open(agent, &mapping->images[0].uuid, FWU_OP_TYPE_WRITE, &handle);
+ 		if (result == FWU_STATUS_NOT_AVAILABLE) {
+ 			break;
+ 		} else {
+@@ -410,7 +420,7 @@ TEST(psa_fwu_m_update_agent, write_stream_write_fail)
+ 	begin_staging();
+ 	open();
+ 
+-	expect_mock_psa_fwu_write(mapping[0].component, 0, NULL, 0, PSA_ERROR_GENERIC_ERROR);
++	expect_mock_psa_fwu_write(mapping->images[0].component, 0, NULL, 0, PSA_ERROR_GENERIC_ERROR);
+ 	LONGS_EQUAL(FWU_STATUS_DENIED, update_agent_write_stream(agent, handle, NULL, 0));
+ }
+ 
+@@ -423,7 +433,7 @@ TEST(psa_fwu_m_update_agent, write_stream_overflow)
+ 	begin_staging();
+ 	open();
+ 
+-	expect_mock_psa_fwu_write(mapping[0].component, 0, data, sizeof(data), PSA_SUCCESS);
++	expect_mock_psa_fwu_write(mapping->images[0].component, 0, data, sizeof(data), PSA_SUCCESS);
+ 	LONGS_EQUAL(FWU_STATUS_SUCCESS,
+ 		    update_agent_write_stream(agent, handle, data, sizeof(data)));
+ 
+@@ -440,11 +450,11 @@ TEST(psa_fwu_m_update_agent, write_stream)
+ 	begin_staging();
+ 	open();
+ 
+-	expect_mock_psa_fwu_write(mapping[0].component, 0, data, sizeof(data), PSA_SUCCESS);
++	expect_mock_psa_fwu_write(mapping->images[0].component, 0, data, sizeof(data), PSA_SUCCESS);
+ 	LONGS_EQUAL(FWU_STATUS_SUCCESS,
+ 		    update_agent_write_stream(agent, handle, data, sizeof(data)));
+ 
+-	expect_mock_psa_fwu_write(mapping[0].component, sizeof(data), data, sizeof(data), PSA_SUCCESS);
++	expect_mock_psa_fwu_write(mapping->images[0].component, sizeof(data), data, sizeof(data), PSA_SUCCESS);
+ 	LONGS_EQUAL(FWU_STATUS_SUCCESS,
+ 		    update_agent_write_stream(agent, handle, data, sizeof(data)));
+ }
+@@ -492,7 +502,7 @@ TEST(psa_fwu_m_update_agent, read_image_directory_query_fail)
+ 	LONGS_EQUAL(FWU_STATUS_SUCCESS,
+ 		    update_agent_open(agent, &image_directory_uuid, FWU_OP_TYPE_READ, &handle));
+ 
+-	expect_mock_psa_fwu_query(mapping[0].component, &info, PSA_ERROR_GENERIC_ERROR);
++	expect_mock_psa_fwu_query(mapping->images[0].component, &info, PSA_ERROR_GENERIC_ERROR);
+ 	LONGS_EQUAL(FWU_STATUS_DENIED,
+ 		    update_agent_read_stream(agent, handle, buffer, sizeof(buffer), &read_len,
+ 		    			     &total_len));
+@@ -522,8 +532,8 @@ TEST(psa_fwu_m_update_agent, read_image_directory)
+ 	LONGS_EQUAL(FWU_STATUS_SUCCESS,
+ 		    update_agent_open(agent, &image_directory_uuid, FWU_OP_TYPE_READ, &handle));
+ 
+-	expect_mock_psa_fwu_query(mapping[0].component, &info0, PSA_SUCCESS);
+-	expect_mock_psa_fwu_query(mapping[1].component, &info1, PSA_SUCCESS);
++	expect_mock_psa_fwu_query(mapping->images[0].component, &info0, PSA_SUCCESS);
++	expect_mock_psa_fwu_query(mapping->images[1].component, &info1, PSA_SUCCESS);
+ 	LONGS_EQUAL(FWU_STATUS_SUCCESS,
+ 		    update_agent_read_stream(agent, handle, buffer, sizeof(buffer), &read_len,
+ 		    			     &total_len));
+@@ -538,8 +548,8 @@ TEST(psa_fwu_m_update_agent, read_image_directory)
+ 	UNSIGNED_LONGS_EQUAL(0, directory->correct_boot);
+ 	UNSIGNED_LONGS_EQUAL(0x28, directory->img_info_size);
+ 
+-	MEMCMP_EQUAL(&mapping[0].uuid, directory->img_info_entry[0].img_type_uuid,
+-		     sizeof(mapping[0].uuid));
++	MEMCMP_EQUAL(&mapping->images[0].uuid, directory->img_info_entry[0].img_type_uuid,
++		     sizeof(mapping->images[0].uuid));
+ 	UNSIGNED_LONGS_EQUAL(1, directory->img_info_entry[0].client_permissions);
+ 	UNSIGNED_LONGS_EQUAL(info0.max_size, directory->img_info_entry[0].img_max_size);
+ 	UNSIGNED_LONGS_EQUAL(0, directory->img_info_entry[0].lowest_accepted_version);
+@@ -547,8 +557,8 @@ TEST(psa_fwu_m_update_agent, read_image_directory)
+ 	UNSIGNED_LONGS_EQUAL(0, directory->img_info_entry[0].accepted);
+ 	UNSIGNED_LONGS_EQUAL(0, directory->img_info_entry[0].reserved);
+ 
+-	MEMCMP_EQUAL(&mapping[1].uuid, directory->img_info_entry[1].img_type_uuid,
+-		     sizeof(mapping[1].uuid));
++	MEMCMP_EQUAL(&mapping->images[1].uuid, directory->img_info_entry[1].img_type_uuid,
++		     sizeof(mapping->images[1].uuid));
+ 	UNSIGNED_LONGS_EQUAL(1, directory->img_info_entry[1].client_permissions);
+ 	UNSIGNED_LONGS_EQUAL(info1.max_size, directory->img_info_entry[1].img_max_size);
+ 	UNSIGNED_LONGS_EQUAL(0, directory->img_info_entry[1].lowest_accepted_version);
+@@ -608,7 +618,7 @@ TEST(psa_fwu_m_update_agent, accept_image_one)
+ {
+ 	begin_staging();
+ 	end_staging();
+-	LONGS_EQUAL(FWU_STATUS_SUCCESS, update_agent_accept_image(agent, &mapping[0].uuid));
++	LONGS_EQUAL(FWU_STATUS_SUCCESS, update_agent_accept_image(agent, &mapping->images[0].uuid));
+ }
+ 
+ TEST(psa_fwu_m_update_agent, accept_image_accept_fail)
+@@ -617,8 +627,8 @@ TEST(psa_fwu_m_update_agent, accept_image_accept_fail)
+ 	end_staging();
+ 
+ 	expect_mock_psa_fwu_accept(PSA_ERROR_GENERIC_ERROR);
+-	LONGS_EQUAL(FWU_STATUS_SUCCESS, update_agent_accept_image(agent, &mapping[0].uuid));
+-	LONGS_EQUAL(FWU_STATUS_DENIED, update_agent_accept_image(agent, &mapping[1].uuid));
++	LONGS_EQUAL(FWU_STATUS_SUCCESS, update_agent_accept_image(agent, &mapping->images[0].uuid));
++	LONGS_EQUAL(FWU_STATUS_DENIED, update_agent_accept_image(agent, &mapping->images[1].uuid));
+ }
+ 
+ TEST(psa_fwu_m_update_agent, accept_image)
+@@ -627,8 +637,8 @@ TEST(psa_fwu_m_update_agent, accept_image)
+ 	end_staging();
+ 
+ 	expect_mock_psa_fwu_accept(PSA_SUCCESS);
+-	LONGS_EQUAL(FWU_STATUS_SUCCESS, update_agent_accept_image(agent, &mapping[0].uuid));
+-	LONGS_EQUAL(FWU_STATUS_SUCCESS, update_agent_accept_image(agent, &mapping[1].uuid));
++	LONGS_EQUAL(FWU_STATUS_SUCCESS, update_agent_accept_image(agent, &mapping->images[0].uuid));
++	LONGS_EQUAL(FWU_STATUS_SUCCESS, update_agent_accept_image(agent, &mapping->images[1].uuid));
+ }
+ 
+ 
+@@ -675,8 +685,8 @@ TEST(psa_fwu_m_update_agent, select_previous)
+ TEST(psa_fwu_m_update_agent, boot_in_trial_mode_query_fail) {
+ 	psa_fwu_component_info_t info = {0};
+ 
+-	expect_mock_psa_fwu_query(mapping[0].component, &info, PSA_ERROR_GENERIC_ERROR);
+-	POINTERS_EQUAL(NULL, psa_fwu_m_update_agent_init(mapping, 2, 4096));
++	expect_mock_psa_fwu_query(mapping->images[0].component, &info, PSA_ERROR_GENERIC_ERROR);
++	POINTERS_EQUAL(NULL, psa_fwu_m_update_agent_init(mapping, 4096));
+ }
+ 
+ TEST(psa_fwu_m_update_agent, boot_in_trial_mode_select_previous) {
+@@ -685,10 +695,10 @@ TEST(psa_fwu_m_update_agent, boot_in_trial_mode_select_previous) {
+ 
+ 	info1.state = PSA_FWU_TRIAL;
+ 
+-	expect_mock_psa_fwu_query(mapping[0].component, &info0, PSA_SUCCESS);
+-	expect_mock_psa_fwu_query(mapping[1].component, &info1, PSA_SUCCESS);
++	expect_mock_psa_fwu_query(mapping->images[0].component, &info0, PSA_SUCCESS);
++	expect_mock_psa_fwu_query(mapping->images[1].component, &info1, PSA_SUCCESS);
+ 
+-	update_agent *agent = psa_fwu_m_update_agent_init(mapping, 2, 4096);
++	update_agent *agent = psa_fwu_m_update_agent_init(mapping, 4096);
+ 
+ 	expect_mock_psa_fwu_reject(0, PSA_SUCCESS);
+ 	LONGS_EQUAL(FWU_STATUS_SUCCESS, update_agent_select_previous(agent));
+@@ -702,14 +712,14 @@ TEST(psa_fwu_m_update_agent, boot_in_trial_mode_accept) {
+ 
+ 	info1.state = PSA_FWU_TRIAL;
+ 
+-	expect_mock_psa_fwu_query(mapping[0].component, &info0, PSA_SUCCESS);
+-	expect_mock_psa_fwu_query(mapping[1].component, &info1, PSA_SUCCESS);
++	expect_mock_psa_fwu_query(mapping->images[0].component, &info0, PSA_SUCCESS);
++	expect_mock_psa_fwu_query(mapping->images[1].component, &info1, PSA_SUCCESS);
+ 
+-	update_agent *agent = psa_fwu_m_update_agent_init(mapping, 2, 4096);
++	update_agent *agent = psa_fwu_m_update_agent_init(mapping, 4096);
+ 
+ 	expect_mock_psa_fwu_accept(PSA_SUCCESS);
+-	LONGS_EQUAL(FWU_STATUS_DENIED, update_agent_accept_image(agent, &mapping[0].uuid));
+-	LONGS_EQUAL(FWU_STATUS_SUCCESS, update_agent_accept_image(agent, &mapping[1].uuid));
++	LONGS_EQUAL(FWU_STATUS_DENIED, update_agent_accept_image(agent, &mapping->images[0].uuid));
++	LONGS_EQUAL(FWU_STATUS_SUCCESS, update_agent_accept_image(agent, &mapping->images[1].uuid));
+ 
+ 	psa_fwu_m_update_agent_deinit(agent);
+ }
+diff --git a/deployments/se-proxy/infra/corstone1000/corstone1000_config.c b/deployments/se-proxy/infra/corstone1000/corstone1000_config.c
+index 0cc0dee9..7466120f 100644
+--- a/deployments/se-proxy/infra/corstone1000/corstone1000_config.c
++++ b/deployments/se-proxy/infra/corstone1000/corstone1000_config.c
+@@ -14,43 +14,48 @@
+ #error "CORSTONE_1000_TYPE is not defined."
+ #endif
+ 
+-struct psa_fwu_m_image_mapping img_mapping[IMAGE_MAPPING_ELEMENT_COUNT] = {
++struct psa_fwu_m_image_mapping img_mapping = {
++	.count = FWU_IMAGE_INDEX_COUNT,
++	.images = {
+ #if (CORSTONE_1000_TYPE == CORSTONE_1000_TYPE_CORTEX_A35_FVP)
+-	{
+-		.uuid = FWU_FVP_BL2_CAPSULE_UUID,
+-		.component = FWU_IMAGE_INDEX_CAPSULE_BL2
+-	},
+-	{
+-		.uuid = FWU_FVP_TFM_S_CAPSULE_UUID,
+-		.component = FWU_IMAGE_INDEX_CAPSULE_TFM_S
+-	},
+-	{
+-		.uuid = FWU_FVP_FIP_CAPSULE_UUID,
+-		.component = FWU_IMAGE_INDEX_CAPSULE_FIP
+-	},
+-	{
+-		.uuid = FWU_FVP_INITRAMFS_CAPSULE_UUID,
+-		.component = FWU_IMAGE_INDEX_CAPSULE_INITRAMFS
+-	},
++		{
++			.uuid = {FWU_FVP_BL2_CAPSULE_UUID},
++			.component = FWU_IMAGE_INDEX_CAPSULE_BL2
++		},
++		{
++			.uuid = {FWU_FVP_TFM_S_CAPSULE_UUID},
++			.component = FWU_IMAGE_INDEX_CAPSULE_TFM_S
++		},
++		{
++			.uuid = {FWU_FVP_FIP_CAPSULE_UUID},
++			.component = FWU_IMAGE_INDEX_CAPSULE_FIP
++		},
++		{
++			.uuid = {FWU_FVP_INITRAMFS_CAPSULE_UUID},
++			.component = FWU_IMAGE_INDEX_CAPSULE_INITRAMFS
++		},
+ #elif (CORSTONE_1000_TYPE == CORSTONE_1000_TYPE_CORTEX_A35_MPS3)
+-	{
+-		.uuid = FWU_MPS3_BL2_CAPSULE_UUID,
+-		.component = FWU_IMAGE_INDEX_CAPSULE_BL2
+-	},
+-	{
+-		.uuid = FWU_MPS3_TFM_S_CAPSULE_UUID,
+-		.component = FWU_IMAGE_INDEX_CAPSULE_TFM_S
+-	},
+-	{
+-		.uuid = FWU_MPS3_FIP_CAPSULE_UUID,
+-		.component = FWU_IMAGE_INDEX_CAPSULE_FIP
+-	},
+-	{
+-		.uuid = FWU_MPS3_INITRAMFS_CAPSULE_UUID,
+-		.component = FWU_IMAGE_INDEX_CAPSULE_INITRAMFS
+-	},
++		{
++			.uuid = {FWU_MPS3_BL2_CAPSULE_UUID},
++			.component = FWU_IMAGE_INDEX_CAPSULE_BL2
++		},
++		{
++			.uuid = {FWU_MPS3_TFM_S_CAPSULE_UUID},
++			.component = FWU_IMAGE_INDEX_CAPSULE_TFM_S
++		},
++		{
++			.uuid = {FWU_MPS3_FIP_CAPSULE_UUID},
++			.component = FWU_IMAGE_INDEX_CAPSULE_FIP
++		},
++		{
++			.uuid = {FWU_MPS3_INITRAMFS_CAPSULE_UUID},
++			.component = FWU_IMAGE_INDEX_CAPSULE_INITRAMFS
++		},
+ #else
+ #error "Unsupported CORSTONE_1000_TYPE value. Valid values are: 0 (Corstone-1000 with " \
+ 		"Cortex-A35 FVP), 1 (Corstone-1000 with Cortex-A35 MPS3)"
+ #endif
++		/* Placeholder for ESRT entry; will be populated at runtime */
++		{} /* ESRT image */
++	}
+ };
+diff --git a/deployments/se-proxy/infra/corstone1000/corstone1000_config.h b/deployments/se-proxy/infra/corstone1000/corstone1000_config.h
+index 59662ee3..99b15c21 100644
+--- a/deployments/se-proxy/infra/corstone1000/corstone1000_config.h
++++ b/deployments/se-proxy/infra/corstone1000/corstone1000_config.h
+@@ -51,6 +51,8 @@ enum fwu_image_index {
+ 	FWU_IMAGE_INDEX_CAPSULE_TFM_S,
+ 	FWU_IMAGE_INDEX_CAPSULE_FIP,
+ 	FWU_IMAGE_INDEX_CAPSULE_INITRAMFS,
++
++	// The ESRT image index should always be the last one
+ 	FWU_IMAGE_INDEX_ESRT,
+ 
+ 	FWU_IMAGE_INDEX_LAST = FWU_IMAGE_INDEX_ESRT,
+diff --git a/deployments/se-proxy/infra/rse/spf_fwu.c b/deployments/se-proxy/infra/rse/spf_fwu.c
+index 713d932d..714edfaf 100644
+--- a/deployments/se-proxy/infra/rse/spf_fwu.c
++++ b/deployments/se-proxy/infra/rse/spf_fwu.c
+@@ -17,23 +17,9 @@
+ #include "service/fwu/provider/fwu_provider.h"
+ #include "service/fwu/common/update_agent_interface.h"
+ #include "service/fwu/psa_fwu_m/interface/psa_ipc/psa_fwu_ipc.h"
+-
+ #include <protocols/service/fwu/fwu_proto.h>
+-#include "corstone1000_config.h"
+-#include "corstone1000_event_handling.h"
+-
+-#ifndef IMAGE_MAPPING_ELEMENT_COUNT
+-#define IMAGE_MAPPING_ELEMENT_COUNT 0
+-#endif
+ 
+-#ifndef MAX_PAYLOAD_SIZE
+ #define MAX_PAYLOAD_SIZE 4096
+-#endif
+-
+-/* The index to access the ESRT image in the psa_fwu_m_image_mapping structure
+- * collection. The ESRT image is always accessed at the end of the collection.
+- */
+-#define IMAGE_MAPPING_ESRT_INDEX (IMAGE_MAPPING_ELEMENT_COUNT - 1)
+ 
+ static void define_esrt_image_mapping(void);
+ 
+@@ -61,8 +47,7 @@ struct rpc_service_interface *fwu_proxy_create(void)
+ 		return NULL;
+ 
+ 	define_esrt_image_mapping();
+-	agent = psa_fwu_m_update_agent_init(img_mapping, IMAGE_MAPPING_ELEMENT_COUNT,
+-					    MAX_PAYLOAD_SIZE);
++	agent = psa_fwu_m_update_agent_init(&img_mapping, MAX_PAYLOAD_SIZE);
+ 
+ 	return fwu_provider_init(&fwu_provider, agent);
+ }
+@@ -72,9 +57,15 @@ struct rpc_service_interface *fwu_proxy_create(void)
+  */
+ static void define_esrt_image_mapping(void)
+ {
+-	uuid_octets_from_canonical(&img_mapping[IMAGE_MAPPING_ESRT_INDEX].uuid,
++	/*
++	 * The index to access the ESRT image in the psa_fwu_m_image_mapping structure
++	 * collection. The ESRT image is always accessed at the end of the collection.
++	 */
++	size_t esrt_index = img_mapping.count - 1;
++
++	uuid_octets_from_canonical(&img_mapping.images[esrt_index].uuid,
+ 				   EFI_SYSTEM_RESOURCE_TABLE_CANONICAL_UUID);
+-	img_mapping[IMAGE_MAPPING_ESRT_INDEX].component = FWU_IMAGE_INDEX_ESRT;
++	img_mapping.images[esrt_index].component = img_mapping.count;
+ }
+ 
+ ADD_PROXY_SERVICE_FACTORY(fwu_proxy_create, FWU_PROXY, SE_PROXY_INTERFACE_PRIO_FWU);
+diff --git a/deployments/se-proxy/infra/stub/service_proxy_factory.c b/deployments/se-proxy/infra/stub/service_proxy_factory.c
+index c6c715e5..078984e0 100644
+--- a/deployments/se-proxy/infra/stub/service_proxy_factory.c
++++ b/deployments/se-proxy/infra/stub/service_proxy_factory.c
+@@ -89,7 +89,7 @@ struct rpc_service_interface *fwu_proxy_create(void)
+ 	static struct update_agent *agent;
+ 	static struct fwu_provider fwu_provider = { 0 };
+ 
+-	agent = psa_fwu_m_update_agent_init(NULL, 0, 4096);
++	agent = psa_fwu_m_update_agent_init(NULL, 4096);
+ 
+ 	return fwu_provider_init(&fwu_provider, agent);
+ }
+diff --git a/platform/providers/arm/corstone1000/platform.cmake b/platform/providers/arm/corstone1000/platform.cmake
+index baddf0be..f5a9c48f 100644
+--- a/platform/providers/arm/corstone1000/platform.cmake
++++ b/platform/providers/arm/corstone1000/platform.cmake
+@@ -34,25 +34,23 @@ set(MM_COMM_BUFFER_PAGE_COUNT 0x1 CACHE STRING "MM Communication buffer page cou
+ 
+ 
+ # For ESRT v1 details : https://uefi.org/specs/UEFI/2.9_A/23_Firmware_Update_and_Reporting.html#efi-system-resource-table
+-set(FWU_IMAGE_CAPSULE_COUNT 4 CACHE STRING "Maximum number of FWU Images in a capsule to be updated")
+-set(ESRT_IMAGE_ENTRY_SIZE 40 CACHE STRING "Size of one ESRT v1 Image entry structure object")
+-set(ESRT_REMAINING_FIELDS_SIZE 16 CACHE STRING "Size of remaining fields of ESRT v1 table structure")
++# `FWU_IMAGE_CAPSULE_COUNT` has to match the number of images declared in corstone_config.h. Note that this does not include the ESRT image.
++# Maximum number of FWU Images in a capsule to be updated
++set(FWU_IMAGE_CAPSULE_COUNT 4)
++# Size of one ESRT v1 Image entry structure object
++set(ESRT_IMAGE_ENTRY_SIZE 40)
++# Size of remaining fields of ESRT v1 table structure
++set(ESRT_REMAINING_FIELDS_SIZE 16)
+ math(EXPR TOTAL_ESRT_SIZE "${FWU_IMAGE_CAPSULE_COUNT} * ${ESRT_IMAGE_ENTRY_SIZE} + ${ESRT_REMAINING_FIELDS_SIZE}" OUTPUT_FORMAT DECIMAL)
+ 
+ set(TFM_FWU_MAX_DIGEST_SIZE ${TOTAL_ESRT_SIZE} CACHE STRING "Maximum size of ESRT entries of all the images in a bank")
+ 
+-set(ESRT_IMAGE_COUNT 1 CACHE STRING "The immutable number of ESRT image")
+-math(EXPR IMAGE_MAPPING_ELEMENT_COUNT "${FWU_IMAGE_CAPSULE_COUNT} + ${ESRT_IMAGE_COUNT}" OUTPUT_FORMAT DECIMAL)
+-
+ target_compile_definitions(${TGT} PRIVATE
+ 	PLAT_RSE_COMMS_PAYLOAD_MAX_SIZE=${PLAT_RSE_COMMS_PAYLOAD_MAX_SIZE}
+ 	COMMS_MHU_MSG_SIZE=${COMMS_MHU_MSG_SIZE}
+ 	MBEDTLS_ECP_DP_SECP521R1_ENABLED
+ 	CORSTONE_1000_TYPE=${CORSTONE_1000_TYPE_INT}
+ 	TFM_FWU_MAX_DIGEST_SIZE=${TFM_FWU_MAX_DIGEST_SIZE}
+-	FWU_IMAGE_CAPSULE_COUNT=${FWU_IMAGE_CAPSULE_COUNT}
+-	IMAGE_MAPPING_ELEMENT_COUNT=${IMAGE_MAPPING_ELEMENT_COUNT}
+-	MAX_PAYLOAD_SIZE=4096
+ )
+ 
+ get_property(_platform_driver_dependencies TARGET ${TGT}
+-- 
+2.43.0
+

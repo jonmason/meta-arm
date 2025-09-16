@@ -1,0 +1,73 @@
+From 85c8535f448466cdbd773f7072a42203ebc6ae64 Mon Sep 17 00:00:00 2001
+From: Gabor Abonyi <gabor.abonyi@arm.com>
+Date: Fri, 4 Apr 2025 11:43:09 +0000
+Subject: [PATCH 01/25] psa-crypto: fix AEAD block cypher support
+
+This change enables support for block cyphers that require input data
+to be processed in whole block-sized chunks.
+
+psa_aead_encrypt() may send all input data for encryption, but the
+underlying implementation is permitted to return only full blocks.
+Any remaining data is returned later via psa_aead_finish().
+Similarly, in psa_aead_decrypt(), extra decrypted data may be returned
+during psa_aead_verify().
+
+This update ensures compatibility with block-based hardware accelerators
+by deferring partial block processing until finalisation steps.
+
+Upstream-Status: Backport [85c8535f448466cdbd773f7072a42203ebc6ae64]
+Signed-off-by: Gabor Abonyi <gabor.abonyi@arm.com>
+---
+ .../service/crypto/client/psa/psa_aead.c       | 18 ++++++++++++------
+ 1 file changed, 12 insertions(+), 6 deletions(-)
+
+diff --git a/components/service/crypto/client/psa/psa_aead.c b/components/service/crypto/client/psa/psa_aead.c
+index c820d222..5d76f708 100644
+--- a/components/service/crypto/client/psa/psa_aead.c
++++ b/components/service/crypto/client/psa/psa_aead.c
+@@ -7,6 +7,7 @@
+ #include <psa/crypto.h>
+ #include "psa_crypto_client.h"
+ #include "crypto_caller_selector.h"
++#include <string.h>
+ 
+ psa_status_t psa_aead_encrypt_setup(psa_aead_operation_t *operation,
+ 	psa_key_id_t key,
+@@ -244,14 +245,19 @@ psa_status_t psa_aead_encrypt(psa_key_id_t key,
+ 	{
+ 		size_t remaining_aead_len = 0;
+ 		size_t tag_len = 0;
++		uint8_t tag[PSA_AEAD_TAG_MAX_SIZE];
+ 
+ 		psa_status = psa_aead_finish(&operation,
+-			NULL, 0, &remaining_aead_len,
+-			&aeadtext[bytes_output], aeadtext_size - bytes_output, &tag_len);
++			&aeadtext[bytes_output], aeadtext_size - bytes_output, &remaining_aead_len,
++			tag, PSA_AEAD_TAG_MAX_SIZE, &tag_len);
+ 
+-		if (psa_status == PSA_SUCCESS) {
++		if (aeadtext_size < bytes_output + remaining_aead_len + tag_len)
++			psa_status = PSA_ERROR_BUFFER_TOO_SMALL;
+ 
+-			*aeadtext_length = bytes_output + remaining_aead_len + tag_len;
++		if (psa_status == PSA_SUCCESS) {
++			bytes_output += remaining_aead_len;
++			memcpy(&aeadtext[bytes_output], tag, tag_len);
++			*aeadtext_length = bytes_output + tag_len;
+ 		}
+ 		else {
+ 
+@@ -301,8 +307,8 @@ psa_status_t psa_aead_decrypt(psa_key_id_t key,
+ 		size_t remaining_plaintext_len = 0;
+ 
+ 		psa_status = psa_aead_verify(&operation,
+-			NULL, 0, &remaining_plaintext_len,
+-			&aeadtext[bytes_output], aeadtext_length - bytes_output);
++			&plaintext[bytes_output], plaintext_size - bytes_output,
++			&remaining_plaintext_len, &aeadtext[ciphertext_len], tag_len);
+ 
+ 		if (psa_status == PSA_SUCCESS) {
+ 
+-- 
+2.43.0
+

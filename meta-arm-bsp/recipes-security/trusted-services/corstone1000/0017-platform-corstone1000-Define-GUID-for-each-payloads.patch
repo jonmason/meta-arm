@@ -1,30 +1,148 @@
-From 6a26d67c0b531af07537aefcbe7a46fc71471d4f Mon Sep 17 00:00:00 2001
-From: Ali Can Ozaslan <ali.oezaslan@arm.com>
-Date: Thu, 27 Mar 2025 13:42:03 +0000
-Subject: [PATCH 8/8] platform: corstone1000: Define GUID for FWU payloads
+From a518c74b7ce050bba2d0aaece701086dc50ffa53 Mon Sep 17 00:00:00 2001
+From: Hugues KAMBA MPIANA <hugues.kambampiana@arm.com>
+Date: Tue, 5 Aug 2025 13:54:13 +0100
+Subject: [PATCH 3/7] fwu:se-proxy: Allow platform override of FWU mapping and
+ payload size
 
-Specify the Global Unique Identifiers (GUIDs) for firmware update (FWU)
-payloads, which include BL2, TFM_S, FIP, and INITRAMFS.
-Note that the GUIDs differ between FVP and MPS3 platforms.
+Allow platform override of FWU mapping and payload size
+by updating the SE-Proxy deployment to support
+platform-specific overrides for Firmware Update configuration
+parameters.
 
-Upstream-Status: Pending
-Signed-off-by: Ali Can Ozaslan <ali.oezaslan@arm.com>
+Specifically, it introduces configurable macros for the image mapping
+table (`img_mapping`), the number of mapping entries
+(`IMAGE_MAPPING_ELEMENT_COUNT`), and the maximum payload size
+(`MAX_PAYLOAD_SIZE`).
+Default values are provided if not defined by the platform.
+
+Corstone-1000 is supplying its own image mapping
+layout and FWU buffer size by defining these symbols.
+
+`corstone1000_config.h` and `corstone1000_config.c` containing
+platform-specific FWU configuration parameters for Corstone-1000
+are added.
+
+Key definitions include:
+- UUIDs for firmware images used on FVP and MPS3 variants.
+- An enum `fwu_image_index` to identify the image index in the capsule.
+
+This configuration enables consistent and reusable FWU integration
+across Corstone-1000 platforms in the SE-Proxy deployment.
+
+Additionaly `psa_fwu_m_update_agent_init()` call is moved after
+`psa_fwu_ipc_init()` because the former uses PSA API calls which can
+only be used when the IPC framework has been initialized.
+
+Upstream-Status: Backport [a518c74b7ce050bba2d0aaece701086dc50ffa53]
 Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
+Signed-off-by: Ali Can Ozaslan <ali.oezaslan@arm.com>
+Signed-off-by: Bence Balogh <bence.balogh@arm.com>
+Signed-off-by: Hugues KAMBA MPIANA <hugues.kambampiana@arm.com>
 ---
- .../infra/corstone1000/corstone1000_config.h  | 43 ++++++++++++++++---
- .../corstone1000/service_proxy_factory.c      | 41 +++++++++++++++---
- 2 files changed, 73 insertions(+), 11 deletions(-)
+ .../psa_fwu_m/agent/psa_fwu_m_update_agent.h  |  3 +
+ .../infra/corstone1000/corstone1000_config.c  | 56 +++++++++++++++++
+ .../infra/corstone1000/corstone1000_config.h  | 60 +++++++++++++++++++
+ .../se-proxy/infra/corstone1000/infra.cmake   | 10 ++++
+ deployments/se-proxy/infra/rse/spf_fwu.c      | 11 +++-
+ 5 files changed, 139 insertions(+), 1 deletion(-)
+ create mode 100644 deployments/se-proxy/infra/corstone1000/corstone1000_config.c
+ create mode 100644 deployments/se-proxy/infra/corstone1000/corstone1000_config.h
 
-diff --git a/deployments/se-proxy/infra/corstone1000/corstone1000_config.h b/deployments/se-proxy/infra/corstone1000/corstone1000_config.h
-index 4a68c2fa..c4bd9c2c 100644
---- a/deployments/se-proxy/infra/corstone1000/corstone1000_config.h
-+++ b/deployments/se-proxy/infra/corstone1000/corstone1000_config.h
-@@ -11,17 +11,48 @@
- /* Maximum payload size to be transferred at once to Secure Enclave */
- #define MAX_PAYLOAD_SIZE 4096
+diff --git a/components/service/fwu/psa_fwu_m/agent/psa_fwu_m_update_agent.h b/components/service/fwu/psa_fwu_m/agent/psa_fwu_m_update_agent.h
+index 3c06570d..6354b8ba 100644
+--- a/components/service/fwu/psa_fwu_m/agent/psa_fwu_m_update_agent.h
++++ b/components/service/fwu/psa_fwu_m/agent/psa_fwu_m_update_agent.h
+@@ -41,6 +41,9 @@ struct update_agent *psa_fwu_m_update_agent_init(
+  */
+ void psa_fwu_m_update_agent_deinit(struct update_agent *update_agent);
  
--#define CORSTONE1000_FVP_FULL_CAPSULE_UUID  \
--{ 0x4e, 0x3a, 0x9f, 0x98, 0xe0, 0x46, 0xd0, 0x4c, 0x98, 0x77, 0xa2, 0x5c, 0x70, 0xc0, 0x13, 0x29, }
++/* This should be defined by the platform */
++extern struct psa_fwu_m_image_mapping img_mapping[];
++
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/deployments/se-proxy/infra/corstone1000/corstone1000_config.c b/deployments/se-proxy/infra/corstone1000/corstone1000_config.c
+new file mode 100644
+index 00000000..0cc0dee9
+--- /dev/null
++++ b/deployments/se-proxy/infra/corstone1000/corstone1000_config.c
+@@ -0,0 +1,56 @@
++/*
++ * Copyright (c) 2025, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ */
++
++#include "service/fwu/psa_fwu_m/agent/psa_fwu_m_update_agent.h"
++#include "protocols/service/fwu/fwu_proto.h"
++
++#include "corstone1000_config.h"
++
++#ifndef CORSTONE_1000_TYPE
++#error "CORSTONE_1000_TYPE is not defined."
++#endif
++
++struct psa_fwu_m_image_mapping img_mapping[IMAGE_MAPPING_ELEMENT_COUNT] = {
++#if (CORSTONE_1000_TYPE == CORSTONE_1000_TYPE_CORTEX_A35_FVP)
++	{
++		.uuid = FWU_FVP_BL2_CAPSULE_UUID,
++		.component = FWU_IMAGE_INDEX_CAPSULE_BL2
++	},
++	{
++		.uuid = FWU_FVP_TFM_S_CAPSULE_UUID,
++		.component = FWU_IMAGE_INDEX_CAPSULE_TFM_S
++	},
++	{
++		.uuid = FWU_FVP_FIP_CAPSULE_UUID,
++		.component = FWU_IMAGE_INDEX_CAPSULE_FIP
++	},
++	{
++		.uuid = FWU_FVP_INITRAMFS_CAPSULE_UUID,
++		.component = FWU_IMAGE_INDEX_CAPSULE_INITRAMFS
++	},
++#elif (CORSTONE_1000_TYPE == CORSTONE_1000_TYPE_CORTEX_A35_MPS3)
++	{
++		.uuid = FWU_MPS3_BL2_CAPSULE_UUID,
++		.component = FWU_IMAGE_INDEX_CAPSULE_BL2
++	},
++	{
++		.uuid = FWU_MPS3_TFM_S_CAPSULE_UUID,
++		.component = FWU_IMAGE_INDEX_CAPSULE_TFM_S
++	},
++	{
++		.uuid = FWU_MPS3_FIP_CAPSULE_UUID,
++		.component = FWU_IMAGE_INDEX_CAPSULE_FIP
++	},
++	{
++		.uuid = FWU_MPS3_INITRAMFS_CAPSULE_UUID,
++		.component = FWU_IMAGE_INDEX_CAPSULE_INITRAMFS
++	},
++#else
++#error "Unsupported CORSTONE_1000_TYPE value. Valid values are: 0 (Corstone-1000 with " \
++		"Cortex-A35 FVP), 1 (Corstone-1000 with Cortex-A35 MPS3)"
++#endif
++};
+diff --git a/deployments/se-proxy/infra/corstone1000/corstone1000_config.h b/deployments/se-proxy/infra/corstone1000/corstone1000_config.h
+new file mode 100644
+index 00000000..59662ee3
+--- /dev/null
++++ b/deployments/se-proxy/infra/corstone1000/corstone1000_config.h
+@@ -0,0 +1,60 @@
++/*
++ * Copyright (c) 2025, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ */
++
++#ifndef CORSTONE1000_CONFIG_H
++#define CORSTONE1000_CONFIG_H
++
++#define CORSTONE_1000_TYPE_CORTEX_A35_FVP  0 // Corstone-1000 with Cortex-A35 FVP
++#define CORSTONE_1000_TYPE_CORTEX_A35_MPS3 1 // Corstone-1000 with Cortex-A35 MPS3
++
 +/*
 + * GUIDs for capsule updatable firmware images
 + *
@@ -55,87 +173,73 @@ index 4a68c2fa..c4bd9c2c 100644
 +
 +#define FWU_MPS3_FIP_CAPSULE_UUID  \
 +{ 0x96, 0x2f, 0x30, 0x55, 0xf0, 0xc4, 0xf9, 0x5c, 0x86, 0x24, 0xe7, 0xcc, 0x38, 0x8f, 0x2b, 0x68, }
- 
--#define CORSTONE1000_MPS3_FULL_CAPSULE_UUID  \
--{ 0xd1, 0x65, 0x18, 0xdf, 0xfb, 0x90, 0x59, 0x4d, 0x9c, 0x38, 0xc9, 0xf2, 0xc1, 0xbb, 0xa8, 0xcc, }
++
 +#define FWU_MPS3_INITRAMFS_CAPSULE_UUID  \
 +{ 0x72, 0xc9, 0x8a, 0x3e, 0x3c, 0xc3, 0xc9, 0x5c, 0x90, 0xa0, 0xcd, 0xd3, 0x15, 0x96, 0x83, 0xea, }
- 
- /* Image indexes in the UEFI capsule */
- enum fwu_image_index
- {
--	FWU_IMAGE_INDEX_FULL_CAPSULE = 1,
--	FWU_IMAGE_INDEX_ESRT,
++
++ /* Image indexes in the UEFI capsule */
++enum fwu_image_index {
 +	FWU_IMAGE_INDEX_CAPSULE_BL2 = 1,
 +	FWU_IMAGE_INDEX_CAPSULE_TFM_S,
 +	FWU_IMAGE_INDEX_CAPSULE_FIP,
 +	FWU_IMAGE_INDEX_CAPSULE_INITRAMFS,
-+	FWU_IMAGE_INDEX_ESRT ,
- };
++	FWU_IMAGE_INDEX_ESRT,
++
++	FWU_IMAGE_INDEX_LAST = FWU_IMAGE_INDEX_ESRT,
++	FWU_IMAGE_INDEX_COUNT = FWU_IMAGE_INDEX_LAST,
++};
++
++#endif /* CORSTONE1000_CONFIG_H */
+diff --git a/deployments/se-proxy/infra/corstone1000/infra.cmake b/deployments/se-proxy/infra/corstone1000/infra.cmake
+index f0c2e58e..8e0ac95f 100644
+--- a/deployments/se-proxy/infra/corstone1000/infra.cmake
++++ b/deployments/se-proxy/infra/corstone1000/infra.cmake
+@@ -33,4 +33,14 @@ add_components(TARGET "se-proxy"
+ 		"components/messaging/rse_comms/sp"
+ )
  
- #endif /* CORSTONE1000_CONFIG_H */
-diff --git a/deployments/se-proxy/infra/corstone1000/service_proxy_factory.c b/deployments/se-proxy/infra/corstone1000/service_proxy_factory.c
-index ed42e2cb..43a9ac37 100644
---- a/deployments/se-proxy/infra/corstone1000/service_proxy_factory.c
-+++ b/deployments/se-proxy/infra/corstone1000/service_proxy_factory.c
-@@ -28,7 +28,14 @@
- #include <service/secure_storage/backend/secure_storage_ipc/secure_storage_ipc.h>
- #include <service/attestation/client/psa/iat_client.h>
++if (CFG_ENABLE_FWU)
++    target_sources(se-proxy PRIVATE
++        ${CMAKE_CURRENT_LIST_DIR}/corstone1000_config.c
++    )
++
++    target_include_directories(se-proxy PRIVATE
++        ${CMAKE_CURRENT_LIST_DIR}
++    )
++endif()
++
+ include(../../infra/rse/service_proxy_factory.cmake REQUIRED)
+diff --git a/deployments/se-proxy/infra/rse/spf_fwu.c b/deployments/se-proxy/infra/rse/spf_fwu.c
+index 4f123ba1..90f200e1 100644
+--- a/deployments/se-proxy/infra/rse/spf_fwu.c
++++ b/deployments/se-proxy/infra/rse/spf_fwu.c
+@@ -18,6 +18,14 @@
+ #include "service/fwu/common/update_agent_interface.h"
+ #include "service/fwu/psa_fwu_m/interface/psa_ipc/psa_fwu_ipc.h"
  
--/* IMAGE_MAPPING_ELEMENT_COUNT includes the number of images to be updated and ESRT image */
-+/* IMAGE_MAPPING_ELEMENT_COUNT includes the number of images to be updated and ESRT image.
-+ * It includes:
-+ * - BL2
-+ * - TFM_S
-+ * - FIP
-+ * - INITRAMFS
-+ * - ESRT
-+ */
- #define IMAGE_MAPPING_ELEMENT_COUNT (FWU_IMAGE_CAPSULE_COUNT + 1)
++#ifndef IMAGE_MAPPING_ELEMENT_COUNT
++#define IMAGE_MAPPING_ELEMENT_COUNT 0
++#endif
++
++#ifndef MAX_PAYLOAD_SIZE
++#define MAX_PAYLOAD_SIZE 4096
++#endif
++
+ struct rpc_service_interface *fwu_proxy_create(void)
+ {
+ 	rpc_status_t rpc_status = RPC_ERROR_INTERNAL;
+@@ -38,9 +46,10 @@ struct rpc_service_interface *fwu_proxy_create(void)
+ 	if (rpc_status != RPC_SUCCESS)
+ 		return NULL;
  
- /* The index to access the ESRT image in the psa_fwu_m_image_mapping structure
-@@ -41,13 +48,37 @@ static const struct rpc_uuid dummy_uuid = { 0 };
- static struct psa_fwu_m_image_mapping img_mapping[IMAGE_MAPPING_ELEMENT_COUNT] = {
- #if PLATFORM_IS_FVP
- 	{
--		.uuid = CORSTONE1000_FVP_FULL_CAPSULE_UUID,
--		.component = FWU_IMAGE_INDEX_FULL_CAPSULE
-+		.uuid = FWU_FVP_BL2_CAPSULE_UUID,
-+		.component = FWU_IMAGE_INDEX_CAPSULE_BL2
-+	},
-+	{
-+		.uuid = FWU_FVP_TFM_S_CAPSULE_UUID,
-+		.component = FWU_IMAGE_INDEX_CAPSULE_TFM_S
-+	},
-+	{
-+		.uuid = FWU_FVP_FIP_CAPSULE_UUID,
-+		.component = FWU_IMAGE_INDEX_CAPSULE_FIP
-+	},
-+	{
-+		.uuid = FWU_FVP_INITRAMFS_CAPSULE_UUID,
-+		.component = FWU_IMAGE_INDEX_CAPSULE_INITRAMFS
- 	},
- #else
- 	{
--		.uuid = CORSTONE1000_MPS3_FULL_CAPSULE_UUID,
--		.component = FWU_IMAGE_INDEX_FULL_CAPSULE
-+		.uuid = FWU_MPS3_BL2_CAPSULE_UUID,
-+		.component = FWU_IMAGE_INDEX_CAPSULE_BL2
-+	},
-+	{
-+		.uuid = FWU_MPS3_TFM_S_CAPSULE_UUID,
-+		.component = FWU_IMAGE_INDEX_CAPSULE_TFM_S
-+	},
-+	{
-+		.uuid = FWU_MPS3_FIP_CAPSULE_UUID,
-+		.component = FWU_IMAGE_INDEX_CAPSULE_FIP
-+	},
-+	{
-+		.uuid = FWU_MPS3_INITRAMFS_CAPSULE_UUID,
-+		.component = FWU_IMAGE_INDEX_CAPSULE_INITRAMFS
- 	},
- #endif
- };
+-	agent = psa_fwu_m_update_agent_init(NULL, 0, 4096);
+ 	if (psa_fwu_ipc_init(&rpc_session) != PSA_SUCCESS)
+ 		return NULL;
++	agent = psa_fwu_m_update_agent_init(img_mapping, IMAGE_MAPPING_ELEMENT_COUNT,
++					    MAX_PAYLOAD_SIZE);
+ 
+ 	return fwu_provider_init(&fwu_provider, agent);
+ }
 -- 
-2.25.1
+2.43.0
 

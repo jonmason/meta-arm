@@ -1,31 +1,74 @@
-From d43ec82f7e419e6f1e9f5bd002c324b788ee901f Mon Sep 17 00:00:00 2001
-From: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
-Date: Thu, 6 Feb 2025 11:32:04 +0000
-Subject: [PATCH 4/8] Fix PSA FWU IPC psa_fwu_install() return value check
+From 8b8eb4a2d512de06d3ee8a17dd9295cd38efd68d Mon Sep 17 00:00:00 2001
+From: Hugues KAMBA MPIANA <hugues.kambampiana@arm.com>
+Date: Tue, 5 Aug 2025 14:42:17 +0100
+Subject: [PATCH 4/7] fwu: Coerce PSA_SUCCESS_REBOOT and PSA_SUCCESS_RESTART to
+ PSA_SUCCESS
 
-This change adds support to validate if the return type in psa_fwu_install()
-is either PSA_SUCCESS or PSA_SUCCESS_REBOOT. Both the return values are expected.
-Earlier, only PSA_SUCCESS is validated.
+Map `PSA_SUCCESS_REBOOT` and `PSA_SUCCESS_RESTART` (returned by
+FWU-M after a successful install) to plain `PSA_SUCCESS` in the FWU PSA
+IPC client.
+This is useful on A+M systems since FWU-A does not define equivalent
+return codes, and avoids exposing non-zero success codes to FWU-A
+clients.
 
-Upstream-Status: Pending
+Key changes:
+- Update `psa_fwu_ipc.c` to coerce `PSA_SUCCESS_REBOOT` and
+  `PSA_SUCCESS_RESTART` to `PSA_SUCCESS` in `psa_fwu_install()``.
+- Extend FWU documentation to describe the behavior.
+
+Note: When this option is enabled, the normal world must still arrange
+a system reboot through its own mechanism.
+
+Upstream-Status: Backport [8b8eb4a2d512de06d3ee8a17dd9295cd38efd68d]
 Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
+Signed-off-by: Hugues KAMBA MPIANA <hugues.kambampiana@arm.com>
 ---
- .../service/fwu/psa_fwu_m/interface/psa_ipc/psa_fwu_ipc.c       | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ .../fwu/psa_fwu_m/interface/psa_ipc/psa_fwu_ipc.c        | 6 +++++-
+ docs/services/fwu/psa-fwu-m.rst                          | 9 ++++++---
+ 2 files changed, 11 insertions(+), 4 deletions(-)
 
 diff --git a/components/service/fwu/psa_fwu_m/interface/psa_ipc/psa_fwu_ipc.c b/components/service/fwu/psa_fwu_m/interface/psa_ipc/psa_fwu_ipc.c
-index a47ae539..3947a809 100644
+index a47ae539..174b06f8 100644
 --- a/components/service/fwu/psa_fwu_m/interface/psa_ipc/psa_fwu_ipc.c
 +++ b/components/service/fwu/psa_fwu_m/interface/psa_ipc/psa_fwu_ipc.c
-@@ -190,7 +190,7 @@ psa_status_t psa_fwu_install(void)
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2024-2025, Arm Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -190,6 +190,10 @@ psa_status_t psa_fwu_install(void)
  	status = psa_call(caller, TFM_FIRMWARE_UPDATE_SERVICE_HANDLE,
  			  TFM_FWU_INSTALL, in_vec, 0,
  			  NULL, 0);
--	if (status != PSA_SUCCESS)
-+	if (status != PSA_SUCCESS && status != PSA_SUCCESS_REBOOT)
++
++	if ((status == PSA_SUCCESS_REBOOT) || (status == PSA_SUCCESS_RESTART))
++		status = PSA_SUCCESS;
++
+ 	if (status != PSA_SUCCESS)
  		EMSG("failed to psa_call: %d", status);
  
- 	return status;
+diff --git a/docs/services/fwu/psa-fwu-m.rst b/docs/services/fwu/psa-fwu-m.rst
+index 1358015f..c3217159 100644
+--- a/docs/services/fwu/psa-fwu-m.rst
++++ b/docs/services/fwu/psa-fwu-m.rst
+@@ -76,9 +76,12 @@ agent switches to trial state, so the client can validate the new set of images
+ 
+ On calling ``fwu_end_staging()`` the agent calls ``psa_fwu_finish()`` on each selected image, then calls
+ ``psa_fwu_install()``. If all images have been accepted (see ``fwu_commit()``) it also calls ``psa_fwu_accept()``.
+-The implementation treats ``PSA_SUCCESS_REBOOT`` and ``PSA_SUCCESS_RESTART`` status values as error. In an A+M system the M
+-class side shouldn't restart the system, so calling ``psa_fwu_request_reboot()`` does not fit the system. There's also no
+-PSA FWU A return code for inidicating the restart request to the normal world. If the normal world has to restart the
++
++Since FWU-M may return ``PSA_SUCCESS_REBOOT`` or ``PSA_SUCCESS_RESTART`` for A+M systems, the FWU PSA IPC client coerces
++these statuses to ``PSA_SUCCESS`` because FWU-A does not define an equivalent return code.
++
++In an A+M system the M class side shouldn't restart the system, so calling ``psa_fwu_request_reboot()`` does not fit the system.
++There's also no PSA FWU A return code for inidicating the restart request to the normal world. If the normal world has to restart the
+ system after ending the staging phase, it has to do it in an implementation defined way.
+ 
+ .. uml:: ../uml/psa_fwu_m_update_agent/fwu_end_staging.puml
 -- 
-2.25.1
+2.43.0
 

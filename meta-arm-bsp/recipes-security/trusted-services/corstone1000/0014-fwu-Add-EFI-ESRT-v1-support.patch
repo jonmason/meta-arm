@@ -1,45 +1,69 @@
-From 740359ba2a73f5ce0015c9023cc1aa69506f99bf Mon Sep 17 00:00:00 2001
-From: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
-Date: Fri, 28 Feb 2025 21:12:25 +0000
-Subject: [PATCH 5/8] fwu: Add EFI ESRT v1 support
+From d5ca8c5b73c3ff3bc5c137828932e440c6a7f187 Mon Sep 17 00:00:00 2001
+From: Hugues KAMBA MPIANA <hugues.kambampiana@arm.com>
+Date: Tue, 5 Aug 2025 15:05:33 +0100
+Subject: [PATCH 5/7] fwu: Add support for ESRT v1 in PSA FWU-M agent
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
-Add EFI ESRT v1 support for PSA FWU M agent.
-ESRT functionality is implemented using unique image dedicated
-for ESRT data having its own UUID. In PSA FWU M agent's context,
-this image has read only attributes. The ESRT data can be read
-using image_read_directory by using ESRT image UUID handle. The
-ESRT data is queried from Secure Enclave using psa_fwu_query()
-and ESRT data can be read from psa_fwu_impl_info_t structure
-object defined in psa_fwu_component_info_t.
+This patch introduces support for ESRT v1, enabling the PSA Firmware
+Update Management (FWU-M) agent to expose UEFI-compliant firmware
+resource metadata via a dedicated image UUID.
 
-This commit includes the following changes:
-1. Declare EFI ESRT v1 data structures.
-2. Modify image_directory_read() to include EFI ESRT data read support
-3. Modify psa_fwu_m_update_agent_init to initialize ESRT image
-attributes
+Key changes:
+- Declares ESRT v1 data structures (`efi_system_resource_entry` and
+  `efi_system_resource_table`) as specified by the UEFI 2.9 standard.
+- Extends `image_directory_read()` to detect ESRT image reads and serve
+  the data stored in `candidate_digest` from `psa_fwu_query()`.
+- Modifies `psa_fwu_m_update_agent_init()` to properly initialize the
+  ESRT image with read-only attributes and hook `image_directory_read()`
+  as its read handler.
+- Defines `FWU_IMAGE_CAPSULE_COUNT`, `ESRT_IMAGE_ENTRY_SIZE`, and
+  `ESRT_REMAINING_FIELDS_SIZE` to represent the structure of the ESRT v1
+  table.
+- Calculates `TOTAL_ESRT_SIZE` based on capsule count and ESRT entry
+  sizes.
+- Sets `TFM_FWU_MAX_DIGEST_SIZE` to `TOTAL_ESRT_SIZE` to ensure the PSA
+  FWU
+  agent allocates sufficient buffer space for ESRT data.
+- Exposes these constants via `target_compile_definitions()` for use in
+  the FWU runtime. This platform configuration ensures correct ESRT
+  memory sizing and enables firmware metadata reporting according to UEFI
+  2.9 specification.
 
-The ESRT v1 details can be found here :
-https://uefi.org/specs/UEFI/2.9_A/23_Firmware_Update_and_Reporting.html#efi-system-resource-table
+ESRT data can now be queried by update clients using the ESRT image UUID
+handle. This enables standardized firmware reporting and diagnostics
+in accordance with UEFI specifications.
 
-Upstream-Status: Pending
+Specification reference:
+UEFI 2.9 §23 - Firmware Update and Reporting:
+https://uefi.org/specs/UEFI/2.9_A/23_Firmware_Update_and_Reporting.html
+
+Upstream-Status: Backport [d5ca8c5b73c3ff3bc5c137828932e440c6a7f187]
+Signed-off-by: Bence Balogh <bence.balogh@arm.com>
 Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
+Signed-off-by: Hugues KAMBA MPIANA <hugues.kambampiana@arm.com>
 ---
- .../psa_fwu_m/agent/psa_fwu_m_update_agent.c  | 50 +++++++++++++++++--
- protocols/service/fwu/fwu_proto.h             | 29 +++++++++--
- 2 files changed, 71 insertions(+), 8 deletions(-)
+ .../psa_fwu_m/agent/psa_fwu_m_update_agent.c  | 57 +++++++++++++++++--
+ deployments/se-proxy/infra/rse/spf_fwu.c      | 23 ++++++++
+ .../providers/arm/corstone1000/platform.cmake | 15 +++++
+ protocols/service/fwu/fwu_proto.h             | 29 ++++++++--
+ 4 files changed, 116 insertions(+), 8 deletions(-)
 
 diff --git a/components/service/fwu/psa_fwu_m/agent/psa_fwu_m_update_agent.c b/components/service/fwu/psa_fwu_m/agent/psa_fwu_m_update_agent.c
-index 48b86f6e..d0464bf5 100644
+index 48b86f6e..26972fc0 100644
 --- a/components/service/fwu/psa_fwu_m/agent/psa_fwu_m_update_agent.c
 +++ b/components/service/fwu/psa_fwu_m/agent/psa_fwu_m_update_agent.c
-@@ -115,13 +115,22 @@ uint32_t image_version_to_uint(psa_fwu_image_version_t version)
+@@ -115,13 +115,25 @@ uint32_t image_version_to_uint(psa_fwu_image_version_t version)
  	return result;
  }
  
 +/* image_directory_read
 + * This function is used for two purposes:
-+ * -> Send the details of firmware images to update client when read request is made for FWU_DIRECTORY_CANONICAL_UUID
-+ * -> Send ESRT data to update client when read request is made for EFI_SYSTEM_RESOURCE_TABLE_CANONICAL_UUID
++ * -> Send the details of firmware images to update client when read request is
++ *    made for FWU_DIRECTORY_CANONICAL_UUID
++ * -> Send ESRT data to update client when read request is
++ *    made for EFI_SYSTEM_RESOURCE_TABLE_CANONICAL_UUID
 + */
  int image_directory_read(struct psa_fwu_m_update_agent *agent, struct psa_fwu_m_image *image,
  			 uint8_t *buf, size_t buf_size, size_t *read_len, size_t *total_len)
@@ -49,14 +73,15 @@ index 48b86f6e..d0464bf5 100644
  	struct fwu_image_directory *directory = NULL;
 -	size_t image_count = agent->image_count - 1; /* Do not return Image directory */
 +	uint8_t esrt_image_uuid[OSF_UUID_OCTET_LEN];
-+	size_t image_count = agent->image_count - 1; /* Do not return Image directory
-+						      * If update client uses ESRT UUID for ESRT data, then ESRT image UUID
-+						      * is considered as a separate image included in this count
-+						      */
++	/* Do not return Image directory
++	 * If update client uses ESRT UUID for ESRT data, then ESRT image UUID
++	 * is considered as a separate image included in this count
++	 */
++	size_t image_count = agent->image_count - 1;
  	size_t image_info_size = 0;
  	size_t i = 0;
  
-@@ -136,12 +145,36 @@ int image_directory_read(struct psa_fwu_m_update_agent *agent, struct psa_fwu_m_
+@@ -136,12 +148,40 @@ int image_directory_read(struct psa_fwu_m_update_agent *agent, struct psa_fwu_m_
  		return FWU_STATUS_DENIED; /* LCOV_EXCL_LINE */
  
  	/*
@@ -67,21 +92,25 @@ index 48b86f6e..d0464bf5 100644
  	if (*total_len > buf_size)
  		return FWU_STATUS_SUCCESS;
  
-+	/* Query ESRT data from Secure Enclave and Copy the ESRT entries from component_info.impl.candidate_digest
-+	 * to buf in case of ESRT image UUID.
-+	 * This is needed because Secure Enclave fills component_info.impl.candidate_digest with ESRT data
-+	 * which needs to be transferred to normal world buffer
++	/* Query ESRT data from Secure Enclave and Copy the ESRT entries
++	 * from component_info.impl.candidate_digest to buf in case of ESRT image UUID.
++	 * This is needed because Secure Enclave fills component_info.impl.candidate_digest
++	 *  with ESRT data which needs to be transferred to normal world buffer
 +	 */
-+	uuid_octets_from_canonical((struct uuid_octets *)&esrt_image_uuid, EFI_SYSTEM_RESOURCE_TABLE_CANONICAL_UUID);
++	uuid_octets_from_canonical((struct uuid_octets *)&esrt_image_uuid,
++				   EFI_SYSTEM_RESOURCE_TABLE_CANONICAL_UUID);
 +	if (!memcmp(&esrt_image_uuid, &image->uuid, sizeof(esrt_image_uuid))) {
 +		/* Query ESRT data */
 +		psa_status = psa_fwu_query(image->component, &component_info);
 +		if (psa_status != PSA_SUCCESS)
 +			return psa_status_to_fwu_status(psa_status);
 +
-+		struct efi_system_resource_table *esrt = (struct efi_system_resource_table *)component_info.impl.candidate_digest;
-+		size_t esrt_size_recv = (esrt->fw_resource_count * sizeof(struct efi_system_resource_entry) ) + sizeof(struct efi_system_resource_table);
-+		if(esrt_size_recv > TFM_FWU_MAX_DIGEST_SIZE)
++		struct efi_system_resource_table *esrt =
++			(struct efi_system_resource_table *)component_info.impl.candidate_digest;
++		size_t esrt_size_recv = (esrt->fw_resource_count *
++			sizeof(struct efi_system_resource_entry))
++		+ sizeof(struct efi_system_resource_table);
++		if  (esrt_size_recv > TFM_FWU_MAX_DIGEST_SIZE)
 +			return FWU_STATUS_OUT_OF_BOUNDS;
 +
 +		/* Copy the ESRT entries to the buf */
@@ -94,7 +123,7 @@ index 48b86f6e..d0464bf5 100644
  	directory = (struct fwu_image_directory *)buf;
  	directory->directory_version = FWU_IMAGE_DIRECTORY_VERSION;
  	directory->img_info_offset = offsetof(struct fwu_image_directory, img_info_entry);
-@@ -615,6 +648,7 @@ struct update_agent *psa_fwu_m_update_agent_init(
+@@ -615,6 +655,7 @@ struct update_agent *psa_fwu_m_update_agent_init(
  	struct psa_fwu_m_image *images = NULL;
  	enum psa_fwu_m_state state = regular;
  	struct update_agent *agent = NULL;
@@ -102,27 +131,110 @@ index 48b86f6e..d0464bf5 100644
  	size_t i = 0;
  
  	/* Allocate +1 image for the Image directory */
-@@ -657,8 +691,16 @@ struct update_agent *psa_fwu_m_update_agent_init(
+@@ -657,8 +698,16 @@ struct update_agent *psa_fwu_m_update_agent_init(
  			images[i].selected_for_staging = false;
  		}
  
 -		images[i].read = NULL; /* Cannot read images */
 -		images[i].write = image_write;
-+		uuid_octets_from_canonical((struct uuid_octets *)&esrt_image_uuid, EFI_SYSTEM_RESOURCE_TABLE_CANONICAL_UUID);
++		uuid_octets_from_canonical((struct uuid_octets *)&esrt_image_uuid,
++					   EFI_SYSTEM_RESOURCE_TABLE_CANONICAL_UUID);
 +		if (!memcmp(&esrt_image_uuid, &images[i].uuid, sizeof(esrt_image_uuid))) {
 +			images[i].read = image_directory_read;
 +			images[i].write = NULL;
 +			images[i].selected_for_staging = false;
-+		}
-+		else {
++		} else {
 +			images[i].read = NULL; /* Cannot read images */
 +			images[i].write = image_write;
 +		}
  	}
  
  	/* Insert Image directory as the last image */
+diff --git a/deployments/se-proxy/infra/rse/spf_fwu.c b/deployments/se-proxy/infra/rse/spf_fwu.c
+index 90f200e1..713d932d 100644
+--- a/deployments/se-proxy/infra/rse/spf_fwu.c
++++ b/deployments/se-proxy/infra/rse/spf_fwu.c
+@@ -18,6 +18,10 @@
+ #include "service/fwu/common/update_agent_interface.h"
+ #include "service/fwu/psa_fwu_m/interface/psa_ipc/psa_fwu_ipc.h"
+ 
++#include <protocols/service/fwu/fwu_proto.h>
++#include "corstone1000_config.h"
++#include "corstone1000_event_handling.h"
++
+ #ifndef IMAGE_MAPPING_ELEMENT_COUNT
+ #define IMAGE_MAPPING_ELEMENT_COUNT 0
+ #endif
+@@ -26,6 +30,13 @@
+ #define MAX_PAYLOAD_SIZE 4096
+ #endif
+ 
++/* The index to access the ESRT image in the psa_fwu_m_image_mapping structure
++ * collection. The ESRT image is always accessed at the end of the collection.
++ */
++#define IMAGE_MAPPING_ESRT_INDEX (IMAGE_MAPPING_ELEMENT_COUNT - 1)
++
++static void define_esrt_image_mapping(void);
++
+ struct rpc_service_interface *fwu_proxy_create(void)
+ {
+ 	rpc_status_t rpc_status = RPC_ERROR_INTERNAL;
+@@ -48,10 +59,22 @@ struct rpc_service_interface *fwu_proxy_create(void)
+ 
+ 	if (psa_fwu_ipc_init(&rpc_session) != PSA_SUCCESS)
+ 		return NULL;
++
++	define_esrt_image_mapping();
+ 	agent = psa_fwu_m_update_agent_init(img_mapping, IMAGE_MAPPING_ELEMENT_COUNT,
+ 					    MAX_PAYLOAD_SIZE);
+ 
+ 	return fwu_provider_init(&fwu_provider, agent);
+ }
+ 
++/* Every platform needs to define esrt image mapping,
++ * if ESRT image UUID is to be used to extract ESRT data
++ */
++static void define_esrt_image_mapping(void)
++{
++	uuid_octets_from_canonical(&img_mapping[IMAGE_MAPPING_ESRT_INDEX].uuid,
++				   EFI_SYSTEM_RESOURCE_TABLE_CANONICAL_UUID);
++	img_mapping[IMAGE_MAPPING_ESRT_INDEX].component = FWU_IMAGE_INDEX_ESRT;
++}
++
+ ADD_PROXY_SERVICE_FACTORY(fwu_proxy_create, FWU_PROXY, SE_PROXY_INTERFACE_PRIO_FWU);
+diff --git a/platform/providers/arm/corstone1000/platform.cmake b/platform/providers/arm/corstone1000/platform.cmake
+index 4b6b9675..baddf0be 100644
+--- a/platform/providers/arm/corstone1000/platform.cmake
++++ b/platform/providers/arm/corstone1000/platform.cmake
+@@ -33,11 +33,26 @@ set(MM_COMM_BUFFER_ADDRESS "0x00000000 0x81FFF000" CACHE STRING "MM Communicatio
+ set(MM_COMM_BUFFER_PAGE_COUNT 0x1 CACHE STRING "MM Communication buffer page count")
+ 
+ 
++# For ESRT v1 details : https://uefi.org/specs/UEFI/2.9_A/23_Firmware_Update_and_Reporting.html#efi-system-resource-table
++set(FWU_IMAGE_CAPSULE_COUNT 4 CACHE STRING "Maximum number of FWU Images in a capsule to be updated")
++set(ESRT_IMAGE_ENTRY_SIZE 40 CACHE STRING "Size of one ESRT v1 Image entry structure object")
++set(ESRT_REMAINING_FIELDS_SIZE 16 CACHE STRING "Size of remaining fields of ESRT v1 table structure")
++math(EXPR TOTAL_ESRT_SIZE "${FWU_IMAGE_CAPSULE_COUNT} * ${ESRT_IMAGE_ENTRY_SIZE} + ${ESRT_REMAINING_FIELDS_SIZE}" OUTPUT_FORMAT DECIMAL)
++
++set(TFM_FWU_MAX_DIGEST_SIZE ${TOTAL_ESRT_SIZE} CACHE STRING "Maximum size of ESRT entries of all the images in a bank")
++
++set(ESRT_IMAGE_COUNT 1 CACHE STRING "The immutable number of ESRT image")
++math(EXPR IMAGE_MAPPING_ELEMENT_COUNT "${FWU_IMAGE_CAPSULE_COUNT} + ${ESRT_IMAGE_COUNT}" OUTPUT_FORMAT DECIMAL)
++
+ target_compile_definitions(${TGT} PRIVATE
+ 	PLAT_RSE_COMMS_PAYLOAD_MAX_SIZE=${PLAT_RSE_COMMS_PAYLOAD_MAX_SIZE}
+ 	COMMS_MHU_MSG_SIZE=${COMMS_MHU_MSG_SIZE}
+ 	MBEDTLS_ECP_DP_SECP521R1_ENABLED
+ 	CORSTONE_1000_TYPE=${CORSTONE_1000_TYPE_INT}
++	TFM_FWU_MAX_DIGEST_SIZE=${TFM_FWU_MAX_DIGEST_SIZE}
++	FWU_IMAGE_CAPSULE_COUNT=${FWU_IMAGE_CAPSULE_COUNT}
++	IMAGE_MAPPING_ELEMENT_COUNT=${IMAGE_MAPPING_ELEMENT_COUNT}
++	MAX_PAYLOAD_SIZE=4096
+ )
+ 
+ get_property(_platform_driver_dependencies TARGET ${TGT}
 diff --git a/protocols/service/fwu/fwu_proto.h b/protocols/service/fwu/fwu_proto.h
-index 4bcacb1f..aa5d2561 100644
+index 4bcacb1f..85296e5b 100644
 --- a/protocols/service/fwu/fwu_proto.h
 +++ b/protocols/service/fwu/fwu_proto.h
 @@ -1,5 +1,5 @@
@@ -139,10 +251,10 @@ index 4bcacb1f..aa5d2561 100644
 -#define FWU_UPDATE_AGENT_CANONICAL_UUID "6823a838-1b06-470e-9774-0cce8bfb53fd"
 -#define FWU_DIRECTORY_CANONICAL_UUID	"deee58d9-5147-4ad3-a290-77666e2341a5"
 -#define FWU_METADATA_CANONICAL_UUID	"8a7a84a0-8387-40f6-ab41-a8b9a5a60d23"
-+#define FWU_UPDATE_AGENT_CANONICAL_UUID 		"6823a838-1b06-470e-9774-0cce8bfb53fd"
-+#define FWU_DIRECTORY_CANONICAL_UUID			"deee58d9-5147-4ad3-a290-77666e2341a5"
-+#define FWU_METADATA_CANONICAL_UUID			"8a7a84a0-8387-40f6-ab41-a8b9a5a60d23"
-+#define EFI_SYSTEM_RESOURCE_TABLE_CANONICAL_UUID	"63a222b1-6136-684f-9929-78f8b0d62180"
++#define FWU_UPDATE_AGENT_CANONICAL_UUID             "6823a838-1b06-470e-9774-0cce8bfb53fd"
++#define FWU_DIRECTORY_CANONICAL_UUID                "deee58d9-5147-4ad3-a290-77666e2341a5"
++#define FWU_METADATA_CANONICAL_UUID                 "8a7a84a0-8387-40f6-ab41-a8b9a5a60d23"
++#define EFI_SYSTEM_RESOURCE_TABLE_CANONICAL_UUID    "63a222b1-6136-684f-9929-78f8b0d62180"
  
  #define FWU_OPEN_OP_TYPE_READ  (0)
  #define FWU_OPEN_OP_TYPE_WRITE (1)
@@ -154,13 +266,13 @@ index 4bcacb1f..aa5d2561 100644
 + * @brief Information about the ESRT v1.
 + */
 +struct __attribute__((__packed__)) efi_system_resource_entry {
-+        uint8_t fw_class[OSF_UUID_OCTET_LEN];
-+        uint32_t fw_type;
-+        uint32_t fw_version;
-+        uint32_t lowest_supported_fw_version;
-+        uint32_t capsule_flags;
-+        uint32_t last_attempt_version;
-+        uint32_t last_attempt_status;
++		uint8_t fw_class[OSF_UUID_OCTET_LEN];
++		uint32_t fw_type;
++		uint32_t fw_version;
++		uint32_t lowest_supported_fw_version;
++		uint32_t capsule_flags;
++		uint32_t last_attempt_version;
++		uint32_t last_attempt_status;
 +};
 +
 +struct __attribute__((__packed__)) efi_system_resource_table {
@@ -174,5 +286,5 @@ index 4bcacb1f..aa5d2561 100644
  	uint8_t img_type_uuid[OSF_UUID_OCTET_LEN];
  	uint32_t client_permissions;
 -- 
-2.25.1
+2.43.0
 

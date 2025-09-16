@@ -13,8 +13,7 @@ SRC_URI:append = "\
     file://0005-cpputest-fix-cmake-4.0-compatibility.patch \
 "
 
-# Trusted Services; aka. v1.1.0
-SRCREV_trusted-services = "83bd53b6689ebb071bc13fcd4e01618bab2e74ca"
+SRCREV_trusted-services = "v1.2.0"
 LIC_FILES_CHKSUM = "file://${S}/license.rst;md5=ea160bac7f690a069c608516b17997f4"
 
 S = "${UNPACKDIR}/trusted-services"

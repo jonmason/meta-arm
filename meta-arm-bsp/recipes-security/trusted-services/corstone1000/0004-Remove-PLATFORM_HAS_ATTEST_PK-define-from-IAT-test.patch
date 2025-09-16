@@ -1,10 +1,23 @@
 From cee283641224d2a6660cde0ad83e59bdddbc2f37 Mon Sep 17 00:00:00 2001
 From: Bence Balogh <bence.balogh@arm.com>
 Date: Tue, 14 May 2024 15:58:15 +0200
-Subject: [PATCH 09/12] Remove PLATFORM_HAS_ATTEST_PK define from IAT test
+Subject: [PATCH] Remove PLATFORM_HAS_ATTEST_PK define from IAT test
 
+The `PLATFORM_HAS_ATTEST_PK` flag is removed to allow
+`PLATFORM_OVERRIDE_ATTEST_PK` to be defined in `psa-api-test`.
+
+When `PLATFORM_HAS_ATTEST_PK` is set, `psa-api-test` does not define
+`PLATFORM_OVERRIDE_ATTEST_PK`, preventing use of the hard-coded
+attestation public key.
+This is required for the Corstone-1000, which is a Cortex-A+Cortex-M
+platform, as it cannot retrieve the attestation PK from the Secure
+Enclave.
+
+Cortex-A based IAT deployments are unaffected, as they can retrieve
+the attestation public key directly.
+
+Upstream-Status: Inappropriate [The change is only necessary for A+M platforms]
 Signed-off-by: Bence Balogh <bence.balogh@arm.com>
-Upstream-Status: Inappropriate [Should remove the flag only for CS1000]
 ---
  deployments/psa-api-test/initial_attestation/iat-api-test.cmake | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)

@@ -1,31 +1,84 @@
-From 7953806fd3fdb743c40b76e363b917fac786c636 Mon Sep 17 00:00:00 2001
-From: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
-Date: Tue, 11 Mar 2025 13:33:36 +0000
-Subject: [PATCH 10/11] platform: corstone1000: Add event provider proxy
+From 6a4cedce9d433bc42a71ac77c3cd90dde4242951 Mon Sep 17 00:00:00 2001
+From: Hugues KAMBA MPIANA <hugues.kambampiana@arm.com>
+Date: Tue, 5 Aug 2025 15:22:44 +0100
+Subject: [PATCH 2/7] platform: corstone1000: Add event provider proxy for boot
+ confirmation handling
 
-Normal world needs to send boot confirmation event
-to Secure Enclave and Trusted-Services is responsible
-to transfer the event to Secure Enclave.
-This commit implements the event handling framework in
-SE-proxy-SP and develops event provider proxy which
-forwards the event to Secure Enclave via psa calls.
-This change is introduced for Corstone-1000
+This patch introduces an event forwarding framework to support
+delivery of boot confirmation events from the normal world to the
+Secure Enclave for the Corstone-1000 platform.
 
-Upstream-Status: Pending
+Key changes:
+- Implements an `event_provider` service in the SE-Proxy SP that
+  processes boot confirmation events received from the host.
+- Forwards the events to the Secure Enclave using PSA calls to
+  the `TFM_PLATFORM_SERVICE_HANDLE` and `TFM_PLATFORM_API_ID_IOCTL`.
+- Defines and registers a proxy factory (`event_handler_proxy_create`)
+  to initialize and connect the event provider with the RSE comms
+  backend.
+- Adds associated infrastructure in `infra.cmake` and headers to
+  support integration with the service framework.
+
+This mechanism ensures the SE-Proxy SP can relay important boot status
+events (e.g., FWU boot confirmation) to the Secure Enclave for secure
+state updates and lifecycle management.
+
+Upstream-Status: Backport [6a4cedce9d433bc42a71ac77c3cd90dde4242951]
 Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
+Signed-off-by: Hugues KAMBA MPIANA <hugues.kambampiana@arm.com>
 ---
+ .../service/common/include/psa/client.h       | 28 +++++++
  components/service/common/include/psa/sid.h   |  9 ++
- .../se-proxy/env/commonsp/se_proxy_sp.c       | 16 +++-
- .../corstone1000_event_handling.c             | 91 +++++++++++++++++++
- .../corstone1000_event_handling.h             | 42 +++++++++
- .../se-proxy/infra/corstone1000/infra.cmake   |  1 +
- .../corstone1000/service_proxy_factory.c      | 27 ++++++
- 6 files changed, 184 insertions(+), 2 deletions(-)
+ .../corstone1000_event_handling.c             | 83 +++++++++++++++++++
+ .../corstone1000_event_handling.h             | 40 +++++++++
+ .../se-proxy/infra/corstone1000/infra.cmake   |  6 ++
+ .../infra/corstone1000/spf_event_handler.c    | 44 ++++++++++
+ 6 files changed, 210 insertions(+)
  create mode 100644 deployments/se-proxy/infra/corstone1000/corstone1000_event_handling.c
  create mode 100644 deployments/se-proxy/infra/corstone1000/corstone1000_event_handling.h
+ create mode 100644 deployments/se-proxy/infra/corstone1000/spf_event_handler.c
 
+diff --git a/components/service/common/include/psa/client.h b/components/service/common/include/psa/client.h
+index db40d7af..7e3092ae 100644
+--- a/components/service/common/include/psa/client.h
++++ b/components/service/common/include/psa/client.h
+@@ -96,6 +96,34 @@ inline static uint32_t psa_ptr_const_to_u32(const void *ptr)
+ 	return (uintptr_t)ptr;
+ }
+ 
++static inline bool psa_ptr_would_truncate_u32(const void *ptr)
++{
++#if UINTPTR_MAX > UINT32_MAX
++	return (uintptr_t)ptr & ~((uintptr_t)UINT32_MAX);
++#else
++	(void)ptr;
++	return false;
++#endif
++}
++
++static inline psa_status_t psa_ptr_const_to_u32_checked(const void *src, uint32_t *dst)
++{
++	if (psa_ptr_would_truncate_u32(src))
++		return PSA_ERROR_INVALID_ARGUMENT;
++
++	*dst = (uint32_t)(uintptr_t)src;
++	return PSA_SUCCESS;
++}
++
++static inline psa_status_t psa_ptr_to_u32_checked(void *src, uint32_t *dst)
++{
++	if (psa_ptr_would_truncate_u32(src))
++		return PSA_ERROR_INVALID_ARGUMENT;
++
++	*dst = (uint32_t)(uintptr_t)src;
++	return PSA_SUCCESS;
++}
++
+ /*************************** PSA Client API **********************************/
+ 
+ /**
 diff --git a/components/service/common/include/psa/sid.h b/components/service/common/include/psa/sid.h
-index 0235764d..9f5ea05e 100644
+index 0235764d..baf16fed 100644
 --- a/components/service/common/include/psa/sid.h
 +++ b/components/service/common/include/psa/sid.h
 @@ -40,6 +40,15 @@ extern "C" {
@@ -39,57 +92,17 @@ index 0235764d..9f5ea05e 100644
 +/**
 + * \brief Define a progressive numerical value for each SID which can be used
 + *        when dispatching the requests to the service
-+*/
++ */
 +
  /******** TFM_SP_PLATFORM ********/
  #define TFM_SP_PLATFORM_SYSTEM_RESET_SID                           (0x00000040U)
  #define TFM_SP_PLATFORM_SYSTEM_RESET_VERSION                       (1U)
-diff --git a/deployments/se-proxy/env/commonsp/se_proxy_sp.c b/deployments/se-proxy/env/commonsp/se_proxy_sp.c
-index 9f94092b..ce1410b2 100644
---- a/deployments/se-proxy/env/commonsp/se_proxy_sp.c
-+++ b/deployments/se-proxy/env/commonsp/se_proxy_sp.c
-@@ -1,6 +1,6 @@
- // SPDX-License-Identifier: BSD-3-Clause
- /*
-- * Copyright (c) 2021-2024, Arm Limited and Contributors. All rights reserved.
-+ * Copyright (c) 2021-2025, Arm Limited and Contributors. All rights reserved.
-  */
- 
- #include "components/rpc/common/endpoint/rpc_service_interface.h"
-@@ -42,7 +42,7 @@ void __noreturn sp_main(union ffa_boot_info *boot_info)
- 		goto fatal_error;
- 	}
- 
--	rpc_status = ts_rpc_endpoint_sp_init(&rpc_endpoint, 6, 16);
-+	rpc_status = ts_rpc_endpoint_sp_init(&rpc_endpoint, 7, 16);
- 	if (rpc_status != RPC_SUCCESS) {
- 		EMSG("Failed to initialize RPC endpoint: %d", rpc_status);
- 		goto fatal_error;
-@@ -97,6 +97,18 @@ void __noreturn sp_main(union ffa_boot_info *boot_info)
- 		goto fatal_error;
- 	}
- 
-+	rpc_iface = event_handler_proxy_create();
-+	if (!rpc_iface) {
-+		EMSG("Failed to create Capsule Update proxy");
-+		goto fatal_error;
-+	}
-+
-+	rpc_status = ts_rpc_endpoint_sp_add_service(&rpc_endpoint, rpc_iface);
-+	if (rpc_status != RPC_SUCCESS) {
-+		EMSG("Failed to add service to RPC endpoint: %d", rpc_status);
-+		goto fatal_error;
-+	}
-+
- 	rpc_iface = fwu_proxy_create();
- 	if (!rpc_iface) {
- 		EMSG("Failed to create FWU proxy");
 diff --git a/deployments/se-proxy/infra/corstone1000/corstone1000_event_handling.c b/deployments/se-proxy/infra/corstone1000/corstone1000_event_handling.c
 new file mode 100644
-index 00000000..faf450f2
+index 00000000..524db58d
 --- /dev/null
 +++ b/deployments/se-proxy/infra/corstone1000/corstone1000_event_handling.c
-@@ -0,0 +1,91 @@
+@@ -0,0 +1,83 @@
 +/*
 + * Copyright (c) 2025, Arm Limited and Contributors. All rights reserved.
 + *
@@ -115,78 +128,70 @@ index 00000000..faf450f2
 +
 +/* Handler mapping table for service */
 +static const struct service_handler handler_table[] = {
-+	{OPCODE_BOOT_CONFIRMED,			boot_confirmed_handler}
++	{.opcode = OPCODE_BOOT_CONFIRMED, .invoke = boot_confirmed_handler}
 +};
 +
-+struct rpc_service_interface *corstone1000_event_provider_init(
-+	struct event_provider *context)
++struct rpc_service_interface *corstone1000_event_provider_init(struct event_provider *context)
 +{
-+	struct rpc_service_interface *rpc_interface = NULL;
-+	const struct rpc_uuid dummy_uuid = { .uuid = { 0 }};
 +	if (!context)
 +		return NULL;
 +
-+	service_provider_init(
-+		&context->base_provider,
-+		context,
-+		&dummy_uuid,
-+		handler_table,
-+		sizeof(handler_table)/sizeof(struct service_handler));
++	service_provider_init(&context->base_provider, context,
++			      &(const struct rpc_uuid){.uuid = { 0 }}, handler_table,
++		sizeof(handler_table) / sizeof(struct service_handler));
 +
-+	rpc_interface = service_provider_get_rpc_interface(&context->base_provider);
-+
-+	return rpc_interface;
++	return service_provider_get_rpc_interface(&context->base_provider);
 +}
 +
 +static rpc_status_t event_handler(uint32_t opcode, struct rpc_caller_interface *caller)
 +{
++	if (!caller) {
++		EMSG("%s rpc_caller is NULL", __func__);
++		return TS_RPC_ERROR_RESOURCE_FAILURE;
++	}
++
++	IMSG("%s opcode %x", __func__, opcode);
++
 +	uint32_t ioctl_id;
-+	rpc_status_t rpc_status = TS_RPC_CALL_ACCEPTED;
++	uint32_t mem_buf_start_addr;
++
++	if (psa_ptr_to_u32_checked(&ioctl_id, &mem_buf_start_addr) != PSA_SUCCESS) {
++		EMSG("%s start address of the memory buffer does not fit in 32 bits", __func__);
++		return TS_RPC_ERROR_INTERNAL;
++	}
 +
 +	struct psa_invec in_vec[] = {
-+			{ .base = &ioctl_id, .len = sizeof(ioctl_id) }
++		{ .base = mem_buf_start_addr, .len = sizeof(ioctl_id) }
 +	};
 +
-+	if(!caller) {
-+		EMSG("event_handler rpc_caller is NULL");
-+		rpc_status = TS_RPC_ERROR_RESOURCE_FAILURE;
-+		return rpc_status;
-+	}
-+
-+	IMSG("event handler opcode %x", opcode);
-+	switch(opcode) {
-+		case OPCODE_BOOT_CONFIRMED:
++	switch (opcode) {
++	case OPCODE_BOOT_CONFIRMED:
 +		ioctl_id = IOCTL_CORSTONE1000_FWU_HOST_ACK;
-+		/* Boot Confirmed event from Normal World  */
-+		
-+		psa_call(caller,TFM_PLATFORM_SERVICE_HANDLE, TFM_PLATFORM_API_ID_IOCTL,
-+			in_vec,IOVEC_LEN(in_vec), NULL, 0);
-+		break;
-+		default:
-+			EMSG("%s unsupported opcode", __func__);
-+			rpc_status = TS_RPC_ERROR_INVALID_PARAMETER;
-+	}
-+	return rpc_status;
 +
++		psa_call(caller, TFM_PLATFORM_SERVICE_HANDLE, TFM_PLATFORM_API_ID_IOCTL, in_vec,
++			 IOVEC_LEN(in_vec), NULL, 0);
++		break;
++
++	default:
++		EMSG("%s unsupported opcode", __func__);
++		return TS_RPC_ERROR_INVALID_PARAMETER;
++	}
++
++	return TS_RPC_CALL_ACCEPTED;
 +}
 +
 +static rpc_status_t boot_confirmed_handler(void *context, struct rpc_request *req)
 +{
-+	struct event_provider *this_instance = (struct event_provider*)context;
-+	struct rpc_caller_interface *caller = this_instance->client.session->caller;
-+	uint32_t opcode = req->opcode;
-+	rpc_status_t rpc_status;
++	struct event_provider *this_instance = (struct event_provider *)context;
 +
-+	rpc_status = event_handler(opcode, caller);
-+
-+	return rpc_status;
++	return event_handler(req->opcode, this_instance->client.session->caller);
 +}
 diff --git a/deployments/se-proxy/infra/corstone1000/corstone1000_event_handling.h b/deployments/se-proxy/infra/corstone1000/corstone1000_event_handling.h
 new file mode 100644
-index 00000000..e8e60dae
+index 00000000..ecb2d6b8
 --- /dev/null
 +++ b/deployments/se-proxy/infra/corstone1000/corstone1000_event_handling.h
-@@ -0,0 +1,42 @@
+@@ -0,0 +1,40 @@
 +/*
 + * Copyright (c) 2025, Arm Limited and Contributors. All rights reserved.
 + *
@@ -208,8 +213,7 @@ index 00000000..e8e60dae
 + * The event_provider is a service provider that accepts events
 + * and delegates them to a suitable backend.
 + */
-+struct event_provider
-+{
++struct event_provider {
 +	struct service_provider base_provider;
 +	struct service_client client;
 +};
@@ -221,8 +225,7 @@ index 00000000..e8e60dae
 + *
 + * \return An rpc_service_interface or NULL on failure
 + */
-+struct rpc_service_interface *corstone1000_event_provider_init(
-+	struct event_provider *context);
++struct rpc_service_interface *corstone1000_event_provider_init(struct event_provider *context);
 +
 +#ifdef __cplusplus
 +} /* extern "C" */
@@ -230,34 +233,48 @@ index 00000000..e8e60dae
 +
 +#endif /* CORSTONE1000_EVENT_HANDLING_H */
 diff --git a/deployments/se-proxy/infra/corstone1000/infra.cmake b/deployments/se-proxy/infra/corstone1000/infra.cmake
-index 2bf6b36e..1ec43700 100644
+index 22d1542d..f0c2e58e 100644
 --- a/deployments/se-proxy/infra/corstone1000/infra.cmake
 +++ b/deployments/se-proxy/infra/corstone1000/infra.cmake
-@@ -33,4 +33,5 @@ add_components(TARGET "se-proxy"
- target_sources(se-proxy PRIVATE
- 
- 	${CMAKE_CURRENT_LIST_DIR}/service_proxy_factory.c
+@@ -14,6 +14,12 @@ set(CFG_ENABLE_CRYPTO        On)
+ set(CFG_ENABLE_CRYPTO_NANO   On)
+ set(CFG_ENABLE_IAT           On)
+ set(CFG_ENABLE_FWU           On)
++
++target_sources(se-proxy PRIVATE
++	${CMAKE_CURRENT_LIST_DIR}/spf_event_handler.c
 +	${CMAKE_CURRENT_LIST_DIR}/corstone1000_event_handling.c
- )
-diff --git a/deployments/se-proxy/infra/corstone1000/service_proxy_factory.c b/deployments/se-proxy/infra/corstone1000/service_proxy_factory.c
-index a754ace7..6d8c3855 100644
---- a/deployments/se-proxy/infra/corstone1000/service_proxy_factory.c
-+++ b/deployments/se-proxy/infra/corstone1000/service_proxy_factory.c
-@@ -20,6 +20,7 @@
- #include <protocols/service/fwu/fwu_proto.h>
- #include <trace.h>
- #include "corstone1000_config.h"
++)
++
+ #-------------------------------------------------------------------------------
+ # Infrastructure components
+ #
+diff --git a/deployments/se-proxy/infra/corstone1000/spf_event_handler.c b/deployments/se-proxy/infra/corstone1000/spf_event_handler.c
+new file mode 100644
+index 00000000..92820259
+--- /dev/null
++++ b/deployments/se-proxy/infra/corstone1000/spf_event_handler.c
+@@ -0,0 +1,44 @@
++/*
++ * Copyright (c) 2025, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <stddef.h>
++#include "deployments/se-proxy/env/commonsp/proxy_service_factory_list.h"
++#include "rpc/common/caller/rpc_caller.h"
++#include "rpc/common/caller/rpc_caller_session.h"
++#include "rpc/common/interface/rpc_status.h"
++#include "rpc/common/interface/rpc_uuid.h"
++#include "rpc/rse_comms/caller/sp/rse_comms_caller.h"
++
 +#include "corstone1000_event_handling.h"
- 
- /* backends */
- #include <service/crypto/backend/psa_ipc/crypto_ipc_backend.h>
-@@ -164,6 +165,32 @@ struct rpc_service_interface *its_proxy_create(void)
- 	return secure_storage_provider_init(&its_provider, backend, &its_uuid);
- }
- 
++
 +struct rpc_service_interface *event_handler_proxy_create(void)
 +{
 +	static struct event_provider event_provider = {0};
++	const struct rpc_uuid dummy_uuid = { .uuid = { 0 }};
 +	rpc_status_t rpc_status = RPC_ERROR_INTERNAL;
 +
 +	/* Static objects for proxy instance */
@@ -272,7 +289,6 @@ index a754ace7..6d8c3855 100644
 +	if (rpc_status != RPC_SUCCESS)
 +		return NULL;
 +
-+
 +	event_provider.client.session = &rpc_session;
 +	event_provider.client.rpc_status = RPC_SUCCESS;
 +	event_provider.client.service_info.supported_encodings = 0;
@@ -281,9 +297,8 @@ index a754ace7..6d8c3855 100644
 +	return corstone1000_event_provider_init(&event_provider);
 +}
 +
- struct rpc_service_interface *fwu_proxy_create(void)
- {
- 	rpc_status_t rpc_status = RPC_ERROR_INTERNAL;
++ADD_PROXY_SERVICE_FACTORY(event_handler_proxy_create,
++			  EVENT_HANDLER_PROXY, SE_PROXY_INTERFACE_PRIO_FWU + 1);
 -- 
-2.34.1
+2.43.0
 
