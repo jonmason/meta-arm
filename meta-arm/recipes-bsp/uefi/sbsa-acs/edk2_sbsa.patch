@@ -1,0 +1,23 @@
+Upstream-Status: Pending
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+diff --git a/ShellPkg/ShellPkg.dsc b/ShellPkg/ShellPkg.dsc
+index 7e985f8..3c66d1a 100644
+--- a/ShellPkg/ShellPkg.dsc
++++ b/ShellPkg/ShellPkg.dsc
+@@ -66,6 +66,8 @@
+   ReportStatusCodeLib|MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf
+ 
+   SafeIntLib|MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf
++  UnifiedValLib|ShellPkg/Application/sysarch-acs/val/UnifiedValLib.inf
++  UnifiedPalLib|ShellPkg/Application/sysarch-acs/pal/uefi_acpi/UnifiedPalLib.inf
+ 
+ [PcdsFixedAtBuild]
+   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0xFF
+@@ -93,6 +95,7 @@
+   ShellPkg/Library/UefiShellDebug1CommandsLib/UefiShellDebug1CommandsLib.inf
+   ShellPkg/Library/UefiShellNetwork1CommandsLib/UefiShellNetwork1CommandsLib.inf
+   ShellPkg/Library/UefiShellNetwork2CommandsLib/UefiShellNetwork2CommandsLib.inf
++  ShellPkg/Application/sysarch-acs/apps/uefi/Sbsa.inf
+ 
+   ShellPkg/Application/Shell/Shell.inf {
+     <PcdsFixedAtBuild>
