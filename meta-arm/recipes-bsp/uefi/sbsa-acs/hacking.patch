@@ -1,0 +1,14 @@
+Upstream-Status: Pending
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+diff --git a/pal/uefi_acpi/UnifiedPalLib.inf b/pal/uefi_acpi/UnifiedPalLib.inf
+index 80bcbb3d1abc..becdb1ae10d8 100644
+--- a/pal/uefi_acpi/UnifiedPalLib.inf
++++ b/pal/uefi_acpi/UnifiedPalLib.inf
+@@ -36,7 +36,6 @@
+   src/pal_iovirt.c
+   src/pal_pcie_enumeration.c
+   src/pal_peripherals.c
+-  ../baremetal/target/RDN2/src/pal_exerciser.c
+   src/pal_smmu.c
+   src/pal_hmat.c
+   src/pal_ras.c
