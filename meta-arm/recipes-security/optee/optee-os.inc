@@ -38,10 +38,6 @@ CPPFLAGS[unexport] = "1"
 AS[unexport] = "1"
 LD[unexport] = "1"
 
-do_compile:prepend() {
-	PLAT_LIBGCC_PATH=$(${CC} -print-libgcc-file-name)
-}
-
 do_compile() {
     oe_runmake -C ${S} all
 }
