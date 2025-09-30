@@ -13,3 +13,7 @@ SRC_URI_MBEDTLS = "git://github.com/ARMmbed/mbedtls.git;name=mbedtls;protocol=ht
 SRCREV_mbedtls = "22098d41c6620ce07cf8a0134d37302355e1e5ef"
 
 LIC_FILES_CHKSUM_MBEDTLS = "file://mbedtls/LICENSE;md5=379d5819937a6c2f1ef1630d341e026d"
+
+SRC_URI += "\
+    file://0001-fix-arm-re-enable-console-by-default-in-BL31.patch \
+"
