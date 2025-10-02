@@ -1,4 +1,5 @@
 SUMMARY = "GN is a meta-build system that generates build files for Ninja"
+HOMEPAGE = "https://gn.googlesource.com/gn/"
 DEPENDS += "ninja-native"
 
 LICENSE = "BSD-3-Clause"
@@ -7,7 +8,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=0fca02217a5d49a14dfe2d11837bb34d"
 UPSTREAM_CHECK_COMMITS = "1"
 
 SRC_URI = "git://gn.googlesource.com/gn;protocol=https;branch=main"
-SRCREV = "4ce861fc06ec87ff74eb6a17ebbd55e4755ebdeb"
+SRCREV = "81b24e01531ecf0eff12ec9359a555ec3944ec4e"
 PV = "0+git"
 
 B = "${WORKDIR}/build"
