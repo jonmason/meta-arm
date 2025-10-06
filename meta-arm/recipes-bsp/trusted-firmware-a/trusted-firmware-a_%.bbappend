@@ -1,10 +1,6 @@
 COMPATIBLE_MACHINE:qemuarm64-secureboot = "qemuarm64-secureboot"
 COMPATIBLE_MACHINE:qemuarm-secureboot = "qemuarm-secureboot"
 
-#FIXME - clang fails to build tfa for qemuarm-secureboot, and possibly other
-# arm/aarch32.  This is a known testing hole in TF-A.
-TOOLCHAIN:qemuarm-secureboot = "gcc"
-
 # Enable passing TOS_FW_CONFIG from FIP package to Trusted OS.
 FILESEXTRAPATHS:prepend:qemuarm64-secureboot := "${THISDIR}/files:"
 SRC_URI:append:qemuarm64-secureboot = " \
@@ -53,7 +49,7 @@ EXTRA_OEMAKE:append:arm:qemuall = " \
 # When using OP-TEE SPMC specify the SPMC manifest file.
 EXTRA_OEMAKE:append:qemuarm64-secureboot = "${@bb.utils.contains('MACHINE_FEATURES', 'arm-ffa', \
     'QEMU_TOS_FW_CONFIG_DTS=${S}/plat/qemu/fdts/optee_spmc_manifest.dts', '', d)}"
-     
+
 do_compile:append:qemuarm64-secureboot() {
     # Create a secure flash image for booting AArch64 Qemu. See:
     # https://git.trustedfirmware.org/TF-A/trusted-firmware-a.git/tree/docs/plat/qemu.rst
