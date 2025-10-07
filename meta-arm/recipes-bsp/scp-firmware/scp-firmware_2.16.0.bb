@@ -28,9 +28,6 @@ DEPENDS = "gcc-arm-none-eabi-native \
            ninja-native \
           "
 
-# For now we only build with GCC, so stop meta-clang trying to get involved
-TOOLCHAIN = "gcc"
-
 inherit deploy
 
 B = "${WORKDIR}/build"
