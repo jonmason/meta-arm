@@ -24,3 +24,4 @@ do_install:append:sbsa-ref() {
     truncate -s 256M ${D}/firmware/SBSA_FLASH*.fd
 }
 
+CFLAGS += "-Wno-uninitialized-const-pointer"
