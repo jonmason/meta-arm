@@ -82,9 +82,6 @@ EDK_COMPILER:toolchain-clang = "CLANGDWARF"
 export CLANG38_AARCH64_PREFIX = "${TARGET_PREFIX}"
 export CLANG38_ARM_PREFIX = "${TARGET_PREFIX}"
 
-#FIXME - arm32 doesn't work with clang due to a linker issue
-TOOLCHAIN:arm = "gcc"
-
 do_configure:prepend() {
     sed -i -e "s#-target ${HOST_ARCH}-linux-gnu.*#-target ${HOST_SYS}#" ${S}/BaseTools/Conf/tools_def.template
 }
