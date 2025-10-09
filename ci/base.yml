@@ -10,17 +10,26 @@ defaults:
     branch: master
 
 repos:
+  bitbake:
+    url: https://git.openembedded.org/bitbake
+    layers:
+      bitbake: disabled
+
+  core:
+    url: https://git.openembedded.org/openembedded-core
+    layers:
+      meta:
+
+  meta-yocto:
+    url: https://git.yoctoproject.org/meta-yocto
+    layers:
+      meta-poky:
+
   meta-arm:
     layers:
       meta-arm:
       meta-arm-bsp:
       meta-arm-toolchain:
-
-  poky:
-    url: https://git.yoctoproject.org/poky
-    layers:
-      meta:
-      meta-poky:
 
 env:
   BB_LOGCONFIG: ""
