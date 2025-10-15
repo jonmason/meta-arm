@@ -69,13 +69,13 @@ SRC_URI:append = " \
     file://0038-corstone1000-enable-OF_UPSTREAM-device-tree-support.patch \
 "
 
-do_configure:append() {
-   openssl req -x509 -sha256 -newkey rsa:2048 -subj /CN=CRT/ -keyout ${B}/CRT.key -out ${B}/corstone1000_defconfig/CRT.crt -nodes -days 365
+uboot_configure_config:append() {
+   openssl req -x509 -sha256 -newkey rsa:2048 -subj /CN=CRT/ -keyout ${B}/CRT.key -out $builddir/CRT.crt -nodes -days 365
 }
 
 FILES:${PN} += "/corstone1000_capsule_*"
-do_install:append() {
-   install -D -p -m 0644 ${B}/corstone1000_defconfig/CRT.crt ${D}/corstone1000_capsule_cert.crt
+uboot_install_config:append() {
+   install -D -p -m 0644 $builddir/CRT.crt ${D}/corstone1000_capsule_cert.crt
    install -D -p -m 0644 ${B}/CRT.key ${D}/corstone1000_capsule_key.key
 }
 
