@@ -8,7 +8,7 @@ require arm-systemready-linux-distros.inc
 LICENSE = "AFL-2.0 & AFL-2.1 \
            & GPL-1.0-only & GPL-1.0-or-later & GPL-2.0-only & GPL-2.0-or-later & GPL-2.0-with-autoconf-exception \
            & GPL-2.0-with-OpenSSL-exception & GPL-3.0-only & GPL-3.0-or-later & GPL-3.0-with-autoconf-exception \
-           & GPL-3-with-bison-exception & SMAIL_GPL & LGPL-2.0-only & LGPL-2.0-or-later & LGPL-2.1-only \
+           & GPL-3-with-bison-exception & SMAIL-GPL & LGPL-2.0-only & LGPL-2.0-or-later & LGPL-2.1-only \
            & LGPL-2.1-or-later & LGPL-3.0-only & LGPL-3.0-or-later & BSD-2-Clause & BSD-3-Clause \
            & BSD-3-Clause-Clear & BSD-4-Clause & BSD-4-Clause-UC & TCP-wrappers & OLDAP-2.8 & PSF-2.0 & BSL-1.0 \
            & bzip2-1.0.6 & CC0-1.0 & Libpng & Latex2e & Unicode-TOU & Unicode-DFS-2016 & CC-BY-3.0 & CC-BY-SA-3.0 \
@@ -31,7 +31,7 @@ file://${COMMON_LICENSE_DIR}/GPL-3.0-only;md5=c79ff39f19dfec6d293b95dea7b07891 \
 file://${COMMON_LICENSE_DIR}/GPL-3.0-or-later;md5=1c76c4cc354acaac30ed4d5eefea7245 \
 file://${COMMON_LICENSE_DIR}/GPL-3.0-with-autoconf-exception;md5=da26b415cb0faf9bfe6829f0ffa409ec \
 file://${COMMON_LICENSE_DIR}/GPL-3-with-bison-exception;md5=6e1bac3dc21fcc4fa049cf5c407eb7a2 \
-file://${COMMON_LICENSE_DIR}/SMAIL_GPL;md5=b948675029f79c64840e78881e91e1d4 \
+file://${COMMON_LICENSE_DIR}/SMAIL-GPL;md5=785f3688caca0adb413cd39878d0411f \
 file://${COMMON_LICENSE_DIR}/LGPL-2.0-only;md5=9427b8ccf5cf3df47c29110424c9641a \
 file://${COMMON_LICENSE_DIR}/LGPL-2.0-or-later;md5=6d2d9952d88b50a51a5c73dc431d06c7 \
 file://${COMMON_LICENSE_DIR}/LGPL-2.1-only;md5=1a6d268fd218675ffea8be556788b780 \
