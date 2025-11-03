@@ -252,6 +252,11 @@ musca-s1:
 
 pending-updates:
   extends: .setup
+  # Only run this job for the default branch (master), or if forced with
+  # BUILD_FORCE_PENDING_UPDATES.
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $BUILD_FORCE_PENDING_UPDATES != null
   artifacts:
     paths:
       - update-report
