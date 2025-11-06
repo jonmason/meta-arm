@@ -5,7 +5,7 @@
 
 SUMMARY = "Trusted Firmware for Cortex-M"
 DESCRIPTION = "Trusted Firmware-M"
-HOMEPAGE = "https://git.trustedfirmware.org/trusted-firmware-m.git"
+HOMEPAGE = "https://trustedfirmware-m.readthedocs.io/"
 PROVIDES = "virtual/trusted-firmware-m"
 
 UPSTREAM_CHECK_GITTAGREGEX = "^TF-Mv(?P<pver>\d+(\.\d+)+)$"
