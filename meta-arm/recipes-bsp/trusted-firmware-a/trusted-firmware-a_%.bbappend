@@ -52,14 +52,14 @@ EXTRA_OEMAKE:append:qemuarm64-secureboot = "${@bb.utils.contains('MACHINE_FEATUR
 
 do_compile:append:qemuarm64-secureboot() {
     # Create a secure flash image for booting AArch64 Qemu. See:
-    # https://git.trustedfirmware.org/TF-A/trusted-firmware-a.git/tree/docs/plat/qemu.rst
+    # https://trustedfirmware-a.readthedocs.io/en/latest/plat/qemu.html
     dd if=${BUILD_DIR}/bl1.bin of=${BUILD_DIR}/flash.bin bs=4096 conv=notrunc
     dd if=${BUILD_DIR}/fip.bin of=${BUILD_DIR}/flash.bin seek=64 bs=4096 conv=notrunc
 }
 
 do_compile:append:qemuarm-secureboot() {
     # Create a secure flash image for booting AArch64 Qemu. See:
-    # https://git.trustedfirmware.org/TF-A/trusted-firmware-a.git/tree/docs/plat/qemu.rst
+    # https://trustedfirmware-a.readthedocs.io/en/latest/plat/qemu.html
     dd if=${BUILD_DIR}/bl1.bin of=${BUILD_DIR}/flash.bin bs=4096 conv=notrunc
     dd if=${BUILD_DIR}/fip.bin of=${BUILD_DIR}/flash.bin seek=64 bs=4096 conv=notrunc
 }
