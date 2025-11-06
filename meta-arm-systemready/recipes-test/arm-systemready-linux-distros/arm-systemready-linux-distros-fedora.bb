@@ -107,7 +107,7 @@ EFI_IMAGE = "${@oe.utils.vartrue("DISTRO_UNATTENDED_INST_TESTS", "images/efiboot
 
 PV = "39.1.5"
 SRC_URI = "\
-    https://download.fedoraproject.org/pub/fedora/linux/releases/39/Server/aarch64/iso/Fedora-Server-dvd-aarch64-39-1.5.iso;unpack=0;downloadfilename=${ISO_IMAGE_NAME}.iso;name=fedora_iso_image \
+    https://download.fedoraproject.org/pub/archive/fedora/linux/releases/39/Server/aarch64/iso/Fedora-Server-dvd-aarch64-39-1.5.iso;unpack=0;downloadfilename=${ISO_IMAGE_NAME}.iso;name=fedora_iso_image \
     file://unattended-boot-conf/Fedora/ks.cfg\
     "
 SRC_URI[fedora_iso_image.sha256sum] = "d19dc2a39758155fa53e6fd555d0d173ccc8175b55dea48002d499f39cb30ce0"
