@@ -2,7 +2,7 @@
 DESCRIPTION = "CoT-dt2c Tool is a python script to convert CoT DT file into corresponding C file"
 LICENSE = "BSD-3-Clause"
 
-SRC_URI_TRUSTED_FIRMWARE_A ?= "git://git.trustedfirmware.org/TF-A/trusted-firmware-a.git;protocol=https"
+SRC_URI_TRUSTED_FIRMWARE_A ?= "git://review.trustedfirmware.org/TF-A/trusted-firmware-a;protocol=https"
 SRC_URI = "${SRC_URI_TRUSTED_FIRMWARE_A};branch=${SRCBRANCH}"
 LIC_FILES_CHKSUM = "file://docs/license.rst;md5=83b7626b8c7a37263c6a58af8d19bee1"
 

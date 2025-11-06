@@ -7,7 +7,7 @@ inherit deploy
 
 COMPATIBLE_MACHINE ?= "invalid"
 
-SRC_URI_TRUSTED_FIRMWARE_A_TESTS ?= "git://git.trustedfirmware.org/TF-A/tf-a-tests.git;protocol=https"
+SRC_URI_TRUSTED_FIRMWARE_A_TESTS ?= "git://review.trustedfirmware.org/TF-A/tf-a-tests;protocol=https"
 SRC_URI = "${SRC_URI_TRUSTED_FIRMWARE_A_TESTS};branch=${SRCBRANCH}"
 SRCBRANCH = "master"
 SRCREV = "fa267c12f9aa790b43b38d171273cf63892e8d51"
