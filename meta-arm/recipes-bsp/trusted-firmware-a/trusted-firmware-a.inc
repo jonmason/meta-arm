@@ -1,4 +1,5 @@
 DESCRIPTION = "Trusted Firmware-A"
+HOMEPAGE = "https://trustedfirmware-a.readthedocs.io/"
 LICENSE = "BSD-2-Clause & BSD-3-Clause & MIT & Apache-2.0"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
