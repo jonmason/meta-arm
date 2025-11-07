@@ -69,6 +69,11 @@ SRC_URI:append = " \
     file://0038-corstone1000-enable-OF_UPSTREAM-device-tree-support.patch \
 "
 
+# Use 32 bit cells for reserved-memory node in dts
+SRC_URI:append = " \
+    file://0040-corstone1000-dts-use-32-bit-cells-for-reserved-memor.patch \
+"
+
 uboot_configure_config:append() {
    openssl req -x509 -sha256 -newkey rsa:2048 -subj /CN=CRT/ -keyout ${B}/CRT.key -out $builddir/CRT.crt -nodes -days 365
 }
