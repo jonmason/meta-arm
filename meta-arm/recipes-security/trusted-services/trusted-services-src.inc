@@ -27,7 +27,7 @@ SRCREV_dtc = "b6910bec11614980a21e46fbccc35934b671bd81"
 LIC_FILES_CHKSUM += "file://${UNPACKDIR}/dtc/README.license;md5=a1eb22e37f09df5b5511b8a278992d0e"
 
 # MbedTLS, tag "v3.6.0"
-SRC_URI += "gitsm://github.com/ARMmbed/mbedtls.git;name=mbedtls;protocol=https;branch=master;destsuffix=mbedtls"
+SRC_URI += "gitsm://github.com/Mbed-TLS/mbedtls;name=mbedtls;protocol=https;branch=master;destsuffix=mbedtls"
 SRCREV_mbedtls = "2ca6c285a0dd3f33982dd57299012dacab1ff206"
 LIC_FILES_CHKSUM += "file://${UNPACKDIR}/mbedtls/LICENSE;md5=379d5819937a6c2f1ef1630d341e026d"
 
