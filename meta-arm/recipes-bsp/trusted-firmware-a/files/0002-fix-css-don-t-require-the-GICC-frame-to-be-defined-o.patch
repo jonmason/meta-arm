@@ -1,0 +1,45 @@
+From 60d103759b0835d61d90c8f2fbc7cf55f37e61a0 Mon Sep 17 00:00:00 2001
+From: Boyan Karatotev <boyan.karatotev@arm.com>
+Date: Wed, 22 Oct 2025 13:52:28 +0100
+Subject: [PATCH] fix(css): don't require the GICC frame to be defined on GICv3
+
+It's used for GICv2 operation, which won't happen with v3. CSS will
+always use USE_GIC_DRIVER with the correct version so we can rely on
+that to skip passing the GICC frame.
+
+Upstream-Status: Backport [e3c36e35f8f92f817e537064d97a3816c339c704]
+Change-Id: I358b99646f98bd7c6ea398bc8d8900cc80ca15bb
+Signed-off-by: Boyan Karatotev <boyan.karatotev@arm.com>
+---
+ include/plat/arm/css/common/aarch64/css_macros.S | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/include/plat/arm/css/common/aarch64/css_macros.S b/include/plat/arm/css/common/aarch64/css_macros.S
+index 85a7044d7..8a687d582 100644
+--- a/include/plat/arm/css/common/aarch64/css_macros.S
++++ b/include/plat/arm/css/common/aarch64/css_macros.S
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2015, ARM Limited and Contributors. All rights reserved.
++ * Copyright (c) 2015-2025, Arm Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -18,7 +18,14 @@
+ 	 */
+ 	.macro css_print_gic_regs
+ 	mov_imm	x16, PLAT_ARM_GICD_BASE
++	/*
++	 * The ID registers will show GIC version, so it can safely be assumed
++	 * that no v2 operation will be attempted on v3. Don't require the
++	 * macro.
++	 */
++#if USE_GIC_DRIVER == 2
+ 	mov_imm	x17, PLAT_ARM_GICC_BASE
++#endif
+ 	arm_print_gic_regs
+ 	.endm
+ 
+-- 
+2.43.0
+

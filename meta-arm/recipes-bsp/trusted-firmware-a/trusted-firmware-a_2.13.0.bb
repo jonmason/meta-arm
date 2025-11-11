@@ -16,4 +16,5 @@ LIC_FILES_CHKSUM_MBEDTLS = "file://mbedtls/LICENSE;md5=379d5819937a6c2f1ef1630d3
 
 SRC_URI += "\
     file://0001-fix-arm-re-enable-console-by-default-in-BL31.patch \
+    file://0002-fix-css-don-t-require-the-GICC-frame-to-be-defined-o.patch \
 "
