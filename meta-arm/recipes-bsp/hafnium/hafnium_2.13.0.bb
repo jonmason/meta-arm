@@ -53,7 +53,7 @@ do_configure() {
 do_configure[cleandirs] += "${B}"
 
 do_compile() {
-    ninja -v ${PARALLEL_MAKE}
+    ninja -v ${PARALLEL_MAKE} root
 }
 do_compile[progress] = "outof:^\[(\d+)/(\d+)\]\s+"
 
