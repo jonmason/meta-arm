@@ -40,11 +40,15 @@ EXTRA_OEMAKE += "PLATFORM=${HAFNIUM_PLATFORM}"
 # Don't use prebuilt binaries for gn and ninja
 EXTRA_OEMAKE += "GN=${STAGING_BINDIR_NATIVE}/gn NINJA=${STAGING_BINDIR_NATIVE}/ninja"
 
+do_configure() {
+    oe_runmake -C ${S} ${B}/build.ninja
+}
 do_configure[cleandirs] += "${B}"
 
 do_compile() {
-    oe_runmake -C ${S}
+    ninja -v ${PARALLEL_MAKE}
 }
+do_compile[progress] = "outof:^\[(\d+)/(\d+)\]\s+"
 
 do_install() {
     cd ${B}/${HAFNIUM_PLATFORM}_clang
