@@ -40,6 +40,13 @@ EXTRA_OEMAKE += "PLATFORM=${HAFNIUM_PLATFORM}"
 # Don't use prebuilt binaries for gn and ninja
 EXTRA_OEMAKE += "GN=${STAGING_BINDIR_NATIVE}/gn NINJA=${STAGING_BINDIR_NATIVE}/ninja"
 
+prune_prebuilts() {
+    for dir in dtc gn ninja qemu; do
+        rm -rf ${S}/prebuilts/*/$dir
+    done
+}
+do_unpack[postfuncs] += "prune_prebuilts"
+
 do_configure() {
     oe_runmake -C ${S} ${B}/build.ninja
 }
