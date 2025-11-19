@@ -2,8 +2,6 @@
 
 LICENSE = "BSD-2-Clause & BSD-3-Clause & Apache-2.0"
 
-EXTRA_OECMAKE += "-DT_COSE_PATH=${UNPACKDIR}/t_cose"
-
 LIC_FILES_CHKSUM = "file://license.rst;md5=07f368487da347f3c7bd0fc3085f3afa \
                     file://${UNPACKDIR}/tf-m-tests/license.rst;md5=4481bae2221b0cfca76a69fb3411f390 \
                     file://${UNPACKDIR}/mbedtls/LICENSE;md5=379d5819937a6c2f1ef1630d341e026d \

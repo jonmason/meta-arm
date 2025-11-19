@@ -70,7 +70,15 @@ EXTRA_OECMAKE += "-DTFM_PLATFORM=${TFM_PLATFORM}"
 # Handle TFM_DEBUG parameter
 EXTRA_OECMAKE += "${@bb.utils.contains('TFM_DEBUG', '1', '-DCMAKE_BUILD_TYPE=Debug', '-DCMAKE_BUILD_TYPE=Release', d)}"
 
-EXTRA_OECMAKE += "-DMBEDCRYPTO_PATH=${UNPACKDIR}/mbedtls -DTFM_TEST_REPO_PATH=${UNPACKDIR}/tf-m-tests -DTFM_EXTRAS_REPO_PATH=${UNPACKDIR}/tfm-extras -DMCUBOOT_PATH=${UNPACKDIR}/mcuboot -DQCBOR_PATH=${UNPACKDIR}/qcbor -DCMSIS_PATH=${UNPACKDIR}/cmsis"
+EXTRA_OECMAKE += "\
+    -DCMSIS_PATH=${UNPACKDIR}/cmsis \
+    -DMBEDCRYPTO_PATH=${UNPACKDIR}/mbedtls \
+    -DMCUBOOT_PATH=${UNPACKDIR}/mcuboot \
+    -DQCBOR_PATH=${UNPACKDIR}/qcbor \
+    -DT_COSE_PATH=${UNPACKDIR}/t_cose \
+    -DTFM_EXTRAS_REPO_PATH=${UNPACKDIR}/tfm-extras \
+    -DTFM_TEST_REPO_PATH=${UNPACKDIR}/tf-m-tests \
+    "
 
 export CMAKE_BUILD_PARALLEL_LEVEL = "${@oe.utils.parallel_make(d, False)}"
 
