@@ -3,6 +3,6 @@
 SRC_URI:append = " \
     file://virtio-boot.cfg \
     file://0001-vexpress64-Set-the-DM_RNG-property.patch \
-    file://0002-vexpress64-Select-PSCI-RESET-by-default.patch \
+    file://0002-arm-vexpress64-Enable-SYSRESET-and-SYSRESET_PSCI.patch \
     file://0003-vexpress64-Imply-CONFIG_ARM64_CRC32-by-default.patch \
     "

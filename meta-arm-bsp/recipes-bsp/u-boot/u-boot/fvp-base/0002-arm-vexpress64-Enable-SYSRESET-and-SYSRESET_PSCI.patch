@@ -1,0 +1,71 @@
+From bec13f424612ba01dace86fe4a4ab49eedaca4b2 Mon Sep 17 00:00:00 2001
+From: Debbie Horsfall <debbie.horsfall@arm.com>
+Date: Wed, 17 Sep 2025 17:22:22 +0100
+Subject: [PATCH] arm: vexpress64: Enable SYSRESET and SYSRESET_PSCI
+
+Select SYSRESET on Vexpress64 to enable system reset to support other
+features, such as capsule-on-disk. Select SYSRESET_PSCI if PSCI is
+inferred from the firmware (via ARM_PSCI_FW).
+Select ARM_SMCCC for Vexpress64 boards which in turn selects
+ARM_PSCI_FW.
+
+The sysreset uclass unconditionally implements a reset_cpu() function.
+Remove the empty reset_cpu() in vexpress64 board code.
+
+Signed-off-by: Debbie Horsfall <debbie.horsfall@arm.com>
+Upstream-Status: Backport [1f3f1e090a2695e0b17cbf9dc50ccb59d100458f]
+---
+ arch/arm/Kconfig                     | 2 ++
+ board/armltd/vexpress64/Kconfig      | 2 ++
+ board/armltd/vexpress64/vexpress64.c | 5 -----
+ 3 files changed, 4 insertions(+), 5 deletions(-)
+
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+index 625d2e995d2f..68f37f633fdf 100644
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -1418,6 +1418,8 @@ config ARCH_VEXPRESS64
+ 	select MTD_NOR_FLASH if MTD
+ 	select FLASH_CFI_DRIVER if MTD
+ 	select ENV_IS_IN_FLASH if MTD
++	select SYSRESET
++	select SYSRESET_PSCI if ARM_PSCI_FW
+ 	imply DISTRO_DEFAULTS
+ 
+ config TARGET_CORSTONE1000
+diff --git a/board/armltd/vexpress64/Kconfig b/board/armltd/vexpress64/Kconfig
+index 610ab0ac37dc..9ef3fa1b379f 100644
+--- a/board/armltd/vexpress64/Kconfig
++++ b/board/armltd/vexpress64/Kconfig
+@@ -23,6 +23,7 @@ config VEXPRESS64_BASE_MODEL
+ 	select POSITION_INDEPENDENT
+ 	imply DM_RNG
+ 	imply RNG_ARM_RNDR
++	select ARM_SMCCC
+ 
+ choice
+ 	prompt "VExpress64 board variant"
+@@ -48,6 +49,7 @@ config TARGET_VEXPRESS64_JUNO
+ 	select USB_EHCI_GENERIC if USB
+ 	select USB_OHCI_HCD if USB
+ 	select USB_OHCI_GENERIC if USB
++	select ARM_SMCCC
+ 	imply OF_HAS_PRIOR_STAGE
+ 
+ endchoice
+diff --git a/board/armltd/vexpress64/vexpress64.c b/board/armltd/vexpress64/vexpress64.c
+index 0b75c1358f0b..e8f1c2fe9fe2 100644
+--- a/board/armltd/vexpress64/vexpress64.c
++++ b/board/armltd/vexpress64/vexpress64.c
+@@ -206,11 +206,6 @@ int board_fdt_blob_setup(void **fdtp)
+ #endif
+ #endif
+ 
+-/* Actual reset is done via PSCI. */
+-void reset_cpu(void)
+-{
+-}
+-
+ /*
+  * Board specific ethernet initialization routine.
+  */
