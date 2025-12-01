@@ -50,4 +50,4 @@ apply_local_src_patches() {
 do_apply_local_src_patches() {
     apply_local_src_patches "${LOCAL_SRC_PATCHES_INPUT_DIR}" "${LOCAL_SRC_PATCHES_DEST_DIR}"
 }
-do_patch[postfuncs] += "do_apply_local_src_patches"
+addtask apply_local_src_patches after do_patch before do_configure
