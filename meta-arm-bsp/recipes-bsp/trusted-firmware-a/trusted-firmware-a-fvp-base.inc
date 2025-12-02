@@ -69,5 +69,5 @@ EXTRA_OEMAKE += "ARM_ARCH_MAJOR=${ARM_ISA_MAJOR} ARM_ARCH_MINOR=${ARM_ISA_MINOR}
 # If GENERATE_COT is set, then tf-a will try to use local poetry install
 # to run the python cot-dt2c command.  Disable the local poetry and use
 # the provided cot-dt2c.
-EXTRA_OEMAKE += "POETRY=''"
+EXTRA_OEMAKE += "host-poetry=''"
 DEPENDS += "cot-dt2c-native"
