@@ -79,5 +79,5 @@ EXTRA_OEMAKE:append:cortexa320 = " \
 # If GENERATE_COT is set, then TF-A will try to use local poetry install
 # to run the python cot-dt2c command.  Disable the local poetry and use
 # the provided cot-dt2c.
-EXTRA_OEMAKE += "POETRY=''"
+EXTRA_OEMAKE += "host-poetry=''"
 DEPENDS += "cot-dt2c-native"

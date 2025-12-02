@@ -1,4 +1,4 @@
-From 82ca3fcf5c323aec4ce8191c349fd7e00a840e02 Mon Sep 17 00:00:00 2001
+From ff4bb404474a3310654827c36c4ac882eb0344b5 Mon Sep 17 00:00:00 2001
 From: Michael Safwat <michael.safwat@arm.com>
 Date: Tue, 26 Aug 2025 11:20:01 +0000
 Subject: [PATCH] plat: corstone1000: Add Cortex-A320 support
@@ -24,15 +24,15 @@ Signed-off-by: Michael Safwat <michael.safwat@arm.com>
 Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
 Upstream-Status: Submitted (https://review.trustedfirmware.org/c/TF-A/tf-a-tests/+/42352)
 ---
- plat/arm/corstone1000/corstone1000_def.h      | 12 +++++++++-
- plat/arm/corstone1000/include/platform_def.h  | 11 +++++----
- plat/arm/corstone1000/platform.mk             | 23 +++++++++++++++++++
- .../tests_to_skip_cortex_a320.txt             | 21 +++++++++++++++++
- 4 files changed, 61 insertions(+), 6 deletions(-)
+ plat/arm/corstone1000/corstone1000_def.h      | 12 ++++++++++-
+ plat/arm/corstone1000/include/platform_def.h  | 11 +++++-----
+ plat/arm/corstone1000/platform.mk             | 20 ++++++++++++++++++
+ .../tests_to_skip_cortex_a320.txt             | 21 +++++++++++++++++++
+ 4 files changed, 58 insertions(+), 6 deletions(-)
  create mode 100644 plat/arm/corstone1000/tests_to_skip_cortex_a320.txt
 
 diff --git a/plat/arm/corstone1000/corstone1000_def.h b/plat/arm/corstone1000/corstone1000_def.h
-index 3e6f036a..c4fa9a3b 100644
+index 3e6f036acc9a..c4fa9a3b5f68 100644
 --- a/plat/arm/corstone1000/corstone1000_def.h
 +++ b/plat/arm/corstone1000/corstone1000_def.h
 @@ -26,13 +26,23 @@
@@ -61,7 +61,7 @@ index 3e6f036a..c4fa9a3b 100644
   * PL011 related constants
   ******************************************************************************/
 diff --git a/plat/arm/corstone1000/include/platform_def.h b/plat/arm/corstone1000/include/platform_def.h
-index a0d6f7b3..1fc505d0 100644
+index 91f4cda19a90..2a9e5c4c35bb 100644
 --- a/plat/arm/corstone1000/include/platform_def.h
 +++ b/plat/arm/corstone1000/include/platform_def.h
 @@ -98,12 +98,13 @@
@@ -84,30 +84,27 @@ index a0d6f7b3..1fc505d0 100644
  
  /*******************************************************************************
 diff --git a/plat/arm/corstone1000/platform.mk b/plat/arm/corstone1000/platform.mk
-index a5a011d5..fd98724a 100644
+index cd7a19162bcf..dfdd27abd897 100644
 --- a/plat/arm/corstone1000/platform.mk
 +++ b/plat/arm/corstone1000/platform.mk
-@@ -6,6 +6,19 @@
+@@ -6,6 +6,16 @@
  
  PLAT_INCLUDES	:=	-Iplat/arm/corstone1000/include/
  
 +CORSTONE1000_CORTEX_A320   :=      0
 +ifeq (${CORSTONE1000_CORTEX_A320},1)
-+PLAT_SOURCES   :=   drivers/arm/gic/arm_gic_v2v3.c                  \
-+            drivers/arm/gic/gic_v2.c                        \
-+            drivers/arm/gic/gic_v3.c                        \
-+            drivers/arm/timer/private_timer.c               \
-+            drivers/arm/timer/system_timer.c                \
-+            plat/arm/corstone1000/plat_helpers.S            \
-+            plat/arm/corstone1000/corstone1000_pwr_state.c  \
-+            plat/arm/corstone1000/corstone1000_topology.c   \
-+            plat/arm/corstone1000/corstone1000_mem_prot.c   \
-+            plat/arm/corstone1000/plat_setup.c
++PLAT_SOURCES	:=	drivers/arm/timer/private_timer.c		\
++                        drivers/arm/timer/system_timer.c                \
++                        plat/arm/corstone1000/plat_helpers.S            \
++                        plat/arm/corstone1000/corstone1000_pwr_state.c  \
++                        plat/arm/corstone1000/corstone1000_topology.c   \
++                        plat/arm/corstone1000/corstone1000_mem_prot.c   \
++                        plat/arm/corstone1000/plat_setup.c
 +else
- PLAT_SOURCES	:=	drivers/arm/gic/arm_gic_v2.c			\
- 			drivers/arm/gic/gic_v2.c			\
- 			drivers/arm/timer/private_timer.c		\
-@@ -15,6 +28,7 @@ PLAT_SOURCES	:=	drivers/arm/gic/arm_gic_v2.c			\
+ PLAT_SOURCES	:=	drivers/arm/timer/private_timer.c		\
+ 			drivers/arm/timer/system_timer.c		\
+ 			plat/arm/corstone1000/plat_helpers.S		\
+@@ -13,6 +23,7 @@ PLAT_SOURCES	:=	drivers/arm/timer/private_timer.c		\
  			plat/arm/corstone1000/corstone1000_topology.c	\
  			plat/arm/corstone1000/corstone1000_mem_prot.c	\
  			plat/arm/corstone1000/plat_setup.c
@@ -115,7 +112,7 @@ index a5a011d5..fd98724a 100644
  
  PLAT_SUPPORTS_NS_RESET	:=	1
  
-@@ -23,6 +37,15 @@ $(eval $(call assert_boolean,PLAT_SUPPORTS_NS_RESET))
+@@ -21,6 +32,15 @@ $(eval $(call assert_boolean,PLAT_SUPPORTS_NS_RESET))
  $(eval $(call add_define,TFTF_DEFINES,PLAT_SUPPORTS_NS_RESET))
  
  FIRMWARE_UPDATE := 0
@@ -133,7 +130,7 @@ index a5a011d5..fd98724a 100644
  include plat/arm/common/arm_common.mk
 diff --git a/plat/arm/corstone1000/tests_to_skip_cortex_a320.txt b/plat/arm/corstone1000/tests_to_skip_cortex_a320.txt
 new file mode 100644
-index 00000000..87b9241d
+index 000000000000..87b9241daba0
 --- /dev/null
 +++ b/plat/arm/corstone1000/tests_to_skip_cortex_a320.txt
 @@ -0,0 +1,21 @@
@@ -158,6 +155,3 @@ index 00000000..87b9241d
 +Boot requirement tests
 +CPU extensions/AMUv1 suspend/resume
 +CPU extensions/Use trace buffer control Registers
--- 
-2.43.0
-
