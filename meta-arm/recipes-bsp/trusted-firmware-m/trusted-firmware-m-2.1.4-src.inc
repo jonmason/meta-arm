@@ -27,21 +27,21 @@ SRC_URI  = "${SRC_URI_TRUSTED_FIRMWARE_M};branch=${SRCBRANCH_tfm};name=tfm;dests
             "
 
 # The required dependencies are documented in tf-m/config/config_base.cmake
-# TF-Mv2.1.1
+# TF-Mv2.1.4
 SRCBRANCH_tfm ?= "release/2.1.x"
-SRCREV_tfm = "02bf279913439a07082dd581df033f370a8fbb92"
-# TF-Mv2.1.1
+SRCREV_tfm = "03d02d6feed02583c41acfe7147d1117678797a3"
+# TF-Mv2.1.4
 SRCBRANCH_tfm-extras ?= "release/2.1.x"
-SRCREV_tfm-extras = "95add8abb15879f48f1069a0952dd9abdffbc1f8"
-# TF-Mv2.1.1
+SRCREV_tfm-extras = "ef7814a8c95d7df4b150a66557c0073cddce6593"
+# TF-Mv2.1.4
 SRCBRANCH_tfm-tests ?= "release/2.1.x"
-SRCREV_tfm-tests = "6f642014a8c255e163ae0bc4d21e327de694d6a2"
+SRCREV_tfm-tests = "852c6f74c5b7ae61e140d1a46e981f95177aa40e"
 # CMSIS v6.0.0+ (intermediate SHA), CMSIS_TAG from lib/ext/cmsis/CMakeLists.txt
 SRCBRANCH_cmsis ?= "main"
 SRCREV_cmsis = "d0c460c1697d210b49a4b90998195831c0cd325c"
-# mbedtls-3.6.2, value from MBEDCRYPTO_VERSION
+# mbedtls-3.6.5, value from MBEDCRYPTO_VERSION
 SRCBRANCH_mbedtls ?= "mbedtls-3.6"
-SRCREV_mbedtls = "107ea89daaefb9867ea9121002fbbdf926780e98"
+SRCREV_mbedtls = "e185d7fd85499c8ce5ca2a54f5cf8fe7dbe3f8df"
 # mcuboot v2.1.0, value from MCUBOOT_VERSION
 SRCBRANCH_mcuboot ?= "main"
 SRCREV_mcuboot = "9c99326b9756dbcc35b524636d99ed5f3e6cb29b"
