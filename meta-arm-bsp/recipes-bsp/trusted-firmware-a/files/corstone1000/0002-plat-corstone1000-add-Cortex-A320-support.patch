@@ -1,4 +1,4 @@
-From 977f06e10e549d01a641a62a1d4850a06d6f0df4 Mon Sep 17 00:00:00 2001
+From 4e23e72e65481fe917d8a0af355b3b7669d5acb6 Mon Sep 17 00:00:00 2001
 From: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
 Date: Thu, 7 Aug 2025 10:05:02 +0000
 Subject: [PATCH] plat: corstone1000: add Cortex-A320 support
@@ -41,12 +41,12 @@ Signed-off-by: Michael Safwat <michael.safwat@arm.com>
  .../common/corstone1000_helpers.S             | 35 ++++++++++++++++++-
  .../corstone1000/common/corstone1000_plat.c   |  4 +++
  .../corstone1000/common/corstone1000_pm.c     |  8 +++++
- .../common/include/platform_def.h             | 28 ++++++++++++++-
+ .../common/include/platform_def.h             | 26 ++++++++++++++
  plat/arm/board/corstone1000/platform.mk       | 11 ++++++
- 5 files changed, 84 insertions(+), 2 deletions(-)
+ 5 files changed, 83 insertions(+), 1 deletion(-)
 
 diff --git a/plat/arm/board/corstone1000/common/corstone1000_helpers.S b/plat/arm/board/corstone1000/common/corstone1000_helpers.S
-index a4ca9fe98..665dbc61a 100644
+index a4ca9fe98223..665dbc61a92e 100644
 --- a/plat/arm/board/corstone1000/common/corstone1000_helpers.S
 +++ b/plat/arm/board/corstone1000/common/corstone1000_helpers.S
 @@ -1,5 +1,5 @@
@@ -97,7 +97,7 @@ index a4ca9fe98..665dbc61a 100644
  	 * void plat_secondary_cold_boot_setup (void);
  	 *
 diff --git a/plat/arm/board/corstone1000/common/corstone1000_plat.c b/plat/arm/board/corstone1000/common/corstone1000_plat.c
-index e388c82f3..d34e80b29 100644
+index e388c82f311b..d34e80b29bb0 100644
 --- a/plat/arm/board/corstone1000/common/corstone1000_plat.c
 +++ b/plat/arm/board/corstone1000/common/corstone1000_plat.c
 @@ -26,6 +26,10 @@ const mmap_region_t plat_arm_mmap[] = {
@@ -112,7 +112,7 @@ index e388c82f3..d34e80b29 100644
  };
  
 diff --git a/plat/arm/board/corstone1000/common/corstone1000_pm.c b/plat/arm/board/corstone1000/common/corstone1000_pm.c
-index ac808873b..a87697e97 100644
+index ac808873b9e7..a87697e97f11 100644
 --- a/plat/arm/board/corstone1000/common/corstone1000_pm.c
 +++ b/plat/arm/board/corstone1000/common/corstone1000_pm.c
 @@ -8,7 +8,11 @@
@@ -140,16 +140,9 @@ index ac808873b..a87697e97 100644
  	/* Flush and invalidate data cache */
  	dcsw_op_all(DCCISW);
 diff --git a/plat/arm/board/corstone1000/common/include/platform_def.h b/plat/arm/board/corstone1000/common/include/platform_def.h
-index caf3d462f..ee0babbf8 100644
+index 200383475c80..ffb1e2dec0e1 100644
 --- a/plat/arm/board/corstone1000/common/include/platform_def.h
 +++ b/plat/arm/board/corstone1000/common/include/platform_def.h
-@@ -1,5 +1,5 @@
- /*
-- * Copyright (c) 2021-2024, Arm Limited and Contributors. All rights reserved.
-+ * Copyright (c) 2021-2025, Arm Limited and Contributors. All rights reserved.
-  *
-  * SPDX-License-Identifier: BSD-3-Clause
-  */
 @@ -112,12 +112,19 @@
  #define ARM_SHARED_RAM_SIZE	(SZ_8K)  /* 8 KB */
  #define ARM_SHARED_RAM_BASE	ARM_TRUSTED_SRAM_BASE
@@ -170,7 +163,7 @@ index caf3d462f..ee0babbf8 100644
  
  #define PLAT_ARM_MAX_BL2_SIZE	(180 * SZ_1K)  /* 180 KB */
  
-@@ -209,8 +216,13 @@
+@@ -208,8 +215,13 @@
  #define MAX_IO_BLOCK_DEVICES	1
  
  /* GIC related constants */
@@ -184,7 +177,7 @@ index caf3d462f..ee0babbf8 100644
  
  /* MHUv2 Secure Channel receiver and sender */
  #define PLAT_SDK700_MHU0_SEND	0x1B800000
-@@ -335,6 +347,20 @@
+@@ -334,6 +346,20 @@
  					CORSTONE1000_DEVICE_BASE, \
  					CORSTONE1000_DEVICE_SIZE, \
  					MT_DEVICE | MT_RW | MT_SECURE)
@@ -206,7 +199,7 @@ index caf3d462f..ee0babbf8 100644
  #define ARM_IRQ_SEC_PHY_TIMER	29
  
 diff --git a/plat/arm/board/corstone1000/platform.mk b/plat/arm/board/corstone1000/platform.mk
-index 65be9c1f5..fe3e94865 100644
+index 65be9c1f5ad7..fe3e94865fca 100644
 --- a/plat/arm/board/corstone1000/platform.mk
 +++ b/plat/arm/board/corstone1000/platform.mk
 @@ -9,7 +9,14 @@ ifeq ($(filter ${TARGET_PLATFORM}, fpga fvp),)
@@ -236,6 +229,3 @@ index 65be9c1f5..fe3e94865 100644
  
  BL2_SOURCES		+=	plat/arm/board/corstone1000/common/corstone1000_security.c		\
  				plat/arm/board/corstone1000/common/corstone1000_err.c		\
--- 
-2.50.1
-
