@@ -21,7 +21,6 @@ SRC_URI_TRUSTED_FIRMWARE_M_PSA_ADAC ?= "git://git.trustedfirmware.org/shared/psa
 SRC_URI_TRUSTED_FIRMWARE_M_T_COSE ?= "git://github.com/laurencelundblade/t_cose.git;protocol=https"
 
 SRC_URI  = "${SRC_URI_TRUSTED_FIRMWARE_M};branch=${SRCBRANCH_tfm};name=tfm;destsuffix=tfm \
-            file://0001-Add-checks-for-BL2-and-TF-M-binary-address-alignment.patch \
             ${SRC_URI_TRUSTED_FIRMWARE_M_EXTRAS};branch=${SRCBRANCH_tfm-extras};name=tfm-extras;destsuffix=tfm-extras \
             ${SRC_URI_TRUSTED_FIRMWARE_M_TESTS};branch=${SRCBRANCH_tfm-tests};name=tfm-tests;destsuffix=tf-m-tests \
             ${SRC_URI_TRUSTED_FIRMWARE_M_CMSIS};branch=${SRCBRANCH_cmsis};name=cmsis;destsuffix=cmsis \
@@ -33,21 +32,21 @@ SRC_URI  = "${SRC_URI_TRUSTED_FIRMWARE_M};branch=${SRCBRANCH_tfm};name=tfm;dests
             "
 
 # The required dependencies are documented in tf-m/config/config_base.cmake
-# TF-Mv2.2.1
+# TF-Mv2.2.2
 SRCBRANCH_tfm ?= "release/2.2.x"
-SRCREV_tfm = "2d91588b14ba2138e05beb1d0685302e68c05fb1"
-# TF-Mv2.2.1
+SRCREV_tfm = "816058200a647f988676ee4b0655e80af3601200"
+# TF-Mv2.2.2
 SRCBRANCH_tfm-extras ?= "release/2.2.x"
 SRCREV_tfm-extras = "88a4bd39284bb497dd8b362f20cd2b7f704ac390"
-# TF-Mv2.2.1
+# TF-Mv2.2.2
 SRCBRANCH_tfm-tests ?= "release/2.2.x"
 SRCREV_tfm-tests = "e0a433c67c37138cd9dce23657ae82c5cbdcf51f"
 # CMSIS v6.1.0, CMSIS_TAG from lib/ext/cmsis/CMakeLists.txt
 SRCBRANCH_cmsis ?= "main"
 SRCREV_cmsis = "b0bbb0423b278ca632cfe1474eb227961d835fd2"
-# mbedtls-3.6.3.1, value from MBEDCRYPTO_VERSION(-ish)
+# mbedtls-3.6.5, value from MBEDCRYPTO_VERSION(-ish)
 SRCBRANCH_mbedtls ?= "mbedtls-3.6"
-SRCREV_mbedtls = "6fb5120fde4ab889bea402f5ab230c720b0a3b9a"
+SRCREV_mbedtls = "e185d7fd85499c8ce5ca2a54f5cf8fe7dbe3f8df"
 # mcuboot v2.2.0, value from MCUBOOT_VERSION
 SRCBRANCH_mcuboot ?= "main"
 SRCREV_mcuboot = "2d61c318933819a0f4954fb2a5a957a62c6128ce"
