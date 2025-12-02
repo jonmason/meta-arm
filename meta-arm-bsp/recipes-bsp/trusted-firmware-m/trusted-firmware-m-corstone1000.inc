@@ -26,21 +26,16 @@ EXTRA_OECMAKE:append:corstone1000-fvp = " -DENABLE_MULTICORE=${@bb.utils.contain
 EXTRA_OECMAKE:append:corstone1000-mps3 = " -DPLATFORM_PSA_ADAC_SECURE_DEBUG=${@bb.utils.contains('MACHINE_FEATURES', 'secure-debug', 'ON', 'OFF', d)}"
 EXTRA_OECMAKE:append:corstone1000-mps3 = " -DPLATFORM_PSA_ADAC_SOURCE_PATH=${UNPACKDIR}/tfm-psa-adac -DPLATFORM_PSA_ADAC_BUILD_PATH=${B}/tfm-psa-adac-build"
 
-SRC_URI += " \
-            file://0001-arm-trusted-firmware-m-disable-address-warnings-into.patch \
-           "
-
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 SRC_URI:append:corstone1000 = " \
-    file://0001-Platform-CS1000-Remove-unused-BL1-files.patch \
-    file://0002-Platform-Corstone1000-Fix-BL1-compiler-switch-and-re.patch \
-    file://0003-CC312-alignment-of-cc312-differences-between-fvp-and.patch \
-    file://0004-Platform-Corstone1000-Enable-FWU-partition.patch \
-    file://0005-Platform-Corstone1000-Implement-Bootloader-Abstracti.patch \
-    file://0006-Platform-Corstone1000-Increase-buffer-sizes.patch \
-    file://0007-Platform-Corstone1000-Remove-duplicate-configuration.patch \
-    file://0008-Platform-Corstone1000-Increase-BL1-size-and-align-bi.patch \
-    file://0009-Platform-CS1K-Adapt-ADAC-enabled-build-to-the-new-BL.patch \
+    file://0001-arm-trusted-firmware-m-disable-address-warnings-into.patch \
+    file://0002-Platform-CS1000-Remove-unused-BL1-files.patch \
+    file://0003-Platform-Corstone1000-Fix-BL1-compiler-switch-and-re.patch \
+    file://0004-CC312-alignment-of-cc312-differences-between-fvp-and.patch \
+    file://0005-Platform-Corstone1000-Enable-FWU-partition.patch \
+    file://0006-Platform-Corstone1000-Implement-Bootloader-Abstracti.patch \
+    file://0007-Platform-Corstone1000-Increase-buffer-sizes.patch \
+    file://0008-Platform-Corstone1000-Remove-duplicate-configuration.patch \
     file://0010-plat-corstone1000-Add-support-for-Cortex-A320-varian.patch \
     "
 

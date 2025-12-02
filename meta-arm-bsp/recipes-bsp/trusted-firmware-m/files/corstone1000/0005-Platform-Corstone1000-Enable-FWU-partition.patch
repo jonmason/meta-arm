@@ -1,7 +1,7 @@
-From ab1ecf0cfbbf199c4d868d2c565f7bff3f5245ee Mon Sep 17 00:00:00 2001
+From fdfbb3b82f62a2d4575a983ebaee14a67130d316 Mon Sep 17 00:00:00 2001
 From: Ali Can Ozaslan <ali.oezaslan@arm.com>
 Date: Tue, 15 Oct 2024 12:50:16 +0000
-Subject: [PATCH 4/7] Platform: Corstone1000: Enable FWU partition
+Subject: [PATCH] Platform: Corstone1000: Enable FWU partition
 
 Enable firmware update partition for Corstone-1000 platform.
 
@@ -17,7 +17,7 @@ Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
  1 file changed, 4 insertions(+)
 
 diff --git a/platform/ext/target/arm/corstone1000/config.cmake b/platform/ext/target/arm/corstone1000/config.cmake
-index 0e6297dae..e45b56b2f 100644
+index 7a88542a32fc..6d9cb1fea750 100644
 --- a/platform/ext/target/arm/corstone1000/config.cmake
 +++ b/platform/ext/target/arm/corstone1000/config.cmake
 @@ -55,6 +55,10 @@ set(TFM_PARTITION_CRYPTO                ON          CACHE BOOL      "Enable Cryp
@@ -31,6 +31,3 @@ index 0e6297dae..e45b56b2f 100644
  
  if (${CMAKE_BUILD_TYPE} STREQUAL Debug OR ${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
    set(ENABLE_FWU_AGENT_DEBUG_LOGS     TRUE          CACHE BOOL      "Enable Firmware update agent debug logs.")
--- 
-2.43.0
-
