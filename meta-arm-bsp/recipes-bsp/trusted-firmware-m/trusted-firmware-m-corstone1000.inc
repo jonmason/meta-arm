@@ -12,6 +12,14 @@ DEPENDS:append = " clang-native python3-rich-native python3-pyelftools-native"
 
 ## Default is the MPS3 board
 TFM_PLATFORM_IS_FVP ?= "FALSE"
+
+## Default is Cortex-A35
+## Cortex-A320 is implemented inside a DynamIQ Shared Unit-120T (DSU-120T) cluster
+EXTRA_OECMAKE:append:cortexa320 = " \
+    -DCORSTONE1000_CORTEX_A320=TRUE \
+    -DCORSTONE1000_DSU_120T=TRUE \
+"
+
 EXTRA_OECMAKE += "-DPLATFORM_IS_FVP=${TFM_PLATFORM_IS_FVP}"
 EXTRA_OECMAKE += "-DCC312_LEGACY_DRIVER_API_ENABLED=OFF"
 EXTRA_OECMAKE:append:corstone1000-fvp = " -DENABLE_MULTICORE=${@bb.utils.contains('MACHINE_FEATURES', 'corstone1000_fvp_smp', 'TRUE', 'FALSE', d)}"
@@ -33,6 +41,7 @@ SRC_URI:append:corstone1000 = " \
     file://0007-Platform-Corstone1000-Remove-duplicate-configuration.patch \
     file://0008-Platform-Corstone1000-Increase-BL1-size-and-align-bi.patch \
     file://0009-Platform-CS1K-Adapt-ADAC-enabled-build-to-the-new-BL.patch \
+    file://0010-plat-corstone1000-Add-support-for-Cortex-A320-varian.patch \
     "
 
 FILESEXTRAPATHS:prepend:corstone1000-mps3 := "${THISDIR}/files/corstone1000/psa-adac:"
