@@ -223,7 +223,7 @@ Build
     .. code-block:: console
 
         cd ${WORKSPACE}
-        git clone https://git.yoctoproject.org/git/meta-arm -b CORSTONE1000-2025.05
+        git clone https://git.yoctoproject.org/git/meta-arm -b CORSTONE1000-2025.12
 
 #. Build a Corstone-1000 image:
 
@@ -243,12 +243,27 @@ Build
 
     .. warning::
 
+        **The External System Processor is not available on the Corstone-1000 with Cortex-A320 FVP.**
+
         Access to the External System Processor is disabled by default.
+
         To build the Corstone-1000 image with External System Processor enabled, run:
 
         .. code-block:: console
 
             kas build meta-arm/kas/corstone1000-${TARGET}.yml:meta-arm/ci/debug.yml:meta-arm/kas/corstone1000-extsys.yml
+
+    .. warning::
+
+        **The Ethos-U85 Neural Processing Unit (NPU) is only available on
+        the Corstone-1000 with Cortex-A320 FVP.**
+
+        To build the Corstone-1000 image with the Ethos-U85 NPU enabled, run:
+
+        .. code-block:: console
+
+            kas build meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml:meta-arm/kas/corstone1000-a320.yml
+
 
 A clean build takes a significant amount of time given that all of the development machine utilities are also
 built along with the target images. Those development machine utilities include executables (Python,
@@ -442,9 +457,14 @@ Corstone-1000 FVP software image.
 A Yocto recipe is provided to download the latest supported FVP version.
 
 The recipe is located at ``${WORKSPACE}/meta-arm/meta-arm/recipes-devtools/fvp/fvp-corstone1000.bb``.
+This recipe supports selecting different Corstone‑1000 FVP models via MACHINE_FEATURES:
 
-The latest FVP version is ``11.23.25`` and is automatically downloaded and installed when using the
-``runfvp`` command as detailed below.
+- ``cortexa320``      use the Cortex-A320 Host Processor with Ethos U85 enabled FVP build
+- (default)           use the Cortex-A35 Host Processor with Cortex-M3 External System FVP build
+
+The latest FVP version is ``11.23.25`` for Corstone-1000 with Cortex-A35 and ``11.30.27`` for
+Corstone-1000 with Cortex-A320, and each model is automatically downloaded and installed when using
+the ``runfvp`` command as detailed below.
 
 .. note::
 
@@ -496,8 +516,8 @@ Tests
 Reports
 -------
 
-Reports for the tests conducted on the `Corstone-1000 software (CORSTONE1000-2025.05) <https://git.yoctoproject.org/meta-arm/tag/?h=CORSTONE1000-2025.05>`__
-release are available for reference `here <https://gitlab.arm.com/arm-reference-solutions/arm-reference-solutions-test-report/-/tree/CORSTONE1000-2025.05/embedded-a/corstone1000/CORSTONE1000-2025.05?ref_type=tags>`__.
+Reports for the tests conducted on the `Corstone-1000 software (CORSTONE1000-2025.12) <https://git.yoctoproject.org/meta-arm/tag/?h=CORSTONE1000-2025.12>`__
+release are available for reference `here <https://gitlab.arm.com/arm-reference-solutions/arm-reference-solutions-test-report/-/tree/CORSTONE1000-2025.12/embedded-a/corstone1000/CORSTONE1000-2025.12?ref_type=tags>`__.
 
 
 .. _clean-secure-flash:
@@ -516,7 +536,7 @@ Clean Secure Flash
     .. code-block:: console
 
         cd ${WORKSPACE}
-        git clone https://git.gitlab.arm.com/arm-reference-solutions/systemready-patch.git -b CORSTONE1000-2025.05
+        git clone https://git.gitlab.arm.com/arm-reference-solutions/systemready-patch.git -b CORSTONE1000-2025.12
 
 #. Copy the secure flash cleaning Git patch file to your copy of `meta-arm`.
 
@@ -838,6 +858,33 @@ The results can be fetched from the `acs_results` folder in the ``BOOT`` partiti
 Capsule Update
 --------------
 
+.. warning::
+
+    The **Corstone-1000 with Cortex-A320 FVP** becomes unresponsive when the Linux kernel driver for the
+    Ethos-U85 NPU loads automatically after a software reboot.
+    This behavior results from a power reset control issue in the **Corstone-1000 with Cortex-A320 FVP** model.
+    To prevent the failure and complete the test successfully,
+    rebuild the **Corstone-1000 with Cortex-A320** firmware image using the following steps:
+
+
+    #. Clone the `systemready-patch` repository to your ``${WORKSPACE}``.
+
+        .. code-block:: console
+
+            cd ${WORKSPACE}
+            git clone https://git.gitlab.arm.com/arm-reference-solutions/systemready-patch.git \
+            -b CORSTONE1000-2025.12
+
+
+    #. Re-Build the **Corstone-1000 with Cortex-A320 FVP** software stack as follows:
+
+        .. code-block:: console
+
+            kas build meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml:meta-arm/kas/corstone1000-a320.yml:\
+            systemready-patch/embedded-a/corstone1000/disable_module_autoloading/disable_module_autoloading.yml
+
+
+
 The following section describes the steps to update the firmware using Capsule Update
 as the Corstone-1000 supports UEFI.
 
@@ -866,10 +913,10 @@ Generate Capsules
 
 `EDK II's <edk2-repository_>`__ ``GenerateCapsule`` tool is used to generate capsules and is built automatically
 for the host machine during the firmware image building process.
-The tool can be found in the ``${WORKSPACE}/build/tmp/sysroots-components/aarch64/edk2-basetools-native/usr/bin/edk2-BaseTools/BinWrappers/PosixLike/GenerateCapsule`` directory.
+The tool can be found at ``${WORKSPACE}/build/tmp/sysroots-components/aarch64/edk2-basetools-native/usr/bin/edk2-BaseTools/BinWrappers/PosixLike/GenerateCapsule``.
 
 A JSON file containing metadata about the capsule payloads needs to be created using the script
-found at ``${WORKSPACE}/meta-arm/scripts/generate_capsule_json_multiple.py``.
+found at ``${WORKSPACE}/meta-arm/meta-arm/scripts/generate_capsule_json_multiple.py``.
 This JSON file is required by EDK II's ``GenerateCapsule`` tool to generate the capsule.
 
 The capsule's default metadata passed can be found in the ``${WORKSPACE}/meta-arm/meta-arm-bsp/recipes-bsp/images/corstone1000-flash-firmware-image.bb``
@@ -1712,7 +1759,7 @@ Generate Keys, Signed Image and Unsigned Image
 
         git clone https://gitlab.arm.com/arm-reference-solutions/systemready-patch \
 
-        -b CORSTONE1000-2025.05
+        -b CORSTONE1000-2025.12
 
 #. Set the current working directory to build directory's subdirectory containing the software stack build images.
 
@@ -2011,7 +2058,7 @@ Symmetric Multiprocessing
 
 .. warning::
 
-    Symmetric multiprocessing (SMP) mode is only supported on FVP but is disabled by default.
+    Symmetric multiprocessing (SMP) mode is only supported on Corstone-1000 with Cortex-A35 FVP but is disabled by default.
 
 
 #. Build the software stack with SMP mode enabled:
@@ -2034,6 +2081,65 @@ Symmetric Multiprocessing
 
         nproc
         4                  # number of processing units
+
+Ethos-U85 NPU
+-------------
+
+.. warning::
+
+    The Ethos-U85 NPU is only supported on Corstone-1000 with Cortex-A320 FVP.
+
+
+#. Clone the `systemready-patch` repository to your ``${WORKSPACE}``.
+
+    .. code-block:: console
+
+        cd ${WORKSPACE}
+        git clone https://git.gitlab.arm.com/arm-reference-solutions/systemready-patch.git \
+        -b CORSTONE1000-2025.12
+
+#. Re-Build the Corstone-1000 with Cortex-A320 FVP software stack as follows:
+
+    .. code-block:: console
+
+        kas build meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml:meta-arm/kas/corstone1000-a320.yml:\
+        systemready-patch/embedded-a/corstone1000/ethos-u85_test/ethos-u85_test.yml
+
+#. Run the Corstone-1000 with Cortex-320 FVP:
+
+    .. code-block:: console
+
+        kas shell meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml:meta-arm/kas/corstone1000-a320.yml:\
+        systemready-patch/embedded-a/corstone1000/ethos-u85_test/ethos-u85_test.yml \
+        -c "../meta-arm/scripts/runfvp"
+
+#. To verify you are running the Corstone-1000 with Cortex-A320, build and run the FVP and inspect the CPU model
+   reported in ``/proc/cpuinfo`` as shown below. Inside the FVP shell, confirm the core type:
+
+
+    .. code-block:: console
+
+        grep -E 'CPU part|model name' /proc/cpuinfo
+        # Expect: CPU part : 0xd8f  (which corresponds to Cortex-A320)
+
+#. Run the `delegate_runner` test application inside the FVP shell as follows:
+
+    .. code-block:: console
+
+        delegate_runner -l /usr/lib/libethosu_op_delegate.so \
+        -n /usr/share/ethosu/mobilenet_v2_1.0_224_INT8_vela.tflite \
+        -i /usr/share/ethosu/input_data0.bin \
+        -o /usr/share/ethosu/actual_output_data0.bin
+
+   The test completes in approximately one minute.
+
+#. Run the following command to compare the generated output binary with the expected output binary:
+
+    .. code-block:: console
+
+        cmp -s /usr/share/ethosu/expected_output_data0.bin /usr/share/ethosu/actual_output_data0.bin
+
+    The two binary files should be identical.
 
 Secure Debug
 ------------
