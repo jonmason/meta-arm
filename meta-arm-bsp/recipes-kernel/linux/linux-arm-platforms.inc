@@ -24,8 +24,6 @@ COMPATIBLE_MACHINE:corstone1000 = "${MACHINE}"
 KCONFIG_MODE:corstone1000 = "--alldefconfig"
 KMACHINE:corstone1000 = "corstone1000"
 LINUX_KERNEL_TYPE:corstone1000 = "standard"
-#disabling the rootfs cpio file compression so it is not compressed twice when bundled with the kernel
-KERNEL_EXTRA_ARGS:corstone1000 += "CONFIG_INITRAMFS_COMPRESSION_NONE=y"
 SRC_URI:append:corstone1000 = " \
            file://defconfig  \
         "
@@ -56,6 +54,26 @@ SRC_URI:append:corstone1000 = " \
 # corstone1000 has limited flash memory constraints
 KERNEL_EXTRA_FEATURES:corstone1000 = ""
 KERNEL_FEATURES:corstone1000 = ""
+
+#
+# Corstone1000 with CORTEX-A320 KMACHINE
+#
+FILESEXTRAPATHS:prepend:cortexa320 := "${ARMBSPFILESPATHS}"
+COMPATIBLE_MACHINE:corstone1000:cortexa320 = "${MACHINE}"
+KCONFIG_MODE:corstone1000:cortexa320 = "--alldefconfig"
+KMACHINE:corstone1000:cortexa320 = "corstone1000-a320"
+LINUX_KERNEL_TYPE:corstone1000:cortexa320 = "standard"
+SRC_URI:append:corstone1000:cortexa320 = " \
+    file://defconfig  \
+"
+
+# Default kernel features not needed for Corstone-1000 with
+# Cortex-A320; otherwise the extra kernel modules will
+# increase the rootfs size but the board has limited flash
+# memory constraints
+KERNEL_EXTRA_FEATURES:corstone1000:cortexa320 = ""
+KERNEL_FEATURES:corstone1000:cortexa320 = ""
+
 
 #
 # FVP BASE KMACHINE

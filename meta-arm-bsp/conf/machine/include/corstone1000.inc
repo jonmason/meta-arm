@@ -1,4 +1,6 @@
-require conf/machine/include/arm/armv8a/tune-cortexa35.inc
+TUNE_FILE = "conf/machine/include/arm/armv8a/tune-cortexa35.inc"
+TUNE_FILE:cortexa320 = "conf/machine/include/arm/arch-armv9-2a.inc"
+require ${TUNE_FILE}
 
 MACHINEOVERRIDES =. "corstone1000:"
 
