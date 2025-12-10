@@ -5,7 +5,10 @@ HOMEPAGE = "https://www.op-tee.org/"
 LICENSE = "BSD-2-Clause"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=69663ab153298557a59c67a60a743e5b"
 
-inherit systemd update-rc.d cmake useradd
+inherit systemd update-rc.d cmake useradd pkgconfig
+
+DEPENDS += "util-linux"
+EXTRA_OEMAKE += "PKG_CONFIG=pkg-config"
 
 SRC_URI = " \
     git://github.com/OP-TEE/optee_client.git;branch=master;protocol=https \

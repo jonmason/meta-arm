@@ -209,6 +209,9 @@ fvp-base:
       - FIRMWARE: [u-boot, edk2]
         TESTING: testimage
       - SYSTEMREADY_FIRMWARE: arm-systemready-firmware
+      - KERNEL: linux-yocto-dev
+        LATEST: latest-revisions
+        TESTING: testimage
 
 fvps:
   extends: .build
