@@ -62,3 +62,15 @@ SRCREV_t-cose = "3076010eeb6383f0827bd992c75b68af9311cf1d"
 SRCREV_FORMAT = "tfm"
 
 S = "${UNPACKDIR}/tfm"
+
+# Apply patches
+inherit apply_local_src_patches
+LOCAL_SRC_PATCHES_INPUT_DIR = "N/A"
+
+do_apply_local_src_patches() {
+    apply_local_src_patches ${S}/lib/ext/qcbor ${UNPACKDIR}/qcbor
+    apply_local_src_patches ${S}/lib/ext/mbedcrypto ${UNPACKDIR}/mbedtls
+    apply_local_src_patches ${S}/lib/ext/mcuboot ${UNPACKDIR}/mcuboot
+    apply_local_src_patches ${S}/lib/ext/tf-m-tests ${UNPACKDIR}/tf-m-tests
+    apply_local_src_patches ${S}/lib/ext/t_cose ${UNPACKDIR}/t_cose
+}
