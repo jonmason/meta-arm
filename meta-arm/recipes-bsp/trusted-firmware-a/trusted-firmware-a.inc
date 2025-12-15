@@ -76,6 +76,11 @@ TFA_BUILD_TARGET ?= "bl1"
 # variable. It is set by default to TFA_BUILD_TARGET
 TFA_INSTALL_TARGET ?= "${TFA_BUILD_TARGET}"
 
+# How to name installed files
+# If we need to uniquely name the files that are produced, we can add
+# TFA_INSTALL_SUFFIX to all targets.  By default, set to "" for no suffix.
+TFA_INSTALL_SUFFIX ?= ""
+
 # Requires CROSS_COMPILE set by hand as there is no configure script
 export CROSS_COMPILE = "${TARGET_PREFIX}"
 
@@ -194,28 +199,28 @@ do_install() {
         if [ -f ${BUILD_DIR}/$atfbin.bin ]; then
             echo "Install $atfbin.bin"
             install -m 0644 ${BUILD_DIR}/$atfbin.bin \
-                ${D}/firmware/$atfbin-${TFA_PLATFORM}.bin
-            ln -sf $atfbin-${TFA_PLATFORM}.bin ${D}/firmware/$atfbin.bin
+                ${D}/firmware/$atfbin-${TFA_PLATFORM}${TFA_INSTALL_SUFFIX}.bin
+            ln -sf $atfbin-${TFA_PLATFORM}${TFA_INSTALL_SUFFIX}.bin ${D}/firmware/$atfbin${TFA_INSTALL_SUFFIX}.bin
             processed="1"
         fi
         if [ -f ${BUILD_DIR}/$atfbin/$atfbin.elf ]; then
             echo "Install $atfbin.elf"
             install -m 0644 ${BUILD_DIR}/$atfbin/$atfbin.elf \
-                ${D}/firmware/$atfbin-${TFA_PLATFORM}.elf
-            ln -sf $atfbin-${TFA_PLATFORM}.elf ${D}/firmware/$atfbin.elf
+                ${D}/firmware/$atfbin-${TFA_PLATFORM}${TFA_INSTALL_SUFFIX}.elf
+            ln -sf $atfbin-${TFA_PLATFORM}${TFA_INSTALL_SUFFIX}.elf ${D}/firmware/$atfbin${TFA_INSTALL_SUFFIX}.elf
             processed="1"
         fi
         if [ -f ${BUILD_DIR}/$atfbin ]; then
             echo "Install $atfbin"
             install -m 0644 ${BUILD_DIR}/$atfbin \
-                ${D}/firmware/$atfbin-${TFA_PLATFORM}
-            ln -sf $atfbin-${TFA_PLATFORM} ${D}/firmware/$atfbin
+                ${D}/firmware/$atfbin-${TFA_PLATFORM}${TFA_INSTALL_SUFFIX}
+            ln -sf $atfbin-${TFA_PLATFORM}${TFA_INSTALL_SUFFIX} ${D}/firmware/$atfbin${TFA_INSTALL_SUFFIX}
             processed="1"
         fi
         if [ -f ${BUILD_DIR}/fdts/$atfbin.dtb ]; then
             echo "Install $atfbin.dtb"
             install -m 0644 "${BUILD_DIR}/fdts/$atfbin.dtb" \
-                "${D}/firmware/$atfbin.dtb"
+                "${D}/firmware/$atfbin${TFA_INSTALL_SUFFIX}.dtb"
             processed="1"
         elif [ "$atfbin" = "dtbs" ]; then
             echo "dtbs install, skipped: set dtbs in TFA_INSTALL_TARGET"
