@@ -5,7 +5,7 @@ require ${TUNE_FILE}
 MACHINEOVERRIDES =. "corstone1000:"
 
 # TF-M
-PREFERRED_VERSION_trusted-firmware-m ?= "2.2.1"
+PREFERRED_VERSION_trusted-firmware-m ?= "2.2.%"
 
 # TF-A
 TFA_PLATFORM = "corstone1000"

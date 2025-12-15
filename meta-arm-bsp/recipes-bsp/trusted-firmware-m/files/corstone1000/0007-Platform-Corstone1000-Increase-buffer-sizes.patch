@@ -1,7 +1,7 @@
-From def9095e7bfd5a82ba6cd4756e990cd9ae7307ab Mon Sep 17 00:00:00 2001
+From 78231f27db0bbc747902b603bf279dce1707a3cc Mon Sep 17 00:00:00 2001
 From: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
 Date: Mon, 16 Jun 2025 14:44:39 +0100
-Subject: [PATCH 6/7] Platform: Corstone1000: Increase buffer sizes
+Subject: [PATCH] Platform: Corstone1000: Increase buffer sizes
 
 Increase PSA_MAX_ASSET_SIZE and CRYPTO_IOVEC_BUFFER_SIZE
 to accommodate large size EFI variables set by new U-Boot version.
@@ -18,7 +18,7 @@ Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/platform/ext/target/arm/corstone1000/config_tfm_target.h b/platform/ext/target/arm/corstone1000/config_tfm_target.h
-index 4920f6708..cf13712a1 100644
+index 4920f67084d4..cf13712a1806 100644
 --- a/platform/ext/target/arm/corstone1000/config_tfm_target.h
 +++ b/platform/ext/target/arm/corstone1000/config_tfm_target.h
 @@ -1,5 +1,5 @@
@@ -44,6 +44,3 @@ index 4920f6708..cf13712a1 100644
  
  /* The Mailbox partition is used as an NS Agent so its stack size is used to
   * determine the PSP and PSPLIM during the SFN backend initialization. It has to
--- 
-2.43.0
-

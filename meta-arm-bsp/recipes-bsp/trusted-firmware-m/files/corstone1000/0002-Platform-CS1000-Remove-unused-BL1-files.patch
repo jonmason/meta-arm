@@ -1,7 +1,7 @@
-From 778d62d8ebe91212363cdab2fa1eef6a977ae6e2 Mon Sep 17 00:00:00 2001
+From 9ed08f26cafc2c6e5bf1d5cc04f91ca17d94a1bd Mon Sep 17 00:00:00 2001
 From: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
 Date: Wed, 13 Aug 2025 14:02:57 +0000
-Subject: [PATCH 1/7] Platform: CS1000: Remove unused BL1 files
+Subject: [PATCH] Platform: CS1000: Remove unused BL1 files
 
 These files are not referenced anywhere so removed them to prevent
 confusion.
@@ -17,7 +17,7 @@ Upstream-Status: Backport [9a7bdf9ef595196e1e518a27d3c79079aedb5bda]
 
 diff --git a/platform/ext/target/arm/corstone1000/bl1/CMakeLists.txt b/platform/ext/target/arm/corstone1000/bl1/CMakeLists.txt
 deleted file mode 100644
-index d85b0611d..000000000
+index d85b0611dd42..000000000000
 --- a/platform/ext/target/arm/corstone1000/bl1/CMakeLists.txt
 +++ /dev/null
 @@ -1,345 +0,0 @@
@@ -368,7 +368,7 @@ index d85b0611d..000000000
 -)
 diff --git a/platform/ext/target/arm/corstone1000/bl1/bl1_security_cnt.c b/platform/ext/target/arm/corstone1000/bl1/bl1_security_cnt.c
 deleted file mode 100644
-index 32c1481cc..000000000
+index 32c1481cca11..000000000000
 --- a/platform/ext/target/arm/corstone1000/bl1/bl1_security_cnt.c
 +++ /dev/null
 @@ -1,75 +0,0 @@
@@ -447,6 +447,3 @@ index 32c1481cc..000000000
 -
 -    return 0;
 -}
--- 
-2.43.0
-

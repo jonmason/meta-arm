@@ -1,7 +1,7 @@
-From 162d46ac77be0ad3e7cf1840fa05578cce084a68 Mon Sep 17 00:00:00 2001
+From 1d7ab426f171516c15ce8e5223541c62c91ec596 Mon Sep 17 00:00:00 2001
 From: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
 Date: Wed, 13 Aug 2025 14:31:53 +0000
-Subject: [PATCH 2/7] Platform: Corstone1000: Fix BL1 compiler switch and
+Subject: [PATCH] Platform: Corstone1000: Fix BL1 compiler switch and
  regression test failure
 
 Introduce a dedicated preprocessor definition (`BL1_BUILD`) added only to the
@@ -16,7 +16,7 @@ Upstream-Status: Backport [f25649cc0de56f360069c6128670f7533ba5e14d]
  1 file changed, 8 insertions(+)
 
 diff --git a/platform/ext/target/arm/corstone1000/CMakeLists.txt b/platform/ext/target/arm/corstone1000/CMakeLists.txt
-index 4d165ed9c..3573c8492 100644
+index ff7cf7330a07..66dfb2399503 100644
 --- a/platform/ext/target/arm/corstone1000/CMakeLists.txt
 +++ b/platform/ext/target/arm/corstone1000/CMakeLists.txt
 @@ -146,6 +146,7 @@ target_sources(platform_s
@@ -41,6 +41,3 @@ index 4d165ed9c..3573c8492 100644
  )
  
  target_include_directories(platform_bl1_1_interface
--- 
-2.43.0
-
