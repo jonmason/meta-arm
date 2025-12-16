@@ -22,7 +22,7 @@ part --source rawcopy --size 144k --sourceparams="file=bl2_signed.bin" --offset 
 part --source rawcopy --size 320k --sourceparams="file=tfm_s_signed.bin" --align 4 --part-name="tfm_primary" --uuid 07F9616C-1233-439C-ACBA-72D75421BF70 --part-type D763C27F-07F6-4FF0-B2F3-060CB465CD4E
 
 # Rawcopy of the FIP binary
-part --source rawcopy --size 2 --sourceparams="file=signed_fip-corstone1000.bin" --align 4 --part-name="FIP_A" --uuid B9C7AC9D-40FF-4675-956B-EEF4DE9DF1C5 --part-type B5EB19BD-CF56-45E8-ABA7-7ADB228FFEA7
+part --source rawcopy --size 2 --sourceparams="file=signed_fip.bin" --align 4 --part-name="FIP_A" --uuid B9C7AC9D-40FF-4675-956B-EEF4DE9DF1C5 --part-type B5EB19BD-CF56-45E8-ABA7-7ADB228FFEA7
 
 # Rawcopy of kernel with initramfs
 part --source rawcopy --size 12 --sourceparams="file=Image.gz-initramfs-${MACHINE}.bin" --align 4 --part-name="kernel_primary" --uuid BF7A6142-0662-47FD-9434-6A8811980816 --part-type 8197561D-6124-46FC-921E-141CC5745B05

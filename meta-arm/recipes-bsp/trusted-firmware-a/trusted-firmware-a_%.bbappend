@@ -63,3 +63,13 @@ do_compile:append:qemuarm-secureboot() {
     dd if=${BUILD_DIR}/bl1.bin of=${BUILD_DIR}/flash.bin bs=4096 conv=notrunc
     dd if=${BUILD_DIR}/fip.bin of=${BUILD_DIR}/flash.bin seek=64 bs=4096 conv=notrunc
 }
+
+do_deploy:append:qemuarm64-secureboot(){
+    # runqemu requires flash.bin to be in the deploy directory
+    ln -srn ${DEPLOYDIR}/${PN}/flash.bin ${DEPLOYDIR}/flash.bin
+}
+
+do_deploy:append:qemuarm-secureboot(){
+    # runqemu requires flash.bin to be in the deploy directory
+    ln -srn ${DEPLOYDIR}/${PN}/flash.bin ${DEPLOYDIR}/flash.bin
+}
