@@ -41,7 +41,7 @@ do_install() {
     cp -f ${RECIPE_SYSROOT}/firmware/trusted-firmware-a/fip.bin \
         ${D}/${FIRMWARE_DIR}/SOFTWARE/fip.bin
 
-    cp -f ${RECIPE_SYSROOT}/firmware/scp_romfw_bypass.bin \
+    cp -f ${RECIPE_SYSROOT}/firmware/scp-firmware/scp_romfw_bypass.bin \
         ${D}/${FIRMWARE_DIR}/SOFTWARE/scp_bl1.bin
 
     # u-boot environment file
