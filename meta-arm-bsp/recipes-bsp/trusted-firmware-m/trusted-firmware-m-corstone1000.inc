@@ -46,16 +46,9 @@ SRC_URI:append:corstone1000-mps3 = " \
     file://0003-Fix-psa_key_handle_t-initialization.patch;patchdir=../tfm-psa-adac \
     "
 
-do_install() {
-  install -D -p -m 0644 ${B}/bin/tfm_s_signed.bin ${D}/firmware/tfm_s_signed.bin
-  install -D -p -m 0644 ${B}/bin/bl2_signed.bin ${D}/firmware/bl2_signed.bin
-  install -D -p -m 0644 ${B}/bin/bl1_1.bin ${D}/firmware/bl1_1.bin
-  install -D -p -m 0644 ${B}/bin/bl1_provisioning_bundle.bin ${D}/firmware/bl1_provisioning_bundle.bin
-}
-
 create_bl1_image(){
-    dd conv=notrunc bs=1 if=${D}/firmware/bl1_1.bin of=${D}/firmware/bl1.bin seek=0
+    dd conv=notrunc bs=1 if=${D}${FIRMWARE_DIR}/bl1_1.bin of=${D}${FIRMWARE_DIR}/bl1.bin seek=0
     # Size of bl1_1.bin is 58KB (59392 bytes)  
-    dd conv=notrunc bs=1 if=${D}/firmware/bl1_provisioning_bundle.bin of=${D}/firmware/bl1.bin seek=59392
+    dd conv=notrunc bs=1 if=${D}${FIRMWARE_DIR}/bl1_provisioning_bundle.bin of=${D}${FIRMWARE_DIR}/bl1.bin seek=59392
 }
 do_install[postfuncs] += "create_bl1_image"

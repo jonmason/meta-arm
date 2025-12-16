@@ -15,7 +15,7 @@ UPSTREAM_CHECK_GITTAGREGEX = "^TF-Mv(?P<pver>\d+(\.\d+)+)$"
 # cmake here. You can easily short-circuit the toolchain but the install
 # is so convoluted there's no gain.
 
-inherit python3native deploy
+inherit python3native firmware
 
 # Baremetal and we bring a compiler below
 INHIBIT_DEFAULT_DEPS = "1"
@@ -44,10 +44,10 @@ DEPENDS += "cmake-native \
 B = "${WORKDIR}/build"
 
 # Build for debug (set TFM_DEBUG to 1 to activate)
-TFM_DEBUG ?= "0"
+TFM_DEBUG ?= "${FIRMWARE_DEBUG_BUILD}"
 
-# Platform must be set, ideally in the machine configuration.
-TFM_PLATFORM ?= ""
+# Platform can be overridden in the machine configuration.
+TFM_PLATFORM ?= "${FIRMWARE_PLATFORM}"
 python() {
     if not d.getVar("TFM_PLATFORM"):
         raise bb.parse.SkipRecipe("TFM_PLATFORM needs to be set")
@@ -106,17 +106,10 @@ do_compile[progress] = "outof:^\[(\d+)/(\d+)\]\s+"
 
 do_install() {
     # TODO install headers and static libraries when we know how they're used
-    install -d -m 755 ${D}/firmware
-    install -m 0644 ${B}/bin/* ${D}/firmware/
-}
-
-FILES:${PN} = "/firmware"
-SYSROOT_DIRS += "/firmware"
-FILES:${PN}-dbg = "/firmware/*.elf"
-
-addtask deploy after do_install
-do_deploy() {
-    cp -rf ${D}/firmware/* ${DEPLOYDIR}/
+    install -d -m 755 ${D}${FIRMWARE_DIR}
+    find ${B}/bin \( -name '*.bin' -o -name '*.elf' \) -type f | while read -r file; do
+        install -m 0644 "$file" "${D}${FIRMWARE_DIR}"
+    done
 }
 
 # Build paths are currently embedded because it's impossible to pass -fdebug-prefix-map
