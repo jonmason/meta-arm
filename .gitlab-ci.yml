@@ -308,7 +308,6 @@ qemuarm:
   parallel:
     matrix:
       - TOOLCHAINS: [gcc, clang]
-        FIRMWARE: edk2
         TESTING: testimage
       - DISTRO: poky-tiny
         TESTING: testimage
