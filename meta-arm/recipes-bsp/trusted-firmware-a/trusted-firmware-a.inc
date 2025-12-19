@@ -229,6 +229,10 @@ do_install() {
     done
 }
 
+# The firmware.bbclass only adds *.bin files by default but TF-A could install
+# files with dtb extension
+FILES:${PN} += "${FIRMWARE_DIR}/*.dtb"
+
 # Skip QA check for relocations in .text of elf binaries
 INSANE_SKIP:${PN}-dbg += "textrel"
 # Build paths are currently embedded
