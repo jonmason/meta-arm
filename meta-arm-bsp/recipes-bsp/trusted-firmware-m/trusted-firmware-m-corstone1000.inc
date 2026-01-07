@@ -27,6 +27,8 @@ EXTRA_OECMAKE:append:corstone1000-mps3 = " -DPLATFORM_PSA_ADAC_SECURE_DEBUG=${@b
 EXTRA_OECMAKE:append:corstone1000-mps3 = " -DPLATFORM_PSA_ADAC_SOURCE_PATH=${UNPACKDIR}/tfm-psa-adac -DPLATFORM_PSA_ADAC_BUILD_PATH=${B}/tfm-psa-adac-build"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
+
+SRCREV_tfm-psa-adac:corstone1000 = "f2809ae231be33a1afcd7714f40756c67d846c88"
 SRC_URI:append:corstone1000 = " \
     file://0001-arm-trusted-firmware-m-disable-address-warnings-into.patch \
     file://0002-Platform-CS1000-Remove-unused-BL1-files.patch \
@@ -37,13 +39,16 @@ SRC_URI:append:corstone1000 = " \
     file://0007-Platform-Corstone1000-Increase-buffer-sizes.patch \
     file://0008-Platform-Corstone1000-Remove-duplicate-configuration.patch \
     file://0010-plat-corstone1000-Add-support-for-Cortex-A320-varian.patch \
+    file://0011-Corstone-1000-Enable-different-DRBG-configurations.patch \
+    file://0012-bl2-corstone-1000-Remove-psa_adac_to_tfm_apply_permi.patch \
+    file://0013-bl2-corstone-1000-secure-debug-waiting-in-CM-LCS.patch \
     "
 
 FILESEXTRAPATHS:prepend:corstone1000-mps3 := "${THISDIR}/files/corstone1000/psa-adac:"
 SRC_URI:append:corstone1000-mps3 = " \
     file://0001-PSA-revert-header-versions.patch;patchdir=../tfm-psa-adac \
-    file://0002-ADAC-Link-psa_interface-instead-of-tfm_sprt.patch;patchdir=../tfm-psa-adac \
-    file://0003-Fix-psa_key_handle_t-initialization.patch;patchdir=../tfm-psa-adac \
+    file://0002-Fix-psa_key_handle_t-initialization.patch;patchdir=../tfm-psa-adac \
+    file://0003-cmake-Update-psa_adac_psa_crypto-dependencies.patch;patchdir=../tfm-psa-adac \
     "
 
 create_bl1_image(){
