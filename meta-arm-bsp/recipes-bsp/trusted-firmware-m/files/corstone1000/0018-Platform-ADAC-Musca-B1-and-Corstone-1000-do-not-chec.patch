@@ -1,0 +1,49 @@
+From d50f841de57c0848595834ab8cde4c89e4ffc1ca Mon Sep 17 00:00:00 2001
+From: Antonio de Angelis <Antonio.deAngelis@arm.com>
+Date: Fri, 19 Sep 2025 10:31:21 +0100
+Subject: [PATCH 4/4] Platform: ADAC: Musca-B1 and Corstone-1000 do not check
+ ICV restrictions mask
+
+As the permissions being requested in our reference certificates are not
+taking into consideration this aspect yet. As restriction checking is purely
+a FW feature, this means that ICV restrictions are not taken into any
+considerations (i.e. which DCU_EN are exclusively reserved for CM or DM)
+
+Upstream-Status: Backport [392f6752bd70052371278c93693b8c3d95cce0c9]
+Signed-off-by: Antonio de Angelis <antonio.deangelis@arm.com>
+Change-Id: I8ef4e432a395e1938d749082fbd25fa58916211c
+
+---
+ platform/ext/target/arm/corstone1000/cc3xx_config.h   | 2 +-
+ platform/ext/target/arm/musca_b1/cc312/cc3xx_config.h | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/platform/ext/target/arm/corstone1000/cc3xx_config.h b/platform/ext/target/arm/corstone1000/cc3xx_config.h
+index a63a2df07a..e3f7843986 100644
+--- a/platform/ext/target/arm/corstone1000/cc3xx_config.h
++++ b/platform/ext/target/arm/corstone1000/cc3xx_config.h
+@@ -14,7 +14,7 @@
+ #endif /* CC3XX_CONFIG_BASE_ADDRESS */
+ 
+ /* Whether the DCU apply permission function enforces ICV restriction mask */
+-#define CC3XX_CONFIG_DCU_ICV_RESTRICTION_MASK_CHECK
++/* #define CC3XX_CONFIG_DCU_ICV_RESTRICTION_MASK_CHECK */
+ 
+ /* Whether uint32_t accesses must be strictly 4-byte aligned */
+ /* CC3XX_CONFIG_STRICT_UINT32_T_ALIGNMENT */
+diff --git a/platform/ext/target/arm/musca_b1/cc312/cc3xx_config.h b/platform/ext/target/arm/musca_b1/cc312/cc3xx_config.h
+index 6fc7ae0fa0..1faf4a06e5 100644
+--- a/platform/ext/target/arm/musca_b1/cc312/cc3xx_config.h
++++ b/platform/ext/target/arm/musca_b1/cc312/cc3xx_config.h
+@@ -14,7 +14,7 @@
+ #endif /* CC3XX_CONFIG_BASE_ADDRESS */
+ 
+ /* Whether the DCU apply permission function enforces ICV restriction mask */
+-#define CC3XX_CONFIG_DCU_ICV_RESTRICTION_MASK_CHECK
++/* #define CC3XX_CONFIG_DCU_ICV_RESTRICTION_MASK_CHECK */
+ 
+ /* Whether uint32_t accesses must be strictly 4-byte aligned */
+ /* CC3XX_CONFIG_STRICT_UINT32_T_ALIGNMENT */
+-- 
+2.43.0
+

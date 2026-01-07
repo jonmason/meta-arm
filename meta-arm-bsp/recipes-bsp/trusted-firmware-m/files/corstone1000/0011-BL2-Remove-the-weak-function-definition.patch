@@ -1,0 +1,116 @@
+From bea93292fdd5eecd4d106a4288004493cabd13b2 Mon Sep 17 00:00:00 2001
+From: Maulik Patel <maulik.patel@arm.com>
+Date: Mon, 14 Jul 2025 14:55:09 +0100
+Subject: [PATCH] BL2: Remove the weak function definition
+
+When psa_adac_generate_challenge is called from the psa adac crypto
+library (psa_adac_psa_crypto), linker uses the weak function defined in
+the thin_psa_crypto_core.c since it part of same static library
+(bl2_cc3xx_psa_driver_api).
+
+This weak function is intended to be overridden by the strong function
+defined in the linked library (cc3xx_psa_random).
+
+This commit creates separate static library for the weak function
+mbedtls_psa_external_get_random and links it only when the
+crypto hardware accelerator is not enabled.
+
+Upstream-Status: Backport [aef30c4e6507db792648b01f81bc82d3c54f7d43]
+Signed-off-by: Maulik Patel <maulik.patel@arm.com>
+Change-Id: Ic51944a2f4c9bf0bcc0560a38e40c85444bd8aac
+---
+ bl2/CMakeLists.txt             | 14 ++++++++++++++
+ bl2/src/psa_stub_rng.c         | 24 ++++++++++++++++++++++++
+ bl2/src/thin_psa_crypto_core.c | 16 ----------------
+ 3 files changed, 38 insertions(+), 16 deletions(-)
+ create mode 100644 bl2/src/psa_stub_rng.c
+
+diff --git a/bl2/CMakeLists.txt b/bl2/CMakeLists.txt
+index f6c2f894d0..d852102427 100644
+--- a/bl2/CMakeLists.txt
++++ b/bl2/CMakeLists.txt
+@@ -57,6 +57,19 @@ endif()
+ 
+ ############################### BL2_CRYPTO #####################################
+ 
++# Adds a static library target named 'bl2_fallback_rng' which includes the source file
++# 'src/psa_stub_rng.c'. This source file contains only the __weak stub implementation,
++# serving as a fallback for random number generation in case no other RNG is provided.
++if(NOT CRYPTO_HW_ACCELERATOR)
++    add_library(bl2_fallback_rng STATIC
++        src/psa_stub_rng.c
++    )
++    target_link_libraries(bl2_fallback_rng
++        PUBLIC
++            bl2_crypto_config
++    )
++endif()
++
+ set(is_384_bit_curve "$<STREQUAL:${SIG_LEN},384>")
+ set(is_256_bit_curve "$<STREQUAL:${SIG_LEN},256>")
+ set(build_sha_384    "$<AND:${is_ec_signature},${is_384_bit_curve}>")
+@@ -150,6 +163,7 @@ target_link_libraries(bl2
+         $<$<BOOL:${TEST_BL2}>:mcuboot_tests>
+     PUBLIC
+         bl2_crypto
++        $<$<NOT:$<BOOL:${CRYPTO_HW_ACCELERATOR}>>:bl2_fallback_rng>
+ )
+ 
+ target_compile_options(bl2
+diff --git a/bl2/src/psa_stub_rng.c b/bl2/src/psa_stub_rng.c
+new file mode 100644
+index 0000000000..6ede1ddc59
+--- /dev/null
++++ b/bl2/src/psa_stub_rng.c
+@@ -0,0 +1,24 @@
++/*
++ * SPDX-FileCopyrightText: Copyright The TrustedFirmware-M Contributors
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ */
++/**
++ * \note This source file is derivative work of psa_crypto.c from the Mbed TLS project
++ */
++#include <stdint.h>
++#include "psa/crypto.h"
++
++/* This function is stubbed as no source of randomness is required
++ * by APIs used in the BLx stages. Nevertheless, an hardwware driver
++ * for a TRNG might override this implementation with a valid one
++ * hence mark it as a weak
++ */
++__attribute__((weak))
++psa_status_t mbedtls_psa_external_get_random(
++    mbedtls_psa_external_random_context_t *context,
++    uint8_t *output, size_t output_size, size_t *output_length)
++{
++    return PSA_ERROR_NOT_SUPPORTED;
++}
+diff --git a/bl2/src/thin_psa_crypto_core.c b/bl2/src/thin_psa_crypto_core.c
+index 4c0c1897a2..07e3e1e07b 100644
+--- a/bl2/src/thin_psa_crypto_core.c
++++ b/bl2/src/thin_psa_crypto_core.c
+@@ -677,19 +677,3 @@ psa_status_t psa_driver_wrapper_export_public_key(
+ 
+     return PSA_SUCCESS;
+ }
+-
+-#if defined(MBEDTLS_PSA_CRYPTO_EXTERNAL_RNG)
+-/* This function is stubbed as no source of randomness is required
+- * by APIs used in the BLx stages. Nevertheless, an hardwware driver
+- * for a TRNG might override this implementation with a valid one
+- * hence mark it as a weak
+- */
+-__attribute__((weak))
+-psa_status_t mbedtls_psa_external_get_random(
+-    mbedtls_psa_external_random_context_t *context,
+-    uint8_t *output, size_t output_size, size_t *output_length)
+-{
+-    return PSA_ERROR_NOT_SUPPORTED;
+-}
+-#endif /* MBEDTLS_PSA_CRYPTO_EXTERNAL_RNG */
+-/*!@}*/
+-- 
+2.43.0
+

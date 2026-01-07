@@ -31,6 +31,7 @@ SRC_URI += " \
            "
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
+SRCREV_tfm-psa-adac:corstone1000 = "f2809ae231be33a1afcd7714f40756c67d846c88"
 SRC_URI:append:corstone1000 = " \
     file://0001-Platform-CS1000-Remove-unused-BL1-files.patch \
     file://0002-Platform-Corstone1000-Fix-BL1-compiler-switch-and-re.patch \
@@ -42,13 +43,21 @@ SRC_URI:append:corstone1000 = " \
     file://0008-Platform-Corstone1000-Increase-BL1-size-and-align-bi.patch \
     file://0009-Platform-CS1K-Adapt-ADAC-enabled-build-to-the-new-BL.patch \
     file://0010-plat-corstone1000-Add-support-for-Cortex-A320-varian.patch \
+    file://0011-BL2-Remove-the-weak-function-definition.patch \
+    file://0012-Corstone-1000-Enable-different-DRBG-configurations.patch \
+    file://0013-bl2-corstone-1000-Remove-psa_adac_to_tfm_apply_permi.patch \
+    file://0014-bl2-corstone-1000-secure-debug-waiting-in-CM-LCS.patch \
+    file://0015-CC3XX-Add-logging-on-cc3xx_dcu.c.patch \
+    file://0016-CC3XX-DCU-Check-dcu_en-against-the-permanent_disable.patch \
+    file://0017-CC3XX-DCU-Enable-checking-ICV-restriction-mask-confi.patch \
+    file://0018-Platform-ADAC-Musca-B1-and-Corstone-1000-do-not-chec.patch \
     "
 
 FILESEXTRAPATHS:prepend:corstone1000-mps3 := "${THISDIR}/files/corstone1000/psa-adac:"
 SRC_URI:append:corstone1000-mps3 = " \
     file://0001-PSA-revert-header-versions.patch;patchdir=../tfm-psa-adac \
-    file://0002-ADAC-Link-psa_interface-instead-of-tfm_sprt.patch;patchdir=../tfm-psa-adac \
-    file://0003-Fix-psa_key_handle_t-initialization.patch;patchdir=../tfm-psa-adac \
+    file://0002-Fix-psa_key_handle_t-initialization.patch;patchdir=../tfm-psa-adac \
+    file://0003-cmake-Update-psa_adac_psa_crypto-dependencies.patch;patchdir=../tfm-psa-adac \
     "
 
 do_install() {

@@ -1,0 +1,118 @@
+From 7607a80c43e6cdc9aab6aea61dcc6b4a567136b2 Mon Sep 17 00:00:00 2001
+From: Antonio de Angelis <Antonio.deAngelis@arm.com>
+Date: Fri, 19 Sep 2025 10:21:59 +0100
+Subject: [PATCH 3/4] CC3XX: DCU: Enable checking ICV restriction mask
+ configurable
+
+To allow for platforms which might not convey the CM/DM cert
+enable information to the driver to work correctly. The ICV
+restriction mask is a software only feature hence restrictions
+won't be taken into account when the feature is not enabled in FW.
+
+Upstream-Status: Backport [ffb14450be486b5cb9cc8d0cce8903fc3bb5de34]
+Signed-off-by: Antonio de Angelis <antonio.deangelis@arm.com>
+Change-Id: Ie5b7efadf9ef1f722546585669383e660acf97a9
+
+---
+ .../target/arm/corstone1000/cc3xx_config.h    |  3 +++
+ .../cc3xx/low_level_driver/src/cc3xx_dcu.c    | 21 ++++++++++++++-----
+ .../target/arm/musca_b1/cc312/cc3xx_config.h  |  3 +++
+ 3 files changed, 22 insertions(+), 5 deletions(-)
+
+diff --git a/platform/ext/target/arm/corstone1000/cc3xx_config.h b/platform/ext/target/arm/corstone1000/cc3xx_config.h
+index 199a99e1ca..a63a2df07a 100644
+--- a/platform/ext/target/arm/corstone1000/cc3xx_config.h
++++ b/platform/ext/target/arm/corstone1000/cc3xx_config.h
+@@ -13,6 +13,9 @@
+ #define CC3XX_CONFIG_BASE_ADDRESS (CC3XX_BASE_S)
+ #endif /* CC3XX_CONFIG_BASE_ADDRESS */
+ 
++/* Whether the DCU apply permission function enforces ICV restriction mask */
++#define CC3XX_CONFIG_DCU_ICV_RESTRICTION_MASK_CHECK
++
+ /* Whether uint32_t accesses must be strictly 4-byte aligned */
+ /* CC3XX_CONFIG_STRICT_UINT32_T_ALIGNMENT */
+ 
+diff --git a/platform/ext/target/arm/drivers/cc3xx/low_level_driver/src/cc3xx_dcu.c b/platform/ext/target/arm/drivers/cc3xx/low_level_driver/src/cc3xx_dcu.c
+index 089589f278..f2b70819c0 100644
+--- a/platform/ext/target/arm/drivers/cc3xx/low_level_driver/src/cc3xx_dcu.c
++++ b/platform/ext/target/arm/drivers/cc3xx/low_level_driver/src/cc3xx_dcu.c
+@@ -1,18 +1,26 @@
+ /*
+- * Copyright (c) 2024, The TrustedFirmware-M Contributors. All rights reserved.
++ * SPDX-FileCopyrightText: Copyright The TrustedFirmware-M Contributors
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  *
+  */
+ 
+-#include "cc3xx_dcu.h"
+-#include "cc3xx_dev.h"
++#ifndef CC3XX_CONFIG_FILE
++#include "cc3xx_config.h"
++#else
++#include CC3XX_CONFIG_FILE
++#endif
++
+ #include <assert.h>
+ #include <string.h>
+ 
++#include "cc3xx_dcu.h"
++#include "cc3xx_dev.h"
++
+ /* FixMe: Remove this when CC3XX_INFO logging gets sorted */
+ #define CC3XX_INFO(...)
+ 
++#ifdef CC3XX_CONFIG_DCU_ICV_RESTRICTION_MASK_CHECK
+ /**
+  * @brief Check that the requested permissions are in accordance with the
+  *        hardware restriction mask
+@@ -20,7 +28,7 @@
+  * @param[in] val Sets of permissions, i.e. host_dcu_en to check as an array of 4 words
+  * @return cc3xx_err_t CC3XX_ERR_SUCCESS or CC3XX_ERR_DCU_MASK_MISMATCH
+  */
+-static cc3xx_err_t check_dcu_restriction_mask(const uint32_t *val)
++static cc3xx_err_t check_dcu_icv_restriction_mask(const uint32_t *val)
+ {
+     size_t idx;
+ 
+@@ -38,6 +46,7 @@ static cc3xx_err_t check_dcu_restriction_mask(const uint32_t *val)
+ 
+     return CC3XX_ERR_SUCCESS;
+ }
++#endif /* CC3XX_CONFIG_DCU_ICV_RESTRICTION_MASK_CHECK */
+ 
+ /**
+  * @brief Check that the requested permissions are in accordance with the
+@@ -182,11 +191,13 @@ cc3xx_err_t cc3xx_dcu_set_enabled(const uint8_t *permissions_mask, size_t len)
+         return err;
+     }
+ 
++#ifdef CC3XX_CONFIG_DCU_ICV_RESTRICTION_MASK_CHECK
+     /* Check the ICV restriction mask for the dcu_en */
+-    err = check_dcu_restriction_mask(dcu_en_requested);
++    err = check_dcu_icv_restriction_mask(dcu_en_requested);
+     if (err != CC3XX_ERR_SUCCESS) {
+         return err;
+     }
++#endif /* CC3XX_CONFIG_DCU_ICV_RESTRICTION_MASK_CHECK */
+ 
+     /* Check if any dcu_lock has been locked for the corresponding dcu_en */
+     err = check_dcu_locks(dcu_en_requested);
+diff --git a/platform/ext/target/arm/musca_b1/cc312/cc3xx_config.h b/platform/ext/target/arm/musca_b1/cc312/cc3xx_config.h
+index cd38d3e837..6fc7ae0fa0 100644
+--- a/platform/ext/target/arm/musca_b1/cc312/cc3xx_config.h
++++ b/platform/ext/target/arm/musca_b1/cc312/cc3xx_config.h
+@@ -13,6 +13,9 @@
+ #define CC3XX_CONFIG_BASE_ADDRESS (CC3XX_BASE_S)
+ #endif /* CC3XX_CONFIG_BASE_ADDRESS */
+ 
++/* Whether the DCU apply permission function enforces ICV restriction mask */
++#define CC3XX_CONFIG_DCU_ICV_RESTRICTION_MASK_CHECK
++
+ /* Whether uint32_t accesses must be strictly 4-byte aligned */
+ /* CC3XX_CONFIG_STRICT_UINT32_T_ALIGNMENT */
+ 
+-- 
+2.43.0
+
