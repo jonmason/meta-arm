@@ -13,7 +13,7 @@ SRC_URI = "gitsm://git.trustedfirmware.org/hafnium/hafnium.git;protocol=https;br
            file://0001-arm-hafnium-fix-kernel-tool-linking.patch  \
            file://0001-work-around-visibility-issue.patch;patchdir=third_party/dtc \
           "
-SRCREV = "92be99ed35cd4eaede402fbb2cea9515fbd2bba5"
+SRCREV = "ce12c6e53838f1cf07d50b616b72db57a81539a4"
 B = "${WORKDIR}/build"
 
 COMPATIBLE_MACHINE ?= "invalid"
