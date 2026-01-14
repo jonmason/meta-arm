@@ -988,7 +988,7 @@ Use the following commands to generate the `capsule_config.json` file, which is 
     build/tmp/work/corstone1000_${TARGET}-poky-linux-musl/corstone1000-flash-firmware-image/1.0/sources/corstone1000-flash-firmware-image-1.0/dummy.bin \
     build/tmp/deploy/images/corstone1000-${TARGET}/trusted-firmware-m/bl2_signed.bin \
     build/tmp/deploy/images/corstone1000-${TARGET}/trusted-firmware-m/tfm_s_signed.bin \
-    build/tmp/deploy/images/corstone1000-${TARGET}/signed_fip-corstone1000.bin \
+    build/tmp/deploy/images/corstone1000-${TARGET}/signed_fip.bin \
     build/tmp/deploy/images/corstone1000-${TARGET}/Image.gz-initramfs-corstone1000-${TARGET}.bin \
     build/tmp/work/corstone1000_${TARGET}-poky-linux-musl/corstone1000-flash-firmware-image/1.0/sources/corstone1000-flash-firmware-image-1.0/dummy.bin \
     --update_image_indexes 5  1  2  3  4  6 \
@@ -1047,7 +1047,7 @@ Use the following commands to generate the `capsule_config.json` file, which is 
     build/tmp/work/corstone1000_${TARGET}-poky-linux-musl/corstone1000-flash-firmware-image/1.0/sources/corstone1000-flash-firmware-image-1.0/dummy.bin \
     build/tmp/deploy/images/corstone1000-${TARGET}/trusted-firmware-m/bl2_signed.bin \
     build/tmp/deploy/images/corstone1000-${TARGET}/trusted-firmware-m/tfm_s_signed.bin \
-    build/tmp/deploy/images/corstone1000-${TARGET}/signed_fip-corstone1000.bin \
+    build/tmp/deploy/images/corstone1000-${TARGET}/signed_fip.bin \
     build/tmp/deploy/images/corstone1000-${TARGET}/Image.gz-initramfs-corstone1000-${TARGET}.bin \
     build/tmp/work/corstone1000_${TARGET}-poky-linux-musl/corstone1000-flash-firmware-image/1.0/sources/corstone1000-flash-firmware-image-1.0/dummy.bin \
     --update_image_indexes 5  1  2  3  4  6 \
