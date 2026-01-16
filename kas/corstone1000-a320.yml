@@ -12,7 +12,7 @@ repos:
   meta-ethos:
     url: https://gitlab.arm.com/iot/meta-ethos.git
     branch: whinlatter
-    commit: aa2504a32f62d29caa17391d10c530576d27212e
+    commit: b919565c36b89af2ba61cc28024da633a9fae0da
   meta-sca:
     url: https://github.com/priv-kweihmann/meta-sca.git
     branch: master
