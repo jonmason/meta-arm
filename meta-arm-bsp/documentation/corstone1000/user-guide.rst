@@ -50,7 +50,7 @@ The Corstone-1000 software stack can be run on:
 Yocto Stable Branch
 -------------------
 
-Corstone-1000 software stack is built on top of Yocto Project's `Walnascar release <meta-arm-repository-release-branch_>`__.
+Corstone-1000 software stack is built on top of Yocto Project's `Whinlatter release <meta-arm-repository-release-branch_>`__.
 
 Software Components
 -------------------
@@ -2365,12 +2365,12 @@ and `Arm Development Studio <arm-ds-website_>`__ versions 2022.2, 2022.c, or 202
 
 --------------
 
-*Copyright (c) 2022-2025, Arm Limited. All rights reserved.*
+*Copyright (c) 2022-2026, Arm Limited. All rights reserved.*
 
 .. _arm-developer-fvp: https://developer.arm.com/tools-and-software/open-source-software/arm-platforms-software/arm-ecosystem-fvps
 .. _secure-debug-manager-repo-readme: https://github.com/ARM-software/secure-debug-manager/tree/master?tab=readme-ov-file#secure-debug-manager-psa-adac--sdc-600
 .. _secure-debug-manager-armds-integration: https://github.com/ARM-software/secure-debug-manager?tab=readme-ov-file#arm-development-studio-integration
-.. _meta-arm-repository-release-branch: https://web.git.yoctoproject.org/meta-arm?h=walnascar
+.. _meta-arm-repository-release-branch: https://docs.yoctoproject.org/next/migration-guides/migration-5.3.html
 .. _arm-ulink-pro-website: https://www.arm.com/products/development-tools/debug-probes/ulink-pro
 .. _arm-ds-website: https://www.arm.com/products/development-tools/embedded-and-software/arm-development-studio
 .. _edk2-repository: https://github.com/tianocore/edk2

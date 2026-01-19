@@ -568,4 +568,4 @@ Changes
 
 --------------
 
-*Copyright (c) 2022-2024, Arm Limited. All rights reserved.*
+*Copyright (c) 2022-2026, Arm Limited. All rights reserved.*

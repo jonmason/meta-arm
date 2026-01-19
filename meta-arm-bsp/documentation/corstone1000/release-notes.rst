@@ -280,4 +280,4 @@ For all security issues, contact Arm by email at psirt@arm.com.
 
 --------------
 
-*Copyright (c) 2022-2023, Arm Limited. All rights reserved.*
+*Copyright (c) 2022-2026, Arm Limited. All rights reserved.*
