@@ -1,5 +1,5 @@
 ..
- # Copyright (c) 2022-2025, Arm Limited.
+ # Copyright (c) 2022-2026, Arm Limited.
  #
  # SPDX-License-Identifier: MIT
 
@@ -468,7 +468,7 @@ References
 
 --------------
 
-*Copyright (c) 2022-2025, Arm Limited. All rights reserved.*
+*Copyright (c) 2022-2026, Arm Limited. All rights reserved.*
 
 .. _arm-developer-cs1000-website: https://developer.arm.com/Tools%20and%20Software/Corstone-1000%20Software
 .. _arm-developer-cs1000-search: https://developer.arm.com/search#q=corstone-1000
