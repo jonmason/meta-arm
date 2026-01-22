@@ -14,3 +14,5 @@ SRC_URI_MBEDTLS = "gitsm://github.com/Mbed-TLS/mbedtls;name=mbedtls;protocol=htt
 SRCREV_mbedtls = "e185d7fd85499c8ce5ca2a54f5cf8fe7dbe3f8df"
 
 LIC_FILES_CHKSUM_MBEDTLS = "file://mbedtls/LICENSE;md5=379d5819937a6c2f1ef1630d341e026d"
+
+SRC_URI += "file://0001-feat-build-add-HOSTLDFLAGS-to-pass-flags-to-host-lin.patch"
