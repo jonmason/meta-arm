@@ -18,17 +18,17 @@ for more information.
 Prerequisites
 -------------
 
-This guide assumes that your host machine is running Ubuntu 20.04 LTS ( with ``sudo`` rights), with at least
+This guide assumes that your host machine is running Ubuntu 24.04 LTS ( with ``sudo`` rights), with at least
 32GB of free disk space and 16GB of RAM as minimum requirement.
 
 The following prerequisites must be available on the host system:
 
-- Git 1.8.3.1 or greater.
-- Python 3.8.0 or greater.
-- GNU Tar 1.28 or greater.
-- GNU Compiler Collection 8.0 or greater.
-- GNU Make 4.0 or greater.
-- tmux.
+- Git 2.39.2 or greater.
+- Python 3.11.2 or greater.
+- GNU Tar 1.34 or greater.
+- GNU Compiler Collection 12.2 or greater.
+- GNU Make 4.3 or greater.
+- tmux 3.3 or greater.
 
 Please follow the steps described in the Yocto mega manual:
 
