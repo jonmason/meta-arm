@@ -91,7 +91,7 @@ Host Processor Components
 +----------+-------------------------------------------------------------------------------------------------------+
 | bbappend | ``${WORKSPACE}/meta-arm/meta-arm-bsp/recipes-bsp/trusted-firmware-a/trusted-firmware-a_%.bbappend``   |
 +----------+-------------------------------------------------------------------------------------------------------+
-| Recipe   | ``${WORKSPACE}/meta-arm/meta-arm/recipes-bsp/trusted-firmware-a/trusted-firmware-a_2.13.0.bb``        |
+| Recipe   | ``${WORKSPACE}/meta-arm/meta-arm/recipes-bsp/trusted-firmware-a/trusted-firmware-a_2.14.0.bb``        |
 +----------+-------------------------------------------------------------------------------------------------------+
 
 `Trusted Services <https://trusted-services.readthedocs.io/en/latest/index.html>`__
@@ -133,7 +133,7 @@ Host Processor Components
 +----------+------------------------------------------------------------------------------------------+
 | bbappend | ``${WORKSPACE}/meta-arm/meta-arm-bsp/recipes-security/optee/optee-os_4.%.bbappend``      |
 +----------+------------------------------------------------------------------------------------------+
-| Recipe   | ``${WORKSPACE}/meta-arm/meta-arm/recipes-security/optee/optee-os_4.7.0.bb``              |
+| Recipe   | ``${WORKSPACE}/meta-arm/meta-arm/recipes-security/optee/optee-os_4.9.0.bb``              |
 +----------+------------------------------------------------------------------------------------------+
 
 `U-Boot <https://github.com/u-boot/u-boot.git>`__

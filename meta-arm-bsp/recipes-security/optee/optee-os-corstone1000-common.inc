@@ -1,9 +1,5 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}/files/optee-os/corstone1000:"
 
-SRC_URI:append = " \
-        file://0001-plat-corstone1000-Add-Cortex-A320-support.patch \
-"
-
 COMPATIBLE_MACHINE = "corstone1000"
 
 OPTEEMACHINE = "corstone1000"
