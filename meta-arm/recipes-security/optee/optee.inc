@@ -1,5 +1,8 @@
 UPSTREAM_CHECK_GITTAGREGEX = "^(?P<pver>\d+(\.\d+)+)$"
 
+# Use tags for versioned recipes, but keep _git recipes on master.
+OPTEE_SRC_URI_BRANCH_OR_TAG ?= "${@'branch=master' if d.getVar('PV') == 'git' or d.getVar('PV').endswith('+git') else 'tag=%s;nobranch=1' % d.getVar('PV')}"
+
 COMPATIBLE_MACHINE ?= "invalid"
 COMPATIBLE_MACHINE:genericarm64 ?= "genericarm64"
 COMPATIBLE_MACHINE:qemuarm64 ?= "qemuarm64"

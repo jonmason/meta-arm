@@ -11,7 +11,7 @@ inherit python3native
 
 require optee.inc
 
-SRC_URI = "git://github.com/linaro-swg/optee_examples.git;branch=master;protocol=https \
+SRC_URI = "git://github.com/linaro-swg/optee_examples.git;protocol=https;${OPTEE_SRC_URI_BRANCH_OR_TAG} \
            file://0001-Makefile-Avoid-variable-override.patch \
            "
 

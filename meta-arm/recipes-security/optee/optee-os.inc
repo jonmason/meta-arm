@@ -14,7 +14,7 @@ DEPENDS = "python3-pyelftools-native python3-cryptography-native"
 
 DEPENDS:append:toolchain-clang = " lld-native compiler-rt"
 
-SRC_URI = "git://github.com/OP-TEE/optee_os.git;branch=master;protocol=https"
+SRC_URI = "git://github.com/OP-TEE/optee_os.git;protocol=https;${OPTEE_SRC_URI_BRANCH_OR_TAG}"
 
 B = "${WORKDIR}/build"
 
