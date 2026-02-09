@@ -164,7 +164,7 @@ corstone1000-fvp:
     matrix:
       - FIRMWARE: corstone1000-firmware-only
         TESTING: [testimage, tftf]
-      - FIRMWARE: none
+      - A320: [none, corstone1000-a320]
         TESTING: testimage
       - SYSTEMREADY_FIRMWARE: arm-systemready-firmware
 
