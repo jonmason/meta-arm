@@ -1,7 +1,7 @@
-From c7df14add690e18645fdfea2c7e8ee5f2b8239c1 Mon Sep 17 00:00:00 2001
+From 9fc2f635885f9e250ad06e6aebfac24e75ec35fd Mon Sep 17 00:00:00 2001
 From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 Date: Thu, 20 Mar 2025 15:09:27 +0000
-Subject: [PATCH 17/36] fwu_arm_psa: Add FWU acceptance mechanism
+Subject: [PATCH] fwu_arm_psa: Add FWU acceptance mechanism
 
 Accept the FWU at ExitBootServices()
 
@@ -305,6 +305,3 @@ index 042bf7a0898..40746eee6ce 100644
  	g_fwu_initialized = true;
  
  	return 0;
--- 
-2.25.1
-

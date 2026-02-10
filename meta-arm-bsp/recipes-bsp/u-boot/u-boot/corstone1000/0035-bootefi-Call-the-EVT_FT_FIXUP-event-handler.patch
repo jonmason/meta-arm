@@ -1,7 +1,7 @@
-From 24cdb09130c32209485648e106da40f5c2732271 Mon Sep 17 00:00:00 2001
+From c8d3f4c9ad0cc67d708a2ecbe5f0d8caa3b0dae0 Mon Sep 17 00:00:00 2001
 From: Sughosh Ganu <sughosh.ganu@linaro.org>
 Date: Thu, 22 May 2025 18:08:38 +0100
-Subject: [PATCH 35/36] bootefi: Call the EVT_FT_FIXUP event handler
+Subject: [PATCH] bootefi: Call the EVT_FT_FIXUP event handler
 
 The bootefi command passes the devicetree to the kernel through the
 EFI config table. Call the event handlers for fixing the devicetree
@@ -16,10 +16,10 @@ Upstream-Status: Denied [RFC: https://lore.kernel.org/u-boot/aca7e6fa-2dec-a7c5-
  1 file changed, 20 insertions(+)
 
 diff --git a/cmd/bootefi.c b/cmd/bootefi.c
-index c1454ffb948..2599afadf9a 100644
+index b8f5bb35950..d03e71d1a46 100644
 --- a/cmd/bootefi.c
 +++ b/cmd/bootefi.c
-@@ -118,6 +118,24 @@ static int do_efi_selftest(void)
+@@ -122,6 +122,24 @@ static int do_efi_selftest(void)
  	return ret != EFI_SUCCESS;
  }
  
@@ -44,7 +44,7 @@ index c1454ffb948..2599afadf9a 100644
  /**
   * do_bootefi() - execute `bootefi` command
   *
-@@ -173,6 +191,8 @@ static int do_bootefi(struct cmd_tbl *cmdtp, int flag, int argc,
+@@ -194,6 +212,8 @@ static int do_bootefi(struct cmd_tbl *cmdtp, int flag, int argc,
  		if (ret != EFI_SUCCESS)
  			return CMD_RET_FAILURE;
  
@@ -53,6 +53,3 @@ index c1454ffb948..2599afadf9a 100644
  		return do_efi_selftest();
  	}
  
--- 
-2.25.1
-

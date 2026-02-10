@@ -1,7 +1,7 @@
-From e2b35f2520ba80c55c96b70bcc2a927cb0d20c75 Mon Sep 17 00:00:00 2001
+From e7858d255652e866f40b455164b172a6a8b92ccf Mon Sep 17 00:00:00 2001
 From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 Date: Fri, 24 Jan 2025 15:13:39 +0000
-Subject: [PATCH 14/36] efi_loader: fwu_arm_psa: Keep the FMP payload header
+Subject: [PATCH] efi_loader: fwu_arm_psa: Keep the FMP payload header
 
 Allow sending the payload with its FMP header
 
@@ -15,10 +15,10 @@ Upstream-Status: Submitted [cover letter: https://lore.kernel.org/all/2025070215
  1 file changed, 2 insertions(+)
 
 diff --git a/lib/efi_loader/efi_firmware.c b/lib/efi_loader/efi_firmware.c
-index de2357acbd7..d1ec7b9427b 100644
+index be439b4019d..80f8acd1774 100644
 --- a/lib/efi_loader/efi_firmware.c
 +++ b/lib/efi_loader/efi_firmware.c
-@@ -523,8 +523,10 @@ static void efi_firmware_get_fw_version(const void **p_image,
+@@ -521,8 +521,10 @@ static void efi_firmware_get_fw_version(const void **p_image,
  		/* FMP header is inserted above the capsule payload */
  		state->fw_version = header->fw_version;
  
@@ -29,6 +29,3 @@ index de2357acbd7..d1ec7b9427b 100644
  	}
  }
  
--- 
-2.25.1
-

@@ -1,7 +1,7 @@
-From 8ba17011b310fee0741ef5c7ddd1a5b019428e4e Mon Sep 17 00:00:00 2001
+From b7f2e23ff923af9a37122b385c0453ea0720dbc0 Mon Sep 17 00:00:00 2001
 From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 Date: Wed, 16 Oct 2024 18:41:16 +0100
-Subject: [PATCH 06/36] arm_ffa: sandbox: Add FFA_MEM_SHARE emulation
+Subject: [PATCH] arm_ffa: sandbox: Add FFA_MEM_SHARE emulation
 
 Add FFA_MEM_SHARE support to the FF-A emulator
 
@@ -124,6 +124,3 @@ index 44b32a829dd..8d85e660e2b 100644
  };
  
  static const struct udevice_id sandbox_ffa_id[] = {
--- 
-2.25.1
-

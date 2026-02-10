@@ -71,12 +71,12 @@ SRC_URI:append = " \
 
 # Use 32 bit cells for reserved-memory node in dts
 SRC_URI:append = " \
-    file://0040-corstone1000-dts-use-32-bit-cells-for-reserved-memor.patch \
+    file://0039-corstone1000-dts-use-32-bit-cells-for-reserved-memor.patch \
 "
 
 # Add Cortex-a320 support
 SRC_URI:append = " \
-    file://0039-corstone1000-Add-Cortex-A320-support-on-FVP.patch \
+    file://0040-corstone1000-Add-Cortex-A320-support-on-FVP.patch \
 "
 
 # Add Cortex-a320 specific configurations
@@ -85,12 +85,12 @@ SRC_URI:append:cortexa320 = " \
 "
 
 uboot_configure_config:append() {
-   openssl req -x509 -sha256 -newkey rsa:2048 -subj /CN=CRT/ -keyout ${B}/CRT.key -out $builddir/CRT.crt -nodes -days 365
+   openssl req -x509 -sha256 -newkey rsa:2048 -subj /CN=CRT/ -keyout ${B}/CRT.key -out ${S}/CRT.crt -nodes -days 365
 }
 
 FILES:${PN} += "/corstone1000_capsule_*"
 uboot_install_config:append() {
-   install -D -p -m 0644 $builddir/CRT.crt ${D}/corstone1000_capsule_cert.crt
+   install -D -p -m 0644 ${S}/CRT.crt ${D}/corstone1000_capsule_cert.crt
    install -D -p -m 0644 ${B}/CRT.key ${D}/corstone1000_capsule_key.key
 }
 

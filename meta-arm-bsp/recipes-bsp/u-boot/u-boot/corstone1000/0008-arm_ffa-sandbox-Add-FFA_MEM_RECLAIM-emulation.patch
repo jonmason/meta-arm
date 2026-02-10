@@ -1,7 +1,7 @@
-From 6c37c2ef7fd844083fddc4c819f3fd37f7f6abc4 Mon Sep 17 00:00:00 2001
+From 99008b3a0627c975f14b7f7a64bfee5d59cd93ed Mon Sep 17 00:00:00 2001
 From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 Date: Thu, 17 Oct 2024 15:50:02 +0100
-Subject: [PATCH 08/36] arm_ffa: sandbox: Add FFA_MEM_RECLAIM emulation
+Subject: [PATCH] arm_ffa: sandbox: Add FFA_MEM_RECLAIM emulation
 
 Add FFA_MEM_RECLAIM support to the FF-A emulator
 
@@ -84,6 +84,3 @@ index 8d85e660e2b..54c81d12f92 100644
  };
  
  static const struct udevice_id sandbox_ffa_id[] = {
--- 
-2.25.1
-

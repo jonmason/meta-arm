@@ -1,8 +1,7 @@
-From 372b693b0d9778fc5696512f13d39d0090b9b0d9 Mon Sep 17 00:00:00 2001
+From 26febd3d62280560814543ccaeb6da7267cdbce4 Mon Sep 17 00:00:00 2001
 From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 Date: Fri, 15 Nov 2024 19:24:50 +0000
-Subject: [PATCH 11/36] fwu_arm_psa: Read the FWU directory through
- get_image_info()
+Subject: [PATCH] fwu_arm_psa: Read the FWU directory through get_image_info()
 
 Implement get_image_info()
 
@@ -889,6 +888,3 @@ index 4a01c5ac672..b42d9f90e1e 100644
 +
 +	return EFI_SUCCESS;
  }
--- 
-2.25.1
-

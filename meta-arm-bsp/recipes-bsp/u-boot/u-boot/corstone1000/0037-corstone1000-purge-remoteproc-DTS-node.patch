@@ -1,7 +1,7 @@
-From 7a32af1d8f904990d016d96d50894c49686db14c Mon Sep 17 00:00:00 2001
+From e615493cfc56df21c1535b03751b25abf76bc4cb Mon Sep 17 00:00:00 2001
 From: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
 Date: Thu, 29 May 2025 14:44:17 +0100
-Subject: [PATCH 37/37] corstone1000: purge remoteproc DTS node
+Subject: [PATCH] corstone1000: purge remoteproc DTS node
 
 Purge remoteproc DTS node
 This is done to remove the remote proc node from the DTS passed
@@ -27,6 +27,3 @@ index c8fcbf976e0..1b9c3a9ed16 100644
  };
  
  #define CORSTONE1000_KERNEL_PARTS 2
--- 
-2.25.1
-

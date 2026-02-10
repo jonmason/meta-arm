@@ -1,8 +1,8 @@
-From e3e4f4adae7bdf580490bd82013760e4f603022e Mon Sep 17 00:00:00 2001
+From 0aa80df8e50eba1474e37a4128e835fb56de8362 Mon Sep 17 00:00:00 2001
 From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 Date: Wed, 5 Mar 2025 19:09:20 +0000
-Subject: [PATCH 22/36] fwu_arm_psa: corstone1000: Perform bank logic when
- reading boot index
+Subject: [PATCH] fwu_arm_psa: corstone1000: Perform bank logic when reading
+ boot index
 
 Move bank logic from board_late_init to fwu_plat_get_bootidx
 
@@ -127,17 +127,14 @@ index d2176b9174d..2ccf851e6c5 100644
 +	}
  }
 diff --git a/configs/corstone1000_defconfig b/configs/corstone1000_defconfig
-index 5b10e3f7484..d52d39a0b36 100644
+index a75877a9174..7be842a2fe2 100644
 --- a/configs/corstone1000_defconfig
 +++ b/configs/corstone1000_defconfig
-@@ -31,7 +31,6 @@ CONFIG_SYS_CBSIZE=512
- CONFIG_LOGLEVEL=7
+@@ -32,7 +32,6 @@ CONFIG_LOGLEVEL=7
  # CONFIG_DISPLAY_CPUINFO is not set
  # CONFIG_DISPLAY_BOARDINFO is not set
+ CONFIG_BOARD_INIT=y
 -CONFIG_BOARD_LATE_INIT=y
  CONFIG_SYS_PROMPT="corstone1000# "
  # CONFIG_CMD_CONSOLE is not set
  CONFIG_CMD_FWU_METADATA=y
--- 
-2.25.1
-

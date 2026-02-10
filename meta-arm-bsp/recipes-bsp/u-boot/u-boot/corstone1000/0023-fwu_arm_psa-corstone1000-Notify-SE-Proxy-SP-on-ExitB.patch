@@ -1,7 +1,7 @@
-From fe7e49ae4fdf07aab3d882adcde94097b3dead82 Mon Sep 17 00:00:00 2001
+From b31e32bb9e0447aaa86afa001134b9b5261ba8b7 Mon Sep 17 00:00:00 2001
 From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 Date: Thu, 20 Mar 2025 15:27:27 +0000
-Subject: [PATCH 23/36] fwu_arm_psa: corstone1000: Notify SE Proxy SP on
+Subject: [PATCH] fwu_arm_psa: corstone1000: Notify SE Proxy SP on
  ExitBootService()
 
 Implement the notification in fwu_notify_exit_boot_services()
@@ -99,6 +99,3 @@ index 2ccf851e6c5..2532c5f10fa 100644
 +out:
 +	return efi_ret;
 +}
--- 
-2.25.1
-

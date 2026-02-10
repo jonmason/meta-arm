@@ -1,7 +1,7 @@
-From f248f22667df72143938bd2175f0ac49b98d1c3c Mon Sep 17 00:00:00 2001
+From e36ef23d76a3cd5c23a79c6fbe64bc431b68af23 Mon Sep 17 00:00:00 2001
 From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 Date: Thu, 13 Feb 2025 17:31:48 +0000
-Subject: [PATCH 18/36] fwu_arm_psa: Add ESRT support
+Subject: [PATCH] fwu_arm_psa: Add ESRT support
 
 Read ESRT data from Secure world in GetImageInfo()
 
@@ -214,6 +214,3 @@ index 40746eee6ce..7297e724569 100644
  
  		image_info[i].hardware_instance = DEFAULT_HW_INSTANCE;
  		image_info[i].dependencies = NULL; /* Not supported */
--- 
-2.25.1
-

@@ -1,4 +1,4 @@
-From 6a1e76a1c0e52c11e9abdcb5990002468650bd81 Mon Sep 17 00:00:00 2001
+From 46fd90a19c9a2c04fb958badb19e148b08f559c8 Mon Sep 17 00:00:00 2001
 From: Frazer Carsley <frazer.carsley@arm.com>
 Date: Fri, 15 Aug 2025 09:22:26 +0100
 Subject: [PATCH] corstone1000: Add Cortex-A320 support on FVP
@@ -49,58 +49,61 @@ Upstream-Status: Submitted (https://lore.kernel.org/all/20251127154752.589691-1-
 Signed-off-by: Frazer Carsley <frazer.carsley@arm.com>
 Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
 ---
- arch/arm/dts/corstone1000-fvp-u-boot.dtsi | 18 +++++-
+ arch/arm/dts/corstone1000-fvp-u-boot.dtsi | 39 ++++++++++++
  arch/arm/dts/corstone1000-u-boot.dtsi     | 76 +++++++++++++++++++++++
  arch/arm/include/asm/armv8/cpu.h          |  1 +
- board/armltd/corstone1000/Kconfig         |  7 +++
- 4 files changed, 99 insertions(+), 3 deletions(-)
+ board/armltd/corstone1000/Kconfig         |  8 +++
+ 4 files changed, 124 insertions(+)
 
 diff --git a/arch/arm/dts/corstone1000-fvp-u-boot.dtsi b/arch/arm/dts/corstone1000-fvp-u-boot.dtsi
-index 6b89d653417..0539e6c092a 100644
+index 20425fa0624..0539e6c092a 100644
 --- a/arch/arm/dts/corstone1000-fvp-u-boot.dtsi
 +++ b/arch/arm/dts/corstone1000-fvp-u-boot.dtsi
-@@ -17,24 +17,36 @@
- &{/cpus} {
- 	cpu1: cpu@1 {
- 		device_type = "cpu";
--		compatible = "arm,cortex-a35";
+@@ -13,3 +13,42 @@
+ 		interrupts = <145>;
+ 	};
+ };
++
++&{/cpus} {
++	cpu1: cpu@1 {
++		device_type = "cpu";
 +		compatible = "arm,cortex-a35","arm,cortex-a320";
 +#ifdef CONFIG_GIC_700
 +		reg = <0x100>;
 +#else
- 		reg = <0x1>;
++		reg = <0x1>;
 +#endif
- 		enable-method = "psci";
- 		next-level-cache = <&L2_0>;
- 	};
- 
- 	cpu2: cpu@2 {
- 		device_type = "cpu";
--		compatible = "arm,cortex-a35";
++		enable-method = "psci";
++		next-level-cache = <&L2_0>;
++	};
++
++	cpu2: cpu@2 {
++		device_type = "cpu";
 +		compatible = "arm,cortex-a35","arm,cortex-a320";
 +#ifdef CONFIG_GIC_700
 +		reg = <0x200>;
 +#else
- 		reg = <0x2>;
++		reg = <0x2>;
 +#endif
- 		enable-method = "psci";
- 		next-level-cache = <&L2_0>;
- 	};
- 
- 	cpu3: cpu@3 {
- 		device_type = "cpu";
--		compatible = "arm,cortex-a35";
++		enable-method = "psci";
++		next-level-cache = <&L2_0>;
++	};
++
++	cpu3: cpu@3 {
++		device_type = "cpu";
 +		compatible = "arm,cortex-a35","arm,cortex-a320";
 +#ifdef CONFIG_GIC_700
 +		reg = <0x300>;
 +#else
- 		reg = <0x3>;
++		reg = <0x3>;
 +#endif
- 		enable-method = "psci";
- 		next-level-cache = <&L2_0>;
- 	};
++		enable-method = "psci";
++		next-level-cache = <&L2_0>;
++	};
++};
++
 diff --git a/arch/arm/dts/corstone1000-u-boot.dtsi b/arch/arm/dts/corstone1000-u-boot.dtsi
-index b29ac74217e..206403ea9a5 100644
+index b29ac74217e..7f75eae48cc 100644
 --- a/arch/arm/dts/corstone1000-u-boot.dtsi
 +++ b/arch/arm/dts/corstone1000-u-boot.dtsi
 @@ -29,6 +29,15 @@
@@ -150,7 +153,7 @@ index b29ac74217e..206403ea9a5 100644
 +
 +		// Address mappings to translate between bus addresses (NPU) and physical host CPU addresses
 +		dma-ranges = <0x02400000 0x02400000 0x200000>,
-+		<0xA0000000 0xA0000000 0x02000000>;
++			     <0xA0000000 0xA0000000 0x02000000>;
 +
 +		interrupts = <0 16 4>;
 +		interrupt-names = "irq";
@@ -176,6 +179,7 @@ index b29ac74217e..206403ea9a5 100644
 +	};
 +};
 +#endif
++
 +#ifdef CONFIG_GIC_700
 +gic: &{/interrupt-controller@1c000000} {
 +		compatible = "arm,gic-v3";
@@ -189,24 +193,23 @@ index b29ac74217e..206403ea9a5 100644
 +		interrupts = <GIC_PPI 9 IRQ_TYPE_LEVEL_LOW>;
 +	};
 +#endif
-+
 diff --git a/arch/arm/include/asm/armv8/cpu.h b/arch/arm/include/asm/armv8/cpu.h
-index 4dbb589aab8..ffd8f8f358f 100644
+index e906fdf1bf1..a361c1100b3 100644
 --- a/arch/arm/include/asm/armv8/cpu.h
 +++ b/arch/arm/include/asm/armv8/cpu.h
-@@ -8,6 +8,7 @@
- #define MIDR_PARTNUM_CORTEX_A57		0xD07
- #define MIDR_PARTNUM_CORTEX_A72		0xD08
+@@ -11,6 +11,7 @@
+ #define MIDR_PARTNUM_CORTEX_A73		0xD09
+ #define MIDR_PARTNUM_CORTEX_A75		0xD0A
  #define MIDR_PARTNUM_CORTEX_A76		0xD0B
 +#define MIDR_PARTNUM_CORTEX_A320		0xD8F
  #define MIDR_PARTNUM_SHIFT		0x4
  #define MIDR_PARTNUM_MASK		(0xFFF << MIDR_PARTNUM_SHIFT)
  
 diff --git a/board/armltd/corstone1000/Kconfig b/board/armltd/corstone1000/Kconfig
-index 709674d4cf7..9476d64d0b0 100644
+index 709674d4cf7..3af29b2bae7 100644
 --- a/board/armltd/corstone1000/Kconfig
 +++ b/board/armltd/corstone1000/Kconfig
-@@ -9,4 +9,11 @@ config SYS_VENDOR
+@@ -9,4 +9,12 @@ config SYS_VENDOR
  config SYS_CONFIG_NAME
  	default "corstone1000"
  
@@ -217,7 +220,6 @@ index 709674d4cf7..9476d64d0b0 100644
 +config GIC_700
 +	bool "Enable GIC-700 support"
 +	default n
++
  endif
--- 
-2.50.1
 

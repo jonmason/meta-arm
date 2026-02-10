@@ -1,7 +1,7 @@
-From 716b0084511392055c3be8b0bb5f4f90f7c4fcd2 Mon Sep 17 00:00:00 2001
+From 61063c4da940390bea439fc0ded48b3e79b3335d Mon Sep 17 00:00:00 2001
 From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 Date: Wed, 23 Oct 2024 17:45:32 +0100
-Subject: [PATCH 10/36] fwu_arm_psa: Initialize the update agent
+Subject: [PATCH] fwu_arm_psa: Initialize the update agent
 
 Add the initializations required for the update agent
 
@@ -40,10 +40,10 @@ Upstream-Status: Submitted [cover letter: https://lore.kernel.org/all/2025070215
  create mode 100644 lib/fwu_updates/fwu_arm_psa.c
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 042d3f6160a..e7ed894441e 100644
+index 1db1070d5f8..0567ba87742 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -1210,6 +1210,13 @@ T:	git https://source.denx.de/u-boot/custodians/u-boot-fsl-qoriq.git
+@@ -1229,6 +1229,13 @@ T:	git https://source.denx.de/u-boot/custodians/u-boot-fsl-qoriq.git
  F:	drivers/watchdog/sp805_wdt.c
  F:	drivers/watchdog/sbsa_gwdt.c
  
@@ -434,6 +434,3 @@ index 00000000000..4a01c5ac672
 +
 +	return 0;
 +}
--- 
-2.25.1
-

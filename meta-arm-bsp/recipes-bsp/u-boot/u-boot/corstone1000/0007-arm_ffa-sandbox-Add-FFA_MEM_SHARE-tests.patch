@@ -1,7 +1,7 @@
-From b5f99e6be813e8bba29f7379ae7395ed51a19967 Mon Sep 17 00:00:00 2001
+From 828a16417e27271bc0f5f148fdd53f16c0ded311 Mon Sep 17 00:00:00 2001
 From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 Date: Thu, 17 Oct 2024 15:14:10 +0100
-Subject: [PATCH 07/36] arm_ffa: sandbox: Add FFA_MEM_SHARE tests
+Subject: [PATCH] arm_ffa: sandbox: Add FFA_MEM_SHARE tests
 
 Add positive and negative test cases
 
@@ -96,6 +96,3 @@ index 593b7177fce..59eea9a57cc 100644
  	return 0;
  }
  DM_TEST(dm_test_ffa_nack, UTF_SCAN_FDT | UTF_CONSOLE);
--- 
-2.25.1
-

@@ -1,7 +1,7 @@
-From a1242cf231ef4d0fc1da36420e2db8cb12f7aa26 Mon Sep 17 00:00:00 2001
+From be89a3fdab2273a6b108574eca997fe818180dea Mon Sep 17 00:00:00 2001
 From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 Date: Thu, 17 Oct 2024 15:50:21 +0100
-Subject: [PATCH 09/36] arm_ffa: sandbox: Add FFA_MEM_RECLAIM tests
+Subject: [PATCH] arm_ffa: sandbox: Add FFA_MEM_RECLAIM tests
 
 Add FFA_MEM_RECLAIM positive and negative test cases
 
@@ -63,6 +63,3 @@ index 59eea9a57cc..f4a6716cfd8 100644
  	return 0;
  }
  DM_TEST(dm_test_ffa_nack, UTF_SCAN_FDT | UTF_CONSOLE);
--- 
-2.25.1
-

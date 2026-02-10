@@ -1,8 +1,8 @@
-From 20f7e4fcd4aec29729c7c3ab2e9dbfe69a04d167 Mon Sep 17 00:00:00 2001
+From 962b8b4f2baf4a84de1fc76382ef7aa240ec1534 Mon Sep 17 00:00:00 2001
 From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 Date: Tue, 11 Feb 2025 17:54:45 +0000
-Subject: [PATCH 05/36] arm_ffa: sandbox: Improve the readability of clearing
- the X registers
+Subject: [PATCH] arm_ffa: sandbox: Improve the readability of clearing the X
+ registers
 
 Make clearing the must be zero registers more readable in the emulator
 
@@ -123,6 +123,3 @@ index d2f051f7e2a..dcf5bce9435 100644
  
  		return ffa_to_std_errmap[INVALID_PARAMETERS];
  	}
--- 
-2.25.1
-

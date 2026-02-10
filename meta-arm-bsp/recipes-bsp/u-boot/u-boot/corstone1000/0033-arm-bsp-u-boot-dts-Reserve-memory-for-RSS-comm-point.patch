@@ -1,8 +1,8 @@
-From 548b7cc0126621af41eff92d504d79d67f85c648 Mon Sep 17 00:00:00 2001
+From 8508d0c0e0bd3846295348053e7d16d8f26c59db Mon Sep 17 00:00:00 2001
 From: Emekcan Aras <emekcan.aras@arm.com>
 Date: Mon, 10 Jul 2023 19:00:43 +0100
-Subject: [PATCH 33/36] arm-bsp/u-boot: dts: Reserve memory for RSS comm
- pointer access protocol
+Subject: [PATCH] arm-bsp/u-boot: dts: Reserve memory for RSS comm pointer
+ access protocol
 
 Add reserved-memory node for RSS comm pointer access protocol
 
@@ -45,6 +45,3 @@ index 76bfc561df7..74e95dcbc6b 100644
  	gic: interrupt-controller@1c000000 {
  		compatible = "arm,gic-400";
  		#interrupt-cells = <3>;
--- 
-2.25.1
-

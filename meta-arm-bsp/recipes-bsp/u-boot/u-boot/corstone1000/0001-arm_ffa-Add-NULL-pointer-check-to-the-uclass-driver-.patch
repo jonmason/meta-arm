@@ -1,7 +1,7 @@
-From 9b001c37347aa8fa5ecbd68f12714a12c74b6ea5 Mon Sep 17 00:00:00 2001
+From 891cef3c87081d0b719213c98cb2a50ecb601332 Mon Sep 17 00:00:00 2001
 From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 Date: Wed, 30 Oct 2024 14:10:43 +0000
-Subject: [PATCH 01/36] arm_ffa: Add NULL pointer check to the uclass driver
+Subject: [PATCH] arm_ffa: Add NULL pointer check to the uclass driver
  operations
 
 Add NULL pointer check for ops
@@ -59,6 +59,3 @@ index 96c64964bb7..f8d231204db 100644
  	if (!ops->rxtx_unmap)
  		return -ENOSYS;
  
--- 
-2.25.1
-

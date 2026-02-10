@@ -1,7 +1,7 @@
-From 09d9e3d05845de1c18672e3bcfabb3ef78092653 Mon Sep 17 00:00:00 2001
+From 4a608633474b545eac07c3e4dd27bdad7bdfb005 Mon Sep 17 00:00:00 2001
 From: Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
 Date: Tue, 29 Oct 2024 17:24:43 +0000
-Subject: [PATCH 03/36] arm_ffa: Add FFA_MEM_RECLAIM support
+Subject: [PATCH] arm_ffa: Add FFA_MEM_RECLAIM support
 
 Add to the FF-A bus FFA_MEM_RECLAIM ABI
 
@@ -160,7 +160,7 @@ index df904cae412..de36f5647d2 100644
  
  /* Registering the FF-A driver as an SMCCC feature driver */
 diff --git a/include/arm_ffa.h b/include/arm_ffa.h
-index 4d2ea7fd1a6..a36f461662c 100644
+index b91b0279371..1229e6e3d02 100644
 --- a/include/arm_ffa.h
 +++ b/include/arm_ffa.h
 @@ -147,8 +147,9 @@ struct ffa_mem_ops_args {
@@ -227,6 +227,3 @@ index a259911d5b9..54196199ce3 100644
  };
  
  enum ffa_abi_errcode {
--- 
-2.25.1
-
