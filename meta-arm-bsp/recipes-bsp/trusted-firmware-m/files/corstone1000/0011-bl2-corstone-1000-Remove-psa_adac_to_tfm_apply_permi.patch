@@ -1,7 +1,7 @@
-From 2165f9db2257905d20722a2b87ceb53f320fc198 Mon Sep 17 00:00:00 2001
+From 3a9e209596ca0ae5850ae382c624adf9932b16b4 Mon Sep 17 00:00:00 2001
 From: Devaraj Ranganna <devaraj.ranganna@arm.com>
 Date: Mon, 22 Sep 2025 12:48:57 +0100
-Subject: [PATCH 1/2] bl2: corstone-1000: Remove
+Subject: [PATCH] bl2: corstone-1000: Remove
  `psa_adac_to_tfm_apply_permissions`
 
 The API `psa_adac_to_tfm_apply_permissions` is added to `psa-adac`
@@ -15,7 +15,7 @@ Signed-off-by: Devaraj Ranganna <devaraj.ranganna@arm.com>
  1 file changed, 21 deletions(-)
 
 diff --git a/platform/ext/target/arm/corstone1000/bl2/boot_hal_bl2.c b/platform/ext/target/arm/corstone1000/bl2/boot_hal_bl2.c
-index 2abcfb5fd3..8c4eb80d03 100644
+index 2abcfb5fd39d..8c4eb80d032c 100644
 --- a/platform/ext/target/arm/corstone1000/bl2/boot_hal_bl2.c
 +++ b/platform/ext/target/arm/corstone1000/bl2/boot_hal_bl2.c
 @@ -111,27 +111,6 @@ static bool fill_flash_map_with_fip_data(uint8_t boot_index) {
@@ -46,6 +46,3 @@ index 2abcfb5fd3..8c4eb80d03 100644
  uint8_t secure_debug_rotpk[32];
  #endif /* PLATFORM_PSA_ADAC_SECURE_DEBUG */
  
--- 
-2.43.0
-

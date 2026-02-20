@@ -1,4 +1,4 @@
-From acefd1b894790c1d2a158bd42fcb4892ffa7c053 Mon Sep 17 00:00:00 2001
+From ab77323c82d4d1983e81fe20b7b3c8eda743d808 Mon Sep 17 00:00:00 2001
 From: Ali Can Ozaslan <ali.oezaslan@arm.com>
 Date: Tue, 15 Oct 2024 12:50:16 +0000
 Subject: [PATCH] Platform: Corstone1000: Implement Bootloader Abstraction
@@ -2875,7 +2875,7 @@ diff --git a/platform/ext/target/arm/corstone1000/fw_update_agent/uefi_fmp.c b/p
 similarity index 66%
 rename from platform/ext/target/arm/corstone1000/fw_update_agent/uefi_fmp.c
 rename to platform/ext/target/arm/corstone1000/bootloader/mcuboot/uefi_fmp.c
-index 896658995a55..aef9c9a20c0f 100644
+index 896658995a55..3edd4ebd0ea9 100644
 --- a/platform/ext/target/arm/corstone1000/fw_update_agent/uefi_fmp.c
 +++ b/platform/ext/target/arm/corstone1000/bootloader/mcuboot/uefi_fmp.c
 @@ -1,5 +1,5 @@
@@ -2999,9 +2999,9 @@ index 896658995a55..aef9c9a20c0f 100644
 +        fmp_info[i].ImageDescriptor.LastAttemptVersion = FWU_IMAGE_INITIAL_VERSION;
 +        fmp_info[i].ImageDescriptor.LastAttemptStatus = LAST_ATTEMPT_STATUS_SUCCESS;
 +
-+        fmp_info[i].ImageName = image_info[i].corstone_image_name;
++        fmp_info[i].ImageName = (uint16_t *)image_info[i].corstone_image_name;
 +        fmp_info[i].ImageNameSize = sizeof(image_info[i].corstone_image_name);
-+        fmp_info[i].ImageVersionName = image_info[i].corstone_version_name;
++        fmp_info[i].ImageVersionName = (uint16_t *)image_info[i].corstone_version_name;
 +        fmp_info[i].ImageVersionNameSize = sizeof(image_info[i].corstone_version_name);
 +    }
      is_fmp_info_initialized = true;

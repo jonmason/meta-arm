@@ -1,7 +1,7 @@
-From d60a6b4edda3465d86ec264b2cbfd7d14109ed5f Mon Sep 17 00:00:00 2001
+From dae5f3d1ec85e29f44d3f19bec2312607751ec22 Mon Sep 17 00:00:00 2001
 From: Devaraj Ranganna <devaraj.ranganna@arm.com>
 Date: Thu, 18 Sep 2025 22:07:38 +0100
-Subject: [PATCH 2/2] Corstone-1000: Enable different DRBG configurations
+Subject: [PATCH] Corstone-1000: Enable different DRBG configurations
 
 The following DRBG configurations are enabled:
 
@@ -18,10 +18,10 @@ Signed-off-by: Devaraj Ranganna <devaraj.ranganna@arm.com>
  1 file changed, 7 insertions(+)
 
 diff --git a/platform/ext/target/arm/corstone1000/cc3xx_config.h b/platform/ext/target/arm/corstone1000/cc3xx_config.h
-index c5654a6bdb..199a99e1ca 100644
+index ac034b17982a..e3f78439861f 100644
 --- a/platform/ext/target/arm/corstone1000/cc3xx_config.h
 +++ b/platform/ext/target/arm/corstone1000/cc3xx_config.h
-@@ -87,6 +87,13 @@
+@@ -90,6 +90,13 @@
  #error "cc3xx_config: RNG config must select a single DRBG"
  #endif /* CC3XX_CONFIG_RNG_DRBG_HMAC + CC3XX_CONFIG_RNG_DRBG_CTR + CC3XX_CONFIG_RNG_DRBG_HASH */
  
@@ -35,6 +35,3 @@ index c5654a6bdb..199a99e1ca 100644
  /* Whether an external TRNG should be used in place of the standard CC3XX TRNG */
  /* #define CC3XX_CONFIG_RNG_EXTERNAL_TRNG */
  
--- 
-2.43.0
-

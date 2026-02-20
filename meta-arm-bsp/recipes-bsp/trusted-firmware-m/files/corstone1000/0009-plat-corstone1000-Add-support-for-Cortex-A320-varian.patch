@@ -1,4 +1,4 @@
-From 2f09a03bc8396164c8075ac802751b6150b8a6c0 Mon Sep 17 00:00:00 2001
+From c5bcb737352ad2e1c24cc14a0b8ddf91ad7197b4 Mon Sep 17 00:00:00 2001
 From: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
 Date: Tue, 29 Jul 2025 15:09:45 +0000
 Subject: [PATCH] plat: corstone1000: Add support for Cortex-A320 variant
@@ -52,7 +52,7 @@ Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
  create mode 100644 platform/ext/target/arm/corstone1000/dsu-120t/ppu.h
 
 diff --git a/platform/ext/target/arm/corstone1000/CMakeLists.txt b/platform/ext/target/arm/corstone1000/CMakeLists.txt
-index 91bf197d8..993c51591 100644
+index 91bf197d86b7..993c51591fa7 100644
 --- a/platform/ext/target/arm/corstone1000/CMakeLists.txt
 +++ b/platform/ext/target/arm/corstone1000/CMakeLists.txt
 @@ -423,6 +423,37 @@ target_sources(tfm_spm
@@ -94,7 +94,7 @@ index 91bf197d8..993c51591 100644
  
  if (${PLATFORM_PSA_ADAC_SECURE_DEBUG})
 diff --git a/platform/ext/target/arm/corstone1000/Device/Include/platform_base_address.h b/platform/ext/target/arm/corstone1000/Device/Include/platform_base_address.h
-index 5f9f03ddc..3908d69bc 100644
+index 5f9f03ddc610..3908d69bc9bd 100644
 --- a/platform/ext/target/arm/corstone1000/Device/Include/platform_base_address.h
 +++ b/platform/ext/target/arm/corstone1000/Device/Include/platform_base_address.h
 @@ -1,5 +1,7 @@
@@ -118,7 +118,7 @@ index 5f9f03ddc..3908d69bc 100644
  #define CC3XX_BASE_S        CORSTONE1000_CRYPTO_ACCELERATOR_BASE
  
 diff --git a/platform/ext/target/arm/corstone1000/bl1/boot_hal_bl1_1.c b/platform/ext/target/arm/corstone1000/bl1/boot_hal_bl1_1.c
-index b51a233e9..1a5e98ad3 100644
+index b51a233e9143..1a5e98ad3c35 100644
 --- a/platform/ext/target/arm/corstone1000/bl1/boot_hal_bl1_1.c
 +++ b/platform/ext/target/arm/corstone1000/bl1/boot_hal_bl1_1.c
 @@ -1,5 +1,5 @@
@@ -199,7 +199,7 @@ index b51a233e9..1a5e98ad3 100644
      /* DDR */
 diff --git a/platform/ext/target/arm/corstone1000/dsu-120t/ppu.c b/platform/ext/target/arm/corstone1000/dsu-120t/ppu.c
 new file mode 100644
-index 000000000..d6be5982a
+index 000000000000..d6be5982a8dd
 --- /dev/null
 +++ b/platform/ext/target/arm/corstone1000/dsu-120t/ppu.c
 @@ -0,0 +1,40 @@
@@ -245,7 +245,7 @@ index 000000000..d6be5982a
 +
 diff --git a/platform/ext/target/arm/corstone1000/dsu-120t/ppu.h b/platform/ext/target/arm/corstone1000/dsu-120t/ppu.h
 new file mode 100644
-index 000000000..05470df9a
+index 000000000000..05470df9a884
 --- /dev/null
 +++ b/platform/ext/target/arm/corstone1000/dsu-120t/ppu.h
 @@ -0,0 +1,185 @@
@@ -435,7 +435,7 @@ index 000000000..05470df9a
 +
 +#endif /* PPU_H */
 diff --git a/platform/ext/target/arm/corstone1000/tfm_hal_multi_core.c b/platform/ext/target/arm/corstone1000/tfm_hal_multi_core.c
-index d0c6b8d59..10c66ac41 100644
+index d0c6b8d590f9..10c66ac41ad2 100644
 --- a/platform/ext/target/arm/corstone1000/tfm_hal_multi_core.c
 +++ b/platform/ext/target/arm/corstone1000/tfm_hal_multi_core.c
 @@ -1,5 +1,5 @@
@@ -485,6 +485,3 @@ index d0c6b8d59..10c66ac41 100644
  #ifdef EXTERNAL_SYSTEM_SUPPORT
      /*release EXT SYS out of reset*/
      tfm_external_system_boot();
--- 
-2.50.1
-
