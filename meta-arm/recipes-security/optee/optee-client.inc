@@ -10,6 +10,7 @@ inherit systemd update-rc.d cmake useradd pkgconfig
 DEPENDS += "util-linux"
 EXTRA_OEMAKE += "PKG_CONFIG=pkg-config"
 
+FILESEXTRAPATHS:prepend := "${THISDIR}/optee-client:"
 SRC_URI = " \
     git://github.com/OP-TEE/optee_client.git;branch=master;protocol=https \
     file://tee-supplicant.sh \
