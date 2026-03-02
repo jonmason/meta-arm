@@ -5,7 +5,7 @@
 # LOCAL_SRC_PATCHES_INPUT_DIR is the directory from where the patches are located
 # LOCAL_SRC_PATCHES_DEST_DIR is the directory where the patches will be applied
 
-do_patch[depends] += "quilt-native:do_populate_sysroot"
+do_apply_local_src_patches[depends] += "quilt-native:do_populate_sysroot"
 
 LOCAL_SRC_PATCHES_INPUT_DIR ??= ""
 LOCAL_SRC_PATCHES_DEST_DIR ??= "${LOCAL_SRC_PATCHES_INPUT_DIR}"
