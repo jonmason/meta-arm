@@ -190,6 +190,8 @@ fvp-base:
         TESTING: testimage
       - FIRMWARE: [u-boot, edk2]
         TESTING: testimage
+      - LTS: lts-revisions
+        TESTING: testimage
       - KERNEL: linux-yocto-dev
         LATEST: latest-revisions
         TESTING: testimage
