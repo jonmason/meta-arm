@@ -10,7 +10,7 @@ COMPATIBLE_MACHINE ?= "invalid"
 SRC_URI_TRUSTED_FIRMWARE_A_TESTS ?= "git://review.trustedfirmware.org/TF-A/tf-a-tests;protocol=https"
 SRC_URI = "${SRC_URI_TRUSTED_FIRMWARE_A_TESTS};branch=${SRCBRANCH}"
 SRCBRANCH = "lts-v2.10"
-SRCREV = "42c6a147d6f8957ff0b6e9eec4591b0927b8769f"
+SRCREV = "ad8e3c9506abc6fd093c9753c8e201ddc2daa270"
 
 EXTRA_OEMAKE += "USE_NVM=0"
 EXTRA_OEMAKE += "SHELL_COLOR=1"
