@@ -1,7 +1,7 @@
-From cee283641224d2a6660cde0ad83e59bdddbc2f37 Mon Sep 17 00:00:00 2001
+From 9dffffbf9fb97d2b50d267a51ba1711795b64027 Mon Sep 17 00:00:00 2001
 From: Bence Balogh <bence.balogh@arm.com>
 Date: Tue, 14 May 2024 15:58:15 +0200
-Subject: [PATCH] Remove PLATFORM_HAS_ATTEST_PK define from IAT test
+Subject: [PATCH 2/2] Remove PLATFORM_HAS_ATTEST_PK define from IAT test
 
 The `PLATFORM_HAS_ATTEST_PK` flag is removed to allow
 `PLATFORM_OVERRIDE_ATTEST_PK` to be defined in `psa-api-test`.
@@ -36,5 +36,5 @@ index 807faf67a..c1b2ba6ed 100644
  #-------------------------------------------------------------------------------
  #  The arch test build system puts its build output under a test suite specific
 -- 
-2.25.1
+2.43.0
 

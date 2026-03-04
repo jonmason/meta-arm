@@ -1,7 +1,7 @@
-From ce6571f7d1054ff003a29e7f977588f1c8e96cc8 Mon Sep 17 00:00:00 2001
+From 76113b4c497f478d2e3a791acd5f43ece6325038 Mon Sep 17 00:00:00 2001
 From: Hugues KAMBA MPIANA <hugues.kambampiana@arm.com>
 Date: Fri, 12 Sep 2025 15:41:10 +0100
-Subject: [PATCH] Revert "Load and store UEFI variable index in chunks"
+Subject: [PATCH 1/2] Revert "Load and store UEFI variable index in chunks"
 
 This reverts commit a0a08571084238af2a24d4e6e580308f86ab59a2.
 The PSA IPC backend for the Protected Storage doesn't support the optional
@@ -22,7 +22,7 @@ Signed-off-by: Hugues KAMBA MPIANA <hugues.kambampiana@arm.com>
  4 files changed, 29 insertions(+), 191 deletions(-)
 
 diff --git a/components/service/uefi/smm_variable/backend/test/variable_store_tests.cpp b/components/service/uefi/smm_variable/backend/test/variable_store_tests.cpp
-index 0f962f20..7c7435fb 100644
+index 0f962f206..7c7435fb4 100644
 --- a/components/service/uefi/smm_variable/backend/test/variable_store_tests.cpp
 +++ b/components/service/uefi/smm_variable/backend/test/variable_store_tests.cpp
 @@ -57,12 +57,6 @@ TEST_GROUP(UefiVariableStoreTests)
@@ -148,7 +148,7 @@ index 0f962f20..7c7435fb 100644
  {
  	efi_status_t efi_status = EFI_SUCCESS;
 diff --git a/components/service/uefi/smm_variable/backend/uefi_variable_store.c b/components/service/uefi/smm_variable/backend/uefi_variable_store.c
-index 48b81ff3..e90ed172 100644
+index 48b81ff37..e90ed1722 100644
 --- a/components/service/uefi/smm_variable/backend/uefi_variable_store.c
 +++ b/components/service/uefi/smm_variable/backend/uefi_variable_store.c
 @@ -716,59 +716,29 @@ static psa_status_t get_active_variable_uid(struct uefi_variable_store *context,
@@ -306,7 +306,7 @@ index 48b81ff3..e90ed172 100644
  
  /* Check attribute usage rules */
 diff --git a/deployments/smm-gateway/common/smm_gateway.c b/deployments/smm-gateway/common/smm_gateway.c
-index 3ab45ccf..eaa86137 100644
+index 3ab45ccf5..eaa861370 100644
 --- a/deployments/smm-gateway/common/smm_gateway.c
 +++ b/deployments/smm-gateway/common/smm_gateway.c
 @@ -40,6 +40,10 @@
@@ -321,10 +321,10 @@ index 3ab45ccf..eaa86137 100644
   * The SP heap must be large enough for storing the UEFI variable index, the RPC shared memory and
   * ~16kB of miscellaneous data.
 diff --git a/platform/providers/arm/corstone1000/platform.cmake b/platform/providers/arm/corstone1000/platform.cmake
-index 91158e93..7da375f0 100644
+index f5a9c48f6..03e99972b 100644
 --- a/platform/providers/arm/corstone1000/platform.cmake
 +++ b/platform/providers/arm/corstone1000/platform.cmake
-@@ -52,6 +52,7 @@ target_compile_definitions(${TGT} PRIVATE
+@@ -51,6 +51,7 @@ target_compile_definitions(${TGT} PRIVATE
  	MBEDTLS_ECP_DP_SECP521R1_ENABLED
  	CORSTONE_1000_TYPE=${CORSTONE_1000_TYPE_INT}
  	TFM_FWU_MAX_DIGEST_SIZE=${TFM_FWU_MAX_DIGEST_SIZE}
