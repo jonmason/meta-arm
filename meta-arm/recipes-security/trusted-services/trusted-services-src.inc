@@ -52,6 +52,7 @@ SRC_URI = "git://git.trustedfirmware.org/TS/trusted-services.git;protocol=https;
            file://0001-Allow-configuring-flash-image-files-compile-time.patch \
            file://0002-Fix-MbedTLS-3.6-and-GCC-14-compatibility.patch \
            file://0001-Relax-pyelftools-dependency.patch \
+           file://0001-fTPM-add-go_idle-support.patch \
 "
 S =        "${UNPACKDIR}/ts"
 
