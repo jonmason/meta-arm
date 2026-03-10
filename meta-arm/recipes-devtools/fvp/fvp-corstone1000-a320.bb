@@ -19,6 +19,10 @@ LIC_FILES_CHKSUM = "\
     file://license_terms/third_party_licenses/third_party_licenses.txt;md5=a5ce56e117d0ab63791fbb7c35ec2211 \
 "
 
+do_install:append() {
+    # This FVP embeds a Python runtime, so clean up RPATHs and remove pointless static libraries
+    chrpath --delete ${D}${FVPDIR}/python/lib/python*/lib-dynload/*.so
+    find ${D}${FVPDIR}/python/ -name *.a -delete
+}
+
 COMPATIBLE_HOST = "(aarch64|x86_64).*-linux"
-INSANE_SKIP:${PN} += "staticdev rpaths useless-rpaths"
-INSANE_SKIP:nativesdk-${PN} += "staticdev rpaths useless-rpaths"
