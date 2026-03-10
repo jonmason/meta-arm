@@ -22,9 +22,9 @@ SRC_URI_TRUSTED_SERVICES_MBEDTLS = "gitsm://github.com/Mbed-TLS/mbedtls;protocol
 SRCREV_mbedtls = "e185d7fd85499c8ce5ca2a54f5cf8fe7dbe3f8df"
 LIC_FILES_CHKSUM += "file://ts-external/mbedtls/LICENSE;md5=379d5819937a6c2f1ef1630d341e026d"
 
-# Nanopb, tag "nanopb-0.4.8" plus some further fixes
-SRC_URI_TRUSTED_SERVICES_NANOPB = "git://github.com/nanopb/nanopb.git;protocol=https;branch=master"
-SRCREV_nanopb = "6cfe48d6f1593f8fa5c0f90437f5e6522587745e"
+# Nanopb, tag "nanopb-0.4.9.1"
+SRC_URI_TRUSTED_SERVICES_NANOPB = "git://github.com/nanopb/nanopb.git;protocol=https;branch=maintenance_0.4"
+SRCREV_nanopb = "cad3c18ef15a663e30e3e43e3a752b66378adec1"
 LIC_FILES_CHKSUM += "file://ts-external/nanopb/LICENSE.txt;md5=9db4b73a55a3994384112efcdb37c01f"
 
 # qcbor, tag "v1.0.0"
