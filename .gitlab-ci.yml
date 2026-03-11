@@ -271,6 +271,7 @@ qemuarm64:
   parallel:
     matrix:
       - DISTRO: poky-tiny
+        FIRMWARE: [u-boot, edk2]
         TESTING: testimage
       - VIRT: xen
 
