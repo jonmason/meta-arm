@@ -258,6 +258,7 @@ qemuarm64-secureboot:
   parallel:
     matrix:
       - TOOLCHAINS: [gcc, clang]
+        FIRMWARE: [u-boot, edk2]
         TCLIBC: [glibc, musl]
         TS: [none, qemuarm64-secureboot-ts]
         TESTING: testimage

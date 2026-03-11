@@ -1,31 +1,13 @@
-COMPATIBLE_MACHINE:qemuarm64-secureboot = "qemuarm64-secureboot"
-COMPATIBLE_MACHINE:qemuarm-secureboot = "qemuarm-secureboot"
+# Machine specific TFAs
 
-# Enable passing TOS_FW_CONFIG from FIP package to Trusted OS.
-FILESEXTRAPATHS:prepend:qemuarm64-secureboot := "${THISDIR}/files:"
-SRC_URI:append:qemuarm64-secureboot = " \
-            file://0001-Add-spmc_manifest-for-qemu.patch \
-        "
+QEMU_TFA_REQUIRE ?= ""
+QEMU_TFA_REQUIRE:qemuarm-secureboot = "trusted-firmware-a-qemuarm-secureboot.inc"
+QEMU_TFA_REQUIRE:qemuarm64-secureboot = "trusted-firmware-a-qemuarm64-secureboot.inc"
 
-TFA_PLATFORM:qemuarm64-secureboot = "qemu"
-TFA_PLATFORM:qemuarm-secureboot = "qemu"
+require ${QEMU_TFA_REQUIRE}
 
-# Trusted Services secure partitions require arm-ffa machine feature.
-# Enabling Secure-EL1 Payload Dispatcher (SPD) in this case
-TFA_SPD:qemuarm64-secureboot = "${@bb.utils.contains('MACHINE_FEATURES', 'arm-ffa', 'spmd', 'opteed', d)}"
-# Configure tf-a accordingly to TS requirements if included
-EXTRA_OEMAKE:append:qemuarm64-secureboot = "${@bb.utils.contains('MACHINE_FEATURES', 'arm-ffa', ' CTX_INCLUDE_EL2_REGS=0 SPMC_OPTEE=1 ', '' , d)}"
-# Cortex-A57 supports Armv8.0 (no S-EL2 execution state).
-# The SPD SPMC component should run at the S-EL1 execution state.
-TFA_SPMD_SPM_AT_SEL2:qemuarm64-secureboot = "0"
-
-TFA_UBOOT:qemuarm64-secureboot = "1"
-TFA_UBOOT:qemuarm-secureboot = "1"
 TFA_BUILD_TARGET:aarch64:qemuall = "all fip"
 TFA_BUILD_TARGET:arm:qemuall = "all fip"
-
-TFA_INSTALL_TARGET:qemuarm64-secureboot = "flash.bin"
-TFA_INSTALL_TARGET:qemuarm-secureboot = "flash.bin"
 
 DEPENDS:append:aarch64:qemuall = " optee-os"
 DEPENDS:append:arm:qemuall = " optee-os"
@@ -46,30 +28,3 @@ EXTRA_OEMAKE:append:arm:qemuall = " \
     BL32_RAM_LOCATION=tdram \
     AARCH32_SP=optee \
     "
-# When using OP-TEE SPMC specify the SPMC manifest file.
-EXTRA_OEMAKE:append:qemuarm64-secureboot = "${@bb.utils.contains('MACHINE_FEATURES', 'arm-ffa', \
-    'QEMU_TOS_FW_CONFIG_DTS=${S}/plat/qemu/fdts/optee_spmc_manifest.dts', '', d)}"
-
-do_compile:append:qemuarm64-secureboot() {
-    # Create a secure flash image for booting AArch64 Qemu. See:
-    # https://trustedfirmware-a.readthedocs.io/en/latest/plat/qemu.html
-    dd if=${BUILD_DIR}/bl1.bin of=${BUILD_DIR}/flash.bin bs=4096 conv=notrunc
-    dd if=${BUILD_DIR}/fip.bin of=${BUILD_DIR}/flash.bin seek=64 bs=4096 conv=notrunc
-}
-
-do_compile:append:qemuarm-secureboot() {
-    # Create a secure flash image for booting AArch64 Qemu. See:
-    # https://trustedfirmware-a.readthedocs.io/en/latest/plat/qemu.html
-    dd if=${BUILD_DIR}/bl1.bin of=${BUILD_DIR}/flash.bin bs=4096 conv=notrunc
-    dd if=${BUILD_DIR}/fip.bin of=${BUILD_DIR}/flash.bin seek=64 bs=4096 conv=notrunc
-}
-
-do_deploy:append:qemuarm64-secureboot(){
-    # runqemu requires flash.bin to be in the deploy directory
-    ln -srn ${DEPLOYDIR}/${PN}/flash.bin ${DEPLOYDIR}/flash.bin
-}
-
-do_deploy:append:qemuarm-secureboot(){
-    # runqemu requires flash.bin to be in the deploy directory
-    ln -srn ${DEPLOYDIR}/${PN}/flash.bin ${DEPLOYDIR}/flash.bin
-}
