@@ -33,6 +33,7 @@ repos:
 
 env:
   BB_LOGCONFIG: ""
+  BB_HASHSERVE: "auto"
 
 local_conf_header:
   base: |
