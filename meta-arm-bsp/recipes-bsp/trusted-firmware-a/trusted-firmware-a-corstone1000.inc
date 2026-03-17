@@ -6,6 +6,7 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/files/corstone1000:"
 SRC_URI:append = " \
 	file://0001-Fix-FF-A-version-in-SPMC-manifest.patch \
 	file://0002-plat-corstone1000-add-Cortex-A320-support.patch \
+	file://0003-feat-corestone-1000-make-mutlicore-support-platform-.patch \
 "
 
 TFA_DEBUG = "1"
