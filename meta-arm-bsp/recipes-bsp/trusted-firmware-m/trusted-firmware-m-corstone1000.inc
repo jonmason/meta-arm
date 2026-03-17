@@ -47,6 +47,7 @@ SRC_URI:append:corstone1000 = " \
     file://0013-Build-adjust-CS1000-platform-for-GCC-v14.2.patch \
     file://0014-Workaround-compile-errors-in-AES.patch \
     file://0015-CC312-Add-barrier-before-first-AO-lock-write.patch \
+    file://0016-Platform-CS1K-make-mutlicore-support-platform-generi.patch \
     "
 
 SRCREV_tfm-psa-adac:corstone1000 = "f2809ae231be33a1afcd7714f40756c67d846c88"
