@@ -58,7 +58,7 @@ EXTRA_OEMAKE:append = " \
                         BL32=${RECIPE_SYSROOT}/${nonarch_base_libdir}/firmware/tee-pager_v2.bin \
                         FVP_USE_GIC_DRIVER=${FVP_GIC_DRIVER} \
                         "
-EXTRA_OEMAKE:append:corstone1000-fvp = "${@bb.utils.contains('MACHINE_FEATURES', 'corstone1000_fvp_smp', ' ENABLE_MULTICORE=1', '', d)}"
+EXTRA_OEMAKE:append = "${@bb.utils.contains('MACHINE_FEATURES', 'corstone1000_smp', ' ENABLE_MULTICORE=1', '', d)}"
 
 # Add Cortex-A320 specific configurations
 EXTRA_OEMAKE:append:cortexa320 = " \
