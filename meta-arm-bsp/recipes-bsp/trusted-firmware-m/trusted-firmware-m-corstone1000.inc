@@ -65,6 +65,16 @@ SRC_URI:append:corstone1000 = " \
     file://0031-lib-gpt-Correct-variable-name-used.patch \
     file://0032-lib-gpt-Correct-include-directory.patch \
     file://0033-lib-gpt-Move-contents-of-CMake-config-file.patch \
+    file://0034-plat-cs1k-Fixed-formatting-errors.patch \
+    file://0035-plat-cs1k-Removed-unused-variables.patch \
+    file://0036-plat-cs1k-Fixed-bad-function-returns.patch \
+    file://0037-plat-cs1k-Improved-logging-in-function.patch \
+    file://0038-plat-cs1k-Remove-unused-function.patch \
+    file://0039-plat-cs1k-Reduce-BL1-binary-size.patch \
+    file://0040-plat-cs1k-Update-license-identifier.patch \
+    file://0041-plat-cs1k-Changed-to-use-new-GPT-library.patch \
+    file://0042-plat-cs1k-Move-variable-from-stack-to-data.patch \
+    file://0043-plat-cs1k-Create-and-remove-FWU-image-partitions.patch \
     "
 
 SRCREV_tfm-psa-adac:corstone1000 = "f2809ae231be33a1afcd7714f40756c67d846c88"
@@ -78,7 +88,7 @@ SRC_URI:append:corstone1000-mps3 = " \
 
 create_bl1_image(){
     dd conv=notrunc bs=1 if=${D}${FIRMWARE_DIR}/bl1_1.bin of=${D}${FIRMWARE_DIR}/bl1.bin seek=0
-    # Size of bl1_1.bin is 58KB (59392 bytes)  
-    dd conv=notrunc bs=1 if=${D}${FIRMWARE_DIR}/bl1_provisioning_bundle.bin of=${D}${FIRMWARE_DIR}/bl1.bin seek=59392
+    # Size of bl1_1.bin is 58KB (59208 bytes)
+    dd conv=notrunc bs=1 if=${D}${FIRMWARE_DIR}/bl1_provisioning_bundle.bin of=${D}${FIRMWARE_DIR}/bl1.bin seek=59208
 }
 do_install[postfuncs] += "create_bl1_image"
