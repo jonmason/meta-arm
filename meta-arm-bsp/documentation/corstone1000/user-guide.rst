@@ -882,13 +882,26 @@ Capsule Update
             git clone https://git.gitlab.arm.com/arm-reference-solutions/systemready-patch.git \
             -b CORSTONE1000-2025.12
 
+    #. Copy the disable ethosu driver Git patch file to your copy of `meta-arm`.
+
+        .. code-block:: console
+
+            cp -f systemready-patch/embedded-a/corstone1000/disable_module_autoloading/0001-arm-bsp-linux-corstone1000-a320-disable-ethosu-confi.patch \
+            ${WORKSPACE}/meta-arm/
+
+    #. Apply the Git patch to `meta-arm`.
+
+        .. code-block:: console
+
+            cd ${WORKSPACE}/meta-arm/
+            git apply 0001-arm-bsp-linux-corstone1000-a320-disable-ethosu-confi.patch
+            cd ${WORKSPACE}
 
     #. Re-Build the **Corstone-1000 with Cortex-A320 FVP** software stack as follows:
 
         .. code-block:: console
 
-            kas build meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml:meta-arm/kas/corstone1000-a320.yml:\
-            systemready-patch/embedded-a/corstone1000/disable_module_autoloading/disable_module_autoloading.yml
+            kas build meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml:meta-arm/kas/corstone1000-a320.yml
 
 
 .. important::
@@ -2245,22 +2258,37 @@ Ethos-U85 NPU
 
     .. code-block:: console
 
-        cp ${WORKSPACE}/systemready-patch/embedded-a/corstone1000/ethos-u85_test/ethos-u85_test.yml \
+        cp ${WORKSPACE}/systemready-patch/embedded-a/corstone1000/ethos-u85_test/ethos-u85-test.yml \
         ${WORKSPACE}/meta-arm/kas/
+
+#. Copy the mesa package Git patch file to your copy of meta-arm.
+
+    .. code-block:: console
+
+        cp -f ${WORKSPACE}/systemready-patch/embedded-a/corstone1000/ethos-u85_test/0001-arm-bsp-mesa-Package-Teflon-test-runner-and-models.patch \
+        ${WORKSPACE}/meta-arm/
+
+#. Apply the Git patch to meta-arm.
+
+    .. code-block:: console
+
+        cd ${WORKSPACE}/meta-arm/
+        git apply 0001-arm-bsp-mesa-Package-Teflon-test-runner-and-models.patch
+        cd ${WORKSPACE}
 
 #. Re-Build the Corstone-1000 with Cortex-A320 FVP software stack as follows:
 
     .. code-block:: console
 
         kas build meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml:meta-arm/kas/corstone1000-a320.yml:\
-        meta-arm/kas/ethos-u85_test.yml
+        meta-arm/kas/ethos-u85-test.yml
 
 #. Run the Corstone-1000 with Cortex-320 FVP:
 
     .. code-block:: console
 
         kas shell meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml:meta-arm/kas/corstone1000-a320.yml:\
-        systemready-patch/embedded-a/corstone1000/ethos-u85_test/ethos-u85_test.yml \
+        systemready-patch/embedded-a/corstone1000/ethos-u85_test/ethos-u85-test.yml \
         -c "../meta-arm/scripts/runfvp"
 
 #. To verify you are running the Corstone-1000 with Cortex-A320, build and run the FVP and inspect the CPU model
@@ -2272,24 +2300,15 @@ Ethos-U85 NPU
         grep -E 'CPU part|model name' /proc/cpuinfo
         # Expect: CPU part : 0xd8f  (which corresponds to Cortex-A320)
 
-#. Run the `delegate_runner` test application inside the FVP shell as follows:
+#. Run the `test_teflon` test application inside the FVP shell as follows:
 
     .. code-block:: console
 
-        delegate_runner -l /usr/lib/libethosu_op_delegate.so \
-        -n /usr/share/ethosu/mobilenet_v2_1.0_224_INT8_vela.tflite \
-        -i /usr/share/ethosu/input_data0.bin \
-        -o /usr/share/ethosu/actual_output_data0.bin
+        export TEFLON_TEST_DELEGATE=/usr/lib/libteflon.so
+        export TEFLON_TEST_DATA=/usr/share/teflon/tests
+        test_teflon --gtest_filter='Models.*'
 
    The test completes in approximately one minute.
-
-#. Run the following command to compare the generated output binary with the expected output binary:
-
-    .. code-block:: console
-
-        cmp -s /usr/share/ethosu/expected_output_data0.bin /usr/share/ethosu/actual_output_data0.bin
-
-    The two binary files should be identical.
 
 Secure Debug
 ------------
