@@ -1,6 +1,6 @@
-From 46fd90a19c9a2c04fb958badb19e148b08f559c8 Mon Sep 17 00:00:00 2001
+From ef9306fde5247ccd8fecec5f886f52426c01af61 Mon Sep 17 00:00:00 2001
 From: Frazer Carsley <frazer.carsley@arm.com>
-Date: Fri, 15 Aug 2025 09:22:26 +0100
+Date: Wed, 25 Feb 2026 14:08:07 +0000
 Subject: [PATCH] corstone1000: Add Cortex-A320 support on FVP
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -49,20 +49,20 @@ Upstream-Status: Submitted (https://lore.kernel.org/all/20251127154752.589691-1-
 Signed-off-by: Frazer Carsley <frazer.carsley@arm.com>
 Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
 ---
- arch/arm/dts/corstone1000-fvp-u-boot.dtsi | 39 ++++++++++++
- arch/arm/dts/corstone1000-u-boot.dtsi     | 76 +++++++++++++++++++++++
+ arch/arm/dts/corstone1000-fvp-u-boot.dtsi | 38 +++++++++++
+ arch/arm/dts/corstone1000-u-boot.dtsi     | 79 +++++++++++++++++++++++
  arch/arm/include/asm/armv8/cpu.h          |  1 +
  board/armltd/corstone1000/Kconfig         |  8 +++
- 4 files changed, 124 insertions(+)
+ 4 files changed, 126 insertions(+)
 
 diff --git a/arch/arm/dts/corstone1000-fvp-u-boot.dtsi b/arch/arm/dts/corstone1000-fvp-u-boot.dtsi
-index 20425fa0624..0539e6c092a 100644
+index 5cb7762fc1c..7ad4ca9e070 100644
 --- a/arch/arm/dts/corstone1000-fvp-u-boot.dtsi
 +++ b/arch/arm/dts/corstone1000-fvp-u-boot.dtsi
-@@ -13,3 +13,42 @@
- 		interrupts = <145>;
- 	};
- };
+@@ -7,3 +7,41 @@
+ #include "corstone1000-u-boot.dtsi"
+ #include "corstone1000-extsys-u-boot.dtsi"
+ #include "corstone1000-virtio-u-boot.dtsi"
 +
 +&{/cpus} {
 +	cpu1: cpu@1 {
@@ -101,15 +101,15 @@ index 20425fa0624..0539e6c092a 100644
 +		next-level-cache = <&L2_0>;
 +	};
 +};
-+
 diff --git a/arch/arm/dts/corstone1000-u-boot.dtsi b/arch/arm/dts/corstone1000-u-boot.dtsi
-index b29ac74217e..7f75eae48cc 100644
+index 4ea6f1d9724..fef56d1ec66 100644
 --- a/arch/arm/dts/corstone1000-u-boot.dtsi
 +++ b/arch/arm/dts/corstone1000-u-boot.dtsi
-@@ -29,6 +29,15 @@
+@@ -28,3 +28,82 @@
+ 		};
  	};
  };
- 
++
 +&{/cpus} {
 +	cpu: cpu@0 {
 +		device_type = "cpu";
@@ -118,14 +118,6 @@ index b29ac74217e..7f75eae48cc 100644
 +		next-level-cache = <&L2_0>;
 +	};
 +};
-+
- &{/soc} {
- 	extsys0: remoteproc@1a010310 {
- 		compatible = "arm,corstone1000-extsys";
-@@ -37,3 +46,72 @@
- 		firmware-name = "es_flashfw.elf";
- 	};
- };
 +
 +#ifdef CONFIG_ETHOS_U85
 +&{/reserved-memory} {
@@ -138,6 +130,7 @@ index b29ac74217e..7f75eae48cc 100644
 +		compatible = "shared-dma-pool";
 +		reg = <0xA0000000 0x02000000>;
 +		no-map;
++
 +	};
 +};
 +
@@ -196,7 +189,7 @@ index b29ac74217e..7f75eae48cc 100644
 +	};
 +#endif
 diff --git a/arch/arm/include/asm/armv8/cpu.h b/arch/arm/include/asm/armv8/cpu.h
-index e906fdf1bf1..a361c1100b3 100644
+index e906fdf1bf1..4ef2ff07f7a 100644
 --- a/arch/arm/include/asm/armv8/cpu.h
 +++ b/arch/arm/include/asm/armv8/cpu.h
 @@ -11,6 +11,7 @@
@@ -208,7 +201,7 @@ index e906fdf1bf1..a361c1100b3 100644
  #define MIDR_PARTNUM_MASK		(0xFFF << MIDR_PARTNUM_SHIFT)
  
 diff --git a/board/armltd/corstone1000/Kconfig b/board/armltd/corstone1000/Kconfig
-index 709674d4cf7..3af29b2bae7 100644
+index 709674d4cf7..eea5c9b8972 100644
 --- a/board/armltd/corstone1000/Kconfig
 +++ b/board/armltd/corstone1000/Kconfig
 @@ -9,4 +9,12 @@ config SYS_VENDOR
@@ -224,4 +217,3 @@ index 709674d4cf7..3af29b2bae7 100644
 +	default n
 +
  endif
-
