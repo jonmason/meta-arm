@@ -34,6 +34,8 @@ target:
   # Infrastructure FVPs
   - fvp-rdv3-r1
   - nativesdk-fvp-rdv3-r1
+  - fvp-rdv3
+  - nativesdk-fvp-rdv3
   - fvp-rdv2
   - nativesdk-fvp-rdv2
   - fvp-rdn2
