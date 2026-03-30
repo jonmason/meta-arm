@@ -2182,22 +2182,41 @@ Symmetric Multiprocessing
 
 .. warning::
 
-    Symmetric multiprocessing (SMP) mode is only supported on Corstone-1000 with Cortex-A35 FVP but is disabled by default.
+    Symmetric multiprocessing (SMP) mode is supported on Corstone-1000
+    with Cortex-A35 FVP and Corstone-1000 with Cortex-A320 FVP, but is disabled by default.
 
 
-#. Build the software stack with SMP mode enabled:
+#. Build the software stack with SMP mode enabled.
+
+   For Corstone-1000 with Cortex-A35 FVP:
 
     .. code-block:: console
 
         kas build meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml:meta-arm/kas/corstone1000-multicore.yml
 
-#. Run the Corstone-1000 FVP:
+   For Corstone-1000 with Cortex-A320 FVP:
+
+    .. code-block:: console
+
+        kas build meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml:meta-arm/kas/corstone1000-a320.yml:\
+        meta-arm/kas/corstone1000-multicore.yml
+
+#. Run the Corstone-1000 FVP.
+
+   For Corstone-1000 with Cortex-A35 FVP:
 
     .. code-block:: console
 
         kas shell meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml:meta-arm/kas/corstone1000-multicore.yml \
         -c "../meta-arm/scripts/runfvp"
 
+   For Corstone-1000 with Cortex-A320 FVP:
+
+    .. code-block:: console
+
+        kas shell meta-arm/kas/corstone1000-fvp.yml:meta-arm/ci/debug.yml:meta-arm/kas/corstone1000-a320.yml:\
+        meta-arm/kas/corstone1000-multicore.yml \
+        -c "../meta-arm/scripts/runfvp"
 
 #. Verify that the FVP is running the Host Processor with more than one CPU core:
 
