@@ -65,6 +65,7 @@ KMACHINE:corstone1000:cortexa320 = "corstone1000-a320"
 LINUX_KERNEL_TYPE:corstone1000:cortexa320 = "standard"
 SRC_URI:append:corstone1000:cortexa320 = " \
     file://defconfig  \
+    file://ethosu.cfg \
 "
 
 # Default kernel features not needed for Corstone-1000 with

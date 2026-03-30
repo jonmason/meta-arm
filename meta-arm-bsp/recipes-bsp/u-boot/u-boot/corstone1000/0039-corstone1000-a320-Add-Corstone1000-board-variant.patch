@@ -1,4 +1,4 @@
-From 9f95097d9b2d9b1360b5c105161509ea9a5b198d Mon Sep 17 00:00:00 2001
+From da23886f3b38812c60a4597db129ab96df74bb99 Mon Sep 17 00:00:00 2001
 From: Frazer Carsley <frazer.carsley@arm.com>
 Date: Wed, 25 Feb 2026 14:28:08 +0000
 Subject: [PATCH] corstone1000-a320: Add Corstone1000 board variant
@@ -22,13 +22,9 @@ compatibility with Cortex-A35 and GIC-400.
 
 * Add `/ethosu@1a050000` node describing the NPU register block at
   `0x1A050000`.
-* Introduce associated reserved memory regions:
-  * `ethosu_sram@02400000`: 2 MiB on-chip SRAM (`no-map`).
-  * `ethosu_reserved@A0000000`: 32 MiB DDR carve-out
-     (`shared-dma-pool`).
-* Connect memory regions through `memory-region` and `sram` phandles.
-* Add `dma-ranges`, interrupt spec, `region-cfgs`, `cs-region`, and
-  `ethosu-mem-config` for full driver support.
+* `ethosu_sram@02400000`: 2 MiB on-chip SRAM.
+* Fully compliant with upstream bindings.
+
 **GIC-700 support**
 
 * Add full GICv3 node.
@@ -41,20 +37,22 @@ These updates align the Corstone-1000 platform with Arm’s latest
 Cortex-A320 and Ethos-U85 configurations and ensure proper interrupt
 and memory mapping for both secure and non-secure domains.
 
-Upstream-Status: Inappropriate [Unsupported ethosu device-tree nodes, denied by maintainers (https://lore.kernel.org/all/20251127154752.589691-1-frazer.carsley@arm.com/)]
+Upstream-Status: Pending [Strong dependency on previous patches that
+should be upstreamed first]
 Signed-off-by: Frazer Carsley <frazer.carsley@arm.com>
 Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
+Signed-off-by: Michael Safwat <michael.safwat@arm.com>
 ---
  arch/arm/Kconfig                              |   1 +
- arch/arm/dts/corstone1000-a320-fvp.dts        |  51 ++++
- arch/arm/dts/corstone1000-a320.dtsi           | 237 ++++++++++++++++++
+ arch/arm/dts/corstone1000-a320-fvp.dts        |  51 +++++
+ arch/arm/dts/corstone1000-a320.dtsi           | 208 ++++++++++++++++++
  arch/arm/include/asm/armv8/cpu.h              |   3 +
  board/armltd/corstone1000-a320/Kconfig        |  12 +
  board/armltd/corstone1000-a320/MAINTAINERS    |   7 +
  board/armltd/corstone1000/corstone1000.c      |   6 +-
- configs/corstone1000-a320_defconfig           |  89 +++++++
+ configs/corstone1000-a320_defconfig           |  89 ++++++++
  .../arm/arm,corstone1000-a320.yml             |  31 +++
- 9 files changed, 434 insertions(+), 3 deletions(-)
+ 9 files changed, 405 insertions(+), 3 deletions(-)
  create mode 100644 arch/arm/dts/corstone1000-a320-fvp.dts
  create mode 100644 arch/arm/dts/corstone1000-a320.dtsi
  create mode 100644 board/armltd/corstone1000-a320/Kconfig
@@ -133,10 +131,10 @@ index 00000000000..c01c629e0ca
 +};
 diff --git a/arch/arm/dts/corstone1000-a320.dtsi b/arch/arm/dts/corstone1000-a320.dtsi
 new file mode 100644
-index 00000000000..28424db77bb
+index 00000000000..6715e15ec37
 --- /dev/null
 +++ b/arch/arm/dts/corstone1000-a320.dtsi
-@@ -0,0 +1,237 @@
+@@ -0,0 +1,208 @@
 +// SPDX-License-Identifier: GPL-2.0 or MIT
 +/*
 + * Copyright 2026, Arm Limited and/or its affiliates <open-source-office@arm.com>
@@ -260,42 +258,26 @@ index 00000000000..28424db77bb
 +		method = "smc";
 +	};
 +
-+	ethosu: ethosu@1A050000 {
-+		compatible = "arm,ethosu-direct";
++	ethosu_sram: ethosu_sram@02400000 {
++		compatible = "mmio-sram";
++		reg = <0x02400000 0x200000>;
 +		#address-cells = <1>;
 +		#size-cells = <1>;
++		ranges;
++	};
++
++	ethosu@1A050000 {
++		compatible = "arm,corstone1000-ethos-u85", "arm,ethos-u85";
 +
 +		// Base address and size of NPU registers
 +		reg = <0x1A050000 0x4000>;
 +
-+		memory-region = <&ethosu_reserved>;
 +		sram = <&ethosu_sram>;
 +
-+		// Address mappings to translate between bus addresses (NPU) and physical host CPU addresses
-+		dma-ranges = <0x02400000 0x02400000 0x200000>,
-+			     <0xA0000000 0xA0000000 0x02000000>;
++		interrupts = <GIC_SPI 16 IRQ_TYPE_LEVEL_HIGH>;
 +
-+		interrupts = <0 16 4>;
-+		interrupt-names = "irq";
-+
-+		// Memory region configuration
-+		region-cfgs = <3 3 0 3 3 3 3 3>;
-+
-+		// Memory regions used for the command stream
-+		cs-region = <2>;
-+
-+		// Memory interface configuration for Ethos-U85
-+		ethosu_mem_config {
-+			compatible = "arm,ethosu-mem-config";
-+			// <beats outstanding_read outstanding_write>
-+			sram = <0 64 32>;
-+			ext  = <1 64 32>;
-+			// <mem_domain mem_type axi_port>
-+			configs = <0 0 0>,
-+			<0 0 0>,
-+			<0 0 1>,
-+			<0 0 1>;
-+		};
++		clocks = <&uartclk>, <&refclk100mhz>;
++		clock-names = "core", "apb";
 +	};
 +
 +	soc {
@@ -358,19 +340,6 @@ index 00000000000..28424db77bb
 +			secure-status = "okay";     /* secure-world-only */
 +			status = "disabled";
 +		};
-+	};
-+};
-+
-+&{/reserved-memory} {
-+	ethosu_sram: ethosu_sram@02400000 {
-+		reg = <0x02400000 0x200000>;
-+		no-map;
-+	};
-+
-+	ethosu_reserved: ethosu_reserved@A0000000 {
-+		compatible = "shared-dma-pool";
-+		reg = <0xA0000000 0x02000000>;
-+		no-map;
 +	};
 +};
 +
