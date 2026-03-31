@@ -128,6 +128,14 @@ KCONFIG_MODE:rdv1 = "--alldefconfig"
 KCONF_BSP_AUDIT_LEVEL:rdv1 = "0"
 
 #
+# RDV2 KMACHINE
+#
+COMPATIBLE_MACHINE:rdv2 = "rdv2"
+KBUILD_DEFCONFIG:rdv2 = "defconfig"
+KCONFIG_MODE:rdv2 = "--alldefconfig"
+KCONF_BSP_AUDIT_LEVEL:rdv2 = "0"
+
+#
 # SGI575 KMACHINE
 #
 COMPATIBLE_MACHINE:sgi575 = "sgi575"
