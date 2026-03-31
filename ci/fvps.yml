@@ -34,6 +34,8 @@ target:
   # Infrastructure FVPs
   - fvp-rdv3-r1
   - nativesdk-fvp-rdv3-r1
+  - fvp-rdn2
+  - nativesdk-fvp-rdn2
   # These are x86 only... :(
   - nativesdk-fvp-rdv1
   - nativesdk-fvp-sgi575
