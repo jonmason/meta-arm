@@ -35,6 +35,7 @@ target:
   - fvp-rdv3-r1
   - nativesdk-fvp-rdv3-r1
   # These are x86 only... :(
+  - nativesdk-fvp-rdv1
   - nativesdk-fvp-sgi575
 
   # IoT FVPs
