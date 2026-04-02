@@ -1,0 +1,48 @@
+From a4c2122444419ab29e1f47b611b22a73d09c7b08 Mon Sep 17 00:00:00 2001
+From: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Date: Thu, 17 Aug 2023 14:59:58 +0530
+Subject: [PATCH 37/43] MdePkg/Acpi64: adds EINJ specific structures
+
+This patch adds SET_ERROR_TYPE_WITH_ADDRESS and
+VENDOR_ERROR_TYPE_EXTENSION_STRUCTURE for supporting vendor defined
+error injection.
+
+Signed-off-by: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Change-Id: Ie77654a5b7ce6cefd312cad89dbe1c4efebe7756
+---
+ MdePkg/Include/IndustryStandard/Acpi64.h | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+
+diff --git a/MdePkg/Include/IndustryStandard/Acpi64.h b/MdePkg/Include/IndustryStandard/Acpi64.h
+index 13a2fd6ccf32..87506e36ced4 100644
+--- a/MdePkg/Include/IndustryStandard/Acpi64.h
++++ b/MdePkg/Include/IndustryStandard/Acpi64.h
+@@ -2412,6 +2412,25 @@ typedef struct {
+   UINT64                         Reserved;
+ } EFI_ACPI_6_4_PLATFORM_COMMUNICATION_CHANNEL_TABLE_HEADER;
+ 
++typedef struct {
++  UINT32                        Length;
++  UINT32                        SBDF;
++  UINT16                        VendorID;
++  UINT16                        DeviceID;
++  UINT8                         RevID;
++  UINT8                         Reserved[3];
++} EFI_ACPI_6_4_VENDOR_ERROR_TYPE_EXTENSION_STRUCTURE;
++
++typedef struct {
++  UINT32                                                  ErrorType;
++  UINT32                                                  VendorStructureOffset;
++  UINT32                                                  Flags;
++  UINT32                                                  ProcessorId;
++  UINT64                                                  MemAddr;
++  UINT64                                                  MemAddrRange;
++  UINT32                                                  PcieSBDF;
++} EFI_ACPI_6_4_SET_ERROR_TYPE_WITH_ADDRESS;
++
+ ///
+ /// PCCT Version (as defined in ACPI 6.4 spec.)
+ ///
+-- 
+2.39.5
+

@@ -1,0 +1,331 @@
+From a8fbefd46f3cbd4ae66729052ec44de1f713859b Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Mon, 9 Aug 2021 02:12:36 +0100
+Subject: [PATCH 02/78] Platform/Sgi: Add support to disable isolated cpus
+
+Isolated CPUs are those that are not to be used on the platform for
+various reasons. The isolated CPU list is an array of MPID values of
+the CPUs that have to be isolated. This list is supplied via the
+NT_FW_CONFIG dtb.
+
+Add support to search for isolated CPUs MPID list and, if present,
+update the MADT table to disable the corresponding CPUs.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: I9f7af896c1bcf0e0845b8b4f9f2bc199f15e6cc2
+---
+ .../SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf  |   1 -
+ .../SgiPkg/Drivers/PlatformDxe/PlatformDxe.c  | 129 +++++++++++++++++-
+ Platform/ARM/SgiPkg/Include/SgiPlatform.h     |   7 +
+ .../Library/SgiPlatformPei/SgiPlatformPei.inf |   8 +-
+ .../Library/SgiPlatformPei/SgiPlatformPeim.c  |  47 ++++++-
+ 5 files changed, 186 insertions(+), 6 deletions(-)
+
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf
+index 88e210933f6d..2d2552400df6 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf
+@@ -18,7 +18,6 @@
+   Dbg2.aslc
+   Fadt.aslc
+   Gtdt.aslc
+-  Iort.aslc
+   Mcfg.aslc
+   RdN2Cfg1/Dsdt.asl
+   RdN2Cfg1/Madt.aslc
+diff --git a/Platform/ARM/SgiPkg/Drivers/PlatformDxe/PlatformDxe.c b/Platform/ARM/SgiPkg/Drivers/PlatformDxe/PlatformDxe.c
+index 090139d4c84d..3fa14c43251b 100644
+--- a/Platform/ARM/SgiPkg/Drivers/PlatformDxe/PlatformDxe.c
++++ b/Platform/ARM/SgiPkg/Drivers/PlatformDxe/PlatformDxe.c
+@@ -6,10 +6,13 @@
+ *
+ **/
+ 
++#include <IndustryStandard/Acpi.h>
++
+ #include <Library/AcpiLib.h>
+ #include <Library/DebugLib.h>
+ #include <Library/HobLib.h>
+ #include <Library/PL011UartLib.h>
++#include <Library/UefiBootServicesTableLib.h>
+ 
+ #include <IoVirtSoCExp.h>
+ #include <SgiPlatform.h>
+@@ -80,6 +83,127 @@ InitIoVirtSocExpBlkUartControllers (
+   }
+ }
+ 
++/**
++  Search for a MPID in a list
++
++  Performs a linear search for a specified MPID on the given linear
++  list of MPIDs.
++
++  @param[in]  MpidList  Pointer to list.
++  @param[in]  Count     Number of the elements in the list.
++  @param[in]  Mpid      Target MPID.
++
++  @retval TRUE   MPID is present.
++  @retval FALSE  MPID is not present.
++**/
++STATIC
++BOOLEAN
++CheckIfMpidIsPresent (
++  IN UINT64  *MpidList,
++  IN UINT64  Count,
++  IN UINT64  Mpid
++  )
++{
++  UINT64 Idx;
++
++  for (Idx = 0; Idx < Count; Idx++) {
++    if (MpidList[Idx] == Mpid) {
++      return TRUE;
++    }
++  }
++
++  return FALSE;
++}
++
++/**
++  Disables isolated CPUs in the MADT table
++
++  Parse the IsolatedCpuInfo from the Hob list and updates the MADT table to
++  disable cpu's which are not available on the platfrom.
++
++  @param[in] AcpiHeader  Points to the Madt table.
++  @param[in] HobData     Points to the unusable cpuinfo in hoblist.
++**/
++STATIC
++VOID
++UpdateMadtTable (
++  IN EFI_ACPI_DESCRIPTION_HEADER  *AcpiHeader,
++  IN SGI_PLATFORM_DESCRIPTOR      *HobData
++  )
++{
++  UINT8 *StructureListHead;
++  UINT8 *StructureListTail;
++  EFI_ACPI_6_4_GIC_STRUCTURE *GicStructure;
++  BOOLEAN MpidPresent;
++
++  if (HobData->IsolatedCpuList.Count == 0) {
++    return;
++  }
++
++  StructureListHead =
++    ((UINT8 *)AcpiHeader) +
++    sizeof(EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER);
++  StructureListTail = (UINT8 *)AcpiHeader + AcpiHeader->Length;
++
++  // Locate ACPI GICC structure in the MADT table.
++  while (StructureListHead < StructureListTail) {
++    if (StructureListHead[0] == EFI_ACPI_6_4_GIC) {
++      GicStructure = (EFI_ACPI_6_4_GIC_STRUCTURE *)StructureListHead;
++      // Disable the CPU if its MPID is present in the list.
++      MpidPresent = CheckIfMpidIsPresent(
++        HobData->IsolatedCpuList.Mpid,
++        HobData->IsolatedCpuList.Count,
++        GicStructure->MPIDR
++        );
++      if (MpidPresent == TRUE) {
++        DEBUG ((
++          DEBUG_INFO,
++          "Disabling Core: %lu, MPID: 0x%llx in MADT\n",
++          GicStructure->AcpiProcessorUid,
++          GicStructure->MPIDR
++          ));
++        GicStructure->Flags = 0;
++      }
++    }
++
++    // Second element in the structure component header is length
++    StructureListHead += StructureListHead[1];
++  }
++}
++
++/**
++  Callback to validate and/or update ACPI table.
++
++  On finding a MADT table, disable the isolated CPUs in the MADT table. The
++  list of isolated CPUs are obtained from the HOB data.
++
++  @param[in] AcpiHeader  Target ACPI table.
++
++  @retval  TURE   Table validated/updated successfully.
++  @retval  FALSE  Error in Table validation/updation.
++**/
++STATIC
++BOOLEAN
++CheckAndUpdateAcpiTable (
++  IN EFI_ACPI_DESCRIPTION_HEADER  *AcpiHeader
++  )
++{
++  VOID *SystemIdHob;
++  SGI_PLATFORM_DESCRIPTOR *HobData;
++
++  // This check updates the MADT table to disable isolated CPUs present on the
++  // platform.
++  if (AcpiHeader->Signature == EFI_ACPI_1_0_APIC_SIGNATURE) {
++    SystemIdHob = GetFirstGuidHob (&gArmSgiPlatformIdDescriptorGuid);
++    if (SystemIdHob != NULL) {
++      HobData = (SGI_PLATFORM_DESCRIPTOR *)GET_GUID_HOB_DATA (SystemIdHob);
++      UpdateMadtTable (AcpiHeader, HobData);
++    }
++  }
++
++  return TRUE;
++}
++
+ EFI_STATUS
+ EFIAPI
+ ArmSgiPkgEntryPoint (
+@@ -89,7 +213,10 @@ ArmSgiPkgEntryPoint (
+ {
+   EFI_STATUS              Status;
+ 
+-  Status = LocateAndInstallAcpiFromFv (&gArmSgiAcpiTablesGuid);
++  Status = LocateAndInstallAcpiFromFvConditional (
++             &gArmSgiAcpiTablesGuid,
++             &CheckAndUpdateAcpiTable
++             );
+   if (EFI_ERROR (Status)) {
+     DEBUG ((DEBUG_ERROR, "%a: Failed to install ACPI tables\n", __func__));
+     return Status;
+diff --git a/Platform/ARM/SgiPkg/Include/SgiPlatform.h b/Platform/ARM/SgiPkg/Include/SgiPlatform.h
+index e4bc8fe723c3..504d41c38d90 100644
+--- a/Platform/ARM/SgiPkg/Include/SgiPlatform.h
++++ b/Platform/ARM/SgiPkg/Include/SgiPlatform.h
+@@ -74,11 +74,18 @@
+ #define DRAM_BLOCK2_BASE_REMOTE(ChipId) \
+           (SGI_REMOTE_CHIP_MEM_OFFSET (ChipId) + FixedPcdGet64 (PcdDramBlock2Base))
+ 
++// List of isolated CPUs MPID
++typedef struct {
++  UINT64  Count;                // Number of elements present in the list
++  UINT64  Mpid[];               // List containing isolated CPU MPIDs
++} SGI_ISOLATED_CPU_LIST;
++
+ // ARM platform description data.
+ typedef struct {
+   UINTN  PlatformId;
+   UINTN  ConfigId;
+   UINTN  MultiChipMode;
++  SGI_ISOLATED_CPU_LIST  IsolatedCpuList;
+ } SGI_PLATFORM_DESCRIPTOR;
+ 
+ // Arm SGI/RD Product IDs
+diff --git a/Platform/ARM/SgiPkg/Library/SgiPlatformPei/SgiPlatformPei.inf b/Platform/ARM/SgiPkg/Library/SgiPlatformPei/SgiPlatformPei.inf
+index 407160c07563..fbf061ad3bdb 100644
+--- a/Platform/ARM/SgiPkg/Library/SgiPlatformPei/SgiPlatformPei.inf
++++ b/Platform/ARM/SgiPkg/Library/SgiPlatformPei/SgiPlatformPei.inf
+@@ -1,5 +1,5 @@
+ #
+-#  Copyright (c) 2018, ARM Limited. All rights reserved.
++#  Copyright (c) 2018-2022, ARM Limited. All rights reserved.
+ #
+ #  SPDX-License-Identifier: BSD-2-Clause-Patent
+ #
+@@ -13,6 +13,7 @@
+   ENTRY_POINT                    = SgiPlatformPeim
+ 
+ [Packages]
++  ArmPlatformPkg/ArmPlatformPkg.dec
+   EmbeddedPkg/EmbeddedPkg.dec
+   MdePkg/MdePkg.dec
+   Platform/ARM/SgiPkg/SgiPlatform.dec
+@@ -21,6 +22,11 @@
+   FdtLib
+   PeimEntryPoint
+ 
++[FixedPcd]
++  gArmSgiTokenSpaceGuid.PcdChipCount
++  gArmPlatformTokenSpaceGuid.PcdCoreCount
++  gArmPlatformTokenSpaceGuid.PcdClusterCount
++
+ [Sources]
+   SgiPlatformPeim.c
+ 
+diff --git a/Platform/ARM/SgiPkg/Library/SgiPlatformPei/SgiPlatformPeim.c b/Platform/ARM/SgiPkg/Library/SgiPlatformPei/SgiPlatformPeim.c
+index 7df52cc4fd7c..f778dc8ac7c1 100644
+--- a/Platform/ARM/SgiPkg/Library/SgiPlatformPei/SgiPlatformPeim.c
++++ b/Platform/ARM/SgiPkg/Library/SgiPlatformPei/SgiPlatformPeim.c
+@@ -1,6 +1,6 @@
+ /** @file
+ *
+-*  Copyright (c) 2018, ARM Limited. All rights reserved.
++*  Copyright (c) 2018-2022, ARM Limited. All rights reserved.
+ *
+ *  SPDX-License-Identifier: BSD-2-Clause-Patent
+ *
+@@ -38,6 +38,8 @@ GetSgiSystemId (
+   CONST VOID                    *NtFwCfgDtBlob;
+   SGI_NT_FW_CONFIG_INFO_PPI     *NtFwConfigInfoPpi;
+   EFI_STATUS                    Status;
++  UINT64                        IsolatedCpuCount;
++  UINT64                        CoreCount;
+ 
+   Status = PeiServicesLocatePpi (&gNtFwConfigDtInfoPpiGuid, 0, NULL,
+              (VOID**)&NtFwConfigInfoPpi);
+@@ -83,6 +85,32 @@ GetSgiSystemId (
+     HobData->MultiChipMode = fdt32_to_cpu (*Property);
+   }
+ 
++  Property = fdt_getprop (NtFwCfgDtBlob, Offset, "isolated-cpu-list", NULL);
++  if (Property == NULL) {
++    DEBUG ((DEBUG_INFO, "%s property not found\n", "isolated-cpu-list"));
++    HobData->IsolatedCpuList.Count = 0;
++  } else {
++    CopyMem (&IsolatedCpuCount, Property, sizeof (IsolatedCpuCount));
++    CoreCount =
++      FixedPcdGet32 (PcdChipCount) *
++      FixedPcdGet32 (PcdClusterCount) *
++      FixedPcdGet32 (PcdCoreCount);
++    if (IsolatedCpuCount > CoreCount) {
++      DEBUG ((
++            DEBUG_ERROR,
++            "IsolatedCpuCount(%u) is higher than CoreCount(%u)\n",
++            IsolatedCpuCount,
++            CoreCount
++            ));
++      return EFI_SUCCESS;
++    }
++    CopyMem (
++      &HobData->IsolatedCpuList,
++      Property,
++      sizeof(HobData->IsolatedCpuList) + (CoreCount * sizeof(UINT64))
++      );
++  }
++
+   return EFI_SUCCESS;
+ }
+ 
+@@ -104,11 +132,24 @@ SgiPlatformPeim (
+ {
+   SGI_PLATFORM_DESCRIPTOR       *HobData;
+   EFI_STATUS                    Status;
+-
++  UINT64                        CoreCount;
++  UINTN                         HobSize;
++
++  CoreCount =
++    FixedPcdGet32 (PcdChipCount) *
++    FixedPcdGet32 (PcdClusterCount) *
++    FixedPcdGet32 (PcdCoreCount);
++
++  // Additional size for SGI_ISOLATED_CPU_LIST.
++  // Size = (MPID register size in bytes * CoreCount) +
++  //        sizeof(SGI_PLATFORM_DESCRIPTOR)
++  HobSize =
++    sizeof (SGI_PLATFORM_DESCRIPTOR) +
++    (CoreCount * sizeof(UINT64));
+   // Create platform descriptor HOB
+   HobData = (SGI_PLATFORM_DESCRIPTOR *)BuildGuidHob (
+                                          &gArmSgiPlatformIdDescriptorGuid,
+-                                         sizeof (SGI_PLATFORM_DESCRIPTOR));
++                                         HobSize);
+ 
+   // Get the system id from the platform specific nt_fw_config device tree
+   if (HobData == NULL) {
+-- 
+2.39.5
+

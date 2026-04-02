@@ -1,0 +1,169 @@
+From 906c272e06738388d8c125cc5ad27b61c7f90961 Mon Sep 17 00:00:00 2001
+From: Lokesh B V <Lokesh.BV@Arm.com>
+Date: Sat, 21 Sep 2024 17:46:21 +0530
+Subject: [PATCH 66/78] Platform/Sgi: Add initial support for RDV3R1CFG1
+ platform
+
+The RDV3R1CFG1 is a quad chip platform with 8 CPUs per chip totalling to
+a count of 32 cores. Add initial support for this platform by adding the
+required platform build configuration files along withpart number and
+configuration changes.
+
+Signed-off-by: Lokesh B V <Lokesh.BV@Arm.com>
+Signed-off-by: Dhinesh Kumar Balu <dhineshkumar.balu@arm.com>
+Change-Id: I34398eb2a2c96773c7698cc9d4511a682edf5f69
+---
+ Platform/ARM/SgiPkg/Include/SgiPlatform.h     |  5 ++
+ .../SgiPkg/Library/PlatformLib/PlatformLib.c  |  6 ++
+ .../Library/PlatformLib/PlatformLibMem.c      |  2 +-
+ Platform/ARM/SgiPkg/RdV3R1Cfg1/RdV3R1Cfg1.dsc | 67 +++++++++++++++++++
+ .../ARM/SgiPkg/RdV3R1Cfg1/RdV3R1Cfg1.fdf.inc  | 10 +++
+ 5 files changed, 89 insertions(+), 1 deletion(-)
+ create mode 100644 Platform/ARM/SgiPkg/RdV3R1Cfg1/RdV3R1Cfg1.dsc
+ create mode 100644 Platform/ARM/SgiPkg/RdV3R1Cfg1/RdV3R1Cfg1.fdf.inc
+
+diff --git a/Platform/ARM/SgiPkg/Include/SgiPlatform.h b/Platform/ARM/SgiPkg/Include/SgiPlatform.h
+index 75147aea0267..fd032862b9af 100644
+--- a/Platform/ARM/SgiPkg/Include/SgiPlatform.h
++++ b/Platform/ARM/SgiPkg/Include/SgiPlatform.h
+@@ -67,6 +67,10 @@
+ #define RD_V3_R1_PART_NUM                         0x7C5
+ #define RD_V3_R1_CONF_ID                          0x0
+ 
++// RD-V3-R1-Cfg1 Platform Identification values
++#define RD_V3_R1_CFG1_PART_NUM                    0x7C5
++#define RD_V3_R1_CFG1_CONF_ID                     0x0
++
+ #define SGI_CONFIG_MASK                           0x0F
+ #define SGI_CONFIG_SHIFT                          0x1C
+ #define SGI_PART_NUM_MASK                         0xFFF
+@@ -165,6 +169,7 @@ typedef enum {
+   RdV3Cfg1,
+   RdV3Cfg2,
+   RdV3R1,
++  RdV3R1Cfg1,
+ } ARM_RD_PRODUCT_ID;
+ 
+ // Arm ProductId look-up table
+diff --git a/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLib.c b/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLib.c
+index 0b04e9448861..82d7a2b81345 100644
+--- a/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLib.c
++++ b/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLib.c
+@@ -109,6 +109,12 @@ STATIC CONST SGI_PRODUCT_ID_LOOKUP SgiProductIdLookup[] = {
+     RD_V3_R1_CONF_ID,
+     1
+   },
++  {
++    RdV3R1Cfg1,
++    RD_V3_R1_CFG1_PART_NUM,
++    RD_V3_R1_CFG1_CONF_ID,
++    1
++  },
+ };
+ 
+ EFI_BOOT_MODE
+diff --git a/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c b/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c
+index ddc2a6257d4a..98457bf5402f 100644
+--- a/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c
++++ b/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c
+@@ -49,7 +49,7 @@ GetRemoteDram2BaseAddr (
+   UINT8                         SgiProductIdx;
+ 
+   SgiProductIdx = SgiGetProductId();
+-  if (SgiProductIdx == RdV3Cfg2 || SgiProductIdx == RdV3R1)
++  if (SgiProductIdx == RdV3Cfg2 || SgiProductIdx == RdV3R1 || SgiProductIdx == RdV3R1Cfg1)
+     return DRAM_BLOCK2_BASE_REMOTE_RDV3(ChipIdx);
+ 
+   return DRAM_BLOCK2_BASE_REMOTE(ChipIdx);
+diff --git a/Platform/ARM/SgiPkg/RdV3R1Cfg1/RdV3R1Cfg1.dsc b/Platform/ARM/SgiPkg/RdV3R1Cfg1/RdV3R1Cfg1.dsc
+new file mode 100644
+index 000000000000..a2497a280703
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/RdV3R1Cfg1/RdV3R1Cfg1.dsc
+@@ -0,0 +1,67 @@
++#
++#  Copyright (c) 2024, Arm Limited. All rights reserved.<BR>
++#
++#  SPDX-License-Identifier: BSD-2-Clause-Patent
++#
++
++################################################################################
++#
++# Defines Section - statements that will be processed to create a Makefile.
++#
++################################################################################
++[Defines]
++  PLATFORM_NAME                  = RdV3R1Cfg1
++  PLATFORM_GUID                  = bec32baf-6471-44f3-9ef0-a09a0cc8eb1d
++  PLATFORM_VERSION               = 0.1
++  DSC_SPECIFICATION              = 0x0001001B
++  OUTPUT_DIRECTORY               = Build/$(PLATFORM_NAME)
++  SUPPORTED_ARCHITECTURES        = AARCH64
++  BUILD_TARGETS                  = NOOPT|DEBUG|RELEASE
++  SKUID_IDENTIFIER               = DEFAULT
++  FLASH_DEFINITION               = Platform/ARM/SgiPkg/SgiPlatform.fdf
++  BOARD_DXE_FV_COMPONENTS        = Platform/ARM/SgiPkg/RdV3R1Cfg1/RdV3R1Cfg1.fdf.inc
++  BUILD_NUMBER                   = 1
++
++  DEFINE PCIE_ENABLE             = TRUE
++
++# include common definitions from SgiPlatform.dsc
++!include Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
++!include Platform/ARM/SgiPkg/SgiPlatform4.dsc.inc
++!include Platform/ARM/SgiPkg/SgiMemoryMap4.dsc.inc
++
++# include common/basic libraries from MdePkg.
++!include MdePkg/MdeLibs.dsc.inc
++
++################################################################################
++#
++# Pcd Section - list of all EDK II PCD Entries defined by this Platform
++#
++################################################################################
++
++[PcdsFixedAtBuild.common]
++  # Verbose Printing
++  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x00000004
++
++  # GIC Base Addresses
++  gArmTokenSpaceGuid.PcdGicDistributorBase|0x20000000
++  gArmTokenSpaceGuid.PcdGicRedistributorsBase|0x20100000
++  gArmSgiTokenSpaceGuid.PcdGicSize|0x200000
++
++  # ARM Cores and Clusters
++  gArmPlatformTokenSpaceGuid.PcdCoreCount|1
++  gArmPlatformTokenSpaceGuid.PcdClusterCount|8
++
++  # Number of chips in the multi-chip package
++  gArmSgiTokenSpaceGuid.PcdChipCount|4
++
++  # IO virtualization block
++  gArmSgiTokenSpaceGuid.PcdIoVirtBlkCountPerChip|2
++
++################################################################################
++#
++# Components Section - list of all EDK II Modules needed by this Platform
++#
++################################################################################
++
++[Components.common]
++  Platform/ARM/SgiPkg/AcpiTables/RdV3R1Cfg1AcpiTables.inf
+diff --git a/Platform/ARM/SgiPkg/RdV3R1Cfg1/RdV3R1Cfg1.fdf.inc b/Platform/ARM/SgiPkg/RdV3R1Cfg1/RdV3R1Cfg1.fdf.inc
+new file mode 100644
+index 000000000000..b0bc59f7af1f
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/RdV3R1Cfg1/RdV3R1Cfg1.fdf.inc
+@@ -0,0 +1,10 @@
++#
++#  Copyright (c) 2024, Arm Limited. All rights reserved.<BR>
++#
++#  SPDX-License-Identifier: BSD-2-Clause-Patent
++#
++
++# Per-platform additional content of the DXE phase firmware volume
++
++  # ACPI support
++  INF RuleOverride=ACPITABLE Platform/ARM/SgiPkg/AcpiTables/RdV3R1Cfg1AcpiTables.inf
+-- 
+2.39.5
+

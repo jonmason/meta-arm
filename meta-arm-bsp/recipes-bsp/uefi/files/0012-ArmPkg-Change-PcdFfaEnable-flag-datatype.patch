@@ -1,0 +1,143 @@
+From 1c2239c534e9b5268bfe046202fca0ccf8891389 Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Fri, 25 Mar 2022 01:31:53 +0000
+Subject: [PATCH 12/43] ArmPkg: Change PcdFfaEnable flag datatype
+
+FeatureFlag type PCD flags are declared by typecasting an integer value
+to BOOLEAN. These flags cannot be use in assembly code as assembler does
+not recognise C primitive types. Change the flag data type from BOOLEAN
+to UINT32.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: I2e24fc1d86c3114742efd4439515c83d27232c47
+---
+ ArmPkg/ArmPkg.dec                                  | 14 +++++++-------
+ .../StandaloneMmMmuLib/ArmMmuStandaloneMmLib.c     |  6 +++---
+ .../StandaloneMmMmuLib/ArmMmuStandaloneMmLib.inf   |  2 +-
+ .../Arm/StandaloneMmCoreEntryPoint.c               |  6 +++---
+ .../StandaloneMmCoreEntryPoint.inf                 |  2 +-
+ 5 files changed, 15 insertions(+), 15 deletions(-)
+
+diff --git a/ArmPkg/ArmPkg.dec b/ArmPkg/ArmPkg.dec
+index 49cbffa5fc81..895b4d6400f4 100644
+--- a/ArmPkg/ArmPkg.dec
++++ b/ArmPkg/ArmPkg.dec
+@@ -146,13 +146,6 @@
+   # hardware coherency (i.e., no virtualization or cache coherent DMA)
+   gArmTokenSpaceGuid.PcdNormalMemoryNonshareableOverride|FALSE|BOOLEAN|0x00000043
+ 
+-[PcdsFeatureFlag.AARCH64, PcdsFeatureFlag.ARM]
+-  ## Used to select method for requesting services from S-EL1.<BR><BR>
+-  #   TRUE  - Selects FF-A calls for communication between S-EL0 and SPMC.<BR>
+-  #   FALSE - Selects SVC calls for communication between S-EL0 and SPMC.<BR>
+-  # @Prompt Enable FF-A support.
+-  gArmTokenSpaceGuid.PcdFfaEnable|FALSE|BOOLEAN|0x0000005B
+-
+ [PcdsFixedAtBuild.common]
+   gArmTokenSpaceGuid.PcdTrustzoneSupport|FALSE|BOOLEAN|0x00000006
+ 
+@@ -229,6 +222,13 @@
+   # If PcdMonitorConduitHvc = TRUE, conduit = HVC
+   gArmTokenSpaceGuid.PcdMonitorConduitHvc|FALSE|BOOLEAN|0x00000047
+ 
++  ## Used to select method for requesting services from S-EL1.<BR><BR>
++  #   1  - Selects FF-A calls for communication between S-EL0 and SPMC.<BR>
++  #   0 - Selects SVC calls for communication between S-EL0 and SPMC.<BR>
++  #   Using unsigned integer as boolean does not work on assembler.
++  # @Prompt Enable FF-A support.
++  gArmTokenSpaceGuid.PcdFfaEnable|0|UINT32|0x0000005B
++
+ [PcdsFixedAtBuild.common, PcdsPatchableInModule.common]
+   gArmTokenSpaceGuid.PcdFdBaseAddress|0|UINT64|0x0000002B
+   gArmTokenSpaceGuid.PcdFvBaseAddress|0|UINT64|0x0000002D
+diff --git a/ArmPkg/Library/StandaloneMmMmuLib/ArmMmuStandaloneMmLib.c b/ArmPkg/Library/StandaloneMmMmuLib/ArmMmuStandaloneMmLib.c
+index d55aff76201e..c119cd873934 100644
+--- a/ArmPkg/Library/StandaloneMmMmuLib/ArmMmuStandaloneMmLib.c
++++ b/ArmPkg/Library/StandaloneMmMmuLib/ArmMmuStandaloneMmLib.c
+@@ -54,7 +54,7 @@ SendMemoryPermissionRequest (
+   }
+ 
+   ArmCallSvc (SvcArgs);
+-  if (FeaturePcdGet (PcdFfaEnable)) {
++  if (FixedPcdGet32 (PcdFfaEnable) != 0) {
+     // Get/Set memory attributes is an atomic call, with
+     // StandaloneMm at S-EL0 being the caller and the SPM
+     // core being the callee. Thus there won't be a
+@@ -163,7 +163,7 @@ GetMemoryPermissions (
+   // Prepare the message parameters.
+   // See [1], Section 13.5.5.1 MM_SP_MEMORY_ATTRIBUTES_GET_AARCH64.
+   ZeroMem (&SvcArgs, sizeof (ARM_SVC_ARGS));
+-  if (FeaturePcdGet (PcdFfaEnable)) {
++  if (FixedPcdGet32 (PcdFfaEnable) != 0) {
+     // See [2], Section 10.2 FFA_MSG_SEND_DIRECT_REQ.
+     SvcArgs.Arg0 = ARM_SVC_ID_FFA_MSG_SEND_DIRECT_REQ;
+     SvcArgs.Arg1 = ARM_FFA_DESTINATION_ENDPOINT_ID;
+@@ -218,7 +218,7 @@ RequestMemoryPermissionChange (
+   // Prepare the message parameters.
+   // See [1], Section 13.5.5.2 MM_SP_MEMORY_ATTRIBUTES_SET_AARCH64.
+   ZeroMem (&SvcArgs, sizeof (ARM_SVC_ARGS));
+-  if (FeaturePcdGet (PcdFfaEnable)) {
++  if (FixedPcdGet32 (PcdFfaEnable) != 0) {
+     // See [2], Section 10.2 FFA_MSG_SEND_DIRECT_REQ.
+     SvcArgs.Arg0 = ARM_SVC_ID_FFA_MSG_SEND_DIRECT_REQ;
+     SvcArgs.Arg1 = ARM_FFA_DESTINATION_ENDPOINT_ID;
+diff --git a/ArmPkg/Library/StandaloneMmMmuLib/ArmMmuStandaloneMmLib.inf b/ArmPkg/Library/StandaloneMmMmuLib/ArmMmuStandaloneMmLib.inf
+index ff20e5898051..7e1baf7680be 100644
+--- a/ArmPkg/Library/StandaloneMmMmuLib/ArmMmuStandaloneMmLib.inf
++++ b/ArmPkg/Library/StandaloneMmMmuLib/ArmMmuStandaloneMmLib.inf
+@@ -23,7 +23,7 @@
+   ArmPkg/ArmPkg.dec
+   MdePkg/MdePkg.dec
+ 
+-[FeaturePcd.ARM, FeaturePcd.AARCH64]
++[FixedPcd]
+   gArmTokenSpaceGuid.PcdFfaEnable
+ 
+ [LibraryClasses]
+diff --git a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
+index 70306be2495e..6c4547b29333 100644
+--- a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
++++ b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
+@@ -152,7 +152,7 @@ DelegatedEventLoop (
+       DEBUG ((DEBUG_ERROR, "UnRecognized Event - 0x%x\n", (UINT32)EventCompleteSvcArgs->Arg0));
+       Status = EFI_INVALID_PARAMETER;
+     } else {
+-      FfaEnabled = FeaturePcdGet (PcdFfaEnable);
++      FfaEnabled = FixedPcdGet32 (PcdFfaEnable) != 0;
+       if (FfaEnabled) {
+         Status = CpuDriverEntryPoint (
+                    EventCompleteSvcArgs->Arg0,
+@@ -238,7 +238,7 @@ GetSpmVersion (
+   UINT32        SpmVersion;
+   ARM_SVC_ARGS  SpmVersionArgs;
+ 
+-  if (FeaturePcdGet (PcdFfaEnable)) {
++  if (FixedPcdGet32 (PcdFfaEnable) != 0) {
+     SpmVersionArgs.Arg0  = ARM_SVC_ID_FFA_VERSION_AARCH32;
+     SpmVersionArgs.Arg1  = mSpmMajorVerFfa << SPM_MAJOR_VER_SHIFT;
+     SpmVersionArgs.Arg1 |= mSpmMinorVerFfa;
+@@ -306,7 +306,7 @@ InitArmSvcArgs (
+   OUT INT32         *Ret
+   )
+ {
+-  if (FeaturePcdGet (PcdFfaEnable)) {
++  if (FixedPcdGet32 (PcdFfaEnable) != 0) {
+     InitMmFoundationSvcArgs->Arg0 = ARM_SVC_ID_FFA_MSG_SEND_DIRECT_RESP;
+     InitMmFoundationSvcArgs->Arg1 = 0;
+     InitMmFoundationSvcArgs->Arg2 = 0;
+diff --git a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/StandaloneMmCoreEntryPoint.inf b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/StandaloneMmCoreEntryPoint.inf
+index d41d7630b614..9928183188fe 100644
+--- a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/StandaloneMmCoreEntryPoint.inf
++++ b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/StandaloneMmCoreEntryPoint.inf
+@@ -51,7 +51,7 @@
+   gEfiStandaloneMmNonSecureBufferGuid
+   gEfiMmCpuDriverEpDescriptorGuid
+ 
+-[FeaturePcd.ARM, FeaturePcd.AARCH64]
++[FixedPcd]
+   gArmTokenSpaceGuid.PcdFfaEnable
+ 
+ #
+-- 
+2.39.5
+

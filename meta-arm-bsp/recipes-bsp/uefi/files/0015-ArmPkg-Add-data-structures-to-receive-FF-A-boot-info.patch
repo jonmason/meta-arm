@@ -1,0 +1,97 @@
+From 14c6f193eee6dfe2e7ae4c7e4bd564746e89fa84 Mon Sep 17 00:00:00 2001
+From: Achin Gupta <achin.gupta@arm.com>
+Date: Tue, 2 Nov 2021 09:49:43 +0000
+Subject: [PATCH 15/43] ArmPkg: Add data structures to receive FF-A boot
+ information
+
+The SPMC will pass the manifest to the StMM SP which contains the boot
+information required for SP initialisation. This patch defines the data
+structures defined in Section 5.4 of the FF-A v1.1 BETA0 spec to enable this
+support. The manifest is identified by the TF-A UUID_TOS_FW_CONFIG.
+
+Signed-off-by: Achin Gupta <achin.gupta@arm.com>
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: I2b4c77b25417720efc59a354c39ed580be262d5f
+---
+ ArmPkg/Include/IndustryStandard/ArmFfaSvc.h | 67 +++++++++++++++++++++
+ 1 file changed, 67 insertions(+)
+
+diff --git a/ArmPkg/Include/IndustryStandard/ArmFfaSvc.h b/ArmPkg/Include/IndustryStandard/ArmFfaSvc.h
+index 4126a4985bb2..03c23b054040 100644
+--- a/ArmPkg/Include/IndustryStandard/ArmFfaSvc.h
++++ b/ArmPkg/Include/IndustryStandard/ArmFfaSvc.h
+@@ -53,4 +53,71 @@
+ // https://github.com/OP-TEE/optee_os/blob/master/core/arch/arm/kernel/stmm_sp.c#L66
+ #define ARM_FFA_DESTINATION_ENDPOINT_ID  3
+ 
++/******************************************************************************
++ * Boot information protocol as per the FF-A v1.1 spec.
++ *****************************************************************************/
++#define FFA_INIT_DESC_SIGNATURE			0x00000FFA
++
++/* Boot information type. */
++#define FFA_BOOT_INFO_TYPE_STD			0x0U
++#define FFA_BOOT_INFO_TYPE_IMPL			0x1U
++
++#define FFA_BOOT_INFO_TYPE_MASK			0x1U
++#define FFA_BOOT_INFO_TYPE_SHIFT		0x7U
++#define FFA_BOOT_INFO_TYPE(type)		\
++	(((type) & FFA_BOOT_INFO_TYPE_MASK)	\
++	<< FFA_BOOT_INFO_TYPE_SHIFT)
++
++/* Boot information identifier. */
++#define FFA_BOOT_INFO_TYPE_ID_FDT		0x0U
++#define FFA_BOOT_INFO_TYPE_ID_HOB		0x1U
++
++#define FFA_BOOT_INFO_TYPE_ID_MASK		0x3FU
++#define FFA_BOOT_INFO_TYPE_ID_SHIFT		0x0U
++#define FFA_BOOT_INFO_TYPE_ID(type)		\
++	(((type) & FFA_BOOT_INFO_TYPE_ID_MASK)	\
++	<< FFA_BOOT_INFO_TYPE_ID_SHIFT)
++
++/* Format of Flags Name field. */
++#define FFA_BOOT_INFO_FLAG_NAME_STRING		0x0U
++#define FFA_BOOT_INFO_FLAG_NAME_UUID		0x1U
++
++#define FFA_BOOT_INFO_FLAG_NAME_MASK		0x3U
++#define FFA_BOOT_INFO_FLAG_NAME_SHIFT		0x0U
++#define FFA_BOOT_INFO_FLAG_NAME(type)		\
++	(((type) & FFA_BOOT_INFO_FLAG_NAME_MASK)\
++	<< FFA_BOOT_INFO_FLAG_NAME_SHIFT)
++
++/* Format of Flags Contents field. */
++#define FFA_BOOT_INFO_FLAG_CONTENT_ADR		0x0U
++#define FFA_BOOT_INFO_FLAG_CONTENT_VAL		0x1U
++
++#define FFA_BOOT_INFO_FLAG_CONTENT_MASK		0x1U
++#define FFA_BOOT_INFO_FLAG_CONTENT_SHIFT	0x2U
++#define FFA_BOOT_INFO_FLAG_CONTENT(content)		\
++	(((content) & FFA_BOOT_INFO_FLAG_CONTENT_MASK)	\
++	<< FFA_BOOT_INFO_FLAG_CONTENT_SHIFT)
++
++// Descriptor to pass boot information as per the FF-A v1.1 spec.
++typedef struct {
++  UINT32 Name[4];
++  UINT8 Type;
++  UINT8 Reserved;
++  UINT16 Flags;
++  UINT32 SizeBotInfo;
++  UINT64 Content;
++} EFI_FFA_BOOT_INFO_DESC;
++
++// Descriptor that contains boot info blobs size, number of desc it cointains
++// size of each descriptor and offset to the first descriptor.
++typedef struct {
++  UINT32 Magic; // 0xFFA^M
++  UINT32 Version;
++  UINT32 SizeBootInfoBlob;
++  UINT32 SizeBootInfoDesc;
++  UINT32 CountBootInfoDesc;
++  UINT32 OffsetBootInfoDesc;
++  UINT64 Reserved;
++} EFI_FFA_BOOT_INFO_HEADER;
++
+ #endif // ARM_FFA_SVC_H_
+-- 
+2.39.5
+

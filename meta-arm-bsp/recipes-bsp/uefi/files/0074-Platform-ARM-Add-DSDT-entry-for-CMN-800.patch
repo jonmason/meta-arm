@@ -1,0 +1,51 @@
+From a0ac619615b879bb16066808eae120df5645ccd4 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Thu, 26 Sep 2024 19:08:42 +0530
+Subject: [PATCH 74/78] Platform/ARM: Add DSDT entry for CMN 800
+
+Add a CRS entry to define CMN base address resource.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: Id56579bca27f790b6901c06a60f7175b23021f68
+---
+ Platform/ARM/SgiPkg/AcpiTables/SsdtRos.asl | 25 ++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
+
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/SsdtRos.asl b/Platform/ARM/SgiPkg/AcpiTables/SsdtRos.asl
+index ab8578072836..2d888a7bde72 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/SsdtRos.asl
++++ b/Platform/ARM/SgiPkg/AcpiTables/SsdtRos.asl
+@@ -78,5 +78,30 @@ DefinitionBlock ("SsdtRosTable.aml", "SSDT", 2, "ARMLTD", "ARMSGI",
+         }
+       })
+     }
++
++    // CMN 800 device
++    Device (CMN8) { // CMN-800 device object for an X * Y mesh where X, Y = 3
++      Name (_HID, "ARMHC800")
++      Name (_UID, Zero)
++      Name (_CRS, ResourceTemplate () {
++        // Descriptor for 1 GB of the CFG region at offset PERIPHBASE
++        QWordMemory (
++          ResourceConsumer,
++          PosDecode,
++          MinFixed,
++          MaxFixed,
++          NonCacheable,
++          ReadWrite,
++          0x00000000,       // Granularity
++          0x100000000,      // Min, set to PERIPHBASE
++          0x13FFFFFFF,      // Max
++          0x000000000,      // Translation
++          0x040000000,      // Range Length 1GB
++          ,                 // ResourceSourceIndex
++          ,                 // ResourceSource
++          CFGM              // DescriptorName
++        )
++      })
++    } // Device(CMN8)
+   } // Scope(_SB)
+ }
+-- 
+2.39.5
+

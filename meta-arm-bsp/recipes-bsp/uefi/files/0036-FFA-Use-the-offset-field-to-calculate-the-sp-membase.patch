@@ -1,0 +1,52 @@
+From 1a574d7239abe44f3ae2c9dfeaf11a03f7f22ce8 Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Tue, 28 Mar 2023 13:19:29 +0000
+Subject: [PATCH 36/43] FFA: Use the offset field to calculate the sp membase
+
+With SPMC at EL2 enabled, StMM is loaded by the SP framework in BL2.
+This framework packages the SP and its manifest into a single package
+image. The package is signed, the information is stored in the header at
+the front, and the SP image comes afterwards. The header size can
+increase in the future and cannot be hardcoded. Add the support to pass
+the SP image offset to avoid using hardcoded values.
+---
+ .../Arm/StandaloneMmCoreEntryPoint.c                | 13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
+index 1eb052ee9507..5f426b1c2972 100644
+--- a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
++++ b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
+@@ -465,6 +465,8 @@ PopulateBootinformation (
+   BOOLEAN FoundNsCommBuffer = FALSE;
+   BOOLEAN FoundSharedBuffer = FALSE;
+   BOOLEAN FoundHeap = FALSE;
++  UINT64 MemBase = 0;
++  UINT32 EntryPointOffset = 0;
+   UINT32 PageSize;
+ 
+   Offset = fdt_node_offset_by_compatible (DtbAddress, -1, "arm,ffa-manifest-1.0");
+@@ -479,11 +481,18 @@ PopulateBootinformation (
+       DtbAddress,
+       Offset,
+       "load-address",
+-      &StmmBootInfo->SpMemBase
+-      );
++      &MemBase);
+   if (Status != EFI_SUCCESS) {
+     return Status;
+   }
++
++  Status = ReadProperty32(
++      DtbAddress,
++      Offset,
++      "entrypoint-offset",
++      &EntryPointOffset);
++
++  StmmBootInfo->SpMemBase = MemBase + EntryPointOffset;
+   DEBUG ((DEBUG_INFO, "sp mem base  = 0x%llx\n", StmmBootInfo->SpMemBase));
+ 
+   Status = ReadProperty64 (
+-- 
+2.39.5
+

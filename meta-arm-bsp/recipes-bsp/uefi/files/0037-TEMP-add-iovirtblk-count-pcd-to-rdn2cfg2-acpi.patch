@@ -1,0 +1,40 @@
+From 156457b07f2f2ea61b88a2c423d12038740bbae1 Mon Sep 17 00:00:00 2001
+From: Vijayenthiran Subramaniam <vijayenthiran.subramaniam@arm.com>
+Date: Wed, 20 Mar 2024 18:43:20 +0530
+Subject: [PATCH 37/78] [TEMP] add iovirtblk count pcd to rdn2cfg2 acpi
+
+Signed-off-by: Vijayenthiran Subramaniam <vijayenthiran.subramaniam@arm.com>
+---
+ Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg2AcpiTables.inf | 1 +
+ Platform/ARM/SgiPkg/RdN2Cfg2/RdN2Cfg2.dsc             | 3 +++
+ 2 files changed, 4 insertions(+)
+
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg2AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg2AcpiTables.inf
+index ad81be29cd42..921d1790b470 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg2AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg2AcpiTables.inf
+@@ -63,6 +63,7 @@
+   gArmSgiTokenSpaceGuid.PcdMaxAddressBitsPerChip
+   gArmSgiTokenSpaceGuid.PcdOscLpiEnable
+   gArmSgiTokenSpaceGuid.PcdOscCppcEnable
++  gArmSgiTokenSpaceGuid.PcdIoVirtBlkCountPerChip
+   gArmSgiTokenSpaceGuid.PcdVirtioBlkBaseAddress
+   gArmSgiTokenSpaceGuid.PcdVirtioBlkSize
+   gArmSgiTokenSpaceGuid.PcdVirtioBlkInterrupt
+diff --git a/Platform/ARM/SgiPkg/RdN2Cfg2/RdN2Cfg2.dsc b/Platform/ARM/SgiPkg/RdN2Cfg2/RdN2Cfg2.dsc
+index 723aef59895f..a5c3bfbfc5ca 100644
+--- a/Platform/ARM/SgiPkg/RdN2Cfg2/RdN2Cfg2.dsc
++++ b/Platform/ARM/SgiPkg/RdN2Cfg2/RdN2Cfg2.dsc
+@@ -48,6 +48,9 @@
+   # Number of chips in the multi-chip package
+   gArmSgiTokenSpaceGuid.PcdChipCount|4
+ 
++  # IO virtualization block
++  gArmSgiTokenSpaceGuid.PcdIoVirtBlkCountPerChip|2
++
+   # Disables FFA
+ !if $(EDK2_ENABLE_FFA) == FALSE
+   gArmTokenSpaceGuid.PcdFfaEnable|0
+-- 
+2.39.5
+

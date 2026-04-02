@@ -1,0 +1,216 @@
+From 819c28d8370f68add5dc5e98d6f559b43bda3f92 Mon Sep 17 00:00:00 2001
+From: Achin Gupta <achin.gupta@arm.com>
+Date: Tue, 2 Nov 2021 10:41:06 +0000
+Subject: [PATCH 19/43] StandaloneMmPkg: Add support to detect FF-A v1.1 in a
+ backwards compatible manner
+
+For better or worse, an StMM SP can communicate with the SPM through one
+of these interfaces.
+
+1. Original TF-A specific interface exported by the SPM
+2. FF-A v1.0 interface
+3. FF-A v1.1 interface
+
+2) implements only minimal FF-A support. It reuses the initialisation ABI
+defined by 1) and wraps the remaining communicaton in
+FFA_MSG_SEND_DIRECT_REQ/RESP ABIs. 3) uses FF-A ABIs from the spec for both
+initialisation and communication.
+
+Detecting these variations in the GetSpmVersion() function is tedious. This
+patch restores the original function that discovered configuration 1). It
+defines a new function to discover presence of FF-A and differentiate between
+v1.0 and v1.1.
+
+Signed-off-by: Achin Gupta <achin.gupta@arm.com>
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: I7e14a434623b5c6da3970df77fc4c8b1142e9ee1
+---
+ .../Arm/StandaloneMmCoreEntryPoint.c          | 132 ++++++++++++------
+ 1 file changed, 87 insertions(+), 45 deletions(-)
+
+diff --git a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
+index 86e4500cc9d3..6a8d833f8320 100644
+--- a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
++++ b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
+@@ -34,13 +34,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
+ #define SPM_MAJOR_VER_MASK   0xFFFF0000
+ #define SPM_MINOR_VER_MASK   0x0000FFFF
+ #define SPM_MAJOR_VER_SHIFT  16
+-#define FFA_NOT_SUPPORTED    -1
+ 
+-STATIC CONST UINT32  mSpmMajorVer = SPM_MAJOR_VERSION;
+-STATIC CONST UINT32  mSpmMinorVer = SPM_MINOR_VERSION;
+-
+-STATIC CONST UINT32  mSpmMajorVerFfa = SPM_MAJOR_VERSION_FFA;
+-STATIC CONST UINT32  mSpmMinorVerFfa = SPM_MINOR_VERSION_FFA;
++#define SPM_MAJOR_VER		  0
++#define SPM_MINOR_VER		  1
+ 
+ #define BOOT_PAYLOAD_VERSION  1
+ 
+@@ -112,6 +108,70 @@ GetAndPrintBootinformation (
+   }
+ 
+   return PayloadBootInfo;
++
++/**
++  An StMM SP implements partial support for FF-A v1.0. The FF-A ABIs are used to
++  get and set permissions of memory pages in collaboration with the SPMC and
++  signalling completion of initialisation. The original Arm MM communication
++  interface is used for communication with the Normal world. A TF-A specific
++  interface is used for initialising the SP.
++
++  With FF-A v1.1, the StMM SP uses only FF-A ABIs for initialisation and
++  communication. This is subject to support for FF-A v1.1 in the SPMC. If this
++  is not the case, the StMM implementation reverts to the FF-A v1.0
++  behaviour. Any of this is applicable only if the feature flag PcdFfaEnable is
++  TRUE.
++
++  This function helps the caller determine whether FF-A v1.1 or v1.0 are
++  available and if only FF-A ABIs can be used at runtime.
++**/
++STATIC
++EFI_STATUS
++CheckFfaCompatibility (BOOLEAN *UseOnlyFfaAbis)
++{
++  UINT16       SpmcMajorVer;
++  UINT16       SpmcMinorVer;
++  UINT32       SpmcVersion;
++  ARM_SVC_ARGS SpmcVersionArgs = {0};
++
++  // Sanity check in case of a spurious call.
++  if (FixedPcdGet32 (PcdFfaEnable) == 0) {
++    return EFI_UNSUPPORTED;
++  }
++
++  // Send the SPMC our version to see whether it supports the same or not.
++  SpmcVersionArgs.Arg0 = ARM_SVC_ID_FFA_VERSION_AARCH32;
++  SpmcVersionArgs.Arg1 = FFA_VERSION_COMPILED;
++
++  ArmCallSvc (&SpmcVersionArgs);
++  SpmcVersion = SpmcVersionArgs.Arg0;
++
++  // If the SPMC barfs then bail.
++  if (SpmcVersion == ARM_FFA_SPM_RET_NOT_SUPPORTED) {
++    return EFI_UNSUPPORTED;
++  }
++
++  // Extract the SPMC version
++  SpmcMajorVer = (SpmcVersion >> FFA_VERSION_MAJOR_SHIFT) & FFA_VERSION_MAJOR_MASK;
++  SpmcMinorVer = (SpmcVersion >> FFA_VERSION_MINOR_SHIFT) & FFA_VERSION_MINOR_MASK;
++
++  // If the major versions differ then all bets are off.
++  if (SpmcMajorVer != SPM_MAJOR_VERSION_FFA) {
++    return EFI_UNSUPPORTED;
++  }
++
++  // We advertised v1.1 as our version. If the SPMC supports it, it must return
++  // the same or a compatible version. If it does not then FF-A ABIs cannot be
++  // used for all communication.
++  if (SpmcMinorVer >= SPM_MINOR_VERSION_FFA) {
++    *UseOnlyFfaAbis = TRUE;
++  } else {
++    *UseOnlyFfaAbis = FALSE;
++  }
++
++  // We have validated that there is a compatible FF-A
++  // implementation. So. return success.
++  return EFI_SUCCESS;
+ }
+ 
+ /**
+@@ -233,34 +293,19 @@ GetSpmVersion (
+   )
+ {
+   EFI_STATUS    Status;
+-  UINT16        CalleeSpmMajorVer;
+-  UINT16        CallerSpmMajorVer;
+-  UINT16        CalleeSpmMinorVer;
+-  UINT16        CallerSpmMinorVer;
++  UINT16        SpmMajorVersion;
++  UINT16        SpmMinorVersion;
+   UINT32        SpmVersion;
+   ARM_SVC_ARGS  SpmVersionArgs;
+ 
+-  if (FixedPcdGet32 (PcdFfaEnable) != 0) {
+-    SpmVersionArgs.Arg0  = ARM_SVC_ID_FFA_VERSION_AARCH32;
+-    SpmVersionArgs.Arg1  = mSpmMajorVerFfa << SPM_MAJOR_VER_SHIFT;
+-    SpmVersionArgs.Arg1 |= mSpmMinorVerFfa;
+-    CallerSpmMajorVer    = mSpmMajorVerFfa;
+-    CallerSpmMinorVer    = mSpmMinorVerFfa;
+-  } else {
+-    SpmVersionArgs.Arg0 = ARM_SVC_ID_SPM_VERSION_AARCH32;
+-    CallerSpmMajorVer   = mSpmMajorVer;
+-    CallerSpmMinorVer   = mSpmMinorVer;
+-  }
++  SpmVersionArgs.Arg0 = ARM_SVC_ID_SPM_VERSION_AARCH32;
+ 
+   ArmCallSvc (&SpmVersionArgs);
+ 
+   SpmVersion = SpmVersionArgs.Arg0;
+-  if (SpmVersion == FFA_NOT_SUPPORTED) {
+-    return EFI_UNSUPPORTED;
+-  }
+ 
+-  CalleeSpmMajorVer = ((SpmVersion & SPM_MAJOR_VER_MASK) >> SPM_MAJOR_VER_SHIFT);
+-  CalleeSpmMinorVer = ((SpmVersion & SPM_MINOR_VER_MASK) >> 0);
++  SpmMajorVersion = ((SpmVersion & SPM_MAJOR_VER_MASK) >> SPM_MAJOR_VER_SHIFT);
++  SpmMinorVersion = ((SpmVersion & SPM_MINOR_VER_MASK) >> 0);
+ 
+   // Different major revision values indicate possibly incompatible functions.
+   // For two revisions, A and B, for which the major revision values are
+@@ -269,25 +314,17 @@ GetSpmVersion (
+   // revision A must work in a compatible way with revision B.
+   // However, it is possible for revision B to have a higher
+   // function count than revision A.
+-  if ((CalleeSpmMajorVer == CallerSpmMajorVer) &&
+-      (CalleeSpmMinorVer >= CallerSpmMinorVer))
+-  {
+-    DEBUG ((
+-      DEBUG_INFO,
+-      "SPM Version: Major=0x%x, Minor=0x%x\n",
+-      CalleeSpmMajorVer,
+-      CalleeSpmMinorVer
+-      ));
++  if ((SpmMajorVersion == SPM_MAJOR_VER) &&
++      (SpmMinorVersion >= SPM_MINOR_VER)) {
++    DEBUG ((DEBUG_INFO, "SPM Version: Major=0x%x, Minor=0x%x\n",
++	          SpmMajorVersion, SpmMinorVersion));
+     Status = EFI_SUCCESS;
+   } else {
+-    DEBUG ((
+-      DEBUG_INFO,
+-      "Incompatible SPM Versions.\n Callee Version: Major=0x%x, Minor=0x%x.\n Caller: Major=0x%x, Minor>=0x%x.\n",
+-      CalleeSpmMajorVer,
+-      CalleeSpmMinorVer,
+-      CallerSpmMajorVer,
+-      CallerSpmMinorVer
+-      ));
++    DEBUG ((DEBUG_INFO, "Incompatible SPM Versions.\n"));
++    DEBUG ((DEBUG_INFO, "Current Version: Major=0x%x, Minor=0x%x.\n",
++            SpmMajorVersion, SpmMinorVersion));
++    DEBUG ((DEBUG_INFO, "Expected: Major=0x%x, Minor>=0x%x.\n",
++            SPM_MAJOR_VER, SPM_MINOR_VER));
+     Status = EFI_UNSUPPORTED;
+   }
+ 
+@@ -349,9 +386,14 @@ ModuleEntryPoint (
+   VOID                            *TeData;
+   UINTN                           TeDataSize;
+   EFI_PHYSICAL_ADDRESS            ImageBase;
++  BOOLEAN                         UseOnlyFfaAbis = FALSE;
+ 
+-  // Get Secure Partition Manager Version Information
+-  Status = GetSpmVersion ();
++  if (FixedPcdGet32 (PcdFfaEnable) != 0) {
++    Status = CheckFfaCompatibility (&UseOnlyFfaAbis);
++  } else {
++    // Get Secure Partition Manager Version Information
++    Status = GetSpmVersion ();
++  }
+   if (EFI_ERROR (Status)) {
+     goto finish;
+   }
+-- 
+2.39.5
+

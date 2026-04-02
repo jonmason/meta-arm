@@ -1,0 +1,35 @@
+From 98e6ebfef807b2331a26a354b10f8a22cfcd06fd Mon Sep 17 00:00:00 2001
+From: Tony Nadackal <tony.nadackal@arm.com>
+Date: Wed, 22 Feb 2023 16:04:16 +0000
+Subject: [PATCH 27/78] Platform/Sgi: enable support for dram size
+ configuration
+
+Allowing build time configuration of DRAM2 size. If the macro
+PLAT_DRAM2_SIZE is defined, during build time it is used to configure
+the PcdDramBlock2Size instead of the default value.
+
+Signed-off-by: Tony Nadackal <tony.nadackal@arm.com>
+Change-Id: I5d14f7c9c5b31b169c84162565e692face4478a0
+---
+ Platform/ARM/SgiPkg/SgiPlatform.dsc.inc | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc b/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+index c8d92420bc8b..4ac097f6fdba 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+@@ -136,7 +136,11 @@
+ 
+   # DRAM Block2 Base and Size
+   gArmSgiTokenSpaceGuid.PcdDramBlock2Base|0x8080000000
++!ifndef $(PLAT_DRAM2_SIZE)
+   gArmSgiTokenSpaceGuid.PcdDramBlock2Size|0x180000000
++!else
++  gArmSgiTokenSpaceGuid.PcdDramBlock2Size|$(PLAT_DRAM2_SIZE)
++!endif
+ 
+ !if $(LPI_EN) == TRUE
+   # Allow use of LPI in the response to _OSC method call
+-- 
+2.39.5
+

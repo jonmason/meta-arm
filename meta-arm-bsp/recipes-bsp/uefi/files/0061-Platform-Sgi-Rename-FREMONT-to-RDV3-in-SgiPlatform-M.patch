@@ -1,0 +1,87 @@
+From 6d2d68975f19364bf7cf1d263545830a31620d9d Mon Sep 17 00:00:00 2001
+From: Lokesh B V <Lokesh.BV@Arm.com>
+Date: Sat, 21 Sep 2024 17:45:59 +0530
+Subject: [PATCH 61/78] Platform/Sgi: Rename FREMONT to RDV3 in SgiPlatform
+ Macro
+
+Renamed FREMONT to RDV3 in SgiPlatform.h and PlatformLibMem.c files.
+
+Signed-off-by: Lokesh B V <Lokesh.BV@Arm.com>
+Signed-off-by: Dhinesh Kumar Balu <dhineshkumar.balu@arm.com>
+Change-Id: I76f1b4e5413dc2d15c32054e5a4de209ef4838ef
+---
+ Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2/Srat.aslc        | 6 +++---
+ Platform/ARM/SgiPkg/Include/SgiPlatform.h                | 4 ++--
+ Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c | 3 +--
+ 3 files changed, 6 insertions(+), 7 deletions(-)
+
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2/Srat.aslc b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2/Srat.aslc
+index 10b709bfff4a..ff59bdc7ffca 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2/Srat.aslc
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2/Srat.aslc
+@@ -58,7 +58,7 @@ EFI_ACPI_STATIC_RESOURCE_AFFINITY_TABLE Srat = {
+       0x1, SYSTEM_MEMORY_BASE_REMOTE(1),
+       FixedPcdGet64 (PcdSystemMemorySize), 0x00000001),
+     EFI_ACPI_6_4_MEMORY_AFFINITY_STRUCTURE_INIT (
+-      0x1, DRAM_BLOCK2_BASE_REMOTE_FREMONT(1),
++      0x1, DRAM_BLOCK2_BASE_REMOTE_RDV3(1),
+       FixedPcdGet64 (PcdDramBlock2Size), 0x00000001),
+ 
+     // Chip 2 (2GB and 6GB)
+@@ -66,7 +66,7 @@ EFI_ACPI_STATIC_RESOURCE_AFFINITY_TABLE Srat = {
+       0x2, SYSTEM_MEMORY_BASE_REMOTE(2),
+       FixedPcdGet64 (PcdSystemMemorySize), 0x00000001),
+     EFI_ACPI_6_4_MEMORY_AFFINITY_STRUCTURE_INIT (
+-      0x2, DRAM_BLOCK2_BASE_REMOTE_FREMONT(2),
++      0x2, DRAM_BLOCK2_BASE_REMOTE_RDV3(2),
+       FixedPcdGet64 (PcdDramBlock2Size), 0x00000001),
+ 
+     // Chip 3 (2GB and 6GB)
+@@ -74,7 +74,7 @@ EFI_ACPI_STATIC_RESOURCE_AFFINITY_TABLE Srat = {
+       0x3, SYSTEM_MEMORY_BASE_REMOTE(3),
+       FixedPcdGet64 (PcdSystemMemorySize), 0x00000001),
+     EFI_ACPI_6_4_MEMORY_AFFINITY_STRUCTURE_INIT(
+-      0x3, DRAM_BLOCK2_BASE_REMOTE_FREMONT(3),
++      0x3, DRAM_BLOCK2_BASE_REMOTE_RDV3(3),
+       FixedPcdGet64 (PcdDramBlock2Size), 0x00000001),
+   },
+   // Processor Affinity
+diff --git a/Platform/ARM/SgiPkg/Include/SgiPlatform.h b/Platform/ARM/SgiPkg/Include/SgiPlatform.h
+index 943c7a68b560..16fca0b9dfa1 100644
+--- a/Platform/ARM/SgiPkg/Include/SgiPlatform.h
++++ b/Platform/ARM/SgiPkg/Include/SgiPlatform.h
+@@ -78,8 +78,8 @@
+ #define SYSTEM_MEMORY_BASE_REMOTE(ChipId) \
+           (SGI_REMOTE_CHIP_MEM_OFFSET (ChipId) + FixedPcdGet64 (PcdSystemMemoryBase))
+ 
+-// Base address of the DRAM2 block in a remote chip for Fremont platform
+-#define DRAM_BLOCK2_BASE_REMOTE_FREMONT(ChipId) ( \
++// Base address of the DRAM2 block in a remote chip for RdV3/RdV3R1 platforms
++#define DRAM_BLOCK2_BASE_REMOTE_RDV3(ChipId) ( \
+           ((1ULL << FixedPcdGet64 (PcdRemoteDramAddressBit)) * (ChipId)) + \
+           FixedPcdGet64 (PcdDramBlock2Base) \
+           )
+diff --git a/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c b/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c
+index 5c78a2fcc776..28031293837e 100644
+--- a/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c
++++ b/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c
+@@ -50,7 +50,7 @@ GetRemoteDram2BaseAddr (
+ 
+   SgiProductIdx = SgiGetProductId();
+   if (SgiProductIdx == RdV3Cfg2)
+-    return DRAM_BLOCK2_BASE_REMOTE_FREMONT(ChipIdx);
++    return DRAM_BLOCK2_BASE_REMOTE_RDV3(ChipIdx);
+ 
+   return DRAM_BLOCK2_BASE_REMOTE(ChipIdx);
+ }
+@@ -90,7 +90,6 @@ ArmPlatformGetVirtualMemoryMap (
+     ResourceAttributes,
+     FixedPcdGet64 (PcdDramBlock2Base),
+     FixedPcdGet64 (PcdDramBlock2Size));
+-
+ #if (FixedPcdGet32 (PcdChipCount) > 1)
+   BuildResourceDescriptorHob (
+      EFI_RESOURCE_SYSTEM_MEMORY,
+-- 
+2.39.5
+

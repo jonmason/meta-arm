@@ -1,0 +1,42 @@
+From 0abfea60b1357da7d0a16de7ab8d4fc9da2e0c45 Mon Sep 17 00:00:00 2001
+From: Achin Gupta <achin.gupta@arm.com>
+Date: Sat, 6 Nov 2021 05:21:15 +0000
+Subject: [PATCH 32/43] ArmPkg: Enable FF-A in DXE MM communication driver
+
+Signed-off-by: Achin Gupta <achin.gupta@arm.com>
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: I923d1f45e0418eda3572955d95cbcc8ceca6bbbe
+---
+ ArmPkg/ArmPkg.dec                                     | 2 +-
+ ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.inf | 3 +++
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/ArmPkg/ArmPkg.dec b/ArmPkg/ArmPkg.dec
+index 895b4d6400f4..daa11c238b9c 100644
+--- a/ArmPkg/ArmPkg.dec
++++ b/ArmPkg/ArmPkg.dec
+@@ -227,7 +227,7 @@
+   #   0 - Selects SVC calls for communication between S-EL0 and SPMC.<BR>
+   #   Using unsigned integer as boolean does not work on assembler.
+   # @Prompt Enable FF-A support.
+-  gArmTokenSpaceGuid.PcdFfaEnable|0|UINT32|0x0000005B
++  gArmTokenSpaceGuid.PcdFfaEnable|1|UINT32|0x0000005B
+ 
+ [PcdsFixedAtBuild.common, PcdsPatchableInModule.common]
+   gArmTokenSpaceGuid.PcdFdBaseAddress|0|UINT64|0x0000002B
+diff --git a/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.inf b/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.inf
+index c15b1a7a86ae..c022c9538852 100644
+--- a/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.inf
++++ b/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.inf
+@@ -55,5 +55,8 @@
+   gArmTokenSpaceGuid.PcdMmBufferBase
+   gArmTokenSpaceGuid.PcdMmBufferSize
+ 
++[FixedPcd]
++  gArmTokenSpaceGuid.PcdFfaEnable
++
+ [Depex]
+   gEfiCpuArchProtocolGuid
+-- 
+2.39.5
+

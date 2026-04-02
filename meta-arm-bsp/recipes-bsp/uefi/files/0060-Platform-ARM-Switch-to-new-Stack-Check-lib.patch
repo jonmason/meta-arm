@@ -1,0 +1,50 @@
+From aecea812e2bfd3ece6c38823a2125aca73b6f521 Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Mon, 23 Sep 2024 14:03:48 +0100
+Subject: [PATCH 60/78] Platform/ARM: Switch to new Stack Check lib
+
+The new stack check lib is compatible with bot MSCV and GCC compilers.
+This lib is replacing the old stack check lib which only worked with
+gcc.
+
+Remove the references to the old stack check lib.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+---
+ Platform/ARM/VExpressPkg/ArmVExpress.dsc.inc      | 5 +++++
+ Platform/ARM/VExpressPkg/PlatformStandaloneMm.dsc | 3 +++
+ 2 files changed, 8 insertions(+)
+
+diff --git a/Platform/ARM/VExpressPkg/ArmVExpress.dsc.inc b/Platform/ARM/VExpressPkg/ArmVExpress.dsc.inc
+index 2cc8bfaa271a..5783e4e02915 100644
+--- a/Platform/ARM/VExpressPkg/ArmVExpress.dsc.inc
++++ b/Platform/ARM/VExpressPkg/ArmVExpress.dsc.inc
+@@ -277,6 +277,11 @@
+ !endif
+   VariablePolicyLib|MdeModulePkg/Library/VariablePolicyLib/VariablePolicyLibRuntimeDxe.inf
+ 
++[LibraryClasses.AARCH64]
++  # Add support for GCC stack protector
++  NULL|MdePkg/Library/StackCheckLibNull/StackCheckLibNull.inf
++  StackCheckfailureHookLib|MdePkg/Library/StackCheckFailureHookLibNull/StackCheckFailureHookLibNull.inf
++
+ [BuildOptions]
+   GCC:RELEASE_*_*_CC_FLAGS  = -DMDEPKG_NDEBUG
+ 
+diff --git a/Platform/ARM/VExpressPkg/PlatformStandaloneMm.dsc b/Platform/ARM/VExpressPkg/PlatformStandaloneMm.dsc
+index 31f7819751ea..f2294e805032 100644
+--- a/Platform/ARM/VExpressPkg/PlatformStandaloneMm.dsc
++++ b/Platform/ARM/VExpressPkg/PlatformStandaloneMm.dsc
+@@ -85,6 +85,9 @@
+   PeCoffExtraActionLib|StandaloneMmPkg/Library/StandaloneMmPeCoffExtraActionLib/StandaloneMmPeCoffExtraActionLib.inf
+ 
+   NULL|MdePkg/Library/StackCheckLibNull/StackCheckLibNull.inf
++  StackCheckfailureHookLib|MdePkg/Library/StackCheckFailureHookLibNull/StackCheckFailureHookLibNull.inf
++
++  NULL|MdePkg/Library/StackCheckLibNull/StackCheckLibNull.inf
+ 
+ [LibraryClasses.common.MM_CORE_STANDALONE]
+   HobLib|StandaloneMmPkg/Library/StandaloneMmCoreHobLib/StandaloneMmCoreHobLib.inf
+-- 
+2.39.5
+

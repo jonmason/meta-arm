@@ -1,0 +1,146 @@
+From f5aee4985f044f716e1683b44ee755bc1f8ee813 Mon Sep 17 00:00:00 2001
+From: Vivek Gautam <vivek.gautam@arm.com>
+Date: Mon, 9 Aug 2021 18:52:08 +0530
+Subject: [PATCH 29/78] Platform/Sgi: add helper macros for acpi table
+ generation
+
+Add helper macros for generation of the MCFG, SSDT and IORT ACPI table.
+The macro EFI_ACPI_SMMUv3_ID_TABLE_INIT simplifies the addition of the
+SMMUv3 ID remapping table in the IORT table. The macro
+EFI_ACPI_PCI_RC_ECAM_INIT describes the location of the PCI Express
+configuration space in the MCFG ACPI table. The macro
+EFI_ACPI_PCI_RC_INIT simplifies the addition of the root complex entry
+in the SSDT ACPI table.
+
+Signed-off-by: Vivek Gautam <vivek.gautam@arm.com>
+Signed-off-by: Vijayenthiran Subramaniam <vijayenthiran.subramaniam@arm.com>
+Change-Id: Ic1b57cd1047d8940adc7909c33d57ffd728998f3
+---
+ Platform/ARM/SgiPkg/Include/SgiAcpiHeader.h | 113 ++++++++++++++++++++
+ 1 file changed, 113 insertions(+)
+
+diff --git a/Platform/ARM/SgiPkg/Include/SgiAcpiHeader.h b/Platform/ARM/SgiPkg/Include/SgiAcpiHeader.h
+index b95468b4b5eb..1ae15ae41c84 100644
+--- a/Platform/ARM/SgiPkg/Include/SgiAcpiHeader.h
++++ b/Platform/ARM/SgiPkg/Include/SgiAcpiHeader.h
+@@ -546,4 +546,117 @@ typedef struct {
+     1               /* Processors */                                           \
+   }
+ 
++// Helper macro for SMMUv3 ID remapping table
++#define EFI_ACPI_SMMUv3_ID_TABLE_INIT(BaseStreamId, NumIds, ItsNodeIdx)        \
++   {                                                                           \
++     BaseStreamId,                             /* InputBase */                 \
++     NumIds,                                   /* NumIds */                    \
++     BaseStreamId,                             /* OutputBase */                \
++     OFFSET_OF (ARM_EFI_ACPI_6_0_IO_REMAPPING_TABLE,                           \
++       ItsNode ##ItsNodeIdx),                  /* OutputReference */           \
++     0,                                        /* Flags */                     \
++   }
++
++// PCI Root Complex for SSDT
++#define EFI_ACPI_PCI_RC_INIT(PciIndex, SegNum, BusStart, BusEnd, BusLength,    \
++    MmiolStart, MmiolEnd, MmiolSize, MmiohStart, MmiohEnd, MmiohSize,          \
++    EcamStart, EcamEnd, EcamSize)                                              \
++    Device (PCI##PciIndex) {                                                   \
++      Name (_HID, EISAID("PNP0A08"))  /* PCI Express Root Bridge */            \
++      Name (_CID, EISAID("PNP0A03"))  /* Compatible PCI Root Bridge */         \
++      Name (_SEG, SegNum)             /* PCI Segment Group Number */           \
++      Name (_BBN, BusStart)           /* PCI Base Bus Number */                \
++      Name (_ADR, Zero)                                                        \
++      Name (_UID, PciIndex)           /* Unique ID */                          \
++      Name (_CCA, 1)                  /* Cache Coherency Attribute */          \
++                                                                               \
++      Method (_CRS, 0, Serialized) {                                           \
++        Name (RBUF, ResourceTemplate () {                                      \
++          WordBusNumber (                                                      \
++            ResourceProducer,                                                  \
++            MinFixed,                                                          \
++            MaxFixed,                                                          \
++            PosDecode,                                                         \
++            0,                                                                 \
++            BusStart,                                                          \
++            BusEnd,                                                            \
++            0,                                                                 \
++            BusLength                                                          \
++          )                                                                    \
++                                                                               \
++          DWordMemory (                                                        \
++            ResourceProducer,                                                  \
++            PosDecode,                                                         \
++            MinFixed,                                                          \
++            MaxFixed,                                                          \
++            Cacheable,                                                         \
++            ReadWrite,                                                         \
++            0x00000000,                                                        \
++            MmiolStart,                                                        \
++            MmiolEnd,                                                          \
++            0x00000000,                                                        \
++            MmiolSize                                                          \
++          )                                                                    \
++                                                                               \
++          QWordMemory (                                                        \
++            ResourceProducer,                                                  \
++            PosDecode,                                                         \
++            MinFixed,                                                          \
++            MaxFixed,                                                          \
++            Cacheable,                                                         \
++            ReadWrite,                                                         \
++            0x00000000,                                                        \
++            MmiohStart,                                                        \
++            MmiohEnd,                                                          \
++            0x00000000,                                                        \
++            MmiohSize                                                          \
++          )                                                                    \
++                                                                               \
++          DWordIo (                                                            \
++            ResourceProducer,                                                  \
++            MinFixed,                                                          \
++            MaxFixed,                                                          \
++            PosDecode,                                                         \
++            EntireRange,                                                       \
++            0x00000000,                                                        \
++            0x00000000,                                                        \
++            0x007FFFFF,                                                        \
++            0x77800000,                                                        \
++            0x00800000,                                                        \
++            ,                                                                  \
++            ,                                                                  \
++            ,                                                                  \
++            TypeTranslation                                                    \
++          )                                                                    \
++        })                                                                     \
++                                                                               \
++        Return (RBUF)                                                          \
++      } /* Method(_CRS) */                                                     \
++                                                                               \
++      Device (RES0)                                                            \
++      {                                                                        \
++        Name (_HID, "PNP0C02" /* PNP Motherboard Resources */)                 \
++        Name (_CRS, ResourceTemplate ()                                        \
++        {                                                                      \
++           QWordMemory (                                                       \
++             ResourceProducer,                                                 \
++             PosDecode,                                                        \
++             MinFixed,                                                         \
++             MaxFixed,                                                         \
++             NonCacheable,                                                     \
++             ReadWrite,                                                        \
++             0x0000000000000000,                                               \
++             EcamStart,                                                        \
++             EcamEnd,                                                          \
++             0x0000000000000000,                                               \
++             EcamSize,                                                         \
++             ,                                                                 \
++             ,                                                                 \
++             ,                                                                 \
++             AddressRangeMemory,                                               \
++             TypeStatic)                                                       \
++        })                                                                     \
++      }                                                                        \
++  }
++
+ #endif /* __SGI_ACPI_HEADER__ */
+-- 
+2.39.5
+

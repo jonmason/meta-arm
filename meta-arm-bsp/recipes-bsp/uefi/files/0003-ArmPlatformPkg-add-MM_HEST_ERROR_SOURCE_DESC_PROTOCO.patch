@@ -1,0 +1,108 @@
+From 4f420060b6ea30b1fea030196d3d29ae1ac0dcab Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Fri, 5 Jun 2020 16:08:41 +0530
+Subject: [PATCH 03/43] ArmPlatformPkg: add MM_HEST_ERROR_SOURCE_DESC_PROTOCOL
+ protocol
+
+Add the protocol definition of the MM_HEST_ERROR_SOURCE_DESC_PROTOCOL
+protocol. This protocol can be implemented by MM drivers to publish
+error source descriptors that have to be populated into HEST table.
+
+Co-authored-by: Thomas Abraham <thomas.abraham@arm.com>
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I8fc5538cf2a5cba1707929fa4c7660649ccee7c2
+---
+ ArmPlatformPkg/ArmPlatformPkg.dec             |  3 +
+ .../Protocol/MmHestErrorSourceProtocol.h      | 69 +++++++++++++++++++
+ 2 files changed, 72 insertions(+)
+ create mode 100644 ArmPlatformPkg/Include/Protocol/MmHestErrorSourceProtocol.h
+
+diff --git a/ArmPlatformPkg/ArmPlatformPkg.dec b/ArmPlatformPkg/ArmPlatformPkg.dec
+index e8be550a8aa7..8cc799b32c71 100644
+--- a/ArmPlatformPkg/ArmPlatformPkg.dec
++++ b/ArmPlatformPkg/ArmPlatformPkg.dec
+@@ -119,3 +119,6 @@
+   gArmPlatformTokenSpaceGuid.PcdPL031RtcPpmAccuracy|300000000|UINT32|0x00000022
+ 
+   gArmPlatformTokenSpaceGuid.PcdWatchdogCount|0x0|UINT32|0x00000033
++
++[Protocols.common]
++  gMmHestErrorSourceDescProtocolGuid = { 0x560bf236, 0xa4a8, 0x4d69, { 0xbc, 0xf6, 0xc2, 0x97, 0x24, 0x10, 0x9d, 0x91 } }
+diff --git a/ArmPlatformPkg/Include/Protocol/MmHestErrorSourceProtocol.h b/ArmPlatformPkg/Include/Protocol/MmHestErrorSourceProtocol.h
+new file mode 100644
+index 000000000000..31be2a856bba
+--- /dev/null
++++ b/ArmPlatformPkg/Include/Protocol/MmHestErrorSourceProtocol.h
+@@ -0,0 +1,69 @@
++/** @file
++  MM protocol to get the error source descriptor information from standalone MM.
++
++  MM Drivers must implement this protocol in order to publish error source
++  descriptor information to OSPM through the HEST ACPI table.
++
++  Copyright (c) 2020 - 2021, ARM Limited. All rights reserved.
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++**/
++
++#ifndef MM_HEST_ERROR_SOURCE_DESC_PROTOCOL_H_
++#define MM_HEST_ERROR_SOURCE_DESC_PROTOCOL_H_
++
++#define MM_HEST_ERROR_SOURCE_DESC_PROTOCOL_GUID \
++  { \
++    0x560bf236, 0xa4a8, 0x4d69, { 0xbc, 0xf6, 0xc2, 0x97, 0x24, 0x10, 0x9d, 0x91 } \
++  }
++
++typedef struct MmHestErrorSourceDescProtocol
++                 EDKII_MM_HEST_ERROR_SOURCE_DESC_PROTOCOL;
++
++/**
++  Get HEST Error Source Descriptors from Standalone MM.
++
++  The MM drivers implementing this protocol must convey the total count and
++  total length of the error sources the driver has along with the actual error
++  source descriptor(s).
++
++  Calling this protocol with Buffer parameter set to NULL shall return
++  EFI_BUFFER_TOO_SMALL with the total length and count of the error source
++  descriptor(s) it supports. So the caller can allocate Buffer of sufficient
++  size and call again.
++
++  @param[in]     This                EDKII_MM_HEST_ERROR_SOURCE_DESC_PROTOCOL
++                                     instance.
++  @param[out]    Buffer              Buffer to be appended with the error
++                                     source descriptors information.
++  @param[in,out] ErrorSourcesLength  Total length of all the error source
++                                     descriptors.
++  @param[in,out] ErrorSourceCount    Count of total error source descriptors
++                                     supported by the driver.
++
++  @retval EFI_SUCCESS            If the Buffer is valid and is filled with valid
++                                 Error Source descriptor data.
++  @retval EFI_BUFFER_TOO_SMALL   Buffer is NULL.
++  @retval EFI_INVALID_PARAMETER  ErrorSourcesLength or ErrorSourcesCount is
++                                 NULL.
++  @retval Other                  If no error source descriptor information is
++                                 available.
++**/
++typedef
++EFI_STATUS
++(EFIAPI *EDKII_MM_HEST_GET_ERROR_SOURCE_DESCRIPTORS) (
++  IN      EDKII_MM_HEST_ERROR_SOURCE_DESC_PROTOCOL *This,
++  OUT     VOID                                     **Buffer,
++  IN  OUT UINTN                                    *ErrorSourcesLength,
++  IN  OUT UINTN                                    *ErrorSourcesCount
++  );
++
++//
++// Protocol declaration.
++//
++struct MmHestErrorSourceDescProtocol {
++  EDKII_MM_HEST_GET_ERROR_SOURCE_DESCRIPTORS GetHestErrorSourceDescriptors;
++};
++
++extern EFI_GUID gMmHestErrorSourceDescProtocolGuid;
++
++#endif // MM_HEST_ERROR_SOURCE_DESC_PROTOCOL_H_
+-- 
+2.39.5
+

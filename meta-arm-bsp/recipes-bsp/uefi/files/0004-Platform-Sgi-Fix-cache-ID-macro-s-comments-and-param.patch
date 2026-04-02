@@ -1,0 +1,49 @@
+From 057fd68c97d036d7ec1e1e860ccadd902f04f93b Mon Sep 17 00:00:00 2001
+From: Rohit Mathew <rohit.mathew@arm.com>
+Date: Tue, 13 Sep 2022 22:28:32 +0100
+Subject: [PATCH 04/78] Platform/Sgi: Fix cache ID macro's comments and params
+
+For computing cache ID, the package ID, clusted ID and cpu IDs are used.
+For a private cache, cluster and cpu ID could be zero or non-zero.
+cluster or cpu ID being zero indicates the first (as cluster or cpu
+numbering starts from 0 to n-1, where n is the count of clusters or
+cpus) block of cluster or cpu respectively. Fix the comments stating
+that cpu and cluster ID being zero indicates a shared cache. Instead,
+'-1' is to be passed for cluster and cpu ID for shared caches.
+
+Additionally, update the macro's CoreId parameter to CpuId to match the
+description in the comments.
+
+Signed-off-by: Rohit Mathew <rohit.mathew@arm.com>
+Change-Id: I935ef51e06a3696da171f2775e2d03e5562913a5
+---
+ Platform/ARM/SgiPkg/Include/SgiAcpiHeader.h | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/Platform/ARM/SgiPkg/Include/SgiAcpiHeader.h b/Platform/ARM/SgiPkg/Include/SgiAcpiHeader.h
+index 73bc5ccbb1f2..b95468b4b5eb 100644
+--- a/Platform/ARM/SgiPkg/Include/SgiAcpiHeader.h
++++ b/Platform/ARM/SgiPkg/Include/SgiAcpiHeader.h
+@@ -203,15 +203,15 @@ typedef struct {
+   calculation is not based on any specification.
+ 
+   @param [in] PackageId Package instance number.
+-  @param [in] ClusterId Cluster instance number (for Cluster cache, 0 otherwise)
+-  @param [in] CpuId     CPU instance number (for CPU cache, 0 otherwise).
++  @param [in] ClusterId Cluster instance number (for Cluster cache, -1 otherwise)
++  @param [in] CpuId     CPU instance number (for CPU cache, -1 otherwise)
+   @param [in] CacheType Identifier for cache type as defined by
+                         RD_PPTT_CACHE_TYPE.
+ **/
+-#define RD_PPTT_CACHE_ID(PackageId, ClusterId, CoreId, CacheType)              \
++#define RD_PPTT_CACHE_ID(PackageId, ClusterId, CpuId, CacheType)               \
+     (                                                                          \
+       (((PackageId) & 0xF) << 20) | (((ClusterId) & 0xFF) << 12) |             \
+-      (((CoreId) & 0xFF) << 4) | ((CacheType) & 0xF)                           \
++      (((CpuId) & 0xFF) << 4) | ((CacheType) & 0xF)                           \
+     )
+ 
+ // A macro to initialise the common header part of EFI ACPI tables as defined by
+-- 
+2.39.5
+

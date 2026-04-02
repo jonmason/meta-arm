@@ -1,0 +1,942 @@
+From 7eb77bb7dc6436459646437696de108bcc948185 Mon Sep 17 00:00:00 2001
+From: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Date: Thu, 8 Sep 2022 12:15:12 +0530
+Subject: [PATCH 45/78] Platform/ARM: add CXL driver
+
+This patch introduces CXL Dxe, which primarily discovers a PCIe device
+with CXL capability and configures the same.
+
+This patch creates and registers event notifier based on
+gEfiPciEnumerationCompleteProtocolGuid. Once PCIe enumeration is
+completed then CXL Dxe triggers function to discover CXL capable device
+with memory expander capability and reads out memory range details.
+
+In addition to find out a PCIe device with CXL Mem extended capability,
+the module also looks for CXL device with DOE capability. Once DOE
+capability is found, then execute DOE operation to fetch CDAT
+structures(DSMAS), which carry information about CXL Device Memory
+range, type of memory etc. It stores the remote CXL memory details in
+local data structure.
+
+Later it installs CXL Protocol interface, which will trigger
+AcpiTableGenerator module to fetch CXL memory details using CXL protocol
+interfaces for preparation of ACPI tables.
+
+Signed-off-by: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Change-Id: I612ed13b6a6bdb27d8ed4ced87f72a33dbbcc4b4
+---
+ Platform/ARM/Drivers/CxlDxe/CxlDxe.c   | 575 +++++++++++++++++++++++++
+ Platform/ARM/Drivers/CxlDxe/CxlDxe.dec |  21 +
+ Platform/ARM/Drivers/CxlDxe/CxlDxe.h   | 163 +++++++
+ Platform/ARM/Drivers/CxlDxe/CxlDxe.inf |  49 +++
+ Platform/ARM/Include/Protocol/Cxl.h    |  62 +++
+ 5 files changed, 870 insertions(+)
+ create mode 100644 Platform/ARM/Drivers/CxlDxe/CxlDxe.c
+ create mode 100644 Platform/ARM/Drivers/CxlDxe/CxlDxe.dec
+ create mode 100644 Platform/ARM/Drivers/CxlDxe/CxlDxe.h
+ create mode 100644 Platform/ARM/Drivers/CxlDxe/CxlDxe.inf
+ create mode 100644 Platform/ARM/Include/Protocol/Cxl.h
+
+diff --git a/Platform/ARM/Drivers/CxlDxe/CxlDxe.c b/Platform/ARM/Drivers/CxlDxe/CxlDxe.c
+new file mode 100644
+index 000000000000..5a055ca066d5
+--- /dev/null
++++ b/Platform/ARM/Drivers/CxlDxe/CxlDxe.c
+@@ -0,0 +1,575 @@
++/** @file
++  Discovers CXL capable device and reads out device capabilities.
++
++  This driver locates PciIo Protocol and discovers PCIe devices with CXL.Mem
++  capability. If a device with CXL.Mem capability is found then DOE capability
++  is looked for. Once DOE capability is found, CDAT structures are fetched from
++  the respective device.
++  It also installs CXL Platform portocol, which can be used by other
++  Platform drivers for capturing remote memory configurations and attributes.
++
++  Copyright (c) 2022, Arm Limited. All rights reserved.<BR>
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++
++  @par Specification Reference:
++    - CXL Specificiation Revision 3.0, Version 0.7, Chapter 8.1.11
++**/
++
++#include <Library/BaseLib.h>
++#include <Library/BaseMemoryLib.h>
++#include <Library/DebugLib.h>
++#include <Library/MemoryAllocationLib.h>
++#include <Library/UefiBootServicesTableLib.h>
++#include <Library/UefiLib.h>
++#include <Protocol/Cxl.h>
++#include <Protocol/PciIo.h>
++#include <IndustryStandard/Pci.h>
++#include <IndustryStandard/Pci22.h>
++
++#include "CxlDxe.h"
++
++STATIC  EFI_EVENT     CxlEvent;
++VOID                  *mPciRegistration;
++STATIC  UINT32        RemoteMemCount;
++//TODO: For now considered maximum 5 remote memory ranges.
++//      In future it will be made dynamic.
++STATIC  REMOTE_MEMORY_CONFIG    RemoteMemConfig[5];
++
++/**
++  Check whether device is ready to receive new data through DOE request.
++
++  @param[in] Pci      PCI IO Protocol handle.
++  @param[in] DoeBase  Base offset of DOE status registers in PCIe device
++                      config space.
++
++  @retval  EFI_SUCCESS   Successful read operation.
++  @retval  Other         Device not ready or failed to check device status.
++**/
++STATIC
++EFI_STATUS
++IsDoeBusy (
++  IN EFI_PCI_IO_PROTOCOL    *Pci,
++  IN UINT32                 DoeBase
++  )
++{
++  EFI_STATUS  Status;
++  UINT32      DoeStatVal;
++
++  Status = Pci->Pci.Read (Pci, EfiPciIoWidthUint32, DoeBase, 1, &DoeStatVal);
++  if (EFI_ERROR (Status))
++    return Status;
++
++  if (DoeStatVal & DOE_STAT_DOE_BUSY)
++    return EFI_ALREADY_STARTED;
++
++  return Status;
++}
++
++/**
++  Read out CDAT structure data for host memory configuration.
++
++  From the DOE response data, various CDAT structure data are filtered out
++  for host platform configuration.
++
++  @param[in]  DoeRespCdatDat    Response data from DOE operation.
++  @param[in]  Length            DOE response data length in bytes.
++**/
++STATIC
++VOID
++UpdateCdatData (
++  IN UINT32 *DoeRespCdatData,
++  IN UINT16 Length
++  )
++{
++    UINT32      Index;
++    CDAT_DSMAS  *Dsmas;
++
++    // Skipping the CDAT header.
++    Index = CDAT_TABLE_HEADER_SIZE;
++
++    while (Index < Length) {
++      switch (DoeRespCdatData[Index] & 0xff) {
++      case CDAT_STRUCTURE_DSMAS:
++        Dsmas = (CDAT_DSMAS *)(& (DoeRespCdatData [Index]));
++        RemoteMemConfig[RemoteMemCount].DpaAddress = Dsmas->DpaBase;
++        RemoteMemConfig[RemoteMemCount].DpaLength = Dsmas->DpaLength;
++        RemoteMemCount ++;
++        Index += CDAT_STRUCTURE_DSMAS_SIZE;
++        break;
++      default:
++        break;
++      }
++    }
++
++  return;
++}
++
++/**
++  Receive DOE response.
++
++  For CXL, DOE responses carry CDAT structures that hold information about
++  remote memory ranges and associated attributes.
++  System firmware polls the Data Object Ready bit and, provided it is Set, reads
++  data from the DOE Read Data Mailbox and writes 1 to the DOE Read Data Mailbox
++  to indicate a successful read.In the read process, a DWORD is read at a time.
++  Data Object Header2 holds number of DW to be transferred for capturing the
++  entire DOE response.
++
++  @param[in]  Pci          PCI IO Protocol handle.
++  @param[in]  DoeBase      Base offset of DOE registers in PCIe device config
++                           space.
++  @param[out] EntryHandle  Value of next entry in table. For CXL, table type
++                           is CDAT.
++
++  @retval  EFI_SUCCESS     Successful receiving of DOE response.
++  @retval  Other           Failed receiving of DOE response.
++**/
++STATIC
++EFI_STATUS
++DoeReceiveResponse (
++  IN EFI_PCI_IO_PROTOCOL   *Pci,
++  IN UINT32                DoeBase,
++  OUT UINT16               *EntryHandle
++  )
++{
++  EFI_STATUS  Status;
++  UINT32      DoeReadMbData = 1;
++  UINT32      DoeRespCdatData[TOTAL_CDAT_ENTRY] = {};
++  UINT32      DoeStat;
++  UINT32      Index = 0;
++  UINT16      Length;
++  UINT64      Reg;
++  UINT32      Val;
++
++  Reg = DoeBase + DOE_STATUS_REG;
++  Status = Pci->Pci.Read ( Pci, EfiPciIoWidthUint32, Reg, 1, &DoeStat);
++  if (EFI_ERROR (Status))
++    return Status;
++
++  if ((DoeStat & DOE_STAT_DATA_OBJ_READY) != 0) {
++    Index = 0;
++    Reg = DoeBase + DOE_READ_DATA_MAILBOX_REG;
++
++    // Read the DOE header.
++    Status = Pci->Pci.Read (Pci, EfiPciIoWidthUint32, Reg, 1, &Val);
++    if (EFI_ERROR (Status))
++      return Status;
++
++    // Write 1 to DOE Read Data Mailbox to indicate successful Read.
++    Status = Pci->Pci.Write (Pci, EfiPciIoWidthUint32, Reg, 1, &DoeReadMbData);
++    if (EFI_ERROR (Status))
++      return Status;
++
++    // Read the DOE Header 2 for data length.
++    Status = Pci->Pci.Read (Pci, EfiPciIoWidthUint32, Reg, 1, &Val);
++    if (EFI_ERROR (Status))
++      return Status;
++
++    Length = Val & DOE_DATA_OBJECT_LENGTH;
++    if (Length < 2) {
++      DEBUG ((DEBUG_ERROR, " DOE data read error\n"));
++      return EFI_PROTOCOL_ERROR;
++    }
++
++    // Write 1 to DOE Read Data Mailbox to indicate successful Read.
++    Status = Pci->Pci.Write (Pci, EfiPciIoWidthUint32, Reg, 1, &DoeReadMbData);
++    if (EFI_ERROR (Status))
++      return Status;
++
++    // Read DOE read entry response header.
++    Status = Pci->Pci.Read (Pci, EfiPciIoWidthUint32, Reg, 1, &Val);
++    if (EFI_ERROR (Status))
++      return Status;
++
++    *EntryHandle = ((Val & CXL_DOE_TABLE_ENTRY_HANDLE) >> 16);
++    // Write 1 to DOE Read Data Mailbox to indicate successful Read.
++    Status = Pci->Pci.Write (Pci, EfiPciIoWidthUint32, Reg, 1, &DoeReadMbData);
++    if (EFI_ERROR (Status))
++      return Status;
++
++    // Discount the length of 2DW DOE Header and 1DW Read entry response
++    Length -= 3;
++    while (Index < Length) {
++      Status = Pci->Pci.Read (Pci, EfiPciIoWidthUint32, Reg, 1, &Val);
++      if (EFI_ERROR (Status))
++        return Status;
++
++      DoeRespCdatData[Index] = Val;
++      Index++;
++      // Write 1 to DOE Read Data Mailbox to indicate successful Read.
++      Status = Pci->Pci.Write (
++                          Pci,
++                          EfiPciIoWidthUint32,
++                          Reg,
++                          1,
++                          &DoeReadMbData
++                          );
++      if (EFI_ERROR (Status))
++        return Status;
++    }
++
++    UpdateCdatData (DoeRespCdatData, Length);
++  }
++
++  return Status;
++}
++
++/**
++  Make DOE request to fetch CDAT structures and receive DOE response.
++
++  This function requests for DOE objects and receives response for the same.
++  The steps include -
++  1. System firmware checks that the DOE Busy bit is Clear.
++  2. System firmware writes entire data object a DWORD(4 Bytes) at a time via
++     DOE Write Data Mailbox register.
++  3. System firmware writes 1b to the DOE Go bit.
++  4. The DOE instance consumes the DOE request from the DOE mailbox.
++  5. The DOE instance generates a DOE Response and Sets Data Object Ready bit.
++  6. System firmware polls the Data Object Ready bit and, provided it is Set,
++     reads data from the DOE Read Data Mailbox and writes 1 to the DOE Read
++     Data Mailbox to indicate a successful read, a DWORD at a time until the
++     entire DOE Response is read.
++  7: DOE requests are made until response for last CDAT table entry is received.
++
++  @param[in] Pci      PCI IO Protocol handle.
++  @param[in] DoeBase  Base offset of DOE registers in PCIe device config space.
++
++  @retval  EFI_SUCCESS   Successful DOE request and response receive.
++  @retval  Other         Failed DOE request or response receive.
++**/
++STATIC
++EFI_STATUS
++SendDoeCommand (
++  IN EFI_PCI_IO_PROTOCOL   *Pci,
++  IN UINT32                DoeBase
++  )
++{
++  EFI_STATUS               Status;
++  UINT32                   Val;
++  UINT64                   Reg;
++  CXL_CDAT_READ_ENTRY_REQ  CxlDoeReq;
++  UINT32                   Index = 0;
++
++  // CDAT DOE Request header & Read entry request object.
++  CxlDoeReq.Header.VendorId = DVSEC_CXL_VENDOR_ID;
++  CxlDoeReq.Header.DataObjType = DOE_DATA_OBJ_TYPE_CDAT;
++  CxlDoeReq.Header.Length = CDAT_READ_ENTRY_REQ_SIZE;
++
++  // 0 indicates that it's a read request.
++  CxlDoeReq.ReqCode = 0;
++
++  // 0 indicates that table type is CDAT.
++  CxlDoeReq.TableType = 0;
++
++  // 0 represents very first entry in the table.
++  CxlDoeReq.EntryHandle = 0;
++
++  Reg = DoeBase + DOE_WRITE_DATA_MAILBOX_REG;
++
++  do {
++    Status = IsDoeBusy (Pci, DoeBase + DOE_STATUS_REG);
++
++    if (EFI_ERROR (Status)) {
++      DEBUG ((DEBUG_WARN, "Device busy or DOE request can't be made\n"));
++      return Status;
++    }
++
++    while (Index < CDAT_READ_ENTRY_REQ_SIZE) {
++      Val = *((UINT32 *) (&CxlDoeReq) + Index);
++      Status = Pci->Pci.Write (Pci, EfiPciIoWidthUint32, Reg, 1, &Val);
++      if (EFI_ERROR (Status)) {
++        DEBUG ((DEBUG_WARN, "Error while making DOE request\n"));
++        return Status;
++      }
++      Index++;
++    }
++
++    Reg = DoeBase + DOE_CONTROL_REG;
++    Status = Pci->Pci.Read (Pci, EfiPciIoWidthUint32, Reg, 1, &Val);
++    if (EFI_ERROR (Status)) {
++      DEBUG ((DEBUG_WARN, "Error while reading DOE control reg\n"));
++      return Status;
++    }
++
++    Val |= DOE_CTRL_DOE_GO;
++    Status = Pci->Pci.Write (Pci, EfiPciIoWidthUint32, Reg, 1, &Val);
++    if (EFI_ERROR (Status)) {
++      DEBUG ((DEBUG_WARN, "Error while writing into DOE control reg\n"));
++      return Status;
++    }
++
++    Status = DoeReceiveResponse (Pci, DoeBase, &CxlDoeReq.EntryHandle);
++    if (EFI_ERROR (Status)) {
++      DEBUG ((DEBUG_WARN, "Error while receiving DOE response\n"));
++      return Status;
++    }
++  } while (CxlDoeReq.EntryHandle < CXL_DOE_TABLE_ENTRY_HANDLE_LAST);
++
++  return Status;
++}
++
++/**
++  Return number of remote memory nodes discovered from CXL Mem devices.
++
++  @retval UINT32   Number of supported remote memory nodes
++**/
++STATIC UINT32 EFIAPI CxlGetRemoteMemCount (VOID)
++{
++  return RemoteMemCount;
++}
++
++/**
++  Update Remote memory information
++
++  Update the Remote memory details, Base address and Length, for number of
++  Remote memory nodes discovered from the CXL devices. If the update request
++  for number of memory nodes is more than discovered remote memory nodes number,
++  then MemCount is modified to number of discovered remote memory nodes.
++
++  @param[out] RemoteMem    Array for updating Remote memory config.
++  @param[in,out] MemCount  Number of supported remote memory nodes.
++
++  @retval EFI_SUCCES    Memory is updated successfully
++**/
++STATIC
++EFI_STATUS
++EFIAPI
++CxlGetRemoteMem (
++  OUT REMOTE_MEMORY_CONFIG  *RemoteMemInfo,
++  IN OUT UINT32  *MemCount
++  )
++{
++
++  if ((*MemCount) > RemoteMemCount) {
++    DEBUG ((DEBUG_WARN, "Requested for more than max. Remote Memory node\n"));
++    *MemCount = RemoteMemCount;
++  }
++
++  CopyMem (
++    RemoteMemInfo,
++    RemoteMemConfig,
++    sizeof (REMOTE_MEMORY_CONFIG) * (*MemCount)
++    );
++
++  return EFI_SUCCESS;
++}
++
++/**
++  Installs the CXL platform protocol.
++
++  CXL platform protocol has interfaces for providing CXL mem device
++  configurations. A Platform driver can fetch such configurations
++  using these protocl interfaces.
++
++  @retval EFI_SUCCESS  On successful installation of protocol interfaces.
++  @retval Other        On failure of protocol installation.
++**/
++STATIC
++EFI_STATUS
++CxlInstallProtocol (VOID)
++{
++  EFI_STATUS                 Status;
++  EFI_HANDLE                 *CxlPlatformHandle;
++  CXL_PLATFORM_PROTOCOL      *CxlPlatformProtocol;
++  STATIC  BOOLEAN            CxlProtocolInstalled = FALSE;
++
++  if (CxlProtocolInstalled == TRUE) {
++    DEBUG ((DEBUG_INFO, "Protocol already installed. \n"));
++    return EFI_SUCCESS;
++  }
++
++  CxlPlatformHandle = (EFI_HANDLE *) AllocateZeroPool (sizeof(EFI_HANDLE));
++
++  CxlPlatformProtocol =
++    (CXL_PLATFORM_PROTOCOL *) AllocateZeroPool (sizeof(CXL_PLATFORM_PROTOCOL));
++
++  if (!CxlPlatformProtocol) {
++    DEBUG ((
++      DEBUG_ERROR,
++      "CxlInstallProtocol: Failed to allocate memory for CxlPlatformProtocol\n"
++      ));
++    return EFI_OUT_OF_RESOURCES;
++  }
++
++  CxlPlatformProtocol->CxlGetRemoteMem = CxlGetRemoteMem;
++  CxlPlatformProtocol->CxlGetRemoteMemCount = CxlGetRemoteMemCount;
++
++  Status = gBS->InstallProtocolInterface (
++                  CxlPlatformHandle,
++                  &gCxlPlatformProtocolGuid,
++                  EFI_NATIVE_INTERFACE,
++                  CxlPlatformProtocol
++                  );
++
++  if (EFI_ERROR(Status)) {
++    DEBUG ((
++      DEBUG_ERROR,
++      "CxlInstallProtocol: Failed to install CxlPlatformProtocol: 0x%08x\n",
++      Status
++      ));
++
++    return Status;
++  }
++
++  CxlProtocolInstalled = TRUE;
++
++  DEBUG ((DEBUG_INFO, "Installed protocol: %p\n", CxlPlatformProtocol));
++  return EFI_SUCCESS;
++}
++
++VOID
++EFIAPI
++PciBusEvent (
++  IN EFI_EVENT    Event,
++  IN VOID*        Context
++  )
++{
++
++  EFI_STATUS               Status;
++  EFI_PCI_IO_PROTOCOL      *Pci;
++  UINTN                    Seg, Bus, Dev, Func;
++  EFI_HANDLE               *HandleBuffer;
++  UINTN                    HandleCount, Index;
++  UINT32                   ExtCapOffset, NextExtCapOffset;
++  UINT32                   NextDoeExtCapOffset;
++  UINT32                   PcieExtCapAndDvsecHeader[3];
++  UINT32                   PcieExtCapHeader;
++
++  Status = gBS->LocateHandleBuffer (
++                  ByProtocol,
++                  &gEfiPciIoProtocolGuid,
++                  NULL,
++                  &HandleCount,
++                  &HandleBuffer
++                  );
++  if (EFI_ERROR(Status)) {
++    DEBUG ((DEBUG_ERROR, "Failed to locate any PciIo protocols\n"));
++    return;
++  }
++
++  for (Index = 0; Index < HandleCount; Index++) {
++    Status = gBS->HandleProtocol (
++                    HandleBuffer[Index],
++                    &gEfiPciIoProtocolGuid,
++                    (VOID **)&Pci
++                    );
++    if (EFI_ERROR (Status)) {
++      DEBUG ((DEBUG_ERROR, "Failed to get Pci handle\n"));
++      return;
++    }
++
++    Pci->GetLocation (Pci, &Seg, &Bus, &Dev, &Func);
++    NextExtCapOffset = PCIE_EXTENDED_CAP_OFFSET;
++
++    do {
++      ExtCapOffset = NextExtCapOffset;
++      Status = Pci->Pci.Read (
++                          Pci,
++                          EfiPciIoWidthUint32,
++                          ExtCapOffset,
++                          PCIE_DVSEC_HEADER_MAX,
++                          PcieExtCapAndDvsecHeader
++                          );
++      if (EFI_ERROR (Status)) {
++        DEBUG ((DEBUG_ERROR, "Failed to read PCI IO for Ext. capability\n"));
++        return;
++      }
++
++      /* Check whether this is a CXL device */
++      if (IS_CXL_DVSEC (PcieExtCapAndDvsecHeader[PCIE_DVSEC_HEADER_1])) {
++        DEBUG ((DEBUG_INFO, "Found CXL Device\n"));
++
++        NextDoeExtCapOffset = PCIE_EXTENDED_CAP_OFFSET;
++        do {
++          ExtCapOffset = NextDoeExtCapOffset;
++          Status = Pci->Pci.Read (
++                              Pci,
++                              EfiPciIoWidthUint32,
++                              ExtCapOffset,
++                              1,
++                              &PcieExtCapHeader
++                              );
++          if (EFI_ERROR (Status)) {
++            DEBUG ((DEBUG_ERROR, "Failed to read PCI Ext. capability\n"));
++            return;
++          }
++
++          if (IS_DOE_SUPPORTED (PcieExtCapHeader)) {
++            DEBUG ((DEBUG_INFO, "Found DOE Capability\n"));
++            Status = SendDoeCommand (Pci, ExtCapOffset);
++
++            if (EFI_ERROR (Status)) {
++              DEBUG ((DEBUG_WARN, "Not Found DOE Capability\n"));
++            } else {
++              Status = CxlInstallProtocol();
++              if (EFI_ERROR (Status))
++                return;
++            }
++
++            NextExtCapOffset = 0;
++            break;
++          }
++
++          NextDoeExtCapOffset = PCIE_EXTENDED_CAP_NEXT (PcieExtCapHeader);
++        } while(NextDoeExtCapOffset);
++      }
++
++      if (NextExtCapOffset == 0)
++        break;
++
++      NextExtCapOffset = PCIE_EXTENDED_CAP_NEXT (
++                           PcieExtCapAndDvsecHeader[PCIE_EXT_CAP_HEADER]
++                           );
++
++    } while (NextExtCapOffset);
++  }
++
++  gBS->CloseEvent (CxlEvent);
++  CxlEvent = NULL;
++
++  return;
++}
++
++/**
++  Entry point for CXL DXE.
++
++  This Dxe depends on gEfiPciEnumerationCompleteProtocolGuid. It locates
++  PciIo Protocol and discovers PCIe devices with CXL.Mem capability. If a
++  device with CXL.Mem capability is found then DOE capability is looked for.
++  After that, CXL.Mem device configurations are fetched, and thereafter CXL
++  Platform portocol is installed.
++
++  @param[in] ImageHandle  Handle to the Efi image.
++  @param[in] SystemTable  A pointer to the Efi System Table.
++
++  @retval EFI_SUCCESS  On successful execution of mentioned functionlities.
++  @retval Other        On failure.
++**/
++EFI_STATUS
++EFIAPI
++CxlDxeEntryPoint (
++  IN EFI_HANDLE         ImageHandle,
++  IN EFI_SYSTEM_TABLE   *SystemTable
++  )
++{
++  EFI_STATUS               Status;
++
++  Status = gBS->CreateEvent (
++                  EVT_NOTIFY_SIGNAL,
++                  TPL_CALLBACK,
++                  PciBusEvent,
++                  NULL,
++                  &CxlEvent
++                  );
++
++  //
++  // Register for protocol notifications on this event
++  //
++  Status = gBS->RegisterProtocolNotify (
++                  &gEfiPciEnumerationCompleteProtocolGuid,
++                  CxlEvent,
++                  &mPciRegistration
++                  );
++
++  return Status;
++}
+diff --git a/Platform/ARM/Drivers/CxlDxe/CxlDxe.dec b/Platform/ARM/Drivers/CxlDxe/CxlDxe.dec
+new file mode 100644
+index 000000000000..d2ebc5ca6148
+--- /dev/null
++++ b/Platform/ARM/Drivers/CxlDxe/CxlDxe.dec
+@@ -0,0 +1,21 @@
++#/** @file
++#
++# Copyright (c) 2022, Arm Limited. All rights reserved.
++# SPDX-License-Identifier: BSD-2-Clause-Patent
++#
++#**/
++
++[Defines]
++  DEC_SPECIFICATION              = 0x0001001B
++  PACKAGE_NAME                   = CxlDxe
++  PACKAGE_GUID                   = cbeba70a-4351-4ff6-a074-6854337b39be
++  PACKAGE_VERSION                = 0.1
++
++[Guids.common]
++  gArmRemoteCxlMemDescriptorGuid = { 0x29e54f5e, 0x365a, 0x4235, { 0xba, 0x62, 0xc8, 0x32, 0xd7, 0x66, 0x08, 0x52 } }
++
++[Protocols]
++  gCxlPlatformProtocolGuid = { 0x88c7bb9c, 0x6175, 0x4bfb, { 0x96, 0x40, 0xd2, 0x53, 0xd3, 0xd8, 0x7c, 0x17 } }
++
++[Includes.common]
++  Platform/ARM/Include
+diff --git a/Platform/ARM/Drivers/CxlDxe/CxlDxe.h b/Platform/ARM/Drivers/CxlDxe/CxlDxe.h
+new file mode 100644
+index 000000000000..bd8e46935bfc
+--- /dev/null
++++ b/Platform/ARM/Drivers/CxlDxe/CxlDxe.h
+@@ -0,0 +1,163 @@
++/** @file
++  CXL driver file.
++
++  Defines CXL specific structures and macros.
++
++  Copyright (c) 2022, Arm Limited. All rights reserved.<BR>
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++
++  @par Specification Reference:
++    - CXL Specificiation Revision 3.0, Version 0.7
++**/
++
++#ifndef CXL_DXE_H_
++#define CXL_DXE_H_
++
++#define PCIE_EXTENDED_CAP_OFFSET             0x100
++#define PCIE_EXTENDED_CAP_ID_MASK            0xFFFF
++#define PCIE_EXTENDED_NEXT_CAP_OFFSET_MASK   0xFFF
++#define PCIE_EXTENDED_NEXT_CAP_OFFSET_SHIFT  20
++
++#define PCIE_EXT_CAP_DOE_ID                  0x2E
++
++#define PCIE_EXTENDED_CAP_NEXT(n)  ((n)>>(PCIE_EXTENDED_NEXT_CAP_OFFSET_SHIFT))
++#define IS_CXL_DVSEC(n) (((n)&(0xFFFF)) == 0x1E98)
++
++#define DOE_DATA_OBJECT_VID                  0x0000ffff
++#define DOE_DATA_OBJECT_TYPE                 0x00ff0000
++#define DOE_DATA_OBJECT_LENGTH               0x0003ffff
++
++#define CXL_DOE_TABLE_ENTRY_HANDLE           0xffff0000
++
++#define CXL_DOE_TABLE_ENTRY_HANDLE_LAST      0xffff
++
++#define DVSEC_CXL_VENDOR_ID                  0x1E98
++
++#define DOE_DATA_OBJ_HEADER_1                0x0
++#define DOE_DATA_OBJ_HEADER_2                0x4
++
++#define DOE_CAPABILITIES_REG                 0x4
++#define DOE_CONTROL_REG                      0x8
++#define DOE_STATUS_REG                       0xC
++#define DOE_WRITE_DATA_MAILBOX_REG           0x10
++#define DOE_READ_DATA_MAILBOX_REG            0x14
++
++#define DOE_STAT_DOE_BUSY                    0x1
++#define DOE_STAT_DATA_OBJ_READY              ((0x1) << 31)
++#define DOE_CTRL_DOE_GO                      ((0x1) << 31)
++
++#define IS_DOE_SUPPORTED(n)  \
++  (((n)&(PCIE_EXTENDED_CAP_ID_MASK))==(PCIE_EXT_CAP_DOE_ID))
++
++typedef enum {
++  PCIE_EXT_CAP_HEADER,
++  PCIE_DVSEC_HEADER_1,
++  PCIE_DVSEC_HEADER_2,
++  PCIE_DVSEC_HEADER_MAX
++} PCIE_DVSEC_HEADER_ENUM;
++
++/**
++  * Data Object Header
++  *
++  * Data Object Exchange(DOE) Header1 and Header2 put together.
++  * Reference taken from PCI-SIG ECN and
++  * CXL Specification (Revision 3.0, Version 0.7).
++**/
++typedef struct {
++  UINT16  VendorId;
++  UINT8   DataObjType;
++  UINT8   Reserved;
++  UINT32  Length;
++} DOE_HEADER;
++
++#define DOE_DATA_OBJ_TYPE_COMPLIANCE   0x0
++#define DOE_DATA_OBJ_TYPE_CDAT         0x2
++
++/**
++  * DOE read request data
++  *
++  * DOE read request data structure. For CXL DOE requests are made
++  * to read CDAT tables.
++  * Reference taken from CXL Specification (Revision 3.0, Version 0.7).
++**/
++typedef struct {
++  DOE_HEADER  Header;
++  UINT8       ReqCode;
++  UINT8       TableType;
++  UINT16      EntryHandle;
++} CXL_CDAT_READ_ENTRY_REQ;
++
++#define CXL_CDAT_DOE_ENTRYHANDLE_LAST_ENTRY  0xFFFF
++
++/* Size in DW(4 Bytes) */
++#define CDAT_READ_ENTRY_REQ_SIZE    3
++
++/**
++  * DOE read response data
++  *
++  * DOE read response data structure. For CXL, DOE responses hold
++  * information about CDAT tables.
++  * Reference taken from CXL Specification (Revision 3.0, Version 0.7).
++**/
++typedef struct {
++  DOE_HEADER  Header;
++  UINT8       RspCode;
++  UINT8       TableType;
++  UINT16      EntryHandle;
++  UINT32      CdatTable[32];
++} CXL_CDAT_READ_ENTRY_RESP;
++
++/* Size in DW(4 Bytes) */
++#define CDAT_READ_ENTRY_RESP_SIZE    3
++
++/**
++  * Coherent Device Attribute Table(CDAT) Header
++  *
++  * CDAT header, which is followed by variable number of CDAT structures.
++  * Reference taken from CDAT Specification (Revision 1.02).
++**/
++typedef struct {
++  UINT32  Length;
++  UINT8   Revision;
++  UINT8   Checksum;
++  UINT8   Reserved[6];
++  UINT32  Sequence;
++} CDAT_TABLE_HEADER;
++
++/* Size in DW(4 Bytes) */
++#define CDAT_TABLE_HEADER_SIZE    4
++
++/* Total CDAT table size. It can be increased further. */
++#define TOTAL_CDAT_ENTRY          24
++
++/**
++  * Device Scoped Memory Affinity Structure (DSMAS)
++  *
++  * DSMAS returns Device Physical Address(DPA) range and it's attributes.
++  * Reference taken from CDAT Specification (Revision 1.02).
++**/
++typedef struct {
++  UINT8   Type;
++  UINT8   Reserved_1;
++  UINT16  Length;
++  UINT8   DsmadHandle;
++  UINT8   Flags;
++  UINT16  Reserved_2;
++  UINT64  DpaBase;
++  UINT64  DpaLength;
++} CDAT_DSMAS;
++
++/* Size in DW(4 Bytes) */
++#define CDAT_STRUCTURE_DSMAS_SIZE   6
++
++typedef enum {
++  CDAT_STRUCTURE_DSMAS,
++  CDAT_STRUCTURE_DSLBIS,
++  CDAT_STRUCTURE_DSMSCIS,
++  CDAT_STRUCTURE_DSIS,
++  CDAT_STRUCTURE_DSEMTS,
++  CDAT_STRUCTURE_SSLBIS,
++  CDAT_STRUCTURE_COUNT
++} CDAT_STRUCTURE_TYPE;
++
++#endif /* CXL_DXE_H_ */
+diff --git a/Platform/ARM/Drivers/CxlDxe/CxlDxe.inf b/Platform/ARM/Drivers/CxlDxe/CxlDxe.inf
+new file mode 100644
+index 000000000000..c56e3b488466
+--- /dev/null
++++ b/Platform/ARM/Drivers/CxlDxe/CxlDxe.inf
+@@ -0,0 +1,49 @@
++## @file
++#  Discovers CXL capable device and reads out device properties.
++#
++#  Copyright (c) 2022, Arm Limited. All rights reserved.<BR>
++#  SPDX-License-Identifier: BSD-2-Clause-Patent
++##
++
++[Defines]
++  INF_VERSION                    = 0x0001001B
++  BASE_NAME                      = CxlDxe
++  FILE_GUID                      = 29e54f5e-365a-4235-ba62-c832d7660852
++  MODULE_TYPE                    = DXE_DRIVER
++  VERSION_STRING                 = 1.0
++  ENTRY_POINT                    = CxlDxeEntryPoint
++
++[Sources.common]
++  CxlDxe.c
++
++[Guids]
++  gArmRemoteCxlMemDescriptorGuid
++
++[Packages]
++  EmbeddedPkg/EmbeddedPkg.dec
++  MdeModulePkg/MdeModulePkg.dec
++  MdePkg/MdePkg.dec
++  ArmPkg/ArmPkg.dec
++  Platform/ARM/ARM.dec
++  Platform/ARM/Drivers/CxlDxe/CxlDxe.dec
++
++[LibraryClasses]
++  ArmMmuLib
++  ArmLib
++  BaseLib
++  DebugLib
++  DevicePathLib
++  DxeServicesTableLib
++  PcdLib
++  UefiBootServicesTableLib
++  UefiRuntimeServicesTableLib
++  UefiLib
++  UefiDriverEntryPoint
++
++[Protocols]
++  gEfiPciIoProtocolGuid      ##CONSUMES
++  gCxlPlatformProtocolGuid   ## PRODUCES
++  gEfiPciEnumerationCompleteProtocolGuid
++
++[Depex]
++  TRUE
+diff --git a/Platform/ARM/Include/Protocol/Cxl.h b/Platform/ARM/Include/Protocol/Cxl.h
+new file mode 100644
+index 000000000000..0250a0ba47fa
+--- /dev/null
++++ b/Platform/ARM/Include/Protocol/Cxl.h
+@@ -0,0 +1,62 @@
++/** @file
++  Interface API of CXL Platform protocol.
++
++  Declares the CXL Platform protocol interfaces, which are used by other
++  platform drivers for collecting information regarding discovered remote
++  memory nodes.
++
++  Copyright (c) 2022, Arm Limited. All rights reserved.<BR>
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++**/
++
++#ifndef CXL_H_
++#define CXL_H_
++
++/** Remote memory details
++  *
++  *  Remote memory region address in device address space and length of the
++  *  region. These informations are passed using ACPI tables, where addressbase
++  *  will be mapped to Host system address space.
++**/
++typedef struct {
++  UINT64  DpaAddress;      /// Remote memory base in device address space
++  UINT64  DpaLength;       /// Remote memory length lower bytes
++} REMOTE_MEMORY_CONFIG;
++
++/**
++  Update Remote memory information
++
++  Update the Remote memory details, Base address and Length, for number of
++  Remote memory nodes discovered from the CXL devices.
++
++  @param[out] RemoteMem    Array for updating Remote memory config.
++  @param[in,out] MemCount  Number of supported remote memory nodes.
++
++  @retval EFI_SUCCES    Memory is updated successfully
++**/
++typedef
++EFI_STATUS
++(EFIAPI *CXL_GET_REMOTE_MEM) (
++  OUT REMOTE_MEMORY_CONFIG  *RemoteMem,
++  IN OUT UINT32   *MemCount
++  );
++
++/**
++  Return number of remote memory nodes discovered from CXL Mem devices.
++
++  @retval UINT32    Number of supported remote memory nodes.
++**/
++typedef UINT32 (EFIAPI *CXL_GET_REMOTE_MEM_COUNT) (VOID);
++
++/**
++  * CXL Platform Protocol
++  *
++  * This protocol enables platform drivers to get number of memory range count
++  * and associated memory configurations.
++**/
++typedef struct {
++  CXL_GET_REMOTE_MEM CxlGetRemoteMem;
++  CXL_GET_REMOTE_MEM_COUNT CxlGetRemoteMemCount;
++} CXL_PLATFORM_PROTOCOL;
++
++#endif /* CXL_H_ */
+-- 
+2.39.5
+

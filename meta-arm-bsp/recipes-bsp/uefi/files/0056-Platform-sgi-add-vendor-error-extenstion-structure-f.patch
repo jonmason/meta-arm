@@ -1,0 +1,141 @@
+From fa3490d9d16969937f049540039f7337f64e72b1 Mon Sep 17 00:00:00 2001
+From: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Date: Thu, 11 Jan 2024 23:25:35 +0530
+Subject: [PATCH 56/78] Platform/sgi: add vendor error extenstion structure for
+ RAS einj
+
+Vendor error extenstion structure allows platform to define a vendor
+specific and OEM defined error injection mechanism.
+
+In this patch, ACPI defined set_error_type_with_address and
+vendor_error_type_extension structures are placed at designated memory area.
+In addition, at the end of vendor_error_type_extension structure, at the
+place of OEM_defined_structure an uint32 variable is placed to classify
+various OEM specific injection operations.
+
+Necessary PCDs are defined.
+
+Signed-off-by: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Signed-off-by: Glen Yeldho <glen.yeldho@arm.com>
+Change-Id: Iadc0cd5667fa6f54ededa79376902145c4e34497
+---
+ .../AcpiTables/RdN2Cfg1AcpiTablesRas.inf      |  1 +
+ .../SgiPkg/AcpiTables/RdV3Cfg1AcpiTables.inf  |  2 +-
+ .../PlatformErrorHandlerDxe.c                 | 28 ++++++++++++++++++-
+ .../PlatformErrorHandlerDxe.inf               |  1 +
+ .../PlatformErrorHandlerDxeRas.inf            |  1 +
+ Platform/ARM/SgiPkg/SgiPlatform.dec           |  3 ++
+ 6 files changed, 34 insertions(+), 2 deletions(-)
+
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesRas.inf b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesRas.inf
+index b7f1019f2c0f..f36576d97d75 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesRas.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesRas.inf
+@@ -93,3 +93,4 @@
+   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+ 
+   gArmSgiTokenSpaceGuid.PcdEinjTriggerActionBase
++  gArmSgiTokenSpaceGuid.PcdEinjSetErrorTypeAddress
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1AcpiTables.inf
+index 4d36c3f6476e..1f5295d82df3 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1AcpiTables.inf
+@@ -78,4 +78,4 @@
+   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+ 
+   gArmSgiTokenSpaceGuid.PcdEinjTriggerActionBase
+-
++  gArmSgiTokenSpaceGuid.PcdEinjSetErrorTypeAddress
+diff --git a/Platform/ARM/SgiPkg/Drivers/PlatformErrorHandlerDxe/PlatformErrorHandlerDxe.c b/Platform/ARM/SgiPkg/Drivers/PlatformErrorHandlerDxe/PlatformErrorHandlerDxe.c
+index 395253c36a10..aae48d67bbc1 100644
+--- a/Platform/ARM/SgiPkg/Drivers/PlatformErrorHandlerDxe/PlatformErrorHandlerDxe.c
++++ b/Platform/ARM/SgiPkg/Drivers/PlatformErrorHandlerDxe/PlatformErrorHandlerDxe.c
+@@ -28,6 +28,9 @@
+ #define GICD_BASE       (0x30000000 + 0x10000)
+ #define GICD_SETSPI_NSR (0x0040)
+ 
++#define ALIGN_UP(num, align)    (((num) + ((align) - 1)) & ~((align) - 1))
++#define ALIGN_NEXT_64(x) ALIGN_UP(x,0x8)
++
+ typedef struct {
+   EFI_ACPI_6_4_EINJ_TRIGGER_ACTION_TABLE        TriggerErrorHeader;
+   EFI_ACPI_6_4_EINJ_INJECTION_INSTRUCTION_ENTRY ErrorInstructionEntry[EINJ_TRIGGER_ERROR_ACTION_NO];
+@@ -48,6 +51,13 @@ InitializeEinjTable (
+   VOID
+   )
+ {
++  UINT64  StartAddr, AddrOffset,VendorOffset;
++  StartAddr = FixedPcdGet64 (PcdEinjSetErrorTypeAddress);
++
++  EFI_ACPI_6_4_SET_ERROR_TYPE_WITH_ADDRESS   *SetErrorTypeWithAddr =
++    (EFI_ACPI_6_4_SET_ERROR_TYPE_WITH_ADDRESS *)StartAddr;
++
++  EFI_ACPI_6_4_VENDOR_ERROR_TYPE_EXTENSION_STRUCTURE *VendorStructure;
+   // Check if EINJ feature is enabled for the platform.
+   if (!FeaturePcdGet (PcdEinjSupported)) {
+     return;
+@@ -60,7 +70,23 @@ InitializeEinjTable (
+     0
+     );
+ 
+-  // Populate Trigger Action table.
++  /**
++    SET_ERROR_TYPE_WITH_ADDRESS Data Structure is of size 0x24.
++    VendorStructureOffset has the Offset value pointing to the start address
++    of Vendor Error Type Extension Structure.ALIGN_NEXT_64 will give next 64bit
++    aligned offset.
++  **/
++  VendorOffset = ALIGN_NEXT_64(sizeof(EFI_ACPI_6_4_VENDOR_ERROR_TYPE_EXTENSION_STRUCTURE));
++  AddrOffset = ALIGN_NEXT_64(sizeof(EFI_ACPI_6_4_SET_ERROR_TYPE_WITH_ADDRESS));
++
++  SetErrorTypeWithAddr->VendorStructureOffset = AddrOffset;
++  VendorStructure = (EFI_ACPI_6_4_VENDOR_ERROR_TYPE_EXTENSION_STRUCTURE *) (StartAddr + AddrOffset);
++
++  // Using an UINT32 variable at the end of Vendor error type extension structure
++  // as OEM defined structure.
++  VendorStructure->Length = VendorOffset + (sizeof (UINT32));
++
++  /*Trigger Action table for Firmware First Error injetion */
+   EINJ_TRIGGER_ERROR_ACTION *mEinjTriggerErrorAction =
+     (EINJ_TRIGGER_ERROR_ACTION*) FixedPcdGet64 (PcdEinjTriggerActionBase);
+ 
+diff --git a/Platform/ARM/SgiPkg/Drivers/PlatformErrorHandlerDxe/PlatformErrorHandlerDxe.inf b/Platform/ARM/SgiPkg/Drivers/PlatformErrorHandlerDxe/PlatformErrorHandlerDxe.inf
+index aafb08e0e163..a037fd43a657 100644
+--- a/Platform/ARM/SgiPkg/Drivers/PlatformErrorHandlerDxe/PlatformErrorHandlerDxe.inf
++++ b/Platform/ARM/SgiPkg/Drivers/PlatformErrorHandlerDxe/PlatformErrorHandlerDxe.inf
+@@ -45,6 +45,7 @@
+   gArmSgiTokenSpaceGuid.PcdEinjInstBufferBase
+   gArmSgiTokenSpaceGuid.PcdEinjInstBufferSize
+   gArmSgiTokenSpaceGuid.PcdEinjTriggerActionBase
++  gArmSgiTokenSpaceGuid.PcdEinjSetErrorTypeAddress
+ 
+   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultCreatorId
+   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultCreatorRevision
+diff --git a/Platform/ARM/SgiPkg/Drivers/PlatformErrorHandlerDxe/PlatformErrorHandlerDxeRas.inf b/Platform/ARM/SgiPkg/Drivers/PlatformErrorHandlerDxe/PlatformErrorHandlerDxeRas.inf
+index add8b9dbf099..c730b7dbd7de 100644
+--- a/Platform/ARM/SgiPkg/Drivers/PlatformErrorHandlerDxe/PlatformErrorHandlerDxeRas.inf
++++ b/Platform/ARM/SgiPkg/Drivers/PlatformErrorHandlerDxe/PlatformErrorHandlerDxeRas.inf
+@@ -45,6 +45,7 @@
+   gArmSgiTokenSpaceGuid.PcdEinjInstBufferBase
+   gArmSgiTokenSpaceGuid.PcdEinjInstBufferSize
+   gArmSgiTokenSpaceGuid.PcdEinjTriggerActionBase
++  gArmSgiTokenSpaceGuid.PcdEinjSetErrorTypeAddress
+ 
+   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultCreatorId
+   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultCreatorRevision
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.dec b/Platform/ARM/SgiPkg/SgiPlatform.dec
+index b10def40afaa..0adeafee3886 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatform.dec
++++ b/Platform/ARM/SgiPkg/SgiPlatform.dec
+@@ -136,5 +136,8 @@
+   gArmSgiTokenSpaceGuid.PcdRemoteMemoryBase|0|UINT64|0x00001007
+   gArmSgiTokenSpaceGuid.PcdRemoteMemorySize|0|UINT64|0x00001008
+ 
++  # EINJ Set error type with address
++  gArmSgiTokenSpaceGuid.PcdEinjSetErrorTypeAddress|0x00000000|UINT64|0x00001009
++
+ [Ppis]
+   gNtFwConfigDtInfoPpiGuid     = { 0x6f606eb3, 0x9123, 0x4e15, { 0xa8, 0x9b, 0x0f, 0xac, 0x66, 0xef, 0xd0, 0x17 } }
+-- 
+2.39.5
+

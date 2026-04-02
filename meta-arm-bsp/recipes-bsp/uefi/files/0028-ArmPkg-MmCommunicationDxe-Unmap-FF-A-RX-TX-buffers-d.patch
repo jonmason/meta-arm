@@ -1,0 +1,97 @@
+From 22ecb82883e5cb6a77d765b0fd44e2281a8a103c Mon Sep 17 00:00:00 2001
+From: Achin Gupta <achin.gupta@arm.com>
+Date: Sat, 6 Nov 2021 06:01:41 +0000
+Subject: [PATCH 28/43] ArmPkg/MmCommunicationDxe: Unmap FF-A RX/TX buffers
+ during ExitBootServices
+
+An FF-A partition can map only a single RX/TX buffer pair with the
+framework. The DXE MM communication driver maps its pair before
+ExitBootServices is called. The OS cannot re-use this pair once it boots
+subsequently and loads its own FF-A driver. This patch ensures that the
+DXE MM communication driver unmaps its buffer pair when ExitBootServices
+is called so that the OS can register its own pair if required.
+
+Signed-off-by: Achin Gupta <achin.gupta@arm.com>
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: I3e9de6e57e01bea8e8bb806164ac52763c0daab3
+---
+ .../MmCommunicationDxe/MmCommunication.c      | 49 +++++++++++++++++++
+ 1 file changed, 49 insertions(+)
+
+diff --git a/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.c b/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.c
+index 311307ed1520..caeb6f36c938 100644
+--- a/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.c
++++ b/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.c
+@@ -43,6 +43,9 @@ STATIC ARM_MEMORY_REGION_DESCRIPTOR  mNsCommBuffMemRegion;
+ // Notification event when virtual address map is set.
+ STATIC EFI_EVENT  mSetVirtualAddressMapEvent;
+ 
++// Notification event when exit boot services is called.
++STATIC EFI_EVENT  mExitBootServicesEvent;
++
+ //
+ // Handle to install the MM Communication Protocol
+ //
+@@ -255,6 +258,39 @@ NotifySetVirtualAddressMap (
+   }
+ }
+ 
++/**
++  Notification callback on ExitBootServices event.
++
++  This function notifies the MM communication protocol interface on
++  ExitBootServices event and releases the FF-A RX/TX buffer.
++
++  @param  Event          ExitBootServices event.
++  @param  Context        A context when the ExitBootServices triggered.
++
++  @retval EFI_SUCCESS    The function executed successfully.
++  @retval Other          Some error occurred when executing this function.
++
++**/
++STATIC
++VOID
++EFIAPI
++NotifyExitBootServices (
++  IN EFI_EVENT  Event,
++  IN VOID      *Context
++  )
++{
++  ARM_SMC_ARGS SmcArgs = {0};
++
++  SmcArgs.Arg0 = ARM_SVC_ID_FFA_RXTX_UNMAP_AARCH32;
++  SmcArgs.Arg1 = mFfaPartId << 16;  // TODO: Use a macro for shift
++  ArmCallSmc (&SmcArgs);
++
++  // We do not bother checking the error code of the RXTX_UNMAP invocation
++  // since we did map the buffers and this call must succeed.
++  return;
++
++}
++
+ STATIC
+ EFI_STATUS
+ GetMmCompatibility (
+@@ -452,6 +488,19 @@ MmCommunication2Initialize (
+     goto CleanAddedMemorySpace;
+   }
+ 
++  // Register notification callback when ExitBootservices is called to
++  // unregister the FF-A RX/TX buffer pair. This allows the OS to register its
++  // own buffer pair.
++  if (FixedPcdGet32 (PcdFfaEnable) != 0) {
++    Status = gBS->CreateEvent (
++                    EVT_SIGNAL_EXIT_BOOT_SERVICES,
++                    TPL_NOTIFY,
++                    NotifyExitBootServices,
++                    NULL,
++                    &mExitBootServicesEvent
++                    );
++    ASSERT_EFI_ERROR (Status);
++  }
+   // Register notification callback when virtual address is associated
+   // with the physical address.
+   // Create a Set Virtual Address Map event.
+-- 
+2.39.5
+

@@ -1,0 +1,79 @@
+From 7096ad1bd4820db76f2ba4d12a4a747a3355cbbc Mon Sep 17 00:00:00 2001
+From: Achin Gupta <achin.gupta@arm.com>
+Date: Sat, 6 Nov 2021 05:57:06 +0000
+Subject: [PATCH 27/43] ArmPkg/MmCommunicationDxe: Register FF-A RX/TX buffers
+
+This patch statically allocates an FF-A RX/TX buffer pair and registers
+them with the framework. This enables discovery of the StMM SP in a
+subsequent patch.
+
+Signed-off-by: Achin Gupta <achin.gupta@arm.com>
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: I3ed74771dfcd4eb524cccc1a422764967f26c27a
+---
+ .../MmCommunicationDxe/MmCommunication.c      | 20 +++++++++++++++++--
+ ArmPkg/Include/IndustryStandard/ArmFfaSvc.h   |  2 ++
+ 2 files changed, 20 insertions(+), 2 deletions(-)
+
+diff --git a/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.c b/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.c
+index f907ccf7349f..311307ed1520 100644
+--- a/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.c
++++ b/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.c
+@@ -28,6 +28,12 @@
+ //
+ STATIC UINT16  mFfaPartId;
+ 
++//
++// RX/TX pair if FF-A support is enabled
++//
++STATIC UINT8 FfaRxBuf[EFI_PAGE_SIZE] __attribute__ ((aligned (EFI_PAGE_SIZE)));
++STATIC UINT8 FfaTxBuf[EFI_PAGE_SIZE] __attribute__ ((aligned (EFI_PAGE_SIZE)));
++
+ //
+ // Address, Length of the pre-allocated buffer for communication with the secure
+ // world.
+@@ -293,9 +299,8 @@ GetMmCompatibility (
+     Status = EFI_UNSUPPORTED;
+   }
+ 
+-  // If FF-A is supported then discover our ID.
++  // If FF-A is supported then discover our ID and register our RX/TX buffers.
+   if (FixedPcdGet32 (PcdFfaEnable) != 0) {
+-
+     // Get our ID
+     ZeroMem(&SmcArgs, sizeof(SmcArgs));
+     SmcArgs.Arg0 = ARM_SVC_ID_FFA_ID_GET_AARCH32;
+@@ -307,6 +312,17 @@ GetMmCompatibility (
+     DEBUG ((DEBUG_INFO, "FF-A partition ID = 0x%lx.\n", SmcArgs.Arg2));
+     mFfaPartId = SmcArgs.Arg2;
+ 
++    // Register our RX/TX pair
++    SmcArgs.Arg0 = ARM_SVC_ID_FFA_RXTX_MAP_AARCH64;
++    SmcArgs.Arg1 = (UINTN) FfaTxBuf;
++    SmcArgs.Arg2 = (UINTN) FfaRxBuf;
++    SmcArgs.Arg3 = 1;                  //TODO: Is this a given?
++    ArmCallSmc (&SmcArgs);
++    if (SmcArgs.Arg0 == ARM_SVC_ID_FFA_ERROR_AARCH32) {
++      DEBUG ((DEBUG_ERROR, "Unable to register FF-A RX/TX buffers (%d).\n", SmcArgs.Arg2));
++      return EFI_UNSUPPORTED;
++    }
++
+     return EFI_SUCCESS;
+   }
+ 
+diff --git a/ArmPkg/Include/IndustryStandard/ArmFfaSvc.h b/ArmPkg/Include/IndustryStandard/ArmFfaSvc.h
+index fc62f6cd64e9..1e648dda0479 100644
+--- a/ArmPkg/Include/IndustryStandard/ArmFfaSvc.h
++++ b/ArmPkg/Include/IndustryStandard/ArmFfaSvc.h
+@@ -17,6 +17,8 @@
+ #define ARM_FFA_SVC_H_
+ 
+ #define ARM_SVC_ID_FFA_VERSION_AARCH32               0x84000063
++#define ARM_SVC_ID_FFA_RXTX_MAP_AARCH32              0x84000066
++#define ARM_SVC_ID_FFA_RXTX_MAP_AARCH64              0xC4000066
+ #define ARM_SVC_ID_FFA_ID_GET_AARCH32                0x84000069
+ #define ARM_SVC_ID_FFA_MSG_SEND_DIRECT_REQ_AARCH32   0x8400006F
+ #define ARM_SVC_ID_FFA_MSG_SEND_DIRECT_RESP_AARCH32  0x84000070
+-- 
+2.39.5
+

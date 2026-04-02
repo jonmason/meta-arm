@@ -1,0 +1,51 @@
+From 3487edea9be314fa0427b018522f0e3cba4b175b Mon Sep 17 00:00:00 2001
+From: Glen Yeldho <glen.yeldho@arm.com>
+Date: Mon, 15 Apr 2024 10:47:43 +0530
+Subject: [PATCH 52/78] Platform/ARM: Refactor RdN2Cfg1 EINJ PCD to
+ Plaform-specific DSC file
+
+Signed-off-by: Glen Yeldho <glen.yeldho@arm.com>
+Change-Id: Ief037cf7545fdf926f3c7dc74e6dd10b29a6034f
+---
+ Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc | 6 ++++++
+ Platform/ARM/SgiPkg/SgiPlatform.dsc.inc   | 7 -------
+ 2 files changed, 6 insertions(+), 7 deletions(-)
+
+diff --git a/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc b/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc
+index 2943f78ef541..d15fc1be4012 100644
+--- a/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc
++++ b/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc
+@@ -52,6 +52,12 @@ DEFINE PCIE_ENABLE             = TRUE
+   gArmPlatformTokenSpaceGuid.PcdCoreCount|1
+   gArmPlatformTokenSpaceGuid.PcdClusterCount|8
+ 
++ # Error Injection
++  gArmSgiTokenSpaceGuid.PcdEinjInstBufferBase|0xFFE10000
++  gArmSgiTokenSpaceGuid.PcdEinjInstBufferSize|0x10000
++  gArmSgiTokenSpaceGuid.PcdEinjTriggerActionBase|0xFFE11000
++  gArmSgiTokenSpaceGuid.PcdEinjSetErrorTypeAddress|0xFFE12000
++
+   # Disables FFA
+ !if $(EDK2_ENABLE_FFA) == FALSE
+   gArmTokenSpaceGuid.PcdFfaEnable|0
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc b/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+index 76ec8b0769eb..af997a5046bb 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+@@ -249,13 +249,6 @@
+   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultCreatorId|0x204d5241 # ARM
+   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultCreatorRevision|1
+ 
+-!if $(EDK2_ERROR_INJ_EN) == TRUE
+-  ## Error Injection Instruction Memory Space
+-  gArmSgiTokenSpaceGuid.PcdEinjInstBufferBase|0xFFE10000
+-  gArmSgiTokenSpaceGuid.PcdEinjInstBufferSize|0x10000
+-  gArmSgiTokenSpaceGuid.PcdEinjTriggerActionBase|0xFFE11000
+-!endif
+-
+ !if $(EDK2_ENABLE_FFA) == FALSE
+   gArmTokenSpaceGuid.PcdFfaEnable|0
+ !endif
+-- 
+2.39.5
+

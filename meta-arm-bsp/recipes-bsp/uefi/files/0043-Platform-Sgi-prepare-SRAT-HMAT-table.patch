@@ -1,0 +1,776 @@
+From 4a5cafff5c516f1282c210c14f004578f54000e7 Mon Sep 17 00:00:00 2001
+From: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Date: Mon, 17 Jan 2022 17:45:11 +0530
+Subject: [PATCH 43/78] Platform/Sgi: prepare SRAT, HMAT table
+
+The primary objective of this patch is to create SRAT, HMAT table at
+runtime based on configuration data found by discovering remote CXL Mem
+device. In SRAT table, the Localmemory, GICC structure information
+remain Static, but only configuration data about Remote memory node is
+updated at runtime. In HMAT the latency numbers are not tuned to actual
+performance values in current solution. After consolidating all
+structure data, SRAT and HMAT tables are installed.
+
+This patch creates and registers notifier event in AcpiTableGenerator
+DXE, and the event depends on CXL protocol interface, so that remote
+memory node population in SRAT, HMAT tables can be performed after CXL
+device discovery and necessary configuration.
+
+While preparing SRAT table, CXL memory information (number of memory
+nodes, remote memory size) is fetched from CXL Dxe using CXLprotocol
+interfaces. If remote CXL memory is present then from the reserved Host
+address space an area equal to remote CXL memory size will be added to
+EFI System Memory space. The memory is EfiGcdMemoryTypeSystemMemory and
+has Normal memory attributes.
+
+In Single-Chip scenario, one of the primary use case, of having extended
+remote memory area and SRAT,HMAT table, is to avail CXL.Memory device as
+memory expander.
+
+Signed-off-by: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Change-Id: I01488ae9cf34b22177ef3d732f674be3e0409f21
+---
+ .../AcpiTableGenerator.c                      | 105 ++++++
+ .../AcpiTableGenerator.h                      |  39 +++
+ .../AcpiTableGenerator.inf                    |  74 ++++
+ .../HmatTableGenerator.c                      | 121 +++++++
+ .../SratTableGenerator.c                      | 322 ++++++++++++++++++
+ Platform/ARM/SgiPkg/SgiPlatform.dsc.inc       |   7 +
+ Platform/ARM/SgiPkg/SgiPlatform.fdf           |   7 +
+ 7 files changed, 675 insertions(+)
+ create mode 100644 Platform/ARM/SgiPkg/Library/AcpiTableGeneratorLib/AcpiTableGenerator.c
+ create mode 100644 Platform/ARM/SgiPkg/Library/AcpiTableGeneratorLib/AcpiTableGenerator.h
+ create mode 100644 Platform/ARM/SgiPkg/Library/AcpiTableGeneratorLib/AcpiTableGenerator.inf
+ create mode 100644 Platform/ARM/SgiPkg/Library/AcpiTableGeneratorLib/HmatTableGenerator.c
+ create mode 100644 Platform/ARM/SgiPkg/Library/AcpiTableGeneratorLib/SratTableGenerator.c
+
+diff --git a/Platform/ARM/SgiPkg/Library/AcpiTableGeneratorLib/AcpiTableGenerator.c b/Platform/ARM/SgiPkg/Library/AcpiTableGeneratorLib/AcpiTableGenerator.c
+new file mode 100644
+index 000000000000..baaf1667e637
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/Library/AcpiTableGeneratorLib/AcpiTableGenerator.c
+@@ -0,0 +1,105 @@
++/** @file
++  ACPI Table Generator Entrypoint. It invokes functions to
++  generate SRAT, HMAT tables.
++
++  Copyright (c) 2022, Arm Limited. All rights reserved.<BR>
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++**/
++
++#include "AcpiTableGenerator.h"
++
++VOID       *mCxlProtocolRegistration;
++
++STATIC EFI_ACPI_TABLE_PROTOCOL *mAcpiTableProtocol = NULL;
++
++VOID
++EFIAPI
++AcpiTableGenerator (
++  IN EFI_EVENT    Event,
++  IN VOID*        Context
++  )
++{
++  EFI_STATUS      Status;
++
++  Status = gBS->LocateProtocol (
++                  &gEfiAcpiTableProtocolGuid,
++                  NULL,
++                  (VOID **)&mAcpiTableProtocol
++                  );
++  if (EFI_ERROR (Status)) {
++    DEBUG ((
++      DEBUG_ERROR,
++      "%a: Failed to locate ACPI table protocol, status: %r\n",
++      __FUNCTION__,
++      Status
++      ));
++    return;
++  }
++
++  Status = SratTableGenerator (mAcpiTableProtocol);
++  if (EFI_ERROR (Status)) {
++    DEBUG ((
++      DEBUG_ERROR,
++      "%a: Failed to create SRAT table: %r\n",
++      __FUNCTION__,
++      Status
++      ));
++    return;
++  }
++
++  Status = HmatTableGenerator (mAcpiTableProtocol);
++  if (EFI_ERROR (Status)) {
++    DEBUG ((
++      DEBUG_ERROR,
++      "%a: Failed to create HMAT table: %r\n",
++      __FUNCTION__,
++      Status
++      ));
++    return;
++  }
++
++  gBS->CloseEvent (Event);
++  return;
++}
++
++/**
++  Initialize function for the driver.
++
++  Locate ACPI Table protocol and installs SRAT, HMAT tables.
++
++  @param[in]  ImageHandle  Handle to image.
++  @param[in]  SystemTable  Pointer to System table.
++
++  @retval  EFI_SUCCESS  On successful installation of SRAT, HMAT ACPI tables.
++  @retval  Other        Failure in installing ACPI tables.
++
++**/
++EFI_STATUS
++EFIAPI
++AcpiTableGeneratorEntryPoint (
++  IN EFI_HANDLE          ImageHandle,
++  IN EFI_SYSTEM_TABLE    *SystemTable
++  )
++{
++  EFI_STATUS Status;
++  EFI_EVENT  CxlProtocolEvent;
++
++  Status = gBS->CreateEvent (
++                  EVT_NOTIFY_SIGNAL,
++                  TPL_CALLBACK,
++                  AcpiTableGenerator,
++                  NULL,
++                  &CxlProtocolEvent
++                  );
++
++  //
++  // Register for protocol notifications on this event
++  //
++  Status = gBS->RegisterProtocolNotify (
++                  &gCxlPlatformProtocolGuid,
++                  CxlProtocolEvent,
++                  &mCxlProtocolRegistration
++                  );
++
++  return Status;
++}
+diff --git a/Platform/ARM/SgiPkg/Library/AcpiTableGeneratorLib/AcpiTableGenerator.h b/Platform/ARM/SgiPkg/Library/AcpiTableGeneratorLib/AcpiTableGenerator.h
+new file mode 100644
+index 000000000000..d30bef89dfe3
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/Library/AcpiTableGeneratorLib/AcpiTableGenerator.h
+@@ -0,0 +1,39 @@
++/** @file
++  Function declarations for AcpiTableGenerator.
++
++  Function declarations are needed for creating ACPI tables at runtime.
++  Macros for Remote memory nodes.
++
++  Copyright (c) 2022, Arm Limited. All rights reserved.<BR>
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++**/
++
++#ifndef ACPI_TABLE_GENERATOR_H_
++#define ACPI_TABLE_GENERATOR_H_
++
++#include <Library/AcpiLib.h>
++#include <Library/AmlLib/AmlLib.h>
++#include <Library/BaseLib.h>
++#include <Library/BaseMemoryLib.h>
++#include <Library/DebugLib.h>
++#include <Library/IoLib.h>
++#include <Library/MemoryAllocationLib.h>
++#include <Library/PcdLib.h>
++#include <Library/UefiBootServicesTableLib.h>
++#include <Protocol/AcpiTable.h>
++#include <Protocol/Cxl.h>
++#include <SgiAcpiHeader.h>
++#include <SgiPlatform.h>
++
++#define LOWER_BYTES_MASK   0xFFFFF000
++#define LOWER_BYTES_SHIFT  32
++
++EFI_STATUS EFIAPI SratTableGenerator (
++  EFI_ACPI_TABLE_PROTOCOL *mAcpiTableProtocol
++  );
++
++EFI_STATUS EFIAPI HmatTableGenerator (
++  EFI_ACPI_TABLE_PROTOCOL *mAcpiTableProtocol
++  );
++
++#endif /* ACPI_TABLE_GENERATOR_H_ */
+diff --git a/Platform/ARM/SgiPkg/Library/AcpiTableGeneratorLib/AcpiTableGenerator.inf b/Platform/ARM/SgiPkg/Library/AcpiTableGeneratorLib/AcpiTableGenerator.inf
+new file mode 100644
+index 000000000000..c78e87dbabe0
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/Library/AcpiTableGeneratorLib/AcpiTableGenerator.inf
+@@ -0,0 +1,74 @@
++## @file
++#  ACPI table generator sources.
++#
++#  SRAT, HMAT table generator sources prepare respective ACPI tables, that
++#  help OSPM to identify device domains, memory attributes etc.
++#
++#  Copyright (c) 2022, Arm Limited. All rights reserved.<BR>
++#
++#  SPDX-License-Identifier: BSD-2-Clause-Patent
++##
++
++[Defines]
++  INF_VERSION                    = 0x0001001B
++  BASE_NAME                      = AcpiTableGeneratorLib
++  FILE_GUID                      = fd0e015b-bbbf-474c-8b68-9ea1b555f913
++  MODULE_TYPE                    = DXE_DRIVER
++  VERSION_STRING                 = 1.0
++  ENTRY_POINT                    = AcpiTableGeneratorEntryPoint
++
++[Sources.common]
++  AcpiTableGenerator.c
++  HmatTableGenerator.c
++  SratTableGenerator.c
++
++[Packages]
++  ArmPkg/ArmPkg.dec
++  ArmPlatformPkg/ArmPlatformPkg.dec
++  DynamicTablesPkg/DynamicTablesPkg.dec
++  EmbeddedPkg/EmbeddedPkg.dec
++  MdeModulePkg/MdeModulePkg.dec
++  MdePkg/MdePkg.dec
++  Platform/ARM/Drivers/CxlDxe/CxlDxe.dec
++  Platform/ARM/SgiPkg/SgiPlatform.dec
++
++
++[LibraryClasses]
++  ArmPlatformLib
++  BaseLib
++  DebugLib
++  DxeServicesTableLib
++  HobLib
++  IoLib
++  MemoryAllocationLib
++  UefiDriverEntryPoint
++
++[Protocols]
++  gEfiAcpiTableProtocolGuid      ## CONSUMES
++  gCxlPlatformProtocolGuid       ## CONSUMES
++
++[Guids]
++
++[Depex]
++  TRUE
++
++[FixedPcd]
++  gArmPlatformTokenSpaceGuid.PcdClusterCount
++  gArmPlatformTokenSpaceGuid.PcdCoreCount
++
++  gArmSgiTokenSpaceGuid.PcdDramBlock2Base
++  gArmSgiTokenSpaceGuid.PcdDramBlock2Size
++  gArmSgiTokenSpaceGuid.PcdGicSize
++
++  gArmTokenSpaceGuid.PcdSystemMemoryBase
++  gArmTokenSpaceGuid.PcdSystemMemorySize
++
++  gArmTokenSpaceGuid.PcdMmBufferBase
++  gArmTokenSpaceGuid.PcdMmBufferSize
++
++  gArmSgiTokenSpaceGuid.PcdChipCount
++
++  gArmSgiTokenSpaceGuid.PcdNumLocalMemBlock
++
++  gArmSgiTokenSpaceGuid.PcdRemoteMemoryBase
++  gArmSgiTokenSpaceGuid.PcdRemoteMemorySize
+diff --git a/Platform/ARM/SgiPkg/Library/AcpiTableGeneratorLib/HmatTableGenerator.c b/Platform/ARM/SgiPkg/Library/AcpiTableGeneratorLib/HmatTableGenerator.c
+new file mode 100644
+index 000000000000..77c14d91ba6d
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/Library/AcpiTableGeneratorLib/HmatTableGenerator.c
+@@ -0,0 +1,121 @@
++/** @file
++  Heterogeneous Memory Attribute Table (HMAT) Table Generator.
++
++  The (HMAT) describes the memory attributes, such as bandwidth and latency
++  details, related to Memory Proximity Domains. The software is expected
++  to use this information as a hint for optimization, or when the system has
++  heterogeneous memory.
++
++  Copyright (c) 2022, Arm Limited. All rights reserved.<BR>
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++
++  @par Specification Reference:
++      - ACPI 6.4, Chapter 5.2.27 Heterogeneous Memory Attribute Table (HMAT)
++**/
++
++#include "AcpiTableGenerator.h"
++
++#define CHIP_CNT                      2
++#define INITATOR_PROXIMITY_DOMAIN_CNT 2
++#define TARGET_PROXIMITY_DOMAIN_CNT   2
++
++/* HMAT Table */
++typedef struct InitiatorTargetProximityMatrix {
++  UINT32  InitatorProximityDomain[INITATOR_PROXIMITY_DOMAIN_CNT];
++  UINT32  TargetProximityDomain[TARGET_PROXIMITY_DOMAIN_CNT];
++  UINT16  MatrixEntry[INITATOR_PROXIMITY_DOMAIN_CNT *
++                      TARGET_PROXIMITY_DOMAIN_CNT];
++} INITIATOR_TARGET_PROXIMITY_MATRIX;
++
++typedef struct {
++  EFI_ACPI_6_4_HETEROGENEOUS_MEMORY_ATTRIBUTE_TABLE_HEADER Header;
++  EFI_ACPI_6_4_HMAT_STRUCTURE_MEMORY_PROXIMITY_DOMAIN_ATTRIBUTES
++    Proximity[CHIP_CNT];
++  EFI_ACPI_6_4_HMAT_STRUCTURE_SYSTEM_LOCALITY_LATENCY_AND_BANDWIDTH_INFO
++    LatencyInfo;
++  INITIATOR_TARGET_PROXIMITY_MATRIX  Matrix;
++} EFI_ACPI_HETEROGENEOUS_MEMORY_ATTRIBUTE_TABLE;
++
++EFI_ACPI_HETEROGENEOUS_MEMORY_ATTRIBUTE_TABLE Hmat = {
++  // Header
++  {
++    ARM_ACPI_HEADER (
++      EFI_ACPI_6_4_HETEROGENEOUS_MEMORY_ATTRIBUTE_TABLE_SIGNATURE,
++      EFI_ACPI_HETEROGENEOUS_MEMORY_ATTRIBUTE_TABLE,
++      EFI_ACPI_6_4_HETEROGENEOUS_MEMORY_ATTRIBUTE_TABLE_REVISION
++      ),
++    {
++      EFI_ACPI_RESERVED_BYTE,
++      EFI_ACPI_RESERVED_BYTE,
++      EFI_ACPI_RESERVED_BYTE,
++      EFI_ACPI_RESERVED_BYTE
++    },
++  },
++
++  // Memory Proximity Domain
++  {
++    EFI_ACPI_6_4_HMAT_STRUCTURE_MEMORY_PROXIMITY_DOMAIN_ATTRIBUTES_INIT (
++      1, 0x0, 0x0),
++    EFI_ACPI_6_4_HMAT_STRUCTURE_MEMORY_PROXIMITY_DOMAIN_ATTRIBUTES_INIT (
++      1, 0x0, 0x1),
++   },
++
++  // Latency Info
++  EFI_ACPI_6_4_HMAT_STRUCTURE_SYSTEM_LOCALITY_LATENCY_AND_BANDWIDTH_INFO_INIT (
++    0, 0, 0, INITATOR_PROXIMITY_DOMAIN_CNT, TARGET_PROXIMITY_DOMAIN_CNT, 100),
++  {
++    {0, 1},
++    {0, 1},
++    {
++      //
++      // The latencies mentioned in this table are hypothetical values and
++      // represents typical latency between two chips. These values are
++      // applicable only for RD-N1-Edge dual-chip fixed virtual platform and
++      // should not be reused for other platforms.
++      //
++      10, 20,
++      20, 10,
++    }
++  }
++};
++
++/**
++  Installs the HMAT table.
++
++  @param[in]  mAcpiTableProtocol  Handle to AcpiTableProtocol.
++
++  @retval  EFI_SUCCESS  On successful installation of HMAT table.
++  @retval  Other        Failure in installing HMAT table.
++**/
++EFI_STATUS
++EFIAPI
++HmatTableGenerator (
++  IN EFI_ACPI_TABLE_PROTOCOL *mAcpiTableProtocol
++  )
++{
++  EFI_STATUS Status;
++  UINTN AcpiTableHandle;
++
++  Status = mAcpiTableProtocol->InstallAcpiTable (
++                                 mAcpiTableProtocol,
++                                 &Hmat,
++                                 sizeof (Hmat),
++                                 &AcpiTableHandle
++                                 );
++  if (EFI_ERROR (Status)) {
++    DEBUG ((
++      DEBUG_ERROR,
++      "%a: HMAT table installation failed, status: %r\n",
++      __FUNCTION__,
++      Status
++      ));
++  } else {
++    DEBUG ((
++      DEBUG_INFO,
++      "Installed HMAT table \n"
++      ));
++  }
++
++  return Status;
++}
++
+diff --git a/Platform/ARM/SgiPkg/Library/AcpiTableGeneratorLib/SratTableGenerator.c b/Platform/ARM/SgiPkg/Library/AcpiTableGeneratorLib/SratTableGenerator.c
+new file mode 100644
+index 000000000000..bd230c65b4dd
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/Library/AcpiTableGeneratorLib/SratTableGenerator.c
+@@ -0,0 +1,322 @@
++/** @file
++  SRAT Table Generator.
++
++  SRAT table provides information that allows OSPM to associate devices such as
++  processors with system locality / proximity domains and clock domains.
++
++  Copyright (c) 2022, Arm Limited. All rights reserved.<BR>
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++
++  @par Specification Reference:
++      - ACPI 6.4, Chapter 5.2.16 System Resource Affinity Table (SRAT)
++**/
++
++#include <Library/DxeServicesTableLib.h>
++#include <Library/HobLib.h>
++#include "AcpiTableGenerator.h"
++
++STATIC EFI_ACPI_6_4_MEMORY_AFFINITY_STRUCTURE  *RemoteMemory;
++
++EFI_ACPI_6_4_SYSTEM_RESOURCE_AFFINITY_TABLE_HEADER  SratHeader = {
++  ARM_ACPI_HEADER (
++    EFI_ACPI_6_4_SYSTEM_RESOURCE_AFFINITY_TABLE_SIGNATURE,
++    EFI_ACPI_6_4_SYSTEM_RESOURCE_AFFINITY_TABLE_HEADER,
++    EFI_ACPI_6_4_SYSTEM_RESOURCE_AFFINITY_TABLE_REVISION
++    ),
++    0x00000001,
++    EFI_ACPI_RESERVED_QWORD
++};
++
++EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE  Gicc[8] = {
++  EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++    0x0, 0x00000000, 0x00000001, 0x00000000),
++  EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++    0x0, 0x00000001, 0x00000001, 0x00000000),
++  EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++    0x0, 0x00000002, 0x00000001, 0x00000000),
++  EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++    0x0, 0x00000003, 0x00000001, 0x00000000),
++  EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++    0x0, 0x00000004, 0x00000001, 0x00000000),
++  EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++    0x0, 0x00000005, 0x00000001, 0x00000000),
++  EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++    0x0, 0x00000006, 0x00000001, 0x00000000),
++  EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++    0x0, 0x00000007, 0x00000001, 0x00000000),
++#if ((CORE_COUNT * CLUSTER_COUNT) > 8)
++  EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++    0x0, 0x00000008, 0x00000001, 0x00000000),
++  EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++    0x0, 0x00000009, 0x00000001, 0x00000000),
++  EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++    0x0, 0x0000000A, 0x00000001, 0x00000000),
++  EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++    0x0, 0x0000000B, 0x00000001, 0x00000000),
++  EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++    0x0, 0x0000000C, 0x00000001, 0x00000000),
++  EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++    0x0, 0x0000000D, 0x00000001, 0x00000000),
++  EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++    0x0, 0x0000000E, 0x00000001, 0x00000000),
++  EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++      0x0, 0x0000000F, 0x00000001, 0x00000000),
++#endif
++};
++
++EFI_ACPI_6_4_MEMORY_AFFINITY_STRUCTURE  LocalMemory[3] = {
++  // Memory at 32-bit address space
++  EFI_ACPI_6_4_MEMORY_AFFINITY_STRUCTURE_INIT (
++    0x0, FixedPcdGet64 (PcdSystemMemoryBase),
++    FixedPcdGet64 (PcdSystemMemorySize), 0x00000001),
++  // Memory at 64-bit address space
++  EFI_ACPI_6_4_MEMORY_AFFINITY_STRUCTURE_INIT (
++    0x0, FixedPcdGet64 (PcdDramBlock2Base),
++    FixedPcdGet64 (PcdDramBlock2Size), 0x00000001),
++  // MmBuffer region
++  EFI_ACPI_6_4_MEMORY_AFFINITY_STRUCTURE_INIT (
++    0x0, FixedPcdGet64 (PcdMmBufferBase),
++    FixedPcdGet64 (PcdMmBufferSize), 0x00000001),
++};
++
++/**
++  Fetch the details of Remote Memory Node, using CXL protocol interfaces.
++
++  By using CXL platform protocol interfaces, fetch number CXL remote memory
++  nodes and their corresponding configurations(Base address, length).
++
++  @param[out]  RemoteMemCount  Number of Remote CXL memory nodes.
++
++  @retval  RemoteMem       Remote memory configuraiton on successful fetching
++                           of remote memory configuration.
++  @retval  Zero            Returns Zero on failure.
++**/
++STATIC
++REMOTE_MEMORY_CONFIG  *
++FetchRemoteCxlMem (OUT UINT32  *RemoteMemCount)
++{
++  EFI_STATUS            Status;
++  CXL_PLATFORM_PROTOCOL *CxlProtocol;
++  REMOTE_MEMORY_CONFIG  *RemoteMem;
++  UINT32                RemoteMemNumber;
++
++  Status = gBS->LocateProtocol (
++                  &gCxlPlatformProtocolGuid,
++                  NULL,
++                  (VOID **)&CxlProtocol
++                  );
++  if (EFI_ERROR (Status)) {
++    DEBUG ((
++      DEBUG_ERROR,
++      "%a: Failed to locate CXL Protocol, status: %r\n",
++      __FUNCTION__,
++      Status
++      ));
++    return 0;
++  }
++
++  RemoteMemNumber = CxlProtocol->CxlGetRemoteMemCount ();
++  if (RemoteMemNumber) {
++    RemoteMem = (REMOTE_MEMORY_CONFIG *) AllocateZeroPool (
++                                           sizeof (REMOTE_MEMORY_CONFIG) *
++                                           RemoteMemNumber
++                                           );
++    if (RemoteMem == NULL) {
++      DEBUG ((DEBUG_WARN, "No memory for Remote Memory affinity structure:\n"));
++      return 0;
++    }
++  } else {
++      DEBUG ((DEBUG_INFO, "No Remote Memory node exists:\n"));
++      return 0;
++  }
++
++  Status = CxlProtocol->CxlGetRemoteMem (RemoteMem, &RemoteMemNumber);
++  if (EFI_ERROR (Status)) {
++    DEBUG ((
++      DEBUG_ERROR,
++      "%a: Failed to get CXL Remote memory details: %r\n",
++      __FUNCTION__,
++      Status
++      ));
++    FreePool(RemoteMem);
++    return 0;
++  }
++
++  *RemoteMemCount = RemoteMemNumber;
++
++  return RemoteMem;
++}
++
++/**
++  Fetch the details of all Remote Memory Node, using CXL protocol interfaces.
++  Prepare SRAT table structure by combining LocalMemoryNode and
++  RemoteMemoryNode information. Thereafter installs the SRAT table.
++
++  @param[in]  mAcpiTableProtocol  Handle to AcpiTableProtocol.
++
++  @retval  EFI_SUCCESS  On successful installation of SRAT table.
++  @retval  Other        Failure in installing SRAT table.
++**/
++EFI_STATUS
++EFIAPI
++SratTableGenerator (
++  IN EFI_ACPI_TABLE_PROTOCOL *mAcpiTableProtocol
++  )
++{
++  EFI_STATUS            Status;
++  UINTN                 AcpiTableHandle;
++  UINTN                 MemoryNodeCount;
++  UINTN                 TableSize;
++  UINT8                 Idx;
++  VOID                  *Srat, *SratDataNext;
++  REMOTE_MEMORY_CONFIG  *RemoteMem;
++  UINT32                RemoteMemCount;
++  UINT64                HostPhysicalBase;
++  UINT64                MemDevicePhysicalBase;
++
++  RemoteMem = FetchRemoteCxlMem (&RemoteMemCount);
++
++  if (RemoteMemCount) {
++    RemoteMemory = AllocateZeroPool (
++                     sizeof (EFI_ACPI_6_4_MEMORY_AFFINITY_STRUCTURE) *
++                     RemoteMemCount
++                     );
++
++    if (RemoteMemory == NULL) {
++      DEBUG ((DEBUG_WARN, "No memory for Remote Memory affinity structure:\n"));
++      RemoteMemCount = 0;
++    } else {
++      HostPhysicalBase = FixedPcdGet64 (PcdRemoteMemoryBase);
++
++      for (Idx = 0; Idx < RemoteMemCount; Idx++) {
++        RemoteMemory[Idx].Type = 1;
++        RemoteMemory[Idx].Length =
++          sizeof (EFI_ACPI_6_4_MEMORY_AFFINITY_STRUCTURE);
++        RemoteMemory[Idx].ProximityDomain = 1;
++        RemoteMemory[Idx].Reserved1 = EFI_ACPI_RESERVED_WORD;
++
++        MemDevicePhysicalBase = HostPhysicalBase + RemoteMem[Idx].DpaAddress;
++        RemoteMemory[Idx].AddressBaseLow =
++          MemDevicePhysicalBase & LOWER_BYTES_MASK;
++        RemoteMemory[Idx].AddressBaseHigh =
++          MemDevicePhysicalBase >> LOWER_BYTES_SHIFT;
++
++        RemoteMemory[Idx].LengthLow =
++          RemoteMem[Idx].DpaLength & LOWER_BYTES_MASK;
++        RemoteMemory[Idx].LengthHigh =
++          RemoteMem[Idx].DpaLength >> LOWER_BYTES_SHIFT;
++
++        RemoteMemory[Idx].Reserved2 = EFI_ACPI_RESERVED_WORD;
++        RemoteMemory[Idx].Flags = 0x1;
++        RemoteMemory[Idx].Reserved3 = EFI_ACPI_RESERVED_WORD;
++
++        HostPhysicalBase += RemoteMem[Idx].DpaLength;
++      }
++
++      Status = gDS->AddMemorySpace (
++                      EfiGcdMemoryTypeSystemMemory,
++                      FixedPcdGet64 (PcdRemoteMemoryBase),
++                      (HostPhysicalBase - FixedPcdGet64 (PcdRemoteMemoryBase)),
++                      EFI_MEMORY_WC | EFI_MEMORY_WT | EFI_MEMORY_WB);
++
++      Status = gDS->SetMemorySpaceAttributes (
++                      FixedPcdGet64 (PcdRemoteMemoryBase),
++                      (HostPhysicalBase - FixedPcdGet64 (PcdRemoteMemoryBase)),
++                      EFI_MEMORY_WB);
++      if (EFI_ERROR (Status)) {
++        DEBUG ((
++          DEBUG_ERROR,
++          "%a: Failed to set memory attributes: %r\n",
++          __FUNCTION__,
++          Status
++          ));
++        FreePool (RemoteMem);
++        return 0;
++      }
++    }
++
++    FreePool (RemoteMem);
++  }
++
++  MemoryNodeCount = FixedPcdGet32 (PcdNumLocalMemBlock);
++//TODO: Not including CXL memory area under a NUMA node. It needs
++//further debugging.
++  //MemoryNodeCount += RemoteMemCount;
++  TableSize = sizeof (Gicc) +
++              sizeof (SratHeader) +
++              (MemoryNodeCount *
++              sizeof (EFI_ACPI_6_4_MEMORY_AFFINITY_STRUCTURE));
++
++  Srat = AllocatePool (TableSize);
++
++  if (Srat == NULL) {
++    DEBUG ((
++      DEBUG_ERROR,
++      "%a: Failed to allocate memory for SRAT table\n",
++      __FUNCTION__
++      ));
++
++    FreePool(RemoteMemory);
++    return EFI_OUT_OF_RESOURCES;
++  }
++
++  CopyMem (
++    Srat,
++    &SratHeader,
++    sizeof (SratHeader)
++    );
++
++  SratDataNext = ((char *)Srat + sizeof (SratHeader));
++  CopyMem (
++    SratDataNext,
++    Gicc,
++    sizeof (Gicc)
++    );
++
++  SratDataNext = ((char *)SratDataNext + sizeof (Gicc));
++  CopyMem (
++    SratDataNext,
++    LocalMemory,
++    sizeof (LocalMemory)
++    );
++
++/**
++ * TODO: CXL expansion memory region is also added in CEDT table. Kernel picks
++ * up from either SRAT or CMFWS. Having presence in both place causing a dummy
++ * NUMA node. Temporarily the entry in SRAT is removed, it will be looked into
++ * further.
++**/
++#if 0
++  SratDataNext = ((char *)SratDataNext + sizeof (LocalMemory));
++  if (RemoteMemCount) {
++    CopyMem (
++      SratDataNext,
++      RemoteMemory,
++      sizeof (EFI_ACPI_6_4_MEMORY_AFFINITY_STRUCTURE) *
++      RemoteMemCount
++      );
++  }
++#endif
++
++  ((EFI_ACPI_DESCRIPTION_HEADER *)Srat)->Length = TableSize;
++
++  Status = mAcpiTableProtocol->InstallAcpiTable (
++             mAcpiTableProtocol,
++             (EFI_ACPI_6_4_SYSTEM_RESOURCE_AFFINITY_TABLE_HEADER *)Srat,
++             TableSize,
++             &AcpiTableHandle
++             );
++
++  if (EFI_ERROR (Status)) {
++    DEBUG ((
++      DEBUG_ERROR,
++      "%a: SRAT table installation failed, status: %r\n",
++      __FUNCTION__,
++      Status
++      ));
++  } else {
++    DEBUG ((DEBUG_INFO, "Installed SRAT table \n"));
++  }
++
++  return Status;
++}
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc b/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+index 2c1b988b3b9e..9132394bfec9 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+@@ -369,6 +369,13 @@
+   Platform/ARM/SgiPkg/Drivers/PlatformErrorHandlerDxe/PlatformErrorHandlerDxeRas.inf
+ !endif
+ 
++  #
++  # SRAT/HMAT Table generator
++  #
++!if $(EDK2_ENABLE_REMOTE_CXL_MEM) == TRUE
++  Platform/ARM/SgiPkg/Library/AcpiTableGeneratorLib/AcpiTableGenerator.inf
++!endif
++
+   #
+   # FAT filesystem + GPT/MBR partitioning
+   #
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.fdf b/Platform/ARM/SgiPkg/SgiPlatform.fdf
+index 7aeb462e1be3..70cfc2578bf0 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatform.fdf
++++ b/Platform/ARM/SgiPkg/SgiPlatform.fdf
+@@ -213,6 +213,13 @@ READ_LOCK_STATUS   = TRUE
+   INF MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
+   INF MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
+ 
++  #
++  # SRAT/HMAT Table generator
++  #
++!if $(EDK2_ENABLE_REMOTE_CXL_MEM) == TRUE
++  INF Platform/ARM/SgiPkg/Library/AcpiTableGeneratorLib/AcpiTableGenerator.inf
++!endif
++
+   #
+   # Networking stack
+   #
+-- 
+2.39.5
+

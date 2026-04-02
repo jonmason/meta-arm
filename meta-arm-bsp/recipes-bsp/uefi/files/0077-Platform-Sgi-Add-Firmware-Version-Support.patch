@@ -1,0 +1,57 @@
+From 4e9fc82b1d63558544fd74b3ad6521da42e36c70 Mon Sep 17 00:00:00 2001
+From: Dishendra Deshmukh <dishendra.deshmukh@arm.com>
+Date: Tue, 5 Nov 2024 11:48:39 +0530
+Subject: [PATCH 77/78] Platform/Sgi: Add Firmware Version Support
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+BiosVersion value is hardcoded as "EDK II" and it appears same in
+SMBIOS type 0 record firmware version string. This is not meaningful,
+it remains unchanged across releases and it does not match the version
+string in the release notes.
+
+So updated BiosVersion from “EDK II” to a format that reflects
+the release version, such as “RD-INFRA-YYYY.MM.DD”
+(e.g., “RD-INFRA-2024.09.30”).
+
+Signed-off-by: Dishendra Deshmukh <dishendra.deshmukh@arm.com>
+Change-Id: Ic8751faae072da2b6c59276be0b083ecd2417652
+---
+ .../SgiPkg/Drivers/SmbiosPlatformDxe/Type0BiosInformation.c   | 4 ++--
+ Platform/ARM/SgiPkg/SgiPlatform.dsc.inc                       | 4 +++-
+ 2 files changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/Platform/ARM/SgiPkg/Drivers/SmbiosPlatformDxe/Type0BiosInformation.c b/Platform/ARM/SgiPkg/Drivers/SmbiosPlatformDxe/Type0BiosInformation.c
+index f5c1b2366d04..6b2fc6baa40c 100644
+--- a/Platform/ARM/SgiPkg/Drivers/SmbiosPlatformDxe/Type0BiosInformation.c
++++ b/Platform/ARM/SgiPkg/Drivers/SmbiosPlatformDxe/Type0BiosInformation.c
+@@ -16,8 +16,8 @@
+ 
+ #define TYPE0_STRINGS                                   \
+   "ARM LTD\0"                   /* Vendor */            \
+-  "EDK II\0"                    /* BiosVersion */       \
+-  __DATE__"\0"                  /* BiosReleaseDate */   \
++  EDK2_PLAT_FW_REL_VERSION      /* BiosVersion */       \
++  "\0"__DATE__"\0"              /* BiosReleaseDate */   \
+   "\0"
+ 
+ typedef enum {
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc b/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+index af997a5046bb..bfe874423b8a 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+@@ -41,7 +41,9 @@
+   DEFINE EDK2_SPMC_AT_EL2                  = FALSE
+ 
+ [BuildOptions]
+-  *_*_*_CC_FLAGS = -D DISABLE_NEW_DEPRECATED_INTERFACES
++  # EDK2_PLAT_FW_REL_VERSION macro resolve to value like RD-INFRA-2024.09.30.
++  # This value is set in build-uefi.sh
++  *_*_*_CC_FLAGS = -DDISABLE_NEW_DEPRECATED_INTERFACES -DEDK2_PLAT_FW_REL_VERSION=\"$(EDK2_PLAT_FW_REL_VERSION)\"
+ 
+ [LibraryClasses.common]
+   ArmLib|ArmPkg/Library/ArmLib/ArmBaseLib.inf
+-- 
+2.39.5
+

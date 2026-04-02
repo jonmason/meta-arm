@@ -1,0 +1,154 @@
+From 600fa61fc8de289ba5667260108681486f2f2d2f Mon Sep 17 00:00:00 2001
+From: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Date: Mon, 17 Jan 2022 17:40:49 +0530
+Subject: [PATCH 42/78] Platform/Sgi: add remote memory descriptor
+
+8GB address region starting at 0x3FE00000000 is reserved for extended
+Remote Memory use. One of the use case, for extended remote memory
+region, is using it as CXL.Mem region.
+
+Remote memory region, with Normal memory attributes, is included into
+the Translation table entries based on the PcdRemoteCxlMemory flag
+status.
+
+Resource descriptor for Remote CXL device memory is not created in
+PlatformLibMem, it will be added at later execution phase after the
+discovery of CXL Mem device.
+
+This patch adds a Pcd, PcdRemoteCxlMemory for identifying a platform
+with CXL enabled configuration.
+
+Also marked Local memory block count, for creating SRAT tables in
+subsequent patch.
+
+Signed-off-by: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Change-Id: I8c16b71fcece70f5720203c4c0a0b5f7e51a41ca
+---
+ .../Library/PlatformLib/PlatformLib.inf       |  4 ++++
+ .../Library/PlatformLib/PlatformLibMem.c      | 19 +++++++++++++++++--
+ Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc     |  7 +++++++
+ Platform/ARM/SgiPkg/SgiPlatform.dec           |  8 ++++++++
+ Platform/ARM/SgiPkg/SgiPlatform.dsc.inc       |  4 ++++
+ 5 files changed, 40 insertions(+), 2 deletions(-)
+
+diff --git a/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLib.inf b/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLib.inf
+index 5293ea9ca8b8..82355de840f7 100644
+--- a/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLib.inf
++++ b/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLib.inf
+@@ -57,6 +57,10 @@
+   gArmTokenSpaceGuid.PcdSystemMemoryBase
+   gArmTokenSpaceGuid.PcdSystemMemorySize
+ 
++  gArmSgiTokenSpaceGuid.PcdRemoteCxlMemory
++  gArmSgiTokenSpaceGuid.PcdRemoteMemoryBase
++  gArmSgiTokenSpaceGuid.PcdRemoteMemorySize
++
+   gArmSgiTokenSpaceGuid.PcdChipCount
+ 
+   gArmTokenSpaceGuid.PcdGicDistributorBase
+diff --git a/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c b/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c
+index 784182e49a70..5c78a2fcc776 100644
+--- a/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c
++++ b/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c
+@@ -74,6 +74,7 @@ ArmPlatformGetVirtualMemoryMap (
+   UINTN                         Index;
+   ARM_MEMORY_REGION_DESCRIPTOR  *VirtualMemoryTable;
+   EFI_RESOURCE_ATTRIBUTE_TYPE   ResourceAttributes;
++  UINTN                         TotalMemoryMapDescirptors;
+ 
+   ResourceAttributes =
+     EFI_RESOURCE_ATTRIBUTE_PRESENT |
+@@ -135,9 +136,15 @@ ArmPlatformGetVirtualMemoryMap (
+   ASSERT (VirtualMemoryMap != NULL);
+   Index = 0;
+ 
++  TotalMemoryMapDescirptors = MAX_VIRTUAL_MEMORY_MAP_DESCRIPTORS;
++
++#if (FixedPcdGetBool (PcdRemoteCxlMemory))
++   TotalMemoryMapDescirptors += 1;
++#endif
++
+   VirtualMemoryTable = (ARM_MEMORY_REGION_DESCRIPTOR*)AllocatePages
+                        (EFI_SIZE_TO_PAGES (sizeof (ARM_MEMORY_REGION_DESCRIPTOR) *
+-                       MAX_VIRTUAL_MEMORY_MAP_DESCRIPTORS));
++                       TotalMemoryMapDescirptors));
+   if (VirtualMemoryTable == NULL) {
+     return;
+   }
+@@ -250,6 +257,14 @@ ArmPlatformGetVirtualMemoryMap (
+   VirtualMemoryTable[Index].Length          = PcdGet64 (PcdDramBlock2Size);
+   VirtualMemoryTable[Index].Attributes      = ARM_MEMORY_REGION_ATTRIBUTE_WRITE_BACK;
+ 
++#if (FixedPcdGetBool (PcdRemoteCxlMemory))
++    // Expanded Remote memory region
++    VirtualMemoryTable[++Index].PhysicalBase  = FixedPcdGet64 (PcdRemoteMemoryBase);
++    VirtualMemoryTable[Index].VirtualBase     = FixedPcdGet64 (PcdRemoteMemoryBase);
++    VirtualMemoryTable[Index].Length          = FixedPcdGet64 (PcdRemoteMemorySize);
++    VirtualMemoryTable[Index].Attributes      = ARM_MEMORY_REGION_ATTRIBUTE_WRITE_BACK;
++#endif
++
+ #if (FixedPcdGet32 (PcdChipCount) > 1)
+   // Chip 1 DDR Block 1 - (2GB)
+   VirtualMemoryTable[++Index].PhysicalBase  = SYSTEM_MEMORY_BASE_REMOTE (1),
+@@ -322,6 +337,6 @@ ArmPlatformGetVirtualMemoryMap (
+   VirtualMemoryTable[Index].Length          = 0;
+   VirtualMemoryTable[Index].Attributes      = (ARM_MEMORY_REGION_ATTRIBUTES)0;
+ 
+-  ASSERT ((Index + 1) <= MAX_VIRTUAL_MEMORY_MAP_DESCRIPTORS);
++  ASSERT ((Index + 1) <= TotalMemoryMapDescirptors);
+   *VirtualMemoryMap = VirtualMemoryTable;
+ }
+diff --git a/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc b/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc
+index ed74a26f51f0..2943f78ef541 100644
+--- a/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc
++++ b/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc
+@@ -57,6 +57,13 @@ DEFINE PCIE_ENABLE             = TRUE
+   gArmTokenSpaceGuid.PcdFfaEnable|0
+ !endif
+ 
++  # Number of local memory blocks
++  gArmSgiTokenSpaceGuid.PcdNumLocalMemBlock|3
++
++  # Expanded Remote Memory Region, used as CXL Memory
++  gArmSgiTokenSpaceGuid.PcdRemoteMemoryBase|0x3FE00000000
++  gArmSgiTokenSpaceGuid.PcdRemoteMemorySize|0x200000000
++
+ ################################################################################
+ #
+ # Components Section - list of all EDK II Modules needed by this Platform
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.dec b/Platform/ARM/SgiPkg/SgiPlatform.dec
+index 53f6290acb19..b10def40afaa 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatform.dec
++++ b/Platform/ARM/SgiPkg/SgiPlatform.dec
+@@ -128,5 +128,13 @@
+   gArmSgiTokenSpaceGuid.PcdEinjInstBufferSize|0x00000000|UINT64|0x00001003
+   gArmSgiTokenSpaceGuid.PcdEinjTriggerActionBase|0x00000000|UINT64|0x00001004
+ 
++  # Number of Local Memory blocks
++  gArmSgiTokenSpaceGuid.PcdNumLocalMemBlock|1|UINT32|0x00001005
++
++  # Expanded Remote Memory Base and Size
++  gArmSgiTokenSpaceGuid.PcdRemoteCxlMemory|FALSE|BOOLEAN|0x00001006
++  gArmSgiTokenSpaceGuid.PcdRemoteMemoryBase|0|UINT64|0x00001007
++  gArmSgiTokenSpaceGuid.PcdRemoteMemorySize|0|UINT64|0x00001008
++
+ [Ppis]
+   gNtFwConfigDtInfoPpiGuid     = { 0x6f606eb3, 0x9123, 0x4e15, { 0xa8, 0x9b, 0x0f, 0xac, 0x66, 0xef, 0xd0, 0x17 } }
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc b/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+index 104bbc0c2666..2c1b988b3b9e 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+@@ -145,6 +145,10 @@
+   gArmSgiTokenSpaceGuid.PcdDramBlock2Size|$(PLAT_DRAM2_SIZE)
+ !endif
+ 
++!if $(EDK2_ENABLE_REMOTE_CXL_MEM) == TRUE
++  gArmSgiTokenSpaceGuid.PcdRemoteCxlMemory|TRUE
++!endif
++
+ !if $(LPI_EN) == TRUE
+   # Allow use of LPI in the response to _OSC method call
+   gArmSgiTokenSpaceGuid.PcdOscLpiEnable|1
+-- 
+2.39.5
+

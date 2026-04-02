@@ -1,0 +1,29 @@
+From 82c6ada01786837c4faeb01fb2cfe20307f163ec Mon Sep 17 00:00:00 2001
+From: Tony K Nadackal <tony.nadackal@arm.com>
+Date: Mon, 15 Aug 2022 11:03:32 +0100
+Subject: [PATCH 01/78] Platform/Sgi: add no-stack-protector flag for StMM
+ builds
+
+Add the no-stack-protector complier flag for both AArch64 and x86 host
+build of StandaloneMM.
+
+Signed-off-by: Tony K Nadackal <tony.nadackal@arm.com>
+Change-Id: I2c546bf01d4b5bbdf4854c05e413c7c595c19e71
+---
+ Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc b/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
+index f8dff7235c5c..c3d2bacf815f 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
+@@ -146,5 +146,5 @@
+ #
+ ###################################################################################################
+ [BuildOptions.AARCH64]
+-  GCC:*_*_*_CC_FLAGS = -mstrict-align -march=armv8-a -D DISABLE_NEW_DEPRECATED_INTERFACES
++  GCC:*_*_*_CC_FLAGS = -mstrict-align -march=armv8-a -D DISABLE_NEW_DEPRECATED_INTERFACES -fno-stack-protector
+   GCC:*_*_*_DLINK_FLAGS = -z common-page-size=0x1000
+-- 
+2.39.5
+

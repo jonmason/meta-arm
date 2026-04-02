@@ -1,0 +1,32 @@
+From 9a2ca2b96a99cbf815eb9607e4b836b56ac01555 Mon Sep 17 00:00:00 2001
+From: Glen Yeldho <glen.yeldho@arm.com>
+Date: Mon, 15 Apr 2024 10:48:12 +0530
+Subject: [PATCH 53/78] Platform/ARM: Refactor RdV3Cfg1 EINJ PCD to
+ Plaform-specific DSC file
+
+Signed-off-by: Glen Yeldho <glen.yeldho@arm.com>
+Change-Id: I62e845be300f019d3e99c359ff5c37914c449bcd
+---
+ Platform/ARM/SgiPkg/RdV3Cfg1/RdV3Cfg1.dsc | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/Platform/ARM/SgiPkg/RdV3Cfg1/RdV3Cfg1.dsc b/Platform/ARM/SgiPkg/RdV3Cfg1/RdV3Cfg1.dsc
+index 96092bffe960..811d02ad4b4f 100644
+--- a/Platform/ARM/SgiPkg/RdV3Cfg1/RdV3Cfg1.dsc
++++ b/Platform/ARM/SgiPkg/RdV3Cfg1/RdV3Cfg1.dsc
+@@ -50,6 +50,12 @@
+   gArmPlatformTokenSpaceGuid.PcdCoreCount|1
+   gArmPlatformTokenSpaceGuid.PcdClusterCount|8
+ 
++  # Error Injection
++  gArmSgiTokenSpaceGuid.PcdEinjInstBufferBase|0xFB1DF000
++  gArmSgiTokenSpaceGuid.PcdEinjInstBufferSize|0x10000
++  gArmSgiTokenSpaceGuid.PcdEinjTriggerActionBase|0xFB1E0000
++  gArmSgiTokenSpaceGuid.PcdEinjSetErrorTypeAddress|0xFB1E1000
++#
+ ################################################################################
+ #
+ # Components Section - list of all EDK II Modules needed by this Platform
+-- 
+2.39.5
+

@@ -1,0 +1,30 @@
+From e1dc3170d4c5dad96b8509176340efedaae5eaf2 Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Sun, 7 Jan 2024 12:07:00 +0000
+Subject: [PATCH 71/78] Platform/Sgi: Enable PCIe support on RdV3
+
+Enable PCIe support by adding the PCDs required for the platform and
+enabling PCIe flag.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: Ide1dc760a166af71c725237b3f0ac25a61299eda
+---
+ Platform/ARM/SgiPkg/RdV3/RdV3.dsc | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/Platform/ARM/SgiPkg/RdV3/RdV3.dsc b/Platform/ARM/SgiPkg/RdV3/RdV3.dsc
+index 0b5ef23aa330..4b6a3e5f1c12 100644
+--- a/Platform/ARM/SgiPkg/RdV3/RdV3.dsc
++++ b/Platform/ARM/SgiPkg/RdV3/RdV3.dsc
+@@ -31,6 +31,8 @@ DEFINE PCIE_ENABLE             = TRUE
+ !include Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+ !include Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc
+ 
++DEFINE PCIE_ENABLE             = TRUE
++
+ ################################################################################
+ #
+ # Pcd Section - list of all EDK II PCD Entries defined by this Platform
+-- 
+2.39.5
+

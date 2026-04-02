@@ -1,0 +1,70 @@
+From 3b2f988d5f70fcb98e1d3c07ffebe17841ad76af Mon Sep 17 00:00:00 2001
+From: Tony K Nadackal <tony.nadackal@arm.com>
+Date: Wed, 16 Nov 2022 17:24:59 +0000
+Subject: [PATCH 23/78] Platform/Sgi: Add memory map entry for debug uart
+ controller
+
+The UART0 controller connected in the AXI expansion space is used as the
+debug UART controller. Add platform memory map descriptor for this UART
+controller.
+
+Signed-off-by: Tony K Nadackal <tony.nadackal@arm.com>
+Change-Id: I8341533e6389a4ef311b84cfb2e9e05c6b5b1035
+---
+ Platform/ARM/SgiPkg/Drivers/PlatformDxe/PlatformDxe.inf  | 1 +
+ Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLib.inf  | 1 +
+ Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c | 7 ++++++-
+ 3 files changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/Platform/ARM/SgiPkg/Drivers/PlatformDxe/PlatformDxe.inf b/Platform/ARM/SgiPkg/Drivers/PlatformDxe/PlatformDxe.inf
+index 3cd7e2329c22..7e52961895fe 100644
+--- a/Platform/ARM/SgiPkg/Drivers/PlatformDxe/PlatformDxe.inf
++++ b/Platform/ARM/SgiPkg/Drivers/PlatformDxe/PlatformDxe.inf
+@@ -48,6 +48,7 @@
+   gArmSgiTokenSpaceGuid.PcdVirtioNetSize
+ 
+   gArmPlatformTokenSpaceGuid.PcdSerialDbgUartClkInHz
++  gArmPlatformTokenSpaceGuid.PcdSerialDbgRegisterBase
+ 
+ [Depex]
+   TRUE
+diff --git a/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLib.inf b/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLib.inf
+index 4ca2cab5405f..1d2b9d09c0c2 100644
+--- a/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLib.inf
++++ b/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLib.inf
+@@ -90,6 +90,7 @@
+   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase64
+   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase
++  gArmPlatformTokenSpaceGuid.PcdSerialDbgRegisterBase
+ 
+ [FeaturePcd]
+   gArmSgiTokenSpaceGuid.PcdEinjSupported
+diff --git a/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c b/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c
+index 32e090456d6f..3bdecc4cdb05 100644
+--- a/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c
++++ b/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c
+@@ -18,7 +18,7 @@
+ 
+ // Total number of descriptors, including the final "end-of-table" descriptor.
+ #define MAX_VIRTUAL_MEMORY_MAP_DESCRIPTORS                                     \
+-          ((13 + (FixedPcdGet32 (PcdChipCount) * 2)) +                         \
++          ((14 + (FixedPcdGet32 (PcdChipCount) * 2)) +                         \
+           (FeaturePcdGet (PcdEinjSupported)) +                                 \
+            ((FeaturePcdGet (PcdPcieEnable) == TRUE) ? 1 : 0) +                 \
+            (FixedPcdGet32 (PcdIoVirtSocExpBlkUartEnable) *                     \
+@@ -210,6 +210,11 @@ ArmPlatformGetVirtualMemoryMap (
+ #endif
+ #endif
+ #endif
++  // Expansion AXI - Debug UART
++  VirtualMemoryTable[++Index].PhysicalBase  = FixedPcdGet64 (PcdSerialDbgRegisterBase);
++  VirtualMemoryTable[Index].VirtualBase     = FixedPcdGet64 (PcdSerialDbgRegisterBase);
++  VirtualMemoryTable[Index].Length          = SIZE_64KB;
++  VirtualMemoryTable[Index].Attributes      = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
+ 
+   // DDR - (2GB - 16MB)
+   VirtualMemoryTable[++Index].PhysicalBase  = PcdGet64 (PcdSystemMemoryBase);
+-- 
+2.39.5
+

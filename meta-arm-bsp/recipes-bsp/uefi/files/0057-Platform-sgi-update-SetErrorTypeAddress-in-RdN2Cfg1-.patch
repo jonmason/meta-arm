@@ -1,0 +1,32 @@
+From 62c9c4032d17db0c39adcdc418edb6f09846ab80 Mon Sep 17 00:00:00 2001
+From: Glen Yeldho <glen.yeldho@arm.com>
+Date: Mon, 15 Apr 2024 11:06:44 +0530
+Subject: [PATCH 57/78]  Platform/sgi: update SetErrorTypeAddress in RdN2Cfg1
+ einj acpi table
+
+SetErrorTypeAddress is a memory region, which will be used by kernel
+Einj framework to perform injection operation. Update the address for
+same memory region.
+
+Signed-off-by: Glen Yeldho <glen.yeldho@arm.com>
+Change-Id: Ib8bf96590a39e471c431202da2a3fc325bb5d916
+---
+ Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Einj.aslc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Einj.aslc b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Einj.aslc
+index e58dec8afa3c..af46d624d447 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Einj.aslc
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Einj.aslc
+@@ -87,7 +87,7 @@ STATIC EFI_ACPI_6_4_ERROR_INJECTION_TABLE Einj = {
+         64,
+         0,
+         EFI_ACPI_6_4_QWORD,
+-        0xFFE10100
++        0xFFE12000
+       },
+       0x0000000000000000,   // Value
+       0xffffffffffffffff    // Register region Mask
+-- 
+2.39.5
+

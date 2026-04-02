@@ -1,0 +1,30 @@
+From 1d417b729782393cf5a97f5545a75b4124a37112 Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Thu, 18 Jul 2024 23:38:10 +0100
+Subject: [PATCH 59/78] Platform/Sgi: Include HobPrintLib
+
+Due to a recent change, Standalone MM module needs an additional lib to
+print the HOB information at the start of StandaloneMmMain().
+
+Include the lib to fix the build.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+---
+ Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc b/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
+index b34b5fcd63d3..203e34b4d5fb 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
+@@ -50,6 +50,7 @@
+   PL011UartLib|ArmPlatformPkg/Library/PL011UartLib/PL011UartLib.inf
+   SerialPortLib|ArmPlatformPkg/Library/PL011SerialPortLib/PL011SerialPortLib.inf
+ !endif
++  HobPrintLib|MdeModulePkg/Library/HobPrintLib/HobPrintLib.inf
+ 
+   #
+   # Entry point
+-- 
+2.39.5
+

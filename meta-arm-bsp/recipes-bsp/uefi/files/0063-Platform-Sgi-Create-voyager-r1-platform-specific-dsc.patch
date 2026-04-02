@@ -1,0 +1,70 @@
+From bdeba1e73084af81909e281aa706696ac04e5565 Mon Sep 17 00:00:00 2001
+From: Lokesh B V <Lokesh.BV@Arm.com>
+Date: Mon, 23 Sep 2024 04:20:33 +0530
+Subject: [PATCH 63/78] Platform/Sgi: Create voyager-r1 platform specific dsc
+ files
+
+There are currently two voyager-r1 platforms that are supported under
+SgiPkg and these platforms have a common platform dsc file to allow these
+to be built into a single binary. But the newer platforms that are
+intended to be added to the SgiPkg differ to some extent on the software
+programming interface. So in order to accommodate the newer platforms
+into SgiPkg, there is shift from building single binary for all
+platforms to independent binary for each platform.
+
+As a first step towards this, create .dsc file for each supported
+platform. The exiting .dsc file is converted to be a include file
+that the platform specific .dsc files can include
+
+Signed-off-by: Lokesh B V <Lokesh.BV@Arm.com>
+Change-Id: Ie4ab231bb4910c3fdc98af1760356a7b7a57de6e
+---
+ Platform/ARM/SgiPkg/SgiPlatform4.dsc.inc | 36 ++++++++++++++++++++++++
+ 1 file changed, 36 insertions(+)
+ create mode 100644 Platform/ARM/SgiPkg/SgiPlatform4.dsc.inc
+
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform4.dsc.inc b/Platform/ARM/SgiPkg/SgiPlatform4.dsc.inc
+new file mode 100644
+index 000000000000..91c3855d1a54
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/SgiPlatform4.dsc.inc
+@@ -0,0 +1,36 @@
++#
++#  Copyright (c) 2018 - 2024, Arm Limited. All rights reserved.
++#  (C) Copyright 2021 Hewlett Packard Enterprise Development LP<BR>
++#
++#  SPDX-License-Identifier: BSD-2-Clause-Patent
++#
++
++################################################################################
++#
++# Pcd Section - list of all EDK II PCD Entries defined by this Platform
++#
++################################################################################
++
++[PcdsFixedAtBuild.common]
++
++  ## SBSA Watchdog Count
++  gArmPlatformTokenSpaceGuid.PcdWatchdogCount|1
++  gArmTokenSpaceGuid.PcdGenericWatchdogControlBase|0x1a440000
++  gArmTokenSpaceGuid.PcdGenericWatchdogRefreshBase|0x1a450000
++
++  ## PL011 - Serial Terminal
++  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase|0x1A400000
++  gEfiMdePkgTokenSpaceGuid.PcdUartDefaultBaudRate|115200
++  gEfiMdePkgTokenSpaceGuid.PcdUartDefaultReceiveFifoDepth|0
++  gArmPlatformTokenSpaceGuid.PL011UartInteger|4
++  gArmPlatformTokenSpaceGuid.PL011UartFractional|0
++
++  # Counter, Timer and Watchdog
++  gArmSgiTokenSpaceGuid.PcdTimerBase0Base|0x1A830000
++  gArmSgiTokenSpaceGuid.PcdTimerBase0Size|0x00010000
++  gArmSgiTokenSpaceGuid.PcdTimerControlBase|0x1A810000
++  gArmSgiTokenSpaceGuid.PcdTimerControlSize|0x00010000
++  gArmSgiTokenSpaceGuid.PcdTimerCounterReadBase|0x1A800000
++  gArmSgiTokenSpaceGuid.PcdTimerCounterReadSize|0x00010000
++  gArmSgiTokenSpaceGuid.PcdWdogBase|0x1A440000
++  gArmSgiTokenSpaceGuid.PcdWdogSize|0x00020000
+-- 
+2.39.5
+

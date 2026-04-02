@@ -1,0 +1,39 @@
+From 2e3a03f94d07f399f9ec5b093c0a6d16f111823c Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Mon, 12 Sep 2022 19:37:00 +0530
+Subject: [PATCH 09/43] MdePkg/IndustryStandard: add missing header to Arm
+ Error Source Table
+
+Include the Acpi.h header file to Arm Error Source Table definition.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I4d372e518ea2c10cf5256f79dae7b531105ef402
+---
+ MdePkg/Include/IndustryStandard/ArmErrorSourceTable.h | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/MdePkg/Include/IndustryStandard/ArmErrorSourceTable.h b/MdePkg/Include/IndustryStandard/ArmErrorSourceTable.h
+index edc253733dcb..18c41d308621 100644
+--- a/MdePkg/Include/IndustryStandard/ArmErrorSourceTable.h
++++ b/MdePkg/Include/IndustryStandard/ArmErrorSourceTable.h
+@@ -2,7 +2,7 @@
+   Arm Error Source Table as described in the
+   'ACPI for the Armv8 RAS Extensions 1.1' Specification.
+ 
+-  Copyright (c) 2020 Arm Limited.
++  Copyright (c) 2020 - 2022 Arm Limited.
+   SPDX-License-Identifier: BSD-2-Clause-Patent
+ 
+   @par Reference(s):
+@@ -18,6 +18,8 @@
+ #ifndef ARM_ERROR_SOURCE_TABLE_H_
+ #define ARM_ERROR_SOURCE_TABLE_H_
+ 
++#include <IndustryStandard/Acpi.h>
++
+ ///
+ /// "AEST" Arm Error Source Table
+ ///
+-- 
+2.39.5
+

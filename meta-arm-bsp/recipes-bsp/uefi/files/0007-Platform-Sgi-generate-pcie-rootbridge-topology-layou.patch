@@ -1,0 +1,431 @@
+From eaef2c62b47dbed387b2455f642ed0e0b425dbe1 Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Thu, 28 Oct 2021 13:41:01 +0100
+Subject: [PATCH 07/78] Platform/Sgi: generate pcie rootbridge topology layout
+ dynamically
+
+Add support to generate RootBridge layout dynamically from the topology
+information passed to UEFI. Use a template to generate the basic layout
+of the topology and then use the topology information to update
+PcieHostBridgeLib specific datastructure.
+
+This file is share by all the platforms on Sgi platforms, add a Pcd flag
+to enable or disable this feature for the plarforms which does not use
+this feature.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: I39d64bf56048e3509f379c6e22514fe12898b2c3
+---
+ Platform/ARM/SgiPkg/Include/SgiPlatform.h     |  32 +++
+ .../PciHostBridgeLib/PciHostBridgeLib.c       | 217 +++++++++++++++++-
+ .../PciHostBridgeLib/PciHostBridgeLib.inf     |   6 +
+ .../Library/SgiPlatformPei/SgiPlatformPei.inf |   1 +
+ .../Library/SgiPlatformPei/SgiPlatformPeim.c  |  23 ++
+ Platform/ARM/SgiPkg/SgiPlatform.dec           |   5 +-
+ 6 files changed, 280 insertions(+), 4 deletions(-)
+
+diff --git a/Platform/ARM/SgiPkg/Include/SgiPlatform.h b/Platform/ARM/SgiPkg/Include/SgiPlatform.h
+index 504d41c38d90..496a4a35dfc3 100644
+--- a/Platform/ARM/SgiPkg/Include/SgiPlatform.h
++++ b/Platform/ARM/SgiPkg/Include/SgiPlatform.h
+@@ -74,6 +74,38 @@
+ #define DRAM_BLOCK2_BASE_REMOTE(ChipId) \
+           (SGI_REMOTE_CHIP_MEM_OFFSET (ChipId) + FixedPcdGet64 (PcdDramBlock2Base))
+ 
++/******************************************************************************
++// PCI data layout
++*******************************************************************************/
++
++typedef struct {
++  UINT64 Address;
++  UINT64 Size;
++} SGI_PCIE_CARVEOUT;
++
++typedef struct {
++  SGI_PCIE_CARVEOUT Ecam;
++  SGI_PCIE_CARVEOUT MmioL;
++  SGI_PCIE_CARVEOUT MmioH;
++  SGI_PCIE_CARVEOUT Bus;
++  UINT64 BaseInterruptId;
++} SGI_PCIE_DEVICE;
++
++typedef struct {
++  UINT64 HostbridgeId;
++  UINT64 Segment;
++  UINT64 Translation;
++  UINT64 SmmuBase;
++  UINT64 Count;
++  SGI_PCIE_DEVICE RootPorts[];
++} SGI_PCIE_IO_BLOCK;
++
++typedef struct {
++  UINT64 BlockCount;
++  UINT64 TableSize;
++  SGI_PCIE_IO_BLOCK IoBlocks[];
++} SGI_PCIE_IO_BLOCK_LIST;
++
+ // List of isolated CPUs MPID
+ typedef struct {
+   UINT64  Count;                // Number of elements present in the list
+diff --git a/Platform/ARM/SgiPkg/Library/PciHostBridgeLib/PciHostBridgeLib.c b/Platform/ARM/SgiPkg/Library/PciHostBridgeLib/PciHostBridgeLib.c
+index e53aab58f829..4bb236dc6e46 100644
+--- a/Platform/ARM/SgiPkg/Library/PciHostBridgeLib/PciHostBridgeLib.c
++++ b/Platform/ARM/SgiPkg/Library/PciHostBridgeLib/PciHostBridgeLib.c
+@@ -8,19 +8,25 @@
+ **/
+ 
+ #include <PiDxe.h>
++#include <Library/BaseMemoryLib.h>
+ #include <Library/DebugLib.h>
+ #include <Library/DevicePathLib.h>
++#include <Library/HobLib.h>
+ #include <Library/MemoryAllocationLib.h>
+ #include <Library/PcdLib.h>
+ #include <Library/PciHostBridgeLib.h>
+ #include <Protocol/PciHostBridgeResourceAllocation.h>
+ #include <Protocol/PciRootBridgeIo.h>
+ 
++#include <SgiPlatform.h>
++
+ GLOBAL_REMOVE_IF_UNREFERENCED
+ STATIC CHAR16 CONST * CONST mPciHostBridgeLibAcpiAddressSpaceTypeStr[] = {
+   L"Mem", L"I/O", L"Bus"
+ };
+ 
++STATIC BOOLEAN DynamicTableGenerationEnabled;
++
+ #pragma pack(1)
+ typedef struct {
+   ACPI_HID_DEVICE_PATH     AcpiDevicePath;
+@@ -89,6 +95,189 @@ STATIC PCI_ROOT_BRIDGE mPciRootBridge[] = {
+   },
+ };
+ 
++STATIC PCI_ROOT_BRIDGE mRootBridgeTemplate[] = {
++  {
++    0,                                              // Segment
++    0,                                              // Supports
++    0,                                              // Attributes
++    TRUE,                                           // DmaAbove4G
++    FALSE,                                          // NoExtendedConfigSpace
++    FALSE,                                          // ResourceAssigned
++    EFI_PCI_HOST_BRIDGE_COMBINE_MEM_PMEM |          // AllocationAttributes
++    EFI_PCI_HOST_BRIDGE_MEM64_DECODE,
++    {
++      // Bus
++      0,
++      0,
++    }, {
++      // Io
++      0,
++      0,
++      0,
++    }, {
++      // Mem
++      MAX_UINT64,
++      0,
++      0,
++    }, {
++      // MemAbove4G
++      MAX_UINT64,
++      0,
++      0,
++    }, {
++      // PMem
++      MAX_UINT64,
++      0
++    }, {
++      // PMemAbove4G
++      MAX_UINT64,
++      0,
++      0,
++    },
++    (EFI_DEVICE_PATH_PROTOCOL *)&mEfiPciRootBridgeDevicePath
++  }
++};
++
++STATIC
++UINT8
++GetPcieRootPortCount(
++    SGI_PCIE_IO_BLOCK_LIST *IoBlockList
++)
++{
++  SGI_PCIE_IO_BLOCK *IoBlock;
++  SGI_PCIE_DEVICE *RootPorts;
++  UINTN Count = 0;
++  UINTN LoopRootPort;
++  UINTN LoopIoBlock;
++
++  IoBlock = IoBlockList->IoBlocks;
++  for (LoopIoBlock = 0; LoopIoBlock < IoBlockList->BlockCount; LoopIoBlock++) {
++    // EDK2 Supports only one segment.
++    if (IoBlock->Segment == 0) {
++      RootPorts = IoBlock->RootPorts;
++      for (LoopRootPort = 0; LoopRootPort < IoBlock->Count; LoopRootPort++) {
++        if (RootPorts[LoopRootPort].Ecam.Size != 0) {
++          Count++;
++        }
++      }
++    }
++    IoBlock = (SGI_PCIE_IO_BLOCK *) ((UINT8 *)IoBlock +
++                sizeof (SGI_PCIE_IO_BLOCK) +
++                (sizeof (SGI_PCIE_DEVICE) * IoBlock->Count));
++  }
++
++  return Count;
++}
++
++STATIC
++EFI_STATUS
++GenerateRootBridge (
++    PCI_ROOT_BRIDGE                     *Bridge,
++    SGI_PCIE_DEVICE                     *RootPort,
++    UINT64                               Translation,
++    UINTN                                Segment
++    )
++{
++  EFI_PCI_ROOT_BRIDGE_DEVICE_PATH *DevicePath;
++  STATIC UINTN UID = 0;
++
++  CopyMem (Bridge, mRootBridgeTemplate, sizeof *Bridge);
++  Bridge->Segment = Segment;
++
++  if (RootPort->Bus.Size != 0) {
++    Bridge->Bus.Base = RootPort->Bus.Address;
++    Bridge->Bus.Limit = RootPort->Bus.Address + RootPort->Bus.Size - 1;
++  }
++
++  if (RootPort->MmioL.Size != 0) {
++    Bridge->Mem.Base = RootPort->MmioL.Address;
++    Bridge->Mem.Limit =
++      RootPort->MmioL.Address + RootPort->MmioL.Size - 1;
++    Bridge->Mem.Translation = Translation;
++  }
++
++  if (RootPort->MmioH.Size != 0) {
++    Bridge->MemAbove4G.Base = RootPort->MmioH.Address;
++    Bridge->MemAbove4G.Limit =
++      RootPort->MmioH.Address + RootPort->MmioH.Size - 1;
++  }
++
++  DevicePath = AllocateCopyPool(
++      sizeof mEfiPciRootBridgeDevicePath,
++      &mEfiPciRootBridgeDevicePath
++      );
++  if (DevicePath == NULL) {
++    DEBUG ((
++          DEBUG_ERROR,
++          "[%a:%d] - AllocatePool failed!\n",
++          __FUNCTION__,
++          __LINE__
++          ));
++    return EFI_OUT_OF_RESOURCES;
++  }
++
++  DevicePath->AcpiDevicePath.UID = UID++;
++  Bridge->DevicePath = (EFI_DEVICE_PATH_PROTOCOL *)DevicePath;
++  return EFI_SUCCESS;
++}
++
++PCI_ROOT_BRIDGE *
++EFIAPI
++PciGenerateHostBridgeInfo (
++  SGI_PCIE_IO_BLOCK_LIST *IoBlockList,
++  UINTN *Count
++  )
++{
++  EFI_STATUS Status;
++  SGI_PCIE_IO_BLOCK *IoBlock;
++  UINT8 Idx;
++  UINTN LoopRootPort;
++  UINTN LoopIoBlock;
++  PCI_ROOT_BRIDGE *Bridges;
++
++  *Count = GetPcieRootPortCount(IoBlockList);
++  if (*Count == 0) {
++    return NULL;
++  }
++
++  Bridges = AllocatePool (*Count * sizeof *Bridges);
++  if (Bridges == NULL) {
++     DEBUG ((
++           DEBUG_ERROR,
++           "[%a:%d] - AllocatePool failed!\n",
++           __FUNCTION__,
++           __LINE__
++           ));
++     return NULL;
++  }
++
++  IoBlock = IoBlockList->IoBlocks;
++  for (LoopIoBlock = 0; LoopIoBlock < IoBlockList->BlockCount; LoopIoBlock++) {
++    // EDK2 support only one segment. Use Segment 0 for device detection.
++    SGI_PCIE_DEVICE *RootPorts = IoBlock->RootPorts;
++    if (IoBlock->Segment == 0) {
++      for (LoopRootPort = 0; LoopRootPort < IoBlock->Count; LoopRootPort++) {
++        if (RootPorts[LoopRootPort].Ecam.Size != 0) {
++          Status = GenerateRootBridge(
++              &Bridges[Idx],
++              &RootPorts[LoopRootPort],
++              IoBlock->Translation,
++              IoBlock->Segment
++              );
++          if (!EFI_ERROR(Status)) {
++            Idx++;
++          }
++        }
++      }
++    }
++    IoBlock = (SGI_PCIE_IO_BLOCK *) ((UINT8 *)IoBlock +
++               sizeof (SGI_PCIE_IO_BLOCK) +
++                (sizeof (SGI_PCIE_DEVICE) * IoBlock->Count));
++  }
++
++  return Bridges;
++}
++
+ /**
+   Return all the root bridge instances in an array.
+ 
+@@ -104,8 +293,21 @@ PciHostBridgeGetRootBridges (
+   UINTN *Count
+   )
+ {
+-  *Count = ARRAY_SIZE (mPciRootBridge);
+-  return mPciRootBridge;
++  PCI_ROOT_BRIDGE *Bridges;
++  VOID *PcieMmapTableHob;
++
++  PcieMmapTableHob = GetFirstGuidHob (&gArmSgiPcieMmapTablesGuid);
++  if (PcieMmapTableHob != NULL) {
++    Bridges = PciGenerateHostBridgeInfo(
++        (SGI_PCIE_IO_BLOCK_LIST *)GET_GUID_HOB_DATA (PcieMmapTableHob), Count);
++    DynamicTableGenerationEnabled = TRUE;
++  } else {
++    *Count = ARRAY_SIZE (mPciRootBridge);
++    Bridges = mPciRootBridge;
++    DynamicTableGenerationEnabled = FALSE;
++  }
++
++  return Bridges;
+ }
+ 
+ /**
+@@ -121,6 +323,17 @@ PciHostBridgeFreeRootBridges (
+   UINTN           Count
+   )
+ {
++  UINTN Index;
++
++  if (DynamicTableGenerationEnabled) {
++    for (Index = 0; Index < Count; Index++) {
++      FreePool (Bridges[Index].DevicePath);
++    }
++
++    if (Bridges != NULL) {
++      FreePool (Bridges);
++    }
++  }
+ }
+ 
+ /**
+diff --git a/Platform/ARM/SgiPkg/Library/PciHostBridgeLib/PciHostBridgeLib.inf b/Platform/ARM/SgiPkg/Library/PciHostBridgeLib/PciHostBridgeLib.inf
+index 0f53d67bc0a8..dc328bdad6ef 100644
+--- a/Platform/ARM/SgiPkg/Library/PciHostBridgeLib/PciHostBridgeLib.inf
++++ b/Platform/ARM/SgiPkg/Library/PciHostBridgeLib/PciHostBridgeLib.inf
+@@ -30,11 +30,14 @@
+   MdePkg/MdePkg.dec
+   MdeModulePkg/MdeModulePkg.dec
+   ArmPkg/ArmPkg.dec
++  Platform/ARM/SgiPkg/SgiPlatform.dec
+ 
+ [LibraryClasses]
++  ArmPlatformLib
+   BaseLib
+   DebugLib
+   DevicePathLib
++  HobLib
+   IoLib
+   MemoryAllocationLib
+   UefiBootServicesTableLib
+@@ -53,5 +56,8 @@
+ [Protocols]
+   gEfiCpuIo2ProtocolGuid          ## CONSUMES
+ 
++[Guids]
++  gArmSgiPcieMmapTablesGuid
++
+ [Depex]
+   gEfiCpuIo2ProtocolGuid
+diff --git a/Platform/ARM/SgiPkg/Library/SgiPlatformPei/SgiPlatformPei.inf b/Platform/ARM/SgiPkg/Library/SgiPlatformPei/SgiPlatformPei.inf
+index fbf061ad3bdb..3d56d47f351f 100644
+--- a/Platform/ARM/SgiPkg/Library/SgiPlatformPei/SgiPlatformPei.inf
++++ b/Platform/ARM/SgiPkg/Library/SgiPlatformPei/SgiPlatformPei.inf
+@@ -32,6 +32,7 @@
+ 
+ [Guids]
+   gArmSgiPlatformIdDescriptorGuid
++  gArmSgiPcieMmapTablesGuid
+ 
+ [Ppis]
+   gNtFwConfigDtInfoPpiGuid
+diff --git a/Platform/ARM/SgiPkg/Library/SgiPlatformPei/SgiPlatformPeim.c b/Platform/ARM/SgiPkg/Library/SgiPlatformPei/SgiPlatformPeim.c
+index f778dc8ac7c1..3cf92fe57be2 100644
+--- a/Platform/ARM/SgiPkg/Library/SgiPlatformPei/SgiPlatformPeim.c
++++ b/Platform/ARM/SgiPkg/Library/SgiPlatformPei/SgiPlatformPeim.c
+@@ -40,6 +40,9 @@ GetSgiSystemId (
+   EFI_STATUS                    Status;
+   UINT64                        IsolatedCpuCount;
+   UINT64                        CoreCount;
++  SGI_PCIE_IO_BLOCK_LIST        IoBlockList;
++  CONST VOID                    *IoBlockListHead;
++  VOID                          *HobIoBlockList;
+ 
+   Status = PeiServicesLocatePpi (&gNtFwConfigDtInfoPpiGuid, 0, NULL,
+              (VOID**)&NtFwConfigInfoPpi);
+@@ -111,6 +114,26 @@ GetSgiSystemId (
+       );
+   }
+ 
++  IoBlockListHead = fdt_getprop(NtFwCfgDtBlob, Offset, "pcie-mmap", NULL);
++  if (IoBlockListHead == NULL) {
++    DEBUG ((DEBUG_WARN, "%s property not found\n", "pcie-mmap"));
++  } else {
++    CopyMem(&IoBlockList, IoBlockListHead, sizeof(IoBlockList));
++    if (IoBlockList.BlockCount != 0) {
++      DEBUG ((DEBUG_WARN, "Number of blocks: %x\n", IoBlockList.BlockCount));
++      DEBUG ((DEBUG_WARN, "Table Size: %x\n", IoBlockList.TableSize));
++      HobIoBlockList =  BuildGuidHob (
++          &gArmSgiPcieMmapTablesGuid,
++          IoBlockList.TableSize);
++      if (HobIoBlockList == NULL) {
++        DEBUG ((DEBUG_ERROR, "PCIe MMap HOB creation failed\n"));
++        ASSERT (FALSE);
++        return EFI_OUT_OF_RESOURCES;
++      }
++      CopyMem (HobIoBlockList, IoBlockListHead, IoBlockList.TableSize);
++    }
++  }
++
+   return EFI_SUCCESS;
+ }
+ 
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.dec b/Platform/ARM/SgiPkg/SgiPlatform.dec
+index f060624fdaa2..d3fcd866cb68 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatform.dec
++++ b/Platform/ARM/SgiPkg/SgiPlatform.dec
+@@ -25,8 +25,9 @@
+ [Guids.common]
+   # ARM Sgi Platform ID descriptor
+   gArmSgiPlatformIdDescriptorGuid = { 0xf56f152a, 0xad2a, 0x11e6, { 0xb1, 0xa7, 0x00, 0x50, 0x56, 0x3c, 0x44, 0xcc } }
+-  gArmSgiTokenSpaceGuid      = { 0x577d6941, 0xaea1, 0x40b4, { 0x90, 0x93, 0x2a, 0x86, 0x61, 0x72, 0x5a, 0x57 } }
+-  gArmSgiAcpiTablesGuid = { 0xc712719a, 0x0aaf, 0x438c, { 0x9c, 0xdd, 0x35, 0xab, 0x4d, 0x60, 0x20, 0x7d } }
++  gArmSgiTokenSpaceGuid           = { 0x577d6941, 0xaea1, 0x40b4, { 0x90, 0x93, 0x2a, 0x86, 0x61, 0x72, 0x5a, 0x57 } }
++  gArmSgiAcpiTablesGuid           = { 0xc712719a, 0x0aaf, 0x438c, { 0x9c, 0xdd, 0x35, 0xab, 0x4d, 0x60, 0x20, 0x7d } }
++  gArmSgiPcieMmapTablesGuid       = { 0x793ab66b, 0x9335, 0x4686, { 0xbb, 0x94, 0x2a, 0x0e, 0xb7, 0xbe, 0x2a, 0x03 } }
+ 
+ [PcdsFeatureFlag.common]
+   gArmSgiTokenSpaceGuid.PcdVirtioBlkSupported|FALSE|BOOLEAN|0x00000001
+-- 
+2.39.5
+

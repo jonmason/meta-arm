@@ -1,0 +1,123 @@
+From 55dcf37f8f5107e92211c46e15137aa8ad6a86cb Mon Sep 17 00:00:00 2001
+From: Achin Gupta <achin.gupta@arm.com>
+Date: Mon, 1 Nov 2021 13:59:53 +0000
+Subject: [PATCH 13/43] StandaloneMmPkg: Allocate and initialise SP stack from
+ internal memory
+
+This patch removes the dependency on the SPM to allocate and initialise stack
+memory for the StMM SP. This is done by reserving 8K worth of memory in the StMM
+image at a page aligned address in the data section. Then, instead of jumping
+directly to the C entrypoint, an assembler entrypoint is invoked. This
+entrypoint locates the stack memory, changes its permissions using FF-A ABIs,
+sets the stack pointer and invokes the C entrypoint.
+
+Signed-off-by: Achin Gupta <achin.gupta@arm.com>
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: Ic2d87de5611a4af0cfffd6fcd3eb9a63397b890d
+---
+ .../Arm/AArch64/ModuleEntryPoint.S            | 66 +++++++++++++++++++
+ .../Arm/StandaloneMmCoreEntryPoint.c          |  2 +-
+ .../StandaloneMmCoreEntryPoint.inf            |  1 +
+ 3 files changed, 68 insertions(+), 1 deletion(-)
+ create mode 100644 StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/AArch64/ModuleEntryPoint.S
+
+diff --git a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/AArch64/ModuleEntryPoint.S b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/AArch64/ModuleEntryPoint.S
+new file mode 100644
+index 000000000000..ae1911ec658f
+--- /dev/null
++++ b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/AArch64/ModuleEntryPoint.S
+@@ -0,0 +1,66 @@
++//
++//  Copyright (c) 2021, ARM Limited. All rights reserved.
++//
++//  SPDX-License-Identifier: BSD-2-Clause-Patent
++//
++//
++
++#include <AsmMacroLib.h>
++
++  .align 12
++StackBase:
++  .space 8192
++StackEnd:
++
++  .macro FfaMemPermSet start:req end:req perm:req
++  adrp x29, \start
++  add x29, x29, :lo12: \start
++
++  adrp x30, \end
++  add x30, x30, :lo12:\end
++
++  /* x30 = end - begin */
++  sub x30, x30, x29
++  /* x28 = x30 >> 12 (number of pages) */
++  mov x28, #12
++  lsrv x28, x30, x28
++
++  mov w0, #0x89
++  movk w0, #0x8400, lsl #16
++  mov x1, x29
++  mov x2, x28
++  mov w3, #\perm
++
++  svc #0
++
++  mov w1, #0x61
++  movk w1, #0x8400, lsl #16
++  cmp w1, w0
++  b.ne .
++  .endm
++
++ASM_FUNC(_ModuleEntryPoint)
++  MOV32 (w8, FixedPcdGet32(PcdFfaEnable))
++  cbz w8, FfaNotEnabled
++  // Stash boot information registers from the SPMC
++  mov	x8, x0
++  mov	x9, x1
++  mov	x10, x2
++  mov	x11, x3
++
++  // Set the correct permissions on stack memory
++  FfaMemPermSet StackBase StackEnd 0x5
++
++  // Initialise SP
++  adr	x0, StackEnd
++  mov   sp, x0
++
++  // Restore boot information registers from the SPMC
++  mov	x0, x8
++  mov	x1, x9
++  mov	x2, x10
++  mov	x3, x11
++
++  // Invoke the C entrypoint
++FfaNotEnabled:
++  b     ModuleEntryPoint
+diff --git a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
+index 6c4547b29333..cda36309dc9c 100644
+--- a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
++++ b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
+@@ -329,7 +329,7 @@ InitArmSvcArgs (
+ **/
+ VOID
+ EFIAPI
+-_ModuleEntryPoint (
++ModuleEntryPoint (
+   IN VOID    *SharedBufAddress,
+   IN UINT64  SharedBufSize,
+   IN UINT64  cookie1,
+diff --git a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/StandaloneMmCoreEntryPoint.inf b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/StandaloneMmCoreEntryPoint.inf
+index 9928183188fe..6cc181ef1c9e 100644
+--- a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/StandaloneMmCoreEntryPoint.inf
++++ b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/StandaloneMmCoreEntryPoint.inf
+@@ -25,6 +25,7 @@
+   Arm/StandaloneMmCoreEntryPoint.c
+   Arm/SetPermissions.c
+   Arm/CreateHobList.c
++  Arm/AArch64/ModuleEntryPoint.S
+ 
+ [Sources.X64]
+   X64/StandaloneMmCoreEntryPoint.c
+-- 
+2.39.5
+

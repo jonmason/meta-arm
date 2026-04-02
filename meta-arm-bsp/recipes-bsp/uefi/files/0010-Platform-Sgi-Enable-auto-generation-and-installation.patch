@@ -1,0 +1,282 @@
+From 18eb3f9e003b572d45577f8935075f6d87753ba5 Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Sat, 6 Jan 2024 23:44:41 +0000
+Subject: [PATCH 10/78] Platform/Sgi: Enable auto generation and installation
+ of MCFG table.
+
+With the dynamic configuration of PCIe controller ECAM and MMIO regions.
+MCFG cannot be compiled statically. To resolve this issue the MCFG table
+should be generated and installed dynamically from the data provided by
+the previous boot components.
+
+This patch add the support to parse the dynamically generated PCIe
+region and bus info and add entries to the MCFG table for each segment
+available on the platform.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: Ice9a2aada301994a6b1deb1d9ba3fc38ffab24fa
+---
+ .../ARM/SgiPkg/AcpiTables/RdN2AcpiTables.inf  |   1 -
+ .../PcieAcpiTableGeneratorLib.c               |  12 +-
+ .../PcieAcpiTableGeneratorLib.inf             |   1 +
+ .../PcieMcfgTableGenerator.c                  | 158 ++++++++++++++++++
+ .../PcieMcfgTableGenerator.h                  |  21 +++
+ 5 files changed, 189 insertions(+), 4 deletions(-)
+ create mode 100644 Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieMcfgTableGenerator.c
+ create mode 100644 Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieMcfgTableGenerator.h
+
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdN2AcpiTables.inf
+index c8b213ee79e7..0d516a583568 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN2AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2AcpiTables.inf
+@@ -18,7 +18,6 @@
+   Dbg2.aslc
+   Fadt.aslc
+   Gtdt.aslc
+-  Mcfg.aslc
+   RdN2/Dsdt.asl
+   RdN2/Madt.aslc
+   RdN2/Pptt.aslc
+diff --git a/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieAcpiTableGeneratorLib.c b/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieAcpiTableGeneratorLib.c
+index 096ee3c22ce9..e7b3916cd16f 100644
+--- a/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieAcpiTableGeneratorLib.c
++++ b/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieAcpiTableGeneratorLib.c
+@@ -19,6 +19,7 @@
+ #include <Protocol/AcpiTable.h>
+ 
+ #include <PcieIortGenerator.h>
++#include <PcieMcfgTableGenerator.h>
+ #include <SgiPlatform.h>
+ 
+ extern CHAR8 pciessdttemplate_aml_code[];
+@@ -358,7 +359,7 @@ PcieTableGeneratorEntryPoint (
+       (SGI_PCIE_IO_BLOCK_LIST *)GET_GUID_HOB_DATA (PcieMmapTableHob);
+     IoBlock = IoBlockList->IoBlocks;
+     for (LoopIoBlock = 0; LoopIoBlock < IoBlockList->BlockCount;
+-         LoopIoBlock++) {
++        LoopIoBlock++) {
+       SGI_PCIE_DEVICE *RootPorts = IoBlock->RootPorts;
+       for (LoopRootPort = 0; LoopRootPort < IoBlock->Count; LoopRootPort++) {
+         if (RootPorts[LoopRootPort].Ecam.Size != 0) {
+@@ -375,8 +376,13 @@ PcieTableGeneratorEntryPoint (
+         }
+       }
+       IoBlock = (SGI_PCIE_IO_BLOCK *) ((UINT8 *)IoBlock +
+-                  sizeof (SGI_PCIE_IO_BLOCK) +
+-                  (sizeof (SGI_PCIE_DEVICE) * IoBlock->Count));
++          sizeof (SGI_PCIE_IO_BLOCK) +
++          (sizeof (SGI_PCIE_DEVICE) * IoBlock->Count));
++    }
++
++    Status = GenerateAndInstallMcfgTable (IoBlockList);
++    if (EFI_ERROR(Status)) {
++      return Status;
+     }
+ 
+     Status = GenerateAndInstallIortTable(IoBlockList);
+diff --git a/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieAcpiTableGeneratorLib.inf b/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieAcpiTableGeneratorLib.inf
+index d3b34b5fba2e..7d909c2bcbf3 100644
+--- a/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieAcpiTableGeneratorLib.inf
++++ b/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieAcpiTableGeneratorLib.inf
+@@ -15,6 +15,7 @@
+ [Sources.common]
+   PcieAcpiTableGeneratorLib.c
+   PcieIortGenerator.c
++  PcieMcfgTableGenerator.c
+   PcieSsdtTemplate.asl
+ 
+ [Packages]
+diff --git a/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieMcfgTableGenerator.c b/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieMcfgTableGenerator.c
+new file mode 100644
+index 000000000000..873f725255eb
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieMcfgTableGenerator.c
+@@ -0,0 +1,158 @@
++/** @file
++  Mcfg Pcie Table Generator.
++
++  Copyright (c) 2022, Arm Limited. All rights reserved.<BR>
++
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++ **/
++
++#include <IndustryStandard/Acpi62.h>
++#include <IndustryStandard/MemoryMappedConfigurationSpaceAccessTable.h>
++#include <Library/AcpiLib.h>
++#include <Library/ArmLib.h>
++#include <Library/BaseLib.h>
++#include <Library/BaseMemoryLib.h>
++#include <Library/DebugLib.h>
++#include <Library/MemoryAllocationLib.h>
++#include <Library/PcdLib.h>
++#include <Library/PrintLib.h>
++#include <Library/UefiBootServicesTableLib.h>
++#include <Protocol/AcpiTable.h>
++
++#include "SgiAcpiHeader.h"
++#include "SgiPlatform.h"
++
++STATIC EFI_ACPI_MEMORY_MAPPED_CONFIGURATION_BASE_ADDRESS_TABLE_HEADER HeaderTemplate = {
++  ARM_ACPI_HEADER (
++      EFI_ACPI_6_2_PCI_EXPRESS_MEMORY_MAPPED_CONFIGURATION_SPACE_BASE_ADDRESS_DESCRIPTION_TABLE_SIGNATURE,
++      EFI_ACPI_MEMORY_MAPPED_CONFIGURATION_BASE_ADDRESS_TABLE_HEADER,
++      EFI_ACPI_MEMORY_MAPPED_CONFIGURATION_SPACE_ACCESS_TABLE_REVISION
++      ),
++  EFI_ACPI_RESERVED_QWORD
++};
++
++STATIC
++VOID
++GetSegmentEcam (
++    IN SGI_PCIE_IO_BLOCK_LIST * CONST IoBlockList,
++    IN UINT64 Segment,
++    OUT UINT64 * EcamBaseAddress,
++    OUT UINT64 * EcamSize,
++    OUT UINTN  * BlocksProcessed
++    )
++{
++  SGI_PCIE_IO_BLOCK *IoBlock;
++  UINTN LoopIoBlock;
++  UINTN LoopRootPort;
++
++  *EcamBaseAddress = MAX_UINT64;
++  *EcamSize = 0;
++
++  IoBlock = IoBlockList->IoBlocks;
++  for (LoopIoBlock = 0; LoopIoBlock < IoBlockList->BlockCount; LoopIoBlock++) {
++    SGI_PCIE_DEVICE *RootPorts = IoBlock->RootPorts;
++    if (Segment == IoBlock->Segment) {
++      for (LoopRootPort = 0; LoopRootPort < IoBlock->Count; LoopRootPort++) {
++        *EcamBaseAddress = MIN(*EcamBaseAddress,
++            RootPorts[LoopRootPort].Ecam.Address +
++            IoBlock->Translation);
++        *EcamSize += RootPorts[LoopRootPort].Ecam.Size;
++      }
++      *BlocksProcessed += 1;
++    }
++    IoBlock = (SGI_PCIE_IO_BLOCK *) ((UINT8 *)IoBlock +
++        sizeof (SGI_PCIE_IO_BLOCK) +
++        (sizeof (SGI_PCIE_DEVICE) * IoBlock->Count));
++  }
++}
++
++EFI_STATUS
++EFIAPI
++GenerateAndInstallMcfgTable (
++    IN SGI_PCIE_IO_BLOCK_LIST * CONST IoBlockList
++    )
++{
++  EFI_ACPI_MEMORY_MAPPED_CONFIGURATION_BASE_ADDRESS_TABLE_HEADER * Header;
++  EFI_ACPI_MEMORY_MAPPED_ENHANCED_CONFIGURATION_SPACE_BASE_ADDRESS_ALLOCATION_STRUCTURE * Structure;
++  EFI_ACPI_TABLE_PROTOCOL * AcpiProtocol;
++  EFI_STATUS Status;
++  UINT64 Segment = 0;
++  UINT32 TableSize;
++  UINTN BlocksProcessed = 0;
++  UINTN TableHandle;
++  UINT64 EcamStart;
++  UINT64 EcamSize;
++
++  if (IoBlockList == NULL) {
++    Status = EFI_INVALID_PARAMETER;
++    goto fail;
++  }
++
++  /* Each Chip has its own ECAM region. */
++  TableSize = sizeof (EFI_ACPI_MEMORY_MAPPED_CONFIGURATION_BASE_ADDRESS_TABLE_HEADER) +
++    (sizeof (EFI_ACPI_MEMORY_MAPPED_ENHANCED_CONFIGURATION_SPACE_BASE_ADDRESS_ALLOCATION_STRUCTURE) *
++     IoBlockList->BlockCount);
++
++  Header = (EFI_ACPI_MEMORY_MAPPED_CONFIGURATION_BASE_ADDRESS_TABLE_HEADER *)
++    AllocateZeroPool (TableSize);
++
++  if (Header == NULL) {
++    Status = EFI_OUT_OF_RESOURCES;
++    goto fail;
++  }
++
++  CopyMem (Header, &HeaderTemplate, sizeof (HeaderTemplate));
++  Structure = (EFI_ACPI_MEMORY_MAPPED_ENHANCED_CONFIGURATION_SPACE_BASE_ADDRESS_ALLOCATION_STRUCTURE *)(Header + 1);
++  while (BlocksProcessed < IoBlockList->BlockCount) {
++    EcamStart = 0;
++    EcamSize = 0;
++    GetSegmentEcam(IoBlockList, Segment, &EcamStart, &EcamSize, &BlocksProcessed);
++    if (EcamSize != 0) {
++      Structure->BaseAddress = EcamStart;
++      Structure->PciSegmentGroupNumber = Segment;
++      Structure->StartBusNumber = 0;
++      Structure->EndBusNumber = (EcamSize / SIZE_1MB) - 1;
++      Structure->Reserved = EFI_ACPI_RESERVED_DWORD;
++      Structure++;
++    }
++    Segment++;
++  }
++
++  Header->Header.Length = (UINT8 *)(Structure) - (UINT8 *)Header;
++
++  Status = gBS->LocateProtocol (
++      &gEfiAcpiTableProtocolGuid,
++      NULL,
++      (VOID**)&AcpiProtocol
++      );
++
++  if (EFI_ERROR (Status)) {
++    DEBUG ((
++          DEBUG_ERROR,
++          "PCIE MCFG Table generation failed\n"
++          "Failed to locate AcpiProtocol, Status = %r\n",
++          Status
++          ));
++    goto fail;
++  }
++
++
++  Status = AcpiProtocol->InstallAcpiTable (
++      AcpiProtocol,
++      Header,
++      Header->Header.Length,
++      &TableHandle
++      );
++
++  if (EFI_ERROR (Status)) {
++    DEBUG ((
++          DEBUG_ERROR,
++          "PCIE MCFG Table generation failed\n"
++          "Failed to install MCFG table, Status = %r\n",
++          Status
++          ));
++  }
++
++fail:
++  return Status;
++}
+diff --git a/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieMcfgTableGenerator.h b/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieMcfgTableGenerator.h
+new file mode 100644
+index 000000000000..f85ed4f551d6
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieMcfgTableGenerator.h
+@@ -0,0 +1,21 @@
++/** @file
++  Function declared for Mcfg Acpi table generator.
++
++  Copyright (c) 2022, ARM Limited. All rights reserved.
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++ **/
++
++#ifndef PCIE_MCFG_TABLE_GENERATOR_H
++#define PCIE_MCFG_TABLE_GENERATOR_H
++
++#include <Library/BaseLib.h>
++
++#include <SgiPlatform.h>
++
++EFI_STATUS
++EFIAPI
++GenerateAndInstallMcfgTable (
++    IN SGI_PCIE_IO_BLOCK_LIST * CONST IoBlockList
++    );
++
++#endif /* PCIE_MCFG_TABLE_GENERATOR_H */
+-- 
+2.39.5
+

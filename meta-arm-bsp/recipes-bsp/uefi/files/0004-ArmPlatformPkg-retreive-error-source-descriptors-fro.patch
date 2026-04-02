@@ -1,0 +1,833 @@
+From b5c472f4e87f4f875a9aa93fbc3def2e25dde817 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Tue, 12 Oct 2021 16:39:45 +0530
+Subject: [PATCH 04/43] ArmPlatformPkg: retreive error source descriptors from
+ MM
+
+Add a driver that retreives error source descriptors from MM and
+populates those into the HEST ACPI table. The error source descriptors
+that are available from the MM side are retreived using MM Communicate 2
+protocol.
+
+The first call into the MM returns the size of MM Communicate buffer
+required to hold all error source descriptor info. The communication
+buffer of that size is then allocated and the second call into MM
+returns the error source descriptors in the communication buffer.
+The retreived error source descriptors are then appended to the HEST
+table.
+
+Co-authored-by: Thomas Abraham <thomas.abraham@arm.com>
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I6355616db838c1a0720dc783c92c9bd907ed4d18
+---
+ ArmPlatformPkg/ArmPlatformPkg.dec             |   2 +
+ .../HestMmErrorSources/HestErrorSourceDxe.c   | 312 +++++++++++++++++
+ .../HestMmErrorSources/HestErrorSourceDxe.inf |  42 +++
+ .../HestErrorSourceStandaloneMm.c             | 321 ++++++++++++++++++
+ .../HestErrorSourceStandaloneMm.inf           |  40 +++
+ .../HestMmErrorSourceCommon.h                 |  37 ++
+ 6 files changed, 754 insertions(+)
+ create mode 100644 ArmPlatformPkg/Drivers/HestMmErrorSources/HestErrorSourceDxe.c
+ create mode 100644 ArmPlatformPkg/Drivers/HestMmErrorSources/HestErrorSourceDxe.inf
+ create mode 100644 ArmPlatformPkg/Drivers/HestMmErrorSources/HestErrorSourceStandaloneMm.c
+ create mode 100644 ArmPlatformPkg/Drivers/HestMmErrorSources/HestErrorSourceStandaloneMm.inf
+ create mode 100644 ArmPlatformPkg/Drivers/HestMmErrorSources/HestMmErrorSourceCommon.h
+
+diff --git a/ArmPlatformPkg/ArmPlatformPkg.dec b/ArmPlatformPkg/ArmPlatformPkg.dec
+index 8cc799b32c71..5eb1df0c88ad 100644
+--- a/ArmPlatformPkg/ArmPlatformPkg.dec
++++ b/ArmPlatformPkg/ArmPlatformPkg.dec
+@@ -48,6 +48,8 @@
+ 
+ [Guids.common]
+   gArmPlatformTokenSpaceGuid   = { 0x9c0aaed4, 0x74c5, 0x4043, { 0xb4, 0x17, 0xa3, 0x22, 0x38, 0x14, 0xce, 0x76 } }
++  gArmPlatformHestErrorSourcesGuid = { 0x76b8ab43, 0x822d, 0x4b00, { 0x9f, 0xd0, 0xf4, 0xa5, 0x35, 0x82, 0x47, 0x0a } }
++  gMmHestGetErrorSourceInfoGuid = { 0x7d602951, 0x678e, 0x4cc4, { 0x98, 0xd9, 0xe3, 0x76, 0x04, 0xf6, 0x93, 0x0d } }
+ 
+ [PcdsFeatureFlag.common]
+   # Disable the GOP controller on ExitBootServices(). By default the value is FALSE,
+diff --git a/ArmPlatformPkg/Drivers/HestMmErrorSources/HestErrorSourceDxe.c b/ArmPlatformPkg/Drivers/HestMmErrorSources/HestErrorSourceDxe.c
+new file mode 100644
+index 000000000000..1174846fccba
+--- /dev/null
++++ b/ArmPlatformPkg/Drivers/HestMmErrorSources/HestErrorSourceDxe.c
+@@ -0,0 +1,312 @@
++/** @file
++  Collects and appends the HEST error source descriptors from the MM drivers.
++
++  The drivers entry point locates the MM Communication protocol and calls into
++  Standalone MM to get the HEST error sources length and count. It also
++  retrieves descriptor information. The information is then used to build the
++  HEST table using the HEST table generation protocol.
++
++  This driver collects the secure error source descriptor information from the
++  MM drviers that implement HEST error source protocol. Instead of directly
++  communicating with the individual MM drivers, it calls into
++  HestErrorSourceStandaloneMM driver which is a gatway MM driver. This MM driver
++  in-turn communicates with individual MM drivers collecting the error source
++  descriptor information.
++
++  Once all the error source descriptor information is retrieved the driver
++  appends the descriptors to HEST table using the HestDxe driver.
++
++  Copyright (c) 2020 - 2021, ARM Limited. All rights reserved.
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++**/
++
++#include <Library/BaseMemoryLib.h>
++#include <Library/DebugLib.h>
++#include <Library/MemoryAllocationLib.h>
++#include <Library/UefiBootServicesTableLib.h>
++#include <Protocol/MmCommunication2.h>
++#include <Protocol/HestTableProtocol.h>
++#include "HestMmErrorSourceCommon.h"
++
++STATIC EDKII_HEST_TABLE_PROTOCOL *mHestProtocol;
++STATIC EFI_MM_COMMUNICATION2_PROTOCOL *mMmCommunication2;
++
++/**
++  Retrieves the error source descriptors from Standalone MM.
++
++  Initializes the MM comminication header with a guid of the Mmi handler to be
++  called and the length of message. Then initiates a MM communication call to
++  retrieve the error source descriptors.
++
++  @param[in]     CommBuffSize  Size of communicate buffer.
++  @param[in,out] CommBuffer    The communicate buffer.
++
++  @retval EFI_SUCCESS          MM Communicate protocol call successful.
++  @retval EFI_BAD_BUFFER_SIZE  CommBufferSize param is not correct.
++  @retval Other                MM Communicate protocol call failed.
++**/
++STATIC
++EFI_STATUS
++GetErrorSourceDescriptors (
++  IN     UINTN                     CommBuffSize,
++  IN OUT EFI_MM_COMMUNICATE_HEADER **CommBuffer
++  )
++{
++  // Check if CommBuffSize is atleast the size of error source descriptor
++  // info and Mm communicate header structures.
++  if (CommBuffSize <
++      (MM_COMMUNICATE_HEADER_SIZE + HEST_ERROR_SOURCE_DESC_INFO_SIZE))
++  {
++    return EFI_BAD_BUFFER_SIZE;
++  }
++
++  //
++  // Initialize the CommBuffer with MM Communicate metadata.
++  //
++  CopyGuid (&(*CommBuffer)->HeaderGuid, &gMmHestGetErrorSourceInfoGuid);
++  (*CommBuffer)->MessageLength =
++    CommBuffSize -
++    sizeof ((*CommBuffer)->HeaderGuid) -
++    sizeof ((*CommBuffer)->MessageLength);
++
++  //
++  // Call into the Standalone MM using the MM Communicate protocol.
++  //
++  return mMmCommunication2->Communicate (
++                              mMmCommunication2,
++                              (VOID *)*CommBuffer,
++                              (VOID *)*CommBuffer,
++                              NULL
++                              );
++}
++
++/**
++  Collect HEST error source descriptors from all Standalone MM drivers and
++  append them to the HEST table.
++
++  Use MM Communication Protocol to collect the error source descriptors
++  information from MM drivers that publish the error sources. The MM driver
++  returns EFI_BUFFER_TOO_SMALL along with for the required buffer size if size
++  of communicate buffer is inadequate to hold all the descriptor information.
++  Allocate buffer of adequate size and call again into Standalone MM.
++
++  @retval EFI_SUCCESS           Successful to collect and append the error
++                                source.
++                                 descriptors to HEST table.
++  @retval EFI_OUT_OF_RESOURCES  Memory allocation failure.
++  @retval Other                 For any other error.
++**/
++STATIC
++EFI_STATUS
++AppendMmErrorSources (
++  VOID
++  )
++{
++  EFI_MM_COMMUNICATE_HEADER   *CommunicationHeader = NULL;
++  HEST_ERROR_SOURCE_DESC_INFO *ErrorSourceDescInfo;
++  EFI_STATUS                  Status;
++  UINTN                       CommBufferSize;
++
++  //
++  // Retrieve the count, length and the actual eror source descriptors from
++  // the MM drivers. Makes two MM Communicate calls, in the first call passes
++  // CommBuffer which is atleast of the size of error source descriptor info
++  // structure. Followed by another communicate call with CommBuffer of
++  // adequate size to hold all descriptors.
++  //
++  // Allocate CommBuffer atleast the size of error source descriptor info
++  // and Mm communicate header structures.
++  CommBufferSize =
++    MM_COMMUNICATE_HEADER_SIZE + HEST_ERROR_SOURCE_DESC_INFO_SIZE;
++  CommunicationHeader = AllocateZeroPool (CommBufferSize);
++  if (CommunicationHeader == NULL) {
++    DEBUG ((
++      DEBUG_ERROR,
++      "%a: Failed to allocate memory for CommunicationHeader\n",
++      __FUNCTION__
++      ));
++    return EFI_OUT_OF_RESOURCES;
++  }
++
++  //
++  // Make the first MM Communicate call to HestErrorSourceStandaloneMM gateway
++  // driver, that returns the required buffer size which is adequate to hold
++  // all the desctriptor information.
++  //
++  Status = GetErrorSourceDescriptors (CommBufferSize, &CommunicationHeader);
++  if ((EFI_ERROR (Status)) &&
++      (Status != EFI_BUFFER_TOO_SMALL)) {
++    DEBUG ((
++      DEBUG_ERROR,
++      "%a: MM Communicate protocol call failed, status: %r\n",
++      __FUNCTION__,
++      Status
++      ));
++    FreePool (CommunicationHeader);
++    return Status;
++  }
++
++  // Check for the length of Error Source descriptors.
++  ErrorSourceDescInfo =
++    (HEST_ERROR_SOURCE_DESC_INFO *)(CommunicationHeader->Data);
++  if ((ErrorSourceDescInfo->ErrSourceDescSize == 0) ||
++      (ErrorSourceDescInfo->ErrSourceDescCount == 0)) {
++    DEBUG ((
++      DEBUG_INFO,
++      "HesErrorSourceDxe: HEST error source(s) not found\n"
++      ));
++    FreePool (CommunicationHeader);
++    return EFI_NOT_FOUND;
++  }
++
++  //
++  // Allocate CommBuffer of required size to accomodate all the error source
++  // descriptors. Required size of communication buffer =
++  // MM communicate metadata. + (error source desc info struct + error source
++  // descriptor size).
++  //
++  CommBufferSize =
++    MM_COMMUNICATE_HEADER_SIZE +
++    HEST_ERROR_SOURCE_DESC_INFO_SIZE +
++    ErrorSourceDescInfo->ErrSourceDescSize;
++
++  // Free old MM Communicate buffer and allocate a new buffer of required size.
++  FreePool (CommunicationHeader);
++  CommunicationHeader = AllocateZeroPool (CommBufferSize);
++  if (CommunicationHeader == NULL) {
++    DEBUG ((
++      DEBUG_ERROR,
++      "%a: Failed to allocate memory for CommunicationHeader\n",
++      __FUNCTION__
++      ));
++    return EFI_OUT_OF_RESOURCES;
++  }
++
++  //
++  // Make second MM Communicate call to HestErrorSourceStandaloneMM driver to
++  // get the error source descriptors from the MM drivers.
++  //
++  Status = GetErrorSourceDescriptors (CommBufferSize, &CommunicationHeader);
++  if (EFI_ERROR (Status)) {
++    DEBUG ((
++      DEBUG_ERROR,
++      "%a: MM Communicate protocol failed, status: %r\n",
++      __FUNCTION__,
++      Status
++      ));
++    FreePool (CommunicationHeader);
++    return Status;
++  }
++
++  //
++  // Retrieve the HEST error source descriptor information. Ensure that there
++  // is a valid list of error source descriptors.
++  //
++  ErrorSourceDescInfo =
++    (HEST_ERROR_SOURCE_DESC_INFO *)(CommunicationHeader->Data);
++  if (ErrorSourceDescInfo->ErrSourceDescList == NULL) {
++    DEBUG ((
++      DEBUG_INFO,
++      "HestErrorSourceDxe: Error source descriptor list is empty"
++      ));
++    FreePool (CommunicationHeader);
++    return EFI_NOT_FOUND;
++  }
++
++  DEBUG ((
++    DEBUG_INFO,
++    "HestErrorSourceDxe: ErrorSources: TotalCount = %d TotalLength = %d \n",
++    ErrorSourceDescInfo->ErrSourceDescCount,
++    ErrorSourceDescInfo->ErrSourceDescSize
++    ));
++
++  //
++  // Add the error source descriptors to HEST table using the HEST table
++  // generation protocol.
++  //
++  Status = mHestProtocol->AddErrorSourceDescriptors (
++                            ErrorSourceDescInfo->ErrSourceDescList,
++                            ErrorSourceDescInfo->ErrSourceDescSize,
++                            ErrorSourceDescInfo->ErrSourceDescCount
++                            );
++  if (EFI_ERROR (Status)) {
++    DEBUG ((
++      DEBUG_ERROR,
++      "%a: Failed to append error source(s), status: %r\n",
++      __FUNCTION__,
++      Status
++      ));
++  }
++
++  FreePool (CommunicationHeader);
++  return Status;
++}
++
++/**
++  The Entry Point for HEST Error Source Dxe driver.
++
++  Locates the HEST Table generation and MM Communication2 protocols. Using the
++  MM Communication2, the driver collects the Error Source Descriptor(s) from
++  Standalone MM. Appends those Error Source Descriptor(s) to the Hest table
++  using the HEST Table generation protocol.
++
++  @param[in] ImageHandle  The firmware allocated handle for the Efi image.
++  @param[in] SystemTable  A pointer to the Efi System Table.
++
++  @retval EFI_SUCCESS  The entry point is executed successfully.
++  @retval Other        Some error occurred when executing this entry point.
++**/
++EFI_STATUS
++EFIAPI
++HestErrorSourceInitialize (
++  IN EFI_HANDLE       ImageHandle,
++  IN EFI_SYSTEM_TABLE *SystemTable
++  )
++{
++  EFI_STATUS Status;
++
++  Status = gBS->LocateProtocol (
++                  &gHestTableProtocolGuid,
++                  NULL,
++                  (VOID **)&mHestProtocol
++                  );
++  if (EFI_ERROR (Status)) {
++    DEBUG ((
++      DEBUG_ERROR,
++      "%a: Failed to locate HEST table generation protocol, status:%r\n",
++      __FUNCTION__,
++      Status
++      ));
++    return Status;
++  }
++
++  Status = gBS->LocateProtocol (
++                  &gEfiMmCommunication2ProtocolGuid,
++                  NULL,
++                  (VOID **)&mMmCommunication2
++                  );
++  if (EFI_ERROR (Status)) {
++    DEBUG ((
++      DEBUG_ERROR,
++      "%a: Failed to locate MMCommunication2 driver protocol, status:%r\n",
++      __FUNCTION__,
++      Status
++      ));
++    return Status;
++  }
++
++  //
++  // Retieve error source descriptors from Standalone MM and append it to the
++  // HEST table.
++  //
++  Status = AppendMmErrorSources ();
++  if (EFI_ERROR (Status)) {
++    DEBUG ((
++      DEBUG_ERROR,
++      "%a: Failed appending error source desc to HEST table, status:%r\n",
++      __FUNCTION__,
++      Status
++      ));
++  }
++  return EFI_SUCCESS;
++}
+diff --git a/ArmPlatformPkg/Drivers/HestMmErrorSources/HestErrorSourceDxe.inf b/ArmPlatformPkg/Drivers/HestMmErrorSources/HestErrorSourceDxe.inf
+new file mode 100644
+index 000000000000..41c2dfda7793
+--- /dev/null
++++ b/ArmPlatformPkg/Drivers/HestMmErrorSources/HestErrorSourceDxe.inf
+@@ -0,0 +1,42 @@
++## @file
++#  DXE driver to get error sources from Standalone MM.
++#
++#  DXE driver to retrieve the error source descriptors from Standalone MM and
++#  append those to the HEST table.
++#
++#  Copyright (c) 2020 - 2021, ARM Limited. All rights reserved.
++#  SPDX-License-Identifier: BSD-2-Clause-Patent
++#
++##
++
++[Defines]
++  INF_VERSION                    = 0x0001001B
++  BASE_NAME                      = HestMmErrorSourceDxe
++  FILE_GUID                      = 76b8ab43-822d-4b00-9fd0-f4a53582470a
++  MODULE_TYPE                    = DXE_DRIVER
++  VERSION_STRING                 = 1.0
++  ENTRY_POINT                    = HestErrorSourceInitialize
++
++[Sources.common]
++  HestErrorSourceDxe.c
++
++[Packages]
++  ArmPlatformPkg/ArmPlatformPkg.dec
++  MdeModulePkg/MdeModulePkg.dec
++  MdePkg/MdePkg.dec
++
++[LibraryClasses]
++  BaseMemoryLib
++  DebugLib
++  UefiDriverEntryPoint
++  UefiLib
++
++[Guids]
++  gMmHestGetErrorSourceInfoGuid                  ## PRODUCES
++
++[Protocols]
++  gHestTableProtocolGuid                         ## CONSUMES
++  gEfiMmCommunication2ProtocolGuid
++
++[Depex]
++  gHestTableProtocolGuid AND gEfiMmCommunication2ProtocolGuid
+diff --git a/ArmPlatformPkg/Drivers/HestMmErrorSources/HestErrorSourceStandaloneMm.c b/ArmPlatformPkg/Drivers/HestMmErrorSources/HestErrorSourceStandaloneMm.c
+new file mode 100644
+index 000000000000..3b7c43e5d946
+--- /dev/null
++++ b/ArmPlatformPkg/Drivers/HestMmErrorSources/HestErrorSourceStandaloneMm.c
+@@ -0,0 +1,321 @@
++/** @file
++  MM HEST error source gateway driver.
++
++  This MM driver installs a Mmi handler which can be used to retrieve the error
++  source descriptors from the all MM drivers implementing the HEST error source
++  descriptor protocol.
++
++  The Mmi handler implemented by the driver is central handler to collect
++  hardware error sources from the MM drivers. It loops over all the MM drivers
++  that implement HEST error source descriptor protocol and collects error source
++  descriptor information along with the error source count and length.
++
++  Copyright (c) 2020 - 2021, ARM Limited. All rights reserved.
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++**/
++
++#include <Library/DebugLib.h>
++#include <Library/MemoryAllocationLib.h>
++#include <Protocol/MmHestErrorSourceProtocol.h>
++
++#include "HestMmErrorSourceCommon.h"
++
++STATIC EFI_MM_SYSTEM_TABLE *mMmst = NULL;
++
++/**
++  Returns an array of handles that implement the HEST error source descriptor
++  protocol.
++
++  Passing HandleBuffer as NULL will return the actual size of the buffer
++  required to hold the array of handles implementing the protocol.
++
++  @param[in,out] HandleBufferSize  The size of the HandleBuffer.
++  @param[out]    HandleBuffer      A pointer to the buffer containing the list
++                                   of handles.
++
++  @retval EFI_SUCCESS    The array of handles returned in HandleBuffer.
++  @retval EFI_NOT_FOUND  No implementation present for the protocol.
++  @retval Other          For any other error.
++**/
++STATIC
++EFI_STATUS
++GetHestErrorSourceProtocolHandles (
++  IN OUT UINTN      *HandleBufferSize,
++  OUT    EFI_HANDLE **HandleBuffer
++  )
++{
++  EFI_STATUS Status;
++
++  Status = mMmst->MmLocateHandle (
++                    ByProtocol,
++                    &gMmHestErrorSourceDescProtocolGuid,
++                    NULL,
++                    HandleBufferSize,
++                    *HandleBuffer
++                    );
++  if ((EFI_ERROR (Status)) &&
++      (Status != EFI_BUFFER_TOO_SMALL))
++  {
++    DEBUG ((
++      DEBUG_ERROR,
++      "%a: No implementation of MmHestErrorSourceDescProtocol found, \
++       Status:%r\n",
++      __FUNCTION__,
++      Status
++      ));
++    return EFI_NOT_FOUND;
++  }
++
++  return Status;
++}
++
++/**
++  Mmi handler to retrieve HEST error source descriptor information.
++
++  A central handler to locate all the Mm drivers that implement HEST error
++  source descriptor protocol. Collect the error source descriptors from each
++  of them. Returns the error source descriptor information along with the total
++  length and count of the error source descriptors in the CommBuffer.
++
++  @param[in]     DispatchHandle  The unique handle assigned to this handler by
++                                 MmiHandlerRegister().
++  @param[in]     Context         Points to an optional handler context that
++                                 is specified when the handler was registered.
++  @param[in,out] CommBuffer      Buffer used to carry HEST error source
++                                 descriptors.
++  @param[in]     CommBufferSize  The size of the CommBuffer.
++
++  @retval  EFI_SUCCESS            CommBuffer has valid data.
++  @retval  EFI_BUFFER_TOO_SMALL   CommBufferSize not adequate.
++  @retval  EFI_OUT_OF_RESOURCES   System out of memory resources.
++  @retval  EFI_INVALID_PARAMETER  Invalid CommBufferSize recieved.
++  @retval  Other                  For any other error.
++**/
++STATIC
++EFI_STATUS
++EFIAPI
++HestErrorSourcesInfoMmiHandler (
++  IN     EFI_HANDLE DispatchHandle,
++  IN     CONST VOID *Context,       OPTIONAL
++  IN OUT VOID       *CommBuffer,    OPTIONAL
++  IN     UINTN      *CommBufferSize OPTIONAL
++  )
++{
++  EDKII_MM_HEST_ERROR_SOURCE_DESC_PROTOCOL *HestErrSourceDescProtocolHandle;
++  HEST_ERROR_SOURCE_DESC_INFO              *ErrorSourceInfoList;
++  EFI_HANDLE                               *HandleBuffer;
++  EFI_STATUS                               Status;
++  UINTN                                    HandleCount;
++  UINTN                                    HandleBufferSize;
++  UINTN                                    Index;
++  UINTN                                    SourceCount = 0;
++  UINTN                                    SourceLength = 0;
++  VOID                                     *ErrorSourcePtr;
++  UINTN                                    TotalSourceLength = 0;
++  UINTN                                    TotalSourceCount = 0;
++
++  if (*CommBufferSize < HEST_ERROR_SOURCE_DESC_INFO_SIZE) {
++    //
++    // Ensures that the communication buffer has enough size to atleast hold
++    // the ErrSourceDescCount and ErrSourceDescSize elements of the
++    // HEST_ERROR_SOURCE_DESC_INFO structure. If the buffer is not big enough
++    // to hold the error source descriptors this call can be returned with
++    // the information of required buffer size in the
++    // HEST_ERROR_SOURCE_DESC_INFO structure elements.
++    //
++    DEBUG ((
++      DEBUG_ERROR,
++      "%a: Invalid CommBufferSize parameter\n",
++      __FUNCTION__
++      ));
++    return EFI_INVALID_PARAMETER;
++  }
++
++  //
++  // Get all handles that implement the HEST error source descriptor protocol.
++  // Get the buffer size required to store list of handles for the protocol.
++  //
++  HandleBuffer = NULL;
++  HandleBufferSize = 0;
++  Status = GetHestErrorSourceProtocolHandles (&HandleBufferSize, &HandleBuffer);
++  if ((Status == EFI_NOT_FOUND) ||
++      (HandleBufferSize == 0))
++  {
++    return Status;
++  }
++
++  // Allocate memory for HandleBuffer of size HandleBufferSize.
++  HandleBuffer = AllocateZeroPool (HandleBufferSize);
++  if (HandleBuffer == NULL) {
++    DEBUG ((
++      DEBUG_ERROR,
++      "%a: Failed to allocate memory for HandleBuffer\n",
++      __FUNCTION__
++      ));
++    return EFI_OUT_OF_RESOURCES;
++  }
++
++  // Call again with valid HandleBuffer parameter to get the handles to drivers
++  // that implement HEST error source descriptor protocol.
++  Status = GetHestErrorSourceProtocolHandles (&HandleBufferSize, &HandleBuffer);
++  if ((EFI_ERROR (Status)) ||
++      (HandleBuffer == NULL))
++  {
++    FreePool (HandleBuffer);
++    return Status;
++  }
++
++  // Count of handles for the protocol.
++  HandleCount = HandleBufferSize / sizeof (EFI_HANDLE);
++
++  //
++  // Loop to get the count and length of the error source descriptors.
++  //
++  // This loop calls into MM drivers implementing HEST error source descriptor
++  // protocol and gets the total length and count of the descriptor from each.
++  // The total length and count values retrieved determine if the CommBuffer
++  // is big enough to hold the descriptor information.
++  // Calling the protocol interface with Buffer parameter set to NULL ensures
++  // only length and the count values are returned from the driver and no error
++  // source information is copied to Buffer.
++  //
++  for (Index = 0; Index < HandleCount; ++Index) {
++    Status = mMmst->MmHandleProtocol (
++                      HandleBuffer[Index],
++                      &gMmHestErrorSourceDescProtocolGuid,
++                      (VOID **)&HestErrSourceDescProtocolHandle
++                      );
++    if (EFI_ERROR (Status)) {
++      continue;
++    }
++
++    //
++    // Protocol called with Buffer parameter passed as NULL, must return
++    // error source length and error count for that driver.
++    //
++    // Initialize SourceLength and SourceCount.
++    SourceLength = 0;
++    SourceCount = 0;
++    Status = HestErrSourceDescProtocolHandle->GetHestErrorSourceDescriptors (
++                                                HestErrSourceDescProtocolHandle,
++                                                NULL,
++                                                &SourceLength,
++                                                &SourceCount
++                                                );
++    if (Status == EFI_BUFFER_TOO_SMALL) {
++      TotalSourceLength += SourceLength;
++      TotalSourceCount += SourceCount;
++    }
++  }
++
++  // Initialize the CommBuffer with HEST_ERROR_SOURCE_DESC_INFO structure
++  // elements. When CommBuffer size is not adequate to hold all the error
++  // source descriptors, the caller uses HEST_ERROR_SOURCE_DESC_INFO elements
++  // to determine the adequate buffer size. Otherwise this information is used
++  // to populate HEST table.
++  ErrorSourceInfoList = (HEST_ERROR_SOURCE_DESC_INFO *)(CommBuffer);
++  ErrorSourceInfoList->ErrSourceDescCount = TotalSourceCount;
++  ErrorSourceInfoList->ErrSourceDescSize = TotalSourceLength;
++
++  //
++  // Check the size of CommBuffer, it should atleast be of size
++  // TotalSourceLength + HEST_ERROR_SOURCE_DESC_INFO_SIZE.
++  // If not return CommBuffer populated with the HEST_ERROR_SOURCE_DESC_INFO
++  // structure.
++  //
++  TotalSourceLength = TotalSourceLength + HEST_ERROR_SOURCE_DESC_INFO_SIZE;
++  if ((*CommBufferSize) < TotalSourceLength) {
++    DEBUG ((
++      DEBUG_ERROR,
++      "%a: Invalid CommBufferSize parameter\n",
++      __FUNCTION__
++      ));
++    FreePool (HandleBuffer);
++    return EFI_BUFFER_TOO_SMALL;
++  }
++
++  //
++  // CommBuffer size is adequate to return all the error source descriptors.
++  // Populate it with the error source descriptor information.
++  //
++
++  // Buffer pointer to append the Error Source Descriptors data.
++  ErrorSourcePtr = ErrorSourceInfoList->ErrSourceDescList;
++
++  //
++  // Loop to retrieve error source descriptors information.
++  //
++  // Calls into each MM driver that implement the HEST error source descriptor
++  // protocol with valid Buffer parameter.
++  //
++  for (Index = 0; Index < HandleCount; ++Index) {
++    Status = mMmst->MmHandleProtocol (
++                      HandleBuffer[Index],
++                      &gMmHestErrorSourceDescProtocolGuid,
++                      (VOID **)&HestErrSourceDescProtocolHandle
++                      );
++    if (EFI_ERROR (Status)) {
++      continue;
++    }
++
++    // Initialize SourceLength and SourceCount.
++    SourceLength = 0;
++    SourceCount = 0;
++    Status = HestErrSourceDescProtocolHandle->GetHestErrorSourceDescriptors (
++                                                HestErrSourceDescProtocolHandle,
++                                                (VOID **)&ErrorSourcePtr,
++                                                &SourceLength,
++                                                &SourceCount
++                                                );
++    if (!EFI_ERROR (Status)) {
++      ErrorSourcePtr += SourceLength;
++    }
++  }
++
++  // Free the buffer holding all the protocol handles.
++  FreePool (HandleBuffer);
++
++  return Status;
++}
++
++/**
++  Entry point for this Stanadlone MM driver.
++
++  Registers an Mmi handler that retrieves the error source descriptors from all
++  the MM drivers implementing the EDKII_MM_HEST_ERROR_SOURCE_DESC_PROTOCOL.
++
++  @param[in] ImageHandle  The firmware allocated handle for the EFI image.
++  @param[in] SystemTable  A pointer to the EFI System Table.
++
++  @retval EFI_SUCCESS  The entry point registered handler successfully.
++  @retval Other        Some error occurred when executing this entry point.
++**/
++EFI_STATUS
++EFIAPI
++StandaloneMmHestErrorSourceInitialize (
++  IN EFI_HANDLE          ImageHandle,
++  IN EFI_MM_SYSTEM_TABLE *SystemTable
++  )
++{
++  EFI_HANDLE DispatchHandle;
++  EFI_STATUS Status;
++
++  ASSERT (SystemTable != NULL);
++  mMmst = SystemTable;
++
++  Status = mMmst->MmiHandlerRegister (
++                    HestErrorSourcesInfoMmiHandler,
++                    &gMmHestGetErrorSourceInfoGuid,
++                    &DispatchHandle
++                    );
++  if (EFI_ERROR (Status)) {
++    DEBUG ((
++      DEBUG_ERROR,
++      "%a: Mmi handler registration failed with status : %r\n",
++      __FUNCTION__,
++      Status
++      ));
++  }
++
++  return Status;
++}
+diff --git a/ArmPlatformPkg/Drivers/HestMmErrorSources/HestErrorSourceStandaloneMm.inf b/ArmPlatformPkg/Drivers/HestMmErrorSources/HestErrorSourceStandaloneMm.inf
+new file mode 100644
+index 000000000000..9288d6ed50b9
+--- /dev/null
++++ b/ArmPlatformPkg/Drivers/HestMmErrorSources/HestErrorSourceStandaloneMm.inf
+@@ -0,0 +1,40 @@
++## @file
++#  HEST error source gateway Standalone MM driver.
++#
++#  Collects HEST error source descriptors,by communicating with all the MM
++#  drivers that implement the HEST error source descriptor protocol.
++#
++#  Copyright (c) 2020 - 2021, ARM Limited. All rights reserved.
++#  SPDX-License-Identifier: BSD-2-Clause-Patent
++#
++##
++
++[Defines]
++  INF_VERSION                    = 0x0001001B
++  BASE_NAME                      = HestErrorSourceStandaloneMm
++  FILE_GUID                      = 3ddbebcc-9841-4ef8-87fa-305843c1922d
++  MODULE_TYPE                    = MM_STANDALONE
++  VERSION_STRING                 = 1.0
++  PI_SPECIFICATION_VERSION       = 0x00010032
++  ENTRY_POINT                    = StandaloneMmHestErrorSourceInitialize
++
++[Sources]
++  HestErrorSourceStandaloneMm.c
++
++[Packages]
++  ArmPlatformPkg/ArmPlatformPkg.dec
++  MdePkg/MdePkg.dec
++
++[LibraryClasses]
++  DebugLib
++  MemoryAllocationLib
++  StandaloneMmDriverEntryPoint
++
++[Protocols]
++  gMmHestErrorSourceDescProtocolGuid
++
++[Guids]
++  gMmHestGetErrorSourceInfoGuid               ##PRODUCES
++
++[Depex]
++  TRUE
+diff --git a/ArmPlatformPkg/Drivers/HestMmErrorSources/HestMmErrorSourceCommon.h b/ArmPlatformPkg/Drivers/HestMmErrorSources/HestMmErrorSourceCommon.h
+new file mode 100644
+index 000000000000..5862fa04e14a
+--- /dev/null
++++ b/ArmPlatformPkg/Drivers/HestMmErrorSources/HestMmErrorSourceCommon.h
+@@ -0,0 +1,37 @@
++/** @file
++  Data structures for error source descriptor information.
++
++  This data structure forms the CommBuffer part of the MM Communication
++  protocol. It is used for communicating the Error Source Descriptor
++  information from Standalone MM to Non-MM environment.
++
++  Copyright (c) 2020 - 2021, ARM Limited. All rights reserved.
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++**/
++
++#ifndef HEST_ERROR_SOURCE_DESCRIPTOR_H_
++#define HEST_ERROR_SOURCE_DESCRIPTOR_H_
++
++#define HEST_ERROR_SOURCE_DESC_INFO_SIZE \
++  (OFFSET_OF (HEST_ERROR_SOURCE_DESC_INFO, ErrSourceDescList))
++
++//
++// Data Structure to communicate the error source descriptor information from
++// Standalone MM.
++//
++typedef struct {
++  //
++  // Total count of error source descriptors.
++  //
++  UINTN ErrSourceDescCount;
++  //
++  // Total size of all the error source descriptors.
++  //
++  UINTN ErrSourceDescSize;
++  //
++  // Array of error source descriptors that is ErrSourceDescSize in size.
++  //
++  UINT8 ErrSourceDescList[1];
++} HEST_ERROR_SOURCE_DESC_INFO;
++
++#endif // HEST_ERROR_SOURCE_DESCRIPTOR_H_
+-- 
+2.39.5
+

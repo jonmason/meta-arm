@@ -1,0 +1,210 @@
+From 4afe9f45bd8dc058634af27d444cbf8777bdf69e Mon Sep 17 00:00:00 2001
+From: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Date: Wed, 17 Nov 2021 21:12:18 +0530
+Subject: [PATCH 24/78] Platform/Sgi: Add fdtlib and PcdFfaEnable
+
+Enable PcdFfaEnable flag for StandaloneMm on rdn2 platform.
+Add fdtlib, needed for StandaloneMm DTS parsing.
+
+Signed-off-by: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Change-Id: I7553645e35a06225a2d712ed9312095b32524bad
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+---
+ Platform/ARM/SgiPkg/PlatformStandaloneMm2.dsc            | 9 +++++++++
+ Platform/ARM/SgiPkg/RdN2/RdN2.dsc                        | 5 +++++
+ Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc                | 5 +++++
+ Platform/ARM/SgiPkg/RdN2Cfg2/RdN2Cfg2.dsc                | 5 +++++
+ Platform/ARM/SgiPkg/RdN2Cfg3/RdN2Cfg3.dsc                | 5 +++++
+ Platform/ARM/SgiPkg/RdV3/RdV3.dsc                        | 5 +++++
+ Platform/ARM/SgiPkg/SgiPlatform.dsc.inc                  | 7 +++++++
+ Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc                | 6 +++++-
+ .../PlatformStandaloneMmPkg/PlatformStandaloneMmRpmb.dsc | 6 ++++--
+ 9 files changed, 50 insertions(+), 3 deletions(-)
+
+diff --git a/Platform/ARM/SgiPkg/PlatformStandaloneMm2.dsc b/Platform/ARM/SgiPkg/PlatformStandaloneMm2.dsc
+index 134daf7f20fb..ef0c333b8eca 100644
+--- a/Platform/ARM/SgiPkg/PlatformStandaloneMm2.dsc
++++ b/Platform/ARM/SgiPkg/PlatformStandaloneMm2.dsc
+@@ -30,11 +30,15 @@
+ !include MdePkg/MdeLibs.dsc.inc
+ !include Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
+ 
++[LibraryClasses]
++  FdtLib|EmbeddedPkg/Library/FdtLib/FdtLib.inf
++
+ ################################################################################
+ #
+ # Pcd Section - list of all EDK II PCD Entries defined by this Platform
+ #
+ ################################################################################
++
+ [PcdsFixedAtBuild]
+ 
+ !if $(SECURE_STORAGE_ENABLE) == TRUE
+@@ -51,3 +55,8 @@
+   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase64|0x1054200000
+   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareSize|0x00100000
+ !endif
++
++  # Disables FFA
++!if $(EDK2_ENABLE_FFA) == FALSE
++  gArmTokenSpaceGuid.PcdFfaEnable|0
++!endif
+diff --git a/Platform/ARM/SgiPkg/RdN2/RdN2.dsc b/Platform/ARM/SgiPkg/RdN2/RdN2.dsc
+index 7bc9a8186b8d..c94bbee8f321 100644
+--- a/Platform/ARM/SgiPkg/RdN2/RdN2.dsc
++++ b/Platform/ARM/SgiPkg/RdN2/RdN2.dsc
+@@ -45,6 +45,11 @@
+   gArmPlatformTokenSpaceGuid.PcdCoreCount|1
+   gArmPlatformTokenSpaceGuid.PcdClusterCount|16
+ 
++  # Disables FFA
++!if $(EDK2_ENABLE_FFA) == FALSE
++  gArmTokenSpaceGuid.PcdFfaEnable|0
++!endif
++
+ ################################################################################
+ #
+ # Components Section - list of all EDK II Modules needed by this Platform
+diff --git a/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc b/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc
+index 2e9bb01a58e3..bb554b51c20d 100644
+--- a/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc
++++ b/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc
+@@ -50,6 +50,11 @@
+   gArmPlatformTokenSpaceGuid.PcdCoreCount|1
+   gArmPlatformTokenSpaceGuid.PcdClusterCount|8
+ 
++  # Disables FFA
++!if $(EDK2_ENABLE_FFA) == FALSE
++  gArmTokenSpaceGuid.PcdFfaEnable|0
++!endif
++
+ ################################################################################
+ #
+ # Components Section - list of all EDK II Modules needed by this Platform
+diff --git a/Platform/ARM/SgiPkg/RdN2Cfg2/RdN2Cfg2.dsc b/Platform/ARM/SgiPkg/RdN2Cfg2/RdN2Cfg2.dsc
+index a52966b30cca..723aef59895f 100644
+--- a/Platform/ARM/SgiPkg/RdN2Cfg2/RdN2Cfg2.dsc
++++ b/Platform/ARM/SgiPkg/RdN2Cfg2/RdN2Cfg2.dsc
+@@ -48,6 +48,11 @@
+   # Number of chips in the multi-chip package
+   gArmSgiTokenSpaceGuid.PcdChipCount|4
+ 
++  # Disables FFA
++!if $(EDK2_ENABLE_FFA) == FALSE
++  gArmTokenSpaceGuid.PcdFfaEnable|0
++!endif
++
+ ################################################################################
+ #
+ # Components Section - list of all EDK II Modules needed by this Platform
+diff --git a/Platform/ARM/SgiPkg/RdN2Cfg3/RdN2Cfg3.dsc b/Platform/ARM/SgiPkg/RdN2Cfg3/RdN2Cfg3.dsc
+index 94fe46b8d477..3f3bf7e3c958 100644
+--- a/Platform/ARM/SgiPkg/RdN2Cfg3/RdN2Cfg3.dsc
++++ b/Platform/ARM/SgiPkg/RdN2Cfg3/RdN2Cfg3.dsc
+@@ -48,6 +48,11 @@
+   # RdN2Cfg3 is the third variant from RdN2 Platform
+   gArmSgiTokenSpaceGuid.PcdPlatformVariant|3
+ 
++  # Disables FFA
++!if $(EDK2_ENABLE_FFA) == FALSE
++  gArmTokenSpaceGuid.PcdFfaEnable|0
++!endif
++
+ ################################################################################
+ #
+ # Components Section - list of all EDK II Modules needed by this Platform
+diff --git a/Platform/ARM/SgiPkg/RdV3/RdV3.dsc b/Platform/ARM/SgiPkg/RdV3/RdV3.dsc
+index 3b62edb13f2f..6037d7a4e859 100644
+--- a/Platform/ARM/SgiPkg/RdV3/RdV3.dsc
++++ b/Platform/ARM/SgiPkg/RdV3/RdV3.dsc
+@@ -45,6 +45,11 @@
+   gArmPlatformTokenSpaceGuid.PcdCoreCount|1
+   gArmPlatformTokenSpaceGuid.PcdClusterCount|16
+ 
++# Disables FFA
++!if $(EDK2_ENABLE_FFA) == FALSE
++  gArmTokenSpaceGuid.PcdFfaEnable|0
++!endif
++
+ ################################################################################
+ #
+ # Components Section - list of all EDK II Modules needed by this Platform
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc b/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+index e333154fadcf..c8d92420bc8b 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+@@ -34,6 +34,9 @@
+   # To enable error injection support, set this to TRUE.
+   DEFINE EDK2_ERROR_INJ_EN                  = FALSE
+ 
++  # To enable FF-A as communication protocol between SP and Non secure world
++  DEFINE EDK2_ENABLE_FFA                   = FALSE
++
+ [BuildOptions]
+   *_*_*_CC_FLAGS = -D DISABLE_NEW_DEPRECATED_INTERFACES
+ 
+@@ -238,6 +241,10 @@
+   gArmSgiTokenSpaceGuid.PcdEinjTriggerActionBase|0xFF611000
+ !endif
+ 
++!if $(EDK2_ENABLE_FFA) == FALSE
++  gArmTokenSpaceGuid.PcdFfaEnable|0
++!endif
++
+ ################################################################################
+ #
+ # Components Section - list of all EDK II Modules needed by this Platform
+diff --git a/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc b/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
+index 77a9d572737f..9697eea3cb82 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
+@@ -16,6 +16,8 @@
+   DEFINE EDK2_ENABLE_CPU_MM                = FALSE
+   # To enable Base Element Ram Mm driver, set this to TRUE.
+   DEFINE EDK2_ENABLE_SRAM_MM               = FALSE
++  # To enable FF-A as communication protocol between SP and Non secure world
++  DEFINE EDK2_ENABLE_FFA                   = FALSE
+ 
+ [LibraryClasses]
+   #
+@@ -121,6 +123,9 @@
+   gSramMmTokenSpaceGuid.PcdSramNonSecureEccRecordBase|0x2A4C0000
+   gSramMmTokenSpaceGuid.PcdSramSecureEccRecordBase|0x2A4B0000
+ !endif
++!if $(EDK2_ENABLE_FFA) == FALSE
++  gArmTokenSpaceGuid.PcdFfaEnable|0
++!endif
+ 
+ ###################################################################################################
+ #
+@@ -171,7 +176,6 @@
+ !if $(EDK2_ENABLE_SRAM_MM) == TRUE
+   Platform/ARM/Drivers/SramMm/SramMm.inf
+ !endif
+-
+ ###################################################################################################
+ #
+ # BuildOptions Section - Define the module specific tool chain flags that should be used as
+diff --git a/Platform/StandaloneMm/PlatformStandaloneMmPkg/PlatformStandaloneMmRpmb.dsc b/Platform/StandaloneMm/PlatformStandaloneMmPkg/PlatformStandaloneMmRpmb.dsc
+index 738d70ad91f1..3d107bbcf02c 100644
+--- a/Platform/StandaloneMm/PlatformStandaloneMmPkg/PlatformStandaloneMmRpmb.dsc
++++ b/Platform/StandaloneMm/PlatformStandaloneMmPkg/PlatformStandaloneMmRpmb.dsc
+@@ -84,10 +84,12 @@
+ # Pcd Section - list of all EDK II PCD Entries defined by this Platform
+ #
+ ################################################################################
+-[PcdsFeatureFlag.common]
+-  gArmTokenSpaceGuid.PcdFfaEnable|TRUE
+ 
+ [PcdsFixedAtBuild]
++!if $(EDK2_ENABLE_FFA) == FALSE
++  gArmTokenSpaceGuid.PcdFfaEnable|0
++!endif
++
+   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x800000CF
+   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0xff
+   gEfiMdePkgTokenSpaceGuid.PcdReportStatusCodePropertyMask|0x0f
+-- 
+2.39.5
+

@@ -1,0 +1,42 @@
+From 47d6f1ee753db577667b1ceef9050b9be314d644 Mon Sep 17 00:00:00 2001
+From: Tony Nadackal <tony.nadackal@arm.com>
+Date: Fri, 16 Dec 2022 14:19:55 +0000
+Subject: [PATCH 26/78] Platform/Sgi: enable dynamic acpi table generation for
+ rdn2cfg3
+
+RdN2Cfg3 configuration is a new variant of RD platform. To enable
+dynamic generation of PCIe SSDT, MCFG and IORT ACPI tables, add the
+configuration PCDs required by the library in the platform
+description file.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: I12430705e7b9599e802010004ed6386557e78d62
+---
+ Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg3AcpiTables.inf | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg3AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg3AcpiTables.inf
+index 5313423e9c85..d796b2866c8d 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg3AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg3AcpiTables.inf
+@@ -53,12 +53,17 @@
+   gArmTokenSpaceGuid.PcdPciBusMin
+   gArmTokenSpaceGuid.PcdPciBusMax
+ 
++  gArmSgiTokenSpaceGuid.PcdChipCount
+   gArmSgiTokenSpaceGuid.PcdGpioController0BaseAddress
+   gArmSgiTokenSpaceGuid.PcdGpioController0Size
+   gArmSgiTokenSpaceGuid.PcdGpioController0Interrupt
+   gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv
+   gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv
+   gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlk0Base
++  gArmSgiTokenSpaceGuid.PcdIoVirtBlkCountPerChip
++  gArmSgiTokenSpaceGuid.PcdIoVirtBlkPortDevIdOffset
++  gArmSgiTokenSpaceGuid.PcdIoVirtBlkPortPciex40DevIdBase
++  gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlkDmaNumCh
+   gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlkUartEnable
+   gArmSgiTokenSpaceGuid.PcdL2CacheSize
+   gArmSgiTokenSpaceGuid.PcdMaxAddressBitsPerChip
+-- 
+2.39.5
+

@@ -1,0 +1,127 @@
+From 5a6dc73d2568ceb1906bc48fad84b8f2b1b6246b Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Mon, 12 Feb 2024 13:25:59 +0000
+Subject: [PATCH 36/78] Sgi: Move StMM communication carveout out of secure
+ region.
+
+The non secure buffer carveout overlaps with the secure DRAM carvout.
+TZC does not allow overlapping carveout and when enabled cause abort to
+any access made to that region. Previous version of TZC had a bug which
+did not detect this.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: Ie39ed8d819f85b1a63f8e03bfbb80d7a7fd66cf8
+---
+ Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Einj.aslc | 12 ++++++------
+ Platform/ARM/SgiPkg/SgiPlatform.dsc.inc           |  6 +++---
+ Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc         |  4 ++--
+ 3 files changed, 11 insertions(+), 11 deletions(-)
+
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Einj.aslc b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Einj.aslc
+index f3c204c99d43..e58dec8afa3c 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Einj.aslc
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Einj.aslc
+@@ -53,7 +53,7 @@ STATIC EFI_ACPI_6_4_ERROR_INJECTION_TABLE Einj = {
+         32,
+         0,
+         EFI_ACPI_6_4_DWORD,
+-        0xFF610000
++        0xFFE10000
+       },   // Register region (GAR)
+       PLATFORM_ERROR_TYPE_SUPPORTED,   // Supported Error Types by platform (Processor, Vendor)
+       0xffffffffffffffff    // Register region Mask
+@@ -70,7 +70,7 @@ STATIC EFI_ACPI_6_4_ERROR_INJECTION_TABLE Einj = {
+         64,
+         0,
+         EFI_ACPI_6_4_QWORD,
+-        0xFF610000
++        0xFFE10000
+       },
+       0x0000000000000000,   // Value
+       0xffffffffffffffff    // Register region Mask
+@@ -87,7 +87,7 @@ STATIC EFI_ACPI_6_4_ERROR_INJECTION_TABLE Einj = {
+         64,
+         0,
+         EFI_ACPI_6_4_QWORD,
+-        0xFF610100
++        0xFFE10100
+       },
+       0x0000000000000000,   // Value
+       0xffffffffffffffff    // Register region Mask
+@@ -104,7 +104,7 @@ STATIC EFI_ACPI_6_4_ERROR_INJECTION_TABLE Einj = {
+         64,
+         0,
+         EFI_ACPI_6_4_QWORD,
+-        0xFF610250
++        0xFFE10250
+       },
+       0x0000000000000000,   // Value
+       0xffffffffffffffff    // Register region Mask
+@@ -121,7 +121,7 @@ STATIC EFI_ACPI_6_4_ERROR_INJECTION_TABLE Einj = {
+         64,
+         0,
+         EFI_ACPI_6_4_QWORD,
+-        0xFF610400
++        0xFFE10400
+       },
+       0x0000000000000000,   // Value
+       0xffffffffffffffff    // Register region Mask
+@@ -138,7 +138,7 @@ STATIC EFI_ACPI_6_4_ERROR_INJECTION_TABLE Einj = {
+         64,
+         0,
+         EFI_ACPI_6_4_QWORD,
+-        0xFF610200
++        0xFFE10200
+       },
+       FixedPcdGet64 (PcdEinjTriggerActionBase),   // Value
+       0xffffffffffffffff    // Register region Mask
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc b/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+index c01e0b02be3a..104bbc0c2666 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+@@ -234,7 +234,7 @@
+ !if $(EDK2_SPMC_AT_EL2) == TRUE
+   gArmTokenSpaceGuid.PcdMmBufferBase|0xF3200000
+ !else
+-  gArmTokenSpaceGuid.PcdMmBufferBase|0xFF600000
++  gArmTokenSpaceGuid.PcdMmBufferBase|0xFFE00000
+ !endif
+   gArmTokenSpaceGuid.PcdMmBufferSize|0x10000
+ 
+@@ -247,9 +247,9 @@
+ 
+ !if $(EDK2_ERROR_INJ_EN) == TRUE
+   ## Error Injection Instruction Memory Space
+-  gArmSgiTokenSpaceGuid.PcdEinjInstBufferBase|0xFF610000
++  gArmSgiTokenSpaceGuid.PcdEinjInstBufferBase|0xFFE10000
+   gArmSgiTokenSpaceGuid.PcdEinjInstBufferSize|0x10000
+-  gArmSgiTokenSpaceGuid.PcdEinjTriggerActionBase|0xFF611000
++  gArmSgiTokenSpaceGuid.PcdEinjTriggerActionBase|0xFFE11000
+ !endif
+ 
+ !if $(EDK2_ENABLE_FFA) == FALSE
+diff --git a/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc b/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
+index 776961101b2d..ec1f440c61d4 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
+@@ -114,7 +114,7 @@
+ 
+ !if $(EDK2_ENABLE_CPU_MM) == TRUE
+   ## CPU
+-  gCpuMmTokenSpaceGuid.PcdCpuErrorDataBase|0xFF621000
++  gCpuMmTokenSpaceGuid.PcdCpuErrorDataBase|0xFFE21000
+   gCpuMmTokenSpaceGuid.PcdCpuErrorDataSize|0x400
+   gCpuMmTokenSpaceGuid.PcdCpuErrorSdeiEventBase|805
+   gCpuMmTokenSpaceGuid.PcdCpuErrorSourceCount|1
+@@ -123,7 +123,7 @@
+ 
+ !if $(EDK2_ENABLE_SRAM_MM) == TRUE
+   ## Base Element Ram
+-  gSramMmTokenSpaceGuid.PcdSramErrorDataBase|0xFF622000
++  gSramMmTokenSpaceGuid.PcdSramErrorDataBase|0xFFE22000
+   gSramMmTokenSpaceGuid.PcdSramErrorDataSize|0x100
+   gSramMmTokenSpaceGuid.PcdSramErrorSdeiEventBase|804
+   gSramMmTokenSpaceGuid.PcdSramErrorSourceCount|1
+-- 
+2.39.5
+

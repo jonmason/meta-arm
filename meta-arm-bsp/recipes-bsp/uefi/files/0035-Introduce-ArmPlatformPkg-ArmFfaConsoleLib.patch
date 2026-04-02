@@ -1,0 +1,241 @@
+From 216b835fa2de24d09c72987505bb76bc82c76bd3 Mon Sep 17 00:00:00 2001
+From: Olivier Deprez <olivier.deprez@arm.com>
+Date: Mon, 6 Dec 2021 15:16:29 +0100
+Subject: [PATCH 35/43] Introduce ArmPlatformPkg/ArmFfaConsoleLib
+
+In context of running the StandaloneMm payload as a S-EL0 SP on
+top Hafnium (VHE enabled):
+Add ArmPlatformPkg/ArmFfaConsoleLib console service using the
+FFA_CONSOLE_LOG supervisor call.
+
+Signed-off-by: Olivier Deprez <olivier.deprez@arm.com>
+---
+ ArmPkg/Include/IndustryStandard/ArmFfaSvc.h   |   1 +
+ .../ArmFfaConsoleLib/ArmFfaConsoleLib.c       | 168 ++++++++++++++++++
+ .../ArmFfaConsoleLib/ArmFfaConsoleLib.inf     |  27 +++
+ 3 files changed, 196 insertions(+)
+ create mode 100644 ArmPlatformPkg/Library/ArmFfaConsoleLib/ArmFfaConsoleLib.c
+ create mode 100644 ArmPlatformPkg/Library/ArmFfaConsoleLib/ArmFfaConsoleLib.inf
+
+diff --git a/ArmPkg/Include/IndustryStandard/ArmFfaSvc.h b/ArmPkg/Include/IndustryStandard/ArmFfaSvc.h
+index b24cdd67ae69..d30b3c7f86d1 100644
+--- a/ArmPkg/Include/IndustryStandard/ArmFfaSvc.h
++++ b/ArmPkg/Include/IndustryStandard/ArmFfaSvc.h
+@@ -36,6 +36,7 @@
+ #define ARM_SVC_ID_FFA_ERROR_AARCH32                 0x84000060
+ #define ARM_SVC_ID_FFA_ERROR_AARCH64                 0xC4000060
+ #define ARM_SVC_ID_FFA_MSG_WAIT_AARCH32              0x8400006B
++#define ARM_SVC_ID_FFA_CONSOLE_LOG_AARCH64           0xC400008A
+ 
+ /* Generic IDs when using AArch32 or AArch64 execution state */
+ #ifdef MDE_CPU_AARCH64
+diff --git a/ArmPlatformPkg/Library/ArmFfaConsoleLib/ArmFfaConsoleLib.c b/ArmPlatformPkg/Library/ArmFfaConsoleLib/ArmFfaConsoleLib.c
+new file mode 100644
+index 000000000000..2598b0c0825b
+--- /dev/null
++++ b/ArmPlatformPkg/Library/ArmFfaConsoleLib/ArmFfaConsoleLib.c
+@@ -0,0 +1,168 @@
++/** @file
++  Serial I/O Port library functions with no library constructor/destructor
++
++  Copyright (c) 2022, ARM Ltd. All rights reserved.<BR>
++
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++
++**/
++
++#include <Base.h>
++#include <Library/SerialPortLib.h>
++#include <IndustryStandard/ArmFfaSvc.h>
++
++/**
++  Initialise the serial device hardware with default settings.
++
++  @retval RETURN_SUCCESS            The serial device was initialised.
++ **/
++RETURN_STATUS
++EFIAPI
++SerialPortInitialize (
++  VOID
++  )
++{
++  return RETURN_SUCCESS;
++}
++
++/**
++  Write data through FFA_CONSOLE_LOG supervisor call.
++
++  @param  Buffer           Point of data buffer which need to be written.
++  @param  NumberOfBytes    Number of output bytes which are cached in Buffer.
++
++  @retval 0                Write data failed.
++  @retval !0               Actual number of bytes written.
++**/
++UINTN
++EFIAPI
++SerialPortWrite (
++  IN UINT8     *Buffer,
++  IN UINTN     NumberOfBytes
++  )
++{
++  const UINTN FfaConsoleLogNbRegs64 = 6;
++  const UINTN MaxCharsPerSvcCall = sizeof(UINT64) * FfaConsoleLogNbRegs64;
++  UINTN RegIndex, NbSvcCalls, BufferIndex, LoopInner;
++  UINTN NumberOfBytesInner, NumberOfCharsRemaining;
++  UINT64 Regs[FfaConsoleLogNbRegs64];
++  register UINT64 r0 __asm__("x0");
++  register UINT64 r1 __asm__("x1");
++  register UINT64 r2 __asm__("x2");
++  register UINT64 r3 __asm__("x3");
++  register UINT64 r4 __asm__("x4");
++  register UINT64 r5 __asm__("x5");
++  register UINT64 r6 __asm__("x6");
++  register UINT64 r7 __asm__("x7");
++
++  BufferIndex = 0;
++  NumberOfCharsRemaining = NumberOfBytes;
++  for (NbSvcCalls = 0; NbSvcCalls < 1 + (NumberOfBytes / MaxCharsPerSvcCall); NbSvcCalls++) {
++    for (LoopInner = 0; LoopInner < FfaConsoleLogNbRegs64; LoopInner++) {
++      Regs[LoopInner] = 0;
++    }
++
++    NumberOfBytesInner = (NumberOfCharsRemaining > MaxCharsPerSvcCall) ?
++      MaxCharsPerSvcCall : NumberOfCharsRemaining;
++    for (LoopInner = 0; LoopInner < NumberOfBytesInner; LoopInner++) {
++      RegIndex = LoopInner >> 3;
++      Regs[RegIndex] |= ((UINT64)Buffer[BufferIndex]) << (sizeof(UINT64) * (BufferIndex % MaxCharsPerSvcCall));
++      BufferIndex++;
++    }
++
++    r0 = ARM_SVC_ID_FFA_CONSOLE_LOG_AARCH64;
++    r1 = NumberOfBytesInner;
++    r2 = Regs[0];
++    r3 = Regs[1];
++    r4 = Regs[2];
++    r5 = Regs[3];
++    r6 = Regs[4];
++    r7 = Regs[5];
++
++    __asm__ volatile(
++      "svc #0" :
++      "+r" (r0), "+r" (r2) : "r" (r1), "r" (r3),
++      "r" (r4), "r" (r5), "r" (r6), "r" (r7) );
++
++    if (r0 != ARM_SVC_ID_FFA_SUCCESS_AARCH32) {
++      /* Note r0 = FFA_ERROR may return r2 = NOT_SUPPORTED/INVALID_PARAMETERS */
++      return 0;
++    }
++
++    NumberOfCharsRemaining -= NumberOfBytesInner;
++  }
++
++  return NumberOfBytes;
++}
++
++/**
++  Read data from serial device and save the data in buffer.
++
++  @param  Buffer           Point of data buffer which need to be written.
++  @param  NumberOfBytes    Number of output bytes which are cached in Buffer.
++
++  @retval 0                Read data failed.
++
++**/
++UINTN
++EFIAPI
++SerialPortRead (
++  OUT UINT8     *Buffer,
++  IN  UINTN     NumberOfBytes
++)
++{
++  return 0;
++}
++
++/**
++  @retval FALSE      No data is available to be read
++**/
++BOOLEAN
++EFIAPI
++SerialPortPoll (
++  VOID
++  )
++{
++  return FALSE;
++}
++
++/**
++  @retval  RETURN_UNSUPPORTED  The device does not support this operation.
++**/
++RETURN_STATUS
++EFIAPI
++SerialPortSetAttributes (
++  IN OUT UINT64              *BaudRate,
++  IN OUT UINT32              *ReceiveFifoDepth,
++  IN OUT UINT32              *Timeout,
++  IN OUT EFI_PARITY_TYPE     *Parity,
++  IN OUT UINT8               *DataBits,
++  IN OUT EFI_STOP_BITS_TYPE  *StopBits
++  )
++{
++  return RETURN_UNSUPPORTED;
++}
++
++/**
++  @retval  RETURN_UNSUPPORTED  The device does not support this operation.
++**/
++RETURN_STATUS
++EFIAPI
++SerialPortSetControl (
++  IN UINT32  Control
++  )
++{
++  return RETURN_UNSUPPORTED;
++}
++
++/**
++  @retval  RETURN_UNSUPPORTED  The device does not support this operation.
++**/
++RETURN_STATUS
++EFIAPI
++SerialPortGetControl (
++  OUT UINT32  *Control
++  )
++{
++  return RETURN_UNSUPPORTED;
++}
+diff --git a/ArmPlatformPkg/Library/ArmFfaConsoleLib/ArmFfaConsoleLib.inf b/ArmPlatformPkg/Library/ArmFfaConsoleLib/ArmFfaConsoleLib.inf
+new file mode 100644
+index 000000000000..39067147d358
+--- /dev/null
++++ b/ArmPlatformPkg/Library/ArmFfaConsoleLib/ArmFfaConsoleLib.inf
+@@ -0,0 +1,27 @@
++#/** @file
++#
++#  Component description file for ArmFfaConsoleLib module
++#
++#  Copyright (c) 2022, ARM Ltd. All rights reserved.<BR>
++#
++#  SPDX-License-Identifier: BSD-2-Clause-Patent
++#
++#**/
++
++[Defines]
++  INF_VERSION                    = 0x00010005
++  BASE_NAME                      = ArmFfaConsoleLib
++  FILE_GUID                      = 8ecefc8f-a2c4-4091-b80f-20f7aeb0567e
++  MODULE_TYPE                    = BASE
++  VERSION_STRING                 = 1.0
++  LIBRARY_CLASS                  = SerialPortLib
++
++[Sources.common]
++  ArmFfaConsoleLib.c
++
++[LibraryClasses]
++  PcdLib
++
++[Packages]
++  MdePkg/MdePkg.dec
++  ArmPkg/ArmPkg.dec
+-- 
+2.39.5
+

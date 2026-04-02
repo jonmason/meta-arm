@@ -1,0 +1,284 @@
+From b08399214e84e3a76d1c3544586052bec93d5fd9 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Thu, 11 Aug 2022 10:38:00 +0530
+Subject: [PATCH 17/78] Platform/Sgi: Enable EINJ ACPI table
+
+Enable initial support for EINJ ACPI table for RdN2Cfg1 platform.
+EINJ table uses Gic Spi interrupt as a error injection trigger event.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I210bc07cb6eae61cf25cc40c3389d88439d38c04
+---
+ .../ARM/SgiPkg/AcpiTables/RdN2Cfg1/Einj.aslc  | 153 ++++++++++++++++++
+ .../SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf  |   2 +
+ .../AcpiTables/RdN2Cfg1AcpiTablesEinj.inf     |  88 ++++++++++
+ 3 files changed, 243 insertions(+)
+ create mode 100644 Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Einj.aslc
+ create mode 100644 Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesEinj.inf
+
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Einj.aslc b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Einj.aslc
+new file mode 100644
+index 000000000000..f3c204c99d43
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Einj.aslc
+@@ -0,0 +1,153 @@
++/** @file
++*  Copyright (c) 2022, ARM Ltd. All rights reserved.
++*
++*  SPDX-License-Identifier: BSD-2-Clause-Patent
++*
++**/
++
++#include "SgiAcpiHeader.h"
++
++#define EINJ_INJECTION_ENTRY_COUNT 0x6
++#define PLATFORM_ERROR_TYPE_SUPPORTED (EFI_ACPI_6_4_EINJ_ERROR_PROCESSOR_CORRECTABLE |            \
++                                       EFI_ACPI_6_4_EINJ_ERROR_PROCESSOR_UNCORRECTABLE_NONFATAL | \
++                                       EFI_ACPI_6_4_EINJ_ERROR_PROCESSOR_UNCORRECTABLE_FATAL)
++
++#pragma pack (1)
++
++typedef struct {
++  EFI_ACPI_6_4_ERROR_INJECTION_TABLE_HEADER     Header;
++  EFI_ACPI_6_4_EINJ_INJECTION_INSTRUCTION_ENTRY Entry[EINJ_INJECTION_ENTRY_COUNT];
++} EFI_ACPI_6_4_ERROR_INJECTION_TABLE;
++
++#pragma pack()
++
++STATIC EFI_ACPI_6_4_ERROR_INJECTION_TABLE Einj = {
++  {
++    ARM_ACPI_HEADER   // EFI_ACPI_DESCRIPTION_HEADER
++    (
++      EFI_ACPI_6_4_ERROR_INJECTION_TABLE_SIGNATURE,
++      EFI_ACPI_6_4_ERROR_INJECTION_TABLE,
++      EFI_ACPI_6_4_ERROR_INJECTION_TABLE_REVISION
++    ),
++    sizeof (EFI_ACPI_6_4_ERROR_INJECTION_TABLE_HEADER),   // InjectionHeaderSize
++    0x0,   // InjectionFlags
++    // Reserved
++    {
++      0x0,
++      0x0,
++      0x0
++    },
++    EINJ_INJECTION_ENTRY_COUNT   // InjectionEntryCount
++  },
++  // Injection Instruction Enteries
++  {
++    // Get Error Type Instruction Entry
++    {
++      EFI_ACPI_6_0_EINJ_GET_ERROR_TYPE,
++      EFI_ACPI_6_0_EINJ_WRITE_REGISTER_VALUE,
++      0,   // Flag
++      0,   // Reserved
++      // Register region (GAR)
++      {
++        EFI_ACPI_6_4_SYSTEM_MEMORY,
++        32,
++        0,
++        EFI_ACPI_6_4_DWORD,
++        0xFF610000
++      },   // Register region (GAR)
++      PLATFORM_ERROR_TYPE_SUPPORTED,   // Supported Error Types by platform (Processor, Vendor)
++      0xffffffffffffffff    // Register region Mask
++    },
++    // Execute Operation Instruction Entry
++    {
++      EFI_ACPI_6_4_EINJ_EXECUTE_OPERATION,
++      EFI_ACPI_6_0_EINJ_WRITE_REGISTER_VALUE,
++      0,   // Flag
++      0,   // Reserved
++      // Register region (GAR)
++      {
++        EFI_ACPI_6_4_SYSTEM_MEMORY,
++        64,
++        0,
++        EFI_ACPI_6_4_QWORD,
++        0xFF610000
++      },
++      0x0000000000000000,   // Value
++      0xffffffffffffffff    // Register region Mask
++    },
++    // Set Error Type With Address
++    {
++      EFI_ACPI_6_4_EINJ_SET_ERROR_TYPE_WITH_ADDRESS,
++      EFI_ACPI_6_0_EINJ_WRITE_REGISTER,
++      0,  // Flag
++      0,  // Reserved
++      // Register region (GAR)
++      {
++        EFI_ACPI_6_4_SYSTEM_MEMORY,
++        64,
++        0,
++        EFI_ACPI_6_4_QWORD,
++        0xFF610100
++      },
++      0x0000000000000000,   // Value
++      0xffffffffffffffff    // Register region Mask
++    },
++    // Check Busy Status
++    {
++      EFI_ACPI_6_4_EINJ_CHECK_BUSY_STATUS,
++      EFI_ACPI_6_4_EINJ_READ_REGISTER,
++      0,   // Flag
++      0,   // Reserved
++      // Register region (GAR)
++      {
++        EFI_ACPI_6_4_SYSTEM_MEMORY,
++        64,
++        0,
++        EFI_ACPI_6_4_QWORD,
++        0xFF610250
++      },
++      0x0000000000000000,   // Value
++      0xffffffffffffffff    // Register region Mask
++    },
++    // Get Status of Current Operation
++    {
++      EFI_ACPI_6_4_EINJ_GET_COMMAND_STATUS,
++      EFI_ACPI_6_4_EINJ_READ_REGISTER,
++      0,   // Flag
++      0,   // Reserved
++      // Register region (GAR)
++      {
++        EFI_ACPI_6_4_SYSTEM_MEMORY,
++        64,
++        0,
++        EFI_ACPI_6_4_QWORD,
++        0xFF610400
++      },
++      0x0000000000000000,   // Value
++      0xffffffffffffffff    // Register region Mask
++    },
++    // Get Trigger Action Table
++    {
++      EFI_ACPI_6_4_EINJ_GET_TRIGGER_ERROR_ACTION_TABLE,
++      EFI_ACPI_6_4_EINJ_WRITE_REGISTER_VALUE,
++      0,   // Flag
++      0,   // Reserved
++      // Register region (GAR)
++      {
++        EFI_ACPI_6_4_SYSTEM_MEMORY,
++        64,
++        0,
++        EFI_ACPI_6_4_QWORD,
++        0xFF610200
++      },
++      FixedPcdGet64 (PcdEinjTriggerActionBase),   // Value
++      0xffffffffffffffff    // Register region Mask
++    },
++  }
++};
++
++/*
++ * Reference the table being generated to prevent the optimizer from removing
++ * the data structure from the executable
++ */
++VOID* CONST ReferenceAcpiTable = &Einj;
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf
+index 8651d81b6c47..2872dac6421a 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf
+@@ -83,3 +83,5 @@
+ 
+   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase
+   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
++
++  gArmSgiTokenSpaceGuid.PcdEinjTriggerActionBase
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesEinj.inf b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesEinj.inf
+new file mode 100644
+index 000000000000..762513bbdea9
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesEinj.inf
+@@ -0,0 +1,88 @@
++## @file
++#  ACPI table data and ASL sources required to boot the platform.
++#
++#  Copyright (c) 2021 - 2023, Arm Ltd. All rights reserved.
++#
++#  SPDX-License-Identifier: BSD-2-Clause-Patent
++#
++##
++
++[Defines]
++  INF_VERSION                    = 0x0001001A
++  BASE_NAME                      = RdN2Cfg1AcpiTables
++  FILE_GUID                      = c712719a-0aaf-438c-9cdd-35ab4d60207d  # gArmSgiAcpiTablesGuid
++  MODULE_TYPE                    = USER_DEFINED
++  VERSION_STRING                 = 1.0
++
++[Sources]
++  Dbg2.aslc
++  Fadt.aslc
++  Gtdt.aslc
++  RdN2Cfg1/Dsdt.asl
++  RdN2Cfg1/Einj.aslc
++  RdN2Cfg1/Madt.aslc
++  RdN2Cfg1/Mpam.aslc
++  RdN2Cfg1/Pptt.aslc
++  Spcr.aslc
++  SsdtEvents.asl
++  SsdtIoVirtSocExp.asl
++  SsdtRos.asl
++  SsdtRosVirtioP9.asl
++
++[Packages]
++  ArmPkg/ArmPkg.dec
++  ArmPlatformPkg/ArmPlatformPkg.dec
++  EmbeddedPkg/EmbeddedPkg.dec
++  MdeModulePkg/MdeModulePkg.dec
++  MdePkg/MdePkg.dec
++  Platform/ARM/SgiPkg/SgiPlatform.dec
++
++[FixedPcd]
++  gArmPlatformTokenSpaceGuid.PcdSerialDbgInterrupt
++  gArmPlatformTokenSpaceGuid.PcdSerialDbgRegisterBase
++  gArmPlatformTokenSpaceGuid.PcdCoreCount
++  gArmPlatformTokenSpaceGuid.PcdClusterCount
++  gArmPlatformTokenSpaceGuid.PL011UartInterrupt
++
++  gArmTokenSpaceGuid.PcdArmArchTimerSecIntrNum
++  gArmTokenSpaceGuid.PcdArmArchTimerIntrNum
++  gArmTokenSpaceGuid.PcdArmArchTimerHypIntrNum
++  gArmTokenSpaceGuid.PcdArmArchTimerVirtIntrNum
++  gArmTokenSpaceGuid.PcdGicDistributorBase
++  gArmTokenSpaceGuid.PcdGicRedistributorsBase
++  gArmTokenSpaceGuid.PcdGenericWatchdogControlBase
++  gArmTokenSpaceGuid.PcdGenericWatchdogRefreshBase
++  gArmTokenSpaceGuid.PcdPciBusMin
++  gArmTokenSpaceGuid.PcdPciBusMax
++
++  gArmSgiTokenSpaceGuid.PcdChipCount
++  gArmSgiTokenSpaceGuid.PcdGpioController0BaseAddress
++  gArmSgiTokenSpaceGuid.PcdGpioController0Size
++  gArmSgiTokenSpaceGuid.PcdGpioController0Interrupt
++  gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv
++  gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv
++  gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlk0Base
++  gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlkUartEnable
++  gArmSgiTokenSpaceGuid.PcdMaxAddressBitsPerChip
++  gArmSgiTokenSpaceGuid.PcdOscLpiEnable
++  gArmSgiTokenSpaceGuid.PcdOscCppcEnable
++  gArmSgiTokenSpaceGuid.PcdSmmuBase
++  gArmSgiTokenSpaceGuid.PcdSp804DualTimerBaseAddress
++  gArmSgiTokenSpaceGuid.PcdSp804DualTimerSize
++  gArmSgiTokenSpaceGuid.PcdSp804DualTimerInterrupt
++  gArmSgiTokenSpaceGuid.PcdVirtioBlkBaseAddress
++  gArmSgiTokenSpaceGuid.PcdVirtioBlkSize
++  gArmSgiTokenSpaceGuid.PcdVirtioBlkInterrupt
++  gArmSgiTokenSpaceGuid.PcdVirtioNetBaseAddress
++  gArmSgiTokenSpaceGuid.PcdVirtioNetSize
++  gArmSgiTokenSpaceGuid.PcdVirtioNetInterrupt
++  gArmSgiTokenSpaceGuid.PcdVirtioP9BaseAddress
++  gArmSgiTokenSpaceGuid.PcdVirtioP9Size
++  gArmSgiTokenSpaceGuid.PcdVirtioP9Interrupt
++  gArmSgiTokenSpaceGuid.PcdWdogWS0Gsiv
++  gArmSgiTokenSpaceGuid.PcdWdogWS1Gsiv
++
++  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase
++  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
++
++  gArmSgiTokenSpaceGuid.PcdEinjTriggerActionBase
+-- 
+2.39.5
+

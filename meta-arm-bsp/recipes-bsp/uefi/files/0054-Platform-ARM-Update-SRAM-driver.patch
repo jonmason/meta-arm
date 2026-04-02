@@ -1,0 +1,260 @@
+From 1c0cff5855b8a77008ad2d57549cf120d2b204db Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Thu, 11 Apr 2024 17:29:24 +0530
+Subject: [PATCH 54/78] Platform/ARM: Update SRAM driver
+
+Add changes to SRAM MM driver to make it platform independent. Update
+variables with platform specific PCDs.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: Idffaef62a48f9707bee07926beb39390ec0d6248
+---
+ Platform/ARM/Drivers/SramMm/SramMm.c          | 55 ++++++-------------
+ Platform/ARM/Drivers/SramMm/SramMm.dec        |  4 +-
+ Platform/ARM/Drivers/SramMm/SramMm.h          | 31 +++--------
+ Platform/ARM/Drivers/SramMm/SramMm.inf        |  4 +-
+ Platform/ARM/SgiPkg/PlatformStandaloneMm2.dsc |  4 +-
+ Platform/ARM/SgiPkg/PlatformStandaloneMm3.dsc |  6 +-
+ 6 files changed, 35 insertions(+), 69 deletions(-)
+
+diff --git a/Platform/ARM/Drivers/SramMm/SramMm.c b/Platform/ARM/Drivers/SramMm/SramMm.c
+index b871352a2bc8..49d6d140bf9d 100644
+--- a/Platform/ARM/Drivers/SramMm/SramMm.c
++++ b/Platform/ARM/Drivers/SramMm/SramMm.c
+@@ -20,54 +20,42 @@
+   record of type 'Memory Error' and populates it with information collected
+   from Base element ram error record registers.
+ 
+-  @param[in] SramEccRecordBase  Sram S/NS Error Record Base register.
++  @param[in] SramErr  Sram error info data structure.
+ **/
+ STATIC
+ VOID
+ SramErrorHandler (
+-  IN UINTN SramEccRecordBase
++  IN SRAM_ERR_INFO  *SramErr
+   )
+ {
+   EFI_ACPI_6_4_GENERIC_ERROR_DATA_ENTRY_STRUCTURE *ErrBlockSectionDesc;
+   EFI_ACPI_6_4_GENERIC_ERROR_STATUS_STRUCTURE     *ErrBlockStatusHeaderData;
+   EFI_PLATFORM_MEMORY_ERROR_DATA                  MemorySectionInfo;
+   EFI_GUID                                        SectionType;
+-  UINT32                                          ClearStatus;
+   VOID                                            *ErrBlockSectionData;
+   UINTN                                           *ErrStatusBlock;
+   UINT32                                          ErrStatus;
+-  UINT32                                          ErrCode;
+   UINT32                                          ErrAddr;
+-  UINT32                                          MultibitError;
+   BOOLEAN                                         CorrectedError;
+   BOOLEAN                                         UncorrectableError;
+-  BOOLEAN                                         MultibitCE;
+-  BOOLEAN                                         MultibitUE;
+ 
+   // Read Base element ram error record registers.
+-  ErrStatus = MmioRead32 (SramEccRecordBase + ERRSTATUS);
+-  ErrCode = MmioRead32 (SramEccRecordBase + ERRCODE);
+-  ErrAddr = MmioRead32 (SramEccRecordBase + ERRADDR);
++  ErrStatus = SramErr->ErrStatus;
++  ErrAddr = SramErr->ErrAddr;
+ 
+-  DEBUG ((DEBUG_INFO,"ErrStatus = 0x%x\n", ErrStatus));
+-  DEBUG ((DEBUG_INFO,"ErrCode = 0x%x\n", ErrCode));
++  DEBUG ((DEBUG_INFO,"ErrStatus = 0x%x 0x%lx 0x%lx\n", ErrStatus));
+   DEBUG ((DEBUG_INFO,"ErrAddr = 0x%x\n", ErrAddr));
+ 
+   // Read the error type and count information.
+-  if ((ErrStatus & ECC_ERR_STATUS_CE_BIT) != 0) {
++  CorrectedError = FALSE;
++  UncorrectableError = FALSE;
++  if ((ErrStatus & FixedPcdGet32 (PcdSramErrorErrStatusCorrectedError)) != 0) {
+     CorrectedError = TRUE;
+-  } else if ((ErrStatus & ECC_ERR_STATUS_UE_BIT) != 0) {
++  } else if ((ErrStatus &
++		FixedPcdGet32 (PcdSramErrorErrStatusUncorrectedError)) != 0) {
+     UncorrectableError = TRUE;
+   }
+ 
+-  if (ErrCode != 0) {
+-    MultibitError =
+-      ((ErrCode >> ECC_ERR_CODE_MBIT_TYPE_SHIFT) &
+-       ECC_ERR_CODE_MBIT_TYPE_MASK);
+-    MultibitCE = (MultibitError == ECC_ERR_CODE_MBIT_CE_ERR) ? 1: 0;
+-    MultibitUE = (MultibitError == ECC_ERR_CODE_MBIT_UE_ERR) ? 1: 0;
+-  }
+-
+   // Read the faulting Memory Error Address Information.
+   ZeroMem (&MemorySectionInfo, sizeof (MemorySectionInfo));
+   MemorySectionInfo.ValidFields |=
+@@ -76,9 +64,6 @@ SramErrorHandler (
+     MemorySectionInfo.PhysicalAddressMask = 0xFFFFFFFFFFFF;
+     MemorySectionInfo.PhysicalAddress = ErrAddr;
+ 
+-  ClearStatus = MmioRead32 (SramEccRecordBase + ERRSTATUS);
+-  MmioWrite32 ((SramEccRecordBase + ERRSTATUS), ClearStatus);
+-
+   // Locate Error Status Data memory space within the firmware reserved memory
+   // and populate Cper record for Memory error.
+   ErrStatusBlock =
+@@ -94,8 +79,8 @@ SramErrorHandler (
+     (UncorrectableError ? 1 : 0);
+   ErrBlockStatusHeaderData->BlockStatus.CorrectableErrorValid =
+     (CorrectedError ? 1 : 0);
+-  ErrBlockStatusHeaderData->BlockStatus.MultipleUncorrectableErrors = MultibitUE;
+-  ErrBlockStatusHeaderData->BlockStatus.MultipleCorrectableErrors = MultibitCE;
++  ErrBlockStatusHeaderData->BlockStatus.MultipleUncorrectableErrors = 0x0;
++  ErrBlockStatusHeaderData->BlockStatus.MultipleCorrectableErrors = 0x0;
+   ErrBlockStatusHeaderData->BlockStatus.ErrorDataEntryCount = 0x1;
+   ErrBlockStatusHeaderData->RawDataOffset =
+     (sizeof (EFI_ACPI_6_4_GENERIC_ERROR_STATUS_STRUCTURE) +
+@@ -165,7 +150,7 @@ SramErrorEventMmiHandler (
+   IN OUT UINTN      *SramBufferSize OPTIONAL
+   )
+ {
+-  BOOLEAN IsNonSecureSram;
++  SRAM_ERR_INFO  *SramErr;
+ 
+   // Validate the SramBuffer parameter is not NULL.
+   if (SramBuffer == NULL) {
+@@ -173,21 +158,17 @@ SramErrorEventMmiHandler (
+   }
+ 
+   // Validate the SramBufferSize parameter.
+-  if (*SramBufferSize < sizeof (BOOLEAN)) {
++  if (*SramBufferSize < sizeof (SRAM_ERR_INFO)) {
+     return EFI_BAD_BUFFER_SIZE;
+   }
+ 
+-  // Secure or Non-Secure Base Element Ram that generated the event.
+-  IsNonSecureSram = *(UINTN *)SramBuffer;
++  // Retrieve the Sram error records information.
++  SramErr = (SRAM_ERR_INFO *)SramBuffer;
+ 
+-  if (IsNonSecureSram == TRUE) {
+-    SramErrorHandler (FixedPcdGet64 (PcdSramNonSecureEccRecordBase));
+-  } else {
+-    SramErrorHandler (FixedPcdGet64 (PcdSramSecureEccRecordBase));
+-  }
++  SramErrorHandler (SramErr);
+ 
+   // Nothing to be returned.
+-  *SramBufferSize = 0;
++  //*SramBufferSize = 0;
+ 
+   return EFI_SUCCESS;
+ }
+diff --git a/Platform/ARM/Drivers/SramMm/SramMm.dec b/Platform/ARM/Drivers/SramMm/SramMm.dec
+index 4a41f552a231..9c5691dbde2c 100644
+--- a/Platform/ARM/Drivers/SramMm/SramMm.dec
++++ b/Platform/ARM/Drivers/SramMm/SramMm.dec
+@@ -26,5 +26,5 @@
+   gSramMmTokenSpaceGuid.PcdSramErrorSdeiEventBase|0|UINT32|0x00000003
+   gSramMmTokenSpaceGuid.PcdSramErrorSourceCount|1|UINT32|0x00000004
+   gSramMmTokenSpaceGuid.PcdSramErrorSourceId|0|UINT16|0x00000005
+-  gSramMmTokenSpaceGuid.PcdSramNonSecureEccRecordBase|0|UINT64|0x00000006
+-  gSramMmTokenSpaceGuid.PcdSramSecureEccRecordBase|0|UINT64|0x00000007
++  gSramMmTokenSpaceGuid.PcdSramErrorErrStatusCorrectedError|0|UINT32|0x00000008
++  gSramMmTokenSpaceGuid.PcdSramErrorErrStatusUncorrectedError|0|UINT32|0x00000009
+diff --git a/Platform/ARM/Drivers/SramMm/SramMm.h b/Platform/ARM/Drivers/SramMm/SramMm.h
+index eecefd3d5596..23db05d3476d 100644
+--- a/Platform/ARM/Drivers/SramMm/SramMm.h
++++ b/Platform/ARM/Drivers/SramMm/SramMm.h
+@@ -20,29 +20,6 @@
+ #include <Library/IoLib.h>
+ #include <Protocol/MmHestErrorSourceProtocol.h>
+ 
+-// Base Element Ram Error Record offsets.
+-#define ERRSTATUS 0
+-#define ERRCODE   8
+-#define ERRADDR   12
+-
+-// Base Element Ram Ecc Error Status register bit fields.
+-#define ECC_ERR_STATUS_CE_BIT BIT0
+-#define ECC_ERR_STATUS_UE_BIT BIT1
+-#define ECC_ERR_STATUS_OF_BIT BIT2
+-
+-// Base Element Ram Ecc Error Code register bit fields.
+-#define ECC_ERR_CODE_MASK        (BIT2|BIT1|BIT0)
+-#define ECC_ERR_CODE_NO_ERR      0x0
+-#define ECC_ERR_CODE_RD_DATA_ERR 0x1
+-#define ECC_ERR_CODE_WR_DATA_ERR 0x2
+-#define ECC_ERR_CODE_POISON_ERR  0x3
+-
+-#define ECC_ERR_CODE_MBIT_TYPE_MASK  (BIT4|BIT3)
+-#define ECC_ERR_CODE_MBIT_TYPE_SHIFT 3
+-#define ECC_ERR_CODE_MBIT_NO_ERR     0x0
+-#define ECC_ERR_CODE_MBIT_CE_ERR     0x1
+-#define ECC_ERR_CODE_MBIT_UE_ERR     0x2
+-
+ //
+ // Offsets within Firmware Reserved Memory (Error Status Block).
+ // The firmware reserved memory is used by the driver to convey the error data
+@@ -60,6 +37,14 @@
+ #define ReadAckDataOffset         (ErrorStatusDataOffset + \
+                                    sizeof (EFI_PLATFORM_MEMORY_ERROR_DATA))
+ 
++//
++// Data structure to communicate Sram Error Information.
++//
++typedef struct {
++  UINT32 ErrStatus;
++  UINT32 ErrAddr;
++} SRAM_ERR_INFO;
++
+ /**
+   Allow reporting of supported Base element ram error sources.
+ 
+diff --git a/Platform/ARM/Drivers/SramMm/SramMm.inf b/Platform/ARM/Drivers/SramMm/SramMm.inf
+index 68846a9b6029..1c3f378d95a9 100644
+--- a/Platform/ARM/Drivers/SramMm/SramMm.inf
++++ b/Platform/ARM/Drivers/SramMm/SramMm.inf
+@@ -43,8 +43,8 @@
+   gSramMmTokenSpaceGuid.PcdSramErrorSdeiEventBase
+   gSramMmTokenSpaceGuid.PcdSramErrorSourceCount
+   gSramMmTokenSpaceGuid.PcdSramErrorSourceId
+-  gSramMmTokenSpaceGuid.PcdSramNonSecureEccRecordBase
+-  gSramMmTokenSpaceGuid.PcdSramSecureEccRecordBase
++  gSramMmTokenSpaceGuid.PcdSramErrorErrStatusCorrectedError
++  gSramMmTokenSpaceGuid.PcdSramErrorErrStatusUncorrectedError
+ 
+ [Guids]
+   gArmSramEventHandlerGuid
+diff --git a/Platform/ARM/SgiPkg/PlatformStandaloneMm2.dsc b/Platform/ARM/SgiPkg/PlatformStandaloneMm2.dsc
+index 0841f49baf0a..f8ad90ca0a60 100644
+--- a/Platform/ARM/SgiPkg/PlatformStandaloneMm2.dsc
++++ b/Platform/ARM/SgiPkg/PlatformStandaloneMm2.dsc
+@@ -73,8 +73,8 @@
+   gSramMmTokenSpaceGuid.PcdSramErrorSdeiEventBase|804
+   gSramMmTokenSpaceGuid.PcdSramErrorSourceCount|1
+   gSramMmTokenSpaceGuid.PcdSramErrorSourceId|20
+-  gSramMmTokenSpaceGuid.PcdSramNonSecureEccRecordBase|0x2A4C0000
+-  gSramMmTokenSpaceGuid.PcdSramSecureEccRecordBase|0x2A4B0000
++  gSramMmTokenSpaceGuid.PcdSramErrorErrStatusCorrectedError|1
++  gSramMmTokenSpaceGuid.PcdSramErrorErrStatusUncorrectedError|2
+ !endif
+   
+   # Disables FFA
+diff --git a/Platform/ARM/SgiPkg/PlatformStandaloneMm3.dsc b/Platform/ARM/SgiPkg/PlatformStandaloneMm3.dsc
+index 2887c25294c3..07e2d464fba3 100644
+--- a/Platform/ARM/SgiPkg/PlatformStandaloneMm3.dsc
++++ b/Platform/ARM/SgiPkg/PlatformStandaloneMm3.dsc
+@@ -68,13 +68,13 @@
+ 
+ !if $(EDK2_ENABLE_SRAM_MM) == TRUE
+   ## Base Element Ram
+-  gSramMmTokenSpaceGuid.PcdSramErrorDataBase|0xFFE22000
++  gSramMmTokenSpaceGuid.PcdSramErrorDataBase|0xFB1F0000
+   gSramMmTokenSpaceGuid.PcdSramErrorDataSize|0x100
+   gSramMmTokenSpaceGuid.PcdSramErrorSdeiEventBase|804
+   gSramMmTokenSpaceGuid.PcdSramErrorSourceCount|1
+   gSramMmTokenSpaceGuid.PcdSramErrorSourceId|20
+-  gSramMmTokenSpaceGuid.PcdSramNonSecureEccRecordBase|0x2A4C0000
+-  gSramMmTokenSpaceGuid.PcdSramSecureEccRecordBase|0x2A4B0000
++  gSramMmTokenSpaceGuid.PcdSramErrorErrStatusCorrectedError|0x3000000
++  gSramMmTokenSpaceGuid.PcdSramErrorErrStatusUncorrectedError|0x20000000
+ !endif
+   
+   # Disables FFA
+-- 
+2.39.5
+

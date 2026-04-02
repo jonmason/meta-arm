@@ -1,0 +1,151 @@
+From 8efaa67c5d0a854dbdf3fef6ba2ec3d26cb13b96 Mon Sep 17 00:00:00 2001
+From: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Date: Tue, 22 Mar 2022 16:22:25 +0530
+Subject: [PATCH 44/78] Platform/Sgi: Add CXL Early Discovery Table(CEDT) for
+ Rd-N2-Cfg1 Platform
+
+CEDT structure type, CXL Host Bridge(CHBS) describes the location of CXL
+Host Bridge, allowing OS to configure CXL Host Bridge.
+
+CEDT structure type, CXL Fixed Memory Window(CFMWS) describes Host
+Physical Address(HPA) window that is associated with a CXL Host bridge.
+
+This patch demonstrates, the addition of CEDT structures, that allows
+OS drivers to detect the presence of CXL Host bridge and CEDT structures
+and then perform necessary configuration of CXL Host bridge registers
+according to ACPI information.
+
+ACPI0017 is a SW entity under System Bus of ACPI tree, that indicates
+the presence of CEDT table.
+
+ACPI0016 is a SW entity under System Bus of ACPI tree, that represents
+a CXL Host Bridge.
+Above two objects are added in subsequent patch, where PCIe SSDT table
+is generated based on runtime data.
+
+In this patch, Interleave target number is considered 1 for demonstrating
+a reference solution with CEDT structures. There is no real interleaving
+address windows across multiple ports with this configuraiton. It is
+same as single port CXL Host bridge.
+
+Signed-off-by: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Change-Id: Id60751efb38452bd479484dd53d5a99d2a9bca8b
+---
+ .../ARM/SgiPkg/AcpiTables/RdN2Cfg1/Cedt.aslc  | 86 +++++++++++++++++++
+ .../SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf  |  3 +
+ 2 files changed, 89 insertions(+)
+ create mode 100644 Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Cedt.aslc
+
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Cedt.aslc b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Cedt.aslc
+new file mode 100644
+index 000000000000..c6bf392ef4e0
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Cedt.aslc
+@@ -0,0 +1,86 @@
++/** @file
++  CXL Early Discovery Table (CEDT) for RD-N2-Cfg1 platform
++
++  This file describes CXL Host Bridge Structure(CHBS) and
++  CXL Fixed Memory Window Structure(CFMWS), which are used by Operating
++  System during boot for locating CXL host bridge and performing necessary
++  decoder configuration according to ACPI information.
++
++  Copyright (c) 2022, Arm Limited. All rights reserved.<BR>
++
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++
++  @par Specification Reference:
++    - CXL Specificiation Revision 3.0, Version 0.7, Chapter 9.16.1,
++        CXL Early Discovery Table (CEDT)
++**/
++
++#include "SgiAcpiHeader.h"
++#include "SgiPlatform.h"
++
++#define INTERLEAVE_TARGETS  1
++
++#pragma pack (1)
++
++typedef struct {
++  EFI_ACPI_CEDT_CFMWS_STRUCTURE  Cfmws;
++  UINT32  InterleaveTarget[INTERLEAVE_TARGETS];
++} EFI_ACPI_CEDT_CFMWS_AND_INTERLEAVE_TARGET_STRUCTURE;
++
++typedef struct {
++  EFI_ACPI_DESCRIPTION_HEADER  Header;
++  EFI_ACPI_CEDT_CFMWS_AND_INTERLEAVE_TARGET_STRUCTURE CfmwsTarget;
++  EFI_ACPI_CEDT_CHBS_STRUCTURE  Chbs;
++} EFI_ACPI_CEDT_STRUCTURE_TABLE;
++
++#pragma pack ()
++
++STATIC EFI_ACPI_CEDT_STRUCTURE_TABLE Cedt = {
++  ARM_ACPI_HEADER (
++    EFI_ACPI_6_4_CEDT_SIGNATURE,
++    EFI_ACPI_CEDT_STRUCTURE_TABLE,
++    1
++  ),
++  {
++    {
++    // CFMWS
++      {
++        1,
++        EFI_ACPI_RESERVED_BYTE,
++        sizeof (EFI_ACPI_CEDT_CFMWS_AND_INTERLEAVE_TARGET_STRUCTURE)
++      },
++      EFI_ACPI_RESERVED_DWORD,
++      0x3fe00000000,
++      0x200000000,
++      0,
++      0,
++      EFI_ACPI_RESERVED_WORD,
++      4,
++      2,
++      0
++    },
++    {
++    //Interleave target list
++      0
++    }
++  },
++  {
++  // CHBS
++    {
++      0,
++      EFI_ACPI_RESERVED_BYTE,
++      sizeof (EFI_ACPI_CEDT_CHBS_STRUCTURE)
++    },
++    0,
++    1,
++    EFI_ACPI_RESERVED_DWORD,
++    0x000EF30000,
++    0x1000
++  }
++};
++
++//
++// Reference the table being generated to prevent the optimizer from removing
++// the data structure from the executable
++//
++VOID* CONST ReferenceAcpiTable = &Cedt;
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf
+index 0f4af38f42dd..23c3dac9e347 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf
+@@ -23,6 +23,7 @@
+   RdN2Cfg1/Madt.aslc
+   RdN2Cfg1/Mpam.aslc
+   RdN2Cfg1/Pptt.aslc
++  RdN2Cfg1/Cedt.aslc
+   Spcr.aslc
+   SsdtEvents.asl
+   SsdtIoVirtSocExp.asl
+@@ -86,3 +87,5 @@
+   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+ 
+   gArmSgiTokenSpaceGuid.PcdEinjTriggerActionBase
++
++  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseSize
+-- 
+2.39.5
+

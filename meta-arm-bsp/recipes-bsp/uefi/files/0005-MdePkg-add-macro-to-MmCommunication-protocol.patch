@@ -1,0 +1,30 @@
+From 7e99fb33c23055605356ec5b30b73dc6686e498a Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Tue, 12 Oct 2021 16:43:02 +0530
+Subject: [PATCH 05/43] MdePkg: add macro to MmCommunication protocol
+
+Add a macro to determine the size of EFI_MM_COMMUNICATE_HEADER
+structure header.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I98faa2723e64884bc068efa47d9be61e22e8d081
+---
+ MdePkg/Include/Protocol/MmCommunication.h | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/MdePkg/Include/Protocol/MmCommunication.h b/MdePkg/Include/Protocol/MmCommunication.h
+index 0ccb98902090..4497b4c91f96 100644
+--- a/MdePkg/Include/Protocol/MmCommunication.h
++++ b/MdePkg/Include/Protocol/MmCommunication.h
+@@ -12,6 +12,8 @@
+ #ifndef _MM_COMMUNICATION_H_
+ #define _MM_COMMUNICATION_H_
+ 
++#define MM_COMMUNICATE_HEADER_SIZE (OFFSET_OF (EFI_MM_COMMUNICATE_HEADER, Data))
++
+ #pragma pack(1)
+ 
+ ///
+-- 
+2.39.5
+

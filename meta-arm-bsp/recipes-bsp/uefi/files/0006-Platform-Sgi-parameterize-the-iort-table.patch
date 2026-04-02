@@ -1,0 +1,236 @@
+From 8162c9e4e9ae03216da160fb3fe28275ad31df23 Mon Sep 17 00:00:00 2001
+From: Vijayenthiran Subramaniam <vijayenthiran.subramaniam@arm.com>
+Date: Mon, 9 Aug 2021 17:15:20 +0530
+Subject: [PATCH 06/78] Platform/Sgi: parameterize the iort table
+
+In preparation of adding multiple SMMU, IORT and PCIe root complex nodes
+into the IORT ACPI table, parameterize the existing IORT table. The SMMU
+interrupt numbers, device ID and base addresses are all parameterized
+using helper macros. PCDs for these parameters are defined and the
+platforms can define the value of these PCDs.
+While we are at it fix the Coherency flags and Number of Ids fields of
+various nodes.
+
+Signed-off-by: Vivek Gautam <vivek.gautam@arm.com>
+Signed-off-by: Vijayenthiran Subramaniam <vijayenthiran.subramaniam@arm.com>
+Change-Id: If631ad3695fb5c7a87c11906fa2331d328fd3495
+---
+ Platform/ARM/SgiPkg/AcpiTables/Iort.aslc       | 18 +++++++++---------
+ .../SgiPkg/AcpiTables/RdE1EdgeAcpiTables.inf   |  6 ++++++
+ .../SgiPkg/AcpiTables/RdN1EdgeAcpiTables.inf   |  6 ++++++
+ .../SgiPkg/AcpiTables/RdN1EdgeX2AcpiTables.inf |  6 ++++++
+ .../ARM/SgiPkg/AcpiTables/RdN2AcpiTables.inf   |  1 -
+ .../ARM/SgiPkg/AcpiTables/RdV1AcpiTables.inf   |  6 ++++++
+ .../ARM/SgiPkg/AcpiTables/RdV1McAcpiTables.inf |  6 ++++++
+ .../ARM/SgiPkg/AcpiTables/Sgi575AcpiTables.inf |  6 ++++++
+ Platform/ARM/SgiPkg/SgiMemoryMap.dsc.inc       |  4 ++++
+ Platform/ARM/SgiPkg/SgiMemoryMap2.dsc.inc      |  1 +
+ Platform/ARM/SgiPkg/SgiPlatform.dec            |  5 +++++
+ 11 files changed, 55 insertions(+), 10 deletions(-)
+
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/Iort.aslc b/Platform/ARM/SgiPkg/AcpiTables/Iort.aslc
+index a7ad92622a90..856b770f937b 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/Iort.aslc
++++ b/Platform/ARM/SgiPkg/AcpiTables/Iort.aslc
+@@ -86,15 +86,15 @@ ARM_EFI_ACPI_6_0_IO_REMAPPING_TABLE Iort =
+         2, // NumIdMapping
+         OFFSET_OF (ARM_EFI_ACPI_6_0_IO_REMAPPING_SMMU3_NODE, SmmuIdMap), // IdReference
+       },
+-      0x4F000000, // Base address
+-      EFI_ACPI_IORT_SMMUv3_FLAG_COHAC_OVERRIDE, // Flags
++      FixedPcdGet32 (PcdSmmuBase), // Base address
++      0,   // Flags
+       0,   // Reserved
+       0,   // VATOS address
+       EFI_ACPI_IORT_SMMUv3_MODEL_GENERIC, // SMMUv3 Model
+-      260, // Event
+-      0,   // Pri
+-      262, // Gerror
+-      261, // Sync
++      FixedPcdGet32 (PcdSmmuEventGsiv), // Event
++      FixedPcdGet32 (PcdSmmuPriGsiv),   // Pri
++      FixedPcdGet32 (PcdSmmuGErrorGsiv), // Gerror
++      FixedPcdGet32 (PcdSmmuSyncGsiv), // Sync
+       0,   // Proximity domain
+       1,   // DevIDMappingIndex
+     },
+@@ -109,8 +109,8 @@ ARM_EFI_ACPI_6_0_IO_REMAPPING_TABLE Iort =
+       },
+       {
+         0x0,     // InputBase
+-        0x1,     // NumIds
+-        0x10000, // OutputBase
++        0x0,     // NumIds
++        FixedPcdGet32 (PcdSmmuDevIDBase), // OutputBase
+         OFFSET_OF (ARM_EFI_ACPI_6_0_IO_REMAPPING_TABLE, ItsNode), // OutputReference
+         EFI_ACPI_IORT_ID_MAPPING_FLAGS_SINGLE, // Flags
+       },
+@@ -129,7 +129,7 @@ ARM_EFI_ACPI_6_0_IO_REMAPPING_TABLE Iort =
+         1,  // NumIdMappings
+         OFFSET_OF (ARM_EFI_ACPI_6_0_IO_REMAPPING_RC_NODE, RcIdMap)  // IdReference
+       },
+-      1,  // CacheCoherent
++      0,  // CacheCoherent
+       0,  // AllocationHints
+       0,  // Reserved
+       0,  // MemoryAccessFlags
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdE1EdgeAcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdE1EdgeAcpiTables.inf
+index d46ae0274d90..653d0bdeb4a9 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdE1EdgeAcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdE1EdgeAcpiTables.inf
+@@ -59,6 +59,12 @@
+   gArmSgiTokenSpaceGuid.PcdGpioController0Interrupt
+   gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv
+   gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv
++  gArmSgiTokenSpaceGuid.PcdSmmuBase
++  gArmSgiTokenSpaceGuid.PcdSmmuDevIDBase
++  gArmSgiTokenSpaceGuid.PcdSmmuEventGsiv
++  gArmSgiTokenSpaceGuid.PcdSmmuGErrorGsiv
++  gArmSgiTokenSpaceGuid.PcdSmmuPriGsiv
++  gArmSgiTokenSpaceGuid.PcdSmmuSyncGsiv
+   gArmSgiTokenSpaceGuid.PcdSp804DualTimerBaseAddress
+   gArmSgiTokenSpaceGuid.PcdSp804DualTimerSize
+   gArmSgiTokenSpaceGuid.PcdSp804DualTimerInterrupt
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN1EdgeAcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdN1EdgeAcpiTables.inf
+index 4bf681d3bc2e..202c26011b8a 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN1EdgeAcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN1EdgeAcpiTables.inf
+@@ -60,6 +60,12 @@
+   gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv
+   gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv
+   gArmSgiTokenSpaceGuid.PcdOscLpiEnable
++  gArmSgiTokenSpaceGuid.PcdSmmuBase
++  gArmSgiTokenSpaceGuid.PcdSmmuDevIDBase
++  gArmSgiTokenSpaceGuid.PcdSmmuEventGsiv
++  gArmSgiTokenSpaceGuid.PcdSmmuGErrorGsiv
++  gArmSgiTokenSpaceGuid.PcdSmmuPriGsiv
++  gArmSgiTokenSpaceGuid.PcdSmmuSyncGsiv
+   gArmSgiTokenSpaceGuid.PcdSp804DualTimerBaseAddress
+   gArmSgiTokenSpaceGuid.PcdSp804DualTimerSize
+   gArmSgiTokenSpaceGuid.PcdSp804DualTimerInterrupt
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN1EdgeX2AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdN1EdgeX2AcpiTables.inf
+index 89f532217ceb..27849532fb96 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN1EdgeX2AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN1EdgeX2AcpiTables.inf
+@@ -70,6 +70,12 @@
+   gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv
+   gArmSgiTokenSpaceGuid.PcdMaxAddressBitsPerChip
+   gArmSgiTokenSpaceGuid.PcdOscLpiEnable
++  gArmSgiTokenSpaceGuid.PcdSmmuBase
++  gArmSgiTokenSpaceGuid.PcdSmmuDevIDBase
++  gArmSgiTokenSpaceGuid.PcdSmmuEventGsiv
++  gArmSgiTokenSpaceGuid.PcdSmmuGErrorGsiv
++  gArmSgiTokenSpaceGuid.PcdSmmuPriGsiv
++  gArmSgiTokenSpaceGuid.PcdSmmuSyncGsiv
+   gArmSgiTokenSpaceGuid.PcdSp804DualTimerBaseAddress
+   gArmSgiTokenSpaceGuid.PcdSp804DualTimerSize
+   gArmSgiTokenSpaceGuid.PcdSp804DualTimerInterrupt
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdN2AcpiTables.inf
+index fb5e6e72c9e8..2bc0dd3d2008 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN2AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2AcpiTables.inf
+@@ -18,7 +18,6 @@
+   Dbg2.aslc
+   Fadt.aslc
+   Gtdt.aslc
+-  Iort.aslc
+   Mcfg.aslc
+   RdN2/Dsdt.asl
+   RdN2/Madt.aslc
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdV1AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdV1AcpiTables.inf
+index cc41dda1a135..b49de539e0f1 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdV1AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdV1AcpiTables.inf
+@@ -61,6 +61,12 @@
+   gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv
+   gArmSgiTokenSpaceGuid.PcdOscLpiEnable
+   gArmSgiTokenSpaceGuid.PcdOscCppcEnable
++  gArmSgiTokenSpaceGuid.PcdSmmuBase
++  gArmSgiTokenSpaceGuid.PcdSmmuDevIDBase
++  gArmSgiTokenSpaceGuid.PcdSmmuEventGsiv
++  gArmSgiTokenSpaceGuid.PcdSmmuGErrorGsiv
++  gArmSgiTokenSpaceGuid.PcdSmmuPriGsiv
++  gArmSgiTokenSpaceGuid.PcdSmmuSyncGsiv
+   gArmSgiTokenSpaceGuid.PcdSp804DualTimerBaseAddress
+   gArmSgiTokenSpaceGuid.PcdSp804DualTimerSize
+   gArmSgiTokenSpaceGuid.PcdSp804DualTimerInterrupt
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdV1McAcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdV1McAcpiTables.inf
+index ecb42bf3cc33..3d0afe37d4a3 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdV1McAcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdV1McAcpiTables.inf
+@@ -71,6 +71,12 @@
+   gArmSgiTokenSpaceGuid.PcdMaxAddressBitsPerChip
+   gArmSgiTokenSpaceGuid.PcdOscLpiEnable
+   gArmSgiTokenSpaceGuid.PcdOscCppcEnable
++  gArmSgiTokenSpaceGuid.PcdSmmuBase
++  gArmSgiTokenSpaceGuid.PcdSmmuDevIDBase
++  gArmSgiTokenSpaceGuid.PcdSmmuEventGsiv
++  gArmSgiTokenSpaceGuid.PcdSmmuGErrorGsiv
++  gArmSgiTokenSpaceGuid.PcdSmmuPriGsiv
++  gArmSgiTokenSpaceGuid.PcdSmmuSyncGsiv
+   gArmSgiTokenSpaceGuid.PcdSp804DualTimerBaseAddress
+   gArmSgiTokenSpaceGuid.PcdSp804DualTimerSize
+   gArmSgiTokenSpaceGuid.PcdSp804DualTimerInterrupt
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/Sgi575AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/Sgi575AcpiTables.inf
+index 379b5c9e6122..36c108c86e06 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/Sgi575AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/Sgi575AcpiTables.inf
+@@ -60,6 +60,12 @@
+   gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv
+   gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv
+   gArmSgiTokenSpaceGuid.PcdOscLpiEnable
++  gArmSgiTokenSpaceGuid.PcdSmmuBase
++  gArmSgiTokenSpaceGuid.PcdSmmuDevIDBase
++  gArmSgiTokenSpaceGuid.PcdSmmuEventGsiv
++  gArmSgiTokenSpaceGuid.PcdSmmuGErrorGsiv
++  gArmSgiTokenSpaceGuid.PcdSmmuPriGsiv
++  gArmSgiTokenSpaceGuid.PcdSmmuSyncGsiv
+   gArmSgiTokenSpaceGuid.PcdSp804DualTimerBaseAddress
+   gArmSgiTokenSpaceGuid.PcdSp804DualTimerSize
+   gArmSgiTokenSpaceGuid.PcdSp804DualTimerInterrupt
+diff --git a/Platform/ARM/SgiPkg/SgiMemoryMap.dsc.inc b/Platform/ARM/SgiPkg/SgiMemoryMap.dsc.inc
+index eab43b23ec6d..48a5ae8a7ce2 100644
+--- a/Platform/ARM/SgiPkg/SgiMemoryMap.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiMemoryMap.dsc.inc
+@@ -62,6 +62,10 @@
+   # SMMU
+   gArmSgiTokenSpaceGuid.PcdSmmuBase|0x4F000000
+   gArmSgiTokenSpaceGuid.PcdSmmuSize|0x01000000
++  gArmSgiTokenSpaceGuid.PcdSmmuDevIDBase|0x10000
++  gArmSgiTokenSpaceGuid.PcdSmmuEventGsiv|260
++  gArmSgiTokenSpaceGuid.PcdSmmuGErrorGsiv|262
++  gArmSgiTokenSpaceGuid.PcdSmmuSyncGsiv|261
+ 
+   # GPIO Controller
+   gArmSgiTokenSpaceGuid.PcdGpioController0BaseAddress|0x1C1D0000
+diff --git a/Platform/ARM/SgiPkg/SgiMemoryMap2.dsc.inc b/Platform/ARM/SgiPkg/SgiMemoryMap2.dsc.inc
+index 35e27d42d5a2..1a123688991a 100644
+--- a/Platform/ARM/SgiPkg/SgiMemoryMap2.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiMemoryMap2.dsc.inc
+@@ -67,6 +67,7 @@
+   # SMMU
+   gArmSgiTokenSpaceGuid.PcdSmmuBase|0x40000000
+   gArmSgiTokenSpaceGuid.PcdSmmuSize|0x10000000
++  gArmSgiTokenSpaceGuid.PcdSmmuDevIDBase|0x80000
+ 
+   # GPIO controller
+   gArmSgiTokenSpaceGuid.PcdGpioController0BaseAddress|0x0C1D0000
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.dec b/Platform/ARM/SgiPkg/SgiPlatform.dec
+index d540dbff2d19..f060624fdaa2 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatform.dec
++++ b/Platform/ARM/SgiPkg/SgiPlatform.dec
+@@ -85,6 +85,11 @@
+   # SMMU
+   gArmSgiTokenSpaceGuid.PcdSmmuBase|0|UINT64|0x0000001D
+   gArmSgiTokenSpaceGuid.PcdSmmuSize|0|UINT32|0x0000001E
++  gArmSgiTokenSpaceGuid.PcdSmmuDevIDBase|0|UINT32|0x00001100
++  gArmSgiTokenSpaceGuid.PcdSmmuEventGsiv|0|UINT32|0x00001101
++  gArmSgiTokenSpaceGuid.PcdSmmuGErrorGsiv|0|UINT32|0x00001102
++  gArmSgiTokenSpaceGuid.PcdSmmuPriGsiv|0|UINT32|0x00001103
++  gArmSgiTokenSpaceGuid.PcdSmmuSyncGsiv|0|UINT32|0x00001104
+ 
+   # GPIO Controller
+   gArmSgiTokenSpaceGuid.PcdGpioController0BaseAddress|0|UINT32|0x0000001F
+-- 
+2.39.5
+

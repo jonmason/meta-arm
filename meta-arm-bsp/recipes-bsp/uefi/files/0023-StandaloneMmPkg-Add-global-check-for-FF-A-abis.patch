@@ -1,0 +1,60 @@
+From cb62d3f26bbfc6f443040cfd2502b79daeedfd29 Mon Sep 17 00:00:00 2001
+From: Achin Gupta <achin.gupta@arm.com>
+Date: Tue, 2 Nov 2021 11:21:16 +0000
+Subject: [PATCH 23/43] StandaloneMmPkg: Add global check for FF-A abis
+
+This patch copies the value of the corresponding stack variable to a global
+variable so that it can be used to determine whether FF-A v1.1 or earlier ABIs
+should be used for communication with the SPMC.
+
+Signed-off-by: Achin Gupta <achin.gupta@arm.com>
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: I1eca53f58ca8982f5e729a2fd385323528628307
+---
+ .../Arm/StandaloneMmCoreEntryPoint.c             | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
+index f1f263e5ff00..7e8d98af4ad4 100644
+--- a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
++++ b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
+@@ -44,6 +44,12 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
+ #define FFA_PAGE_16K 1
+ #define FFA_PAGE_64K 2
+ 
++// Local variable to help Standalone MM Core decide whether FF-A ABIs can be
++// used for all communication. This variable is usable only after the StMM image
++// has been relocated and all image section permissions have been correctly
++// updated.
++STATIC BOOLEAN mUseOnlyFfaAbis = FALSE;
++
+ PI_MM_CPU_DRIVER_ENTRYPOINT  CpuDriverEntryPoint = NULL;
+ 
+ /**
+@@ -653,6 +659,13 @@ InitArmSvcArgs (
+   )
+ {
+   if (FixedPcdGet32 (PcdFfaEnable) != 0) {
++
++    // With FF-A v1.1 invoke FFA_MSG_WAIT to signal completion of SP init.
++    if (mUseOnlyFfaAbis) {
++      InitMmFoundationSvcArgs->Arg0 = ARM_SVC_ID_FFA_MSG_WAIT_AARCH32;
++      return;
++    }
++
+     InitMmFoundationSvcArgs->Arg0 = ARM_SVC_ID_FFA_MSG_SEND_DIRECT_RESP;
+     InitMmFoundationSvcArgs->Arg1 = 0;
+     InitMmFoundationSvcArgs->Arg2 = 0;
+@@ -834,6 +847,9 @@ ModuleEntryPoint (
+     ASSERT_EFI_ERROR (Status);
+   }
+ 
++  // Update the global copy now that the image has been relocated.
++  mUseOnlyFfaAbis = UseOnlyFfaAbis;
++
+   //
+   // Create Hoblist based upon boot information passed by privileged software
+   //
+-- 
+2.39.5
+

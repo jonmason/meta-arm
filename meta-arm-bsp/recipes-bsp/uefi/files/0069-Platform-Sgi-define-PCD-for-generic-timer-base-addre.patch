@@ -1,0 +1,340 @@
+From 1c6c0eb55ca65c460351e3b7dd040685451ae765 Mon Sep 17 00:00:00 2001
+From: Lokesh B V <Lokesh.BV@Arm.com>
+Date: Mon, 23 Sep 2024 05:18:43 +0530
+Subject: [PATCH 69/78] Platform/Sgi: define PCD for generic timer base address
+
+The generic timer and watchdog timer control base on the RD-V3-R1
+platform is different than those on the other platforms supported by
+SgiPkg. So in order to reuse the existing GTDT ACPI table for all the
+supported platforms, introduce and use PCD to provide the base
+addresses for watchdog and generic timers.
+
+TODO: Update other platforms...
+
+Signed-off-by: Lokesh B V <Lokesh.BV@Arm.com>
+Change-Id: I2012625051c290011c536af36ca798211d88b336
+---
+ Platform/ARM/SgiPkg/AcpiTables/Gtdt.aslc                  | 6 +++---
+ Platform/ARM/SgiPkg/AcpiTables/RdE1EdgeAcpiTables.inf     | 3 +++
+ Platform/ARM/SgiPkg/AcpiTables/RdN1EdgeAcpiTables.inf     | 3 +++
+ Platform/ARM/SgiPkg/AcpiTables/RdN1EdgeX2AcpiTables.inf   | 3 +++
+ Platform/ARM/SgiPkg/AcpiTables/RdN2AcpiTables.inf         | 3 +++
+ Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf     | 3 +++
+ Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesEinj.inf | 3 +++
+ Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesRas.inf  | 3 +++
+ Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg2AcpiTables.inf     | 3 +++
+ Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg3AcpiTables.inf     | 3 +++
+ Platform/ARM/SgiPkg/AcpiTables/RdV1AcpiTables.inf         | 3 +++
+ Platform/ARM/SgiPkg/AcpiTables/RdV1McAcpiTables.inf       | 3 +++
+ Platform/ARM/SgiPkg/AcpiTables/RdV3AcpiTables.inf         | 3 +++
+ Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1AcpiTables.inf     | 3 +++
+ Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2AcpiTables.inf     | 3 +++
+ Platform/ARM/SgiPkg/AcpiTables/RdV3R1AcpiTables.inf       | 3 +++
+ Platform/ARM/SgiPkg/AcpiTables/RdV3R1Cfg1AcpiTables.inf   | 3 +++
+ Platform/ARM/SgiPkg/AcpiTables/Sgi575AcpiTables.inf       | 3 +++
+ Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc                 | 5 +++++
+ Platform/ARM/SgiPkg/SgiMemoryMap4.dsc.inc                 | 5 +++++
+ Platform/ARM/SgiPkg/SgiPlatform.dec                       | 3 +++
+ 21 files changed, 67 insertions(+), 3 deletions(-)
+
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/Gtdt.aslc b/Platform/ARM/SgiPkg/AcpiTables/Gtdt.aslc
+index 70765f87e537..026c9c742be9 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/Gtdt.aslc
++++ b/Platform/ARM/SgiPkg/AcpiTables/Gtdt.aslc
+@@ -25,12 +25,12 @@
+ #define GTDT_GLOBAL_FLAGS                 0
+ #define GTDT_GTIMER_FLAGS                 EFI_ACPI_6_4_GTDT_TIMER_FLAG_TIMER_INTERRUPT_POLARITY
+ 
+-#define SGI_GT_BLOCK_CTL_BASE             0x2A810000
+-#define SGI_GT_BLOCK_FRAME1_CTL_BASE      0x2A820000
++#define SGI_GT_BLOCK_CTL_BASE             FixedPcdGet32 (PcdGtCtlBase)
++#define SGI_GT_BLOCK_FRAME1_CTL_BASE      FixedPcdGet32 (PcdGtFrame1CtlBase)
+ #define SGI_GT_BLOCK_FRAME1_CTL_EL0_BASE  0xFFFFFFFFFFFFFFFF
+ #define SGI_GT_BLOCK_FRAME1_GSIV          FixedPcdGet32 (PcdGtFrame1Gsiv)
+ 
+-#define SGI_GT_BLOCK_FRAME0_CTL_BASE      0x2A830000
++#define SGI_GT_BLOCK_FRAME0_CTL_BASE      FixedPcdGet32 (PcdGtFrame0CtlBase)
+ #define SGI_GT_BLOCK_FRAME0_CTL_EL0_BASE  0xFFFFFFFFFFFFFFFF
+ #define SGI_GT_BLOCK_FRAME0_GSIV          FixedPcdGet32 (PcdGtFrame0Gsiv)
+ 
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdE1EdgeAcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdE1EdgeAcpiTables.inf
+index 653d0bdeb4a9..aa4b352d352e 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdE1EdgeAcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdE1EdgeAcpiTables.inf
+@@ -57,6 +57,9 @@
+   gArmSgiTokenSpaceGuid.PcdGpioController0BaseAddress
+   gArmSgiTokenSpaceGuid.PcdGpioController0Size
+   gArmSgiTokenSpaceGuid.PcdGpioController0Interrupt
++  gArmSgiTokenSpaceGuid.PcdGtCtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame0CtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame1CtlBase
+   gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv
+   gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv
+   gArmSgiTokenSpaceGuid.PcdSmmuBase
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN1EdgeAcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdN1EdgeAcpiTables.inf
+index 202c26011b8a..6759ce37e126 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN1EdgeAcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN1EdgeAcpiTables.inf
+@@ -57,6 +57,9 @@
+   gArmSgiTokenSpaceGuid.PcdGpioController0BaseAddress
+   gArmSgiTokenSpaceGuid.PcdGpioController0Size
+   gArmSgiTokenSpaceGuid.PcdGpioController0Interrupt
++  gArmSgiTokenSpaceGuid.PcdGtCtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame0CtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame1CtlBase
+   gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv
+   gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv
+   gArmSgiTokenSpaceGuid.PcdOscLpiEnable
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN1EdgeX2AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdN1EdgeX2AcpiTables.inf
+index 27849532fb96..4147e642e270 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN1EdgeX2AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN1EdgeX2AcpiTables.inf
+@@ -66,6 +66,9 @@
+   gArmSgiTokenSpaceGuid.PcdGpioController0BaseAddress
+   gArmSgiTokenSpaceGuid.PcdGpioController0Size
+   gArmSgiTokenSpaceGuid.PcdGpioController0Interrupt
++  gArmSgiTokenSpaceGuid.PcdGtCtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame0CtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame1CtlBase
+   gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv
+   gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv
+   gArmSgiTokenSpaceGuid.PcdMaxAddressBitsPerChip
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdN2AcpiTables.inf
+index 0d516a583568..7dbdb4ba026e 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN2AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2AcpiTables.inf
+@@ -57,6 +57,9 @@
+   gArmSgiTokenSpaceGuid.PcdGpioController0BaseAddress
+   gArmSgiTokenSpaceGuid.PcdGpioController0Size
+   gArmSgiTokenSpaceGuid.PcdGpioController0Interrupt
++  gArmSgiTokenSpaceGuid.PcdGtCtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame0CtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame1CtlBase
+   gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv
+   gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv
+   gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlk0Base
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf
+index 23c3dac9e347..6532e72ea1b4 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf
+@@ -60,6 +60,9 @@
+   gArmSgiTokenSpaceGuid.PcdGpioController0BaseAddress
+   gArmSgiTokenSpaceGuid.PcdGpioController0Size
+   gArmSgiTokenSpaceGuid.PcdGpioController0Interrupt
++  gArmSgiTokenSpaceGuid.PcdGtCtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame0CtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame1CtlBase
+   gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv
+   gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv
+   gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlk0Base
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesEinj.inf b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesEinj.inf
+index 3ab29a9b7cc4..f3c7bb8505f0 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesEinj.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesEinj.inf
+@@ -59,6 +59,9 @@
+   gArmSgiTokenSpaceGuid.PcdGpioController0BaseAddress
+   gArmSgiTokenSpaceGuid.PcdGpioController0Size
+   gArmSgiTokenSpaceGuid.PcdGpioController0Interrupt
++  gArmSgiTokenSpaceGuid.PcdGtCtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame0CtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame1CtlBase
+   gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv
+   gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv
+   gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlk0Base
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesRas.inf b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesRas.inf
+index f36576d97d75..55a41e344e10 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesRas.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesRas.inf
+@@ -63,6 +63,9 @@
+   gArmSgiTokenSpaceGuid.PcdGpioController0BaseAddress
+   gArmSgiTokenSpaceGuid.PcdGpioController0Size
+   gArmSgiTokenSpaceGuid.PcdGpioController0Interrupt
++  gArmSgiTokenSpaceGuid.PcdGtCtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame0CtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame1CtlBase
+   gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv
+   gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv
+   gArmSgiTokenSpaceGuid.PcdIoVirtBlkCountPerChip
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg2AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg2AcpiTables.inf
+index c77c6d12b7f6..03b53b4072b6 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg2AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg2AcpiTables.inf
+@@ -55,6 +55,9 @@
+   gArmSgiTokenSpaceGuid.PcdChipCount
+   gArmSgiTokenSpaceGuid.PcdDramBlock2Base
+   gArmSgiTokenSpaceGuid.PcdDramBlock2Size
++  gArmSgiTokenSpaceGuid.PcdGtCtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame0CtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame1CtlBase
+   gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv
+   gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv
+   gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlk0Base
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg3AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg3AcpiTables.inf
+index c3ad61939bd8..0662f44e0f02 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg3AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg3AcpiTables.inf
+@@ -56,6 +56,9 @@
+   gArmSgiTokenSpaceGuid.PcdGpioController0BaseAddress
+   gArmSgiTokenSpaceGuid.PcdGpioController0Size
+   gArmSgiTokenSpaceGuid.PcdGpioController0Interrupt
++  gArmSgiTokenSpaceGuid.PcdGtCtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame0CtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame1CtlBase
+   gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv
+   gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv
+   gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlk0Base
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdV1AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdV1AcpiTables.inf
+index b49de539e0f1..0599be8603d1 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdV1AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdV1AcpiTables.inf
+@@ -57,6 +57,9 @@
+   gArmSgiTokenSpaceGuid.PcdGpioController0BaseAddress
+   gArmSgiTokenSpaceGuid.PcdGpioController0Size
+   gArmSgiTokenSpaceGuid.PcdGpioController0Interrupt
++  gArmSgiTokenSpaceGuid.PcdGtCtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame0CtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame1CtlBase
+   gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv
+   gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv
+   gArmSgiTokenSpaceGuid.PcdOscLpiEnable
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdV1McAcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdV1McAcpiTables.inf
+index 3d0afe37d4a3..8a50b407d1e6 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdV1McAcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdV1McAcpiTables.inf
+@@ -66,6 +66,9 @@
+   gArmSgiTokenSpaceGuid.PcdGpioController0BaseAddress
+   gArmSgiTokenSpaceGuid.PcdGpioController0Size
+   gArmSgiTokenSpaceGuid.PcdGpioController0Interrupt
++  gArmSgiTokenSpaceGuid.PcdGtCtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame0CtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame1CtlBase
+   gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv
+   gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv
+   gArmSgiTokenSpaceGuid.PcdMaxAddressBitsPerChip
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdV3AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdV3AcpiTables.inf
+index 6775c1e91a87..7644f6bd78f0 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdV3AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdV3AcpiTables.inf
+@@ -46,6 +46,9 @@
+   gArmSgiTokenSpaceGuid.PcdGpioController0BaseAddress
+   gArmSgiTokenSpaceGuid.PcdGpioController0Size
+   gArmSgiTokenSpaceGuid.PcdGpioController0Interrupt
++  gArmSgiTokenSpaceGuid.PcdGtCtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame0CtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame1CtlBase
+   gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv
+   gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv
+   gArmSgiTokenSpaceGuid.PcdOscCppcEnable
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1AcpiTables.inf
+index 860203c60cb0..4bb0e7a260f9 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1AcpiTables.inf
+@@ -57,6 +57,9 @@
+   gArmSgiTokenSpaceGuid.PcdGpioController0BaseAddress
+   gArmSgiTokenSpaceGuid.PcdGpioController0Size
+   gArmSgiTokenSpaceGuid.PcdGpioController0Interrupt
++  gArmSgiTokenSpaceGuid.PcdGtCtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame0CtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame1CtlBase
+   gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv
+   gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv
+   gArmSgiTokenSpaceGuid.PcdMaxAddressBitsPerChip
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2AcpiTables.inf
+index 9f91537c8b57..a5a2f7cded11 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2AcpiTables.inf
+@@ -54,6 +54,9 @@
+   gArmSgiTokenSpaceGuid.PcdChipCount
+   gArmSgiTokenSpaceGuid.PcdDramBlock2Base
+   gArmSgiTokenSpaceGuid.PcdDramBlock2Size
++  gArmSgiTokenSpaceGuid.PcdGtCtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame0CtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame1CtlBase
+   gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv
+   gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv
+   gArmSgiTokenSpaceGuid.PcdMaxAddressBitsPerChip
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdV3R1AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdV3R1AcpiTables.inf
+index 08083243237c..1a6301849ab8 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdV3R1AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdV3R1AcpiTables.inf
+@@ -53,6 +53,9 @@
+   gArmSgiTokenSpaceGuid.PcdChipCount
+   gArmSgiTokenSpaceGuid.PcdDramBlock2Base
+   gArmSgiTokenSpaceGuid.PcdDramBlock2Size
++  gArmSgiTokenSpaceGuid.PcdGtCtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame0CtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame1CtlBase
+   gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv
+   gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv
+   gArmSgiTokenSpaceGuid.PcdMaxAddressBitsPerChip
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdV3R1Cfg1AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdV3R1Cfg1AcpiTables.inf
+index 25d13ee14fa5..5a8c07261155 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdV3R1Cfg1AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdV3R1Cfg1AcpiTables.inf
+@@ -53,6 +53,9 @@
+   gArmSgiTokenSpaceGuid.PcdChipCount
+   gArmSgiTokenSpaceGuid.PcdDramBlock2Base
+   gArmSgiTokenSpaceGuid.PcdDramBlock2Size
++  gArmSgiTokenSpaceGuid.PcdGtCtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame0CtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame1CtlBase
+   gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv
+   gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv
+   gArmSgiTokenSpaceGuid.PcdMaxAddressBitsPerChip
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/Sgi575AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/Sgi575AcpiTables.inf
+index 36c108c86e06..31ab6a22d580 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/Sgi575AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/Sgi575AcpiTables.inf
+@@ -57,6 +57,9 @@
+   gArmSgiTokenSpaceGuid.PcdGpioController0BaseAddress
+   gArmSgiTokenSpaceGuid.PcdGpioController0Size
+   gArmSgiTokenSpaceGuid.PcdGpioController0Interrupt
++  gArmSgiTokenSpaceGuid.PcdGtCtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame0CtlBase
++  gArmSgiTokenSpaceGuid.PcdGtFrame1CtlBase
+   gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv
+   gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv
+   gArmSgiTokenSpaceGuid.PcdOscLpiEnable
+diff --git a/Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc b/Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc
+index e5f467339a11..4f6918e2bd15 100644
+--- a/Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc
+@@ -79,3 +79,8 @@
+   gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv|108
+   gArmSgiTokenSpaceGuid.PcdWdogWS0Gsiv|110
+   gArmSgiTokenSpaceGuid.PcdWdogWS1Gsiv|111
++
++  # Generic Timer
++  gArmSgiTokenSpaceGuid.PcdGtCtlBase|0x2A810000
++  gArmSgiTokenSpaceGuid.PcdGtFrame1CtlBase|0x2A820000
++  gArmSgiTokenSpaceGuid.PcdGtFrame0CtlBase|0x2A830000
+diff --git a/Platform/ARM/SgiPkg/SgiMemoryMap4.dsc.inc b/Platform/ARM/SgiPkg/SgiMemoryMap4.dsc.inc
+index cce58ac1a70c..223fd2ab9355 100644
+--- a/Platform/ARM/SgiPkg/SgiMemoryMap4.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiMemoryMap4.dsc.inc
+@@ -80,3 +80,8 @@
+   gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv|100
+   gArmSgiTokenSpaceGuid.PcdWdogWS0Gsiv|101
+   gArmSgiTokenSpaceGuid.PcdWdogWS1Gsiv|102
++
++  # Generic Timer
++  gArmSgiTokenSpaceGuid.PcdGtCtlBase|0x1A810000
++  gArmSgiTokenSpaceGuid.PcdGtFrame1CtlBase|0x1A820000
++  gArmSgiTokenSpaceGuid.PcdGtFrame0CtlBase|0x1A830000
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.dec b/Platform/ARM/SgiPkg/SgiPlatform.dec
+index 0adeafee3886..a461e52102bf 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatform.dec
++++ b/Platform/ARM/SgiPkg/SgiPlatform.dec
+@@ -74,6 +74,9 @@
+   gArmSgiTokenSpaceGuid.PcdSysPeriphSysRegBase|0x0|UINT64|0x0000000F
+ 
+   # Counter, Timer and Watchdog
++  gArmSgiTokenSpaceGuid.PcdGtCtlBase|0|UINT32|0x000000030
++  gArmSgiTokenSpaceGuid.PcdGtFrame0CtlBase|0|UINT32|0x0000031
++  gArmSgiTokenSpaceGuid.PcdGtFrame1CtlBase|0|UINT32|0x00000032
+   gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv|0|UINT32|0x00000011
+   gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv|0|UINT32|0x00000012
+   gArmSgiTokenSpaceGuid.PcdTimerBase0Base|0|UINT32|0x00000015
+-- 
+2.39.5
+

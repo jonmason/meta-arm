@@ -1,0 +1,72 @@
+From 709567a6a28232a63f8aed0d27a3c5df34aac04a Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Thu, 28 Mar 2024 01:12:24 +0000
+Subject: [PATCH 40/78] Platform/Sgi: Enable PCIe support on RdN2
+
+Enable PCIe support by adding the PCDs required for the platform and
+enabling PCIe flag.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: I76d97b9b3659e4b6bd03c44cd5b1c3a83e1c1243
+---
+ Platform/ARM/SgiPkg/RdN2/RdN2.dsc         | 2 ++
+ Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc | 2 ++
+ Platform/ARM/SgiPkg/RdN2Cfg2/RdN2Cfg2.dsc | 2 ++
+ Platform/ARM/SgiPkg/RdN2Cfg3/RdN2Cfg3.dsc | 2 ++
+ 4 files changed, 8 insertions(+)
+
+diff --git a/Platform/ARM/SgiPkg/RdN2/RdN2.dsc b/Platform/ARM/SgiPkg/RdN2/RdN2.dsc
+index c94bbee8f321..de9a8003aa61 100644
+--- a/Platform/ARM/SgiPkg/RdN2/RdN2.dsc
++++ b/Platform/ARM/SgiPkg/RdN2/RdN2.dsc
+@@ -22,6 +22,8 @@
+   BOARD_DXE_FV_COMPONENTS        = Platform/ARM/SgiPkg/RdN2/RdN2.fdf.inc
+   BUILD_NUMBER                   = 1
+ 
++DEFINE PCIE_ENABLE             = TRUE
++
+ # include common/basic libraries from MdePkg.
+ !include MdePkg/MdeLibs.dsc.inc
+ 
+diff --git a/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc b/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc
+index bb554b51c20d..ed74a26f51f0 100644
+--- a/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc
++++ b/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc
+@@ -24,6 +24,8 @@
+   BOARD_DXE_FV_COMPONENTS        = Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.fdf.inc
+   BUILD_NUMBER                   = 1
+ 
++DEFINE PCIE_ENABLE             = TRUE
++
+ # include common/basic libraries from MdePkg.
+ !include MdePkg/MdeLibs.dsc.inc
+ 
+diff --git a/Platform/ARM/SgiPkg/RdN2Cfg2/RdN2Cfg2.dsc b/Platform/ARM/SgiPkg/RdN2Cfg2/RdN2Cfg2.dsc
+index a5c3bfbfc5ca..d279ad954b57 100644
+--- a/Platform/ARM/SgiPkg/RdN2Cfg2/RdN2Cfg2.dsc
++++ b/Platform/ARM/SgiPkg/RdN2Cfg2/RdN2Cfg2.dsc
+@@ -22,6 +22,8 @@
+   BOARD_DXE_FV_COMPONENTS        = Platform/ARM/SgiPkg/RdN2Cfg2/RdN2Cfg2.fdf.inc
+   BUILD_NUMBER                   = 1
+ 
++DEFINE PCIE_ENABLE             = TRUE
++
+ # include common/basic libraries from MdePkg.
+ !include MdePkg/MdeLibs.dsc.inc
+ 
+diff --git a/Platform/ARM/SgiPkg/RdN2Cfg3/RdN2Cfg3.dsc b/Platform/ARM/SgiPkg/RdN2Cfg3/RdN2Cfg3.dsc
+index 3f3bf7e3c958..dfa5be3e9b71 100644
+--- a/Platform/ARM/SgiPkg/RdN2Cfg3/RdN2Cfg3.dsc
++++ b/Platform/ARM/SgiPkg/RdN2Cfg3/RdN2Cfg3.dsc
+@@ -22,6 +22,8 @@
+   BOARD_DXE_FV_COMPONENTS        = Platform/ARM/SgiPkg/RdN2Cfg3/RdN2Cfg3.fdf.inc
+   BUILD_NUMBER                   = 1
+ 
++DEFINE PCIE_ENABLE             = TRUE
++
+ # include common/basic libraries from MdePkg.
+ !include MdePkg/MdeLibs.dsc.inc
+ 
+-- 
+2.39.5
+

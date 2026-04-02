@@ -1,0 +1,53 @@
+From 891bf1ec71ef5be21a92a99d770fb4854eff91cb Mon Sep 17 00:00:00 2001
+From: Achin Gupta <achin.gupta@arm.com>
+Date: Tue, 2 Nov 2021 10:23:03 +0000
+Subject: [PATCH 18/43] StandaloneMmPkg: define new data structure to stage
+ FF-A boot information
+
+With FF-A v1.1, the SPMC sends a reduced amount of boot information as compared
+to the original SPM implementation. For example, the stack layout, MP
+information etc. This information could be accommodated in the old data
+structure but this is too complicated. This patch defines a new structure to
+clearly separate FF-A v1.1 and other functionality.
+
+Signed-off-by: Achin Gupta <achin.gupta@arm.com>
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: If0fae97197703147402299dd50e681ac4699fc25
+---
+ .../Library/Arm/StandaloneMmCoreEntryPoint.h  | 20 +++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/StandaloneMmPkg/Include/Library/Arm/StandaloneMmCoreEntryPoint.h b/StandaloneMmPkg/Include/Library/Arm/StandaloneMmCoreEntryPoint.h
+index dbb81610ff8e..39ec81abf97c 100644
+--- a/StandaloneMmPkg/Include/Library/Arm/StandaloneMmCoreEntryPoint.h
++++ b/StandaloneMmPkg/Include/Library/Arm/StandaloneMmCoreEntryPoint.h
+@@ -48,6 +48,26 @@ typedef struct {
+   EFI_SECURE_PARTITION_CPU_INFO    *CpuInfo;
+ } EFI_SECURE_PARTITION_BOOT_INFO;
+ 
++/**
++  This structure is used to stage boot information required to initialize the
++  standalone MM environment when FF-A is used as the interface between this
++  secure partition and the SPMC. This structure supersedes
++  EFI_SECURE_PARTITION_BOOT_INFO and reduces the amount of information that must
++  be passed by the SPMC for SP initialization.
++**/
++typedef struct {
++  UINT64                        SpMemBase;
++  UINT64                        SpMemSize;
++  UINT64                        SpNsCommBufBase;
++  UINT64                        SpNsCommBufSize;
++  UINT64                        SpSharedBufBase;
++  UINT64                        SpSharedBufSize;
++  UINT64                        SpHeapBase;
++  UINT64                        SpHeapSize;
++  /* UP migrate-able FF-A SP requires awareness of only 1 cpu */
++  EFI_SECURE_PARTITION_CPU_INFO CpuInfo[1];
++} EFI_STMM_BOOT_INFO;
++
+ typedef RETURN_STATUS (*REGION_PERMISSION_UPDATE_FUNC) (
+   IN  EFI_PHYSICAL_ADDRESS  BaseAddress,
+   IN  UINT64                Length
+-- 
+2.39.5
+

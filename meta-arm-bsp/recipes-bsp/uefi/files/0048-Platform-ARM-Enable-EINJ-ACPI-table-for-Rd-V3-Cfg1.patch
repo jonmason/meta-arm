@@ -1,0 +1,200 @@
+From 35385d02f2401af458890bbb158b8fd76d1a441d Mon Sep 17 00:00:00 2001
+From: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Date: Thu, 11 Jan 2024 23:43:52 +0530
+Subject: [PATCH 48/78] Platform/ARM: Enable EINJ ACPI table for Rd-V3-Cfg1
+
+Kernel Einj framework parses EINJ ACPI table to fetch details about the
+error injection features supported by the platform. This patch adds EINJ
+ACPI table, capturing platform's error injection capabilities.
+
+Signed-off-by: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Signed-off-by: Glen Yeldho <glen.yeldho@arm.com>
+Change-Id: I4cd2eb873203476f5a7c4ea50653c93e50be559b
+---
+ .../ARM/SgiPkg/AcpiTables/RdV3Cfg1/Einj.aslc  | 154 ++++++++++++++++++
+ .../SgiPkg/AcpiTables/RdV3Cfg1AcpiTables.inf  |   4 +
+ 2 files changed, 158 insertions(+)
+ create mode 100644 Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1/Einj.aslc
+
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1/Einj.aslc b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1/Einj.aslc
+new file mode 100644
+index 000000000000..e300ff10fb9e
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1/Einj.aslc
+@@ -0,0 +1,154 @@
++/** @file
++*  Copyright (c) 2022, ARM Ltd. All rights reserved.
++*
++*  SPDX-License-Identifier: BSD-2-Clause-Patent
++*
++**/
++
++#include "SgiAcpiHeader.h"
++
++#define EINJ_INJECTION_ENTRY_COUNT 0x6
++#define PLATFORM_ERROR_TYPE_SUPPORTED ((1 << 31) | \
++                                       EFI_ACPI_6_4_EINJ_ERROR_PROCESSOR_CORRECTABLE |            \
++                                       EFI_ACPI_6_4_EINJ_ERROR_PROCESSOR_UNCORRECTABLE_NONFATAL | \
++                                       EFI_ACPI_6_4_EINJ_ERROR_PROCESSOR_UNCORRECTABLE_FATAL)
++
++#pragma pack (1)
++
++typedef struct {
++  EFI_ACPI_6_4_ERROR_INJECTION_TABLE_HEADER     Header;
++  EFI_ACPI_6_4_EINJ_INJECTION_INSTRUCTION_ENTRY Entry[EINJ_INJECTION_ENTRY_COUNT];
++} EFI_ACPI_6_4_ERROR_INJECTION_TABLE;
++
++#pragma pack()
++
++STATIC EFI_ACPI_6_4_ERROR_INJECTION_TABLE Einj = {
++  {
++    ARM_ACPI_HEADER   // EFI_ACPI_DESCRIPTION_HEADER
++    (
++      EFI_ACPI_6_4_ERROR_INJECTION_TABLE_SIGNATURE,
++      EFI_ACPI_6_4_ERROR_INJECTION_TABLE,
++      EFI_ACPI_6_4_ERROR_INJECTION_TABLE_REVISION
++    ),
++    sizeof (EFI_ACPI_6_4_ERROR_INJECTION_TABLE_HEADER),   // InjectionHeaderSize
++    0x0,   // InjectionFlags
++    // Reserved
++    {
++      0x0,
++      0x0,
++      0x0
++    },
++    EINJ_INJECTION_ENTRY_COUNT   // InjectionEntryCount
++  },
++  // Injection Instruction Enteries
++  {
++    // Get Error Type Instruction Entry
++    {
++      EFI_ACPI_6_0_EINJ_GET_ERROR_TYPE,
++      EFI_ACPI_6_0_EINJ_WRITE_REGISTER_VALUE,
++      0,   // Flag
++      0,   // Reserved
++      // Register region (GAR)
++      {
++        EFI_ACPI_6_4_SYSTEM_MEMORY,
++        32,
++        0,
++        EFI_ACPI_6_4_DWORD,
++        0xFB1DF000
++      },   // Register region (GAR)
++      PLATFORM_ERROR_TYPE_SUPPORTED,   // Supported Error Types by platform (Processor, Vendor)
++      0xffffffffffffffff    // Register region Mask
++    },
++    // Execute Operation Instruction Entry
++    {
++      EFI_ACPI_6_4_EINJ_EXECUTE_OPERATION,
++      EFI_ACPI_6_0_EINJ_WRITE_REGISTER_VALUE,
++      0,   // Flag
++      0,   // Reserved
++      // Register region (GAR)
++      {
++        EFI_ACPI_6_4_SYSTEM_MEMORY,
++        64,
++        0,
++        EFI_ACPI_6_4_QWORD,
++        0xFB1DF000
++      },
++      0x0000000000000000,   // Value
++      0xffffffffffffffff    // Register region Mask
++    },
++    // Set Error Type With Address
++    {
++      EFI_ACPI_6_4_EINJ_SET_ERROR_TYPE_WITH_ADDRESS,
++      EFI_ACPI_6_0_EINJ_WRITE_REGISTER,
++      0,  // Flag
++      0,  // Reserved
++      // Register region (GAR)
++      {
++        EFI_ACPI_6_4_SYSTEM_MEMORY,
++        64,
++        0,
++        EFI_ACPI_6_4_QWORD,
++        0xFB1E1000
++      },
++      0x0000000000000000,   // Value
++      0xffffffffffffffff    // Register region Mask
++    },
++    // Check Busy Status
++    {
++      EFI_ACPI_6_4_EINJ_CHECK_BUSY_STATUS,
++      EFI_ACPI_6_4_EINJ_READ_REGISTER,
++      0,   // Flag
++      0,   // Reserved
++      // Register region (GAR)
++      {
++        EFI_ACPI_6_4_SYSTEM_MEMORY,
++        64,
++        0,
++        EFI_ACPI_6_4_QWORD,
++        0xFB1DF250
++      },
++      0x0000000000000000,   // Value
++      0xffffffffffffffff    // Register region Mask
++    },
++    // Get Status of Current Operation
++    {
++      EFI_ACPI_6_4_EINJ_GET_COMMAND_STATUS,
++      EFI_ACPI_6_4_EINJ_READ_REGISTER,
++      0,   // Flag
++      0,   // Reserved
++      // Register region (GAR)
++      {
++        EFI_ACPI_6_4_SYSTEM_MEMORY,
++        64,
++        0,
++        EFI_ACPI_6_4_QWORD,
++        0xFB1DF400
++      },
++      0x0000000000000000,   // Value
++      0xffffffffffffffff    // Register region Mask
++    },
++    // Get Trigger Action Table
++    {
++      EFI_ACPI_6_4_EINJ_GET_TRIGGER_ERROR_ACTION_TABLE,
++      EFI_ACPI_6_4_EINJ_WRITE_REGISTER_VALUE,
++      0,   // Flag
++      0,   // Reserved
++      // Register region (GAR)
++      {
++        EFI_ACPI_6_4_SYSTEM_MEMORY,
++        64,
++        0,
++        EFI_ACPI_6_4_QWORD,
++        0xFB1DF200
++      },
++      FixedPcdGet64 (PcdEinjTriggerActionBase),   // Value
++      0xffffffffffffffff    // Register region Mask
++    },
++  }
++};
++
++/*
++ * Reference the table being generated to prevent the optimizer from removing
++ * the data structure from the executable
++ */
++VOID* CONST ReferenceAcpiTable = &Einj;
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1AcpiTables.inf
+index d988b517e16a..3e8be617266f 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1AcpiTables.inf
+@@ -19,6 +19,7 @@
+   Fadt.aslc
+   Gtdt.aslc
+   RdV3Cfg1/Dsdt.asl
++  RdV3Cfg1/Einj.aslc
+   RdV3Cfg1/Madt.aslc
+   RdV3Cfg1/Pptt.aslc
+   Spcr.aslc
+@@ -74,3 +75,6 @@
+ 
+   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase
+   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
++
++  gArmSgiTokenSpaceGuid.PcdEinjTriggerActionBase
++
+-- 
+2.39.5
+

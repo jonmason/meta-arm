@@ -1,0 +1,72 @@
+From 1f0f691a3c7e66be423ea14672624f8f63c644b1 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Fri, 27 Sep 2024 18:02:45 +0530
+Subject: [PATCH 40/43] MdePkg: Add AEST table specific definitions
+
+Update the AEST table specific structures and defines based on
+latest spec.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+---
+ .../IndustryStandard/ArmErrorSourceTable.h    | 26 ++++++++++++++-----
+ 1 file changed, 20 insertions(+), 6 deletions(-)
+
+diff --git a/MdePkg/Include/IndustryStandard/ArmErrorSourceTable.h b/MdePkg/Include/IndustryStandard/ArmErrorSourceTable.h
+index 18c41d308621..f8da680a2775 100644
+--- a/MdePkg/Include/IndustryStandard/ArmErrorSourceTable.h
++++ b/MdePkg/Include/IndustryStandard/ArmErrorSourceTable.h
+@@ -92,6 +92,7 @@ typedef struct {
+   /// Interface type:
+   ///   0x0 - System register (SR)
+   ///   0x1 - Memory mapped (MMIO)
++  ///   0x2 - Single Record Memory mapped
+   UINT8     Type;
+ 
+   /// Reserved - Must be zero.
+@@ -122,16 +123,29 @@ typedef struct {
+   /// A bitmap indicating the addressing mode used by each error
+   /// record within this node to populate the ERR<n>_ADDR register.
+   UINT64    AddressingMode;
++
++  /// ACPI _UID field of Arm Error Node Device.
++  UINT32    AcpiArmErrorNodeDevice;
++
++  /// Indicates Processor or Group of processors error node is associated with.
++  UINT32    ProcessorAffinity;
++
++  /// Base address of group level registers set for this error group.
++  UINT64    ErrorGroupRegisterSetBaseAddress;
+ } EFI_ACPI_AEST_INTERFACE_STRUCT;
+ 
+ // AEST Interface node type definitions.
+-#define EFI_ACPI_AEST_INTERFACE_TYPE_SR    0x0
+-#define EFI_ACPI_AEST_INTERFACE_TYPE_MMIO  0x1
++#define EFI_ACPI_AEST_INTERFACE_TYPE_SR         0x0
++#define EFI_ACPI_AEST_INTERFACE_TYPE_MMIO       0x1
++#define EFI_ACPI_AEST_INTERFACE_TYPE_SINGLE_REC 0x2
+ 
+ // AEST node interface flag definitions.
+-#define EFI_ACPI_AEST_INTERFACE_FLAG_PRIVATE      0
+-#define EFI_ACPI_AEST_INTERFACE_FLAG_SHARED       BIT0
+-#define EFI_ACPI_AEST_INTERFACE_FLAG_CLEAR_MISCX  BIT1
++#define EFI_ACPI_AEST_INTERFACE_FLAG_PRIVATE             0
++#define EFI_ACPI_AEST_INTERFACE_FLAG_SHARED              BIT0
++#define EFI_ACPI_AEST_INTERFACE_FLAG_CLEAR_MISCX         BIT1
++#define EFI_ACPI_AEST_INTERFACE_FLAG_ACPI_DEVICE_VALID   BIT2
++#define EFI_ACPI_AEST_INTERFACE_FLAG_AFFINITY_TYPE       BIT3
++#define EFI_ACPI_AEST_INTERFACE_TYPE_GROUP_ADDRESS_VALID BIT4
+ 
+ ///
+ /// AEST Node Interrupt structure.
+@@ -309,7 +323,7 @@ typedef struct {
+   EFI_ACPI_AEST_NODE_STRUCT    NodeHeader;
+ 
+   /// ACPI HID of the component.
+-  UINT32                       HardwareId;
++  UINT64                       HardwareId;
+ 
+   /// The ACPI Unique identifier of the component.
+   UINT32                       UniqueId;
+-- 
+2.39.5
+

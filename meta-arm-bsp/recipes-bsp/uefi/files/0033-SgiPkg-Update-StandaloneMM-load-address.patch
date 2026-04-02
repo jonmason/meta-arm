@@ -1,0 +1,69 @@
+From bdd251e8c650a6b7a9109cbb72d122d1db3eed83 Mon Sep 17 00:00:00 2001
+From: Rohit Mathew <Rohit.Mathew@arm.com>
+Date: Mon, 8 Jan 2024 14:10:23 +0000
+Subject: [PATCH 33/78] SgiPkg: Update StandaloneMM load address.
+
+Move the carveout to a new address.
+
+Signed-off-by: Rohit Mathew <Rohit.Mathew@arm.com>
+Change-Id: I6174909a1c827261873b37fcd4a50c300edd47f6
+---
+ Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf | 2 +-
+ Platform/ARM/SgiPkg/SgiMemoryMap.dsc.inc     | 2 +-
+ Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc    | 2 +-
+ Platform/ARM/SgiPkg/SgiPlatform.dsc.inc      | 2 +-
+ 4 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf b/Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf
+index ab0209cc5e5a..e85c3b68a447 100644
+--- a/Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf
++++ b/Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf
+@@ -20,7 +20,7 @@
+ 
+ [FD.BL32_AP_MM]
+ !if $(EDK2_SPMC_AT_EL2) == TRUE
+-BaseAddress   = 0xf9302000|gArmTokenSpaceGuid.PcdFdBaseAddress  # UEFI in DRAM + 128MB.
++BaseAddress   = 0xf4302000|gArmTokenSpaceGuid.PcdFdBaseAddress  # UEFI in DRAM + 128MB.
+ !else
+ BaseAddress   = 0xff200000|gArmTokenSpaceGuid.PcdFdBaseAddress  # UEFI in DRAM + 128MB.
+ !endif
+diff --git a/Platform/ARM/SgiPkg/SgiMemoryMap.dsc.inc b/Platform/ARM/SgiPkg/SgiMemoryMap.dsc.inc
+index 48a5ae8a7ce2..5cac869abd2b 100644
+--- a/Platform/ARM/SgiPkg/SgiMemoryMap.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiMemoryMap.dsc.inc
+@@ -75,5 +75,5 @@
+   # System Memory (1GB - 16MB of Trusted DRAM at the top of the
+   # 32bit address space)
+   gArmTokenSpaceGuid.PcdSystemMemoryBase|0x80000000
+-  gArmTokenSpaceGuid.PcdSystemMemorySize|0x7F000000
++  gArmTokenSpaceGuid.PcdSystemMemorySize|0x73000000
+ 
+diff --git a/Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc b/Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc
+index f8ef9c56d2b7..301a159b6384 100644
+--- a/Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc
+@@ -50,7 +50,7 @@
+ 
+   # System Memory (2GB - 128MB of Trusted DRAM at the top of the 32bit address space)
+   gArmTokenSpaceGuid.PcdSystemMemoryBase|0x80000000
+-  gArmTokenSpaceGuid.PcdSystemMemorySize|0x78000000
++  gArmTokenSpaceGuid.PcdSystemMemorySize|0x73000000
+ 
+   # SMMU
+   gArmSgiTokenSpaceGuid.PcdSmmuBase|0x280000000
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc b/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+index 6242d126c783..c01e0b02be3a 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+@@ -232,7 +232,7 @@
+   #
+   ## MM Communicate
+ !if $(EDK2_SPMC_AT_EL2) == TRUE
+-  gArmTokenSpaceGuid.PcdMmBufferBase|0xF8200000
++  gArmTokenSpaceGuid.PcdMmBufferBase|0xF3200000
+ !else
+   gArmTokenSpaceGuid.PcdMmBufferBase|0xFF600000
+ !endif
+-- 
+2.39.5
+

@@ -1,0 +1,45 @@
+From abbe386960ec8bd0bdd6140da1c184efe83d9473 Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Tue, 29 Mar 2022 15:56:57 +0100
+Subject: [PATCH 33/43] StandaloneMmPkg: Add support to handle FFA interrupt
+ message
+
+return code ARM_SVC_ID_FFA_MSG_WAIT_AARCH32 to mark the completion of
+the interrupt handling.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+---
+ .../Arm/StandaloneMmCoreEntryPoint.c                   | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
+index a8811950168f..6e45cc2befb2 100644
+--- a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
++++ b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
+@@ -222,7 +222,8 @@ DelegatedEventLoop (
+     // between synchronous and asynchronous events.
+     //
+     if ((ARM_SMC_ID_MM_COMMUNICATE != (UINT32)EventCompleteSvcArgs->Arg0) &&
+-        (ARM_SVC_ID_FFA_MSG_SEND_DIRECT_REQ != (UINT32)EventCompleteSvcArgs->Arg0))
++        (ARM_SVC_ID_FFA_MSG_SEND_DIRECT_REQ != (UINT32)EventCompleteSvcArgs->Arg0) &&
++        (ARM_SVC_ID_FFA_INTERRUPT_AARCH32 != (UINT32)EventCompleteSvcArgs->Arg0))
+     {
+       DEBUG ((DEBUG_ERROR, "UnRecognized Event - 0x%x\n", (UINT32)EventCompleteSvcArgs->Arg0));
+       Status = EFI_INVALID_PARAMETER;
+@@ -284,7 +285,12 @@ DelegatedEventLoop (
+     }
+ 
+     if (FfaEnabled) {
+-      EventCompleteSvcArgs->Arg0 = ARM_SVC_ID_FFA_MSG_SEND_DIRECT_RESP;
++      if (ARM_SVC_ID_FFA_INTERRUPT_AARCH32 == EventCompleteSvcArgs->Arg0) {
++        // FFA v1.1 section 8.3 Secure interrupt completion mechanisms
++        EventCompleteSvcArgs->Arg0 = ARM_SVC_ID_FFA_MSG_WAIT_AARCH32;
++      } else {
++        EventCompleteSvcArgs->Arg0 = ARM_SVC_ID_FFA_MSG_SEND_DIRECT_RESP;
++      }
+       EventCompleteSvcArgs->Arg1 = ReceiverPartId << 16 | SenderPartId;
+       EventCompleteSvcArgs->Arg2 = 0;
+       EventCompleteSvcArgs->Arg3 = ARM_SVC_ID_SP_EVENT_COMPLETE;
+-- 
+2.39.5
+

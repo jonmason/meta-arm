@@ -1,0 +1,72 @@
+From 1e2a5527717549b40751421d607a9c4438e40a23 Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Thu, 28 Mar 2024 01:12:24 +0000
+Subject: [PATCH 72/78] Platform/Sgi: Enable PCIe support on RdN2
+
+Enable PCIe support by adding the PCDs required for the platform and
+enabling PCIe flag.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: I76d97b9b3659e4b6bd03c44cd5b1c3a83e1c1243
+---
+ Platform/ARM/SgiPkg/RdN2/RdN2.dsc         | 2 ++
+ Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc | 2 ++
+ Platform/ARM/SgiPkg/RdN2Cfg2/RdN2Cfg2.dsc | 2 ++
+ Platform/ARM/SgiPkg/RdN2Cfg3/RdN2Cfg3.dsc | 2 ++
+ 4 files changed, 8 insertions(+)
+
+diff --git a/Platform/ARM/SgiPkg/RdN2/RdN2.dsc b/Platform/ARM/SgiPkg/RdN2/RdN2.dsc
+index de9a8003aa61..dfa648d950c9 100644
+--- a/Platform/ARM/SgiPkg/RdN2/RdN2.dsc
++++ b/Platform/ARM/SgiPkg/RdN2/RdN2.dsc
+@@ -31,6 +31,8 @@ DEFINE PCIE_ENABLE             = TRUE
+ !include Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+ !include Platform/ARM/SgiPkg/SgiMemoryMap2.dsc.inc
+ 
++DEFINE PCIE_ENABLE             = TRUE
++
+ ################################################################################
+ #
+ # Pcd Section - list of all EDK II PCD Entries defined by this Platform
+diff --git a/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc b/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc
+index d15fc1be4012..2c5b7e20a649 100644
+--- a/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc
++++ b/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc
+@@ -36,6 +36,8 @@ DEFINE PCIE_ENABLE             = TRUE
+ # include common/basic libraries from MdePkg.
+ !include DynamicTablesPkg/DynamicTables.dsc.inc
+ 
++DEFINE PCIE_ENABLE             = TRUE
++
+ ################################################################################
+ #
+ # Pcd Section - list of all EDK II PCD Entries defined by this Platform
+diff --git a/Platform/ARM/SgiPkg/RdN2Cfg2/RdN2Cfg2.dsc b/Platform/ARM/SgiPkg/RdN2Cfg2/RdN2Cfg2.dsc
+index d279ad954b57..43546400fef8 100644
+--- a/Platform/ARM/SgiPkg/RdN2Cfg2/RdN2Cfg2.dsc
++++ b/Platform/ARM/SgiPkg/RdN2Cfg2/RdN2Cfg2.dsc
+@@ -31,6 +31,8 @@ DEFINE PCIE_ENABLE             = TRUE
+ !include Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+ !include Platform/ARM/SgiPkg/SgiMemoryMap2.dsc.inc
+ 
++DEFINE PCIE_ENABLE             = TRUE
++
+ ################################################################################
+ #
+ # Pcd Section - list of all EDK II PCD Entries defined by this Platform
+diff --git a/Platform/ARM/SgiPkg/RdN2Cfg3/RdN2Cfg3.dsc b/Platform/ARM/SgiPkg/RdN2Cfg3/RdN2Cfg3.dsc
+index dfa5be3e9b71..16b232548e2f 100644
+--- a/Platform/ARM/SgiPkg/RdN2Cfg3/RdN2Cfg3.dsc
++++ b/Platform/ARM/SgiPkg/RdN2Cfg3/RdN2Cfg3.dsc
+@@ -31,6 +31,8 @@ DEFINE PCIE_ENABLE             = TRUE
+ !include Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+ !include Platform/ARM/SgiPkg/SgiMemoryMap2.dsc.inc
+ 
++DEFINE PCIE_ENABLE             = TRUE
++
+ ################################################################################
+ #
+ # Pcd Section - list of all EDK II PCD Entries defined by this Platform
+-- 
+2.39.5
+

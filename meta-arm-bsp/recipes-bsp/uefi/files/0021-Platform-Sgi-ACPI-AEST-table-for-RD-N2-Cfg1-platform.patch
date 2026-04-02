@@ -1,0 +1,249 @@
+From a18a5d71cacf4e2d2dc772929b36c45d9bf15c03 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Tue, 4 Jan 2022 13:29:07 +0530
+Subject: [PATCH 21/78] Platform/Sgi: ACPI AEST table for RD-N2-Cfg1 platform
+
+AEST ACPI table describes the hardware error nodes supported by the
+platform. The table also describes the interfaces and interrupts used by
+each error node. This information helps OSPM to initialize itself and
+perform kernel first error handling.
+
+New INF file is introduced to support both kernel and firmware first
+error handling by the platform. Both features are mutually exclusive and
+firmware first support is enabled by default. User can enable kernel
+first support selecting the new INF file form build system.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I1b58cafa812c593c3cc8c640535fb1b4ea9695f9
+---
+ .../ARM/SgiPkg/AcpiTables/RdN2Cfg1/Aest.aslc  | 113 ++++++++++++++++++
+ .../AcpiTables/RdN2Cfg1AcpiTablesRas.inf      |  97 +++++++++++++++
+ 2 files changed, 210 insertions(+)
+ create mode 100644 Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Aest.aslc
+ create mode 100644 Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesRas.inf
+
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Aest.aslc b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Aest.aslc
+new file mode 100644
+index 000000000000..4e3f3b2d3f54
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Aest.aslc
+@@ -0,0 +1,113 @@
++/** @file
++*  Arm Error Source Table (AEST) for RD-N2-Cfg1 platform
++*
++*  This file describes the hardware error nodes, interface for each node that
++*  carries error information and supported interrupts by the node.
++*
++*  Copyright (c) 2021 - 2022, ARM Ltd. All rights reserved.
++*
++*  SPDX-License-Identifier: BSD-2-Clause-Patent
++*
++*  @par Specification Reference:
++*    - ACPI for the Armv8 RAS Extensions, Version 1.1, Chpater 2, The Arm Error
++*      Source Table.
++**/
++
++#include <IndustryStandard/ArmErrorSourceTable.h>
++#include "SgiAcpiHeader.h"
++
++#define MAX_INTERRUPT_TYPE 2
++#define MAX_NODES          1
++
++#pragma pack (1)
++
++typedef union {
++  EFI_ACPI_AEST_PROCESSOR_STRUCT         Proc;
++  EFI_ACPI_AEST_MEMORY_CONTROLLER_STRUCT Mem;
++  EFI_ACPI_AEST_SMMU_STRUCT              Smmu;
++  EFI_ACPI_AEST_VENDOR_DEFINED_STRUCT    Vendor;
++  EFI_ACPI_AEST_GIC_STRUCT               Gic;
++} EFI_ACPI_AEST_NODE_RESOURCE;
++
++typedef struct {
++  EFI_ACPI_AEST_NODE_RESOURCE     NodeResource;
++  EFI_ACPI_AEST_INTERFACE_STRUCT  NodeInterface;
++  EFI_ACPI_AEST_INTERRUPT_STRUCT  NodeInterrupt[MAX_INTERRUPT_TYPE];
++} EFI_ACPI_AEST_NODE_DATA;
++
++typedef struct {
++  EFI_ACPI_ARM_ERROR_SOURCE_TABLE Header;
++  EFI_ACPI_AEST_NODE_DATA     Node[MAX_NODES];
++} EFI_ACPI_ARM_ERROR_SOURCE_TABLE_DATA;
++
++STATIC EFI_ACPI_ARM_ERROR_SOURCE_TABLE_DATA Aest = {
++  {
++    ARM_ACPI_HEADER (
++      EFI_ACPI_6_3_ARM_ERROR_SOURCE_TABLE_SIGNATURE,
++      EFI_ACPI_ARM_ERROR_SOURCE_TABLE_DATA,
++      EFI_ACPI_ARM_ERROR_SOURCE_TABLE_REVISION
++    ),
++  },
++  {
++    {
++      {
++        {
++          {
++            EFI_ACPI_AEST_NODE_TYPE_PROCESSOR,         /* Type */
++            sizeof (EFI_ACPI_AEST_NODE_DATA),          /* Length */
++            0,                                         /* Reserved */
++            sizeof (EFI_ACPI_AEST_NODE_STRUCT),        /* Offset to Node data */
++            sizeof (EFI_ACPI_AEST_NODE_RESOURCE),      /* Offset to Node Interface */
++            (sizeof (EFI_ACPI_AEST_NODE_RESOURCE) +    /* Offset to Node Interrupt */
++             sizeof (EFI_ACPI_AEST_INTERFACE_STRUCT)),
++            1,                                         /* Interrupt array size */
++            0,                                         /* Timestamp */
++            0,                                         /* Reserved1 */
++            0,                                         /* Injection countdown rate */
++          },
++          // Processor Node Structure
++          0,                                             /* Processor ID */
++          EFI_ACPI_AEST_PROCESSOR_RESOURCE_TYPE_CACHE,   /* Resource Type */
++          0,                                             /* Reserved */
++          0,                                             /* Flags */
++          0,                                             /* Revision */
++          0,
++          {
++            // Cache Resource sub-structures
++            {
++              0,                                         /* Cache ID */
++              0,                                         /* Reserved */
++            },
++          },
++        },
++      },
++      {
++        EFI_ACPI_AEST_INTERFACE_TYPE_SR,         /* Interface type */
++        {0, 0, 0},                               /* Reserved */
++        0,                                       /* Flags */
++        0,                                       /* Base Address */
++        1,                                       /* Record Index */
++        1,                                       /* Num Error records */
++        BIT1,                                       /* Record implemented */
++        0,                                       /* Group status reporting */
++        0,                                       /* Addressing mode */
++      },
++      {
++        {
++          EFI_ACPI_AEST_INTERRUPT_TYPE_FAULT_HANDLING,     /* Interrupt type */
++          {0, 0},                                          /* Reserved */
++          EFI_ACPI_AEST_INTERRUPT_FLAG_TRIGGER_TYPE_LEVEL, /* Flags */
++          17,                                              /* GSIV */
++          0,                                               /* ID */
++          {0, 0, 0},                                       /* Reserved */
++        },
++      },
++    },
++  },
++};
++
++/*
++ * Reference the table being generated to prevent the optimizer from removing
++ * the data structure from the executable
++ */
++VOID* CONST ReferenceAcpiTable = &Aest;
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesRas.inf b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesRas.inf
+new file mode 100644
+index 000000000000..aa20a1ffb540
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesRas.inf
+@@ -0,0 +1,97 @@
++## @file
++#  ACPI table data and ASL sources required to boot the platform.
++#
++#  INF file to be used to enable Kernel first error handling on the platform.
++#  Default choice by the platform is firware first. Use of this INF shall be
++#  enabled from the build system.
++#
++#  Copyright (c) 2022, Arm Ltd. All rights reserved.
++#
++#  SPDX-License-Identifier: BSD-2-Clause-Patent
++#
++##
++
++[Defines]
++  INF_VERSION                    = 0x0001001A
++  BASE_NAME                      = RdN2Cfg1AcpiTablesRas
++  FILE_GUID                      = c712719a-0aaf-438c-9cdd-35ab4d60207d  # gArmSgiAcpiTablesGuid
++  MODULE_TYPE                    = USER_DEFINED
++  VERSION_STRING                 = 1.0
++
++[Sources]
++  Dbg2.aslc
++  Fadt.aslc
++  Gtdt.aslc
++  RdN2Cfg1/Aest.aslc
++  RdN2Cfg1/Dsdt.asl
++  RdN2Cfg1/Einj.aslc
++  RdN2Cfg1/Madt.aslc
++  RdN2Cfg1/Mcfg.aslc
++  RdN2Cfg1/Mpam.aslc
++  RdN2Cfg1/Pptt.aslc
++  Spcr.aslc
++  SsdtEvents.asl
++  SsdtIoVirtSocExp0.asl
++  SsdtRos.asl
++  SsdtRosVirtioP9.asl
++
++[Packages]
++  ArmPkg/ArmPkg.dec
++  ArmPlatformPkg/ArmPlatformPkg.dec
++  EmbeddedPkg/EmbeddedPkg.dec
++  MdeModulePkg/MdeModulePkg.dec
++  MdePkg/MdePkg.dec
++  Platform/ARM/SgiPkg/SgiPlatform.dec
++
++[FixedPcd]
++  gArmPlatformTokenSpaceGuid.PcdSerialDbgInterrupt
++  gArmPlatformTokenSpaceGuid.PcdSerialDbgRegisterBase
++  gArmPlatformTokenSpaceGuid.PcdCoreCount
++  gArmPlatformTokenSpaceGuid.PcdClusterCount
++  gArmPlatformTokenSpaceGuid.PL011UartInterrupt
++
++  gArmTokenSpaceGuid.PcdArmArchTimerSecIntrNum
++  gArmTokenSpaceGuid.PcdArmArchTimerIntrNum
++  gArmTokenSpaceGuid.PcdArmArchTimerHypIntrNum
++  gArmTokenSpaceGuid.PcdArmArchTimerVirtIntrNum
++  gArmTokenSpaceGuid.PcdGicDistributorBase
++  gArmTokenSpaceGuid.PcdGicRedistributorsBase
++  gArmTokenSpaceGuid.PcdGenericWatchdogControlBase
++  gArmTokenSpaceGuid.PcdGenericWatchdogRefreshBase
++  gArmTokenSpaceGuid.PcdPciBusMin
++  gArmTokenSpaceGuid.PcdPciBusMax
++
++  gArmSgiTokenSpaceGuid.PcdChipCount
++  gArmSgiTokenSpaceGuid.PcdGpioController0BaseAddress
++  gArmSgiTokenSpaceGuid.PcdGpioController0Size
++  gArmSgiTokenSpaceGuid.PcdGpioController0Interrupt
++  gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv
++  gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv
++  gArmSgiTokenSpaceGuid.PcdIoVirtBlkCountPerChip
++  gArmSgiTokenSpaceGuid.PcdIoVirtBlkPortDevIdOffset
++  gArmSgiTokenSpaceGuid.PcdIoVirtBlkPortPciex40DevIdBase
++  gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlkDmaNumCh
++  gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlkUartEnable
++  gArmSgiTokenSpaceGuid.PcdMaxAddressBitsPerChip
++  gArmSgiTokenSpaceGuid.PcdOscLpiEnable
++  gArmSgiTokenSpaceGuid.PcdOscCppcEnable
++  gArmSgiTokenSpaceGuid.PcdSmmuBase
++  gArmSgiTokenSpaceGuid.PcdSp804DualTimerBaseAddress
++  gArmSgiTokenSpaceGuid.PcdSp804DualTimerSize
++  gArmSgiTokenSpaceGuid.PcdSp804DualTimerInterrupt
++  gArmSgiTokenSpaceGuid.PcdVirtioBlkBaseAddress
++  gArmSgiTokenSpaceGuid.PcdVirtioBlkSize
++  gArmSgiTokenSpaceGuid.PcdVirtioBlkInterrupt
++  gArmSgiTokenSpaceGuid.PcdVirtioNetBaseAddress
++  gArmSgiTokenSpaceGuid.PcdVirtioNetSize
++  gArmSgiTokenSpaceGuid.PcdVirtioNetInterrupt
++  gArmSgiTokenSpaceGuid.PcdVirtioP9BaseAddress
++  gArmSgiTokenSpaceGuid.PcdVirtioP9Size
++  gArmSgiTokenSpaceGuid.PcdVirtioP9Interrupt
++  gArmSgiTokenSpaceGuid.PcdWdogWS0Gsiv
++  gArmSgiTokenSpaceGuid.PcdWdogWS1Gsiv
++
++  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase
++  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
++
++  gArmSgiTokenSpaceGuid.PcdEinjTriggerActionBase
+-- 
+2.39.5
+

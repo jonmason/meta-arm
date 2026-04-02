@@ -1,0 +1,195 @@
+From aa127aecde0862dea4ae284d511f598ab7811601 Mon Sep 17 00:00:00 2001
+From: Thomas Abraham <thomas.abraham@arm.com>
+Date: Sun, 10 Jul 2022 20:55:10 +0530
+Subject: [PATCH 12/78] Platform/Sgi: add helper macros for DMA Named Component
+ IORT nodes
+
+Add preprocessor macros for DMA named component nodes of IORT table
+that can be used to describe the IO topology connected to the IO
+Virtualization block. An IO virtualization block could be used to
+connect PCIe root bus or non-PCIe SoC expansion peripherals.
+
+The SoC expansion block that connects to the IO Virtualization block
+includes PL330 DMA controllers that connect with SMMUv3 present in
+the IO virtualization block in the following manner:
+
+    0x0  -------------   0x30000   ------------
+        |  DMA device |---------->|    SMMU    |
+        |    (ID)     |           | (StreamID) |
+    0x9  -------------   0x30009   ------------
+
+The DMA controller consists of 8 data channels and 1 instruction
+channel. The device IDs emitted by the DMA go to the SMMUv3 as
+StreamID and the SMMUv3 programs the corresponding translation
+contexts.
+
+The peripherals in the SoC expansion block are connected to one of
+the x16/x8/x4_1/x4_0 ports of IO virtualization block. Each of these
+ports have a base DeviceID that is added to the StreamID of devices
+to create the IDs sent to the SMMUv3 and ITS.
+
+Stream ID coming at SMMUv3 is calculated as below:
+    Stream ID = DMA Channel Index + Base PCI port index, e.g.
+
+For example, for channel 1 of DMA0 device (connected to x16 port
+whose baseID is 0x30000, the streamID that SMMUv3 sees is:
+    (1 + 0x30000) = 0x30001.
+
+Change-Id: Id10d0d402621bfde0b5ac74ab93a095601897bf3
+Signed-off-by: Thomas Abraham <thomas.abraham@arm.com>
+Signed-off-by: Vivek Gautam <vivek.gautam@arm.com>
+---
+ Platform/ARM/SgiPkg/Include/IoVirtSoCExp.h | 103 ++++++++++++++++++++-
+ Platform/ARM/SgiPkg/SgiMemoryMap2.dsc.inc  |   4 +
+ Platform/ARM/SgiPkg/SgiPlatform.dec        |   6 ++
+ 3 files changed, 111 insertions(+), 2 deletions(-)
+
+diff --git a/Platform/ARM/SgiPkg/Include/IoVirtSoCExp.h b/Platform/ARM/SgiPkg/Include/IoVirtSoCExp.h
+index ab20f7b1413b..1c76d897fdcf 100644
+--- a/Platform/ARM/SgiPkg/Include/IoVirtSoCExp.h
++++ b/Platform/ARM/SgiPkg/Include/IoVirtSoCExp.h
+@@ -1,5 +1,5 @@
+-/** @file
+-*
++/** @file
++*
+ *  Copyright (c) 2023, Arm Limited. All rights reserved.
+ *
+ *  SPDX-License-Identifier: BSD-2-Clause-Patent
+@@ -186,3 +186,102 @@
+       Return (RBUF)                                                            \
+     } /* end Method(_CRS) */                                                   \
+   }
++
++// x16/x8/x4_1/x4_0 ports of the IO virtualization block to which the PCIe
++// root bus or the SoC expansion block is connected.
++typedef enum {
++  PCIex4_0,
++  PCIex4_1,
++  PCIex8,
++  PCIex16,
++} ARM_RD_PCIE_PORT_ID;
++
++// x16/x8/x4_1/x4_0 ports of the IO virtualization block have a base
++// DeviceID that is added to the StreamID of the devices connected
++// to ports to create the IDs sent to the SMMUv3 and ITS.
++//
++// Stream ID coming at SMMUv3 is calculated as below:
++//    Stream ID = DMA base Stream/deviceID +
++//                DMA Channel Index + deviceID for port
++// On each IO-virtualization SoC expansion block the base DeviceID
++// for DMA is 0.
++#define DEV_ID_BASE(Port)                                                      \
++    FixedPcdGet32 (PcdIoVirtBlkPortPciex40DevIdBase) +                         \
++    (FixedPcdGet32 (PcdIoVirtBlkPortDevIdOffset) * Port)
++
++// StreamID base for PL330 DMA0 controller
++// IO virtualization SoC expansion block has DMA-0 and DMA-1 connected
++// to PCIex4_1 and PCIex16 ports respectively.
++#define DMA_STREAM_ID_BASE(DmaIdx)                                             \
++    ( DmaIdx == 0 ? DEV_ID_BASE(PCIex4_1) :                                    \
++      DmaIdx == 1 ? DEV_ID_BASE(PCIex16) :                                     \
++      0 )
++
++/** Helper macro for ID mapping table initialization of DMA Named Component
++    IORT node.
++
++    See Table 4 of Arm IORT specification, version E.b.
++
++    Output StreamID for a channel can be calculated as -
++    ((IDBase for x16/x8/x4_1/x4_0) + BaseSID of DMA controller) + Channel Idx).
++
++    @param [in] DmaIdx            Index of DMA pl330 controller connected to
++                                  a IO virtualization SoC expansion block.
++    @param [in] ChStreamIdx       Channel index within one DMA controller -
++                                  0 to 8 that includes 8 data channels, and
++                                  one instruction channel.
++**/
++#define DMA_NC_ID_TABLE_INIT(DmaIdx, ChStreamIdx)                              \
++  {                                                                            \
++    ChStreamIdx,                                       /* InputBase */         \
++    0,                                                 /* NumIds */            \
++    (DMA_STREAM_ID_BASE(DmaIdx % 2) + ChStreamIdx),    /* OutputBase */        \
++    0x0,                                               /* OutputReference */   \
++    EFI_ACPI_IORT_ID_MAPPING_FLAGS_SINGLE,             /* Flags */             \
++  }
++
++/** Helper macro for DMA Named Component node initialization for Arm Iort
++    table.
++
++    See Table 13 of Arm IORT specification, version E.b.
++
++    @param [in] DmaIdx            Index of DMA pl330 controller connected to
++                                  a IO virtualization SoC expansion block.
++**/
++#define ARM_RD_ACPI_IO_VIRT_BLK_DMA_NC_INIT(DmaIdx)                            \
++  /* RD_IOVIRT_SOC_EXP_IORT_DMA_NC_NODE */                                     \
++  {                                                                            \
++    /* EFI_ACPI_6_0_IO_REMAPPING_NAMED_COMP_NODE */                            \
++    {                                                                          \
++      {                                                                        \
++        EFI_ACPI_IORT_TYPE_NAMED_COMP,                       /* Type */        \
++        sizeof (RD_IOVIRT_SOC_EXP_IORT_DMA_NC_NODE),         /* Length */      \
++        4,                                                   /* Revision */    \
++        0,                                                   /* Identifier */  \
++        9,                                          /* NumIdMappings */        \
++        OFFSET_OF (RD_IOVIRT_SOC_EXP_IORT_DMA_NC_NODE, DmaIdMap)               \
++                                                    /* IdReference */          \
++      },                                                                       \
++      0x0,                                          /* Flags */                \
++      0x0,                                          /* CacheCoherent */        \
++      0x0,                                          /* AllocationHints */      \
++      0x0,                                          /* Reserved */             \
++      0x0,                                          /* MemoryAccessFlags */    \
++      0x30,                                         /* AddressSizeLimit */     \
++    },                                                                         \
++    {                                                                          \
++      /* Object RefName */                                                     \
++    },                                                                         \
++    /* ID mapping table */                                                     \
++    {                                                                          \
++      DMA_NC_ID_TABLE_INIT(DmaIdx, 0),              /* Data Channel - 0 */     \
++      DMA_NC_ID_TABLE_INIT(DmaIdx, 1),              /* Data Channel - 1 */     \
++      DMA_NC_ID_TABLE_INIT(DmaIdx, 2),              /* Data Channel - 2 */     \
++      DMA_NC_ID_TABLE_INIT(DmaIdx, 3),              /* Data Channel - 3 */     \
++      DMA_NC_ID_TABLE_INIT(DmaIdx, 4),              /* Data Channel - 4 */     \
++      DMA_NC_ID_TABLE_INIT(DmaIdx, 5),              /* Data Channel - 5 */     \
++      DMA_NC_ID_TABLE_INIT(DmaIdx, 6),              /* Data Channel - 6 */     \
++      DMA_NC_ID_TABLE_INIT(DmaIdx, 7),              /* Data Channel - 7 */     \
++      DMA_NC_ID_TABLE_INIT(DmaIdx, 8),              /* Instruction Channel */  \
++    },                                                                         \
++  }
+diff --git a/Platform/ARM/SgiPkg/SgiMemoryMap2.dsc.inc b/Platform/ARM/SgiPkg/SgiMemoryMap2.dsc.inc
+index 1a123688991a..498962569733 100644
+--- a/Platform/ARM/SgiPkg/SgiMemoryMap2.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiMemoryMap2.dsc.inc
+@@ -69,6 +69,10 @@
+   gArmSgiTokenSpaceGuid.PcdSmmuSize|0x10000000
+   gArmSgiTokenSpaceGuid.PcdSmmuDevIDBase|0x80000
+ 
++  # IO virtualization SoC expansion block
++  gArmSgiTokenSpaceGuid.PcdIoVirtBlkPortDevIdOffset|0x10000
++  gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlkDmaNumCh|8
++
+   # GPIO controller
+   gArmSgiTokenSpaceGuid.PcdGpioController0BaseAddress|0x0C1D0000
+   gArmSgiTokenSpaceGuid.PcdGpioController0Size|0x00010000
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.dec b/Platform/ARM/SgiPkg/SgiPlatform.dec
+index d3fcd866cb68..510a85b130bb 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatform.dec
++++ b/Platform/ARM/SgiPkg/SgiPlatform.dec
+@@ -113,5 +113,11 @@
+   gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlk0Base|0|UINT64|0x0000002B
+   gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlkUartEnable|0|UINT32|0x0000002C
+ 
++  # IO virtualization block
++  gArmSgiTokenSpaceGuid.PcdIoVirtBlkCountPerChip|0|UINT32|0x00001023
++  gArmSgiTokenSpaceGuid.PcdIoVirtBlkPortDevIdOffset|0|UINT32|0x00001024
++  gArmSgiTokenSpaceGuid.PcdIoVirtBlkPortPciex40DevIdBase|0|UINT32|0x00001025
++  gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlkDmaNumCh|0|UINT32|0x00001026
++
+ [Ppis]
+   gNtFwConfigDtInfoPpiGuid     = { 0x6f606eb3, 0x9123, 0x4e15, { 0xa8, 0x9b, 0x0f, 0xac, 0x66, 0xef, 0xd0, 0x17 } }
+-- 
+2.39.5
+

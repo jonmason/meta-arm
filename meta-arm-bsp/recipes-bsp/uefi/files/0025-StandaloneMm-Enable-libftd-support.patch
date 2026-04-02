@@ -1,0 +1,31 @@
+From dd2304a080a0b0560775c7f2219df6845a7dfa6a Mon Sep 17 00:00:00 2001
+From: Achin Gupta <achin.gupta@arm.com>
+Date: Sat, 6 Nov 2021 10:42:51 +0000
+Subject: [PATCH 25/78] StandaloneMm: Enable libftd support
+
+FFA use DT to pass secure partition manifest info.
+
+Signed-off-by: Achin Gupta <achin.gupta@arm.com>
+Change-Id: I4ce9116e554c92790bc261f9e198969f8d000ba3
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+---
+ Platform/ARM/SgiPkg/PlatformStandaloneMm.dsc | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/Platform/ARM/SgiPkg/PlatformStandaloneMm.dsc b/Platform/ARM/SgiPkg/PlatformStandaloneMm.dsc
+index 4b624a11c6d8..db48c5e4f3dd 100644
+--- a/Platform/ARM/SgiPkg/PlatformStandaloneMm.dsc
++++ b/Platform/ARM/SgiPkg/PlatformStandaloneMm.dsc
+@@ -31,6 +31,9 @@
+ !include MdePkg/MdeLibs.dsc.inc
+ !include Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
+ 
++[LibraryClasses]
++  FdtLib|EmbeddedPkg/Library/FdtLib/FdtLib.inf
++
+ ################################################################################
+ #
+ # Pcd Section - list of all EDK II PCD Entries defined by this Platform
+-- 
+2.39.5
+

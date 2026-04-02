@@ -1,0 +1,56 @@
+From d49c1be20911c639e224d3921b8362abb21324f9 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Wed, 7 Jul 2021 22:49:54 +0530
+Subject: [PATCH 06/43] EmbeddedPkg: Add helpers for HEST table generation
+
+Add helper macros for the generation of the HEST ACPI table. Macros to
+initialize the HEST GHESv2 Notification Structure and Error Status
+Structure are introduced.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I314cfe3b52059d95ec4d0660bc58da5086e9f42b
+---
+ EmbeddedPkg/Include/Library/AcpiLib.h | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/EmbeddedPkg/Include/Library/AcpiLib.h b/EmbeddedPkg/Include/Library/AcpiLib.h
+index 29137a4a53df..67c6c2327e2d 100644
+--- a/EmbeddedPkg/Include/Library/AcpiLib.h
++++ b/EmbeddedPkg/Include/Library/AcpiLib.h
+@@ -24,6 +24,7 @@
+ #define ARM_GAS16(Address)  { EFI_ACPI_5_0_SYSTEM_MEMORY, 16, 0, EFI_ACPI_5_0_WORD,      Address }
+ #define ARM_GAS32(Address)  { EFI_ACPI_5_0_SYSTEM_MEMORY, 32, 0, EFI_ACPI_5_0_DWORD,     Address }
+ #define ARM_GASN(Address)   { EFI_ACPI_5_0_SYSTEM_MEMORY,  0, 0, EFI_ACPI_5_0_DWORD,     Address }
++#define ARM_GAS64(Address)  { EFI_ACPI_6_3_SYSTEM_MEMORY, 64, 0, EFI_ACPI_6_3_QWORD,     Address }
+ 
+ //
+ // Macros for the Multiple APIC Description Table (MADT)
+@@ -91,6 +92,25 @@
+     WatchdogTimerGSIV, WatchdogTimerFlags                                                               \
+   }
+ 
++//
++// HEST table GHESv2 type related structure.
++// Helper Macro to initialize the HEST GHESv2 Notification Structure.
++// Refer Table 18.14 in ACPI Specification, Version 6.4.
++//
++#define EFI_ACPI_6_4_HARDWARE_ERROR_NOTIFICATION_STRUCTURE_INIT(Type,         \
++  PollInterval, EventId)                                                      \
++  {                                                                           \
++    Type,                                                                     \
++    sizeof (EFI_ACPI_6_4_HARDWARE_ERROR_NOTIFICATION_STRUCTURE),              \
++    {0, 0, 0, 0, 0, 0, 0}, /* ConfigurationWriteEnable */                     \
++    PollInterval,                                                             \
++    EventId,                                                                  \
++    0,                    /* Poll Interval Threshold Value  */                \
++    0,                    /* Poll Interval Threshold Window */                \
++    0,                    /* Error Threshold Value          */                \
++    0                     /* Error Threshold Window         */                \
++  }
++
+ typedef
+ BOOLEAN
+ (EFIAPI *EFI_LOCATE_ACPI_CHECK)(
+-- 
+2.39.5
+

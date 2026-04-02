@@ -1,0 +1,113 @@
+From 207eb521aaf45594d28868028a97b417423d0905 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Wed, 3 Apr 2024 16:41:43 +0530
+Subject: [PATCH 51/78] Platform/ARM: Make RAS PCD's plaform specific
+
+Move the RAS PCD's to platform specific dsc files.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Signed-off-by: Glen Yeldho <glen.yeldho@arm.com>
+Change-Id: I4c008fd3130ca088601e6ae21e1a70bc495742f5
+---
+ Platform/ARM/SgiPkg/PlatformStandaloneMm2.dsc | 21 +++++++++++++++++++
+ Platform/ARM/SgiPkg/PlatformStandaloneMm3.dsc | 21 +++++++++++++++++++
+ Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc     | 19 -----------------
+ 3 files changed, 42 insertions(+), 19 deletions(-)
+
+diff --git a/Platform/ARM/SgiPkg/PlatformStandaloneMm2.dsc b/Platform/ARM/SgiPkg/PlatformStandaloneMm2.dsc
+index ef0c333b8eca..0841f49baf0a 100644
+--- a/Platform/ARM/SgiPkg/PlatformStandaloneMm2.dsc
++++ b/Platform/ARM/SgiPkg/PlatformStandaloneMm2.dsc
+@@ -56,6 +56,27 @@
+   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareSize|0x00100000
+ !endif
+ 
++[PcdsFixedAtBuild]
++!if $(EDK2_ENABLE_CPU_MM) == TRUE
++  ## CPU
++  gCpuMmTokenSpaceGuid.PcdCpuErrorDataBase|0xFFE21000
++  gCpuMmTokenSpaceGuid.PcdCpuErrorDataSize|0x400
++  gCpuMmTokenSpaceGuid.PcdCpuErrorSdeiEventBase|805
++  gCpuMmTokenSpaceGuid.PcdCpuErrorSourceCount|1
++  gCpuMmTokenSpaceGuid.PcdCpuErrorSourceId|10
++!endif
++
++!if $(EDK2_ENABLE_SRAM_MM) == TRUE
++  ## Base Element Ram
++  gSramMmTokenSpaceGuid.PcdSramErrorDataBase|0xFFE22000
++  gSramMmTokenSpaceGuid.PcdSramErrorDataSize|0x100
++  gSramMmTokenSpaceGuid.PcdSramErrorSdeiEventBase|804
++  gSramMmTokenSpaceGuid.PcdSramErrorSourceCount|1
++  gSramMmTokenSpaceGuid.PcdSramErrorSourceId|20
++  gSramMmTokenSpaceGuid.PcdSramNonSecureEccRecordBase|0x2A4C0000
++  gSramMmTokenSpaceGuid.PcdSramSecureEccRecordBase|0x2A4B0000
++!endif
++  
+   # Disables FFA
+ !if $(EDK2_ENABLE_FFA) == FALSE
+   gArmTokenSpaceGuid.PcdFfaEnable|0
+diff --git a/Platform/ARM/SgiPkg/PlatformStandaloneMm3.dsc b/Platform/ARM/SgiPkg/PlatformStandaloneMm3.dsc
+index 10f63c3f5738..2887c25294c3 100644
+--- a/Platform/ARM/SgiPkg/PlatformStandaloneMm3.dsc
++++ b/Platform/ARM/SgiPkg/PlatformStandaloneMm3.dsc
+@@ -55,6 +55,27 @@
+   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase64|0x0604200000
+   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareSize|0x00100000
+ !endif
++
++[PcdsFixedAtBuild]
++!if $(EDK2_ENABLE_CPU_MM) == TRUE
++  ## CPU
++  gCpuMmTokenSpaceGuid.PcdCpuErrorDataBase|0xFB1EF000
++  gCpuMmTokenSpaceGuid.PcdCpuErrorDataSize|0x400
++  gCpuMmTokenSpaceGuid.PcdCpuErrorSdeiEventBase|805
++  gCpuMmTokenSpaceGuid.PcdCpuErrorSourceCount|1
++  gCpuMmTokenSpaceGuid.PcdCpuErrorSourceId|10
++!endif
++
++!if $(EDK2_ENABLE_SRAM_MM) == TRUE
++  ## Base Element Ram
++  gSramMmTokenSpaceGuid.PcdSramErrorDataBase|0xFFE22000
++  gSramMmTokenSpaceGuid.PcdSramErrorDataSize|0x100
++  gSramMmTokenSpaceGuid.PcdSramErrorSdeiEventBase|804
++  gSramMmTokenSpaceGuid.PcdSramErrorSourceCount|1
++  gSramMmTokenSpaceGuid.PcdSramErrorSourceId|20
++  gSramMmTokenSpaceGuid.PcdSramNonSecureEccRecordBase|0x2A4C0000
++  gSramMmTokenSpaceGuid.PcdSramSecureEccRecordBase|0x2A4B0000
++!endif
+   
+   # Disables FFA
+ !if $(EDK2_ENABLE_FFA) == FALSE
+diff --git a/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc b/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
+index ec1f440c61d4..b34b5fcd63d3 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
+@@ -112,25 +112,6 @@
+   gEfiSecurityPkgTokenSpaceGuid.PcdUserPhysicalPresence|TRUE
+ !endif
+ 
+-!if $(EDK2_ENABLE_CPU_MM) == TRUE
+-  ## CPU
+-  gCpuMmTokenSpaceGuid.PcdCpuErrorDataBase|0xFFE21000
+-  gCpuMmTokenSpaceGuid.PcdCpuErrorDataSize|0x400
+-  gCpuMmTokenSpaceGuid.PcdCpuErrorSdeiEventBase|805
+-  gCpuMmTokenSpaceGuid.PcdCpuErrorSourceCount|1
+-  gCpuMmTokenSpaceGuid.PcdCpuErrorSourceId|10
+-!endif
+-
+-!if $(EDK2_ENABLE_SRAM_MM) == TRUE
+-  ## Base Element Ram
+-  gSramMmTokenSpaceGuid.PcdSramErrorDataBase|0xFFE22000
+-  gSramMmTokenSpaceGuid.PcdSramErrorDataSize|0x100
+-  gSramMmTokenSpaceGuid.PcdSramErrorSdeiEventBase|804
+-  gSramMmTokenSpaceGuid.PcdSramErrorSourceCount|1
+-  gSramMmTokenSpaceGuid.PcdSramErrorSourceId|20
+-  gSramMmTokenSpaceGuid.PcdSramNonSecureEccRecordBase|0x2A4C0000
+-  gSramMmTokenSpaceGuid.PcdSramSecureEccRecordBase|0x2A4B0000
+-!endif
+ !if $(EDK2_ENABLE_FFA) == FALSE
+   gArmTokenSpaceGuid.PcdFfaEnable|0
+ !endif
+-- 
+2.39.5
+

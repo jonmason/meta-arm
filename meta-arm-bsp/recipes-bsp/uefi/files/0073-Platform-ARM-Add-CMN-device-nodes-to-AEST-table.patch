@@ -1,0 +1,404 @@
+From 39ffa0715eddc6b960f52a3b547bc41e1ead195b Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Fri, 26 Apr 2024 19:29:34 +0530
+Subject: [PATCH 73/78] Platform/ARM: Add CMN device nodes to AEST table
+
+Appends new AEST nodes to AEST table to represent erorrs CMN device
+nodes.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: Ia14e044db0821fb2e496faf4838af2dd127fd6d7
+---
+ .../ARM/SgiPkg/AcpiTables/RdV3Cfg1/Aest.aslc  | 338 +++++++++++++++++-
+ 1 file changed, 325 insertions(+), 13 deletions(-)
+
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1/Aest.aslc b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1/Aest.aslc
+index a023a3134fa1..f8465a50078b 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1/Aest.aslc
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1/Aest.aslc
+@@ -1,31 +1,27 @@
+ /** @file
+-*  Arm Error Source Table (AEST) for RD-N2-Cfg1 platform
++*  Arm Error Source Table (AEST)
+ *
+-*  This file describes the hardware error nodes, interface for each node that
+-*  carries error information and supported interrupts by the node.
+-*
+-*  Copyright (c) 2021 - 2022, ARM Ltd. All rights reserved.
++*  Copyright (c) 2024, ARM Ltd. All rights reserved.
+ *
+ *  SPDX-License-Identifier: BSD-2-Clause-Patent
+ *
+-*  @par Specification Reference:
+-*    - ACPI for the Armv8 RAS Extensions, Version 1.1, Chpater 2, The Arm Error
+-*      Source Table.
+ **/
+ 
+ #include <IndustryStandard/ArmErrorSourceTable.h>
+ #include "SgiAcpiHeader.h"
+ 
+ #define MAX_INTERRUPT_TYPE 2
+-#define MAX_NODES          1
++#define MAX_NODES          6
++
++#define AEST_NODE_TYPE_VENDOR_HID SIGNATURE_64('A', 'R', 'M', 'H', 'C', '0', '0', '1')
+ 
+ #pragma pack (1)
+ 
+ typedef union {
++  EFI_ACPI_AEST_VENDOR_DEFINED_STRUCT    Vendor;
+   EFI_ACPI_AEST_PROCESSOR_STRUCT         Proc;
+   EFI_ACPI_AEST_MEMORY_CONTROLLER_STRUCT Mem;
+   EFI_ACPI_AEST_SMMU_STRUCT              Smmu;
+-  EFI_ACPI_AEST_VENDOR_DEFINED_STRUCT    Vendor;
+   EFI_ACPI_AEST_GIC_STRUCT               Gic;
+ } EFI_ACPI_AEST_NODE_RESOURCE;
+ 
+@@ -50,8 +46,8 @@ STATIC EFI_ACPI_ARM_ERROR_SOURCE_TABLE_DATA Aest = {
+   },
+   {
+     {
+-      {
+-        {
++      .NodeResource = {
++        .Proc = {
+           {
+             EFI_ACPI_AEST_NODE_TYPE_PROCESSOR,         /* Type */
+             sizeof (EFI_ACPI_AEST_NODE_DATA),          /* Length */
+@@ -88,9 +84,12 @@ STATIC EFI_ACPI_ARM_ERROR_SOURCE_TABLE_DATA Aest = {
+         0,                                       /* Base Address */
+         1,                                       /* Record Index */
+         1,                                       /* Num Error records */
+-        BIT0,                                       /* Record implemented */
++        BIT1,                                    /* Record implemented */
+         0,                                       /* Group status reporting */
+         0,                                       /* Addressing mode */
++        0,                                       /* ACPI ARM error node device */
++        0,                                       /* Processor Affinity */
++        0,                                       /* ErrGsr base address */
+       },
+       {
+         {
+@@ -103,6 +102,319 @@ STATIC EFI_ACPI_ARM_ERROR_SOURCE_TABLE_DATA Aest = {
+         },
+       },
+     },
++    {
++      .NodeResource = {
++        .Vendor = {
++          {
++            EFI_ACPI_AEST_NODE_TYPE_VENDOR_DEFINED,    /* Type */
++            sizeof (EFI_ACPI_AEST_NODE_DATA),          /* Length */
++            0,                                         /* Reserved */
++            sizeof (EFI_ACPI_AEST_NODE_STRUCT),        /* Offset to Node data */
++            sizeof (EFI_ACPI_AEST_NODE_RESOURCE),      /* Offset to Node Interface */
++            (sizeof (EFI_ACPI_AEST_NODE_RESOURCE) +    /* Offset to Node Interrupt */
++             sizeof (EFI_ACPI_AEST_INTERFACE_STRUCT)),
++            1,                                         /* Interrupt array size */
++            0,                                         /* Timestamp */
++            0,                                         /* Reserved1 */
++            0,                                         /* Injection countdown rate */
++          },
++          // Vendor Node Structure
++          AEST_NODE_TYPE_VENDOR_HID,                   /* Hardware ID */
++          1,                                           /* Unique ID */
++          // Vendor Data
++          {
++            0x00,                                      /* Offset HNF0 0x1700000 */
++            0x00,
++            0x70,
++            0x01,
++            0,
++            0,
++            0,
++            0,
++            0x00,                                      /* Offset HND 0x0000 */
++            0x00,
++            0,
++            0,
++          },
++        },
++      },
++      {
++        EFI_ACPI_AEST_INTERFACE_TYPE_MMIO,       /* Interface type */
++        {0, 0, 0},                               /* Reserved */
++        0,                                       /* Flags */
++        0,                                       /* Base Address */
++        0,                                       /* Record Index */
++        0,                                       /* Num Error records */
++        0,                                       /* Record implemented */
++        0,                                       /* Group status reporting */
++        0,                                       /* Addressing mode */
++        0,                                       /* ACPI ARM error node device */
++        0,                                       /* Processor Affinity */
++        0,                                       /* ErrGsr base address */
++      },
++      {
++        {
++          EFI_ACPI_AEST_INTERRUPT_TYPE_FAULT_HANDLING,     /* Interrupt type */
++          {0, 0},                                          /* Reserved */
++          EFI_ACPI_AEST_INTERRUPT_FLAG_TRIGGER_TYPE_LEVEL, /* Flags */
++          79,                                              /* GSIV */
++          0,                                               /* ID */
++          {0, 0, 0},                                       /* Reserved */
++        },
++      },
++    },
++    {
++      .NodeResource = {
++        .Vendor = {
++          {
++            EFI_ACPI_AEST_NODE_TYPE_VENDOR_DEFINED,    /* Type */
++            sizeof (EFI_ACPI_AEST_NODE_DATA),          /* Length */
++            0,                                         /* Reserved */
++            sizeof (EFI_ACPI_AEST_NODE_STRUCT),        /* Offset to Node data */
++            sizeof (EFI_ACPI_AEST_NODE_RESOURCE),      /* Offset to Node Interface */
++            (sizeof (EFI_ACPI_AEST_NODE_RESOURCE) +    /* Offset to Node Interrupt */
++             sizeof (EFI_ACPI_AEST_INTERFACE_STRUCT)),
++            1,                                         /* Interrupt array size */
++            0,                                         /* Timestamp */
++            0,                                         /* Reserved1 */
++            0,                                         /* Injection countdown rate */
++          },
++          // Vendor Node Structure
++          AEST_NODE_TYPE_VENDOR_HID,                   /* Hardware ID */
++          1,                                           /* Unique ID */
++          // Vendor Data
++          {
++            0x00,                                      /* Offset HNF1 0x1740000 */
++            0x00,
++            0x74,
++            0x01,
++            0,
++            0,
++            0,
++            0,
++            0x00,                                      /* Offset HND 0x0000 */
++            0x00,
++            0,
++            0,
++          },
++        },
++      },
++      {
++        EFI_ACPI_AEST_INTERFACE_TYPE_MMIO,       /* Interface type */
++        {0, 0, 0},                               /* Reserved */
++        0,                                       /* Flags */
++        0,                                       /* Base Address */
++        0,                                       /* Record Index */
++        0,                                       /* Num Error records */
++        0,                                       /* Record implemented */
++        0,                                       /* Group status reporting */
++        0,                                       /* Addressing mode */
++        0,                                       /* ACPI ARM error node device */
++        0,                                       /* Processor Affinity */
++        0,                                       /* ErrGsr base address */
++      },
++      {
++        {
++          EFI_ACPI_AEST_INTERRUPT_TYPE_FAULT_HANDLING,     /* Interrupt type */
++          {0, 0},                                          /* Reserved */
++          EFI_ACPI_AEST_INTERRUPT_FLAG_TRIGGER_TYPE_LEVEL, /* Flags */
++          79,                                              /* GSIV */
++          0,                                               /* ID */
++          {0, 0, 0},                                       /* Reserved */
++        },
++      },
++    },
++    {
++      .NodeResource = {
++        .Vendor = {
++          {
++            EFI_ACPI_AEST_NODE_TYPE_VENDOR_DEFINED,    /* Type */
++            sizeof (EFI_ACPI_AEST_NODE_DATA),          /* Length */
++            0,                                         /* Reserved */
++            sizeof (EFI_ACPI_AEST_NODE_STRUCT),        /* Offset to Node data */
++            sizeof (EFI_ACPI_AEST_NODE_RESOURCE),      /* Offset to Node Interface */
++            (sizeof (EFI_ACPI_AEST_NODE_RESOURCE) +    /* Offset to Node Interrupt */
++             sizeof (EFI_ACPI_AEST_INTERFACE_STRUCT)),
++            1,                                         /* Interrupt array size */
++            0,                                         /* Timestamp */
++            0,                                         /* Reserved1 */
++            0,                                         /* Injection countdown rate */
++          },
++          // Vendor Node Structure
++          AEST_NODE_TYPE_VENDOR_HID,                   /* Hardware ID */
++          1,                                           /* Unique ID */
++          // Vendor Data
++          {
++            0x00,                                      /* Offset HNI1 0x300000 */
++            0x00,
++            0x30,
++            0,
++            0,
++            0,
++            0,
++            0,
++            0x00,                                       /* Offset HND 0x0000 */
++            0x00,
++            0,
++            0,
++          },
++        },
++      },
++      {
++        EFI_ACPI_AEST_INTERFACE_TYPE_MMIO,       /* Interface type */
++        {0, 0, 0},                               /* Reserved */
++        0,                                       /* Flags */
++        0,                                       /* Base Address */
++        0,                                       /* Record Index */
++        0,                                       /* Num Error records */
++        0,                                       /* Record implemented */
++        0,                                       /* Group status reporting */
++        0,                                       /* Addressing mode */
++        0,                                       /* ACPI ARM error node device */
++        0,                                       /* Processor Affinity */
++        0,                                       /* ErrGsr base address */
++      },
++      {
++        {
++          EFI_ACPI_AEST_INTERRUPT_TYPE_FAULT_HANDLING,     /* Interrupt type */
++          {0, 0},                                          /* Reserved */
++          EFI_ACPI_AEST_INTERRUPT_FLAG_TRIGGER_TYPE_LEVEL, /* Flags */
++          79,                                              /* GSIV */
++          0,                                               /* ID */
++          {0, 0, 0},                                       /* Reserved */
++        },
++      },
++    },
++    {
++      .NodeResource = {
++        .Vendor = {
++          {
++            EFI_ACPI_AEST_NODE_TYPE_VENDOR_DEFINED,    /* Type */
++            sizeof (EFI_ACPI_AEST_NODE_DATA),          /* Length */
++            0,                                         /* Reserved */
++            sizeof (EFI_ACPI_AEST_NODE_STRUCT),        /* Offset to Node data */
++            sizeof (EFI_ACPI_AEST_NODE_RESOURCE),      /* Offset to Node Interface */
++            (sizeof (EFI_ACPI_AEST_NODE_RESOURCE) +    /* Offset to Node Interrupt */
++             sizeof (EFI_ACPI_AEST_INTERFACE_STRUCT)),
++            1,                                         /* Interrupt array size */
++            0,                                         /* Timestamp */
++            0,                                         /* Reserved1 */
++            0,                                         /* Injection countdown rate */
++          },
++          // Vendor Node Structure
++          AEST_NODE_TYPE_VENDOR_HID,                   /* Hardware ID */
++          1,                                           /* Unique ID */
++          // Vendor Data
++          {
++            0x00,                                      /* Offset XP8 0x2820000 */
++            0x00,
++            0x82,
++            0x02,
++            0,
++            0,
++            0,
++            0,
++            0x00,                                       /* Offset HND 0x0000 */
++            0x00,
++            0,
++            0,
++          },
++        },
++      },
++      {
++        EFI_ACPI_AEST_INTERFACE_TYPE_MMIO,       /* Interface type */
++        {0, 0, 0},                               /* Reserved */
++        0,                                       /* Flags */
++        0,                                       /* Base Address */
++        0,                                       /* Record Index */
++        0,                                       /* Num Error records */
++        0,                                       /* Record implemented */
++        0,                                       /* Group status reporting */
++        0,                                       /* Addressing mode */
++        0,                                       /* ACPI ARM error node device */
++        0,                                       /* Processor Affinity */
++        0,                                       /* ErrGsr base address */
++      },
++      {
++        {
++          EFI_ACPI_AEST_INTERRUPT_TYPE_FAULT_HANDLING,     /* Interrupt type */
++          {0, 0},                                          /* Reserved */
++          EFI_ACPI_AEST_INTERRUPT_FLAG_TRIGGER_TYPE_LEVEL, /* Flags */
++          79,                                              /* GSIV */
++          0,                                               /* ID */
++          {0, 0, 0},                                       /* Reserved */
++        },
++      },
++    },
++    {
++      .NodeResource = {
++        .Vendor = {
++          {
++            EFI_ACPI_AEST_NODE_TYPE_VENDOR_DEFINED,    /* Type */
++            sizeof (EFI_ACPI_AEST_NODE_DATA),          /* Length */
++            0,                                         /* Reserved */
++            sizeof (EFI_ACPI_AEST_NODE_STRUCT),        /* Offset to Node data */
++            sizeof (EFI_ACPI_AEST_NODE_RESOURCE),      /* Offset to Node Interface */
++            (sizeof (EFI_ACPI_AEST_NODE_RESOURCE) +    /* Offset to Node Interrupt */
++             sizeof (EFI_ACPI_AEST_INTERFACE_STRUCT)),
++            2,                                         /* Interrupt array size */
++            0,                                         /* Timestamp */
++            0,                                         /* Reserved1 */
++            0,                                         /* Injection countdown rate */
++          },
++          // Vendor Node Structure
++          AEST_NODE_TYPE_VENDOR_HID,                   /* Hardware ID */
++          1,                                           /* Unique ID */
++          // Vendor Data
++          {
++            0x00,                                      /* Offset SBSX0 0x2180000 */
++            0x00,
++            0x18,
++            0x02,
++            0,
++            0,
++            0,
++            0,
++            0x00,                                       /* Offset HND 0x0000 */
++            0x00,
++            0,
++            0,
++          },
++        },
++      },
++      {
++        EFI_ACPI_AEST_INTERFACE_TYPE_MMIO,       /* Interface type */
++        {0, 0, 0},                               /* Reserved */
++        0,                                       /* Flags */
++        0,                                       /* Base Address */
++        0,                                       /* Record Index */
++        0,                                       /* Num Error records */
++        0,                                       /* Record implemented */
++        0,                                       /* Group status reporting */
++        0,                                       /* Addressing mode */
++        0,                                       /* ACPI ARM error node device */
++        0,                                       /* Processor Affinity */
++        0,                                       /* ErrGsr base address */
++      },
++      {
++        {
++          EFI_ACPI_AEST_INTERRUPT_TYPE_FAULT_HANDLING,     /* Interrupt type */
++          {0, 0},                                          /* Reserved */
++          EFI_ACPI_AEST_INTERRUPT_FLAG_TRIGGER_TYPE_LEVEL, /* Flags */
++          79,                                              /* GSIV */
++          0,                                               /* ID */
++          {0, 0, 0},                                       /* Reserved */
++        },
++        {
++          EFI_ACPI_AEST_INTERRUPT_TYPE_ERROR_RECOVERY,     /* Interrupt type */
++          {0, 0},                                          /* Reserved */
++          EFI_ACPI_AEST_INTERRUPT_FLAG_TRIGGER_TYPE_LEVEL, /* Flags */
++          80,                                              /* GSIV */
++          0,                                               /* ID */
++          {0, 0, 0},                                       /* Reserved */
++        },
++      },
++    },
+   },
+ };
+ 
+-- 
+2.39.5
+

@@ -1,0 +1,149 @@
+From f3e2ebaee2bc3341ca98de467ba8bd7fb8202011 Mon Sep 17 00:00:00 2001
+From: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Date: Fri, 22 Dec 2023 14:31:37 +0530
+Subject: [PATCH 49/78] Platform/ARM: Enable AEST ACPI table for Rd-V3-Cfg1
+
+This patch adds aest table for RdV3Cfg1.
+
+Signed-off-by: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Change-Id: Ica454191ef36c75ce2121bc3601f2c7a0a7768b7
+---
+ .../ARM/SgiPkg/AcpiTables/RdV3Cfg1/Aest.aslc  | 113 ++++++++++++++++++
+ .../SgiPkg/AcpiTables/RdV3Cfg1AcpiTables.inf  |   1 +
+ 2 files changed, 114 insertions(+)
+ create mode 100644 Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1/Aest.aslc
+
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1/Aest.aslc b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1/Aest.aslc
+new file mode 100644
+index 000000000000..a023a3134fa1
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1/Aest.aslc
+@@ -0,0 +1,113 @@
++/** @file
++*  Arm Error Source Table (AEST) for RD-N2-Cfg1 platform
++*
++*  This file describes the hardware error nodes, interface for each node that
++*  carries error information and supported interrupts by the node.
++*
++*  Copyright (c) 2021 - 2022, ARM Ltd. All rights reserved.
++*
++*  SPDX-License-Identifier: BSD-2-Clause-Patent
++*
++*  @par Specification Reference:
++*    - ACPI for the Armv8 RAS Extensions, Version 1.1, Chpater 2, The Arm Error
++*      Source Table.
++**/
++
++#include <IndustryStandard/ArmErrorSourceTable.h>
++#include "SgiAcpiHeader.h"
++
++#define MAX_INTERRUPT_TYPE 2
++#define MAX_NODES          1
++
++#pragma pack (1)
++
++typedef union {
++  EFI_ACPI_AEST_PROCESSOR_STRUCT         Proc;
++  EFI_ACPI_AEST_MEMORY_CONTROLLER_STRUCT Mem;
++  EFI_ACPI_AEST_SMMU_STRUCT              Smmu;
++  EFI_ACPI_AEST_VENDOR_DEFINED_STRUCT    Vendor;
++  EFI_ACPI_AEST_GIC_STRUCT               Gic;
++} EFI_ACPI_AEST_NODE_RESOURCE;
++
++typedef struct {
++  EFI_ACPI_AEST_NODE_RESOURCE     NodeResource;
++  EFI_ACPI_AEST_INTERFACE_STRUCT  NodeInterface;
++  EFI_ACPI_AEST_INTERRUPT_STRUCT  NodeInterrupt[MAX_INTERRUPT_TYPE];
++} EFI_ACPI_AEST_NODE_DATA;
++
++typedef struct {
++  EFI_ACPI_ARM_ERROR_SOURCE_TABLE Header;
++  EFI_ACPI_AEST_NODE_DATA     Node[MAX_NODES];
++} EFI_ACPI_ARM_ERROR_SOURCE_TABLE_DATA;
++
++STATIC EFI_ACPI_ARM_ERROR_SOURCE_TABLE_DATA Aest = {
++  {
++    ARM_ACPI_HEADER (
++      EFI_ACPI_6_3_ARM_ERROR_SOURCE_TABLE_SIGNATURE,
++      EFI_ACPI_ARM_ERROR_SOURCE_TABLE_DATA,
++      EFI_ACPI_ARM_ERROR_SOURCE_TABLE_REVISION
++    ),
++  },
++  {
++    {
++      {
++        {
++          {
++            EFI_ACPI_AEST_NODE_TYPE_PROCESSOR,         /* Type */
++            sizeof (EFI_ACPI_AEST_NODE_DATA),          /* Length */
++            0,                                         /* Reserved */
++            sizeof (EFI_ACPI_AEST_NODE_STRUCT),        /* Offset to Node data */
++            sizeof (EFI_ACPI_AEST_NODE_RESOURCE),      /* Offset to Node Interface */
++            (sizeof (EFI_ACPI_AEST_NODE_RESOURCE) +    /* Offset to Node Interrupt */
++             sizeof (EFI_ACPI_AEST_INTERFACE_STRUCT)),
++            1,                                         /* Interrupt array size */
++            0,                                         /* Timestamp */
++            0,                                         /* Reserved1 */
++            0,                                         /* Injection countdown rate */
++          },
++          // Processor Node Structure
++          0,                                             /* Processor ID */
++          EFI_ACPI_AEST_PROCESSOR_RESOURCE_TYPE_CACHE,   /* Resource Type */
++          0,                                             /* Reserved */
++          0,                                             /* Flags */
++          0,                                             /* Revision */
++          0,
++          {
++            // Cache Resource sub-structures
++            {
++              0,                                         /* Cache ID */
++              0,                                         /* Reserved */
++            },
++          },
++        },
++      },
++      {
++        EFI_ACPI_AEST_INTERFACE_TYPE_SR,         /* Interface type */
++        {0, 0, 0},                               /* Reserved */
++        0,                                       /* Flags */
++        0,                                       /* Base Address */
++        1,                                       /* Record Index */
++        1,                                       /* Num Error records */
++        BIT0,                                       /* Record implemented */
++        0,                                       /* Group status reporting */
++        0,                                       /* Addressing mode */
++      },
++      {
++        {
++          EFI_ACPI_AEST_INTERRUPT_TYPE_FAULT_HANDLING,     /* Interrupt type */
++          {0, 0},                                          /* Reserved */
++          EFI_ACPI_AEST_INTERRUPT_FLAG_TRIGGER_TYPE_LEVEL, /* Flags */
++          17,                                              /* GSIV */
++          0,                                               /* ID */
++          {0, 0, 0},                                       /* Reserved */
++        },
++      },
++    },
++  },
++};
++
++/*
++ * Reference the table being generated to prevent the optimizer from removing
++ * the data structure from the executable
++ */
++VOID* CONST ReferenceAcpiTable = &Aest;
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1AcpiTables.inf
+index 3e8be617266f..4d36c3f6476e 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1AcpiTables.inf
+@@ -18,6 +18,7 @@
+   Dbg2.aslc
+   Fadt.aslc
+   Gtdt.aslc
++  RdV3Cfg1/Aest.aslc
+   RdV3Cfg1/Dsdt.asl
+   RdV3Cfg1/Einj.aslc
+   RdV3Cfg1/Madt.aslc
+-- 
+2.39.5
+

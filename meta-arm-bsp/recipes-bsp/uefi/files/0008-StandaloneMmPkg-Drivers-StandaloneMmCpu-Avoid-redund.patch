@@ -1,0 +1,33 @@
+From 2c45ca3584389140b5169e33eeb93975b22da1e1 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Mon, 28 Dec 2020 16:06:59 +0530
+Subject: [PATCH 08/43] StandaloneMmPkg/Drivers/StandaloneMmCpu: Avoid
+ redundant copy
+
+When MM Communicate message length is zero, then avoid the
+overhead of copying the buffers.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I39f30cb315f46235c9ce39922a0814ae089f51cf
+---
+ StandaloneMmPkg/Drivers/StandaloneMmCpu/EventHandle.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/StandaloneMmPkg/Drivers/StandaloneMmCpu/EventHandle.c b/StandaloneMmPkg/Drivers/StandaloneMmCpu/EventHandle.c
+index dc11d4375a02..64831683a9d3 100644
+--- a/StandaloneMmPkg/Drivers/StandaloneMmCpu/EventHandle.c
++++ b/StandaloneMmPkg/Drivers/StandaloneMmCpu/EventHandle.c
+@@ -188,7 +188,9 @@ PiMmStandaloneMmCpuDriverEntry (
+ 
+   // Free the memory allocation done earlier and reset the per-cpu context
+   ASSERT (GuidedEventContext);
+-  CopyMem ((VOID *)NsCommBufferAddr, (CONST VOID *)GuidedEventContext, NsCommBufferSize);
++  if (GuidedEventContext->MessageLength) {
++    CopyMem ((VOID *)NsCommBufferAddr, (CONST VOID *)GuidedEventContext, NsCommBufferSize);
++  }
+ 
+   Status = mMmst->MmFreePool ((VOID *)GuidedEventContext);
+   if (Status != EFI_SUCCESS) {
+-- 
+2.39.5
+

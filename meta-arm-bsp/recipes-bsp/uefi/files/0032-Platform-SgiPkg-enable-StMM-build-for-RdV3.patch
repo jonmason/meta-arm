@@ -1,0 +1,203 @@
+From bd98431fa56abbe18a9d648db1361bf111ab8955 Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Tue, 26 Sep 2023 00:46:03 +0100
+Subject: [PATCH 32/78] Platform/SgiPkg: enable StMM build for RdV3
+
+Update the carveout address, disable real UART driver, enable virtual
+UART driver, and change the base load address.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: I2debb326b6443ec31962214fe463c115f80cc134
+---
+ Platform/ARM/Drivers/SramMm/SramMm.inf        |  1 +
+ Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf  |  5 ++
+ Platform/ARM/SgiPkg/PlatformStandaloneMm3.dsc | 62 +++++++++++++++++++
+ Platform/ARM/SgiPkg/SgiPlatform.dsc.inc       |  7 +++
+ Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc     | 20 ++++--
+ 5 files changed, 89 insertions(+), 6 deletions(-)
+ create mode 100644 Platform/ARM/SgiPkg/PlatformStandaloneMm3.dsc
+
+diff --git a/Platform/ARM/Drivers/SramMm/SramMm.inf b/Platform/ARM/Drivers/SramMm/SramMm.inf
+index 946f28461517..68846a9b6029 100644
+--- a/Platform/ARM/Drivers/SramMm/SramMm.inf
++++ b/Platform/ARM/Drivers/SramMm/SramMm.inf
+@@ -30,6 +30,7 @@
+ 
+ [LibraryClasses]
+   BaseMemoryLib
++  IoLib
+   DebugLib
+   StandaloneMmDriverEntryPoint
+ 
+diff --git a/Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf b/Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf
+index 05c4a8b20986..ab0209cc5e5a 100644
+--- a/Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf
++++ b/Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf
+@@ -19,8 +19,13 @@
+ ################################################################################
+ 
+ [FD.BL32_AP_MM]
++!if $(EDK2_SPMC_AT_EL2) == TRUE
++BaseAddress   = 0xf9302000|gArmTokenSpaceGuid.PcdFdBaseAddress  # UEFI in DRAM + 128MB.
++!else
+ BaseAddress   = 0xff200000|gArmTokenSpaceGuid.PcdFdBaseAddress  # UEFI in DRAM + 128MB.
++!endif
+ Size          = 0x00e00000|gArmTokenSpaceGuid.PcdFdSize         # The size in bytes of the device (64MiB).
++
+ ErasePolarity = 1
+ 
+ BlockSize     = 0x00001000
+diff --git a/Platform/ARM/SgiPkg/PlatformStandaloneMm3.dsc b/Platform/ARM/SgiPkg/PlatformStandaloneMm3.dsc
+new file mode 100644
+index 000000000000..10f63c3f5738
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/PlatformStandaloneMm3.dsc
+@@ -0,0 +1,62 @@
++## @file
++#  StandaloneMM platform description file for RD-N2 platforms.
++#
++#  Copyright (c) 2021 - 2022, ARM Limited. All rights reserved.
++#
++#  SPDX-License-Identifier: BSD-2-Clause-Patent
++##
++
++################################################################################
++#
++# Defines Section - statements that will be processed to create a Makefile.
++#
++################################################################################
++[Defines]
++  PLATFORM_NAME                  = SgiMmStandalone
++  PLATFORM_GUID                  = 67309f8a-d278-4df5-86ee-a1826cf481ed
++  PLATFORM_VERSION               = 1.0
++  DSC_SPECIFICATION              = 0x0001001B
++  OUTPUT_DIRECTORY               = Build/$(PLATFORM_NAME)
++  SUPPORTED_ARCHITECTURES        = AARCH64
++  BUILD_TARGETS                  = DEBUG|RELEASE|NOOPT
++  SKUID_IDENTIFIER               = DEFAULT
++  FLASH_DEFINITION               = Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf
++  DEFINE DEBUG_MESSAGE           = TRUE
++
++  # LzmaF86
++  DEFINE COMPRESSION_TOOL_GUID   = D42AE6BD-1352-4bfb-909A-CA72A6EAE889
++
++# include common definitions.
++!include MdePkg/MdeLibs.dsc.inc
++!include Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
++
++[LibraryClasses]
++  FdtLib|EmbeddedPkg/Library/FdtLib/FdtLib.inf
++
++################################################################################
++#
++# Pcd Section - list of all EDK II PCD Entries defined by this Platform
++#
++################################################################################
++
++[PcdsFixedAtBuild]
++
++!if $(SECURE_STORAGE_ENABLE) == TRUE
++  ##Secure NOR Flash 2
++  gArmSgiTokenSpaceGuid.PcdSmcCs2Base|0x604000000
++  gArmSgiTokenSpaceGuid.PcdSysPeriphBase|0x0C000000
++  gArmSgiTokenSpaceGuid.PcdSysPeriphSysRegBase|0x0C010000
++
++  ##Secure Variable Storage in NOR Flash 2
++  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase64|0x604000000
++  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableSize|0x00100000
++  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingBase64|0x604100000
++  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingSize|0x00100000
++  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase64|0x0604200000
++  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareSize|0x00100000
++!endif
++  
++  # Disables FFA
++!if $(EDK2_ENABLE_FFA) == FALSE
++  gArmTokenSpaceGuid.PcdFfaEnable|0
++!endif
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc b/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+index 4ac097f6fdba..6242d126c783 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+@@ -37,6 +37,9 @@
+   # To enable FF-A as communication protocol between SP and Non secure world
+   DEFINE EDK2_ENABLE_FFA                   = FALSE
+ 
++  # To enable drivers required for SPMC running at EL3
++  DEFINE EDK2_SPMC_AT_EL2                  = FALSE
++
+ [BuildOptions]
+   *_*_*_CC_FLAGS = -D DISABLE_NEW_DEPRECATED_INTERFACES
+ 
+@@ -228,7 +231,11 @@
+   # size of this buffer from ATF, hard-code it here
+   #
+   ## MM Communicate
++!if $(EDK2_SPMC_AT_EL2) == TRUE
++  gArmTokenSpaceGuid.PcdMmBufferBase|0xF8200000
++!else
+   gArmTokenSpaceGuid.PcdMmBufferBase|0xFF600000
++!endif
+   gArmTokenSpaceGuid.PcdMmBufferSize|0x10000
+ 
+   # ACPI Table Header IDs
+diff --git a/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc b/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
+index 9697eea3cb82..776961101b2d 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
+@@ -18,6 +18,8 @@
+   DEFINE EDK2_ENABLE_SRAM_MM               = FALSE
+   # To enable FF-A as communication protocol between SP and Non secure world
+   DEFINE EDK2_ENABLE_FFA                   = FALSE
++  # To enable drivers required for SPMC running at EL3
++  DEFINE EDK2_SPMC_AT_EL2                  = FALSE
+ 
+ [LibraryClasses]
+   #
+@@ -38,6 +40,16 @@
+   PeCoffLib|MdePkg/Library/BasePeCoffLib/BasePeCoffLib.inf
+   PrintLib|MdePkg/Library/BasePrintLib/BasePrintLib.inf
+   ReportStatusCodeLib|MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf
++!if $(EDK2_SPMC_AT_EL2) == TRUE
++  SerialPortLib|ArmPlatformPkg/Library/ArmFfaConsoleLib/ArmFfaConsoleLib.inf
++  CacheMaintenanceLib|MdePkg/Library/BaseCacheMaintenanceLibNull/BaseCacheMaintenanceLibNull.inf
++!else
++  CacheMaintenanceLib|ArmPkg/Library/ArmCacheMaintenanceLib/ArmCacheMaintenanceLib.inf
++  # ARM PL011 UART Driver
++  PL011UartClockLib|ArmPlatformPkg/Library/PL011UartClockLib/PL011UartClockLib.inf
++  PL011UartLib|ArmPlatformPkg/Library/PL011UartLib/PL011UartLib.inf
++  SerialPortLib|ArmPlatformPkg/Library/PL011SerialPortLib/PL011SerialPortLib.inf
++!endif
+ 
+   #
+   # Entry point
+@@ -47,14 +59,8 @@
+   ArmLib|ArmPkg/Library/ArmLib/ArmBaseLib.inf
+   StandaloneMmMmuLib|ArmPkg/Library/StandaloneMmMmuLib/ArmMmuStandaloneMmLib.inf
+   ArmSvcLib|ArmPkg/Library/ArmSvcLib/ArmSvcLib.inf
+-  CacheMaintenanceLib|ArmPkg/Library/ArmCacheMaintenanceLib/ArmCacheMaintenanceLib.inf
+   PeCoffExtraActionLib|StandaloneMmPkg/Library/StandaloneMmPeCoffExtraActionLib/StandaloneMmPeCoffExtraActionLib.inf
+ 
+-  # ARM PL011 UART Driver
+-  PL011UartClockLib|ArmPlatformPkg/Library/PL011UartClockLib/PL011UartClockLib.inf
+-  PL011UartLib|ArmPlatformPkg/Library/PL011UartLib/PL011UartLib.inf
+-  SerialPortLib|ArmPlatformPkg/Library/PL011SerialPortLib/PL011SerialPortLib.inf
+-
+   ImagePropertiesRecordLib|MdeModulePkg/Library/ImagePropertiesRecordLib/ImagePropertiesRecordLib.inf
+   PeCoffGetEntryPointLib|MdePkg/Library/BasePeCoffGetEntryPointLib/BasePeCoffGetEntryPointLib.inf
+ 
+@@ -92,9 +98,11 @@
+   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0xff
+   gEfiMdePkgTokenSpaceGuid.PcdReportStatusCodePropertyMask|0x0f
+ 
++!if $(EDK2_SPMC_AT_EL2) == FALSE
+   ## PL011 - Serial Terminal
+   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase|0x2A410000
+   gEfiMdePkgTokenSpaceGuid.PcdUartDefaultBaudRate|115200
++!endif
+ 
+   gEfiMdePkgTokenSpaceGuid.PcdMaximumGuidedExtractHandler|0x2
+ 
+-- 
+2.39.5
+

@@ -1,0 +1,30 @@
+From 6d94ad9adb5ad4fb2e171f9adaf9dfe0394a0bae Mon Sep 17 00:00:00 2001
+From: Dhinesh Balu <dhinesh.balu@arm.com>
+Date: Thu, 12 Dec 2024 06:11:41 +0000
+Subject: [PATCH 76/78] Platform/Sgi: Update DRAM Block2 Base Address PCD
+
+With a recent design change, the base address for the 2nd DRAM block
+has been updated in from 0x20000000000 to 0x20080000000
+
+Signed-off-by: Dhinesh Balu <dhinesh.balu@arm.com>
+Change-Id: Id1fa222c8a3b4c9966639d126082f63888053491
+---
+ Platform/ARM/SgiPkg/SgiMemoryMap4.dsc.inc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Platform/ARM/SgiPkg/SgiMemoryMap4.dsc.inc b/Platform/ARM/SgiPkg/SgiMemoryMap4.dsc.inc
+index 223fd2ab9355..e1854ce3a32e 100644
+--- a/Platform/ARM/SgiPkg/SgiMemoryMap4.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiMemoryMap4.dsc.inc
+@@ -47,7 +47,7 @@
+   gArmTokenSpaceGuid.PcdSystemMemoryBase|0x80000000
+   gArmTokenSpaceGuid.PcdSystemMemorySize|0x73000000
+   # DRAM Block2 Base and Size
+-  gArmSgiTokenSpaceGuid.PcdDramBlock2Base|0x20000000000
++  gArmSgiTokenSpaceGuid.PcdDramBlock2Base|0x20080000000
+ !ifndef $(PLAT_DRAM2_SIZE)
+   gArmSgiTokenSpaceGuid.PcdDramBlock2Size|0x180000000
+ !else
+-- 
+2.39.5
+

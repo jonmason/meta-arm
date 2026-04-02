@@ -1,0 +1,38 @@
+From 3b1a16c0ced69171f05a2e3330384e40fa5df3a5 Mon Sep 17 00:00:00 2001
+From: Rohit Mathew <rohit.mathew@arm.com>
+Date: Fri, 9 Sep 2022 18:06:16 +0100
+Subject: [PATCH 03/78] Platform/Sgi: Define SLC supported PPTT container
+
+For Neoverse reference design platforms with CMN-700 mesh, System Level
+Cache (SLC) of CMN-700 is treated as a PPTT cache and not a memory-side
+cache. Define a PPTT container type supporting SLC for these platforms.
+
+Signed-off-by: Rohit Mathew <rohit.mathew@arm.com>
+Change-Id: I795e0d9d721e9edd46b84cfcaf11f4bc41acf149
+---
+ Platform/ARM/SgiPkg/Include/SgiAcpiHeader.h | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/Platform/ARM/SgiPkg/Include/SgiAcpiHeader.h b/Platform/ARM/SgiPkg/Include/SgiAcpiHeader.h
+index 3e24f569c95a..73bc5ccbb1f2 100644
+--- a/Platform/ARM/SgiPkg/Include/SgiAcpiHeader.h
++++ b/Platform/ARM/SgiPkg/Include/SgiAcpiHeader.h
+@@ -78,6 +78,15 @@ typedef struct {
+   EFI_ACPI_6_4_PPTT_STRUCTURE_PROCESSOR  Package;
+   RD_PPTT_MINIMAL_CLUSTER                Cluster[CLUSTER_COUNT];
+ } RD_PPTT_PACKAGE;
++
++// PPTT processor package structure with SLC
++typedef struct {
++  EFI_ACPI_6_4_PPTT_STRUCTURE_PROCESSOR  Package;
++  UINT32                                 ResourceOffset;
++  EFI_ACPI_6_4_PPTT_STRUCTURE_CACHE      Slc;
++  RD_PPTT_MINIMAL_CLUSTER                Cluster[CLUSTER_COUNT];
++} RD_PPTT_SLC_PACKAGE;
++
+ #pragma pack ()
+ 
+ //
+-- 
+2.39.5
+

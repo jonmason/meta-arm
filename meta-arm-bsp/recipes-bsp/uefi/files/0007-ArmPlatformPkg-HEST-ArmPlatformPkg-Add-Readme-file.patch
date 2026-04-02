@@ -1,0 +1,90 @@
+From e343b9cf7e17c64a06fa2c011d1adca6ba275607 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Sat, 7 Aug 2021 17:24:53 +0530
+Subject: [PATCH 07/43] ArmPlatformPkg/HEST: ArmPlatformPkg: Add Readme file
+
+Added a readme file that explains the software framework for dynamic
+generation of HEST table.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: Iafe54949948ddf15c1d769cf5886caba589409ba
+---
+ .../Drivers/HestMmErrorSources/Readme.md      | 66 +++++++++++++++++++
+ 1 file changed, 66 insertions(+)
+ create mode 100644 ArmPlatformPkg/Drivers/HestMmErrorSources/Readme.md
+
+diff --git a/ArmPlatformPkg/Drivers/HestMmErrorSources/Readme.md b/ArmPlatformPkg/Drivers/HestMmErrorSources/Readme.md
+new file mode 100644
+index 000000000000..1b6f0713cb9a
+--- /dev/null
++++ b/ArmPlatformPkg/Drivers/HestMmErrorSources/Readme.md
+@@ -0,0 +1,66 @@
++Hardware Error Source Table (HEST)[1] and Software Delegated Exception Interface
++(SDEI)[2] ACPI tables are used to acomplish firmware first error handling.This
++patch series introduces a framework to build and install the HEST ACPI table
++dynamically.
++
++The following figure illustrates the possible usage of the dyanamic
++generation of HEST ACPI table.
++
++                                    NS | S
+++--------------------------------------+--------------------------------------+
++|                                      |                                      |
++|+-------------------------------------+---------------------+                |
++||               +---------------------+--------------------+|                |
++||               |                     |                    ||                |
++|| +-----------+ |+------------------+ | +-----------------+|| +-------------+|
++|| |HestTable  | ||  HestErrorSource | | | HestErrorSource ||| | DMC-620     ||
++|| |  DXE      | ||        DXE       | | |  StandaloneMM   ||| |Standalone MM||
++|| +-----------+ |+------------------+ | +-----------------+|| +-------------+|
++||               |GHESv2               |                    ||                |
++||               +---------------------+--------------------+|                |
++||          +--------------------+     |                     |                |
++||          |PlatformErrorHandler|     |                     |                |
++||          |        DXE         |     |                     |                |
++||          +--------------------+     |                     |                |
++||FF FWK                               |                     |                |
++|+-------------------------------------+---------------------+                |
++|                                      |                                      |
+++--------------------------------------+--------------------------------------+
++                                       |
++                   Figure: Dynamic Hest Table Generation.
++
++All the hardware error sources are added to HEST table as GHESv2[3] error source
++descriptors. The framework comprises of following DXE and MM drivers:
++
++- HestTableDxe:
++  Builds HEST table header and allows appending error source descriptors to the
++  HEST table. Also provides protocol interface to install the built HEST table.
++
++- HestErrorSourceDxe & HestErrorSourceStandaloneMM:
++  These two drivers together retrieve all possible error source descriptors of
++  type GHESv2 from the MM drivers implementing HEST Error Source Descriptor
++  protocol. Once all the descriptors are collected HestErrorSourceDxe appends
++  it to HEST table using HestTableDxe driver.
++
++- PlatformErrorHandlerDxe:
++  Builds and installs SDEI ACPI table. This driver does not initialize(load)
++  until HestErrorSourceDxe driver has finished appending all possible GHESv2
++  error source descriptors to the HEST table. Once that is complete using the
++  HestTableDxe driver it installs the HEST table.
++
++This patch series provides reference implementation for DMC-620 Dynamic Memory
++Controller[4] that has RAS feature enabled. This is platform code
++implemented as Standalone MM driver in edk2-platforms.
++
++References:
++[1] : ACPI 6.3, Table 18-382, Hardware Error Source Table
++[2] : SDEI Platform Design Document, revision b, 10 Appendix C, ACPI table
++      definitions for SDEI
++[3] : ACPI Reference Specification 6.3, Table 18-393 GHESv2 Structure
++[4] : DMC620 Dynamic Memory Controller, revision r1p0
++[5] : UEFI Reference Specification 2.8, Appendix N - Common Platform Error
++      Record
++[6] : UEFI Reference Specification 2.8, Section N.2.5 Memory Error Section
++
++Link to github branch with the patches in this series -
++https://github.com/omkkul01/edk2/tree/ras_firmware_first_edk2
+-- 
+2.39.5
+

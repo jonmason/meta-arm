@@ -1,0 +1,113 @@
+From 6b3ff65a34efa0c777219aefcd8836e7b12a6c88 Mon Sep 17 00:00:00 2001
+From: Lokesh B V <Lokesh.BV@Arm.com>
+Date: Sat, 21 Sep 2024 17:46:23 +0530
+Subject: [PATCH 68/78] Platform/SgiPkg: Enable StMM build for RdV3R1
+
+Enable the use of StandaloneMM on RDV3R1 platform.
+
+Signed-off-by: Lokesh B V <Lokesh.BV@Arm.com>
+Signed-off-by: Dhinesh Kumar Balu <dhineshkumar.balu@arm.com>
+Change-Id: I2a8f97b06853af1a6955c65659210e13a2246315
+---
+ Platform/ARM/SgiPkg/PlatformStandaloneMm4.dsc | 89 +++++++++++++++++++
+ 1 file changed, 89 insertions(+)
+ create mode 100644 Platform/ARM/SgiPkg/PlatformStandaloneMm4.dsc
+
+diff --git a/Platform/ARM/SgiPkg/PlatformStandaloneMm4.dsc b/Platform/ARM/SgiPkg/PlatformStandaloneMm4.dsc
+new file mode 100644
+index 000000000000..c07ad74b2701
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/PlatformStandaloneMm4.dsc
+@@ -0,0 +1,89 @@
++## @file
++#  StandaloneMM platform description file for RD-N2 platforms.
++#
++#  Copyright (c) 2024, Arm Limited. All rights reserved.
++#
++#  SPDX-License-Identifier: BSD-2-Clause-Patent
++##
++
++################################################################################
++#
++# Defines Section - statements that will be processed to create a Makefile.
++#
++################################################################################
++[Defines]
++  PLATFORM_NAME                  = SgiMmStandalone
++  PLATFORM_GUID                  = 7ef0b834-d534-4c7d-b735-92e053d2acdd
++  PLATFORM_VERSION               = 1.0
++  DSC_SPECIFICATION              = 0x0001001B
++  OUTPUT_DIRECTORY               = Build/$(PLATFORM_NAME)
++  SUPPORTED_ARCHITECTURES        = AARCH64
++  BUILD_TARGETS                  = DEBUG|RELEASE|NOOPT
++  SKUID_IDENTIFIER               = DEFAULT
++  FLASH_DEFINITION               = Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf
++  DEFINE DEBUG_MESSAGE           = TRUE
++
++  # LzmaF86
++  DEFINE COMPRESSION_TOOL_GUID   = D42AE6BD-1352-4bfb-909A-CA72A6EAE889
++
++# include common definitions.
++!include MdePkg/MdeLibs.dsc.inc
++!include Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
++
++[LibraryClasses]
++  FdtLib|EmbeddedPkg/Library/FdtLib/FdtLib.inf
++
++################################################################################
++#
++# Pcd Section - list of all EDK II PCD Entries defined by this Platform
++#
++################################################################################
++
++[PcdsFixedAtBuild]
++
++!if $(EDK2_SPMC_AT_EL2) == FALSE
++  ## PL011 - Serial Terminal
++  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase|0x1A410000
++  gEfiMdePkgTokenSpaceGuid.PcdUartDefaultBaudRate|115200
++!endif
++
++!if $(SECURE_STORAGE_ENABLE) == TRUE
++  ##Secure NOR Flash 2
++  gArmSgiTokenSpaceGuid.PcdSmcCs2Base|0x654000000
++  gArmSgiTokenSpaceGuid.PcdSysPeriphBase|0x0C000000
++  gArmSgiTokenSpaceGuid.PcdSysPeriphSysRegBase|0x0C010000
++
++  ##Secure Variable Storage in NOR Flash 2
++  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase64|0x654000000
++  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableSize|0x00100000
++  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingBase64|0x654100000
++  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingSize|0x00100000
++  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase64|0x0654200000
++  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareSize|0x00100000
++!endif
++
++[PcdsFixedAtBuild]
++!if $(EDK2_ENABLE_CPU_MM) == TRUE
++  ## CPU
++  gCpuMmTokenSpaceGuid.PcdCpuErrorDataBase|0xFB1EF000
++  gCpuMmTokenSpaceGuid.PcdCpuErrorDataSize|0x400
++  gCpuMmTokenSpaceGuid.PcdCpuErrorSdeiEventBase|805
++  gCpuMmTokenSpaceGuid.PcdCpuErrorSourceCount|1
++  gCpuMmTokenSpaceGuid.PcdCpuErrorSourceId|10
++!endif
++
++!if $(EDK2_ENABLE_SRAM_MM) == TRUE
++  ## Base Element Ram
++  gSramMmTokenSpaceGuid.PcdSramErrorDataBase|0xFB1F0000
++  gSramMmTokenSpaceGuid.PcdSramErrorDataSize|0x100
++  gSramMmTokenSpaceGuid.PcdSramErrorSdeiEventBase|804
++  gSramMmTokenSpaceGuid.PcdSramErrorSourceCount|1
++  gSramMmTokenSpaceGuid.PcdSramErrorSourceId|20
++  gSramMmTokenSpaceGuid.PcdSramErrorErrStatusCorrectedError|0x3000000
++  gSramMmTokenSpaceGuid.PcdSramErrorErrStatusUncorrectedError|0x20000000
++!endif
++
++  # Disables FFA
++!if $(EDK2_ENABLE_FFA) == FALSE
++  gArmTokenSpaceGuid.PcdFfaEnable|0
++!endif
+-- 
+2.39.5
+

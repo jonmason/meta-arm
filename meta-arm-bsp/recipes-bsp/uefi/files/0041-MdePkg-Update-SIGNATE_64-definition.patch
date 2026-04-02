@@ -1,0 +1,42 @@
+From 2773b926d0049c3f3dc38596dd2fbf4cd991bde5 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Fri, 27 Sep 2024 18:05:04 +0530
+Subject: [PATCH 41/43] MdePkg: Update SIGNATE_64 definition
+
+The SIGNATURE_64 macro definition has error update it.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+---
+ BaseTools/Source/C/Include/Common/UefiBaseTypes.h | 2 +-
+ MdePkg/Include/Base.h                             | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/BaseTools/Source/C/Include/Common/UefiBaseTypes.h b/BaseTools/Source/C/Include/Common/UefiBaseTypes.h
+index acf179af23e2..131ec747b072 100644
+--- a/BaseTools/Source/C/Include/Common/UefiBaseTypes.h
++++ b/BaseTools/Source/C/Include/Common/UefiBaseTypes.h
+@@ -141,7 +141,7 @@ typedef union {
+ #define SIGNATURE_16(A, B)        ((A) | (B << 8))
+ #define SIGNATURE_32(A, B, C, D)  (SIGNATURE_16 (A, B) | (SIGNATURE_16 (C, D) << 16))
+ #define SIGNATURE_64(A, B, C, D, E, F, G, H) \
+-    (SIGNATURE_32 (A, B, C, D) | ((UINT64) (SIGNATURE_32 (E, F, G, H)) << 32))
++    ((UINT64) SIGNATURE_32 (A, B, C, D) | ((UINT64) (SIGNATURE_32 (E, F, G, H)) << 32))
+ 
+ 
+ //
+diff --git a/MdePkg/Include/Base.h b/MdePkg/Include/Base.h
+index 363e0fea40fa..61926c7c9e63 100644
+--- a/MdePkg/Include/Base.h
++++ b/MdePkg/Include/Base.h
+@@ -1329,7 +1329,7 @@ typedef UINTN RETURN_STATUS;
+ 
+ **/
+ #define SIGNATURE_64(A, B, C, D, E, F, G, H) \
+-    (SIGNATURE_32 (A, B, C, D) | ((UINT64) (SIGNATURE_32 (E, F, G, H)) << 32))
++    ((UINT64) SIGNATURE_32 (A, B, C, D) | ((UINT64) (SIGNATURE_32 (E, F, G, H)) << 32))
+ 
+ #if defined (_MSC_EXTENSIONS) && !defined (__INTEL_COMPILER) && !defined (MDE_CPU_EBC)
+ void *
+-- 
+2.39.5
+

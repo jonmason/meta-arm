@@ -1,0 +1,77 @@
+From ad3ea20e68cf61d229bd23a7e076577ff95665da Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Sun, 7 Jan 2024 12:07:00 +0000
+Subject: [PATCH 39/78] Platform/Sgi: Enable PCIe support on RdV3
+
+Enable PCIe support by adding the PCDs required for the platform and
+enabling PCIe flag.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: Ide1dc760a166af71c725237b3f0ac25a61299eda
+---
+ Platform/ARM/SgiPkg/RdV3/RdV3.dsc         | 2 ++
+ Platform/ARM/SgiPkg/RdV3Cfg1/RdV3Cfg1.dsc | 2 ++
+ Platform/ARM/SgiPkg/RdV3Cfg2/RdV3Cfg2.dsc | 2 ++
+ Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc | 7 +++++++
+ 4 files changed, 13 insertions(+)
+
+diff --git a/Platform/ARM/SgiPkg/RdV3/RdV3.dsc b/Platform/ARM/SgiPkg/RdV3/RdV3.dsc
+index 6037d7a4e859..0b5ef23aa330 100644
+--- a/Platform/ARM/SgiPkg/RdV3/RdV3.dsc
++++ b/Platform/ARM/SgiPkg/RdV3/RdV3.dsc
+@@ -22,6 +22,8 @@
+   BOARD_DXE_FV_COMPONENTS        = Platform/ARM/SgiPkg/RdV3/RdV3.fdf.inc
+   BUILD_NUMBER                   = 1
+ 
++DEFINE PCIE_ENABLE             = TRUE
++
+ # include common/basic libraries from MdePkg.
+ !include MdePkg/MdeLibs.dsc.inc
+ 
+diff --git a/Platform/ARM/SgiPkg/RdV3Cfg1/RdV3Cfg1.dsc b/Platform/ARM/SgiPkg/RdV3Cfg1/RdV3Cfg1.dsc
+index d336e06cbf3a..96092bffe960 100644
+--- a/Platform/ARM/SgiPkg/RdV3Cfg1/RdV3Cfg1.dsc
++++ b/Platform/ARM/SgiPkg/RdV3Cfg1/RdV3Cfg1.dsc
+@@ -22,6 +22,8 @@
+   BOARD_DXE_FV_COMPONENTS        = Platform/ARM/SgiPkg/RdV3Cfg1/RdV3Cfg1.fdt.inc
+   BUILD_NUMBER                   = 1
+ 
++  DEFINE PCIE_ENABLE             = TRUE
++
+ # include common definitions from SgiPlatform.dsc
+ !include Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+ !include Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc
+diff --git a/Platform/ARM/SgiPkg/RdV3Cfg2/RdV3Cfg2.dsc b/Platform/ARM/SgiPkg/RdV3Cfg2/RdV3Cfg2.dsc
+index 508831fa0845..ffe688b587bc 100644
+--- a/Platform/ARM/SgiPkg/RdV3Cfg2/RdV3Cfg2.dsc
++++ b/Platform/ARM/SgiPkg/RdV3Cfg2/RdV3Cfg2.dsc
+@@ -22,6 +22,8 @@
+   BOARD_DXE_FV_COMPONENTS        = Platform/ARM/SgiPkg/RdV3Cfg2/RdV3Cfg2.fdf.inc
+   BUILD_NUMBER                   = 1
+ 
++  DEFINE PCIE_ENABLE             = TRUE
++
+ # include common definitions from SgiPlatform.dsc
+ !include Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+ !include Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc
+diff --git a/Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc b/Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc
+index 301a159b6384..e5f467339a11 100644
+--- a/Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc
+@@ -61,6 +61,13 @@
+   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingBase64|0x0601400000
+   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase64|0x0602800000
+ 
++  # PCIe
++  gArmTokenSpaceGuid.PcdPciMmio32Base|0x60000000
++  gArmTokenSpaceGuid.PcdPciMmio32Size|0x10000000
++  gArmTokenSpaceGuid.PcdPciMmio64Base|0x4040000000
++  gArmTokenSpaceGuid.PcdPciMmio64Size|0x4040000000
++  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress|0x4000000000
++
+   # Address bus width - 64GB address space
+   gArmSgiTokenSpaceGuid.PcdMaxAddressBitsPerChip|36
+ 
+-- 
+2.39.5
+

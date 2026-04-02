@@ -1,0 +1,95 @@
+From ad1f01b010f34e4109e32861bcfa002584998d2b Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Thu, 29 Oct 2020 21:46:25 +0530
+Subject: [PATCH 13/78] Platform/Sgi: enable firmware-first error handling
+
+Enable the use of HEST table generation protocol, GHES error source
+descriptor protocol on ARM Neoverse Reference Design platforms.
+This enables the framework to support firmware first error handling on
+ARM Neoverse Reference Design platforms.
+
+Co-authored-by: Thomas Abraham <thomas.abraham@arm.com>
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I008fc7d599989903b01f664f768e57960943535a
+---
+ Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf |  3 +++
+ Platform/ARM/SgiPkg/SgiPlatform.dsc.inc      | 11 +++++++++++
+ Platform/ARM/SgiPkg/SgiPlatform.fdf          |  6 ++++++
+ Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc    |  4 ++++
+ 4 files changed, 24 insertions(+)
+
+diff --git a/Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf b/Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf
+index 653aae8285a6..0bb09d741cc2 100644
+--- a/Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf
++++ b/Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf
+@@ -48,6 +48,9 @@ READ_STATUS        = TRUE
+ READ_LOCK_CAP      = TRUE
+ READ_LOCK_STATUS   = TRUE
+ 
++!if $(EDK2_ENABLE_GHES_MM) == TRUE
++  INF ArmPlatformPkg/Drivers/HestMmErrorSources/HestErrorSourceStandaloneMm.inf
++!endif
+   INF StandaloneMmPkg/Core/StandaloneMmCore.inf
+ !if $(SECURE_STORAGE_ENABLE) == TRUE
+   INF Platform/ARM/Drivers/NorFlashDxe/NorFlashStandaloneMm.inf
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc b/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+index 97efe84191f6..b64e3ed278ba 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+@@ -22,6 +22,9 @@
+   DEFINE LPI_EN                             = FALSE
+   DEFINE CPPC_EN                            = FALSE
+ 
++  # To allow firmware first error handling, set this to TRUE.
++  DEFINE EDK2_ENABLE_GHES_MM                = FALSE
++
+ [BuildOptions]
+   *_*_*_CC_FLAGS = -D DISABLE_NEW_DEPRECATED_INTERFACES
+ 
+@@ -370,3 +373,11 @@
+ !else
+   ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.inf
+ !endif
++
++  #
++  # GHESv2 HEST error sources support
++  #
++  MdeModulePkg/Universal/Apei/HestDxe/HestDxe.inf
++!if $(EDK2_ENABLE_GHES_MM) == TRUE
++  ArmPlatformPkg/Drivers/HestMmErrorSources/HestErrorSourceDxe.inf
++!endif
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.fdf b/Platform/ARM/SgiPkg/SgiPlatform.fdf
+index ecdb0e3afde5..8b0647eb7fed 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatform.fdf
++++ b/Platform/ARM/SgiPkg/SgiPlatform.fdf
+@@ -181,6 +181,12 @@ READ_LOCK_STATUS   = TRUE
+   # MM Communicate
+   INF ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.inf
+ 
++  # Hest Error Source Support
++  INF MdeModulePkg/Universal/Apei/HestDxe/HestDxe.inf
++!if $(EDK2_ENABLE_GHES_MM) == TRUE
++  INF ArmPlatformPkg/Drivers/HestMmErrorSources/HestErrorSourceDxe.inf
++!endif
++
+   #
+   # Platform driver
+   #
+diff --git a/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc b/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
+index c3d2bacf815f..4aa1ae536eab 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
+@@ -136,6 +136,10 @@
+   }
+ !endif
+ 
++!if $(EDK2_ENABLE_GHES_MM) == TRUE
++  ArmPlatformPkg/Drivers/HestMmErrorSources/HestErrorSourceStandaloneMm.inf
++!endif
++
+ ###################################################################################################
+ #
+ # BuildOptions Section - Define the module specific tool chain flags that should be used as
+-- 
+2.39.5
+

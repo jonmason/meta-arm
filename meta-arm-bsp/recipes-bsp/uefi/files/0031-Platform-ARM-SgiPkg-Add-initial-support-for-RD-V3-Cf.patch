@@ -1,0 +1,1381 @@
+From a8bd33020a7bf8e58fdc15d7c0db4a8fd6840cef Mon Sep 17 00:00:00 2001
+From: Pranav Madhu <pranav.madhu@arm.com>
+Date: Tue, 30 May 2023 22:15:18 +0530
+Subject: [PATCH 31/78] Platform/ARM/SgiPkg: Add initial support for RD-V3-Cfg2
+ platform
+
+RD-V3-Cfg2 platform is quad chip configuration of RD-V3
+platform, with 4 poseidon CPU per chip, with each chip having local
+address mapping of 64GB per chip. Also each chip is equiped with 8GB
+DRAM. This patch add initial support for RD-V3-Cfg2 platform.
+
+Change-Id: Ib2c406dbfae6566693bd88f98ce462c1f4d0b969
+Signed-off-by: Pranav Madhu <pranav.madhu@arm.com>
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+---
+ .../ARM/SgiPkg/AcpiTables/RdV3Cfg2/Dsdt.asl   | 512 ++++++++++++++++++
+ .../ARM/SgiPkg/AcpiTables/RdV3Cfg2/Madt.aslc  | 152 ++++++
+ .../ARM/SgiPkg/AcpiTables/RdV3Cfg2/Pptt.aslc  | 172 ++++++
+ .../ARM/SgiPkg/AcpiTables/RdV3Cfg2/Srat.aslc  | 117 ++++
+ .../SgiPkg/AcpiTables/RdV3Cfg2AcpiTables.inf  |  80 +++
+ Platform/ARM/SgiPkg/Include/SgiPlatform.h     |  11 +
+ .../SgiPkg/Library/PlatformLib/PlatformLib.c  |   6 +
+ .../Library/PlatformLib/PlatformLib.inf       |   1 +
+ .../Library/PlatformLib/PlatformLibMem.c      |  40 +-
+ Platform/ARM/SgiPkg/RdV3Cfg2/RdV3Cfg2.dsc     |  64 +++
+ Platform/ARM/SgiPkg/RdV3Cfg2/RdV3Cfg2.fdf.inc |  10 +
+ Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc     |   7 +-
+ Platform/ARM/SgiPkg/SgiPlatform.dec           |   3 +
+ 13 files changed, 1164 insertions(+), 11 deletions(-)
+ create mode 100644 Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2/Dsdt.asl
+ create mode 100644 Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2/Madt.aslc
+ create mode 100644 Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2/Pptt.aslc
+ create mode 100644 Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2/Srat.aslc
+ create mode 100644 Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2AcpiTables.inf
+ create mode 100644 Platform/ARM/SgiPkg/RdV3Cfg2/RdV3Cfg2.dsc
+ create mode 100644 Platform/ARM/SgiPkg/RdV3Cfg2/RdV3Cfg2.fdf.inc
+
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2/Dsdt.asl b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2/Dsdt.asl
+new file mode 100644
+index 000000000000..3db8764680ad
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2/Dsdt.asl
+@@ -0,0 +1,512 @@
++/** @file
++*  Differentiated System Description Table Fields (DSDT)
++*
++*  Copyright (c) 2022 - 2023, Arm Limited. All rights reserved.<BR>
++*
++*  SPDX-License-Identifier: BSD-2-Clause-Patent
++*
++* @par Specification Reference:
++*   - ACPI 6.5, Chapter 5, Section 5.2.11.1, Differentiated System Description
++*     Table (DSDT)
++*   - ACPI 6.5, Chapter 8, Section 8.4.3, Lower Power Idle States
++*   - ACPI 6.5, Chapter 8, Section 8.4.6, Collaborative Processor Performance
++*     Control
++*   - Arm Functional Fixed Hardware Specification v1.2, Chapter 3, Section 3.1,
++*     Idle management and Low Power Idle states
++*   - Arm Functional Fixed Hardware Specification v1.2, Chapter 3, Section 3.2,
++*     Performance management and Collaborative Processor Performance Control
++*
++**/
++
++#include "SgiPlatform.h"
++#include "SgiAcpiHeader.h"
++
++DefinitionBlock ("DsdtTable.aml", "DSDT", 2, "ARMLTD", "ARMSGI",
++                 EFI_ACPI_ARM_OEM_REVISION) {
++  Scope (_SB) {
++    /* _OSC: Operating System Capabilities */
++    Method (_OSC, 4, Serialized) {
++      CreateDWordField (Arg3, 0x00, STS0)
++      CreateDWordField (Arg3, 0x04, CAP0)
++
++      /* Platform-wide Capabilities */
++      If (LEqual (Arg0, ToUUID("0811b06e-4a27-44f9-8d60-3cbbc22e7b48"))) {
++        /* OSC rev 1 supported, for other version, return failure */
++        If (LEqual (Arg1, One)) {
++          And (STS0, Not (OSC_STS_MASK), STS0)
++
++          If (And (CAP0, OSC_CAP_OS_INITIATED_LPI)) {
++            /* OS initiated LPI not supported */
++            And (CAP0, Not (OSC_CAP_OS_INITIATED_LPI), CAP0)
++            Or (STS0, OSC_STS_CAPABILITY_MASKED, STS0)
++          }
++
++          If (And (CAP0, OSC_CAP_PLAT_COORDINATED_LPI)) {
++            if (LEqual (FixedPcdGet32 (PcdOscLpiEnable), Zero)) {
++              And (CAP0, Not (OSC_CAP_PLAT_COORDINATED_LPI), CAP0)
++              Or (STS0, OSC_STS_CAPABILITY_MASKED, STS0)
++            }
++          }
++
++          If (And (CAP0, OSC_CAP_CPPC_SUPPORT)) {
++            /* CPPC revision 1 and below not supported */
++            And (CAP0, Not (OSC_CAP_CPPC_SUPPORT), CAP0)
++            Or (STS0, OSC_STS_CAPABILITY_MASKED, STS0)
++          }
++
++          If (And (CAP0, OSC_CAP_CPPC2_SUPPORT)) {
++            if (LEqual (FixedPcdGet32 (PcdOscCppcEnable), Zero)) {
++              And (CAP0, Not (OSC_CAP_CPPC2_SUPPORT), CAP0)
++              Or (STS0, OSC_STS_CAPABILITY_MASKED, STS0)
++            }
++          }
++
++        } Else {
++          And (STS0, Not (OSC_STS_MASK), STS0)
++          Or (STS0, Or (OSC_STS_FAILURE, OSC_STS_UNRECOGNIZED_REV), STS0)
++        }
++      } Else {
++        And (STS0, Not (OSC_STS_MASK), STS0)
++        Or (STS0, Or (OSC_STS_FAILURE, OSC_STS_UNRECOGNIZED_UUID), STS0)
++      }
++
++      Return (Arg3)
++    }
++
++    Name (PLPI, Package () {  /* LPI for Processor, support 2 LPI states */
++      0,                      // Version
++      0,                      // Level Index
++      2,                      // Count
++      Package () {            // WFI for CPU
++        1,                    // Min residency (uS)
++        1,                    // Wake latency (uS)
++        1,                    // Flags
++        0,                    // Arch Context lost Flags (no loss)
++        0,                    // Residency Counter Frequency
++        0,                    // No parent state
++        ResourceTemplate () { // Register Entry method
++          Register (FFixedHW,
++            32,               // Bit Width
++            0,                // Bit Offset
++            0xFFFFFFFF,       // Address
++            3,                // Access Size
++          )
++        },
++        ResourceTemplate () { // Null Residency Counter
++          Register (SystemMemory, 0, 0, 0, 0)
++        },
++        ResourceTemplate () { // Null Usage Counter
++          Register (SystemMemory, 0, 0, 0, 0)
++        },
++        "LPI1-Core"
++      },
++      Package () {            // Power Gating state for CPU
++        150,                  // Min residency (uS)
++        350,                  // Wake latency (uS)
++        1,                    // Flags
++        1,                    // Arch Context lost Flags (Core context lost)
++        0,                    // Residency Counter Frequency
++        0,                    // No parent state
++        ResourceTemplate () { // Register Entry method
++          Register (FFixedHW,
++            32,               // Bit Width
++            0,                // Bit Offset
++            0x40000002,       // Address (PwrLvl:core, StateTyp:PwrDn)
++            3,                // Access Size
++          )
++        },
++        ResourceTemplate () { // Null Residency Counter
++          Register (SystemMemory, 0, 0, 0, 0)
++        },
++        ResourceTemplate () { // Null Usage Counter
++          Register (SystemMemory, 0, 0, 0, 0)
++        },
++        "LPI3-Core"
++      },
++    })
++
++    Device (CL00) {   // Cluster 0
++      Name (_HID, "ACPI0010")
++      Name (_UID, 0)
++
++      Device (CP00) { // Neoverse Poseidon core 0
++        Name (_HID, "ACPI0007")
++        Name (_UID, 0)
++        Name (_STA, 0xF)
++
++        Name (_CPC, Package()
++          CPPC_PACKAGE_INIT (0x200093000, 0x200093004, 20, 160, 160, 85, 85, 5)
++        )
++
++        Name (_PSD, Package () {
++          Package ()
++            PSD_INIT (0)
++        })
++
++        Method (_LPI, 0, NotSerialized) {
++          Return (\_SB.PLPI)
++        }
++      }
++    }
++
++    Device (CL01) {   // Cluster 1
++      Name (_HID, "ACPI0010")
++      Name (_UID, 1)
++
++      Device (CP01) { // Neoverse Poseidon core 1
++        Name (_HID, "ACPI0007")
++        Name (_UID, 1)
++        Name (_STA, 0xF)
++
++        Name (_CPC, Package()
++          CPPC_PACKAGE_INIT (0x200293000, 0x200293004, 20, 160, 160, 85, 85, 5)
++        )
++
++        Name (_PSD, Package () {
++          Package ()
++            PSD_INIT (1)
++        })
++
++        Method (_LPI, 0, NotSerialized) {
++          Return (\_SB.PLPI)
++        }
++      }
++    }
++
++    Device (CL02) {   // Cluster 2
++      Name (_HID, "ACPI0010")
++      Name (_UID, 2)
++
++      Device (CP02) { // Neoverse Poseidon core 2
++        Name (_HID, "ACPI0007")
++        Name (_UID, 2)
++        Name (_STA, 0xF)
++
++        Name (_CPC, Package()
++          CPPC_PACKAGE_INIT (0x200493000, 0x200493004, 20, 160, 160, 85, 85, 5)
++        )
++
++        Name (_PSD, Package () {
++          Package ()
++            PSD_INIT (2)
++        })
++
++        Method (_LPI, 0, NotSerialized) {
++          Return (\_SB.PLPI)
++        }
++      }
++    }
++
++    Device (CL03) {   // Cluster 3
++      Name (_HID, "ACPI0010")
++      Name (_UID, 3)
++
++      Device (CP03) { // Neoverse Poseidon core 3
++        Name (_HID, "ACPI0007")
++        Name (_UID, 3)
++        Name (_STA, 0xF)
++
++        Name (_CPC, Package()
++          CPPC_PACKAGE_INIT (0x200693000, 0x200693004, 20, 160, 160, 85, 85, 5)
++        )
++
++        Name (_PSD, Package () {
++          Package ()
++            PSD_INIT (3)
++        })
++
++        Method (_LPI, 0, NotSerialized) {
++          Return (\_SB.PLPI)
++        }
++      }
++    }
++
++    Device (CL04) {   // Cluster 4
++      Name (_HID, "ACPI0010")
++      Name (_UID, 4)
++
++      Device (CP04) { // Neoverse Poseidon core 4
++        Name (_HID, "ACPI0007")
++        Name (_UID, 4)
++        Name (_STA, 0xF)
++
++        Name (_CPC, Package()
++          CPPC_PACKAGE_INIT (0x1200093000, 0x1200093004, 20, 160, 160, 85, 85, 5)
++        )
++
++        Name (_PSD, Package () {
++          Package ()
++            PSD_INIT (4)
++        })
++
++        Method (_LPI, 0, NotSerialized) {
++          Return (\_SB.PLPI)
++        }
++      }
++    }
++
++    Device (CL05) {   // Cluster 5
++      Name (_HID, "ACPI0010")
++      Name (_UID, 5)
++
++      Device (CP05) { // Neoverse Poseidon core 5
++        Name (_HID, "ACPI0007")
++        Name (_UID, 5)
++        Name (_STA, 0xF)
++
++        Name (_CPC, Package()
++          CPPC_PACKAGE_INIT (0x1200293000, 0x1200293004, 20, 160, 160, 85, 85, 5)
++        )
++
++        Name (_PSD, Package () {
++          Package ()
++            PSD_INIT (5)
++        })
++
++        Method (_LPI, 0, NotSerialized) {
++          Return (\_SB.PLPI)
++        }
++      }
++    }
++
++    Device (CL06) {   // Cluster 6
++      Name (_HID, "ACPI0010")
++      Name (_UID, 6)
++
++      Device (CP06) { // Neoverse Poseidon core 6
++        Name (_HID, "ACPI0007")
++        Name (_UID, 6)
++        Name (_STA, 0xF)
++
++        Name (_CPC, Package()
++          CPPC_PACKAGE_INIT (0x1200493000, 0x1200493004, 20, 160, 160, 85, 85, 5)
++        )
++
++        Name (_PSD, Package () {
++          Package ()
++            PSD_INIT (6)
++        })
++
++        Method (_LPI, 0, NotSerialized) {
++          Return (\_SB.PLPI)
++        }
++      }
++    }
++
++    Device (CL07) {   // Cluster 7
++      Name (_HID, "ACPI0010")
++      Name (_UID, 7)
++
++      Device (CP07) { // Neoverse Poseidon core 7
++        Name (_HID, "ACPI0007")
++        Name (_UID, 7)
++        Name (_STA, 0xF)
++
++        Name (_CPC, Package()
++          CPPC_PACKAGE_INIT (0x1200693000, 0x1200693004, 20, 160, 160, 85, 85, 5)
++        )
++
++        Name (_PSD, Package () {
++          Package ()
++            PSD_INIT (7)
++        })
++
++        Method (_LPI, 0, NotSerialized) {
++          Return (\_SB.PLPI)
++        }
++      }
++    }
++
++    Device (CL08) {   // Cluster 8
++      Name (_HID, "ACPI0010")
++      Name (_UID, 8)
++
++      Device (CP08) { // Neoverse Poseidon core 8
++        Name (_HID, "ACPI0007")
++        Name (_UID, 8)
++        Name (_STA, 0xF)
++
++        Name (_CPC, Package()
++          CPPC_PACKAGE_INIT (0x2200093000, 0x2200093004, 20, 160, 160, 85, 85, 5)
++        )
++
++        Name (_PSD, Package () {
++          Package ()
++            PSD_INIT (8)
++        })
++
++        Method (_LPI, 0, NotSerialized) {
++          Return (\_SB.PLPI)
++        }
++      }
++    }
++
++    Device (CL09) {   // Cluster 9
++      Name (_HID, "ACPI0010")
++      Name (_UID, 9)
++
++      Device (CP09) { // Neoverse Poseidon core 9
++        Name (_HID, "ACPI0007")
++        Name (_UID, 9)
++        Name (_STA, 0xF)
++
++        Name (_CPC, Package()
++          CPPC_PACKAGE_INIT (0x2200293000, 0x2200293004, 20, 160, 160, 85, 85, 5)
++        )
++
++        Name (_PSD, Package () {
++          Package ()
++            PSD_INIT (9)
++        })
++
++        Method (_LPI, 0, NotSerialized) {
++          Return (\_SB.PLPI)
++        }
++      }
++    }
++
++    Device (CL10) {   // Cluster 10
++      Name (_HID, "ACPI0010")
++      Name (_UID, 10)
++
++      Device (CP10) { // Neoverse Poseidon core 10
++        Name (_HID, "ACPI0007")
++        Name (_UID, 10)
++        Name (_STA, 0xF)
++
++        Name (_CPC, Package()
++          CPPC_PACKAGE_INIT (0x2200493000, 0x2200493004, 20, 160, 160, 85, 85, 5)
++        )
++
++        Name (_PSD, Package () {
++          Package ()
++            PSD_INIT (10)
++        })
++
++        Method (_LPI, 0, NotSerialized) {
++          Return (\_SB.PLPI)
++        }
++      }
++    }
++
++    Device (CL11) {   // Cluster 11
++      Name (_HID, "ACPI0010")
++      Name (_UID, 11)
++
++      Device (CP11) { // Neoverse Poseidon core 11
++        Name (_HID, "ACPI0007")
++        Name (_UID, 11)
++        Name (_STA, 0xF)
++
++        Name (_CPC, Package()
++          CPPC_PACKAGE_INIT (0x2200693000, 0x2200693004, 20, 160, 160, 85, 85, 5)
++        )
++
++        Name (_PSD, Package () {
++          Package ()
++            PSD_INIT (11)
++        })
++
++        Method (_LPI, 0, NotSerialized) {
++          Return (\_SB.PLPI)
++        }
++      }
++    }
++
++    Device (CL12) {   // Cluster 12
++      Name (_HID, "ACPI0010")
++      Name (_UID, 12)
++
++      Device (CP12) { // Neoverse Poseidon core 12
++        Name (_HID, "ACPI0007")
++        Name (_UID, 12)
++        Name (_STA, 0xF)
++
++        Name (_CPC, Package()
++          CPPC_PACKAGE_INIT (0x3200093000, 0x3200093004, 20, 160, 160, 85, 85, 5)
++        )
++
++        Name (_PSD, Package () {
++          Package ()
++            PSD_INIT (12)
++        })
++
++        Method (_LPI, 0, NotSerialized) {
++          Return (\_SB.PLPI)
++        }
++      }
++    }
++
++    Device (CL13) {   // Cluster 13
++      Name (_HID, "ACPI0010")
++      Name (_UID, 13)
++
++      Device (CP13) { // Neoverse Poseidon core 13
++        Name (_HID, "ACPI0007")
++        Name (_UID, 13)
++        Name (_STA, 0xF)
++
++        Name (_CPC, Package()
++          CPPC_PACKAGE_INIT (0x3200293000, 0x3200293004, 20, 160, 160, 85, 85, 5)
++        )
++
++        Name (_PSD, Package () {
++          Package ()
++            PSD_INIT (13)
++        })
++
++        Method (_LPI, 0, NotSerialized) {
++          Return (\_SB.PLPI)
++        }
++      }
++    }
++
++    Device (CL14) {   // Cluster 14
++      Name (_HID, "ACPI0010")
++      Name (_UID, 14)
++
++      Device (CP14) { // Neoverse Poseidon core 14
++        Name (_HID, "ACPI0007")
++        Name (_UID, 14)
++        Name (_STA, 0xF)
++
++        Name (_CPC, Package()
++          CPPC_PACKAGE_INIT (0x3200493000, 0x3200493004, 20, 160, 160, 85, 85, 5)
++        )
++
++        Name (_PSD, Package () {
++          Package ()
++            PSD_INIT (14)
++        })
++
++        Method (_LPI, 0, NotSerialized) {
++          Return (\_SB.PLPI)
++        }
++      }
++    }
++
++    Device (CL15) {   // Cluster 15
++      Name (_HID, "ACPI0010")
++      Name (_UID, 15)
++
++      Device (CP15) { // Neoverse Poseidon core 15
++        Name (_HID, "ACPI0007")
++        Name (_UID, 15)
++        Name (_STA, 0xF)
++
++        Name (_CPC, Package()
++          CPPC_PACKAGE_INIT (0x3200693000, 0x3200693004, 20, 160, 160, 85, 85, 5)
++        )
++
++        Name (_PSD, Package () {
++          Package ()
++            PSD_INIT (15)
++        })
++
++        Method (_LPI, 0, NotSerialized) {
++          Return (\_SB.PLPI)
++        }
++      }
++    }
++  } // Scope(_SB)
++}
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2/Madt.aslc b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2/Madt.aslc
+new file mode 100644
+index 000000000000..59c5f333f62f
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2/Madt.aslc
+@@ -0,0 +1,152 @@
++/** @file
++  Multiple APIC Description Table (MADT)
++
++  The MADT table provides OSPM with information necessary for operation on
++  systems with Generic interrupt controller (GIC). The information about the GIC
++  CPU interface, redistributor, distributor and ITS blocks on the RD-N2-Cfg2
++  platform is included in this table.
++
++  Copyright (c) 2022, Arm Limited. All rights reserved.
++
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++
++  @par Specification Reference:
++    - ACPI 6.4, Chapter 5, Section 5.2.12, Multiple APIC Description Table
++**/
++
++#include <Library/AcpiLib.h>
++#include <Library/ArmLib.h>
++#include <Library/PcdLib.h>
++#include "SgiAcpiHeader.h"
++#include "SgiPlatform.h"
++
++#define CORE_CNT   (FixedPcdGet32 (PcdClusterCount) * \
++                      FixedPcdGet32 (PcdCoreCount))
++#define CHIP_CNT   (FixedPcdGet32 (PcdChipCount))
++
++
++// Multiple APIC Description Table
++#pragma pack (1)
++
++typedef struct {
++  EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER   Header;
++  EFI_ACPI_6_4_GIC_STRUCTURE                            GicInterfaces[CORE_CNT * CHIP_CNT];
++  EFI_ACPI_6_4_GIC_DISTRIBUTOR_STRUCTURE                GicDistributor;
++  EFI_ACPI_6_4_GICR_STRUCTURE                           GicRedistributor[CHIP_CNT];
++  EFI_ACPI_6_4_GIC_ITS_STRUCTURE                        GicIts[12];
++} EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE;
++
++#pragma pack ()
++
++STATIC EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE Madt = {
++  {
++    ARM_ACPI_HEADER (
++      EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE,
++      EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE,
++      EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE_REVISION
++    ),
++    // MADT specific fields
++    0, // LocalApicAddress
++    0  // Flags
++  },
++  {
++    // Format: EFI_ACPI_6_4_GICC_STRUCTURE_INIT(GicId, AcpiCpuUid, Mpidr, Flags,
++    //                                          PmuIrq, GicBase, GicVBase,
++    //                                          GicHBase, GsivId, GicRBase,
++    //                                          Efficiency,
++    //                                          SpeOverflowInterrupt)
++    // Note: The GIC Structure of the primary CPU must be the first entry
++    // (see chapter 5.2.12.14 GICC Structure of ACPI v6.4).
++
++    // Chip 0
++    EFI_ACPI_6_4_GICC_STRUCTURE_INIT( // Neoverse Poseidon core0
++      0, 0, GET_MPID(0x0, 0x0), EFI_ACPI_6_4_GIC_ENABLED, 23,
++      0, 0, 0, 25, 0, 0, 0),
++    EFI_ACPI_6_4_GICC_STRUCTURE_INIT( // Neoverse Poseidon core1
++      0, 1, GET_MPID(0x100, 0x0), EFI_ACPI_6_4_GIC_ENABLED, 23,
++      0, 0, 0, 25, 0, 0, 0),
++    EFI_ACPI_6_4_GICC_STRUCTURE_INIT( // Neoverse Poseidon core2
++      0, 2, GET_MPID(0x200, 0x0), EFI_ACPI_6_4_GIC_ENABLED, 23,
++      0, 0, 0, 25, 0, 0, 0),
++    EFI_ACPI_6_4_GICC_STRUCTURE_INIT( // Neoverse Poseidon core3
++      0, 3, GET_MPID(0x300, 0x0), EFI_ACPI_6_4_GIC_ENABLED, 23,
++      0, 0, 0, 25, 0, 0, 0),
++
++    // Chip 1
++    EFI_ACPI_6_4_GICC_STRUCTURE_INIT( // Neoverse Poseidon core0
++      0, 4, GET_MPID(0x01000000ULL, 0x0), EFI_ACPI_6_4_GIC_ENABLED, 23,
++      0, 0, 0, 25, 0, 0, 0),
++    EFI_ACPI_6_4_GICC_STRUCTURE_INIT( // Neoverse Poseidon core1
++      0, 5, GET_MPID(0x01000100ULL, 0x0), EFI_ACPI_6_4_GIC_ENABLED, 23,
++      0, 0, 0, 25, 0, 0, 0),
++    EFI_ACPI_6_4_GICC_STRUCTURE_INIT( // Neoverse Poseidon core2
++      0, 6, GET_MPID(0x01000200ULL, 0x0), EFI_ACPI_6_4_GIC_ENABLED, 23,
++      0, 0, 0, 25, 0, 0, 0),
++    EFI_ACPI_6_4_GICC_STRUCTURE_INIT( // Neoverse Poseidon core3
++      0, 7, GET_MPID(0x01000300ULL, 0x0), EFI_ACPI_6_4_GIC_ENABLED, 23,
++      0, 0, 0, 25, 0, 0, 0),
++
++    // Chip 2
++    EFI_ACPI_6_4_GICC_STRUCTURE_INIT( // Neoverse Poseidon core0
++      0, 8, GET_MPID(0x02000000ULL, 0x0), EFI_ACPI_6_4_GIC_ENABLED, 23,
++      0, 0, 0, 25, 0, 0, 0),
++    EFI_ACPI_6_4_GICC_STRUCTURE_INIT( // Neoverse Poseidon core1
++      0, 9, GET_MPID(0x02000100ULL, 0x0), EFI_ACPI_6_4_GIC_ENABLED, 23,
++      0, 0, 0, 25, 0, 0, 0),
++    EFI_ACPI_6_4_GICC_STRUCTURE_INIT( // Neoverse Poseidon core2
++      0, 10, GET_MPID(0x02000200ULL, 0x0), EFI_ACPI_6_4_GIC_ENABLED, 23,
++      0, 0, 0, 25, 0, 0, 0),
++    EFI_ACPI_6_4_GICC_STRUCTURE_INIT( // Neoverse Poseidon core3
++      0, 11, GET_MPID(0x02000300ULL, 0x0), EFI_ACPI_6_4_GIC_ENABLED, 23,
++      0, 0, 0, 25, 0, 0, 0),
++
++    // Chip 3
++    EFI_ACPI_6_4_GICC_STRUCTURE_INIT( // Neoverse Poseidon core0
++      0, 12, GET_MPID(0x03000000ULL, 0x0), EFI_ACPI_6_4_GIC_ENABLED, 23,
++      0, 0, 0, 25, 0, 0, 0),
++    EFI_ACPI_6_4_GICC_STRUCTURE_INIT( // Neoverse Poseidon core1
++      0, 13, GET_MPID(0x03000100ULL, 0x0), EFI_ACPI_6_4_GIC_ENABLED, 23,
++      0, 0, 0, 25, 0, 0, 0),
++    EFI_ACPI_6_4_GICC_STRUCTURE_INIT( // Neoverse Poseidon core2
++      0, 14, GET_MPID(0x03000200ULL, 0x0), EFI_ACPI_6_4_GIC_ENABLED, 23,
++      0, 0, 0, 25, 0, 0, 0),
++    EFI_ACPI_6_4_GICC_STRUCTURE_INIT( // Neoverse Poseidon core3
++      0, 15, GET_MPID(0x03000300ULL, 0x0), EFI_ACPI_6_4_GIC_ENABLED, 23,
++      0, 0, 0, 25, 0, 0, 0),
++  },
++  // GIC Distributor Entry
++  EFI_ACPI_6_4_GIC_DISTRIBUTOR_INIT(0, FixedPcdGet32 (PcdGicDistributorBase),
++                                    0, 3),
++  {
++    // GIC Redistributor
++    EFI_ACPI_6_4_GIC_REDISTRIBUTOR_INIT(FixedPcdGet32 (PcdGicRedistributorsBase) +
++      SGI_REMOTE_CHIP_MEM_OFFSET(0), SIZE_16MB),
++    EFI_ACPI_6_4_GIC_REDISTRIBUTOR_INIT(FixedPcdGet32 (PcdGicRedistributorsBase) +
++      SGI_REMOTE_CHIP_MEM_OFFSET(1), SIZE_16MB),
++    EFI_ACPI_6_4_GIC_REDISTRIBUTOR_INIT(FixedPcdGet32 (PcdGicRedistributorsBase) +
++      SGI_REMOTE_CHIP_MEM_OFFSET(2), SIZE_16MB),
++    EFI_ACPI_6_4_GIC_REDISTRIBUTOR_INIT(FixedPcdGet32 (PcdGicRedistributorsBase) +
++      SGI_REMOTE_CHIP_MEM_OFFSET(3), SIZE_16MB)
++  },
++  // GIC ITS
++  {
++    EFI_ACPI_6_4_GIC_ITS_INIT(0, 0x30040000),
++    EFI_ACPI_6_4_GIC_ITS_INIT(1, 0x1030040000),
++    EFI_ACPI_6_4_GIC_ITS_INIT(2, 0x2030040000),
++    EFI_ACPI_6_4_GIC_ITS_INIT(3, 0x3030040000),
++    EFI_ACPI_6_4_GIC_ITS_INIT(4, 0x30080000),
++    EFI_ACPI_6_4_GIC_ITS_INIT(5, 0x1030080000),
++    EFI_ACPI_6_4_GIC_ITS_INIT(6, 0x2030080000),
++    EFI_ACPI_6_4_GIC_ITS_INIT(7, 0x3030080000),
++    EFI_ACPI_6_4_GIC_ITS_INIT(8, 0x300C0000),
++    EFI_ACPI_6_4_GIC_ITS_INIT(9, 0x10300C0000),
++    EFI_ACPI_6_4_GIC_ITS_INIT(10, 0x20300C0000),
++    EFI_ACPI_6_4_GIC_ITS_INIT(11, 0x30300C0000),
++  },
++};
++
++//
++// Reference the table being generated to prevent the optimizer from removing
++// the data structure from the executable
++//
++VOID* CONST ReferenceAcpiTable = &Madt;
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2/Pptt.aslc b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2/Pptt.aslc
+new file mode 100644
+index 000000000000..d633abccb8f2
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2/Pptt.aslc
+@@ -0,0 +1,172 @@
++/** @file
++  Processor Properties Topology Table (PPTT) for RD-V3-Cfg2 platform
++
++  This file describes the topological structure of the processor block on the
++  RD-V3-Cfg2 platform in the form as defined by ACPI PPTT table. The
++  RD-V3-Cfg2 platform is composed of four identical chips connected over
++  cache coherent interconnect. Each of the chip on the platform includes four
++  single thread CPUS. Each of the CPUs include 64KB L1 Data cache, 64KB L1
++  Instruction cache and 1MB L2 cache.
++
++  Copyright (c) 2023, Arm Limited. All rights reserved.<BR>
++
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++
++  @par Specification Reference:
++    - ACPI 6.4, Chapter 5, Section 5.2.29, Processor Properties Topology Table
++**/
++
++#include <Library/AcpiLib.h>
++#include <Library/ArmLib.h>
++#include <Library/PcdLib.h>
++#include "SgiAcpiHeader.h"
++#include "SgiPlatform.h"
++
++#define CHIP_COUNT      FixedPcdGet32 (PcdChipCount)
++
++/** Define helper macro for populating processor core information.
++
++  @param [in] PackageId Package instance number.
++  @param [in] ClusterId Cluster instance number.
++  @param [in] CpuId     CPU instance number.
++**/
++#define PPTT_CORE_INIT(PackageId, ClusterId, CpuId)                            \
++  {                                                                            \
++    /* Parameters for CPU Core */                                              \
++    EFI_ACPI_6_4_PPTT_STRUCTURE_PROCESSOR_INIT (                               \
++      OFFSET_OF (RD_PPTT_CORE, DCache),     /* Length */                       \
++      PPTT_PROCESSOR_CORE_FLAGS,            /* Flag */                         \
++      OFFSET_OF (EFI_ACPI_6_4_PROCESSOR_PROPERTIES_TOPOLOGY_TABLE,             \
++        Package[PackageId].Cluster[ClusterId]), /* Parent */                   \
++      ((PackageId << 2) | ClusterId),       /* ACPI Id */                      \
++      2                                     /* Num of private resource */      \
++    ),                                                                         \
++                                                                               \
++    /* Offsets of the private resources */                                     \
++    {                                                                          \
++      OFFSET_OF (EFI_ACPI_6_4_PROCESSOR_PROPERTIES_TOPOLOGY_TABLE,             \
++        Package[PackageId].Cluster[ClusterId].Core[CpuId].DCache),             \
++      OFFSET_OF (EFI_ACPI_6_4_PROCESSOR_PROPERTIES_TOPOLOGY_TABLE,             \
++        Package[PackageId].Cluster[ClusterId].Core[CpuId].ICache)              \
++    },                                                                         \
++                                                                               \
++    /* L1 data cache parameters */                                             \
++    EFI_ACPI_6_4_PPTT_STRUCTURE_CACHE_INIT (                                   \
++      PPTT_CACHE_STRUCTURE_FLAGS,           /* Flag */                         \
++      OFFSET_OF (EFI_ACPI_6_4_PROCESSOR_PROPERTIES_TOPOLOGY_TABLE,             \
++        Package[PackageId].Cluster[ClusterId].Core[CpuId].L2Cache),            \
++                                            /* Next level of cache */          \
++      SIZE_64KB,                            /* Size */                         \
++      256,                                  /* Num of sets */                  \
++      4,                                    /* Associativity */                \
++      PPTT_DATA_CACHE_ATTR,                 /* Attributes */                   \
++      64,                                   /* Line size */                    \
++      RD_PPTT_CACHE_ID(PackageId, ClusterId, CpuId, L1DataCache)               \
++                                            /* Cache id */                     \
++    ),                                                                         \
++                                                                               \
++    /* L1 instruction cache parameters */                                      \
++    EFI_ACPI_6_4_PPTT_STRUCTURE_CACHE_INIT (                                   \
++      PPTT_CACHE_STRUCTURE_FLAGS,           /* Flag */                         \
++      OFFSET_OF (EFI_ACPI_6_4_PROCESSOR_PROPERTIES_TOPOLOGY_TABLE,             \
++        Package[PackageId].Cluster[ClusterId].Core[CpuId].L2Cache),            \
++                                            /* Next level of cache */          \
++      SIZE_64KB,                            /* Size */                         \
++      256,                                  /* Num of sets */                  \
++      4,                                    /* Associativity */                \
++      PPTT_INST_CACHE_ATTR,                 /* Attributes */                   \
++      64,                                   /* Line size */                    \
++      RD_PPTT_CACHE_ID(PackageId, ClusterId, CpuId, L1InstructionCache)        \
++                                            /* Cache id */                     \
++    ),                                                                         \
++                                                                               \
++    /* L2 cache parameters */                                                  \
++    EFI_ACPI_6_4_PPTT_STRUCTURE_CACHE_INIT (                                   \
++      PPTT_CACHE_STRUCTURE_FLAGS,           /* Flag */                         \
++      0,                                    /* Next level of cache */          \
++      SIZE_1MB,                             /* Size */                         \
++      2048,                                 /* Num of sets */                  \
++      8,                                    /* Associativity */                \
++      PPTT_UNIFIED_CACHE_ATTR,              /* Attributes */                   \
++      64,                                   /* Line size */                    \
++      RD_PPTT_CACHE_ID(PackageId, ClusterId, CpuId, L2Cache)                   \
++                                            /* Cache id */                     \
++    ),                                                                         \
++  }
++
++/** Define helper macro for populating processor container information.
++
++  @param [in] PackageId Package instance number.
++  @param [in] ClusterId Cluster instance number.
++**/
++#define PPTT_CLUSTER_INIT(PackageId, ClusterId)                                \
++  {                                                                            \
++    /* Parameters for Cluster */                                               \
++    EFI_ACPI_6_4_PPTT_STRUCTURE_PROCESSOR_INIT (                               \
++      OFFSET_OF (RD_PPTT_MINIMAL_CLUSTER, Core),  /* Length */                 \
++      PPTT_PROCESSOR_CLUSTER_FLAGS,         /* Flag */                         \
++      OFFSET_OF (EFI_ACPI_6_4_PROCESSOR_PROPERTIES_TOPOLOGY_TABLE,             \
++        Package[PackageId]),                /* Parent */                       \
++      ((PackageId << 2) | ClusterId),       /* ACPI Id */                      \
++      0                                     /* Num of private resource */      \
++    ),                                                                         \
++                                                                               \
++    /* Initialize child core */                                                \
++    {                                                                          \
++      PPTT_CORE_INIT (PackageId, ClusterId, 0)                                 \
++    }                                                                          \
++  }
++
++/** Define helper macro for populating SoC package information.
++
++  @param [in] PackageId Package instance number.
++**/
++#define PPTT_PACKAGE_INIT(PackageId)                                           \
++  {                                                                            \
++    EFI_ACPI_6_4_PPTT_STRUCTURE_PROCESSOR_INIT (                               \
++      OFFSET_OF (RD_PPTT_PACKAGE, Cluster[0]),  /* Length */                   \
++      PPTT_PROCESSOR_PACKAGE_FLAGS,         /* Flag */                         \
++      0,                                    /* Parent */                       \
++      0,                                    /* ACPI Id */                      \
++      0                                     /* Num of private resource */      \
++    ),                                                                         \
++    {                                                                          \
++      PPTT_CLUSTER_INIT (PackageId, 0),                                        \
++      PPTT_CLUSTER_INIT (PackageId, 1),                                        \
++      PPTT_CLUSTER_INIT (PackageId, 2),                                        \
++      PPTT_CLUSTER_INIT (PackageId, 3),                                        \
++    }                                                                          \
++  }
++
++#pragma pack(1)
++/*
++ * Processor Properties Topology Table
++ */
++typedef struct {
++  EFI_ACPI_6_4_PROCESSOR_PROPERTIES_TOPOLOGY_TABLE_HEADER  Header;
++  RD_PPTT_PACKAGE                                          Package[CHIP_COUNT];
++} EFI_ACPI_6_4_PROCESSOR_PROPERTIES_TOPOLOGY_TABLE;
++#pragma pack ()
++
++STATIC EFI_ACPI_6_4_PROCESSOR_PROPERTIES_TOPOLOGY_TABLE Pptt = {
++  {
++    ARM_ACPI_HEADER (
++      EFI_ACPI_6_4_PROCESSOR_PROPERTIES_TOPOLOGY_TABLE_STRUCTURE_SIGNATURE,
++      EFI_ACPI_6_4_PROCESSOR_PROPERTIES_TOPOLOGY_TABLE,
++      EFI_ACPI_6_4_PROCESSOR_PROPERTIES_TOPOLOGY_TABLE_REVISION
++    )
++  },
++
++  {
++    PPTT_PACKAGE_INIT (0),
++    PPTT_PACKAGE_INIT (1),
++    PPTT_PACKAGE_INIT (2),
++    PPTT_PACKAGE_INIT (3)
++  }
++};
++
++/*
++ * Reference the table being generated to prevent the optimizer from removing
++ * the data structure from the executable
++ */
++VOID* CONST ReferenceAcpiTable = &Pptt;
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2/Srat.aslc b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2/Srat.aslc
+new file mode 100644
+index 000000000000..10b709bfff4a
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2/Srat.aslc
+@@ -0,0 +1,117 @@
++/** @file
++  Static Resource Affinity Table (SRAT)
++
++  SRAT table provides information that allows OSPM to associate devices such as
++  processors with system locality / proximity domains and clock domains. The
++  memory attached to the two chips on this platform and its affinity to the
++  chips on its respective chips is listed in this table.
++
++  Copyright (c) 2023, Arm Limited. All rights reserved.<BR>
++
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++
++  @par Specification Reference:
++    - ACPI 6.4, Chapter 5, Section 5.2.16, System Resource Affinity Table
++**/
++
++#include <Library/AcpiLib.h>
++#include <Library/ArmLib.h>
++#include "SgiAcpiHeader.h"
++#include "SgiPlatform.h"
++
++//
++// Static Resource Affinity Table
++//
++#pragma pack (1)
++
++typedef struct {
++  EFI_ACPI_6_4_SYSTEM_RESOURCE_AFFINITY_TABLE_HEADER  Header;
++  EFI_ACPI_6_4_MEMORY_AFFINITY_STRUCTURE              Memory[8];
++  EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE                Gicc[16];
++} EFI_ACPI_STATIC_RESOURCE_AFFINITY_TABLE;
++
++#pragma pack ()
++
++EFI_ACPI_STATIC_RESOURCE_AFFINITY_TABLE Srat = {
++  // Header
++  {
++    ARM_ACPI_HEADER (
++      EFI_ACPI_6_4_SYSTEM_RESOURCE_AFFINITY_TABLE_SIGNATURE,
++      EFI_ACPI_STATIC_RESOURCE_AFFINITY_TABLE,
++      EFI_ACPI_6_4_SYSTEM_RESOURCE_AFFINITY_TABLE_REVISION
++    ),
++    0x00000001,
++    EFI_ACPI_RESERVED_QWORD
++  },
++  // Memory Affinity
++  {
++    // Chip 0 (2GB and 6GB)
++    EFI_ACPI_6_4_MEMORY_AFFINITY_STRUCTURE_INIT (
++      0x0, FixedPcdGet64 (PcdSystemMemoryBase),
++      FixedPcdGet64 (PcdSystemMemorySize), 0x00000001),
++    EFI_ACPI_6_4_MEMORY_AFFINITY_STRUCTURE_INIT (
++      0x0, FixedPcdGet64 (PcdDramBlock2Base),
++      FixedPcdGet64 (PcdDramBlock2Size), 0x00000001),
++
++    // Chip 1 (2GB and 6GB)
++    EFI_ACPI_6_4_MEMORY_AFFINITY_STRUCTURE_INIT (
++      0x1, SYSTEM_MEMORY_BASE_REMOTE(1),
++      FixedPcdGet64 (PcdSystemMemorySize), 0x00000001),
++    EFI_ACPI_6_4_MEMORY_AFFINITY_STRUCTURE_INIT (
++      0x1, DRAM_BLOCK2_BASE_REMOTE_FREMONT(1),
++      FixedPcdGet64 (PcdDramBlock2Size), 0x00000001),
++
++    // Chip 2 (2GB and 6GB)
++    EFI_ACPI_6_4_MEMORY_AFFINITY_STRUCTURE_INIT (
++      0x2, SYSTEM_MEMORY_BASE_REMOTE(2),
++      FixedPcdGet64 (PcdSystemMemorySize), 0x00000001),
++    EFI_ACPI_6_4_MEMORY_AFFINITY_STRUCTURE_INIT (
++      0x2, DRAM_BLOCK2_BASE_REMOTE_FREMONT(2),
++      FixedPcdGet64 (PcdDramBlock2Size), 0x00000001),
++
++    // Chip 3 (2GB and 6GB)
++    EFI_ACPI_6_4_MEMORY_AFFINITY_STRUCTURE_INIT(
++      0x3, SYSTEM_MEMORY_BASE_REMOTE(3),
++      FixedPcdGet64 (PcdSystemMemorySize), 0x00000001),
++    EFI_ACPI_6_4_MEMORY_AFFINITY_STRUCTURE_INIT(
++      0x3, DRAM_BLOCK2_BASE_REMOTE_FREMONT(3),
++      FixedPcdGet64 (PcdDramBlock2Size), 0x00000001),
++  },
++  // Processor Affinity
++  {
++    EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++      0x0, 0x00000000, 0x00000001, 0x00000000),
++    EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++      0x0, 0x00000001, 0x00000001, 0x00000000),
++    EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++      0x0, 0x00000002, 0x00000001, 0x00000000),
++    EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++      0x0, 0x00000003, 0x00000001, 0x00000000),
++    EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++      0x1, 0x00000004, 0x00000001, 0x00000000),
++    EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++      0x1, 0x00000005, 0x00000001, 0x00000000),
++    EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++      0x1, 0x00000006, 0x00000001, 0x00000000),
++    EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++      0x1, 0x00000007, 0x00000001, 0x00000000),
++    EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++      0x2, 0x00000008, 0x00000001, 0x00000000),
++    EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++      0x2, 0x00000009, 0x00000001, 0x00000000),
++    EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++      0x2, 0x0000000A, 0x00000001, 0x00000000),
++    EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++      0x2, 0x0000000B, 0x00000001, 0x00000000),
++    EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++      0x3, 0x0000000C, 0x00000001, 0x00000000),
++    EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++      0x3, 0x0000000D, 0x00000001, 0x00000000),
++    EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++      0x3, 0x0000000E, 0x00000001, 0x00000000),
++    EFI_ACPI_6_4_GICC_AFFINITY_STRUCTURE_INIT (
++      0x3, 0x0000000F, 0x00000001, 0x00000000),
++  },
++};
++
++VOID* CONST ReferenceAcpiTable = &Srat;
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2AcpiTables.inf
+new file mode 100644
+index 000000000000..9f91537c8b57
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2AcpiTables.inf
+@@ -0,0 +1,80 @@
++## @file
++#  ACPI table data and ASL sources required to boot the platform.
++#
++#  Copyright (c) 2023, Arm Ltd. All rights reserved.
++#
++#  SPDX-License-Identifier: BSD-2-Clause-Patent
++#
++##
++
++[Defines]
++  INF_VERSION                    = 0x0001001A
++  BASE_NAME                      = RdV3Cfg1AcpiTables
++  FILE_GUID                      = c712719a-0aaf-438c-9cdd-35ab4d60207d  # gArmSgiAcpiTablesGuid
++  MODULE_TYPE                    = USER_DEFINED
++  VERSION_STRING                 = 1.0
++
++[Sources]
++  Dbg2.aslc
++  Fadt.aslc
++  Gtdt.aslc
++  RdV3Cfg2/Dsdt.asl
++  RdV3Cfg2/Madt.aslc
++  RdV3Cfg2/Pptt.aslc
++  RdV3Cfg2/Srat.aslc
++  Spcr.aslc
++  SsdtRos.asl
++
++[Packages]
++  ArmPkg/ArmPkg.dec
++  ArmPlatformPkg/ArmPlatformPkg.dec
++  EmbeddedPkg/EmbeddedPkg.dec
++  MdeModulePkg/MdeModulePkg.dec
++  MdePkg/MdePkg.dec
++  Platform/ARM/SgiPkg/SgiPlatform.dec
++
++[FixedPcd]
++  gArmPlatformTokenSpaceGuid.PcdCoreCount
++  gArmPlatformTokenSpaceGuid.PcdClusterCount
++  gArmPlatformTokenSpaceGuid.PcdSerialDbgInterrupt
++  gArmPlatformTokenSpaceGuid.PcdSerialDbgRegisterBase
++  gArmPlatformTokenSpaceGuid.PL011UartInterrupt
++
++  gArmTokenSpaceGuid.PcdArmArchTimerSecIntrNum
++  gArmTokenSpaceGuid.PcdArmArchTimerIntrNum
++  gArmTokenSpaceGuid.PcdArmArchTimerHypIntrNum
++  gArmTokenSpaceGuid.PcdArmArchTimerVirtIntrNum
++  gArmTokenSpaceGuid.PcdGicDistributorBase
++  gArmTokenSpaceGuid.PcdGicRedistributorsBase
++  gArmTokenSpaceGuid.PcdGenericWatchdogControlBase
++  gArmTokenSpaceGuid.PcdGenericWatchdogRefreshBase
++  gArmTokenSpaceGuid.PcdSystemMemoryBase
++  gArmTokenSpaceGuid.PcdSystemMemorySize
++
++  gArmSgiTokenSpaceGuid.PcdChipCount
++  gArmSgiTokenSpaceGuid.PcdDramBlock2Base
++  gArmSgiTokenSpaceGuid.PcdDramBlock2Size
++  gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv
++  gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv
++  gArmSgiTokenSpaceGuid.PcdMaxAddressBitsPerChip
++  gArmSgiTokenSpaceGuid.PcdIoVirtBlkCountPerChip
++  gArmSgiTokenSpaceGuid.PcdOscLpiEnable
++  gArmSgiTokenSpaceGuid.PcdOscCppcEnable
++  gArmSgiTokenSpaceGuid.PcdRemoteDramAddressBit
++  gArmSgiTokenSpaceGuid.PcdSmmuBase
++  gArmSgiTokenSpaceGuid.PcdSmmuEventGsiv
++  gArmSgiTokenSpaceGuid.PcdSmmuGErrorGsiv
++  gArmSgiTokenSpaceGuid.PcdSmmuPriGsiv
++  gArmSgiTokenSpaceGuid.PcdSmmuSyncGsiv
++  gArmSgiTokenSpaceGuid.PcdSmmuDevIDBase
++  gArmSgiTokenSpaceGuid.PcdVirtioBlkBaseAddress
++  gArmSgiTokenSpaceGuid.PcdVirtioBlkSize
++  gArmSgiTokenSpaceGuid.PcdVirtioBlkInterrupt
++  gArmSgiTokenSpaceGuid.PcdVirtioNetBaseAddress
++  gArmSgiTokenSpaceGuid.PcdVirtioNetSize
++  gArmSgiTokenSpaceGuid.PcdVirtioNetInterrupt
++  gArmSgiTokenSpaceGuid.PcdWdogWS0Gsiv
++  gArmSgiTokenSpaceGuid.PcdWdogWS1Gsiv
++
++  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase
++  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+diff --git a/Platform/ARM/SgiPkg/Include/SgiPlatform.h b/Platform/ARM/SgiPkg/Include/SgiPlatform.h
+index f8f6243d8e96..943c7a68b560 100644
+--- a/Platform/ARM/SgiPkg/Include/SgiPlatform.h
++++ b/Platform/ARM/SgiPkg/Include/SgiPlatform.h
+@@ -59,6 +59,10 @@
+ #define RD_V3_CFG1_PART_NUM                       0x7F9
+ #define RD_V3_CFG1_CONF_ID                        0x0
+ 
++// RD-V3-Cfg2 Platform Identification values
++#define RD_V3_CFG2_PART_NUM                       0x7EE
++#define RD_V3_CFG2_CONF_ID                        0x0
++
+ #define SGI_CONFIG_MASK                           0x0F
+ #define SGI_CONFIG_SHIFT                          0x1C
+ #define SGI_PART_NUM_MASK                         0xFFF
+@@ -74,6 +78,12 @@
+ #define SYSTEM_MEMORY_BASE_REMOTE(ChipId) \
+           (SGI_REMOTE_CHIP_MEM_OFFSET (ChipId) + FixedPcdGet64 (PcdSystemMemoryBase))
+ 
++// Base address of the DRAM2 block in a remote chip for Fremont platform
++#define DRAM_BLOCK2_BASE_REMOTE_FREMONT(ChipId) ( \
++          ((1ULL << FixedPcdGet64 (PcdRemoteDramAddressBit)) * (ChipId)) + \
++          FixedPcdGet64 (PcdDramBlock2Base) \
++          )
++
+ // Base address of the DRAM2 block in a remote chip
+ #define DRAM_BLOCK2_BASE_REMOTE(ChipId) \
+           (SGI_REMOTE_CHIP_MEM_OFFSET (ChipId) + FixedPcdGet64 (PcdDramBlock2Base))
+@@ -149,6 +159,7 @@ typedef enum {
+   RdV2,
+   RdV3,
+   RdV3Cfg1,
++  RdV3Cfg2,
+ } ARM_RD_PRODUCT_ID;
+ 
+ // Arm ProductId look-up table
+diff --git a/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLib.c b/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLib.c
+index 9a41ce09c604..007059988fe1 100644
+--- a/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLib.c
++++ b/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLib.c
+@@ -97,6 +97,12 @@ STATIC CONST SGI_PRODUCT_ID_LOOKUP SgiProductIdLookup[] = {
+     RD_V3_CFG1_CONF_ID,
+     0
+   },
++  {
++    RdV3Cfg2,
++    RD_V3_CFG2_PART_NUM,
++    RD_V3_CFG2_CONF_ID,
++    1
++  },
+ };
+ 
+ EFI_BOOT_MODE
+diff --git a/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLib.inf b/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLib.inf
+index 1d2b9d09c0c2..5293ea9ca8b8 100644
+--- a/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLib.inf
++++ b/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLib.inf
+@@ -52,6 +52,7 @@
+   gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlk0Base
+   gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlkUartEnable
+   gArmSgiTokenSpaceGuid.PcdMaxAddressBitsPerChip
++  gArmSgiTokenSpaceGuid.PcdRemoteDramAddressBit
+ 
+   gArmTokenSpaceGuid.PcdSystemMemoryBase
+   gArmTokenSpaceGuid.PcdSystemMemorySize
+diff --git a/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c b/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c
+index 3bdecc4cdb05..784182e49a70 100644
+--- a/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c
++++ b/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c
+@@ -34,6 +34,28 @@
+   VirtualMemoryTable[Index].Attributes     = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
+ 
+ 
++#if (FixedPcdGet32 (PcdChipCount) > 1)
++/**
++  Return the physical address of the second DRAM on remote chip.
++
++  @param[in]  ChipIdx   The identifier of the chip
++**/
++STATIC
++EFI_PHYSICAL_ADDRESS
++GetRemoteDram2BaseAddr (
++  IN UINT8 ChipIdx
++  )
++{
++  UINT8                         SgiProductIdx;
++
++  SgiProductIdx = SgiGetProductId();
++  if (SgiProductIdx == RdV3Cfg2)
++    return DRAM_BLOCK2_BASE_REMOTE_FREMONT(ChipIdx);
++
++  return DRAM_BLOCK2_BASE_REMOTE(ChipIdx);
++}
++#endif
++
+ /**
+   Returns the Virtual Memory Map of the platform.
+ 
+@@ -78,7 +100,7 @@ ArmPlatformGetVirtualMemoryMap (
+    BuildResourceDescriptorHob (
+      EFI_RESOURCE_SYSTEM_MEMORY,
+      ResourceAttributes,
+-     DRAM_BLOCK2_BASE_REMOTE (1),
++     GetRemoteDram2BaseAddr (1),
+      FixedPcdGet64 (PcdDramBlock2Size));
+ 
+ #if (FixedPcdGet32 (PcdChipCount) > 2)
+@@ -91,7 +113,7 @@ ArmPlatformGetVirtualMemoryMap (
+    BuildResourceDescriptorHob (
+      EFI_RESOURCE_SYSTEM_MEMORY,
+      ResourceAttributes,
+-     DRAM_BLOCK2_BASE_REMOTE (2),
++     GetRemoteDram2BaseAddr (2),
+      FixedPcdGet64 (PcdDramBlock2Size));
+ 
+ #if (FixedPcdGet32 (PcdChipCount) > 3)
+@@ -104,7 +126,7 @@ ArmPlatformGetVirtualMemoryMap (
+    BuildResourceDescriptorHob (
+      EFI_RESOURCE_SYSTEM_MEMORY,
+      ResourceAttributes,
+-     DRAM_BLOCK2_BASE_REMOTE (3),
++     GetRemoteDram2BaseAddr (3),
+      FixedPcdGet64 (PcdDramBlock2Size));
+ #endif
+ #endif
+@@ -236,8 +258,8 @@ ArmPlatformGetVirtualMemoryMap (
+   VirtualMemoryTable[Index].Attributes      = ARM_MEMORY_REGION_ATTRIBUTE_WRITE_BACK;
+ 
+   // Chip 1 DDR Block 2 - (6GB)
+-  VirtualMemoryTable[++Index].PhysicalBase  = DRAM_BLOCK2_BASE_REMOTE (1),
+-  VirtualMemoryTable[Index].VirtualBase     = DRAM_BLOCK2_BASE_REMOTE (1),
++  VirtualMemoryTable[++Index].PhysicalBase  = GetRemoteDram2BaseAddr (1),
++  VirtualMemoryTable[Index].VirtualBase     = GetRemoteDram2BaseAddr (1),
+   VirtualMemoryTable[Index].Length          = PcdGet64 (PcdDramBlock2Size);
+   VirtualMemoryTable[Index].Attributes      = ARM_MEMORY_REGION_ATTRIBUTE_WRITE_BACK;
+ 
+@@ -249,8 +271,8 @@ ArmPlatformGetVirtualMemoryMap (
+   VirtualMemoryTable[Index].Attributes      = ARM_MEMORY_REGION_ATTRIBUTE_WRITE_BACK;
+ 
+   // Chip 2 DDR Block 2 - (6GB)
+-  VirtualMemoryTable[++Index].PhysicalBase  = DRAM_BLOCK2_BASE_REMOTE (2),
+-  VirtualMemoryTable[Index].VirtualBase     = DRAM_BLOCK2_BASE_REMOTE (2),
++  VirtualMemoryTable[++Index].PhysicalBase  = GetRemoteDram2BaseAddr (2),
++  VirtualMemoryTable[Index].VirtualBase     = GetRemoteDram2BaseAddr (2),
+   VirtualMemoryTable[Index].Length          = PcdGet64 (PcdDramBlock2Size);
+   VirtualMemoryTable[Index].Attributes      = ARM_MEMORY_REGION_ATTRIBUTE_WRITE_BACK;
+ 
+@@ -262,8 +284,8 @@ ArmPlatformGetVirtualMemoryMap (
+   VirtualMemoryTable[Index].Attributes      = ARM_MEMORY_REGION_ATTRIBUTE_WRITE_BACK;
+ 
+   // Chip 3 DDR Block 2 - (6GB)
+-  VirtualMemoryTable[++Index].PhysicalBase  = DRAM_BLOCK2_BASE_REMOTE (3),
+-  VirtualMemoryTable[Index].VirtualBase     = DRAM_BLOCK2_BASE_REMOTE (3),
++  VirtualMemoryTable[++Index].PhysicalBase  = GetRemoteDram2BaseAddr (3),
++  VirtualMemoryTable[Index].VirtualBase     = GetRemoteDram2BaseAddr (3),
+   VirtualMemoryTable[Index].Length          = PcdGet64 (PcdDramBlock2Size);
+   VirtualMemoryTable[Index].Attributes      = ARM_MEMORY_REGION_ATTRIBUTE_WRITE_BACK;
+ #endif
+diff --git a/Platform/ARM/SgiPkg/RdV3Cfg2/RdV3Cfg2.dsc b/Platform/ARM/SgiPkg/RdV3Cfg2/RdV3Cfg2.dsc
+new file mode 100644
+index 000000000000..508831fa0845
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/RdV3Cfg2/RdV3Cfg2.dsc
+@@ -0,0 +1,64 @@
++#
++#  Copyright (c) 2023, Arm Limited. All rights reserved.<BR>
++#
++#  SPDX-License-Identifier: BSD-2-Clause-Patent
++#
++
++################################################################################
++#
++# Defines Section - statements that will be processed to create a Makefile.
++#
++################################################################################
++[Defines]
++  PLATFORM_NAME                  = RdV3Cfg2
++  PLATFORM_GUID                  = 8e4c6337-366d-4916-b042-9256f2b1d873
++  PLATFORM_VERSION               = 0.1
++  DSC_SPECIFICATION              = 0x0001001B
++  OUTPUT_DIRECTORY               = Build/$(PLATFORM_NAME)
++  SUPPORTED_ARCHITECTURES        = AARCH64
++  BUILD_TARGETS                  = NOOPT|DEBUG|RELEASE
++  SKUID_IDENTIFIER               = DEFAULT
++  FLASH_DEFINITION               = Platform/ARM/SgiPkg/SgiPlatform.fdf
++  BOARD_DXE_FV_COMPONENTS        = Platform/ARM/SgiPkg/RdV3Cfg2/RdV3Cfg2.fdf.inc
++  BUILD_NUMBER                   = 1
++
++# include common definitions from SgiPlatform.dsc
++!include Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
++!include Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc
++
++# include common/basic libraries from MdePkg.
++!include MdePkg/MdeLibs.dsc.inc
++
++################################################################################
++#
++# Pcd Section - list of all EDK II PCD Entries defined by this Platform
++#
++################################################################################
++
++[PcdsFixedAtBuild.common]
++  # Verbose Printing
++  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x00000004
++
++  # GIC Base Addresses
++  gArmTokenSpaceGuid.PcdGicDistributorBase|0x30000000
++  gArmTokenSpaceGuid.PcdGicRedistributorsBase|0x301C0000
++  gArmSgiTokenSpaceGuid.PcdGicSize|0x200000
++
++  # ARM Cores and Clusters
++  gArmPlatformTokenSpaceGuid.PcdCoreCount|1
++  gArmPlatformTokenSpaceGuid.PcdClusterCount|4
++
++  # Number of chips in the multi-chip package
++  gArmSgiTokenSpaceGuid.PcdChipCount|4
++
++  # IO virtualization block
++  gArmSgiTokenSpaceGuid.PcdIoVirtBlkCountPerChip|2
++
++################################################################################
++#
++# Components Section - list of all EDK II Modules needed by this Platform
++#
++################################################################################
++
++[Components.common]
++  Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2AcpiTables.inf
+diff --git a/Platform/ARM/SgiPkg/RdV3Cfg2/RdV3Cfg2.fdf.inc b/Platform/ARM/SgiPkg/RdV3Cfg2/RdV3Cfg2.fdf.inc
+new file mode 100644
+index 000000000000..e17b55b5d139
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/RdV3Cfg2/RdV3Cfg2.fdf.inc
+@@ -0,0 +1,10 @@
++#
++#  Copyright (c) 2023, Arm Limited. All rights reserved.<BR>
++#
++#  SPDX-License-Identifier: BSD-2-Clause-Patent
++#
++
++# Per-platform additional content of the DXE phase firmware volume
++
++  # ACPI support
++  INF RuleOverride=ACPITABLE Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg2AcpiTables.inf
+diff --git a/Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc b/Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc
+index 06c3b37388c1..f8ef9c56d2b7 100644
+--- a/Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc
+@@ -61,8 +61,11 @@
+   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingBase64|0x0601400000
+   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase64|0x0602800000
+ 
+-  # Address bus width - 64TB address space
+-  gArmSgiTokenSpaceGuid.PcdMaxAddressBitsPerChip|46
++  # Address bus width - 64GB address space
++  gArmSgiTokenSpaceGuid.PcdMaxAddressBitsPerChip|36
++
++
++  gArmSgiTokenSpaceGuid.PcdRemoteDramAddressBit|44
+ 
+   # Timer & Watchdog interrupts
+   gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv|109
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.dec b/Platform/ARM/SgiPkg/SgiPlatform.dec
+index d0f540e8f23a..53f6290acb19 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatform.dec
++++ b/Platform/ARM/SgiPkg/SgiPlatform.dec
+@@ -36,8 +36,11 @@
+   gArmSgiTokenSpaceGuid.PcdEinjSupported|FALSE|BOOLEAN|0x00001001
+ 
+ [PcdsFixedAtBuild]
++
+   gArmSgiTokenSpaceGuid.PcdDramBlock2Base|0|UINT64|0x00000002
+   gArmSgiTokenSpaceGuid.PcdDramBlock2Size|0|UINT64|0x00000003
++  gArmSgiTokenSpaceGuid.PcdRemoteDramAddressBit|0x0|UINT64|0x0000102A
++
+ 
+   # L2 Cache size
+   gArmSgiTokenSpaceGuid.PcdL2CacheSize|0x100000|UINT32|0x0000002F
+-- 
+2.39.5
+

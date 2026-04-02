@@ -1,0 +1,64 @@
+From 8956eabaa5ebcedf7cd751c9d00fb78102560727 Mon Sep 17 00:00:00 2001
+From: Olivier Deprez <olivier.deprez@arm.com>
+Date: Fri, 12 Nov 2021 18:00:06 +0100
+Subject: [PATCH 34/43] Fix FF-A prototype to run StMM on top of Hafnium
+
+Minor fixes to accomodate running StMM SEL0 SP on top of Hafnium (built
+with VHE support):
+-FFA_SUCCESS 32 func id.
+-Mem perm set macro to check 32b ffa success returned func id.
+-FDT compatible string for manifest passed to StMM SP.
+-Prevent adjusting permissions for zero sized sections.
+
+Signed-off-by: Olivier Deprez <olivier.deprez@arm.com>
+---
+ .../Arm/StandaloneMmCoreEntryPoint.c                  |  3 ++-
+ .../AArch64/StandaloneMmPeCoffExtraActionLib.c        | 11 ++++++++---
+ 2 files changed, 10 insertions(+), 4 deletions(-)
+
+diff --git a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
+index 6e45cc2befb2..1eb052ee9507 100644
+--- a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
++++ b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
+@@ -467,7 +467,8 @@ PopulateBootinformation (
+   BOOLEAN FoundHeap = FALSE;
+   UINT32 PageSize;
+ 
+-  Offset = fdt_path_offset (DtbAddress, "/");
++  Offset = fdt_node_offset_by_compatible (DtbAddress, -1, "arm,ffa-manifest-1.0");
++
+   DEBUG ((DEBUG_INFO, "Offset  = %d \n", Offset));
+   if (Offset < 0) {
+     DEBUG ((DEBUG_ERROR, "Missing FF-A boot information in manifest\n"));
+diff --git a/StandaloneMmPkg/Library/StandaloneMmPeCoffExtraActionLib/AArch64/StandaloneMmPeCoffExtraActionLib.c b/StandaloneMmPkg/Library/StandaloneMmPeCoffExtraActionLib/AArch64/StandaloneMmPeCoffExtraActionLib.c
+index 7a5bb412d0d2..16cf479a47fa 100644
+--- a/StandaloneMmPkg/Library/StandaloneMmPeCoffExtraActionLib/AArch64/StandaloneMmPeCoffExtraActionLib.c
++++ b/StandaloneMmPkg/Library/StandaloneMmPeCoffExtraActionLib/AArch64/StandaloneMmPeCoffExtraActionLib.c
+@@ -174,7 +174,9 @@ UpdatePeCoffPermissions (
+           Base,
+           SectionHeader.Misc.VirtualSize
+           ));
+-        ReadOnlyUpdater (Base, SectionHeader.Misc.VirtualSize);
++        if (SectionHeader.Misc.VirtualSize != 0) {
++          ReadOnlyUpdater (Base, SectionHeader.Misc.VirtualSize);
++        }
+       } else {
+         DEBUG ((
+           DEBUG_WARN,
+@@ -194,8 +196,11 @@ UpdatePeCoffPermissions (
+         Base,
+         SectionHeader.Misc.VirtualSize
+         ));
+-      ReadOnlyUpdater (Base, SectionHeader.Misc.VirtualSize);
+-      NoExecUpdater (Base, SectionHeader.Misc.VirtualSize);
++
++      if (SectionHeader.Misc.VirtualSize != 0) {
++        ReadOnlyUpdater (Base, SectionHeader.Misc.VirtualSize);
++        NoExecUpdater (Base, SectionHeader.Misc.VirtualSize);
++      }
+     }
+ 
+     SectionHeaderOffset += sizeof (EFI_IMAGE_SECTION_HEADER);
+-- 
+2.39.5
+

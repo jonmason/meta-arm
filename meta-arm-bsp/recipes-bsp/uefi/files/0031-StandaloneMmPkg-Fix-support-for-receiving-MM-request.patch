@@ -1,0 +1,56 @@
+From df7a8d4a761ac10e5874b246dabfe93f0c09166c Mon Sep 17 00:00:00 2001
+From: Achin Gupta <achin.gupta@arm.com>
+Date: Sat, 6 Nov 2021 05:31:40 +0000
+Subject: [PATCH 31/43] StandaloneMmPkg: Fix support for receiving MM requests
+ as FF-A direct messages
+
+This patch adds support for correctly receiving a request for a
+Standalome MM driver service using the MM communication protocol
+packaged as an FF-A direct request message.
+
+Signed-off-by: Achin Gupta <achin.gupta@arm.com>
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: Ie59dc12e951e1de609010dd784606fde35d01c23
+---
+ .../Arm/StandaloneMmCoreEntryPoint.c                     | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
+index 7e8d98af4ad4..a8811950168f 100644
+--- a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
++++ b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
+@@ -200,6 +200,8 @@ DelegatedEventLoop (
+   BOOLEAN     FfaEnabled;
+   EFI_STATUS  Status;
+   UINTN       SvcStatus;
++  UINT16      SenderPartId;
++  UINT16      ReceiverPartId;
+ 
+   while (TRUE) {
+     ArmCallSvc (EventCompleteSvcArgs);
+@@ -227,9 +229,12 @@ DelegatedEventLoop (
+     } else {
+       FfaEnabled = FixedPcdGet32 (PcdFfaEnable) != 0;
+       if (FfaEnabled) {
++        SenderPartId = EventCompleteSvcArgs->Arg1 >> 16;
++        ReceiverPartId = EventCompleteSvcArgs->Arg1 & 0xffff;
+         Status = CpuDriverEntryPoint (
+                    EventCompleteSvcArgs->Arg0,
+-                   EventCompleteSvcArgs->Arg6,
++                   // Assume CPU number 0
++                   0,
+                    EventCompleteSvcArgs->Arg3
+                    );
+         if (EFI_ERROR (Status)) {
+@@ -280,7 +285,7 @@ DelegatedEventLoop (
+ 
+     if (FfaEnabled) {
+       EventCompleteSvcArgs->Arg0 = ARM_SVC_ID_FFA_MSG_SEND_DIRECT_RESP;
+-      EventCompleteSvcArgs->Arg1 = 0;
++      EventCompleteSvcArgs->Arg1 = ReceiverPartId << 16 | SenderPartId;
+       EventCompleteSvcArgs->Arg2 = 0;
+       EventCompleteSvcArgs->Arg3 = ARM_SVC_ID_SP_EVENT_COMPLETE;
+       EventCompleteSvcArgs->Arg4 = SvcStatus;
+-- 
+2.39.5
+

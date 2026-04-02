@@ -1,0 +1,888 @@
+From 9ea55c57a907bed4bec5c0d7798a35ac02024290 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Thu, 3 Jun 2021 11:03:04 +0530
+Subject: [PATCH 16/78] Platform/ARM: Add CPU RAS error handling driver
+
+Support added for handling 1-bit CE and DE that occur on CPU's L1 & L2
+caches, TLB and MMU. MMI handler is implemented that collects all the
+error information and notifies OS.
+
+The driver implements the HEST error source descriptor protocol in order
+to publish the GHESv2 type error source descriptor for single-bit DRAM
+errors. The GHESv2 error source descriptor that is published is of type
+'ARM Processor Error'.
+
+The driver registers a MMI handler for handling 1-bit CE and DE errors. On
+error event, the TF-a collates all the error information including the
+error record registers, the context registers and invokes the MMI handler.
+Depending on the security state of the error, the handler populates ARM
+Processor Error Section information structure and returns.
+
+Defines flag EDK2_ENABLE_CPU_MM to selectively enable CPU MM driver.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I946d13fb8b4972db56260957cb2b2b1d0f702cdb
+---
+ Platform/ARM/Drivers/CpuMm/CpuMm.c            | 344 ++++++++++++++++++
+ Platform/ARM/Drivers/CpuMm/CpuMm.dec          |  28 ++
+ Platform/ARM/Drivers/CpuMm/CpuMm.h            | 142 ++++++++
+ Platform/ARM/Drivers/CpuMm/CpuMm.inf          |  52 +++
+ .../ARM/Drivers/CpuMm/CpuMmErrorSourceInfo.c  | 188 ++++++++++
+ Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf  |   5 +-
+ Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc     |  16 +
+ 7 files changed, 774 insertions(+), 1 deletion(-)
+ create mode 100644 Platform/ARM/Drivers/CpuMm/CpuMm.c
+ create mode 100644 Platform/ARM/Drivers/CpuMm/CpuMm.dec
+ create mode 100644 Platform/ARM/Drivers/CpuMm/CpuMm.h
+ create mode 100644 Platform/ARM/Drivers/CpuMm/CpuMm.inf
+ create mode 100644 Platform/ARM/Drivers/CpuMm/CpuMmErrorSourceInfo.c
+
+diff --git a/Platform/ARM/Drivers/CpuMm/CpuMm.c b/Platform/ARM/Drivers/CpuMm/CpuMm.c
+new file mode 100644
+index 000000000000..5af151e4c4cb
+--- /dev/null
++++ b/Platform/ARM/Drivers/CpuMm/CpuMm.c
+@@ -0,0 +1,344 @@
++/** @file
++  Cpu Standalone MM error handling driver.
++
++  Standalone MM driver to handle 1-bit CE and DE generated on the Cpu. The
++  driver creates a ARM specific Error Descriptor information. On error event
++  publishes the CPER error record of Processor Error type.
++
++  On an error event platform forwards the context information for both the
++  security states, care must be taken to not pass the context information to
++  OSPM if the error occurred when the Cpu was in secure mode.
++
++  Copyright (c) 2021 - 2022, ARM Limited. All rights reserved.
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++
++  @par Specification Reference:
++    - ARM Perseus Core TRM, revision r0p0
++    - UEFI Reference Specification 2.9, Section N.2.4.4 ARM Processor Error
++      Section
++**/
++
++#include <CpuMm.h>
++
++/**
++  Cpu error event handler.
++
++  Cpu event handler with CommBuffer carrying the data structure of type
++  CPU_ERR_INFO. Handles the 1-bit overflow CE and DE errors that occur
++  on that processor.
++
++  @param[in] DispatchHandle      The unique handle assigned to this handler
++                                 by MmiHandlerRegister().
++  @param[in] Context             Points to an optional handler context which
++                                 was specified when the handler was
++                                 registered.
++  @param[in, out] CpuBuffer      Buffer carrying CPU information.
++  @param[in, out] CpuBufferSize  The size of the CpuCommBuffer.
++
++  @retval EFI_SUCCESS  Event handler successful.
++  @retval Other        Failed to handle the event.
++**/
++STATIC
++EFI_STATUS
++EFIAPI
++CpuErrorEventHandler (
++  IN     EFI_HANDLE DispatchHandle,
++  IN     CONST VOID *Context,      OPTIONAL
++  IN OUT VOID       *CpuBuffer,    OPTIONAL
++  IN OUT UINTN      *CpuBufferSize OPTIONAL
++  )
++{
++  EFI_ACPI_6_3_GENERIC_ERROR_DATA_ENTRY_STRUCTURE *ErrBlockSectionDesc;
++  EFI_ACPI_6_3_GENERIC_ERROR_STATUS_STRUCTURE     *ErrBlockStatusHeaderData;
++  CPU_ERR_SECTION_DATA                            SectionData;
++  CPU_ERR_INFO                                    *CpuErr;
++  EFI_GUID                                        SectionType;
++  VOID                                            *ErrBlockSectionData;
++  UINTN                                           *ErrStatusBlock;
++  UINT8                                           CorrectedError = 1;
++  UINT8                                           ErrorType;
++  UINT16                                          ErrorCount;
++
++  // Validate the CpuBuffer parameter is not NULL.
++  if (CpuBuffer == NULL) {
++    return EFI_INVALID_PARAMETER;
++  }
++
++  // Validate the CpuBufferSize parameter.
++  if (*CpuBufferSize < sizeof (CPU_ERR_INFO)) {
++    return EFI_BAD_BUFFER_SIZE;
++  }
++
++  // Retrieve the Cpu error records information.
++  CpuErr = (CPU_ERR_INFO *)CpuBuffer;
++
++  // Locate Error Status Data memory space within the firmware reserved memory
++  // and populate Cper record for Processor error.
++  ErrStatusBlock =
++    (UINTN *)(FixedPcdGet64 (PcdCpuErrorDataBase) + ErrorStatusDataOffset);
++
++  //
++  // Block Status Header Information.
++  // Locate Block Status Header base address and populate it with Error Status
++  // Block Header information.
++  //
++  ErrBlockStatusHeaderData = (EFI_ACPI_6_3_GENERIC_ERROR_STATUS_STRUCTURE *)
++                             ErrStatusBlock;
++  ErrBlockStatusHeaderData->BlockStatus.UncorrectableErrorValid =
++    ((CorrectedError == 0) ? 0 : 1);
++  ErrBlockStatusHeaderData->BlockStatus.CorrectableErrorValid =
++    ((CpuErr->ErrStatus & CPU_ERR_STATUS_CE_MASK) ? 1 : 0);
++  ErrBlockStatusHeaderData->BlockStatus.MultipleUncorrectableErrors = 0x0;
++  ErrBlockStatusHeaderData->BlockStatus.MultipleCorrectableErrors   = 0x0,
++  ErrBlockStatusHeaderData->BlockStatus.ErrorDataEntryCount         = 0x1;
++  ErrBlockStatusHeaderData->RawDataOffset =
++    (sizeof (EFI_ACPI_6_3_GENERIC_ERROR_STATUS_STRUCTURE) +
++     sizeof (EFI_ACPI_6_3_GENERIC_ERROR_DATA_ENTRY_STRUCTURE));
++  ErrBlockStatusHeaderData->RawDataLength = 0;
++  ErrBlockStatusHeaderData->DataLength =
++    (sizeof(EFI_ACPI_6_3_GENERIC_ERROR_DATA_ENTRY_STRUCTURE) +
++     CPU_SECTION_DATA_SIZE (CpuErr->SecurityState));
++  ErrBlockStatusHeaderData->ErrorSeverity =
++    ((CpuErr->ErrStatus & CPU_ERR_STATUS_CE_MASK) ?
++     EFI_ACPI_6_3_ERROR_SEVERITY_CORRECTED :
++     EFI_ACPI_6_3_ERROR_SEVERITY_CORRECTABLE);
++
++  //
++  // Section Descriptor Information.
++  // Locate Section Descriptor base address and populate Error Status Section
++  // Descriptor data.
++  //
++  ErrBlockSectionDesc = (EFI_ACPI_6_3_GENERIC_ERROR_DATA_ENTRY_STRUCTURE *)
++                        (ErrBlockStatusHeaderData + 1);
++  ErrBlockSectionDesc->ErrorSeverity =
++                         ((CpuErr->ErrStatus & CPU_ERR_STATUS_CE_MASK) ?
++                          EFI_ACPI_6_3_ERROR_SEVERITY_CORRECTED :
++                          EFI_ACPI_6_3_ERROR_SEVERITY_CORRECTABLE);
++  ErrBlockSectionDesc->Revision =
++    EFI_ACPI_6_3_GENERIC_ERROR_DATA_ENTRY_REVISION;
++  ErrBlockSectionDesc->ValidationBits = 0;
++  if ((CpuErr->ErrStatus & CPU_ERR_STATUS_CE_MASK) != 0) {
++    if ((CpuErr->ErrStatus & CPU_ERR_STATUS_OF_BIT) != 0) {
++      ErrBlockSectionDesc->Flags |= BIT7;
++    }
++  } else if ((CpuErr->ErrStatus & CPU_ERR_STATUS_DE_BIT) != 0) {
++    ErrBlockSectionDesc->Flags |= EFI_ERROR_SECTION_FLAGS_LATENT_ERROR;
++  }
++  ErrBlockSectionDesc->ErrorDataLength =
++    CPU_SECTION_DATA_SIZE (CpuErr->SecurityState);
++  SectionType = (EFI_GUID) EFI_ERROR_SECTION_PROCESSOR_SPECIFIC_ARM_GUID;
++  CopyGuid ((EFI_GUID *)ErrBlockSectionDesc->SectionType, &SectionType);
++
++  //
++  // Section Data (Cper) Information.
++  // Locate Section base address and populate Cpu Error Section data.
++  // CPU Section Data = (EFI_ARM_PROCESSOR_ERROR_RECORD +
++  //                    EFI_ARM_PROCESSOR_ERROR_INFORMATION * N +
++  //                    EFI_ARM_PROCESSOR_CONTEXT_INFORMATION * P)
++  // where, N = CPU_ERR_INFO_NUM
++  //        P = CPU_CONTEXT_INFO_NUM
++  //
++  ErrBlockSectionData = (VOID *)(ErrBlockSectionDesc + 1);
++
++  // Populate EFI_ARM_PROCESSOR_ERROR_RECORD structure.
++  SectionData.CpuInfo.ValidFields =
++    (EFI_ARM_PROC_ERROR_MPIDR_VALID | EFI_ARM_PROC_ERROR_RUNNING_STATE_VALID);
++  SectionData.CpuInfo.ErrInfoNum = CPU_ERR_INFO_NUM;
++  SectionData.CpuInfo.ContextInfoNum = CPU_CONTEXT_INFO_NUM;
++  SectionData.CpuInfo.SectionLength =
++    CPU_SECTION_DATA_SIZE (CpuErr->SecurityState);
++  SectionData.CpuInfo.MPIDR_EL1 =
++    CpuErr->ErrCtxEl1Reg[CONTEXT_STRUCT_EL1_MPIDR_FIELD];
++  SectionData.CpuInfo.MIDR_EL1 =
++    CpuErr->ErrCtxEl1Reg[CONTEXT_STRUCT_EL1_MIDR_FIELD];
++  SectionData.CpuInfo.RunState = 0x1;
++  SectionData.CpuInfo.PsciState =
++    ((SectionData.CpuInfo.RunState) ? 0 : 1);
++
++  // Populate EFI_ARM_PROCESSOR_ERROR_INFORMATION structure.
++  ErrorCount = (CpuErr->ErrMisc0 & CPU_ERR_MISC0_CECR_COUNT_MASK) >>
++               CPU_ERR_MISC0_CECR_COUNT_SHIFT;
++  ErrorType = (CpuErr->ErrStatus & CPU_ERR_STATUS_SERR_MASK);
++  if (ErrorType < CPU_ERR_STATUS_SERR_TLB) {
++    ErrorType = EFI_ARM_PROC_ERROR_TYPE_CACHE;
++  }
++  else {
++    ErrorType = EFI_ARM_PROC_ERROR_TYPE_TLB;
++  }
++
++  for (UINTN i = 0; i < CPU_ERR_INFO_NUM; ++i) {
++    SectionData.CpuErrInfo[i].Version =
++      EFI_ARM_PROCESSOR_ERROR_INFO_STRUCTURE_REVISION;
++    SectionData.CpuErrInfo[i].Length =
++      sizeof (EFI_ARM_PROCESSOR_ERROR_INFORMATION);
++    SectionData.CpuErrInfo[i].ValidFields =
++      (EFI_ARM_PROC_ERROR_INFO_MULTIPLE_ERROR_VALID |
++       EFI_ARM_PROC_ERROR_INFO_FLAGS_VALID |
++       EFI_ARM_PROC_ERROR_INFO_ERROR_INFO_VALID |
++       EFI_ARM_PROC_ERROR_INFO_PHY_FAULT_ADDR_VALID);
++    SectionData.CpuErrInfo[i].Type = ErrorType;
++    SectionData.CpuErrInfo[i].MultipleError =
++      ((CpuErr->ErrStatus & CPU_ERR_STATUS_DE_BIT) ?
++       0 : ErrorCount);
++    SectionData.CpuErrInfo[i].Flags =
++      ((CpuErr->ErrStatus & CPU_ERR_STATUS_CE_MASK) ?
++       EFI_ARM_PROC_ERROR_INFO_OVERFLOW_FLAG :
++       EFI_ARM_PROC_ERROR_INFO_FIRST_ERROR_CAPTURED_FLAG);
++    SectionData.CpuErrInfo[i].VirtualFaultAddress  = 0;
++    SectionData.CpuErrInfo[i].PhysicalFaultAddress = CpuErr->ErrAddr;
++
++    if (ErrorType == EFI_ARM_PROC_ERROR_TYPE_CACHE) {
++      SectionData.CpuErrInfo[i].ErrorInfo.CacheErrorInfo.    \
++      ValidFields =
++        (EFI_TLB_ERROR_TRANSACTION_TYPE_VALID |
++         EFI_TLB_ERROR_OPERATION_VALID |
++         EFI_CACHE_ERROR_LEVEL_VALID |
++         EFI_CACHE_ERROR_PROCESSOR_CONTEXT_CORRUPT_VALID |
++         EFI_CACHE_ERROR_CORRECTED_VALID);
++      SectionData.CpuErrInfo[i].ErrorInfo.CacheErrorInfo.    \
++      TransactionType = EFI_CACHE_ERROR_TYPE_GENERIC;
++      SectionData.CpuErrInfo[i].ErrorInfo.CacheErrorInfo.    \
++      Operation = EFI_CACHE_ERROR_OPERATION_GENERIC_ERROR;
++      SectionData.CpuErrInfo[i].ErrorInfo.CacheErrorInfo.    \
++      Level =
++        ((CpuErr->ErrMisc0 & CPU_ERR_MISC0_LVL_MASK) >>
++         CPU_ERR_MISC0_LVL_SHIFT);
++      SectionData.CpuErrInfo[i].ErrorInfo.CacheErrorInfo.ContextCorrupt = 0;
++      SectionData.CpuErrInfo[i].ErrorInfo.CacheErrorInfo.    \
++      ErrorCorrected =
++        ((CpuErr->ErrStatus & CPU_ERR_STATUS_CE_MASK) ?
++         1 : 0);
++      SectionData.CpuErrInfo[i].ErrorInfo.CacheErrorInfo.PrecisePc = 0;
++      SectionData.CpuErrInfo[i].ErrorInfo.CacheErrorInfo. RestartablePc = 0;
++    }
++    else if (ErrorType == EFI_ARM_PROC_ERROR_TYPE_TLB) {
++      SectionData.CpuErrInfo[i].ErrorInfo.TlbErrorInfo.      \
++      ValidFields =
++        (EFI_TLB_ERROR_TRANSACTION_TYPE_VALID |
++         EFI_TLB_ERROR_OPERATION_VALID |
++         EFI_TLB_ERROR_LEVEL_VALID |
++         EFI_TLB_ERROR_PROCESSOR_CONTEXT_CORRUPT_VALID |
++         EFI_TLB_ERROR_CORRECTED_VALID);
++      SectionData.CpuErrInfo[i].ErrorInfo.TlbErrorInfo.      \
++      TransactionType = EFI_TLB_ERROR_TYPE_GENERIC;
++      SectionData.CpuErrInfo[i].ErrorInfo.TlbErrorInfo.      \
++      Operation = EFI_TLB_ERROR_OPERATION_GENERIC_ERROR;
++      SectionData.CpuErrInfo[i].ErrorInfo.TlbErrorInfo.      \
++      Level =
++        ((CpuErr->ErrMisc0 & CPU_ERR_MISC0_LVL_MASK) >>
++         CPU_ERR_MISC0_LVL_MASK),
++      SectionData.CpuErrInfo[i].ErrorInfo.TlbErrorInfo.ContextCorrupt = 0;
++      SectionData.CpuErrInfo[i].ErrorInfo.TlbErrorInfo.      \
++      ErrorCorrected =
++        ((CpuErr->ErrStatus & CPU_ERR_STATUS_CE_MASK) ?
++         1 : 0);
++      SectionData.CpuErrInfo[i].ErrorInfo.TlbErrorInfo.PrecisePc = 0;
++      SectionData.CpuErrInfo[i].ErrorInfo.TlbErrorInfo.RestartablePc = 0;
++    }
++  }
++
++  //
++  // Populate EFI_ARM_PROCESSOR_CONTEXT_INFORMATION data.
++  //
++  // Only if the error occurs in NON_SECURE state then the context information
++  // is passed to OSPM.
++  if (CpuErr->SecurityState == NON_SECURE) {
++    SectionData.CpuContextInfo[0].Version = 0;
++    SectionData.CpuContextInfo[0].RegisterContextType =
++      EFI_REG_CONTEXT_TYPE_4;
++    SectionData.CpuContextInfo[0].RegisterArraySize =
++      sizeof (EFI_CONTEXT_REGISTER_ARRAY_INFO);
++    CopyMem (
++      (VOID *)&SectionData.CpuContextInfo[0].RegisterArray.Type4SysRegs,
++      (VOID *)&CpuErr->ErrCtxGpr,
++      sizeof (EFI_ARM_AARCH64_CONTEXT_GPR)
++      );
++
++    SectionData.CpuContextInfo[1].Version = 0;
++    SectionData.CpuContextInfo[1].RegisterContextType =
++      EFI_REG_CONTEXT_TYPE_5;
++    SectionData.CpuContextInfo[1].RegisterArraySize =
++      sizeof (EFI_CONTEXT_REGISTER_ARRAY_INFO);
++    CopyMem (
++      (VOID *)&SectionData.CpuContextInfo[1].RegisterArray.Type5SysRegs,
++      (VOID *)&CpuErr->ErrCtxEl1Reg,
++      sizeof (EFI_ARM_AARCH64_EL1_CONTEXT_SYSTEM_REGISTERS)
++      );
++
++    SectionData.CpuContextInfo[2].Version = 0;
++    SectionData.CpuContextInfo[2] .RegisterContextType =
++      EFI_REG_CONTEXT_TYPE_6;
++    SectionData.CpuContextInfo[2].RegisterArraySize =
++      sizeof (EFI_CONTEXT_REGISTER_ARRAY_INFO);
++    CopyMem (
++      (VOID *)&SectionData.CpuContextInfo[2].RegisterArray.Type6SysRegs,
++      (VOID *)&CpuErr->ErrCtxEl2Reg,
++      sizeof (EFI_ARM_AARCH64_EL2_CONTEXT_SYSTEM_REGISTERS)
++     );
++  }
++
++  // Copy Section Data(Cper) information.
++  CopyMem (
++    ErrBlockSectionData,
++    (VOID *)&SectionData,
++    CPU_SECTION_DATA_SIZE (CpuErr->SecurityState)
++    );
++
++  // Nothing to be returned.
++  *CpuBufferSize = 0;
++
++  return EFI_SUCCESS;
++}
++
++/**
++  Initialization function of the driver.
++
++  Registers Mmi handler to process error events on Cpu and implements required
++  protocols to create and publish the error source descriptors.
++
++  @param[in] ImageHandle  Handle to image.
++  @param[in] SystemTable  Pointer to System table.
++
++  @retval EFI_SUCCESS  On successful installation of error event handlers for
++                       Cpu.
++  @retval Other        Failure in installing error event handlers for Cpu.
++**/
++EFI_STATUS
++EFIAPI
++CpuMmDriverInitialize (
++  IN EFI_HANDLE          ImageHandle,
++  IN EFI_MM_SYSTEM_TABLE *SystemTable
++  )
++{
++  EFI_MM_SYSTEM_TABLE *Mmst;
++  EFI_STATUS          Status;
++  EFI_HANDLE          DispatchHandle;
++
++  ASSERT (SystemTable != NULL);
++  Mmst = SystemTable;
++
++  // Register Mmi handlers for Cpu error events.
++  Status = Mmst->MmiHandlerRegister (
++                    CpuErrorEventHandler,
++                    &gArmCpuEventHandlerGuid,
++                    &DispatchHandle
++                    );
++  if (EFI_ERROR (Status)) {
++    DEBUG ((
++      DEBUG_ERROR,
++      "%a: Registration failed for Cpu error event handler, Status:%r\n",
++      __FUNCTION__,
++      Status
++      ));
++
++     return Status;
++  }
++
++  // Implement the Hest error source descriptor protocol.
++  Status = CpuInstallErrorSourceDescProtocol (SystemTable);
++  if (EFI_ERROR (Status)) {
++    Mmst->MmiHandlerUnRegister (DispatchHandle);
++  }
++
++  return Status;
++}
+diff --git a/Platform/ARM/Drivers/CpuMm/CpuMm.dec b/Platform/ARM/Drivers/CpuMm/CpuMm.dec
+new file mode 100644
+index 000000000000..39ebe223cd14
+--- /dev/null
++++ b/Platform/ARM/Drivers/CpuMm/CpuMm.dec
+@@ -0,0 +1,28 @@
++## @file
++#  Cpu MM driver specific declarations.
++#
++#  This file defines Guids and declares Pcd values for Cpu MM driver.
++#
++#  Copyright (c) 2021 - 2022, ARM Limited. All rights reserved.
++#
++#  SPDX-License-Identifier: BSD-2-Clause-Patent
++#
++##
++
++[Defines]
++  DEC_SPECIFICATION              = 0x0001001B
++  PACKAGE_NAME                   = CpuMm
++  PACKAGE_GUID                   = b6b5e2a0-ca32-4881-90ee-cbdbcf349b3e
++  PACKAGE_VERSION                = 0.1
++
++[Guids]
++  gCpuMmTokenSpaceGuid = {0x8162f48a, 0x05d0, 0x4d34, { 0x8d, 0x1b, 0x05, 0x53, 0xd6, 0x30, 0x3c, 0x87 }}
++  # Cpu Event handler Guid
++  gArmCpuEventHandlerGuid = { 0x2c1b3bfc, 0x42cd, 0x4a66, { 0xac, 0xd1, 0xa4, 0xd1, 0x63, 0xe9, 0x90, 0xf6 }}
++
++[PcdsFixedAtBuild.common]
++  gCpuMmTokenSpaceGuid.PcdCpuErrorDataBase|0|UINT64|0x00000001
++  gCpuMmTokenSpaceGuid.PcdCpuErrorDataSize|0|UINT64|0x00000002
++  gCpuMmTokenSpaceGuid.PcdCpuErrorSdeiEventBase|0|UINT32|0x00000003
++  gCpuMmTokenSpaceGuid.PcdCpuErrorSourceCount|1|UINT32|0x00000004
++  gCpuMmTokenSpaceGuid.PcdCpuErrorSourceId|0|UINT16|0x00000005
+diff --git a/Platform/ARM/Drivers/CpuMm/CpuMm.h b/Platform/ARM/Drivers/CpuMm/CpuMm.h
+new file mode 100644
+index 000000000000..c41f1fe210b9
+--- /dev/null
++++ b/Platform/ARM/Drivers/CpuMm/CpuMm.h
+@@ -0,0 +1,142 @@
++/** @file
++  Cpu Standalone MM error source driver file.
++
++  Defines bit fields and macros specific to Cpu Error Records. Also adds
++  data structures specific to Cpu error Section(Cper) data.
++
++  Copyright (c) 2021 - 2022, ARM Limited. All rights reserved.
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++
++  @par Specification Reference:
++    - ARM Perseus Core TRM, revision r0p0
++    - UEFI Reference Specification 2.8, Section N.2.4.4 ARM Processor Error
++      Section
++**/
++
++#ifndef CPU_MM_DRIVER_H_
++#define CPU_MM_DRIVER_H_
++
++#include <Base.h>
++#include <Guid/Cper.h>
++#include <IndustryStandard/Acpi.h>
++#include <Library/ArmLib.h>
++#include <Library/BaseMemoryLib.h>
++#include <Library/DebugLib.h>
++#include <Protocol/MmHestErrorSourceProtocol.h>
++
++//
++// Cpu Section Data(Cper) helper macros.
++//
++// Number of Processor Error Information data structers and Context Information
++// data structures that will be part of Cpu Section(Cper) data.
++#define CPU_ERR_INFO_NUM     1
++// 3 data structures to carry Type4, Type5 and Type6 Context System Register
++// information.
++#define CPU_CONTEXT_INFO_NUM 3
++
++// Total Cpu Section Data(Cper) Size. The security state of the error will
++// decide wheather the context information will be added to Cpu Section data.
++#define CPU_SECTION_DATA_SIZE(state)                                          \
++  (sizeof (EFI_ARM_PROCESSOR_ERROR_RECORD) +                                  \
++   (sizeof (EFI_ARM_PROCESSOR_ERROR_INFORMATION) * CPU_ERR_INFO_NUM) +        \
++   ((sizeof (EFI_ARM_PROCESSOR_CONTEXT_INFORMATION) * CPU_CONTEXT_INFO_NUM) * \
++    state))
++
++// Cpu Section Data(Cper) Structure.
++typedef struct {
++  EFI_ARM_PROCESSOR_ERROR_RECORD        CpuInfo;
++  EFI_ARM_PROCESSOR_ERROR_INFORMATION   CpuErrInfo[CPU_ERR_INFO_NUM];
++  EFI_ARM_PROCESSOR_CONTEXT_INFORMATION CpuContextInfo[CPU_CONTEXT_INFO_NUM];
++} CPU_ERR_SECTION_DATA;
++
++// Error Record Status register bit fields.
++#define CPU_ERR_STATUS_SERR_MASK 0xFF//(BIT0|BIT1|BIT2|BIT3|BIT4|BIT5|BIT6|BIT7)
++#define CPU_ERR_STATUS_PN_BIT    BIT22
++#define CPU_ERR_STATUS_DE_BIT    BIT23
++#define CPU_ERR_STATUS_CE_MASK   (BIT24|BIT25)
++#define CPU_ERR_STATUS_MV_BIT    BIT26
++#define CPU_ERR_STATUS_OF_BIT    BIT27
++#define CPU_ERR_STATUS_V_BIT     BIT30
++#define CPU_ERR_STATUS_AV_BIT    BIT31
++
++#define CPU_ERR_STATUS_SERR_TLB 0x08
++
++// Error Record Misc0 register bit fields.
++#define CPU_ERR_MISC0_LVL_MASK         (BIT1|BIT2|BIT3)
++#define CPU_ERR_MISC0_LVL_SHIFT        1
++#define CPU_ERR_MISC0_CECR_COUNT_MASK  0xFF00000000
++//  (BIT32|BIT33|BIT34|BIT35|BIT36|BIT36|BIT37|BIT38|BIT39)
++#define CPU_ERR_MISC0_CECR_COUNT_SHIFT 32
++
++// Cpu Section Data(Cper) Context Information helper macros.
++#define GPR_ARR_SIZE \
++  (sizeof (EFI_ARM_AARCH64_CONTEXT_GPR) / sizeof (UINT64))
++#define EL1_REG_ARR_SIZE \
++  (sizeof (EFI_ARM_AARCH64_EL1_CONTEXT_SYSTEM_REGISTERS) / sizeof (UINT64))
++#define EL2_REG_ARR_SIZE \
++  (sizeof (EFI_ARM_AARCH64_EL2_CONTEXT_SYSTEM_REGISTERS) / sizeof (UINT64))
++#define EL3_REG_ARR_SIZE \
++  (sizeof (EFI_ARM_AARCH64_EL3_CONTEXT_SYSTEM_REGISTERS) / sizeof (UINT64))
++
++#define CONTEXT_STRUCT_EL1_MPIDR_FIELD \
++  (OFFSET_OF (EFI_ARM_AARCH64_EL1_CONTEXT_SYSTEM_REGISTERS, MPIDR_EL1) / \
++   sizeof (UINT64))
++#define CONTEXT_STRUCT_EL1_MIDR_FIELD \
++  (OFFSET_OF (EFI_ARM_AARCH64_EL1_CONTEXT_SYSTEM_REGISTERS, MIDR_EL1) /  \
++   sizeof (UINT64))
++
++//
++// Security States.
++//
++#define SECURE     0
++#define NON_SECURE 1
++
++//
++// Offsets within Firmware Reserved Memory (Error Status Block).
++// The firmware reserved memory is used by the driver to convey the error data
++// to OSPM at runtime. The firmware reserved memory carries below information:
++// - Read Ack Register: Holds the physical address to the block of memory that
++//                      contains Read Ack Data.
++// - Error Status Register: Holds the physical address to the block of memory
++//                          that contains Error Status Data (Cper).
++// - Error Status Data: Actual error information buffer or Cper.
++// - Read Ack Data.
++//
++#define ReadAckRegisterOffset     0
++#define ErrorStatusRegisterOffset 8
++#define ErrorStatusDataOffset     16
++#define ReadAckDataOffset         (ErrorStatusDataOffset + \
++                                   sizeof (CPU_ERR_SECTION_DATA))
++
++//
++// Data structure to communicate Cpu Error Information.
++//
++typedef struct {
++  UINT64 ErrStatus;
++  UINT64 ErrMisc0;
++  UINT64 ErrAddr;
++  UINT64 SecurityState;
++  UINT64 ErrCtxGpr[GPR_ARR_SIZE];
++  UINT64 ErrCtxEl1Reg[EL1_REG_ARR_SIZE];
++  UINT64 ErrCtxEl2Reg[EL2_REG_ARR_SIZE];
++  UINT64 ErrCtxEl3Reg[EL3_REG_ARR_SIZE];
++} CPU_ERR_INFO;
++
++/**
++  Allow reporting of supported Cpu error sources.
++
++  Installs the HEST Error Source Descriptor protocol handler that publishes the
++  supported Cpu error sources as error source descriptor.
++
++  @param[in] MmSystemTable  Pointer to System table.
++
++  @retval EFI_SUCCESS            Protocol installation successful.
++  @retval EFI_INVALID_PARAMETER  Invalid system table parameter.
++  @retval Other                  Other error while installing the protocol.
++**/
++EFI_STATUS
++CpuInstallErrorSourceDescProtocol (
++  IN EFI_MM_SYSTEM_TABLE *MmSystemTable
++  );
++
++#endif // CPU_MM_DRIVER_H_
+diff --git a/Platform/ARM/Drivers/CpuMm/CpuMm.inf b/Platform/ARM/Drivers/CpuMm/CpuMm.inf
+new file mode 100644
+index 000000000000..f382d396105a
+--- /dev/null
++++ b/Platform/ARM/Drivers/CpuMm/CpuMm.inf
+@@ -0,0 +1,52 @@
++## @file
++#  StandaloneMM driver for the CPU.
++#
++#  Driver to handle CE and DE error events that occur on CPU.
++#
++#  Copyright (c) 2021 - 2022, ARM Limited. All rights reserved.
++#  SPDX-License-Identifier: BSD-2-Clause-Patent
++#
++##
++
++[Defines]
++  INF_VERSION                    = 0x0001001B
++  BASE_NAME                      = StandaloneMmCpuDriver
++  FILE_GUID                      = 3F6D82CA-0CAC-4405-8B59-7587BE8334D1
++  MODULE_TYPE                    = MM_STANDALONE
++  VERSION_STRING                 = 1.0
++  PI_SPECIFICATION_VERSION       = 0x00010032
++  ENTRY_POINT                    = CpuMmDriverInitialize
++
++[Sources]
++  CpuMm.c
++  CpuMmErrorSourceInfo.c
++
++[Packages]
++  ArmPkg/ArmPkg.dec
++  ArmPlatformPkg/ArmPlatformPkg.dec
++  EmbeddedPkg/EmbeddedPkg.dec
++  Platform/ARM/Drivers/CpuMm/CpuMm.dec
++  MdePkg/MdePkg.dec
++
++[LibraryClasses]
++  ArmSvcLib
++  ArmLib
++  BaseMemoryLib
++  DebugLib
++  StandaloneMmDriverEntryPoint
++
++[Protocols]
++  gMmHestErrorSourceDescProtocolGuid      ##PRODUCES
++
++[FixedPcd]
++  gCpuMmTokenSpaceGuid.PcdCpuErrorDataBase
++  gCpuMmTokenSpaceGuid.PcdCpuErrorDataSize
++  gCpuMmTokenSpaceGuid.PcdCpuErrorSdeiEventBase
++  gCpuMmTokenSpaceGuid.PcdCpuErrorSourceId
++  gCpuMmTokenSpaceGuid.PcdCpuErrorSourceCount
++
++[Guids]
++  gArmCpuEventHandlerGuid
++
++[Depex]
++  TRUE
+diff --git a/Platform/ARM/Drivers/CpuMm/CpuMmErrorSourceInfo.c b/Platform/ARM/Drivers/CpuMm/CpuMmErrorSourceInfo.c
+new file mode 100644
+index 000000000000..7a6c66d120a9
+--- /dev/null
++++ b/Platform/ARM/Drivers/CpuMm/CpuMmErrorSourceInfo.c
+@@ -0,0 +1,188 @@
++/** @file
++  Cpu Error Source descriptor information.
++
++  Implements the Hest Error Source Descriptor protocol. Creates and publishes
++  error source descriptors of type GHESv2 for supported error sources.
++
++  Copyright (c) 2021 - 2022, ARM Limited. All rights reserved.
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++
++  @par Specification Reference:
++    - ACPI Reference Specification 6.4, Table 18.13 GHESv2 Structure.
++**/
++
++#include <Library/AcpiLib.h>
++#include <CpuMm.h>
++
++/**
++  HEST error source descriptor protocol implementation for Cpu MM driver.
++
++  At boot returns the error source descriptor information for all supported
++  Cpu error sources. As defined by the HEST Error Source Descriptor
++  protocol interface this handler returns error source count and length when
++  it is called with Buffer parameter set to NULL.
++
++  @param[in]  This                Pointer for this protocol.
++  @param[out] Buffer              Hest error source descriptor Information
++                                  buffer.
++  @param[out] ErrorSourcesLength  Total length of Error Source Descriptors.
++  @param[out] ErrorSourceCount    Total number of supported error sources.
++
++  @retval EFI_SUCCESS            Buffer has valid Error Source descriptor
++                                 information.
++  @retval EFI_BUFFER_TOO_SMALL   Buffer is NULL.
++  @retval EFI_INVALID_PARAMETER  Buffer is NULL.
++**/
++STATIC
++EFI_STATUS
++EFIAPI
++CpuErrorSourceDescInfoGet (
++  IN  EDKII_MM_HEST_ERROR_SOURCE_DESC_PROTOCOL *This,
++  OUT VOID                                     **Buffer,
++  OUT UINTN                                    *ErrorSourcesLength,
++  OUT UINTN                                    *ErrorSourcesCount
++  )
++{
++  EFI_ACPI_6_4_GENERIC_HARDWARE_ERROR_SOURCE_VERSION_2_STRUCTURE *ErrorDescriptor;
++  UINTN    ErrorStatusBlock;
++  UINTN    *ErrorStatusRegister;
++
++
++  // Check ErrorSourcesLength and ErrorSourcesCount params are valid.
++  if (ErrorSourcesLength == NULL ||
++      ErrorSourcesCount == NULL) {
++    return EFI_INVALID_PARAMETER;
++  }
++
++  //
++  // Update the error source length and error source count parameters. These
++  // parameters represent total count of error sources that this driver
++  // publishes and their total length.
++  //
++  *ErrorSourcesLength =
++    FixedPcdGet64 (PcdCpuErrorSourceCount) *
++    sizeof (EFI_ACPI_6_4_GENERIC_HARDWARE_ERROR_SOURCE_VERSION_2_STRUCTURE);
++  *ErrorSourcesCount = FixedPcdGet32 (PcdCpuErrorSourceCount);
++
++  //
++  // If 'Buffer' is NULL, return. The current invocation of interface is to
++  // determine the total size of all the error source descriptor.
++  // Caller will allocate adequate size buffer using the length param and call
++  // again.
++  //
++  if (Buffer == NULL) {
++    return EFI_BUFFER_TOO_SMALL;
++  }
++
++  // Initialize firmware reserved memory(Cper) section for Cpu.
++  SetMem (
++    (VOID *)FixedPcdGet64 (PcdCpuErrorDataBase),
++    FixedPcdGet64 (PcdCpuErrorDataSize),
++    0
++    );
++
++  //
++  // Locate Error Status Register memory space within the firmware reserved
++  // memory and initialize it with physical address of Cper.
++  //
++  // Determine and initialize the address range of firmware reserved memory
++  // (Error Status Block) for given Cpu error. This memory is used to hold
++  // the runtime error information for Cpu error. This firmware
++  // reserved memory contains information about:
++  // - Read Ack Register: Holds the physical address to block of memory that
++  //                      contains Read Ack Data.
++  // - Error Status Register: Holds the physical address of block of memory
++  //                          that contains Cper.
++  // - Error Status Data : Cper.
++  // - Read Ack Data.
++  //
++  ErrorStatusBlock = FixedPcdGet64 (PcdCpuErrorDataBase);
++  ErrorStatusRegister = (UINTN *)(ErrorStatusBlock + ErrorStatusRegisterOffset);
++  *ErrorStatusRegister = (ErrorStatusBlock + ErrorStatusDataOffset);
++
++  // Buffer to be updated with error source descriptor(s) information.
++  ErrorDescriptor =
++    (EFI_ACPI_6_4_GENERIC_HARDWARE_ERROR_SOURCE_VERSION_2_STRUCTURE *)*Buffer;
++
++  // Populate boot time Cpu Error source descriptor information.
++  ErrorDescriptor->Type = EFI_ACPI_6_4_GENERIC_HARDWARE_ERROR_VERSION_2;
++  ErrorDescriptor->SourceId = FixedPcdGet16 (PcdCpuErrorSourceId);
++  ErrorDescriptor->RelatedSourceId = 0xFFFF;
++  ErrorDescriptor->Flags = 0;
++  ErrorDescriptor->Enabled = 1;
++  ErrorDescriptor->NumberOfRecordsToPreAllocate = 1;
++  ErrorDescriptor->MaxSectionsPerRecord = 1;
++  ErrorDescriptor->MaxRawDataLength = CPU_SECTION_DATA_SIZE (NON_SECURE);
++  // Initialize Error Status Register address with physical address of Cper.
++  ErrorDescriptor->ErrorStatusAddress = (EFI_ACPI_6_4_GENERIC_ADDRESS_STRUCTURE)
++    ARM_GAS64 (ErrorStatusBlock + ErrorStatusRegisterOffset);
++  ErrorDescriptor->NotificationStructure =
++    (EFI_ACPI_6_4_HARDWARE_ERROR_NOTIFICATION_STRUCTURE)
++    EFI_ACPI_6_4_HARDWARE_ERROR_NOTIFICATION_STRUCTURE_INIT (
++      EFI_ACPI_6_4_HARDWARE_ERROR_NOTIFICATION_SOFTWARE_DELEGATED_EXCEPTION,
++      0,
++      FixedPcdGet32 (PcdCpuErrorSdeiEventBase)
++      );
++  ErrorDescriptor->ErrorStatusBlockLength =
++    sizeof (EFI_ACPI_6_4_GENERIC_ERROR_STATUS_STRUCTURE) +
++    sizeof (EFI_ACPI_6_4_GENERIC_ERROR_DATA_ENTRY_STRUCTURE) +
++    CPU_SECTION_DATA_SIZE (NON_SECURE);
++  // Initialize Read Ack Register with physical address of Acknowledge
++  // buffer.
++  ErrorDescriptor->ReadAckRegister = (EFI_ACPI_6_4_GENERIC_ADDRESS_STRUCTURE)
++    ARM_GAS64 (ErrorStatusBlock);
++  ErrorDescriptor->ReadAckPreserve = 0;
++  ErrorDescriptor->ReadAckWrite = 0;
++
++  return EFI_SUCCESS;
++}
++
++//
++// Cpu EDKII_MM_HEST_ERROR_SOURCE_DESC_PROTOCOL protocol instance.
++//
++STATIC EDKII_MM_HEST_ERROR_SOURCE_DESC_PROTOCOL mCpuErrorSourceDesc = {
++  CpuErrorSourceDescInfoGet
++};
++
++/**
++  Allow reporting of supported Cpu error sources.
++
++  Installs the HEST Error Source Descriptor protocol handler that publishes the
++  supported Cpu error sources as error source descriptor.
++
++  @param[in] MmSystemTable  Pointer to System table.
++
++  @retval EFI_SUCCESS            Protocol installation successful.
++  @retval EFI_INVALID_PARAMETER  Invalid system table parameter.
++**/
++EFI_STATUS
++CpuInstallErrorSourceDescProtocol (
++  IN EFI_MM_SYSTEM_TABLE *MmSystemTable
++  )
++{
++  EFI_HANDLE CpuHandle = NULL;
++  EFI_STATUS Status;
++
++  // Check if the MmSystemTable is initialized.
++  if (MmSystemTable == NULL) {
++    return EFI_INVALID_PARAMETER;
++  }
++
++  // Install Hest error source descriptor protocol for Cpu.
++  Status = MmSystemTable->MmInstallProtocolInterface (
++                            &CpuHandle,
++                            &gMmHestErrorSourceDescProtocolGuid,
++                            EFI_NATIVE_INTERFACE,
++                            &mCpuErrorSourceDesc
++                            );
++  if (EFI_ERROR (Status)) {
++    DEBUG ((
++      DEBUG_ERROR,
++      "%a: Failed installing Hest error source protocol, status: %r\n",
++      __FUNCTION__,
++      Status
++      ));
++  }
++
++  return Status;
++}
+diff --git a/Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf b/Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf
+index 0bb09d741cc2..0d8d0dd965b5 100644
+--- a/Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf
++++ b/Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf
+@@ -1,5 +1,5 @@
+ #
+-#  Copyright (c) 2018, ARM Limited. All rights reserved.
++#  Copyright (c) 2018 - 2021, ARM Limited. All rights reserved.
+ #
+ #  SPDX-License-Identifier: BSD-2-Clause-Patent
+ #
+@@ -50,6 +50,9 @@ READ_LOCK_STATUS   = TRUE
+ 
+ !if $(EDK2_ENABLE_GHES_MM) == TRUE
+   INF ArmPlatformPkg/Drivers/HestMmErrorSources/HestErrorSourceStandaloneMm.inf
++!endif
++!if $(EDK2_ENABLE_CPU_MM) == TRUE
++  INF Platform/ARM/Drivers/CpuMm/CpuMm.inf
+ !endif
+   INF StandaloneMmPkg/Core/StandaloneMmCore.inf
+ !if $(SECURE_STORAGE_ENABLE) == TRUE
+diff --git a/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc b/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
+index 4aa1ae536eab..edcf99919ff6 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiPlatformMm.dsc.inc
+@@ -11,6 +11,10 @@
+ # Library Class section - list of all Library Classes needed by this Platform.
+ #
+ ################################################################################
++[Defines]
++  # To enable Cpu Mm driver, set this to TRUE.
++  DEFINE EDK2_ENABLE_CPU_MM                = FALSE
++
+ [LibraryClasses]
+   #
+   # Basic
+@@ -96,6 +100,15 @@
+   gEfiSecurityPkgTokenSpaceGuid.PcdUserPhysicalPresence|TRUE
+ !endif
+ 
++!if $(EDK2_ENABLE_CPU_MM) == TRUE
++  ## CPU
++  gCpuMmTokenSpaceGuid.PcdCpuErrorDataBase|0xFF621000
++  gCpuMmTokenSpaceGuid.PcdCpuErrorDataSize|0x400
++  gCpuMmTokenSpaceGuid.PcdCpuErrorSdeiEventBase|805
++  gCpuMmTokenSpaceGuid.PcdCpuErrorSourceCount|1
++  gCpuMmTokenSpaceGuid.PcdCpuErrorSourceId|10
++!endif
++
+ ###################################################################################################
+ #
+ # Components Section - list of the modules and components that will be processed by compilation
+@@ -139,6 +152,9 @@
+ !if $(EDK2_ENABLE_GHES_MM) == TRUE
+   ArmPlatformPkg/Drivers/HestMmErrorSources/HestErrorSourceStandaloneMm.inf
+ !endif
++!if $(EDK2_ENABLE_CPU_MM) == TRUE
++  Platform/ARM/Drivers/CpuMm/CpuMm.inf
++!endif
+ 
+ ###################################################################################################
+ #
+-- 
+2.39.5
+

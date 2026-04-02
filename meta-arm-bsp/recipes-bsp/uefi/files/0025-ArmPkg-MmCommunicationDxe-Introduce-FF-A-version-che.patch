@@ -1,0 +1,90 @@
+From e79dc9cc5c620c2a8db487a32d98f8565e4e9dd2 Mon Sep 17 00:00:00 2001
+From: Achin Gupta <achin.gupta@arm.com>
+Date: Sat, 6 Nov 2021 05:14:21 +0000
+Subject: [PATCH 25/43] ArmPkg/MmCommunicationDxe: Introduce FF-A version check
+
+This patch adds support for querying whether FF-A v1.1 is supported by the FF-A
+impplementation.
+
+Signed-off-by: Achin Gupta <achin.gupta@arm.com>
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: I008ba98ca31200067a4e3cb8b51b0c236b301f8d
+---
+ .../Drivers/MmCommunicationDxe/MmCommunicate.h  |  7 ++++++-
+ .../MmCommunicationDxe/MmCommunication.c        | 17 ++++++++++++-----
+ .../MmCommunicationDxe/MmCommunication.inf      |  3 +++
+ 3 files changed, 21 insertions(+), 6 deletions(-)
+
+diff --git a/ArmPkg/Drivers/MmCommunicationDxe/MmCommunicate.h b/ArmPkg/Drivers/MmCommunicationDxe/MmCommunicate.h
+index 5c5fcb576856..71edf7f49174 100644
+--- a/ArmPkg/Drivers/MmCommunicationDxe/MmCommunicate.h
++++ b/ArmPkg/Drivers/MmCommunicationDxe/MmCommunicate.h
+@@ -16,7 +16,12 @@
+ #define MM_MAJOR_VER(x)  (((x) & MM_MAJOR_VER_MASK) >> MM_MAJOR_VER_SHIFT)
+ #define MM_MINOR_VER(x)  ((x) & MM_MINOR_VER_MASK)
+ 
++#if (FixedPcdGet32 (PcdFfaEnable) == 1)
+ #define MM_CALLER_MAJOR_VER  0x1UL
+-#define MM_CALLER_MINOR_VER  0x0
++#define MM_CALLER_MINOR_VER  0x1UL
++#else
++#define MM_CALLER_MAJOR_VER  0x1UL
++#define MM_CALLER_MINOR_VER  0x0UL
++#endif
+ 
+ #endif /* MM_COMMUNICATE_H_ */
+diff --git a/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.c b/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.c
+index 85d9034555f0..a6fcd590a65b 100644
+--- a/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.c
++++ b/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.c
+@@ -18,6 +18,7 @@
+ 
+ #include <Protocol/MmCommunication2.h>
+ 
++#include <IndustryStandard/ArmFfaSvc.h>
+ #include <IndustryStandard/ArmStdSmc.h>
+ 
+ #include "MmCommunicate.h"
+@@ -250,14 +251,20 @@ GetMmCompatibility (
+ {
+   EFI_STATUS    Status;
+   UINT32        MmVersion;
+-  ARM_SMC_ARGS  MmVersionArgs;
++  ARM_SMC_ARGS  SmcArgs = {0};
+ 
+-  // MM_VERSION uses SMC32 calling conventions
+-  MmVersionArgs.Arg0 = ARM_SMC_ID_MM_VERSION_AARCH32;
++  if (FixedPcdGet32 (PcdFfaEnable) != 0) {
++    SmcArgs.Arg0 = ARM_SVC_ID_FFA_VERSION_AARCH32;
++    SmcArgs.Arg1 = MM_CALLER_MAJOR_VER << MM_MAJOR_VER_SHIFT;
++    SmcArgs.Arg1 |= MM_CALLER_MINOR_VER;
++  } else {
++    // MM_VERSION uses SMC32 calling conventions
++    SmcArgs.Arg0 = ARM_SMC_ID_MM_VERSION_AARCH32;
++  }
+ 
+-  ArmCallSmc (&MmVersionArgs);
++  ArmCallSmc (&SmcArgs);
+ 
+-  MmVersion = MmVersionArgs.Arg0;
++  MmVersion = SmcArgs.Arg0;
+ 
+   if ((MM_MAJOR_VER (MmVersion) == MM_CALLER_MAJOR_VER) &&
+       (MM_MINOR_VER (MmVersion) >= MM_CALLER_MINOR_VER))
+diff --git a/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.inf b/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.inf
+index 05b6de73ff34..c15b1a7a86ae 100644
+--- a/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.inf
++++ b/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.inf
+@@ -31,6 +31,9 @@
+   ArmPkg/ArmPkg.dec
+   MdePkg/MdePkg.dec
+ 
++[FixedPcd]
++  gArmTokenSpaceGuid.PcdFfaEnable
++
+ [LibraryClasses]
+   ArmLib
+   ArmSmcLib
+-- 
+2.39.5
+

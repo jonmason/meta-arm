@@ -1,0 +1,74 @@
+From c3368a4555ee4729c40ae3e5c7ac161a6b13df02 Mon Sep 17 00:00:00 2001
+From: Achin Gupta <achin.gupta@arm.com>
+Date: Sat, 6 Nov 2021 05:42:44 +0000
+Subject: [PATCH 26/43] ArmPkg/MmCommunicationDxe: Add support for obtaining
+ FF-A partition ID
+
+This patch invokes the FFA_ID_GET to obtain and stash the ID of the the
+FF-A partition that implements the DXE MM communication driver. This ID
+is used in subsequent patches for sending and receiving MM communication
+protocol requests and responses that are packaged as FF-A messages.
+
+Signed-off-by: Achin Gupta <achin.gupta@arm.com>
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: I5f20fe11f206a0c0ddaf87a2b5bba0bd5448d5fd
+---
+ .../MmCommunicationDxe/MmCommunication.c      | 22 +++++++++++++++++++
+ ArmPkg/Include/IndustryStandard/ArmFfaSvc.h   |  1 +
+ 2 files changed, 23 insertions(+)
+
+diff --git a/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.c b/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.c
+index a6fcd590a65b..f907ccf7349f 100644
+--- a/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.c
++++ b/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.c
+@@ -23,6 +23,11 @@
+ 
+ #include "MmCommunicate.h"
+ 
++//
++// Partition ID if FF-A support is enabled
++//
++STATIC UINT16  mFfaPartId;
++
+ //
+ // Address, Length of the pre-allocated buffer for communication with the secure
+ // world.
+@@ -288,6 +293,23 @@ GetMmCompatibility (
+     Status = EFI_UNSUPPORTED;
+   }
+ 
++  // If FF-A is supported then discover our ID.
++  if (FixedPcdGet32 (PcdFfaEnable) != 0) {
++
++    // Get our ID
++    ZeroMem(&SmcArgs, sizeof(SmcArgs));
++    SmcArgs.Arg0 = ARM_SVC_ID_FFA_ID_GET_AARCH32;
++    ArmCallSmc (&SmcArgs);
++    if (SmcArgs.Arg0 == ARM_SVC_ID_FFA_ERROR_AARCH32) {
++      DEBUG ((DEBUG_ERROR, "Unable to retrieve FF-A partition ID (%d).\n", SmcArgs.Arg2));
++      return EFI_UNSUPPORTED;
++    }
++    DEBUG ((DEBUG_INFO, "FF-A partition ID = 0x%lx.\n", SmcArgs.Arg2));
++    mFfaPartId = SmcArgs.Arg2;
++
++    return EFI_SUCCESS;
++  }
++
+   return Status;
+ }
+ 
+diff --git a/ArmPkg/Include/IndustryStandard/ArmFfaSvc.h b/ArmPkg/Include/IndustryStandard/ArmFfaSvc.h
+index d21b263339ee..fc62f6cd64e9 100644
+--- a/ArmPkg/Include/IndustryStandard/ArmFfaSvc.h
++++ b/ArmPkg/Include/IndustryStandard/ArmFfaSvc.h
+@@ -17,6 +17,7 @@
+ #define ARM_FFA_SVC_H_
+ 
+ #define ARM_SVC_ID_FFA_VERSION_AARCH32               0x84000063
++#define ARM_SVC_ID_FFA_ID_GET_AARCH32                0x84000069
+ #define ARM_SVC_ID_FFA_MSG_SEND_DIRECT_REQ_AARCH32   0x8400006F
+ #define ARM_SVC_ID_FFA_MSG_SEND_DIRECT_RESP_AARCH32  0x84000070
+ #define ARM_SVC_ID_FFA_MSG_SEND_DIRECT_REQ_AARCH64   0xC400006F
+-- 
+2.39.5
+

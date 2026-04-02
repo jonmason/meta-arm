@@ -1,0 +1,57 @@
+From 8fca3675bf9eb3eb6e2ea5740e007d10adeed994 Mon Sep 17 00:00:00 2001
+From: Rohit Mathew <rohit.mathew@arm.com>
+Date: Fri, 9 Sep 2022 18:46:12 +0100
+Subject: [PATCH 05/78] Platform/Sgi: Migrate to PPTT with SLC for RD-N2-Cfg1
+
+For RD-N2-Cfg1 (platform with CMN-700 mesh), use PPTT container with SLC
+included. The SLC for this platform is 8MB in size, 16 way set
+associative and has a cache line size of 64 bytes. This SLC also houses
+8192 sets (number of cache lines / associativity).
+
+Signed-off-by: Rohit Mathew <rohit.mathew@arm.com>
+Change-Id: Id007f8ef67fdf1cde07deba5da037815e24cbabe
+---
+ .../ARM/SgiPkg/AcpiTables/RdN2Cfg1/Pptt.aslc  | 20 ++++++++++++++++---
+ 1 file changed, 17 insertions(+), 3 deletions(-)
+
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Pptt.aslc b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Pptt.aslc
+index 454ed58ea8e6..dce0c76ff3a8 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Pptt.aslc
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Pptt.aslc
+@@ -119,7 +119,7 @@
+  */
+ typedef struct {
+   EFI_ACPI_6_4_PROCESSOR_PROPERTIES_TOPOLOGY_TABLE_HEADER  Header;
+-  RD_PPTT_PACKAGE                                          Package;
++  RD_PPTT_SLC_PACKAGE                                      Package;
+ } EFI_ACPI_6_4_PROCESSOR_PROPERTIES_TOPOLOGY_TABLE;
+ #pragma pack ()
+ 
+@@ -134,8 +134,22 @@ STATIC EFI_ACPI_6_4_PROCESSOR_PROPERTIES_TOPOLOGY_TABLE Pptt = {
+ 
+   {
+     EFI_ACPI_6_4_PPTT_STRUCTURE_PROCESSOR_INIT (
+-      OFFSET_OF (RD_PPTT_PACKAGE, Cluster[0]),
+-      PPTT_PROCESSOR_PACKAGE_FLAGS, 0, 0, 0),
++      OFFSET_OF (RD_PPTT_SLC_PACKAGE, Slc),
++      PPTT_PROCESSOR_PACKAGE_FLAGS, 0, 0, 1),
++
++    OFFSET_OF (EFI_ACPI_6_4_PROCESSOR_PROPERTIES_TOPOLOGY_TABLE,
++               Package.Slc),
++
++    EFI_ACPI_6_4_PPTT_STRUCTURE_CACHE_INIT (
++      PPTT_CACHE_STRUCTURE_FLAGS,           /* Flag */
++      0,                                    /* Next level of cache */
++      SIZE_8MB,                             /* Size */
++      8192,                                 /* Num of sets */
++      16,                                   /* Associativity */
++      PPTT_UNIFIED_CACHE_ATTR,              /* Attributes */
++      64,                                   /* Line size */
++      RD_PPTT_CACHE_ID(0, -1, -1, L3Cache)  /* Cache id */
++    ),
+ 
+     {
+       PPTT_CLUSTER_INIT (0, 0),
+-- 
+2.39.5
+

@@ -1,0 +1,180 @@
+From 971f62c5eaa2e4c6e6ddb46e6166f40bfc76a675 Mon Sep 17 00:00:00 2001
+From: Rohit Mathew <rohit.mathew@arm.com>
+Date: Thu, 14 Apr 2022 12:12:18 +0100
+Subject: [PATCH 35/78] Platform/Sgi: Add MPAM ACPI table for RD-N2-Cfg1
+
+Add MPAM ACPI table based on MPAM ACPI 2.0 specification for RD-N2-Cfg1
+reference design platform. OS would query this table to understand
+about the type and details of the MSCs supported by the platform.
+
+RD-N2-Cfg1 platform supports 8 SLC slices. Each of these slices have
+individual MPAM MSC controls and register set. PPTT defines this group
+of cache slices as one single cache, tagged with a unique cache ID. All
+the MSCs would in-turn refer to this unique cache ID given in the PPTT
+ACPI description.
+
+As the macro SGI_REMOTE_CHIP_MEM_OFFSET is used by
+RD_MPAM_MSC_NODE_INIT macro, add a reference to PcdMaxAddressBitsPerChip
+PCD.
+
+Signed-off-by: Rohit Mathew <rohit.mathew@arm.com>
+Change-Id: I8e5111b51225abae4ee8a896c3817c8bb88667a7
+---
+ .../ARM/SgiPkg/AcpiTables/RdN2Cfg1/Mpam.aslc  | 132 ++++++++++++++++++
+ .../SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf  |   1 +
+ 2 files changed, 133 insertions(+)
+ create mode 100644 Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Mpam.aslc
+
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Mpam.aslc b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Mpam.aslc
+new file mode 100644
+index 000000000000..52e5ce940a9f
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1/Mpam.aslc
+@@ -0,0 +1,132 @@
++/** @file
++
++  Memory System Resource Partitioning and Monitoring (MPAM) for RD-N2-Cfg1
++  platform
++
++  MPAM ACPI description for the MSCs (Memory system components) for RD-N2-Cfg1
++  reference design platform is contained within this file. RD-N2-Cfg1 supports 8
++  HNF slices, each holding 1 MB of SLC cache. Each of these SLC cache slices in
++  turn holds MPAM MSC controls and associated register files. MPAM has separate
++  secure and non-secure register spaces. Since non-secure OS is generally
++  concerned with the non-secure register space, all of the non-secure nodes
++  should be described within the MPAM ACPI table
++
++  Copyright (c) 2023, Arm Limited. All rights reserved.
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++
++  @par Specification Reference:
++    - MPAM 2.0, Memory System Resource Partitioning and Monitoring
++**/
++
++#include <IndustryStandard/Mpam.h>
++#include <Library/AcpiLib.h>
++#include "SgiAcpiHeader.h"
++
++/*
++ * Macros for RD-N2-Cfg1's MPAM table
++ */
++#define RDN2CFG1_MPAM_MSC_COUNT                                (8)
++#define RDN2CFG1_MPAM_MMIO_SIZE                                (0x1008)
++#define RDN2CFG1_RESOURCES_PER_MSC                             (0x01)
++#define RDN2CFG1_FUNCTIONAL_DEPENDENCY_PER_RESOURCE            (0x0)
++#define RDN2CFG1_BASE_ADDRESS(BaseAddress, ChipId)                     \
++  ((SGI_REMOTE_CHIP_MEM_OFFSET(ChipId)) + BaseAddress)
++
++typedef EFI_ACPI_DESCRIPTION_HEADER
++  EFI_ACPI_MPAM_HEADER;
++
++///
++/// MPAM MSC type. For RD-N2-Cfg1, MPAM MSC structure doesn't have any
++/// functional dependency list.
++///
++typedef struct {
++  EFI_ACPI_MPAM_MSC_NODE            Header;
++  EFI_ACPI_MPAM_MSC_RESOURCE        Resource;
++} EFI_ACPI_MPAM_MSC;
++
++///
++/// MPAM ACPI Table
++///
++typedef struct {
++  EFI_ACPI_MPAM_HEADER              Header;
++  EFI_ACPI_MPAM_MSC                 Node[RDN2CFG1_MPAM_MSC_COUNT];
++} EFI_ACPI_MEMORY_SYSTEM_RESOURCE_PARTITIONING_MONITORING_TABLE;
++
++
++STATIC EFI_ACPI_MEMORY_SYSTEM_RESOURCE_PARTITIONING_MONITORING_TABLE Mpam =
++{
++
++  /* EFI_ACPI_MPAM_HEADER */
++  ARM_ACPI_HEADER (
++    EFI_ACPI_MEMORY_SYSTEM_RESOURCE_PARTITIONING_AND_MONITORING_TABLE_SIGNATURE,
++    EFI_ACPI_MEMORY_SYSTEM_RESOURCE_PARTITIONING_MONITORING_TABLE,
++    EFI_ACPI_MEMORY_SYSTEM_RESOURCE_PARTITIONING_AND_MONITORING_TABLE_REVISION
++  ),
++  {
++    /* MPAM_MSC_NODE 1 */
++    {
++      RD_MPAM_MSC_NODE_INIT(0x1, RDN2CFG1_BASE_ADDRESS(0x141601000, 0),
++	 RDN2CFG1_MPAM_MMIO_SIZE, 0, RDN2CFG1_MPAM_MSC_COUNT,
++         RDN2CFG1_RESOURCES_PER_MSC,
++         RDN2CFG1_FUNCTIONAL_DEPENDENCY_PER_RESOURCE)
++    },
++
++    /* MPAM_MSC_NODE 2 */
++    {
++      RD_MPAM_MSC_NODE_INIT(0x2, RDN2CFG1_BASE_ADDRESS(0x141641000, 0),
++         RDN2CFG1_MPAM_MMIO_SIZE, 0, RDN2CFG1_MPAM_MSC_COUNT,
++         RDN2CFG1_RESOURCES_PER_MSC,
++         RDN2CFG1_FUNCTIONAL_DEPENDENCY_PER_RESOURCE)
++    },
++
++    /* MPAM_MSC_NODE 3 */
++    {
++      RD_MPAM_MSC_NODE_INIT(0x3, RDN2CFG1_BASE_ADDRESS(0x141a01000, 0),
++        RDN2CFG1_MPAM_MMIO_SIZE, 0, RDN2CFG1_MPAM_MSC_COUNT,
++        RDN2CFG1_RESOURCES_PER_MSC,
++        RDN2CFG1_FUNCTIONAL_DEPENDENCY_PER_RESOURCE)
++    },
++
++    /* MPAM_MSC_NODE 4 */
++    {
++      RD_MPAM_MSC_NODE_INIT(0x4, RDN2CFG1_BASE_ADDRESS(0x141a41000, 0),
++        RDN2CFG1_MPAM_MMIO_SIZE, 0, RDN2CFG1_MPAM_MSC_COUNT,
++        RDN2CFG1_RESOURCES_PER_MSC,
++        RDN2CFG1_FUNCTIONAL_DEPENDENCY_PER_RESOURCE)
++    },
++
++    /* MPAM_MSC_NODE 5 */
++    {
++      RD_MPAM_MSC_NODE_INIT(0x5, RDN2CFG1_BASE_ADDRESS(0x142601000, 0),
++        RDN2CFG1_MPAM_MMIO_SIZE, 0, RDN2CFG1_MPAM_MSC_COUNT,
++        RDN2CFG1_RESOURCES_PER_MSC,
++        RDN2CFG1_FUNCTIONAL_DEPENDENCY_PER_RESOURCE)
++    },
++
++    /* MPAM_MSC_NODE 6 */
++    {
++      RD_MPAM_MSC_NODE_INIT(0x6, RDN2CFG1_BASE_ADDRESS(0x142641000, 0),
++        RDN2CFG1_MPAM_MMIO_SIZE, 0, RDN2CFG1_MPAM_MSC_COUNT,
++        RDN2CFG1_RESOURCES_PER_MSC,
++        RDN2CFG1_FUNCTIONAL_DEPENDENCY_PER_RESOURCE)
++    },
++
++    /* MPAM_MSC_NODE 7 */
++    {
++      RD_MPAM_MSC_NODE_INIT(0x7, RDN2CFG1_BASE_ADDRESS(0x142a01000, 0),
++        RDN2CFG1_MPAM_MMIO_SIZE, 0, RDN2CFG1_MPAM_MSC_COUNT,
++        RDN2CFG1_RESOURCES_PER_MSC,
++        RDN2CFG1_FUNCTIONAL_DEPENDENCY_PER_RESOURCE)
++    },
++
++    /* MPAM_MSC_NODE 8 */
++    {
++      RD_MPAM_MSC_NODE_INIT(0x8, RDN2CFG1_BASE_ADDRESS(0x142a41000, 0),
++        RDN2CFG1_MPAM_MMIO_SIZE, 0, RDN2CFG1_MPAM_MSC_COUNT,
++        RDN2CFG1_RESOURCES_PER_MSC,
++        RDN2CFG1_FUNCTIONAL_DEPENDENCY_PER_RESOURCE)
++    }
++  }
++};
++
++VOID* CONST ReferenceAcpiTable = &Mpam;
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf
+index 2872dac6421a..0f4af38f42dd 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf
+@@ -21,6 +21,7 @@
+   Mcfg.aslc
+   RdN2Cfg1/Dsdt.asl
+   RdN2Cfg1/Madt.aslc
++  RdN2Cfg1/Mpam.aslc
+   RdN2Cfg1/Pptt.aslc
+   Spcr.aslc
+   SsdtEvents.asl
+-- 
+2.39.5
+

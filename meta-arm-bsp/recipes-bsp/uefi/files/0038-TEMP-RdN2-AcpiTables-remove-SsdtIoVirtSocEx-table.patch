@@ -1,0 +1,43 @@
+From 719d5489558a961b0cb1e079a6260745554e47d4 Mon Sep 17 00:00:00 2001
+From: Vijayenthiran Subramaniam <vijayenthiran.subramaniam@arm.com>
+Date: Fri, 22 Mar 2024 17:59:51 +0530
+Subject: [PATCH 38/78] [TEMP] RdN2: AcpiTables: remove SsdtIoVirtSocEx table
+
+Remove the SSDT tables of the peripherals present in the IO Virt blk.
+The support has to be reintroduced once the IO Macro support is
+enabled.
+
+Signed-off-by: Vijayenthiran Subramaniam <vijayenthiran.subramaniam@arm.com>
+Change-Id: I0697217e7c8ffc09f99bc23f282f3597c9048a0f
+---
+ Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg2AcpiTables.inf | 1 -
+ Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg3AcpiTables.inf | 1 -
+ 2 files changed, 2 deletions(-)
+
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg2AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg2AcpiTables.inf
+index 921d1790b470..c77c6d12b7f6 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg2AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg2AcpiTables.inf
+@@ -23,7 +23,6 @@
+   RdN2Cfg2/Pptt.aslc
+   RdN2Cfg2/Srat.aslc
+   Spcr.aslc
+-  SsdtIoVirtSocExp.asl
+   SsdtRos.asl
+   SsdtRosVirtioP9.asl
+ 
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg3AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg3AcpiTables.inf
+index d796b2866c8d..c3ad61939bd8 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg3AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg3AcpiTables.inf
+@@ -23,7 +23,6 @@
+   RdN2/Pptt.aslc
+   Spcr.aslc
+   SsdtEvents.asl
+-  SsdtIoVirtSocExp.asl
+   SsdtRos.asl
+   SsdtRosVirtioP9.asl
+ 
+-- 
+2.39.5
+

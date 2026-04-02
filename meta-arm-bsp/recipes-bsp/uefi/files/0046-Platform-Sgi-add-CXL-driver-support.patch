@@ -1,0 +1,53 @@
+From 76ba671098351190bb534f5cb8156f32563d9883 Mon Sep 17 00:00:00 2001
+From: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Date: Thu, 8 Sep 2022 12:16:00 +0530
+Subject: [PATCH 46/78] Platform/Sgi: add CXL driver support
+
+CxlDxe discovers CXL capable device with memory expander capability
+and reads out memory range details. Platform drivers fetch the remote
+memory details and include as part of system memory through ACPI
+tables.
+
+Signed-off-by: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Change-Id: I65e39c33dc642acf36a0f7e9375aad3b860749bc
+---
+ Platform/ARM/SgiPkg/SgiPlatform.dsc.inc | 1 +
+ Platform/ARM/SgiPkg/SgiPlatform.fdf     | 7 ++++++-
+ 2 files changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc b/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+index 9132394bfec9..76ec8b0769eb 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+@@ -373,6 +373,7 @@
+   # SRAT/HMAT Table generator
+   #
+ !if $(EDK2_ENABLE_REMOTE_CXL_MEM) == TRUE
++  edk2-platforms/Platform/ARM/Drivers/CxlDxe/CxlDxe.inf
+   Platform/ARM/SgiPkg/Library/AcpiTableGeneratorLib/AcpiTableGenerator.inf
+ !endif
+ 
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.fdf b/Platform/ARM/SgiPkg/SgiPlatform.fdf
+index 70cfc2578bf0..47551d39f2a6 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatform.fdf
++++ b/Platform/ARM/SgiPkg/SgiPlatform.fdf
+@@ -213,10 +213,15 @@ READ_LOCK_STATUS   = TRUE
+   INF MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
+   INF MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
+ 
++!if $(EDK2_ENABLE_REMOTE_CXL_MEM) == TRUE
++  #
++  # Cxl Device driver
++  #
++  INF edk2-platforms/Platform/ARM/Drivers/CxlDxe/CxlDxe.inf
++
+   #
+   # SRAT/HMAT Table generator
+   #
+-!if $(EDK2_ENABLE_REMOTE_CXL_MEM) == TRUE
+   INF Platform/ARM/SgiPkg/Library/AcpiTableGeneratorLib/AcpiTableGenerator.inf
+ !endif
+ 
+-- 
+2.39.5
+

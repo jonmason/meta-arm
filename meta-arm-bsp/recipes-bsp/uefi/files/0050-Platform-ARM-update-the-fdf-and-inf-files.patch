@@ -1,0 +1,51 @@
+From d89e858fb55efa918ec44279a2d8f551cd30a151 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Tue, 2 Apr 2024 18:32:10 +0530
+Subject: [PATCH 50/78] Platform/ARM: update the fdf and inf files
+
+For Rd-N2-Cfg1 platform update the inf and fdf files.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I3b46c491e3fe189905d207326256d024fe452215
+---
+ Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesEinj.inf | 2 +-
+ Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.fdf.inc             | 3 ---
+ 2 files changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesEinj.inf b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesEinj.inf
+index 762513bbdea9..3ab29a9b7cc4 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesEinj.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesEinj.inf
+@@ -18,6 +18,7 @@
+   Dbg2.aslc
+   Fadt.aslc
+   Gtdt.aslc
++  Mcfg.aslc
+   RdN2Cfg1/Dsdt.asl
+   RdN2Cfg1/Einj.aslc
+   RdN2Cfg1/Madt.aslc
+@@ -25,7 +26,6 @@
+   RdN2Cfg1/Pptt.aslc
+   Spcr.aslc
+   SsdtEvents.asl
+-  SsdtIoVirtSocExp.asl
+   SsdtRos.asl
+   SsdtRosVirtioP9.asl
+ 
+diff --git a/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.fdf.inc b/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.fdf.inc
+index 2f6cf29adb5d..a8cf76623078 100644
+--- a/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.fdf.inc
++++ b/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.fdf.inc
+@@ -9,9 +9,6 @@
+ # Per-platform additional content of the DXE phase firmware volume
+ 
+   # ACPI support
+-!if $(EDK2_ENABLE_FIRMWARE_FIRST) == TRUE
+-  INF RuleOverride=ACPITABLE Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf
+-!endif
+ !if $(EDK2_ENABLE_KERNEL_FIRST) == TRUE
+   INF RuleOverride=ACPITABLE Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesRas.inf
+ !else
+-- 
+2.39.5
+

@@ -1,0 +1,36 @@
+From dd25905d63ec72d6e06804155fda1098d10da19e Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Thu, 28 Nov 2024 16:07:00 +0000
+Subject: [PATCH 43/43] [HACK]StandaloneMmPkg/Core: Skip creation of shadow BFV
+ region
+
+Skip creation of shadow BFV region because the case for region
+allocation failure is not handled.
+
+This skips the driver load step and cause failure in fimrware during MMI
+call.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+---
+ StandaloneMmPkg/Core/StandaloneMmCore.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/StandaloneMmPkg/Core/StandaloneMmCore.c b/StandaloneMmPkg/Core/StandaloneMmCore.c
+index 292e556b372b..a0fac774f896 100644
+--- a/StandaloneMmPkg/Core/StandaloneMmCore.c
++++ b/StandaloneMmPkg/Core/StandaloneMmCore.c
+@@ -890,6 +890,11 @@ StandaloneMmMain (
+         if (!FeaturePcdGet (PcdRestartMmDispatcherOnceMmEntryRegistered)) {
+           FreePool (mBfv);
+         }
++      } else {
++        mBfv = (VOID *)(UINTN)BfvHob->BaseAddress;
++        MmCoreFfsFindMmDriver (mBfv, 0);
++        MmDispatcher ();
++        DEBUG ((DEBUG_INFO, "Bfv shadow buffer allocation failed\n"));
+       }
+     }
+   }
+-- 
+2.39.5
+

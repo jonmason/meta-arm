@@ -1,0 +1,239 @@
+From 8da129d3036b1d8e454c2b7cd9cc4ab38cb0d400 Mon Sep 17 00:00:00 2001
+From: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Date: Sun, 25 Sep 2022 22:59:29 +0530
+Subject: [PATCH 47/78] Platform/Sgi: add CXL specific ACPI tables
+
+PcieAcpiTableGenerator, creates SSDT table for PCIe, based on data at
+runtime. For CXL enabled platform, there has to be presence of CXL
+specific ACPI objects.
+
+ACPI0017 is a SW entity under System Bus of ACPI tree, that indicates
+the presence of CEDT table.
+
+ACPI0016 is a SW entity under System Bus of ACPI tree, that represents
+a CXL Host Bridge.
+
+The _UID object under a CXL Host Bridge object, when evaluated, must
+match the UID field in the associated CHBS entry. In this patch,
+the UID across the objects, is Zero.
+
+Signed-off-by: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Change-Id: Ic90785e6b453584a642e86ddfb3a4bb3cc6f0a83
+---
+ .../PcieAcpiTableGeneratorLib.c               |  47 ++++++++
+ .../PcieAcpiTableGeneratorLib.inf             |   2 +
+ .../PcieCxlSsdtTemplate.asl                   | 112 ++++++++++++++++++
+ 3 files changed, 161 insertions(+)
+ create mode 100644 Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieCxlSsdtTemplate.asl
+
+diff --git a/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieAcpiTableGeneratorLib.c b/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieAcpiTableGeneratorLib.c
+index e7b3916cd16f..bcbd5dbe8164 100644
+--- a/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieAcpiTableGeneratorLib.c
++++ b/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieAcpiTableGeneratorLib.c
+@@ -22,7 +22,46 @@
+ #include <PcieMcfgTableGenerator.h>
+ #include <SgiPlatform.h>
+ 
++#if (FixedPcdGetBool (PcdRemoteCxlMemory))
++STATIC
++VOID
++EFIAPI
++UpdateCxlDeviceInfo (
++  IN  AML_ROOT_NODE_HANDLE  RootNodeHandle,
++  IN  UINT64                Idx
++  )
++{
++  EFI_STATUS                Status;
++  AML_OBJECT_NODE_HANDLE    NameOpCxlNode;
++  UINT8                     CxlName[SGI_PCI_DEV_NAME_LEN];
++
++  Status = AmlFindNode (
++             RootNodeHandle,
++             "\\_SB_.CXL0._UID",
++             &NameOpCxlNode
++             );
++  if (EFI_ERROR (Status)) {
++    DEBUG ((DEBUG_WARN, "Not found CXL0 UID\n"));
++    return;
++  }
++
++  Status = AmlNameOpUpdateInteger (NameOpCxlNode, Idx);
++
++  Status = AmlFindNode (RootNodeHandle, "\\_SB.CXL0", &NameOpCxlNode);
++  if (EFI_ERROR (Status)) {
++    DEBUG ((DEBUG_WARN, "Not found CXL0 \n"));
++    return;
++  }
++
++  AsciiSPrint ((CHAR8 *)CxlName, sizeof (CxlName), "CXL%d", Idx);
++  AmlDeviceOpUpdateName (NameOpCxlNode, (CHAR8 *)CxlName);
++
++  return;
++}
++#endif
++
+ extern CHAR8 pciessdttemplate_aml_code[];
++extern CHAR8 pciecxlssdttemplate_aml_code[];
+ 
+ STATIC
+ EFI_STATUS
+@@ -219,10 +258,18 @@ GenerateAndInstallPcieSsdt (
+   }
+ 
+   for (Idx = 0; Idx < Count; Idx++) {
++#if (FixedPcdGetBool (PcdRemoteCxlMemory))
++    Status = AmlParseDefinitionBlock(
++        (EFI_ACPI_DESCRIPTION_HEADER *) pciecxlssdttemplate_aml_code,
++        &RootNodeHandle
++        );
++    UpdateCxlDeviceInfo (RootNodeHandle, (UINT64) Config[Idx].Index);
++#else
+     Status = AmlParseDefinitionBlock(
+         (EFI_ACPI_DESCRIPTION_HEADER *) pciessdttemplate_aml_code,
+         &RootNodeHandle
+         );
++#endif
+     if (EFI_ERROR (Status)) {
+       DEBUG ((
+             DEBUG_ERROR,
+diff --git a/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieAcpiTableGeneratorLib.inf b/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieAcpiTableGeneratorLib.inf
+index 7d909c2bcbf3..4bd2a93adbb1 100644
+--- a/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieAcpiTableGeneratorLib.inf
++++ b/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieAcpiTableGeneratorLib.inf
+@@ -17,6 +17,7 @@
+   PcieIortGenerator.c
+   PcieMcfgTableGenerator.c
+   PcieSsdtTemplate.asl
++  PcieCxlSsdtTemplate.asl
+ 
+ [Packages]
+   ArmPkg/ArmPkg.dec
+@@ -46,6 +47,7 @@
+   gArmSgiTokenSpaceGuid.PcdSmmuGErrorGsiv
+   gArmSgiTokenSpaceGuid.PcdSmmuPriGsiv
+   gArmSgiTokenSpaceGuid.PcdSmmuSyncGsiv
++  gArmSgiTokenSpaceGuid.PcdRemoteCxlMemory
+ 
+ [Protocols]
+   gEfiAcpiTableProtocolGuid          ## CONSUMES
+diff --git a/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieCxlSsdtTemplate.asl b/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieCxlSsdtTemplate.asl
+new file mode 100644
+index 000000000000..568b1a21080f
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieCxlSsdtTemplate.asl
+@@ -0,0 +1,112 @@
++/** @file
++  Secondary System Description Table (SSDT)
++
++  Copyright (c) 2022, ARM Limited. All rights reserved.<BR>
++
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++
++**/
++
++#include "SgiAcpiHeader.h"
++
++DefinitionBlock("SsdtPci.aml", "SSDT", 2, "ARMLTD", "ARMSGI", EFI_ACPI_ARM_OEM_REVISION) {
++  Scope (_SB) {
++    Device (PCI0) {
++      Name (_HID, "ACPI0016")         // CXL Host Bridge
++      Name (_CID, EISAID("PNP0A03"))  // Compatible PCI Root Bridge
++      Name (_SEG, 0)                  // PCI Segment Group Number
++      Name (_BBN, 0)                  // PCI Base Bus Number
++      Name (_UID, 0)                  // Unique ID
++      Name (_CCA, 1)                  // Cache Coherency Attribute
++
++      Name (_CRS, ResourceTemplate () {
++        WordBusNumber (
++          ResourceProducer,
++          MinFixed,
++          MaxFixed,
++          PosDecode,
++          0,
++          0,
++          0xF,
++          0,
++          0x10
++        )
++
++        QWordMemory (
++          ResourceProducer,
++          PosDecode,
++          MinFixed,
++          MaxFixed,
++          Cacheable,
++          ReadWrite,
++          0x00000000,
++          0x60000000,
++          0x6FFFFFFF,
++          0x00000000,
++          0x10000000
++        )
++
++        QWordMemory (
++          ResourceProducer,
++          PosDecode,
++          MinFixed,
++          MaxFixed,
++          Cacheable,
++          ReadWrite,
++          0x00000000,
++          0x4000000000,
++          0x5FFFFFFFFF,
++          0x00000000,
++          0x2000000000
++        )
++
++        DWordIo (
++          ResourceProducer,
++          MinFixed,
++          MaxFixed,
++          PosDecode,
++          EntireRange,
++          0x00000000,
++          0x00000000,
++          0x007FFFFF,
++          0x77800000,
++          0x00800000,
++          ,
++          ,
++          ,
++          TypeTranslation
++        )
++      })
++
++      Device (RES0)
++      {
++        Name (_HID, "PNP0C02" /* PNP Motherboard Resources */)
++        Name (_CRS, ResourceTemplate ()
++        {
++           QWordMemory (
++             ResourceProducer,
++             PosDecode,
++             MinFixed,
++             MaxFixed,
++             NonCacheable,
++             ReadWrite,
++             0x0000000000000000,
++             0x1010000000,
++             0x1017FFFFFF,
++             0x0000000000000000,
++             0x8000000,
++             ,
++             ,
++             ,
++             AddressRangeMemory,
++             TypeStatic)
++        })
++      }
++    }
++
++    Device (CXL0) {   // Host bridge CEDT
++      Name (_HID, "ACPI0017")
++      Name (_UID, 0)
++    }
++  }
++}
+-- 
+2.39.5
+

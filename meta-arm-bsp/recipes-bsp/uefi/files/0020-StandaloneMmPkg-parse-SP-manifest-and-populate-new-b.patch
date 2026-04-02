@@ -1,0 +1,464 @@
+From 4bcf5b654ee457d7df64e27fec486d818ac56948 Mon Sep 17 00:00:00 2001
+From: Achin Gupta <achin.gupta@arm.com>
+Date: Tue, 2 Nov 2021 11:06:58 +0000
+Subject: [PATCH 20/43] StandaloneMmPkg: parse SP manifest and populate new
+ boot information
+
+This patch discovers the SP manifest in DT format passed by the SPMC. It then
+parses it to obtain the boot information required to initialise the SP.
+
+Signed-off-by: Achin Gupta <achin.gupta@arm.com>
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: I04236799c92817e887ff3f80be2e2635101006c3
+---
+ .../Arm/StandaloneMmCoreEntryPoint.c          | 389 +++++++++++++++++-
+ 1 file changed, 380 insertions(+), 9 deletions(-)
+
+diff --git a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
+index 6a8d833f8320..7390dc45b7e5 100644
+--- a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
++++ b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
+@@ -40,6 +40,10 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
+ 
+ #define BOOT_PAYLOAD_VERSION  1
+ 
++#define FFA_PAGE_4K 0
++#define FFA_PAGE_16K 1
++#define FFA_PAGE_64K 2
++
+ PI_MM_CPU_DRIVER_ENTRYPOINT  CpuDriverEntryPoint = NULL;
+ 
+ /**
+@@ -108,6 +112,7 @@ GetAndPrintBootinformation (
+   }
+ 
+   return PayloadBootInfo;
++}
+ 
+ /**
+   An StMM SP implements partial support for FF-A v1.0. The FF-A ABIs are used to
+@@ -280,6 +285,308 @@ DelegatedEventLoop (
+   }
+ }
+ 
++STATIC
++BOOLEAN
++CheckDescription (
++    IN VOID   * DtbAddress,
++    IN INT32    Offset,
++    OUT CHAR8 * Description,
++    OUT UINT32  Size
++    )
++{
++  CONST CHAR8 * Property;
++  INT32 LenP;
++
++  Property = fdt_getprop (DtbAddress, Offset, "description", &LenP);
++  if (Property == NULL) {
++    return FALSE;
++  }
++
++ return CompareMem (Description, Property, MIN(Size, (UINT32)LenP)) == 0;
++
++}
++
++STATIC
++EFI_STATUS
++ReadProperty32 (
++    IN  VOID   * DtbAddress,
++    IN  INT32    Offset,
++    IN  CHAR8  * Property,
++    OUT UINT32 * Value
++    )
++{
++  CONST UINT32 * Property32;
++
++  Property32 =  fdt_getprop (DtbAddress, Offset, Property, NULL);
++  if (Property32 == NULL) {
++    DEBUG ((
++          DEBUG_ERROR,
++          "%s: Missing in FF-A boot information manifest\n",
++          Property
++          ));
++    return EFI_INVALID_PARAMETER;
++  }
++
++  *Value = fdt32_to_cpu (*Property32);
++
++  return EFI_SUCCESS;
++}
++
++STATIC
++EFI_STATUS
++ReadProperty64 (
++    IN  VOID   * DtbAddress,
++    IN  INT32    Offset,
++    IN  CHAR8  * Property,
++    OUT UINT64 * Value
++    )
++{
++  CONST UINT64 * Property64;
++
++  Property64 =  fdt_getprop (DtbAddress, Offset, Property, NULL);
++  if (Property64 == NULL) {
++    DEBUG ((
++          DEBUG_ERROR,
++          "%s: Missing in FF-A boot information manifest\n",
++          Property
++          ));
++    return EFI_INVALID_PARAMETER;
++  }
++
++  *Value = fdt64_to_cpu (*Property64);
++
++  return EFI_SUCCESS;
++}
++
++STATIC
++BOOLEAN
++ReadRegionInfo (
++    IN VOID  *DtbAddress,
++    IN INT32  Node,
++    IN CHAR8 *Region,
++    IN UINTN  RegionStrSize,
++    IN UINT32 PageSize,
++    OUT UINT64 *Address,
++    OUT UINT64 *Size
++    )
++{
++  BOOLEAN FoundBuffer;
++  INTN Status = 0;
++
++  FoundBuffer = CheckDescription (
++      DtbAddress,
++      Node,
++      Region,
++      RegionStrSize
++      );
++  if (!FoundBuffer) {
++    return FALSE;
++  }
++
++  DEBUG ((DEBUG_INFO, "Found Node: %a\n", Region));
++  Status = ReadProperty64 (
++      DtbAddress,
++      Node,
++      "base-address",
++      Address
++      );
++  if (Status != EFI_SUCCESS) {
++    DEBUG ((DEBUG_ERROR, "base-address missing in DTB"));
++    return FALSE;
++  }
++  DEBUG ((
++        DEBUG_INFO,
++        "base = 0x%llx\n",
++        *Address
++        ));
++
++  Status = ReadProperty32 (
++      DtbAddress,
++      Node,
++      "pages-count",
++      (UINT32*)Size
++      );
++  if (Status != EFI_SUCCESS) {
++    DEBUG ((DEBUG_ERROR, "pages-count missing in DTB"));
++    return FALSE;
++  }
++
++  DEBUG ((DEBUG_ERROR, "pages-count: 0x%lx\n", *Size));
++
++  *Size = *Size * PageSize;
++  DEBUG ((
++        DEBUG_INFO,
++        "Size = 0x%llx\n",
++        *Size
++        ));
++
++  return TRUE;
++}
++
++/**
++
++  Populates FF-A boot information structure.
++
++  This function receives the address of a DTB from which boot information defind
++  by FF-A and required to initialize the standalone environment is extracted.
++
++  @param [in, out] StmmBootInfo  Pointer to a pre-allocated boot info structure to be
++                                 populated.
++  @param [in]      DtbAddress    Address of the Device tree from where boot
++                                 information will be fetched.
++**/
++STATIC
++EFI_STATUS
++PopulateBootinformation (
++  IN  OUT  EFI_STMM_BOOT_INFO *StmmBootInfo,
++  IN       VOID              *DtbAddress
++)
++{
++  INTN Status;
++  INT32 Offset;
++  INT32 Node;
++  BOOLEAN FoundNsCommBuffer = FALSE;
++  BOOLEAN FoundSharedBuffer = FALSE;
++  BOOLEAN FoundHeap = FALSE;
++  UINT32 PageSize;
++
++  Offset = fdt_path_offset (DtbAddress, "/");
++  DEBUG ((DEBUG_INFO, "Offset  = %d \n", Offset));
++  if (Offset < 0) {
++    DEBUG ((DEBUG_ERROR, "Missing FF-A boot information in manifest\n"));
++    return EFI_NOT_FOUND;
++  }
++
++  Status = ReadProperty64 (
++      DtbAddress,
++      Offset,
++      "load-address",
++      &StmmBootInfo->SpMemBase
++      );
++  if (Status != EFI_SUCCESS) {
++    return Status;
++  }
++  DEBUG ((DEBUG_INFO, "sp mem base  = 0x%llx\n", StmmBootInfo->SpMemBase));
++
++  Status = ReadProperty64 (
++      DtbAddress,
++      Offset,
++      "image-size",
++      &StmmBootInfo->SpMemSize
++      );
++  if (Status != EFI_SUCCESS) {
++    return Status;
++  }
++  DEBUG ((DEBUG_INFO, "sp mem size  = 0x%llx\n", StmmBootInfo->SpMemSize));
++
++  Status = ReadProperty32 (DtbAddress, Offset, "xlat-granule", &PageSize);
++  if (Status != EFI_SUCCESS) {
++    return Status;
++  }
++
++  /*  EFI_PAGE_SIZE is 4KB */
++  switch (PageSize) {
++    case FFA_PAGE_4K:
++      PageSize = EFI_PAGE_SIZE;
++      break;
++
++    case FFA_PAGE_16K:
++      PageSize = 4 * EFI_PAGE_SIZE;
++      break;
++
++    case FFA_PAGE_64K:
++      PageSize = 16 * EFI_PAGE_SIZE;
++      break;
++
++    default:
++      DEBUG ((DEBUG_ERROR, "Invalid page type = %lu\n", PageSize));
++      return EFI_INVALID_PARAMETER;
++      break;
++  };
++
++  DEBUG ((DEBUG_INFO, "Page Size = 0x%lx\n", PageSize));
++
++  Offset = fdt_subnode_offset_namelen (
++      DtbAddress,
++      Offset,
++      "memory-regions",
++      sizeof("memory-regions") - 1
++      );
++  if (Offset < 1) {
++    DEBUG ((
++          DEBUG_ERROR,
++          "%s: Missing in FF-A boot information manifest\n",
++          "memory-regions"
++          ));
++    return EFI_INVALID_PARAMETER;
++  }
++
++  for (
++      Node = fdt_first_subnode (DtbAddress, Offset);
++      Node > 0;
++      Node = fdt_next_subnode (DtbAddress, Node)) {
++    if (!FoundNsCommBuffer) {
++      FoundNsCommBuffer = ReadRegionInfo (
++          DtbAddress,
++          Node,
++          "ns-comm",
++          sizeof ("ns-comm") - 1,
++          PageSize,
++          &StmmBootInfo->SpNsCommBufBase,
++          &StmmBootInfo->SpNsCommBufSize
++          );
++    }
++
++    if (!FoundHeap) {
++      FoundHeap = ReadRegionInfo (
++          DtbAddress,
++          Node,
++          "heap",
++          sizeof ("heap") - 1,
++          PageSize,
++          &StmmBootInfo->SpHeapBase,
++          &StmmBootInfo->SpHeapSize
++          );
++    }
++
++    if (!FoundSharedBuffer) {
++      FoundSharedBuffer = ReadRegionInfo (
++          DtbAddress,
++          Node,
++          "shared-buff",
++          sizeof ("shared-buff") - 1,
++          PageSize,
++          &StmmBootInfo->SpSharedBufBase,
++          &StmmBootInfo->SpSharedBufSize
++          );
++    }
++  }
++
++  if (!FoundNsCommBuffer) {
++    DEBUG ((DEBUG_ERROR, "Failed to find ns-comm buffer info\n"));
++    return EFI_INVALID_PARAMETER;
++  }
++
++  if (!FoundHeap) {
++    DEBUG ((DEBUG_ERROR, "Failed to find heap buffer info\n"));
++    return EFI_INVALID_PARAMETER;
++  }
++
++  if (!FoundSharedBuffer) {
++    DEBUG ((DEBUG_ERROR, "Failed to find shared buffer info\n"));
++    return EFI_INVALID_PARAMETER;
++  }
++
++  // Populate CPU information under the assumption made in the FF-A spec that
++  // this is a uniprocessor SP that is capable of migration. So, it is fine if
++  // it sees 0 as both its physical and linear cpu id
++  StmmBootInfo->CpuInfo[0].Mpidr = 0;
++  StmmBootInfo->CpuInfo[0].LinearId = 0;
++  StmmBootInfo->CpuInfo[0].Flags = 0;
++
++  return EFI_SUCCESS;
++}
++
+ /**
+   Query the SPM version, check compatibility and return success if compatible.
+ 
+@@ -357,6 +664,49 @@ InitArmSvcArgs (
+   }
+ }
+ 
++
++STATIC
++EFI_STATUS
++GetSpManifest (
++  IN  OUT     UINT64 **SpManifestAddr,
++  IN          VOID    *BootInfoAddr
++  )
++{
++  EFI_FFA_BOOT_INFO_HEADER *FfaBootInfo;
++  EFI_FFA_BOOT_INFO_DESC   *FfaBootInfoDesc;
++
++  // Paranoid check to avoid an inadvertent NULL pointer dereference.
++  if (BootInfoAddr == NULL) {
++    DEBUG ((DEBUG_ERROR, "FF-A Boot information is NULL\n"));
++    return EFI_INVALID_PARAMETER;
++  }
++
++  // Check boot information magic number.
++  FfaBootInfo = (EFI_FFA_BOOT_INFO_HEADER *) BootInfoAddr;
++  if (FfaBootInfo->Magic != FFA_INIT_DESC_SIGNATURE) {
++    DEBUG ((
++          DEBUG_ERROR, "FfaBootInfo Magic no. is invalid 0x%ux\n",
++          FfaBootInfo->Magic
++          ));
++    return EFI_INVALID_PARAMETER;
++  }
++
++
++  FfaBootInfoDesc =
++    (EFI_FFA_BOOT_INFO_DESC *)((UINT8 *)BootInfoAddr +
++        FfaBootInfo->OffsetBootInfoDesc);
++
++  if (FfaBootInfoDesc->Type ==
++      (FFA_BOOT_INFO_TYPE(FFA_BOOT_INFO_TYPE_STD) |
++      FFA_BOOT_INFO_TYPE_ID(FFA_BOOT_INFO_TYPE_ID_FDT))) {
++    *SpManifestAddr = (UINT64 *) FfaBootInfoDesc->Content;
++    return EFI_SUCCESS;
++  }
++
++  DEBUG ((DEBUG_ERROR, "SP manifest not found \n"));
++  return EFI_NOT_FOUND;
++}
++
+ /**
+   The entry point of Standalone MM Foundation.
+ 
+@@ -377,6 +727,7 @@ ModuleEntryPoint (
+ {
+   PE_COFF_LOADER_IMAGE_CONTEXT    ImageContext;
+   EFI_SECURE_PARTITION_BOOT_INFO  *PayloadBootInfo;
++  EFI_STMM_BOOT_INFO              StmmBootInfo = {0};
+   ARM_SVC_ARGS                    InitMmFoundationSvcArgs;
+   EFI_STATUS                      Status;
+   INT32                           Ret;
+@@ -386,6 +737,8 @@ ModuleEntryPoint (
+   VOID                            *TeData;
+   UINTN                           TeDataSize;
+   EFI_PHYSICAL_ADDRESS            ImageBase;
++  UINT64                          *DtbAddress;
++  EFI_FIRMWARE_VOLUME_HEADER      *BfvAddress;
+   BOOLEAN                         UseOnlyFfaAbis = FALSE;
+ 
+   if (FixedPcdGet32 (PcdFfaEnable) != 0) {
+@@ -398,18 +751,36 @@ ModuleEntryPoint (
+     goto finish;
+   }
+ 
+-  PayloadBootInfo = GetAndPrintBootinformation (SharedBufAddress);
+-  if (PayloadBootInfo == NULL) {
+-    Status = EFI_UNSUPPORTED;
+-    goto finish;
++  // If only FF-A is used, the DTB address is passed in the Boot information
++  // structure. Else, the Boot info is copied from Sharedbuffer.
++  if (UseOnlyFfaAbis) {
++    Status = GetSpManifest (&DtbAddress, SharedBufAddress);
++    if (Status != EFI_SUCCESS) {
++      goto finish;
++    }
++
++    // Extract boot information from the DTB
++    Status = PopulateBootinformation (&StmmBootInfo, (VOID *) DtbAddress);
++    if (Status != EFI_SUCCESS) {
++      goto finish;
++    }
++
++    // Stash the base address of the boot firmware volume
++    BfvAddress = (EFI_FIRMWARE_VOLUME_HEADER *) StmmBootInfo.SpMemBase;
++  } else {
++    PayloadBootInfo = GetAndPrintBootinformation (SharedBufAddress);
++    if (PayloadBootInfo == NULL) {
++      Status = EFI_UNSUPPORTED;
++      goto finish;
++    }
++
++    // Stash the base address of the boot firmware volume
++    BfvAddress = (EFI_FIRMWARE_VOLUME_HEADER *) PayloadBootInfo->SpImageBase;
+   }
+ 
++
+   // Locate PE/COFF File information for the Standalone MM core module
+-  Status = LocateStandaloneMmCorePeCoffData (
+-             (EFI_FIRMWARE_VOLUME_HEADER *)(UINTN)PayloadBootInfo->SpImageBase,
+-             &TeData,
+-             &TeDataSize
+-             );
++  Status = LocateStandaloneMmCorePeCoffData (BfvAddress, &TeData, &TeDataSize);
+ 
+   if (EFI_ERROR (Status)) {
+     goto finish;
+-- 
+2.39.5
+

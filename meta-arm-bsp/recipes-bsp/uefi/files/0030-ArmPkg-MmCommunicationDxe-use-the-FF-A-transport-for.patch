@@ -1,0 +1,207 @@
+From 30bfa9ddbde847f7427bec817c5834e3cef63cb8 Mon Sep 17 00:00:00 2001
+From: Achin Gupta <achin.gupta@arm.com>
+Date: Sat, 6 Nov 2021 05:17:26 +0000
+Subject: [PATCH 30/43] ArmPkg/MmCommunicationDxe: use the FF-A transport for
+ transmitting MM requests
+
+This patch packages requests for accessing a Standalone MM driver
+through the MM communication protocol as FF-A direct messages.
+Corresponding changes in Standalone MM Core ensure that responses are
+packaged in the same way.
+
+Signed-off-by: Achin Gupta <achin.gupta@arm.com>
+Co-developed-by: Aditya Angadi <aditya.angadi@arm.com>
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: Iada9d8c8d6bc3146c29cbd926ad924b153e90f2c
+---
+ .../MmCommunicationDxe/MmCommunication.c      | 135 ++++++++++++------
+ ArmPkg/Include/IndustryStandard/ArmFfaSvc.h   |   2 +
+ 2 files changed, 94 insertions(+), 43 deletions(-)
+
+diff --git a/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.c b/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.c
+index d908aff70690..1855ae30ce94 100644
+--- a/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.c
++++ b/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.c
+@@ -100,6 +100,7 @@ MmCommunication2Communicate (
+   ARM_SMC_ARGS               CommunicateSmcArgs;
+   EFI_STATUS                 Status;
+   UINTN                      BufferSize;
++  UINTN                      Ret;
+ 
+   Status     = EFI_ACCESS_DENIED;
+   BufferSize = 0;
+@@ -160,60 +161,108 @@ MmCommunication2Communicate (
+     return Status;
+   }
+ 
+-  // SMC Function ID
+-  CommunicateSmcArgs.Arg0 = ARM_SMC_ID_MM_COMMUNICATE_AARCH64;
+-
+-  // Cookie
+-  CommunicateSmcArgs.Arg1 = 0;
+-
+   // Copy Communication Payload
+   CopyMem ((VOID *)mNsCommBuffMemRegion.VirtualBase, CommBufferVirtual, BufferSize);
+ 
+-  // comm_buffer_address (64-bit physical address)
+-  CommunicateSmcArgs.Arg2 = (UINTN)mNsCommBuffMemRegion.PhysicalBase;
++  // Use the FF-A interface if enabled.
++  if (FixedPcdGet32 (PcdFfaEnable) != 0) {
++    // FF-A Interface ID for direct message communication
++    CommunicateSmcArgs.Arg0 = ARM_SVC_ID_FFA_MSG_SEND_DIRECT_REQ_AARCH64;
++
++    // FF-A Destination EndPoint ID, not used as of now
++    CommunicateSmcArgs.Arg1 = mFfaPartId << 16 | mStmmPartInfo.PartId;
++
++    // Reserved for future use(MBZ)
++    CommunicateSmcArgs.Arg2 = 0x0;
++
++    // comm_buffer_address (64-bit physical address)
++    CommunicateSmcArgs.Arg3 = (UINTN)mNsCommBuffMemRegion.PhysicalBase;
++
++    // Cookie
++    CommunicateSmcArgs.Arg4 = 0x0;
+ 
+-  // comm_size_address (not used, indicated by setting to zero)
+-  CommunicateSmcArgs.Arg3 = 0;
++    // Not Used
++    CommunicateSmcArgs.Arg5 = 0;
+ 
++    // comm_size_address (not used, indicated by setting to zero)
++    CommunicateSmcArgs.Arg6 = 0;
++  } else {
++    // SMC Function ID
++    CommunicateSmcArgs.Arg0 = ARM_SMC_ID_MM_COMMUNICATE_AARCH64;
++
++    // Cookie
++    CommunicateSmcArgs.Arg1 = 0;
++
++    // comm_buffer_address (64-bit physical address)
++    CommunicateSmcArgs.Arg2 = (UINTN)mNsCommBuffMemRegion.PhysicalBase;
++
++    // comm_size_address (not used, indicated by setting to zero)
++    CommunicateSmcArgs.Arg3 = 0;
++  }
++
++ffa_intr_loop:
+   // Call the Standalone MM environment.
+   ArmCallSmc (&CommunicateSmcArgs);
+ 
+-  switch (CommunicateSmcArgs.Arg0) {
+-    case ARM_SMC_MM_RET_SUCCESS:
+-      ZeroMem (CommBufferVirtual, BufferSize);
+-      // On successful return, the size of data being returned is inferred from
+-      // MessageLength + Header.
+-      CommunicateHeader = (EFI_MM_COMMUNICATE_HEADER *)mNsCommBuffMemRegion.VirtualBase;
+-      BufferSize        = CommunicateHeader->MessageLength +
+-                          sizeof (CommunicateHeader->HeaderGuid) +
+-                          sizeof (CommunicateHeader->MessageLength);
+-
+-      CopyMem (
+-        CommBufferVirtual,
+-        (VOID *)mNsCommBuffMemRegion.VirtualBase,
+-        BufferSize
+-        );
+-      Status = EFI_SUCCESS;
+-      break;
+-
+-    case ARM_SMC_MM_RET_INVALID_PARAMS:
+-      Status = EFI_INVALID_PARAMETER;
+-      break;
++  Ret = CommunicateSmcArgs.Arg0;
+ 
+-    case ARM_SMC_MM_RET_DENIED:
+-      Status = EFI_ACCESS_DENIED;
+-      break;
++  if (FixedPcdGet32 (PcdFfaEnable) != 0) {
++    if (Ret == ARM_SVC_ID_FFA_INTERRUPT_AARCH32) {
++      DEBUG ((DEBUG_INFO, "Resuming interrupted FF-A call \n"));
+ 
+-    case ARM_SMC_MM_RET_NO_MEMORY:
+-      // Unexpected error since the CommSize was checked for zero length
+-      // prior to issuing the SMC
+-      Status = EFI_OUT_OF_RESOURCES;
+-      ASSERT (0);
+-      break;
++      // FF-A Interface ID for running the interrupted partition
++      CommunicateSmcArgs.Arg0 = ARM_SVC_ID_FFA_RUN_AARCH32;
+ 
+-    default:
+-      Status = EFI_ACCESS_DENIED;
+-      ASSERT (0);
++      // FF-A Destination EndPoint and vCPU ID, TODO: We are assuming vCPU0 of the
++      // StMM SP since it is UP.
++      CommunicateSmcArgs.Arg1 = mStmmPartInfo.PartId << 16;
++
++      // Loop if the call was interrupted
++      goto ffa_intr_loop;
++    }
++  }
++
++  if (((FixedPcdGet32 (PcdFfaEnable) != 0) &&
++      (Ret == ARM_SVC_ID_FFA_MSG_SEND_DIRECT_RESP)) ||
++      (Ret == ARM_SMC_MM_RET_SUCCESS)) {
++    ZeroMem (CommBufferVirtual, BufferSize);
++    // On successful return, the size of data being returned is inferred from
++    // MessageLength + Header.
++    CommunicateHeader = (EFI_MM_COMMUNICATE_HEADER *)mNsCommBuffMemRegion.VirtualBase;
++    BufferSize = CommunicateHeader->MessageLength +
++                 sizeof (CommunicateHeader->HeaderGuid) +
++                 sizeof (CommunicateHeader->MessageLength);
++
++    CopyMem (CommBufferVirtual, (VOID *)mNsCommBuffMemRegion.VirtualBase,
++             BufferSize);
++    Status = EFI_SUCCESS;
++    return Status;
++  }
++
++  if (FixedPcdGet32 (PcdFfaEnable) != 0) {
++    Ret = CommunicateSmcArgs.Arg2;
++  }
++
++  // Error Codes are same for FF-A and SMC interface
++  switch (Ret) {
++  case ARM_SMC_MM_RET_INVALID_PARAMS:
++    Status = EFI_INVALID_PARAMETER;
++    break;
++
++  case ARM_SMC_MM_RET_DENIED:
++    Status = EFI_ACCESS_DENIED;
++    break;
++
++  case ARM_SMC_MM_RET_NO_MEMORY:
++    // Unexpected error since the CommSize was checked for zero length
++    // prior to issuing the SMC
++    Status = EFI_OUT_OF_RESOURCES;
++    ASSERT (0);
++    break;
++
++  default:
++    Status = EFI_ACCESS_DENIED;
++    ASSERT (0);
+   }
+ 
+   return Status;
+diff --git a/ArmPkg/Include/IndustryStandard/ArmFfaSvc.h b/ArmPkg/Include/IndustryStandard/ArmFfaSvc.h
+index 56b6bcb1edb5..b24cdd67ae69 100644
+--- a/ArmPkg/Include/IndustryStandard/ArmFfaSvc.h
++++ b/ArmPkg/Include/IndustryStandard/ArmFfaSvc.h
+@@ -23,6 +23,7 @@
+ #define ARM_SVC_ID_FFA_RXTX_UNMAP_AARCH32            0x84000067
+ #define ARM_SVC_ID_FFA_PARTITION_INFO_GET_AARCH32    0x84000068
+ #define ARM_SVC_ID_FFA_ID_GET_AARCH32                0x84000069
++#define ARM_SVC_ID_FFA_RUN_AARCH32                   0x8400006D
+ #define ARM_SVC_ID_FFA_MSG_SEND_DIRECT_REQ_AARCH32   0x8400006F
+ #define ARM_SVC_ID_FFA_MSG_SEND_DIRECT_RESP_AARCH32  0x84000070
+ #define ARM_SVC_ID_FFA_MSG_SEND_DIRECT_REQ_AARCH64   0xC400006F
+@@ -31,6 +32,7 @@
+ #define ARM_SVC_ID_FFA_SUCCESS_AARCH64               0xC4000061
+ #define ARM_SVC_ID_FFA_MEM_PERM_SET_AARCH32          0x84000089
+ #define ARM_SVC_ID_FFA_MEM_PERM_GET_AARCH32          0x84000088
++#define ARM_SVC_ID_FFA_INTERRUPT_AARCH32             0x84000062
+ #define ARM_SVC_ID_FFA_ERROR_AARCH32                 0x84000060
+ #define ARM_SVC_ID_FFA_ERROR_AARCH64                 0xC4000060
+ #define ARM_SVC_ID_FFA_MSG_WAIT_AARCH32              0x8400006B
+-- 
+2.39.5
+

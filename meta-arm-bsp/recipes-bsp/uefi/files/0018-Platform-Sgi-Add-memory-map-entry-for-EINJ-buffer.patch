@@ -1,0 +1,160 @@
+From 3b596ff672df7f0360fcf102c281159457d31a8a Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Thu, 11 Aug 2022 11:26:38 +0530
+Subject: [PATCH 18/78] Platform/Sgi: Add memory map entry for EINJ buffer
+
+Define PCD values for EINJ buffer. Add memory map entry for the
+EINJ buffer to allow OSPM to access the EINJ memory region.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I4e2165f34afabd5ac4530766ad63c67e13c00397
+---
+ .../ARM/SgiPkg/Library/PlatformLib/PlatformLib.inf |  5 +++++
+ .../SgiPkg/Library/PlatformLib/PlatformLibMem.c    |  9 +++++++++
+ Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc          |  4 ++++
+ Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.fdf.inc      |  4 ++++
+ Platform/ARM/SgiPkg/SgiPlatform.dec                |  6 ++++++
+ Platform/ARM/SgiPkg/SgiPlatform.dsc.inc            | 14 ++++++++++++++
+ 6 files changed, 42 insertions(+)
+
+diff --git a/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLib.inf b/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLib.inf
+index 9bb14eafc5ed..4ca2cab5405f 100644
+--- a/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLib.inf
++++ b/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLib.inf
+@@ -46,6 +46,8 @@
+ 
+   gArmSgiTokenSpaceGuid.PcdDramBlock2Base
+   gArmSgiTokenSpaceGuid.PcdDramBlock2Size
++  gArmSgiTokenSpaceGuid.PcdEinjInstBufferBase
++  gArmSgiTokenSpaceGuid.PcdEinjInstBufferSize
+   gArmSgiTokenSpaceGuid.PcdGicSize
+   gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlk0Base
+   gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlkUartEnable
+@@ -89,6 +91,9 @@
+   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase64
+   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase
+ 
++[FeaturePcd]
++  gArmSgiTokenSpaceGuid.PcdEinjSupported
++
+ [Guids]
+   gArmSgiPlatformIdDescriptorGuid
+   gEfiHobListGuid          ## CONSUMES  ## SystemTable
+diff --git a/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c b/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c
+index 85e8f03d49ea..32e090456d6f 100644
+--- a/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c
++++ b/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c
+@@ -19,6 +19,7 @@
+ // Total number of descriptors, including the final "end-of-table" descriptor.
+ #define MAX_VIRTUAL_MEMORY_MAP_DESCRIPTORS                                     \
+           ((13 + (FixedPcdGet32 (PcdChipCount) * 2)) +                         \
++          (FeaturePcdGet (PcdEinjSupported)) +                                 \
+            ((FeaturePcdGet (PcdPcieEnable) == TRUE) ? 1 : 0) +                 \
+            (FixedPcdGet32 (PcdIoVirtSocExpBlkUartEnable) *                     \
+             FixedPcdGet32 (PcdChipCount) * 2))
+@@ -280,6 +281,14 @@ ArmPlatformGetVirtualMemoryMap (
+   VirtualMemoryTable[Index].Length          = PcdGet64 (PcdMmBufferSize);
+   VirtualMemoryTable[Index].Attributes      = ARM_MEMORY_REGION_ATTRIBUTE_UNCACHED_UNBUFFERED;
+ 
++  if (FeaturePcdGet (PcdEinjSupported)) {
++    // EINJ instruction address region
++    VirtualMemoryTable[++Index].PhysicalBase  = PcdGet64 (PcdEinjInstBufferBase);
++    VirtualMemoryTable[Index].VirtualBase     = PcdGet64 (PcdEinjInstBufferBase);
++    VirtualMemoryTable[Index].Length          = PcdGet64 (PcdEinjInstBufferSize);
++    VirtualMemoryTable[Index].Attributes      = ARM_MEMORY_REGION_ATTRIBUTE_UNCACHED_UNBUFFERED;
++  }
++
+   // End of Table
+   VirtualMemoryTable[++Index].PhysicalBase  = 0;
+   VirtualMemoryTable[Index].VirtualBase     = 0;
+diff --git a/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc b/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc
+index a9a91494b4d9..1d3f51acfc2c 100644
+--- a/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc
++++ b/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc
+@@ -57,4 +57,8 @@
+ ################################################################################
+ 
+ [Components.common]
++!if $(EDK2_ERROR_INJ_EN) == TRUE
++  Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesEinj.inf
++!else
+   Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf
++!endif
+diff --git a/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.fdf.inc b/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.fdf.inc
+index ef0c02afb4f4..a726669765ae 100644
+--- a/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.fdf.inc
++++ b/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.fdf.inc
+@@ -9,4 +9,8 @@
+ # Per-platform additional content of the DXE phase firmware volume
+ 
+   # ACPI support
++!if $(EDK2_ERROR_INJ_EN) == TRUE
++  INF RuleOverride=ACPITABLE Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesEinj.inf
++!else
+   INF RuleOverride=ACPITABLE Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTables.inf
++!endif
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.dec b/Platform/ARM/SgiPkg/SgiPlatform.dec
+index 510a85b130bb..d0f540e8f23a 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatform.dec
++++ b/Platform/ARM/SgiPkg/SgiPlatform.dec
+@@ -33,6 +33,7 @@
+   gArmSgiTokenSpaceGuid.PcdVirtioBlkSupported|FALSE|BOOLEAN|0x00000001
+   gArmSgiTokenSpaceGuid.PcdVirtioNetSupported|FALSE|BOOLEAN|0x00000010
+   gArmSgiTokenSpaceGuid.PcdPcieEnable|FALSE|BOOLEAN|0x0000002E
++  gArmSgiTokenSpaceGuid.PcdEinjSupported|FALSE|BOOLEAN|0x00001001
+ 
+ [PcdsFixedAtBuild]
+   gArmSgiTokenSpaceGuid.PcdDramBlock2Base|0|UINT64|0x00000002
+@@ -119,5 +120,10 @@
+   gArmSgiTokenSpaceGuid.PcdIoVirtBlkPortPciex40DevIdBase|0|UINT32|0x00001025
+   gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlkDmaNumCh|0|UINT32|0x00001026
+ 
++  ## EINJ Instruction reserved memory region
++  gArmSgiTokenSpaceGuid.PcdEinjInstBufferBase|0x00000000|UINT64|0x00001002
++  gArmSgiTokenSpaceGuid.PcdEinjInstBufferSize|0x00000000|UINT64|0x00001003
++  gArmSgiTokenSpaceGuid.PcdEinjTriggerActionBase|0x00000000|UINT64|0x00001004
++
+ [Ppis]
+   gNtFwConfigDtInfoPpiGuid     = { 0x6f606eb3, 0x9123, 0x4e15, { 0xa8, 0x9b, 0x0f, 0xac, 0x66, 0xef, 0xd0, 0x17 } }
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc b/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+index 34bdde15eb59..f58d20520679 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+@@ -25,6 +25,9 @@
+   # To allow firmware first error handling, set this to TRUE.
+   DEFINE EDK2_ENABLE_GHES_MM                = FALSE
+ 
++  # To enable error injection support, set this to TRUE.
++  DEFINE EDK2_ERROR_INJ_EN                  = FALSE
++
+ [BuildOptions]
+   *_*_*_CC_FLAGS = -D DISABLE_NEW_DEPRECATED_INTERFACES
+ 
+@@ -114,6 +117,10 @@
+   gArmSgiTokenSpaceGuid.PcdPcieEnable|TRUE
+ !endif
+ 
++!if $(EDK2_ERROR_INJ_EN) == TRUE
++  gArmSgiTokenSpaceGuid.PcdEinjSupported|TRUE
++!endif
++
+ [PcdsFixedAtBuild.common]
+   gArmTokenSpaceGuid.PcdVFPEnabled|1
+   gEfiMdeModulePkgTokenSpaceGuid.PcdMaxVariableSize|0x2000
+@@ -218,6 +225,13 @@
+   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultCreatorId|0x204d5241 # ARM
+   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultCreatorRevision|1
+ 
++!if $(EDK2_ERROR_INJ_EN) == TRUE
++  ## Error Injection Instruction Memory Space
++  gArmSgiTokenSpaceGuid.PcdEinjInstBufferBase|0xFF610000
++  gArmSgiTokenSpaceGuid.PcdEinjInstBufferSize|0x10000
++  gArmSgiTokenSpaceGuid.PcdEinjTriggerActionBase|0xFF611000
++!endif
++
+ ################################################################################
+ #
+ # Components Section - list of all EDK II Modules needed by this Platform
+-- 
+2.39.5
+

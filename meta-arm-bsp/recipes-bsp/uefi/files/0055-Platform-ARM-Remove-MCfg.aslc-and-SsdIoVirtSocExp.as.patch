@@ -1,0 +1,32 @@
+From 1c1f091cd5b55550165cb3451c1a0e71182182be Mon Sep 17 00:00:00 2001
+From: Glen Yeldho <glen.yeldho@arm.com>
+Date: Fri, 12 Apr 2024 15:39:06 +0530
+Subject: [PATCH 55/78] Platform/ARM: Remove MCfg.aslc and SsdIoVirtSocExp.asl
+ from RdN2Cfg1
+
+Signed-off-by: Glen Yeldho <glen.yeldho@arm.com>
+Change-Id: Iac84cdd25c38e047786aedfcdd74ac29e184139c
+---
+ Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesRas.inf | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesRas.inf b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesRas.inf
+index aa20a1ffb540..b7f1019f2c0f 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesRas.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg1AcpiTablesRas.inf
+@@ -26,12 +26,10 @@
+   RdN2Cfg1/Dsdt.asl
+   RdN2Cfg1/Einj.aslc
+   RdN2Cfg1/Madt.aslc
+-  RdN2Cfg1/Mcfg.aslc
+   RdN2Cfg1/Mpam.aslc
+   RdN2Cfg1/Pptt.aslc
+   Spcr.aslc
+   SsdtEvents.asl
+-  SsdtIoVirtSocExp0.asl
+   SsdtRos.asl
+   SsdtRosVirtioP9.asl
+ 
+-- 
+2.39.5
+

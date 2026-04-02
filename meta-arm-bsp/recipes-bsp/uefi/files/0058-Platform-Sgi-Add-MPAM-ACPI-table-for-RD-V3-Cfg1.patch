@@ -1,0 +1,216 @@
+From 87fd7275654e0889431ce7089534f60ec419887d Mon Sep 17 00:00:00 2001
+From: Rohit Mathew <Rohit.Mathew@arm.com>
+Date: Wed, 2 Aug 2023 13:58:31 +0100
+Subject: [PATCH 58/78] Platform/Sgi: Add MPAM ACPI table for RD-V3-Cfg1
+
+Add MPAM ACPI table based on MPAM ACPI 2.0 specification for
+RD-V3-Cfg1 reference design platform. OS would query this table to
+understand about the type and details of the MSCs supported by the
+platform.
+
+RD-V3-Cfg1 platform supports 8 SLC slices. Each of these slices have
+individual MPAM MSC controls and register set. PPTT defines this group
+of cache slices as one single cache, tagged with a unique cache ID. All
+the MSCs would in-turn refer to this unique cache ID given in the PPTT
+ACPI description.
+
+Signed-off-by: Rohit Mathew <Rohit.Mathew@arm.com>
+Change-Id: Ifdbd819bbc84b051bfb8b5ca21087f8688c07568
+---
+ .../ARM/SgiPkg/AcpiTables/RdV3Cfg1/Mpam.aslc  | 132 ++++++++++++++++++
+ .../ARM/SgiPkg/AcpiTables/RdV3Cfg1/Pptt.aslc  |  20 ++-
+ .../SgiPkg/AcpiTables/RdV3Cfg1AcpiTables.inf  |   1 +
+ 3 files changed, 150 insertions(+), 3 deletions(-)
+ create mode 100644 Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1/Mpam.aslc
+
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1/Mpam.aslc b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1/Mpam.aslc
+new file mode 100644
+index 000000000000..5452c2217c7f
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1/Mpam.aslc
+@@ -0,0 +1,132 @@
++/** @file
++
++  Memory System Resource Partitioning and Monitoring (MPAM) for RD-V3-Cfg1
++  platform
++
++  MPAM ACPI description for the MSCs (Memory system components) for
++  RD-V3-Cfg1 reference design platform is contained within this file.
++  RD-V3-Cfg1 supports 8 HNF slices, each holding 1 MB of SLC cache. Each of
++  these SLC cache slices in turn holds MPAM MSC controls and associated register
++  files. MPAM has separate secure and non-secure register spaces. Since
++  non-secure OS is generally concerned with the non-secure register space, all
++  of the non-secure nodes should be described within the MPAM ACPI table
++
++  Copyright (c) 2023, Arm Limited. All rights reserved.
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++
++  @par Specification Reference:
++    - MPAM 2.0, Memory System Resource Partitioning and Monitoring
++**/
++
++#include <IndustryStandard/Mpam.h>
++#include <Library/AcpiLib.h>
++#include "SgiAcpiHeader.h"
++
++/*
++ * Macros for RD-V3-Cfg1's MPAM table
++ */
++#define RDV3CFG1_MPAM_MSC_COUNT                                (8)
++#define RDV3CFG1_MPAM_MMIO_SIZE                                (0x1008)
++#define RDV3CFG1_RESOURCES_PER_MSC                             (0x01)
++#define RDV3CFG1_FUNCTIONAL_DEPENDENCY_PER_RESOURCE            (0x0)
++#define RDV3CFG1_BASE_ADDRESS(BaseAddress, ChipId)                     \
++  ((SGI_REMOTE_CHIP_MEM_OFFSET(ChipId)) + BaseAddress)
++
++typedef EFI_ACPI_DESCRIPTION_HEADER
++  EFI_ACPI_MPAM_HEADER;
++
++///
++/// MPAM MSC type. For RD-V3-Cfg1, MPAM MSC structure doesn't have any
++/// functional dependency list.
++///
++typedef struct {
++  EFI_ACPI_MPAM_MSC_NODE            Header;
++  EFI_ACPI_MPAM_MSC_RESOURCE        Resource;
++} EFI_ACPI_MPAM_MSC;
++
++///
++/// MPAM ACPI Table
++///
++typedef struct {
++  EFI_ACPI_MPAM_HEADER              Header;
++  EFI_ACPI_MPAM_MSC                 Node[RDV3CFG1_MPAM_MSC_COUNT];
++} EFI_ACPI_MEMORY_SYSTEM_RESOURCE_PARTITIONING_MONITORING_TABLE;
++
++
++STATIC EFI_ACPI_MEMORY_SYSTEM_RESOURCE_PARTITIONING_MONITORING_TABLE Mpam =
++{
++
++  /* EFI_ACPI_MPAM_HEADER */
++  ARM_ACPI_HEADER (
++    EFI_ACPI_MEMORY_SYSTEM_RESOURCE_PARTITIONING_AND_MONITORING_TABLE_SIGNATURE,
++    EFI_ACPI_MEMORY_SYSTEM_RESOURCE_PARTITIONING_MONITORING_TABLE,
++    EFI_ACPI_MEMORY_SYSTEM_RESOURCE_PARTITIONING_AND_MONITORING_TABLE_REVISION
++  ),
++  {
++    /* MPAM_MSC_NODE 1 */
++    {
++      RD_MPAM_MSC_NODE_INIT(0x1, RDV3CFG1_BASE_ADDRESS(0x102a41000, 0),
++	 RDV3CFG1_MPAM_MMIO_SIZE, 0, RDV3CFG1_MPAM_MSC_COUNT,
++         RDV3CFG1_RESOURCES_PER_MSC,
++         RDV3CFG1_FUNCTIONAL_DEPENDENCY_PER_RESOURCE)
++    },
++
++    /* MPAM_MSC_NODE 2 */
++    {
++      RD_MPAM_MSC_NODE_INIT(0x2, RDV3CFG1_BASE_ADDRESS(0x102a01000, 0),
++         RDV3CFG1_MPAM_MMIO_SIZE, 0, RDV3CFG1_MPAM_MSC_COUNT,
++         RDV3CFG1_RESOURCES_PER_MSC,
++         RDV3CFG1_FUNCTIONAL_DEPENDENCY_PER_RESOURCE)
++    },
++
++    /* MPAM_MSC_NODE 3 */
++    {
++      RD_MPAM_MSC_NODE_INIT(0x3, RDV3CFG1_BASE_ADDRESS(0x102641000, 0),
++        RDV3CFG1_MPAM_MMIO_SIZE, 0, RDV3CFG1_MPAM_MSC_COUNT,
++        RDV3CFG1_RESOURCES_PER_MSC,
++        RDV3CFG1_FUNCTIONAL_DEPENDENCY_PER_RESOURCE)
++    },
++
++    /* MPAM_MSC_NODE 4 */
++    {
++      RD_MPAM_MSC_NODE_INIT(0x4, RDV3CFG1_BASE_ADDRESS(0x102601000, 0),
++        RDV3CFG1_MPAM_MMIO_SIZE, 0, RDV3CFG1_MPAM_MSC_COUNT,
++        RDV3CFG1_RESOURCES_PER_MSC,
++        RDV3CFG1_FUNCTIONAL_DEPENDENCY_PER_RESOURCE)
++    },
++
++    /* MPAM_MSC_NODE 5 */
++    {
++      RD_MPAM_MSC_NODE_INIT(0x5, RDV3CFG1_BASE_ADDRESS(0x101a41000, 0),
++        RDV3CFG1_MPAM_MMIO_SIZE, 0, RDV3CFG1_MPAM_MSC_COUNT,
++        RDV3CFG1_RESOURCES_PER_MSC,
++        RDV3CFG1_FUNCTIONAL_DEPENDENCY_PER_RESOURCE)
++    },
++
++    /* MPAM_MSC_NODE 6 */
++    {
++      RD_MPAM_MSC_NODE_INIT(0x6, RDV3CFG1_BASE_ADDRESS(0x101a01000, 0),
++        RDV3CFG1_MPAM_MMIO_SIZE, 0, RDV3CFG1_MPAM_MSC_COUNT,
++        RDV3CFG1_RESOURCES_PER_MSC,
++        RDV3CFG1_FUNCTIONAL_DEPENDENCY_PER_RESOURCE)
++    },
++
++    /* MPAM_MSC_NODE 7 */
++    {
++      RD_MPAM_MSC_NODE_INIT(0x7, RDV3CFG1_BASE_ADDRESS(0x101641000, 0),
++        RDV3CFG1_MPAM_MMIO_SIZE, 0, RDV3CFG1_MPAM_MSC_COUNT,
++        RDV3CFG1_RESOURCES_PER_MSC,
++        RDV3CFG1_FUNCTIONAL_DEPENDENCY_PER_RESOURCE)
++    },
++
++    /* MPAM_MSC_NODE 8 */
++    {
++      RD_MPAM_MSC_NODE_INIT(0x8, RDV3CFG1_BASE_ADDRESS(0x101601000, 0),
++        RDV3CFG1_MPAM_MMIO_SIZE, 0, RDV3CFG1_MPAM_MSC_COUNT,
++        RDV3CFG1_RESOURCES_PER_MSC,
++        RDV3CFG1_FUNCTIONAL_DEPENDENCY_PER_RESOURCE)
++    }
++  }
++};
++
++VOID* CONST ReferenceAcpiTable = &Mpam;
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1/Pptt.aslc b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1/Pptt.aslc
+index 98731f4e8122..1c33de528c16 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1/Pptt.aslc
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1/Pptt.aslc
+@@ -122,7 +122,7 @@
+  */
+ typedef struct {
+   EFI_ACPI_6_4_PROCESSOR_PROPERTIES_TOPOLOGY_TABLE_HEADER  Header;
+-  RD_PPTT_PACKAGE                                          Package;
++  RD_PPTT_SLC_PACKAGE                                      Package;
+ } EFI_ACPI_6_4_PROCESSOR_PROPERTIES_TOPOLOGY_TABLE;
+ #pragma pack ()
+ 
+@@ -137,8 +137,22 @@ STATIC EFI_ACPI_6_4_PROCESSOR_PROPERTIES_TOPOLOGY_TABLE Pptt = {
+ 
+   {
+     EFI_ACPI_6_4_PPTT_STRUCTURE_PROCESSOR_INIT (
+-      OFFSET_OF (RD_PPTT_PACKAGE, Cluster[0]),
+-      PPTT_PROCESSOR_PACKAGE_FLAGS, 0, 0, 0),
++      OFFSET_OF (RD_PPTT_SLC_PACKAGE, Slc),
++      PPTT_PROCESSOR_PACKAGE_FLAGS, 0, 0, 1),
++
++    OFFSET_OF (EFI_ACPI_6_4_PROCESSOR_PROPERTIES_TOPOLOGY_TABLE,
++               Package.Slc),
++
++    EFI_ACPI_6_4_PPTT_STRUCTURE_CACHE_INIT (
++      PPTT_CACHE_STRUCTURE_FLAGS,           /* Flag */
++      0,                                    /* Next level of cache */
++      SIZE_8MB,                             /* Size */
++      8192,                                 /* Num of sets */
++      16,                                   /* Associativity */
++      PPTT_UNIFIED_CACHE_ATTR,              /* Attributes */
++      64,                                   /* Line size */
++      RD_PPTT_CACHE_ID(0, -1, -1, L3Cache)  /* Cache id */
++    ),
+ 
+     {
+       PPTT_CLUSTER_INIT (0, 0),
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1AcpiTables.inf
+index 1f5295d82df3..860203c60cb0 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1AcpiTables.inf
+@@ -22,6 +22,7 @@
+   RdV3Cfg1/Dsdt.asl
+   RdV3Cfg1/Einj.aslc
+   RdV3Cfg1/Madt.aslc
++  RdV3Cfg1/Mpam.aslc
+   RdV3Cfg1/Pptt.aslc
+   Spcr.aslc
+   SsdtEvents.asl
+-- 
+2.39.5
+

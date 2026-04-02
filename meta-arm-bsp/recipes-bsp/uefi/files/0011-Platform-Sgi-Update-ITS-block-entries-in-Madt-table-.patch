@@ -1,0 +1,69 @@
+From 73beae5b9711cb9b8a879a2ac1635fda4967ebfb Mon Sep 17 00:00:00 2001
+From: Vivek Gautam <vivek.gautam@arm.com>
+Date: Wed, 21 Sep 2022 00:46:45 +0530
+Subject: [PATCH 11/78] Platform/Sgi: Update ITS block entries in Madt table
+ for Rd-N2-Cfg2
+
+Rd-N2-Cfg2 platform has two IO virtualization blocks present on each
+chip. Each of this block has one ITS and in addition one system ITS is
+also present on the platform.
+Update the Madt table entries to account for all the ITS present on the
+platform.
+
+Signed-off-by: Vivek Gautam <vivek.gautam@arm.com>
+Change-Id: I8d770a4a553702d925fd2cd2f959a5d43e451497
+---
+ .../ARM/SgiPkg/AcpiTables/RdN2Cfg2/Madt.aslc  | 22 ++++++++++++++-----
+ 1 file changed, 16 insertions(+), 6 deletions(-)
+
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg2/Madt.aslc b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg2/Madt.aslc
+index 044d8d9b690b..aae2159b2a5c 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg2/Madt.aslc
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2Cfg2/Madt.aslc
+@@ -24,6 +24,8 @@
+                       FixedPcdGet32 (PcdCoreCount))
+ #define CHIP_CNT   (FixedPcdGet32 (PcdChipCount))
+ 
++#define ITS_CNT    (FixedPcdGet32 (PcdIoVirtBlkCountPerChip) + 1) * CHIP_CNT
++
+ // Multiple APIC Description Table
+ #pragma pack (1)
+ 
+@@ -32,7 +34,7 @@ typedef struct {
+   EFI_ACPI_6_4_GIC_STRUCTURE                            GicInterfaces[CORE_CNT * CHIP_CNT];
+   EFI_ACPI_6_4_GIC_DISTRIBUTOR_STRUCTURE                GicDistributor;
+   EFI_ACPI_6_4_GICR_STRUCTURE                           GicRedistributor[CHIP_CNT];
+-  EFI_ACPI_6_4_GIC_ITS_STRUCTURE                        GicIts[6];
++  EFI_ACPI_6_4_GIC_ITS_STRUCTURE                        GicIts[ITS_CNT];
+ } EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE;
+ 
+ #pragma pack ()
+@@ -129,12 +131,20 @@ STATIC EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE Madt = {
+   },
+   // GIC ITS
+   {
++    // Keep IO Virtual Block ITS in sequence. This is required by IORT generator
++    // To map the the block configuration to its correct ITS block.
+     EFI_ACPI_6_4_GIC_ITS_INIT(0, 0x30040000),
+-    EFI_ACPI_6_4_GIC_ITS_INIT(1, 0x30080000),
+-    EFI_ACPI_6_4_GIC_ITS_INIT(2, 0x300C0000),
+-    EFI_ACPI_6_4_GIC_ITS_INIT(3, 0x30100000),
+-    EFI_ACPI_6_4_GIC_ITS_INIT(4, 0x30140000),
+-    EFI_ACPI_6_4_GIC_ITS_INIT(5, 0x30180000),
++    EFI_ACPI_6_4_GIC_ITS_INIT(1, 0x400030040000),
++    EFI_ACPI_6_4_GIC_ITS_INIT(2, 0x800030040000),
++    EFI_ACPI_6_4_GIC_ITS_INIT(3, 0xC00030040000),
++    EFI_ACPI_6_4_GIC_ITS_INIT(4, 0x30080000),
++    EFI_ACPI_6_4_GIC_ITS_INIT(5, 0x400030080000),
++    EFI_ACPI_6_4_GIC_ITS_INIT(6, 0x800030080000),
++    EFI_ACPI_6_4_GIC_ITS_INIT(7, 0xC00030080000),
++    EFI_ACPI_6_4_GIC_ITS_INIT(8, 0x300C0000),
++    EFI_ACPI_6_4_GIC_ITS_INIT(9, 0x4000300C0000),
++    EFI_ACPI_6_4_GIC_ITS_INIT(10, 0x8000300C0000),
++    EFI_ACPI_6_4_GIC_ITS_INIT(11, 0xC000300C0000),
+   },
+ };
+ 
+-- 
+2.39.5
+

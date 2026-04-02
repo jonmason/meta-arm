@@ -1,0 +1,36 @@
+From 2dfa38db326b2c280d2dcc7fe65695a97d987ae6 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Fri, 25 Jun 2021 00:09:57 +0530
+Subject: [PATCH 14/78] Platform/Sgi: Define values for ACPI table header
+
+For ACPI tables that are generated dynamically, define the ACPI table
+header values that have to be used to build the table header.
+
+Co-authored-by: Thomas Abraham <thomas.abraham@arm.com>
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I54cbeac58028a5e4334cea24b36147d2b6606260
+---
+ Platform/ARM/SgiPkg/SgiPlatform.dsc.inc | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc b/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+index b64e3ed278ba..f17e25221aeb 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiPlatform.dsc.inc
+@@ -211,6 +211,13 @@
+   gArmTokenSpaceGuid.PcdMmBufferBase|0xFF600000
+   gArmTokenSpaceGuid.PcdMmBufferSize|0x10000
+ 
++  # ACPI Table Header IDs
++  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemId|"ARMLTD"
++  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemTableId|0x4152464e49464552 # REFINFRA
++  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemRevision|0x20200831
++  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultCreatorId|0x204d5241 # ARM
++  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultCreatorRevision|1
++
+ ################################################################################
+ #
+ # Components Section - list of all EDK II Modules needed by this Platform
+-- 
+2.39.5
+

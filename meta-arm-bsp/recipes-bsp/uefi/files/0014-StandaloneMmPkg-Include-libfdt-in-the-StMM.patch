@@ -1,0 +1,72 @@
+From b7ccc5c6356eb620b1b7d49a1730b8658be2bd27 Mon Sep 17 00:00:00 2001
+From: Achin Gupta <achin.gupta@arm.com>
+Date: Mon, 1 Nov 2021 14:12:10 +0000
+Subject: [PATCH 14/43] StandaloneMmPkg: Include libfdt in the StMM
+
+The StMM SP will extract boot information from its manifest instead of a C data
+structure populated by the SPM. The manifest will be passed by the SPM. This
+patch includes support for libfdt to prepare for parsing the manifest in future
+patches.
+
+Signed-off-by: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: I3b2f57a54569b09661620eccc0d1210a5305026e
+---
+ .../Arm/StandaloneMmCoreEntryPoint.c                           | 2 ++
+ .../StandaloneMmCoreEntryPoint/StandaloneMmCoreEntryPoint.inf  | 3 +++
+ StandaloneMmPkg/StandaloneMmPkg.dsc                            | 1 +
+ 3 files changed, 6 insertions(+)
+
+diff --git a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
+index cda36309dc9c..86e4500cc9d3 100644
+--- a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
++++ b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/Arm/StandaloneMmCoreEntryPoint.c
+@@ -16,6 +16,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
+ #include <Guid/MpInformation.h>
+ 
+ #include <StandaloneMmCpu.h>
++#include <libfdt.h>
++#include <Library/ArmMmuLib.h>
+ #include <Library/ArmSvcLib.h>
+ #include <Library/DebugLib.h>
+ #include <Library/HobLib.h>
+diff --git a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/StandaloneMmCoreEntryPoint.inf b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/StandaloneMmCoreEntryPoint.inf
+index 6cc181ef1c9e..78d16fcd7877 100644
+--- a/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/StandaloneMmCoreEntryPoint.inf
++++ b/StandaloneMmPkg/Library/StandaloneMmCoreEntryPoint/StandaloneMmCoreEntryPoint.inf
+@@ -31,6 +31,7 @@
+   X64/StandaloneMmCoreEntryPoint.c
+ 
+ [Packages]
++  EmbeddedPkg/EmbeddedPkg.dec
+   MdePkg/MdePkg.dec
+   MdeModulePkg/MdeModulePkg.dec
+   StandaloneMmPkg/StandaloneMmPkg.dec
+@@ -41,10 +42,12 @@
+ [LibraryClasses]
+   BaseLib
+   DebugLib
++  FdtLib
+ 
+ [LibraryClasses.ARM, LibraryClasses.AARCH64]
+   StandaloneMmMmuLib
+   ArmSvcLib
++  FdtLib
+ 
+ [Guids]
+   gMpInformationHobGuid
+diff --git a/StandaloneMmPkg/StandaloneMmPkg.dsc b/StandaloneMmPkg/StandaloneMmPkg.dsc
+index 51dd134ef9da..317da9001362 100644
+--- a/StandaloneMmPkg/StandaloneMmPkg.dsc
++++ b/StandaloneMmPkg/StandaloneMmPkg.dsc
+@@ -49,6 +49,7 @@
+   HobLib|StandaloneMmPkg/Library/StandaloneMmHobLib/StandaloneMmHobLib.inf
+   IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
+   MemLib|StandaloneMmPkg/Library/StandaloneMmMemLib/StandaloneMmMemLib.inf
++  FdtLib|EmbeddedPkg/Library/FdtLib/FdtLib.inf
+   MemoryAllocationLib|StandaloneMmPkg/Library/StandaloneMmCoreMemoryAllocationLib/StandaloneMmCoreMemoryAllocationLib.inf
+   MmServicesTableLib|MdePkg/Library/StandaloneMmServicesTableLib/StandaloneMmServicesTableLib.inf
+   PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
+-- 
+2.39.5
+

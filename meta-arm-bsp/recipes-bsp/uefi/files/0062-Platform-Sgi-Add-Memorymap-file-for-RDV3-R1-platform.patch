@@ -1,0 +1,107 @@
+From 671372070eda3acc4cdc6be7b1ba0280d37976bb Mon Sep 17 00:00:00 2001
+From: Lokesh B V <Lokesh.BV@Arm.com>
+Date: Sat, 21 Sep 2024 17:46:19 +0530
+Subject: [PATCH 62/78] Platform/Sgi: Add Memorymap file for RDV3-R1 platform
+
+Added the platform specific SgiMemoryMap4 file for RDV3-R1 platform.
+
+Signed-off-by: Vijayenthiran Subramaniam <vijayenthiran.subramaniam@arm.com>
+Signed-off-by: Lokesh B V <Lokesh.BV@Arm.com>
+Signed-off-by: Dhinesh Kumar Balu <dhineshkumar.balu@arm.com>
+Change-Id: I25954872e2365a9c21a041c8fd60aa5c13f94a44
+---
+ Platform/ARM/SgiPkg/SgiMemoryMap4.dsc.inc | 82 +++++++++++++++++++++++
+ 1 file changed, 82 insertions(+)
+ create mode 100644 Platform/ARM/SgiPkg/SgiMemoryMap4.dsc.inc
+
+diff --git a/Platform/ARM/SgiPkg/SgiMemoryMap4.dsc.inc b/Platform/ARM/SgiPkg/SgiMemoryMap4.dsc.inc
+new file mode 100644
+index 000000000000..cce58ac1a70c
+--- /dev/null
++++ b/Platform/ARM/SgiPkg/SgiMemoryMap4.dsc.inc
+@@ -0,0 +1,82 @@
++#
++#  Copyright (c) 2024, Arm Limited. All rights reserved.
++#
++#  SPDX-License-Identifier: BSD-2-Clause-Patent
++#
++
++[PcdsFixedAtBuild.common]
++  # System Peripherals
++  gArmSgiTokenSpaceGuid.PcdSmcCs0Base|0x08000000
++  gArmSgiTokenSpaceGuid.PcdSmcCs1Base|0x0650000000
++  gArmSgiTokenSpaceGuid.PcdSysPeriphBase|0x0C000000
++  gArmSgiTokenSpaceGuid.PcdSysPeriphSysRegBase|0x0C010000
++
++  # Virtio Disk
++  gArmSgiTokenSpaceGuid.PcdVirtioBlkBaseAddress|0x0C130000
++  gArmSgiTokenSpaceGuid.PcdVirtioBlkSize|0x10000
++  gArmSgiTokenSpaceGuid.PcdVirtioBlkInterrupt|184
++
++  # GPIO controller
++  gArmSgiTokenSpaceGuid.PcdGpioController0BaseAddress|0x0C1D0000
++  gArmSgiTokenSpaceGuid.PcdGpioController0Size|0x00010000
++  gArmSgiTokenSpaceGuid.PcdGpioController0Interrupt|168
++
++   # Ethernet
++  gArmSgiTokenSpaceGuid.PcdVirtioNetBaseAddress|0x0C150000
++  gArmSgiTokenSpaceGuid.PcdVirtioNetInterrupt|186
++
++  # PL031 RealTimeClock
++  gArmPlatformTokenSpaceGuid.PcdPL031RtcBase|0x0C170000
++
++  # Virtio P9
++  gArmSgiTokenSpaceGuid.PcdVirtioP9BaseAddress|0x0C190000
++  gArmSgiTokenSpaceGuid.PcdVirtioP9Size|0x10000
++  gArmSgiTokenSpaceGuid.PcdVirtioP9Interrupt|185
++
++  # PL370 - HDLCD1
++  gArmPlatformTokenSpaceGuid.PcdArmHdLcdBase|0x0EF60000
++
++  # PL011 - Serial Debug UART
++  gArmPlatformTokenSpaceGuid.PcdSerialDbgRegisterBase|0x0EF70000
++  gArmPlatformTokenSpaceGuid.PcdSerialDbgInterrupt|179
++
++  # PL011 - Serial Terminal
++  gArmPlatformTokenSpaceGuid.PL011UartInterrupt|103
++
++  # System Memory (2GB - 128MB of Trusted DRAM at the top of the 32bit address space)
++  gArmTokenSpaceGuid.PcdSystemMemoryBase|0x80000000
++  gArmTokenSpaceGuid.PcdSystemMemorySize|0x73000000
++  # DRAM Block2 Base and Size
++  gArmSgiTokenSpaceGuid.PcdDramBlock2Base|0x20000000000
++!ifndef $(PLAT_DRAM2_SIZE)
++  gArmSgiTokenSpaceGuid.PcdDramBlock2Size|0x180000000
++!else
++  gArmSgiTokenSpaceGuid.PcdDramBlock2Size|$(PLAT_DRAM2_SIZE)
++!endif
++
++  # SMMU
++  gArmSgiTokenSpaceGuid.PcdSmmuBase|0x1C0000000
++  gArmSgiTokenSpaceGuid.PcdSmmuSize|0x4000000
++
++  # Non-Volatile variable storage
++  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase64|0x0650000000
++  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingBase64|0x0651400000
++  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase64|0x0652800000
++
++  # PCIe
++  gArmTokenSpaceGuid.PcdPciMmio32Base|0x60000000
++  gArmTokenSpaceGuid.PcdPciMmio32Size|0x10000000
++  gArmTokenSpaceGuid.PcdPciMmio64Base|0x10100000000
++  gArmTokenSpaceGuid.PcdPciMmio64Size|0x1000000000
++  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress|0x10000000000
++
++  # Address bus width - 64GB address space
++  gArmSgiTokenSpaceGuid.PcdMaxAddressBitsPerChip|36
++
++  gArmSgiTokenSpaceGuid.PcdRemoteDramAddressBit|40
++
++  # Timer & Watchdog interrupts
++  gArmSgiTokenSpaceGuid.PcdGtFrame1Gsiv|99
++  gArmSgiTokenSpaceGuid.PcdGtFrame0Gsiv|100
++  gArmSgiTokenSpaceGuid.PcdWdogWS0Gsiv|101
++  gArmSgiTokenSpaceGuid.PcdWdogWS1Gsiv|102
+-- 
+2.39.5
+

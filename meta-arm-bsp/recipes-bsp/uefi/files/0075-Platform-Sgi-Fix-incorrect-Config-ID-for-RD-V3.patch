@@ -1,0 +1,32 @@
+From 9d2d2e5cbde22e5a7d895f22cf356e218d201dff Mon Sep 17 00:00:00 2001
+From: Dhinesh Balu <dhinesh.balu@arm.com>
+Date: Wed, 27 Nov 2024 13:16:30 +0000
+Subject: [PATCH 75/78] Platform/Sgi: Fix incorrect Config ID for RD-V3
+
+The RD-V3 Config ID was incorrectly set to 0x1, leading to missing
+SMBIOS table due to a mismatch between the platform's actual
+configuration and the maintained lookup table.
+Resolve this by updating the Config ID to its correct value of 0x0.
+
+Signed-off-by: Dhinesh Balu <dhinesh.balu@arm.com>
+Change-Id: I7741c7a27bd8ce4a63f18addd353f099515001fd
+---
+ Platform/ARM/SgiPkg/Include/SgiPlatform.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Platform/ARM/SgiPkg/Include/SgiPlatform.h b/Platform/ARM/SgiPkg/Include/SgiPlatform.h
+index fd032862b9af..93f2962fe728 100644
+--- a/Platform/ARM/SgiPkg/Include/SgiPlatform.h
++++ b/Platform/ARM/SgiPkg/Include/SgiPlatform.h
+@@ -53,7 +53,7 @@
+ 
+ // RD-V3 Platform Identification values
+ #define RD_V3_PART_NUM                            0x7EE
+-#define RD_V3_CONF_ID                             0x1
++#define RD_V3_CONF_ID                             0x0
+ 
+ // RD-V3-Cfg1 Platform Identification values
+ #define RD_V3_CFG1_PART_NUM                       0x7F9
+-- 
+2.39.5
+

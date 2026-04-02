@@ -1,0 +1,174 @@
+From 0e3680ee28f753acb4814ac3f1f870592af330a4 Mon Sep 17 00:00:00 2001
+From: Achin Gupta <achin.gupta@arm.com>
+Date: Sat, 6 Nov 2021 05:52:26 +0000
+Subject: [PATCH 29/43] ArmPkg/MmCommunicationDxe: Discover the StMM SP
+
+This patch adds support for discovering the presence of the SP using the
+EFI_MM_COMMUNICATION_PROTOCOL GUID that implements Standalone MM
+drivers. This is done by querying the framework through
+FFA_PARTITION_INFO_GET whether any partition that implements the
+EFI_MM_COMMUNICATION_PROTOCOL is present or not. The partition ID and
+its properties are stashed for use in subsequent communication with the
+StMM SP.
+
+Signed-off-by: Achin Gupta <achin.gupta@arm.com>
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: If10884cb25c0b3ca8c8a76a0b1348f92b819c425
+---
+ .../MmCommunicationDxe/MmCommunication.c      | 68 ++++++++++++++++++-
+ ArmPkg/Include/IndustryStandard/ArmFfaSvc.h   | 24 +++++++
+ 2 files changed, 91 insertions(+), 1 deletion(-)
+
+diff --git a/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.c b/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.c
+index caeb6f36c938..d908aff70690 100644
+--- a/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.c
++++ b/ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.c
+@@ -8,6 +8,7 @@
+ 
+ #include <Library/ArmLib.h>
+ #include <Library/ArmSmcLib.h>
++#include <Library/BaseLib.h>
+ #include <Library/BaseMemoryLib.h>
+ #include <Library/DebugLib.h>
+ #include <Library/DxeServicesTableLib.h>
+@@ -28,6 +29,11 @@
+ //
+ STATIC UINT16  mFfaPartId;
+ 
++// Partition information of the StMM SP if FF-A support is enabled
++// TODO: Revisit assumption that there is only a single StMM SP
++//
++STATIC EFI_FFA_PART_INFO_DESC mStmmPartInfo;
++
+ //
+ // RX/TX pair if FF-A support is enabled
+ //
+@@ -298,7 +304,9 @@ GetMmCompatibility (
+ {
+   EFI_STATUS    Status;
+   UINT32        MmVersion;
++  UINT32        SmccUuid[4];
+   ARM_SMC_ARGS  SmcArgs = {0};
++  EFI_GUID      MmCommProtGuid = EFI_MM_COMMUNICATION2_PROTOCOL_GUID;
+ 
+   if (FixedPcdGet32 (PcdFfaEnable) != 0) {
+     SmcArgs.Arg0 = ARM_SVC_ID_FFA_VERSION_AARCH32;
+@@ -335,8 +343,11 @@ GetMmCompatibility (
+     Status = EFI_UNSUPPORTED;
+   }
+ 
+-  // If FF-A is supported then discover our ID and register our RX/TX buffers.
++  // If FF-A is supported then discover the StMM SP's presence, ID, our ID and
++  // register our RX/TX buffers.
+   if (FixedPcdGet32 (PcdFfaEnable) != 0) {
++    EFI_FFA_PART_INFO_DESC *StmmPartInfo;
++
+     // Get our ID
+     ZeroMem(&SmcArgs, sizeof(SmcArgs));
+     SmcArgs.Arg0 = ARM_SVC_ID_FFA_ID_GET_AARCH32;
+@@ -359,7 +370,62 @@ GetMmCompatibility (
+       return EFI_UNSUPPORTED;
+     }
+ 
++    // Discover the StMM SP after converting the EFI_GUID to a format TF-A will
++    // understand.
++    SmcArgs.Arg0 = ARM_SVC_ID_FFA_PARTITION_INFO_GET_AARCH32;
++    MmCommProtGuid.Data2 += MmCommProtGuid.Data3;
++    MmCommProtGuid.Data3 = MmCommProtGuid.Data2 - MmCommProtGuid.Data3;
++    MmCommProtGuid.Data2 = MmCommProtGuid.Data2 - MmCommProtGuid.Data3;
++    CopyMem ((VOID *) SmccUuid, (VOID *) &MmCommProtGuid, sizeof(EFI_GUID));
++    SmcArgs.Arg1 = SmccUuid[0];
++    SmcArgs.Arg2 = SmccUuid[1];
++    SmcArgs.Arg3 = SmccUuid[2];
++    SmcArgs.Arg3 = SwapBytes32(SmcArgs.Arg3);
++    SmcArgs.Arg4 = SmccUuid[3];
++    SmcArgs.Arg4 = SwapBytes32(SmcArgs.Arg4);
++    ArmCallSmc (&SmcArgs);
++    if (SmcArgs.Arg0 == ARM_SVC_ID_FFA_ERROR_AARCH32) {
++      DEBUG ((DEBUG_ERROR, "Unable to discover FF-A StMM SP (%d).\n", SmcArgs.Arg2));
++      goto ffa_init_error;
++    }
++
++    // Retrieve the partition information from the RX buffer
++    StmmPartInfo = (EFI_FFA_PART_INFO_DESC *) FfaRxBuf;
++
++    // TODO: Sanity check the partition type.
++    DEBUG ((DEBUG_INFO, "Discovered FF-A StMM SP."));
++    DEBUG ((DEBUG_INFO, "ID = 0x%lx, Execution contexts = %d, Properties = 0x%lx. \n",
++	    StmmPartInfo->PartId, StmmPartInfo->EcCnt, StmmPartInfo->PartProps));
++
++    // Make a local copy
++    mStmmPartInfo = *StmmPartInfo;
++
++    // Release the RX buffer
++    ZeroMem(&SmcArgs, sizeof(SmcArgs));
++    SmcArgs.Arg0 = ARM_SVC_ID_FFA_RX_RELEASE_AARCH32;
++    SmcArgs.Arg1 = mFfaPartId;
++    ArmCallSmc (&SmcArgs);
++
++    // This should really never fail since there is only a single CPU booting
++    // and another CPU could not have released the RX buffer before us.
++    if (SmcArgs.Arg0 == ARM_SVC_ID_FFA_ERROR_AARCH32) {
++      DEBUG ((DEBUG_ERROR, "Unable to release FF-A RX buffer (%d).\n", SmcArgs.Arg2));
++      ASSERT (0);
++      goto ffa_init_error;
++    }
++
+     return EFI_SUCCESS;
++
++  ffa_init_error:
++    // Release the RX/TX pair before exiting.
++    ZeroMem(&SmcArgs, sizeof(SmcArgs));
++    SmcArgs.Arg0 = ARM_SVC_ID_FFA_RXTX_UNMAP_AARCH32;
++    SmcArgs.Arg1 = mFfaPartId << 16;  // TODO: Use a macro for shift
++    ArmCallSmc (&SmcArgs);
++
++    // We do not bother checking the error code of the RXTX_UNMAP invocation
++    // since we did map the buffers and this call must succeed.
++    return EFI_UNSUPPORTED;
+   }
+ 
+   return Status;
+diff --git a/ArmPkg/Include/IndustryStandard/ArmFfaSvc.h b/ArmPkg/Include/IndustryStandard/ArmFfaSvc.h
+index 1e648dda0479..56b6bcb1edb5 100644
+--- a/ArmPkg/Include/IndustryStandard/ArmFfaSvc.h
++++ b/ArmPkg/Include/IndustryStandard/ArmFfaSvc.h
+@@ -19,6 +19,9 @@
+ #define ARM_SVC_ID_FFA_VERSION_AARCH32               0x84000063
+ #define ARM_SVC_ID_FFA_RXTX_MAP_AARCH32              0x84000066
+ #define ARM_SVC_ID_FFA_RXTX_MAP_AARCH64              0xC4000066
++#define ARM_SVC_ID_FFA_RX_RELEASE_AARCH32            0x84000065
++#define ARM_SVC_ID_FFA_RXTX_UNMAP_AARCH32            0x84000067
++#define ARM_SVC_ID_FFA_PARTITION_INFO_GET_AARCH32    0x84000068
+ #define ARM_SVC_ID_FFA_ID_GET_AARCH32                0x84000069
+ #define ARM_SVC_ID_FFA_MSG_SEND_DIRECT_REQ_AARCH32   0x8400006F
+ #define ARM_SVC_ID_FFA_MSG_SEND_DIRECT_RESP_AARCH32  0x84000070
+@@ -144,4 +147,25 @@ typedef struct {
+   UINT64 Reserved;
+ } EFI_FFA_BOOT_INFO_HEADER;
+ 
++// FF-A partition information descriptor
++typedef struct {
++  UINT16 PartId;
++  UINT16 EcCnt;
++  UINT32 PartProps;
++  UINT32 PartGuid[4];
++} EFI_FFA_PART_INFO_DESC;
++
++#define PART_INFO_PROP_MASK                    0x3f
++#define PART_INFO_PROP_SHIFT                   0
++#define PART_INFO_PROP_DIR_MSG_RECV_BIT        (1u << 0)
++#define PART_INFO_PROP_DIR_MSG_SEND_BIT        (1u << 1)
++#define PART_INFO_PROP_INDIR_MSG_BIT           (1u << 2)
++#define PART_INFO_PROP_NOTIFICATIONS_BIT       (1u << 3)
++#define PART_INFO_PROP_EP_TYPE_MASK            0x3
++#define PART_INFO_PROP_EP_TYPE_SHIFT           4
++#define PART_INFO_PROP_EP_PE                   0
++#define PART_INFO_PROP_EP_SEPID_IND            1
++#define PART_INFO_PROP_EP_SEPID_DEP            2
++#define PART_INFO_PROP_EP_AUX                  3
++
+ #endif // ARM_FFA_SVC_H_
+-- 
+2.39.5
+
