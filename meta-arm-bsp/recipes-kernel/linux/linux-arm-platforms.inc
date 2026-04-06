@@ -120,14 +120,6 @@ KCONFIG_MODE:rdn2 = "--alldefconfig"
 KCONF_BSP_AUDIT_LEVEL:rdn2 = "0"
 
 #
-# RDV1 KMACHINE
-#
-COMPATIBLE_MACHINE:rdv1 = "rdv1"
-KBUILD_DEFCONFIG:rdv1 = "defconfig"
-KCONFIG_MODE:rdv1 = "--alldefconfig"
-KCONF_BSP_AUDIT_LEVEL:rdv1 = "0"
-
-#
 # RDV2 KMACHINE
 #
 COMPATIBLE_MACHINE:rdv2 = "rdv2"

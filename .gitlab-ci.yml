@@ -312,15 +312,6 @@ rdn2:
     matrix:
       - TESTING: testimage
 
-rdv1:
-  extends: .build
-  parallel:
-    matrix:
-      - TESTING: testimage
-  # FVP binary is x86-only
-  tags:
-    - x86_64
-
 rdv2:
   extends: .build
   parallel:
