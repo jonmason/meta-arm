@@ -40,7 +40,6 @@ target:
   - nativesdk-fvp-rdn2
   # These are x86 only... :(
   - nativesdk-fvp-rdv1
-  - nativesdk-fvp-sgi575
 
   # IoT FVPs
   - fvp-corstone1000

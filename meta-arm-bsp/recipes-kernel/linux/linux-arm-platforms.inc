@@ -136,15 +136,6 @@ KCONFIG_MODE:rdv2 = "--alldefconfig"
 KCONF_BSP_AUDIT_LEVEL:rdv2 = "0"
 
 #
-# SGI575 KMACHINE
-#
-COMPATIBLE_MACHINE:sgi575 = "sgi575"
-KBUILD_DEFCONFIG:sgi575 = "defconfig"
-KCONFIG_MODE:sgi575 = "--alldefconfig"
-# Upstream defconfig often causes warnings but we don't maintain it
-KCONF_BSP_AUDIT_LEVEL:sgi575 = "0"
-
-#
 # sbsa-ref KMACHINE
 #
 COMPATIBLE_MACHINE:sbsa-ref = "sbsa-ref"
