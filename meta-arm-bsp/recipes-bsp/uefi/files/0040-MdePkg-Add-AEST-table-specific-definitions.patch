@@ -1,7 +1,7 @@
-From 1f0f691a3c7e66be423ea14672624f8f63c644b1 Mon Sep 17 00:00:00 2001
+From 6751fceedde409ed56ee94885087fdba850f5c35 Mon Sep 17 00:00:00 2001
 From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
 Date: Fri, 27 Sep 2024 18:02:45 +0530
-Subject: [PATCH 40/43] MdePkg: Add AEST table specific definitions
+Subject: [PATCH] MdePkg: Add AEST table specific definitions
 
 Update the AEST table specific structures and defines based on
 latest spec.
@@ -67,6 +67,3 @@ index 18c41d308621..f8da680a2775 100644
  
    /// The ACPI Unique identifier of the component.
    UINT32                       UniqueId;
--- 
-2.39.5
-

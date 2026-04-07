@@ -1,8 +1,8 @@
-From 891bf1ec71ef5be21a92a99d770fb4854eff91cb Mon Sep 17 00:00:00 2001
+From 5a2c0a24ea88b700f4f21e41f5c0f455bc24f916 Mon Sep 17 00:00:00 2001
 From: Achin Gupta <achin.gupta@arm.com>
 Date: Tue, 2 Nov 2021 10:23:03 +0000
-Subject: [PATCH 18/43] StandaloneMmPkg: define new data structure to stage
- FF-A boot information
+Subject: [PATCH] StandaloneMmPkg: define new data structure to stage FF-A boot
+ information
 
 With FF-A v1.1, the SPMC sends a reduced amount of boot information as compared
 to the original SPM implementation. For example, the stack layout, MP
@@ -48,6 +48,3 @@ index dbb81610ff8e..39ec81abf97c 100644
  typedef RETURN_STATUS (*REGION_PERMISSION_UPDATE_FUNC) (
    IN  EFI_PHYSICAL_ADDRESS  BaseAddress,
    IN  UINT64                Length
--- 
-2.39.5
-

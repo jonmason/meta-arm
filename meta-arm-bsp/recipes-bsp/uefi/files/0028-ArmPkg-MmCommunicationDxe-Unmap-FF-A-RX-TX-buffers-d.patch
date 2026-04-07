@@ -1,8 +1,8 @@
-From 22ecb82883e5cb6a77d765b0fd44e2281a8a103c Mon Sep 17 00:00:00 2001
+From 2655c205639761c16220ed6737419364a6a7ed3f Mon Sep 17 00:00:00 2001
 From: Achin Gupta <achin.gupta@arm.com>
 Date: Sat, 6 Nov 2021 06:01:41 +0000
-Subject: [PATCH 28/43] ArmPkg/MmCommunicationDxe: Unmap FF-A RX/TX buffers
- during ExitBootServices
+Subject: [PATCH] ArmPkg/MmCommunicationDxe: Unmap FF-A RX/TX buffers during
+ ExitBootServices
 
 An FF-A partition can map only a single RX/TX buffer pair with the
 framework. The DXE MM communication driver maps its pair before
@@ -92,6 +92,3 @@ index 311307ed1520..caeb6f36c938 100644
    // Register notification callback when virtual address is associated
    // with the physical address.
    // Create a Set Virtual Address Map event.
--- 
-2.39.5
-

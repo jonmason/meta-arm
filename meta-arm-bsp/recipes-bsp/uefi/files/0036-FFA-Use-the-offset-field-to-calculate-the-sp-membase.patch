@@ -1,7 +1,7 @@
-From 1a574d7239abe44f3ae2c9dfeaf11a03f7f22ce8 Mon Sep 17 00:00:00 2001
+From fb065bb4d63ec0bb9c8a03001ba696b336aff904 Mon Sep 17 00:00:00 2001
 From: Nishant Sharma <nishant.sharma@arm.com>
 Date: Tue, 28 Mar 2023 13:19:29 +0000
-Subject: [PATCH 36/43] FFA: Use the offset field to calculate the sp membase
+Subject: [PATCH] FFA: Use the offset field to calculate the sp membase
 
 With SPMC at EL2 enabled, StMM is loaded by the SP framework in BL2.
 This framework packages the SP and its manifest into a single package
@@ -47,6 +47,3 @@ index 1eb052ee9507..5f426b1c2972 100644
    DEBUG ((DEBUG_INFO, "sp mem base  = 0x%llx\n", StmmBootInfo->SpMemBase));
  
    Status = ReadProperty64 (
--- 
-2.39.5
-

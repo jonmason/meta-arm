@@ -1,7 +1,7 @@
-From 30bfa9ddbde847f7427bec817c5834e3cef63cb8 Mon Sep 17 00:00:00 2001
+From 8d52adcc92568ed364049c8208eb702d6147dedf Mon Sep 17 00:00:00 2001
 From: Achin Gupta <achin.gupta@arm.com>
 Date: Sat, 6 Nov 2021 05:17:26 +0000
-Subject: [PATCH 30/43] ArmPkg/MmCommunicationDxe: use the FF-A transport for
+Subject: [PATCH] ArmPkg/MmCommunicationDxe: use the FF-A transport for
  transmitting MM requests
 
 This patch packages requests for accessing a Standalone MM driver
@@ -202,6 +202,3 @@ index 56b6bcb1edb5..b24cdd67ae69 100644
  #define ARM_SVC_ID_FFA_ERROR_AARCH32                 0x84000060
  #define ARM_SVC_ID_FFA_ERROR_AARCH64                 0xC4000060
  #define ARM_SVC_ID_FFA_MSG_WAIT_AARCH32              0x8400006B
--- 
-2.39.5
-

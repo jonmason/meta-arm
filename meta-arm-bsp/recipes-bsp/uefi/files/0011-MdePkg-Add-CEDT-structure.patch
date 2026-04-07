@@ -1,7 +1,7 @@
-From 0e30bb99668e6bd9cc8f11940f611d522e344746 Mon Sep 17 00:00:00 2001
+From 84940323524a42a147d0ba9b8f606cf806ee8281 Mon Sep 17 00:00:00 2001
 From: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
 Date: Tue, 23 Aug 2022 11:26:23 +0530
-Subject: [PATCH 11/43] MdePkg: Add CEDT structure
+Subject: [PATCH] MdePkg: Add CEDT structure
 
 CXL Early Discovery Table (CEDT) enables OSes to locate CXL Host Bridges
 and location of Host Bridge Registers early during boot and configure
@@ -91,6 +91,3 @@ index bbe6a3c9eb5c..13a2fd6ccf32 100644
  #pragma pack()
  
  #endif
--- 
-2.39.5
-

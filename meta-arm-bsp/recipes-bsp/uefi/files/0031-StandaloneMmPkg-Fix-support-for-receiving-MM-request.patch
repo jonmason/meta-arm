@@ -1,8 +1,8 @@
-From df7a8d4a761ac10e5874b246dabfe93f0c09166c Mon Sep 17 00:00:00 2001
+From 3e08b630939529a7ac821963d6c5ee9db177da55 Mon Sep 17 00:00:00 2001
 From: Achin Gupta <achin.gupta@arm.com>
 Date: Sat, 6 Nov 2021 05:31:40 +0000
-Subject: [PATCH 31/43] StandaloneMmPkg: Fix support for receiving MM requests
- as FF-A direct messages
+Subject: [PATCH] StandaloneMmPkg: Fix support for receiving MM requests as
+ FF-A direct messages
 
 This patch adds support for correctly receiving a request for a
 Standalome MM driver service using the MM communication protocol
@@ -51,6 +51,3 @@ index 7e8d98af4ad4..a8811950168f 100644
        EventCompleteSvcArgs->Arg2 = 0;
        EventCompleteSvcArgs->Arg3 = ARM_SVC_ID_SP_EVENT_COMPLETE;
        EventCompleteSvcArgs->Arg4 = SvcStatus;
--- 
-2.39.5
-

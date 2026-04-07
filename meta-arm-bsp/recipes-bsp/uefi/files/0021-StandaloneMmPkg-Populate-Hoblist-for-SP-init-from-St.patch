@@ -1,8 +1,8 @@
-From bd66ffc6347388f54dba69a9fd6e9fc3836df7f2 Mon Sep 17 00:00:00 2001
+From 545046e06ace023da88fed68e820a3200e6e628b Mon Sep 17 00:00:00 2001
 From: Achin Gupta <achin.gupta@arm.com>
 Date: Tue, 2 Nov 2021 11:12:25 +0000
-Subject: [PATCH 21/43] StandaloneMmPkg: Populate Hoblist for SP init from StMM
- boot information
+Subject: [PATCH] StandaloneMmPkg: Populate Hoblist for SP init from StMM boot
+ information
 
 This patch adds support for creating a hoblist from the reduced boot
 information retrieved from the SP manifest.
@@ -252,6 +252,3 @@ index 7390dc45b7e5..f1f263e5ff00 100644
  
    //
    // Call the MM Core entry point
--- 
-2.39.5
-

@@ -1,7 +1,7 @@
-From b7ccc5c6356eb620b1b7d49a1730b8658be2bd27 Mon Sep 17 00:00:00 2001
+From 88674d21a35c16cf41748455678a465442b90c46 Mon Sep 17 00:00:00 2001
 From: Achin Gupta <achin.gupta@arm.com>
 Date: Mon, 1 Nov 2021 14:12:10 +0000
-Subject: [PATCH 14/43] StandaloneMmPkg: Include libfdt in the StMM
+Subject: [PATCH] StandaloneMmPkg: Include libfdt in the StMM
 
 The StMM SP will extract boot information from its manifest instead of a C data
 structure populated by the SPM. The manifest will be passed by the SPM. This
@@ -67,6 +67,3 @@ index 51dd134ef9da..317da9001362 100644
    MemoryAllocationLib|StandaloneMmPkg/Library/StandaloneMmCoreMemoryAllocationLib/StandaloneMmCoreMemoryAllocationLib.inf
    MmServicesTableLib|MdePkg/Library/StandaloneMmServicesTableLib/StandaloneMmServicesTableLib.inf
    PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
--- 
-2.39.5
-

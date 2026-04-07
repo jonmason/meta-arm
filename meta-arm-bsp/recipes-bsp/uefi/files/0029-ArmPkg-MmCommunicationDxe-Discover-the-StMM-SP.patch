@@ -1,7 +1,7 @@
-From 0e3680ee28f753acb4814ac3f1f870592af330a4 Mon Sep 17 00:00:00 2001
+From 4e66437546a26c07bb4c6f02499d67cf364b24eb Mon Sep 17 00:00:00 2001
 From: Achin Gupta <achin.gupta@arm.com>
 Date: Sat, 6 Nov 2021 05:52:26 +0000
-Subject: [PATCH 29/43] ArmPkg/MmCommunicationDxe: Discover the StMM SP
+Subject: [PATCH] ArmPkg/MmCommunicationDxe: Discover the StMM SP
 
 This patch adds support for discovering the presence of the SP using the
 EFI_MM_COMMUNICATION_PROTOCOL GUID that implements Standalone MM
@@ -169,6 +169,3 @@ index 1e648dda0479..56b6bcb1edb5 100644
 +#define PART_INFO_PROP_EP_AUX                  3
 +
  #endif // ARM_FFA_SVC_H_
--- 
-2.39.5
-

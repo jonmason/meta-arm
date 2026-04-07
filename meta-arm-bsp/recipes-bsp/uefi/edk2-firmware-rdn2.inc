@@ -6,7 +6,7 @@ EDK2_BIN_NAME      = "BL33_AP_UEFI.fd"
 
 COMPATIBLE_MACHINE = "rdn2"
 
-SRCREV_edk2           = "4af58495561278551e1d4dd5a32be1c17b788b00"
+SRCREV_edk2           = "1301e0b47eb3b4212da384a34f23b68edaf1911e"
 SRCREV_edk2-platforms = "8383fb3d45b8afa1e28295b35cf69a50f12fd725"
 
 WARN_QA:remove = "patch-status"
@@ -56,7 +56,6 @@ SRC_URI += "\
     file://0040-MdePkg-Add-AEST-table-specific-definitions.patch \
     file://0041-MdePkg-Update-SIGNATE_64-definition.patch \
     file://0042-CreateHobList-Do-not-add-MMRAM-carveout-in-resource-.patch \
-    file://0043-HACK-StandaloneMmPkg-Core-Skip-creation-of-shadow-BF.patch \
 "
 SRC_URI += "\
     file://0001-Platform-Sgi-add-no-stack-protector-flag-for-StMM-bu.patch;patchdir=edk2-platforms \

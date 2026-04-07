@@ -1,7 +1,7 @@
-From c076a7c6ad8f6b0e29c8d687d38dc8141bbfebfc Mon Sep 17 00:00:00 2001
+From 3ed9368aa8d88e80b11a9635d1e732700595a330 Mon Sep 17 00:00:00 2001
 From: Achin Gupta <achin.gupta@arm.com>
 Date: Tue, 2 Nov 2021 10:12:27 +0000
-Subject: [PATCH 16/43] ArmPkg/ArmFfaSvc: Add helper macros and fids
+Subject: [PATCH] ArmPkg/ArmFfaSvc: Add helper macros and fids
 
 Add new fid for Success, error and wait. Also add macro to generate FFA
 verions.
@@ -59,6 +59,3 @@ index 03c23b054040..be866ba917d0 100644
  // For now, the destination id to be used in the FF-A calls
  // is being hard-coded. Subsequently, support will be added
  // to get the endpoint id's dynamically
--- 
-2.39.5
-

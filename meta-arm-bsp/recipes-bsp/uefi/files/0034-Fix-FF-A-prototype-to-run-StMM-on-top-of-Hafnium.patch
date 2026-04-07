@@ -1,7 +1,7 @@
-From 8956eabaa5ebcedf7cd751c9d00fb78102560727 Mon Sep 17 00:00:00 2001
+From c7da940b46ac710ca69159dcb1a61ab912bef246 Mon Sep 17 00:00:00 2001
 From: Olivier Deprez <olivier.deprez@arm.com>
 Date: Fri, 12 Nov 2021 18:00:06 +0100
-Subject: [PATCH 34/43] Fix FF-A prototype to run StMM on top of Hafnium
+Subject: [PATCH] Fix FF-A prototype to run StMM on top of Hafnium
 
 Minor fixes to accomodate running StMM SEL0 SP on top of Hafnium (built
 with VHE support):
@@ -59,6 +59,3 @@ index 7a5bb412d0d2..16cf479a47fa 100644
      }
  
      SectionHeaderOffset += sizeof (EFI_IMAGE_SECTION_HEADER);
--- 
-2.39.5
-

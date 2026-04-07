@@ -1,7 +1,7 @@
-From a4c2122444419ab29e1f47b611b22a73d09c7b08 Mon Sep 17 00:00:00 2001
+From 1c9937b4e10ad722c86027c371999fd51a502ba5 Mon Sep 17 00:00:00 2001
 From: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
 Date: Thu, 17 Aug 2023 14:59:58 +0530
-Subject: [PATCH 37/43] MdePkg/Acpi64: adds EINJ specific structures
+Subject: [PATCH] MdePkg/Acpi64: adds EINJ specific structures
 
 This patch adds SET_ERROR_TYPE_WITH_ADDRESS and
 VENDOR_ERROR_TYPE_EXTENSION_STRUCTURE for supporting vendor defined
@@ -43,6 +43,3 @@ index 13a2fd6ccf32..87506e36ced4 100644
  ///
  /// PCCT Version (as defined in ACPI 6.4 spec.)
  ///
--- 
-2.39.5
-

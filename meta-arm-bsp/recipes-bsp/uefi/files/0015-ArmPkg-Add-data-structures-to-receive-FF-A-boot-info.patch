@@ -1,8 +1,7 @@
-From 14c6f193eee6dfe2e7ae4c7e4bd564746e89fa84 Mon Sep 17 00:00:00 2001
+From 8a655c2f94780b37929a6e7d85c6d1ef9e8b8e88 Mon Sep 17 00:00:00 2001
 From: Achin Gupta <achin.gupta@arm.com>
 Date: Tue, 2 Nov 2021 09:49:43 +0000
-Subject: [PATCH 15/43] ArmPkg: Add data structures to receive FF-A boot
- information
+Subject: [PATCH] ArmPkg: Add data structures to receive FF-A boot information
 
 The SPMC will pass the manifest to the StMM SP which contains the boot
 information required for SP initialisation. This patch defines the data
@@ -92,6 +91,3 @@ index 4126a4985bb2..03c23b054040 100644
 +} EFI_FFA_BOOT_INFO_HEADER;
 +
  #endif // ARM_FFA_SVC_H_
--- 
-2.39.5
-

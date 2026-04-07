@@ -1,7 +1,7 @@
-From e343b9cf7e17c64a06fa2c011d1adca6ba275607 Mon Sep 17 00:00:00 2001
+From 7b81056f188cf0e3cf2d905ad9791f1a3bc9db40 Mon Sep 17 00:00:00 2001
 From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
 Date: Sat, 7 Aug 2021 17:24:53 +0530
-Subject: [PATCH 07/43] ArmPlatformPkg/HEST: ArmPlatformPkg: Add Readme file
+Subject: [PATCH] ArmPlatformPkg/HEST: ArmPlatformPkg: Add Readme file
 
 Added a readme file that explains the software framework for dynamic
 generation of HEST table.
@@ -85,6 +85,3 @@ index 000000000000..1b6f0713cb9a
 +
 +Link to github branch with the patches in this series -
 +https://github.com/omkkul01/edk2/tree/ras_firmware_first_edk2
--- 
-2.39.5
-

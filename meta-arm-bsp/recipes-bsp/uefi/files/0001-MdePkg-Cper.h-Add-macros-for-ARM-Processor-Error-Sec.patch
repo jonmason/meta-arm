@@ -1,8 +1,7 @@
-From d42e680cdf7dfdbbea18f25a0f0633603b2f79b2 Mon Sep 17 00:00:00 2001
+From 155196cd1ae1d7b6b0e787e152870551913d59ac Mon Sep 17 00:00:00 2001
 From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
 Date: Tue, 1 Jun 2021 20:03:23 +0530
-Subject: [PATCH 01/43] MdePkg Cper.h: Add macros for ARM Processor Error
- Section
+Subject: [PATCH] MdePkg Cper.h: Add macros for ARM Processor Error Section
 
 Add CPER definitions for ARM Processor error section per UEFI 2.8 errata
 b spec. The definitions are part of Section N.2.4.4 of Appendix N
@@ -532,6 +531,3 @@ index be6b86382703..334e0ef231c9 100644
  ///
  /// Validation bit mask indicates which fields in the memory error record are valid
  /// in Memory Error section
--- 
-2.39.5
-

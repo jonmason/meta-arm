@@ -1,7 +1,7 @@
-From 819c28d8370f68add5dc5e98d6f559b43bda3f92 Mon Sep 17 00:00:00 2001
+From bc44dd3f61123f1bdf1f6a6ab1da8fe3c0e430a1 Mon Sep 17 00:00:00 2001
 From: Achin Gupta <achin.gupta@arm.com>
 Date: Tue, 2 Nov 2021 10:41:06 +0000
-Subject: [PATCH 19/43] StandaloneMmPkg: Add support to detect FF-A v1.1 in a
+Subject: [PATCH] StandaloneMmPkg: Add support to detect FF-A v1.1 in a
  backwards compatible manner
 
 For better or worse, an StMM SP can communicate with the SPM through one
@@ -211,6 +211,3 @@ index 86e4500cc9d3..6a8d833f8320 100644
    if (EFI_ERROR (Status)) {
      goto finish;
    }
--- 
-2.39.5
-

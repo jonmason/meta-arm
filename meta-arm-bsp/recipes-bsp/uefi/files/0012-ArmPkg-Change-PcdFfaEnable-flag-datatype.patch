@@ -1,7 +1,7 @@
-From 1c2239c534e9b5268bfe046202fca0ccf8891389 Mon Sep 17 00:00:00 2001
+From cd8dcb3ac0b96f3af60953e35d6ce65dc2a1a3c7 Mon Sep 17 00:00:00 2001
 From: Nishant Sharma <nishant.sharma@arm.com>
 Date: Fri, 25 Mar 2022 01:31:53 +0000
-Subject: [PATCH 12/43] ArmPkg: Change PcdFfaEnable flag datatype
+Subject: [PATCH] ArmPkg: Change PcdFfaEnable flag datatype
 
 FeatureFlag type PCD flags are declared by typecasting an integer value
 to BOOLEAN. These flags cannot be use in assembly code as assembler does
@@ -138,6 +138,3 @@ index d41d7630b614..9928183188fe 100644
    gArmTokenSpaceGuid.PcdFfaEnable
  
  #
--- 
-2.39.5
-

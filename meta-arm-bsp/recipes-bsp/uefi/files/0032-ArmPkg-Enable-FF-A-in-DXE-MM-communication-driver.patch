@@ -1,7 +1,7 @@
-From 0abfea60b1357da7d0a16de7ab8d4fc9da2e0c45 Mon Sep 17 00:00:00 2001
+From 8862e7f10fee5579a6dced6cce7d251b69f3fdd2 Mon Sep 17 00:00:00 2001
 From: Achin Gupta <achin.gupta@arm.com>
 Date: Sat, 6 Nov 2021 05:21:15 +0000
-Subject: [PATCH 32/43] ArmPkg: Enable FF-A in DXE MM communication driver
+Subject: [PATCH] ArmPkg: Enable FF-A in DXE MM communication driver
 
 Signed-off-by: Achin Gupta <achin.gupta@arm.com>
 Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
@@ -37,6 +37,3 @@ index c15b1a7a86ae..c022c9538852 100644
 +
  [Depex]
    gEfiCpuArchProtocolGuid
--- 
-2.39.5
-

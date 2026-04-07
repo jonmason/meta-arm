@@ -1,7 +1,7 @@
-From e79dc9cc5c620c2a8db487a32d98f8565e4e9dd2 Mon Sep 17 00:00:00 2001
+From bd4994fde99256878e5ef780781b6e2f344c7de8 Mon Sep 17 00:00:00 2001
 From: Achin Gupta <achin.gupta@arm.com>
 Date: Sat, 6 Nov 2021 05:14:21 +0000
-Subject: [PATCH 25/43] ArmPkg/MmCommunicationDxe: Introduce FF-A version check
+Subject: [PATCH] ArmPkg/MmCommunicationDxe: Introduce FF-A version check
 
 This patch adds support for querying whether FF-A v1.1 is supported by the FF-A
 impplementation.
@@ -85,6 +85,3 @@ index 05b6de73ff34..c15b1a7a86ae 100644
  [LibraryClasses]
    ArmLib
    ArmSmcLib
--- 
-2.39.5
-

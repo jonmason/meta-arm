@@ -1,8 +1,7 @@
-From 29cc3e6c345cb9dc83c955777d53b89ceb6b41d6 Mon Sep 17 00:00:00 2001
+From 31d283d1b32b62512b8463afe62cb38e5bc80c14 Mon Sep 17 00:00:00 2001
 From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
 Date: Fri, 5 Jun 2020 11:57:36 +0530
-Subject: [PATCH 02/43] MdeModulePkg: Allow dynamic generation of HEST ACPI
- table
+Subject: [PATCH] MdeModulePkg: Allow dynamic generation of HEST ACPI table
 
 Introduce the HEST table generation protocol that allows platforms to
 build the table with multiple error source descriptors and install the
@@ -534,6 +533,3 @@ index 000000000000..ea368e5ea4a8
 +
 +[Depex]
 +  TRUE
--- 
-2.39.5
-

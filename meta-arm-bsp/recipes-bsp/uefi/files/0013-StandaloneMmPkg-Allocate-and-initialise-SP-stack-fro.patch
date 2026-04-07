@@ -1,7 +1,7 @@
-From 55dcf37f8f5107e92211c46e15137aa8ad6a86cb Mon Sep 17 00:00:00 2001
+From 1478c42d666d31b17b9fc249529d07ec922049ae Mon Sep 17 00:00:00 2001
 From: Achin Gupta <achin.gupta@arm.com>
 Date: Mon, 1 Nov 2021 13:59:53 +0000
-Subject: [PATCH 13/43] StandaloneMmPkg: Allocate and initialise SP stack from
+Subject: [PATCH] StandaloneMmPkg: Allocate and initialise SP stack from
  internal memory
 
 This patch removes the dependency on the SPM to allocate and initialise stack
@@ -118,6 +118,3 @@ index 9928183188fe..6cc181ef1c9e 100644
  
  [Sources.X64]
    X64/StandaloneMmCoreEntryPoint.c
--- 
-2.39.5
-

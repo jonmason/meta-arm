@@ -1,7 +1,7 @@
-From 216b835fa2de24d09c72987505bb76bc82c76bd3 Mon Sep 17 00:00:00 2001
+From 5395ce57de575e3316ded1c170df8c666743bdf3 Mon Sep 17 00:00:00 2001
 From: Olivier Deprez <olivier.deprez@arm.com>
 Date: Mon, 6 Dec 2021 15:16:29 +0100
-Subject: [PATCH 35/43] Introduce ArmPlatformPkg/ArmFfaConsoleLib
+Subject: [PATCH] Introduce ArmPlatformPkg/ArmFfaConsoleLib
 
 In context of running the StandaloneMm payload as a S-EL0 SP on
 top Hafnium (VHE enabled):
@@ -236,6 +236,3 @@ index 000000000000..39067147d358
 +[Packages]
 +  MdePkg/MdePkg.dec
 +  ArmPkg/ArmPkg.dec
--- 
-2.39.5
-

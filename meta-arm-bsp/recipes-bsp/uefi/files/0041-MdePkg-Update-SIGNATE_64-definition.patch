@@ -1,7 +1,7 @@
-From 2773b926d0049c3f3dc38596dd2fbf4cd991bde5 Mon Sep 17 00:00:00 2001
+From dda9d23ef89101abe41454745798653c52f3d09c Mon Sep 17 00:00:00 2001
 From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
 Date: Fri, 27 Sep 2024 18:05:04 +0530
-Subject: [PATCH 41/43] MdePkg: Update SIGNATE_64 definition
+Subject: [PATCH] MdePkg: Update SIGNATE_64 definition
 
 The SIGNATURE_64 macro definition has error update it.
 
@@ -25,10 +25,10 @@ index acf179af23e2..131ec747b072 100644
  
  //
 diff --git a/MdePkg/Include/Base.h b/MdePkg/Include/Base.h
-index 363e0fea40fa..61926c7c9e63 100644
+index a6fb59205e90..45ad2252311a 100644
 --- a/MdePkg/Include/Base.h
 +++ b/MdePkg/Include/Base.h
-@@ -1329,7 +1329,7 @@ typedef UINTN RETURN_STATUS;
+@@ -1331,7 +1331,7 @@ typedef UINTN RETURN_STATUS;
  
  **/
  #define SIGNATURE_64(A, B, C, D, E, F, G, H) \
@@ -37,6 +37,3 @@ index 363e0fea40fa..61926c7c9e63 100644
  
  #if defined (_MSC_EXTENSIONS) && !defined (__INTEL_COMPILER) && !defined (MDE_CPU_EBC)
  void *
--- 
-2.39.5
-

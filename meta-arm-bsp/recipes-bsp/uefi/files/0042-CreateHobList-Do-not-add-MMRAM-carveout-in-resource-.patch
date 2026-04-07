@@ -1,7 +1,7 @@
-From 38f25e4465904c6b77ceeb63d752af8c97f3a4a7 Mon Sep 17 00:00:00 2001
+From 28d5573ad348eb0e6534a3ad837d558fb89e17c2 Mon Sep 17 00:00:00 2001
 From: Nishant Sharma <nishant.sharma@arm.com>
 Date: Mon, 25 Nov 2024 21:13:58 +0000
-Subject: [PATCH 42/43] CreateHobList: Do not add MMRAM carveout in resource
+Subject: [PATCH] CreateHobList: Do not add MMRAM carveout in resource
  descriptor HOB
 
 Secure partition memory region is part of the MMRAM range.Resouce
@@ -45,6 +45,3 @@ index 8ab741ecd500..155dc606cf7f 100644
    // Create an MP information hob from cpu information passed in the boot
    // information structure
    CreateMpInformationHobFromCpuInfo(StmmBootInfo->CpuInfo);
--- 
-2.39.5
-

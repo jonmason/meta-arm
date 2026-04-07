@@ -1,7 +1,7 @@
-From 5660c6522cd18fad71d36f1d77e07a7720ae8682 Mon Sep 17 00:00:00 2001
+From 73f28f91712a52ac765bc50ab2bec1fe88b8962f Mon Sep 17 00:00:00 2001
 From: Nishant Sharma <nishant.sharma@arm.com>
 Date: Mon, 20 Sep 2021 22:17:29 +0100
-Subject: [PATCH 10/43] DynamicTablesPkg: add/update resource updater APIs
+Subject: [PATCH] DynamicTablesPkg: add/update resource updater APIs
 
 These APIs are needed by SSDT table generator used to generate PCIe SSDT
 tables.
@@ -352,6 +352,3 @@ index e8eef4048d4b..4a180df22b14 100644
               );
    if (EFI_ERROR (Status)) {
      return Status;
--- 
-2.39.5
-

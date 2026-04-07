@@ -1,8 +1,7 @@
-From b5c472f4e87f4f875a9aa93fbc3def2e25dde817 Mon Sep 17 00:00:00 2001
+From b998e38f62a3973aa017ecbd0fa8d286a1a807e5 Mon Sep 17 00:00:00 2001
 From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
 Date: Tue, 12 Oct 2021 16:39:45 +0530
-Subject: [PATCH 04/43] ArmPlatformPkg: retreive error source descriptors from
- MM
+Subject: [PATCH] ArmPlatformPkg: retreive error source descriptors from MM
 
 Add a driver that retreives error source descriptors from MM and
 populates those into the HEST ACPI table. The error source descriptors
@@ -828,6 +827,3 @@ index 000000000000..5862fa04e14a
 +} HEST_ERROR_SOURCE_DESC_INFO;
 +
 +#endif // HEST_ERROR_SOURCE_DESCRIPTOR_H_
--- 
-2.39.5
-

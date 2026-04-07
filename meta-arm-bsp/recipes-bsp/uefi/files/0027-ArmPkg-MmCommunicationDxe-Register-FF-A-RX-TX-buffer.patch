@@ -1,7 +1,7 @@
-From 7096ad1bd4820db76f2ba4d12a4a747a3355cbbc Mon Sep 17 00:00:00 2001
+From a0fb7a40d8e3d845bb270dd89bb58a673cd2afbc Mon Sep 17 00:00:00 2001
 From: Achin Gupta <achin.gupta@arm.com>
 Date: Sat, 6 Nov 2021 05:57:06 +0000
-Subject: [PATCH 27/43] ArmPkg/MmCommunicationDxe: Register FF-A RX/TX buffers
+Subject: [PATCH] ArmPkg/MmCommunicationDxe: Register FF-A RX/TX buffers
 
 This patch statically allocates an FF-A RX/TX buffer pair and registers
 them with the framework. This enables discovery of the StMM SP in a
@@ -74,6 +74,3 @@ index fc62f6cd64e9..1e648dda0479 100644
  #define ARM_SVC_ID_FFA_ID_GET_AARCH32                0x84000069
  #define ARM_SVC_ID_FFA_MSG_SEND_DIRECT_REQ_AARCH32   0x8400006F
  #define ARM_SVC_ID_FFA_MSG_SEND_DIRECT_RESP_AARCH32  0x84000070
--- 
-2.39.5
-

@@ -1,7 +1,7 @@
-From d49c1be20911c639e224d3921b8362abb21324f9 Mon Sep 17 00:00:00 2001
+From 305fd51ef1c752305708b03428b3f645a0788dff Mon Sep 17 00:00:00 2001
 From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
 Date: Wed, 7 Jul 2021 22:49:54 +0530
-Subject: [PATCH 06/43] EmbeddedPkg: Add helpers for HEST table generation
+Subject: [PATCH] EmbeddedPkg: Add helpers for HEST table generation
 
 Add helper macros for the generation of the HEST ACPI table. Macros to
 initialize the HEST GHESv2 Notification Structure and Error Status
@@ -51,6 +51,3 @@ index 29137a4a53df..67c6c2327e2d 100644
  typedef
  BOOLEAN
  (EFIAPI *EFI_LOCATE_ACPI_CHECK)(
--- 
-2.39.5
-

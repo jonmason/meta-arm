@@ -1,8 +1,8 @@
-From 2e3a03f94d07f399f9ec5b093c0a6d16f111823c Mon Sep 17 00:00:00 2001
+From f8604395ef528962d9be23d50bbf63453988354c Mon Sep 17 00:00:00 2001
 From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
 Date: Mon, 12 Sep 2022 19:37:00 +0530
-Subject: [PATCH 09/43] MdePkg/IndustryStandard: add missing header to Arm
- Error Source Table
+Subject: [PATCH] MdePkg/IndustryStandard: add missing header to Arm Error
+ Source Table
 
 Include the Acpi.h header file to Arm Error Source Table definition.
 
@@ -34,6 +34,3 @@ index edc253733dcb..18c41d308621 100644
  ///
  /// "AEST" Arm Error Source Table
  ///
--- 
-2.39.5
-

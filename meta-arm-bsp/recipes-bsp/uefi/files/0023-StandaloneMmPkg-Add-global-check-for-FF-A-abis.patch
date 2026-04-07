@@ -1,7 +1,7 @@
-From cb62d3f26bbfc6f443040cfd2502b79daeedfd29 Mon Sep 17 00:00:00 2001
+From 543fcfc3e7fb132511ab01ef9a069ab4cc4e823d Mon Sep 17 00:00:00 2001
 From: Achin Gupta <achin.gupta@arm.com>
 Date: Tue, 2 Nov 2021 11:21:16 +0000
-Subject: [PATCH 23/43] StandaloneMmPkg: Add global check for FF-A abis
+Subject: [PATCH] StandaloneMmPkg: Add global check for FF-A abis
 
 This patch copies the value of the corresponding stack variable to a global
 variable so that it can be used to determine whether FF-A v1.1 or earlier ABIs
@@ -55,6 +55,3 @@ index f1f263e5ff00..7e8d98af4ad4 100644
    //
    // Create Hoblist based upon boot information passed by privileged software
    //
--- 
-2.39.5
-

@@ -1,7 +1,7 @@
-From 65bac5aa8907e6c79008b625bc3e67f8ee5f6232 Mon Sep 17 00:00:00 2001
+From c1e01f46619a57977ca942b0f39617c03cff12fa Mon Sep 17 00:00:00 2001
 From: gaurav02 <gautham.ravichandran@arm.com>
 Date: Fri, 16 Aug 2024 17:30:54 +0100
-Subject: [PATCH 39/43] Revert "BaseTools: Move GccLto Files to BaseTools"
+Subject: [PATCH] Revert "BaseTools: Move GccLto Files to BaseTools"
 
 This reverts commit 990bc4e562772521d771f3d0fe3e3d107ba3752f.
 ---
@@ -120,6 +120,3 @@ index f22460c81e7e..361a2b8e82e4 100755
  
  ##################
  # CLANGDWARF RISCV64 definitions
--- 
-2.39.5
-

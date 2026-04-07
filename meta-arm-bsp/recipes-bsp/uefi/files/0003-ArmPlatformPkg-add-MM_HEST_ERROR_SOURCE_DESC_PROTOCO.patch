@@ -1,7 +1,7 @@
-From 4f420060b6ea30b1fea030196d3d29ae1ac0dcab Mon Sep 17 00:00:00 2001
+From 8d5ed536b4906a36b01c1af5b9c3952bd3c5774a Mon Sep 17 00:00:00 2001
 From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
 Date: Fri, 5 Jun 2020 16:08:41 +0530
-Subject: [PATCH 03/43] ArmPlatformPkg: add MM_HEST_ERROR_SOURCE_DESC_PROTOCOL
+Subject: [PATCH] ArmPlatformPkg: add MM_HEST_ERROR_SOURCE_DESC_PROTOCOL
  protocol
 
 Add the protocol definition of the MM_HEST_ERROR_SOURCE_DESC_PROTOCOL
@@ -103,6 +103,3 @@ index 000000000000..31be2a856bba
 +extern EFI_GUID gMmHestErrorSourceDescProtocolGuid;
 +
 +#endif // MM_HEST_ERROR_SOURCE_DESC_PROTOCOL_H_
--- 
-2.39.5
-

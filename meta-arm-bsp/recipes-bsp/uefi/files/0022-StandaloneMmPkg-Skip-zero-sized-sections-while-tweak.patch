@@ -1,8 +1,8 @@
-From a30a539c912370dbc7b684c1663ac27be5f7714e Mon Sep 17 00:00:00 2001
+From a71c69408fe9939b949ffd0ceb4918141fa625f9 Mon Sep 17 00:00:00 2001
 From: Achin Gupta <achin.gupta@arm.com>
 Date: Tue, 2 Nov 2021 11:19:24 +0000
-Subject: [PATCH 22/43] StandaloneMmPkg: Skip zero sized sections while
- tweaking page permissions
+Subject: [PATCH] StandaloneMmPkg: Skip zero sized sections while tweaking page
+ permissions
 
 This patch skips zero sized sections in the StMM SP image e.g. .reloc since
 there is no point in attempting to change their permissions.
@@ -39,6 +39,3 @@ index 5c6bd0e1d7d2..3af8882fb6cd 100644
  
      //
      // If the section is marked as XN then remove the X attribute. Furthermore,
--- 
-2.39.5
-

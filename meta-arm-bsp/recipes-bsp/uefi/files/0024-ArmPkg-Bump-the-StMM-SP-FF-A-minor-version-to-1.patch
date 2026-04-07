@@ -1,7 +1,7 @@
-From 30f781ff2fa5b1fccfd618fba377ffd0d9533713 Mon Sep 17 00:00:00 2001
+From 8d9f599b0a1cf800040ef31ab1f3b934057f786a Mon Sep 17 00:00:00 2001
 From: Achin Gupta <achin.gupta@arm.com>
 Date: Tue, 2 Nov 2021 11:22:46 +0000
-Subject: [PATCH 24/43] ArmPkg: Bump the StMM SP FF-A minor version to 1
+Subject: [PATCH] ArmPkg: Bump the StMM SP FF-A minor version to 1
 
 Signed-off-by: Achin Gupta <achin.gupta@arm.com>
 Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
@@ -23,6 +23,3 @@ index f8bdcce1e120..d21b263339ee 100644
  
  #define ARM_FFA_SPM_RET_SUCCESS              0
  #define ARM_FFA_SPM_RET_NOT_SUPPORTED       -1
--- 
-2.39.5
-

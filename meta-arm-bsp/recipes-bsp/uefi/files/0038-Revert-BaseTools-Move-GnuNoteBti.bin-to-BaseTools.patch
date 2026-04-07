@@ -1,7 +1,7 @@
-From a3b552e351d18fac270b495342b0dcbc5c4c6a7d Mon Sep 17 00:00:00 2001
+From 43713dda72d5e7403021e3c026b38c1944cf9415 Mon Sep 17 00:00:00 2001
 From: gaurav02 <gautham.ravichandran@arm.com>
 Date: Fri, 16 Aug 2024 17:26:04 +0100
-Subject: [PATCH 38/43] Revert "BaseTools: Move GnuNoteBti.bin to BaseTools"
+Subject: [PATCH] Revert "BaseTools: Move GnuNoteBti.bin to BaseTools"
 
 This reverts commit da591416ee8fddb1b691d157e3c61bdc7a994b79.
 ---
@@ -27,6 +27,3 @@ index f6bc9736b9dd..f22460c81e7e 100755
  DEFINE GCC_RISCV64_RC_FLAGS        = -I binary -O elf64-littleriscv   -B riscv       --rename-section .data=.hii
  DEFINE GCC_LOONGARCH64_RC_FLAGS    = -I binary -O elf64-loongarch     -B loongarch64 --rename-section .data=.hii
  
--- 
-2.39.5
-

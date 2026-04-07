@@ -1,7 +1,7 @@
-From 6472ebc25c4d6060c36c27027a99e01f9da2e212 Mon Sep 17 00:00:00 2001
+From d41d9bc697416e4cee313ffda28299f9681693c3 Mon Sep 17 00:00:00 2001
 From: Achin Gupta <achin.gupta@arm.com>
 Date: Tue, 2 Nov 2021 10:18:47 +0000
-Subject: [PATCH 17/43] ArmPkg: Add support for FFA_MEM_PERM_GET/SET ABIs
+Subject: [PATCH] ArmPkg: Add support for FFA_MEM_PERM_GET/SET ABIs
 
 This patch uses the FFA_MEM_PERM_GET/SET ABIs to tweak the permissions of a set
 of pages if FF-A v1.1 and above is supported by the SPMC. For FF-A v1.0 the
@@ -190,6 +190,3 @@ index c119cd873934..0ae2a3e03aa5 100644
    } else {
      SvcArgs.Arg0 = ARM_SVC_ID_SP_SET_MEM_ATTRIBUTES;
      SvcArgs.Arg1 = BaseAddress;
--- 
-2.39.5
-
