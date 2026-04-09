@@ -20,7 +20,7 @@ local_conf_header:
     # kernel is in the image, should not be loaded separately
     QB_DEFAULT_KERNEL = "none"
 
-    WKS_FILE = "efi-disk.wks.in"
+    WKS_FILE = "efi-dtb-disk.wks.in"
     KERNEL_IMAGETYPE = "Image"
 
     MACHINE_FEATURES:append = " efi uefi-secureboot uefi-http-boot uefi-capsule-updates"
