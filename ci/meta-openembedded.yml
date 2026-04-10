@@ -3,7 +3,8 @@ header:
 
 repos:
   meta-openembedded:
-    url: https://git.openembedded.org/meta-openembedded
+    url: https://github.com/jonmason/meta-openembedded/
+    refspec: kirkstone-wip2
     layers:
       meta-filesystems:
       meta-networking:
