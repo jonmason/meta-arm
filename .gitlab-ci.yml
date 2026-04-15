@@ -106,7 +106,7 @@ update-repos:
         echo Using existing lockfile.yml
       else
         # Be sure that this is the complete list of layers being fetched
-        kas dump --lock --update ci/qemuarm64.yml:ci/meta-openembedded.yml:ci/clang.yml:ci/meta-virtualization.yml | tee lockfile.yml
+        kas dump --lock --update ci/qemuarm64.yml:ci/meta-openembedded.yml:ci/clang.yml | tee lockfile.yml
       fi
       exit $exit_code
   artifacts:
