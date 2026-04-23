@@ -1,4 +1,3 @@
-import shutil
 import collections
 import pathlib
 import os
@@ -35,6 +34,20 @@ def check_executable(*cmd) -> bool:
         exitcode = 127
 
     return exitcode == 0
+
+
+def screen_is_ready(*, silent: bool = False) -> bool:
+    log_print = (lambda *_args, **_kwargs: None) if silent else logger.error
+
+    if not check_executable("screen", "--version"):
+        log_print("--terminal screen requires screen to be available and runnable, but startup failed.")
+        return False
+
+    if not os.environ.get("STY"):
+        log_print("--terminal screen requires runfvp to be started from a screen session.\n\tEnsure $STY is set in the environment.")
+        return False
+
+    return True
 
 
 def tmux_is_ready(*, silent: bool = False) -> bool:
@@ -126,6 +139,8 @@ class Terminals:
 terminals = Terminals()
 # TODO: option to switch between telnet and netcat
 connect_command = "telnet localhost %port"
+sty = os.environ.get("STY")
+terminals.add_terminal(2, "screen", f'screen -S "{sty}" -X screen -t "{{name}} - %title" -L {connect_command}', screen_is_ready)
 terminals.add_terminal(2, "tmux", f'tmux new-window -n "{{name}}" "{connect_command}"', tmux_is_ready)
 terminals.add_terminal(2, "gnome-terminal", f'gnome-terminal --window --title "{{name}} - %title" --command "{connect_command}"', gterm_is_ready)
 terminals.add_terminal(1, "xterm", f'xterm -title "{{name}} - %title" -e {connect_command}', xterm_is_ready)
