@@ -77,6 +77,11 @@ SRC_URI:append:corstone1000 = " \
     file://0043-plat-cs1k-Create-and-remove-FWU-image-partitions.patch \
     file://0044-plat-cs1k-Derive-host-base-addresses-from-offsets.patch \
     file://0045-plat-cs1k-Drive-NPU-via-external-system-reset-contro.patch \
+    file://0046-lib-gpt-Fix-final-entry-not-being-removed.patch \
+    file://0047-lib-gpt-Replace-warnings-with-errors.patch \
+    file://0048-lib-gpt-Enforce-entry-size-of-128-bytes.patch \
+    file://0049-lib-gpt-Ensure-block-size-complies-with-spec.patch \
+    file://0050-lib-gpt-Expand-table-validation.patch \
     "
 
 SRCREV_tfm-psa-adac:corstone1000 = "f2809ae231be33a1afcd7714f40756c67d846c88"
