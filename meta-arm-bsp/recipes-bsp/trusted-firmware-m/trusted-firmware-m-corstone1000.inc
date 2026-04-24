@@ -88,6 +88,9 @@ SRC_URI:append:corstone1000 = " \
     file://0054-lib-gpt-Consecutively-erase-blocks-when-moving-parti.patch \
     file://0055-lib-gpt-Clarify-API-operation.patch \
     file://0056-lib-gpt-Add-metadata-only-API-operations.patch \
+    file://0057-plat-cs1k-Add-flash-erase-protection.patch \
+    file://0058-plat-cs1k-Remove-unused-FWU-partitions-upon-version-.patch \
+    file://0059-plat-cs1k-Duplicate-old-images-in-FWU.patch \
     "
 
 SRCREV_tfm-psa-adac:corstone1000 = "f2809ae231be33a1afcd7714f40756c67d846c88"
