@@ -82,6 +82,12 @@ SRC_URI:append:corstone1000 = " \
     file://0048-lib-gpt-Enforce-entry-size-of-128-bytes.patch \
     file://0049-lib-gpt-Ensure-block-size-complies-with-spec.patch \
     file://0050-lib-gpt-Expand-table-validation.patch \
+    file://0051-lib-gpt-Show-intent-of-GUIDs-in-unittests-more-clear.patch \
+    file://0052-lib-gpt-Provide-macro-identifying-free-space.patch \
+    file://0053-lib-gpt-Add-operation-to-duplicate-entries.patch \
+    file://0054-lib-gpt-Consecutively-erase-blocks-when-moving-parti.patch \
+    file://0055-lib-gpt-Clarify-API-operation.patch \
+    file://0056-lib-gpt-Add-metadata-only-API-operations.patch \
     "
 
 SRCREV_tfm-psa-adac:corstone1000 = "f2809ae231be33a1afcd7714f40756c67d846c88"
