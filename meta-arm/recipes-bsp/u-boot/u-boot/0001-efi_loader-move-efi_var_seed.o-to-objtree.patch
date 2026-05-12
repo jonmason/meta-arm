@@ -1,0 +1,35 @@
+From 5eecdad260f13b8a400317ef3d40301e3559a3ff Mon Sep 17 00:00:00 2001
+From: Jon Mason <jon.mason@arm.com>
+Date: Tue, 12 May 2026 10:06:47 -0400
+Subject: [PATCH] efi_loader: move efi_var_seed.o to objtree
+
+With commit bd3f9ee679b4d1456d0d3c261ab76788950e6096
+(kbuild: Bump the build system to 6.1), there is an issue when trying to
+build out of tree, where efi_var_seed.S wants ubootefi.var to be in the
+object tree, but lib/efi_loader/efi_var_seed.o wants ubootefi.var to be
+in the source tree.
+
+If we change efi_var_seed.o to look in the objtree, then it should work
+in both local and out-of-tree.  However, it would require anything
+previously working to put ubootefi.vars to the objtree, but it's broken
+now anyway.
+
+Upstream-Status: Pending
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+---
+ lib/efi_loader/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/lib/efi_loader/Makefile b/lib/efi_loader/Makefile
+index f490081f6542..9c836f6ee237 100644
+--- a/lib/efi_loader/Makefile
++++ b/lib/efi_loader/Makefile
+@@ -74,7 +74,7 @@ obj-$(CONFIG_EFI_ECPT) += efi_conformance.o
+ obj-$(CONFIG_EFI_DEBUG_SUPPORT) += efi_debug_support.o
+ 
+ EFI_VAR_SEED_FILE := $(subst $\",,$(CONFIG_EFI_VAR_SEED_FILE))
+-$(obj)/efi_var_seed.o: $(srctree)/$(EFI_VAR_SEED_FILE)
++$(obj)/efi_var_seed.o: $(objtree)/$(EFI_VAR_SEED_FILE)
+ 
+ ifeq ($(CONFIG_EFI_CAPSULE_AUTHENTICATE),y)
+ capsule_crt_path=($(subst $(quote),,$(CONFIG_EFI_CAPSULE_CRT_FILE)))
