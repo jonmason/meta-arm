@@ -290,6 +290,28 @@ The output binaries run in the Corstone-1000 platform are the following:
  - The External System Processor firmware: ``${WORKSPACE}/build/tmp/deploy/images/corstone1000-${TARGET}/es_flashfw.bin``
  - The internal firmware flash image: ``${WORKSPACE}/build/tmp/deploy/images/corstone1000-${TARGET}/corstone1000-flash-firmware-image-corstone1000-${TARGET}.wic``
 
+Build with SSH
+--------------
+
+The ``meta-arm/kas/corstone1000-${TARGET}.yml`` build produces an image for
+booting from flash.
+
+To build a bootable mass storage OS image with Dropbear SSH enabled, run:
+
+.. code-block:: console
+
+    kas build meta-arm/ci/corstone1000-${TARGET}.yml:meta-arm/kas/corstone1000-ssh.yml
+
+The mass storage OS image can be found at ``${WORKSPACE}/build/tmp/deploy/images/corstone1000-${TARGET}/core-image-minimal-corstone1000-${TARGET}.wic``
+
+.. note::
+
+    For the FVP, the generated ``core-image-minimal-corstone1000-fvp.fvpconf``
+    configures the mass storage OS image using ``board.msd_mmc.p_mmc_file``.
+
+    For the MPS3 platform, write the ``*.wic`` image directly to the mass storage device.
+
+
 .. _flashing-firmware-images:
 
 Flash
