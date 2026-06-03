@@ -11,6 +11,8 @@ LIC_FILES_CHKSUM += "file://docs/license.rst;md5=b2c740efedc159745b9b31f88ff03dd
 SRCBRANCH_MBEDTLS = "mbedtls-3.6"
 SRC_URI_MBEDTLS = "git://github.com/Mbed-TLS/mbedtls;name=mbedtls;protocol=https;destsuffix=${BB_GIT_DEFAULT_DESTSUFFIX}/mbedtls;branch=${SRCBRANCH_MBEDTLS}"
 SRCREV_mbedtls = "c765c831e5c2a0971410692f92f7a81d6ec65ec2"
+# The default value changed in v2.15.0 and later.  Given this is a legacy version, change it here to keep future versions simplier
+TFA_MBEDTLS_DIR = "mbedtls"
 
 LIC_FILES_CHKSUM_MBEDTLS = "file://mbedtls/LICENSE;md5=379d5819937a6c2f1ef1630d341e026d"
 
