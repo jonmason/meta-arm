@@ -1,8 +1,8 @@
 require recipes-bsp/trusted-firmware-a/trusted-firmware-a.inc
 
-# TF-A v2.14.1
+# TF-A v2.14.2
 SRC_URI_TRUSTED_FIRMWARE_A = "gitsm://review.trustedfirmware.org/TF-A/trusted-firmware-a;protocol=https"
-SRCREV_tfa = "e82c7ced9e76aea35b176e608d67dfe5ebe1c569"
+SRCREV_tfa = "aa1793fff49a1b5a6a877c278a0df0a188e2b1f2"
 SRCBRANCH = "lts-v2.14"
 
 LIC_FILES_CHKSUM += "file://docs/license.rst;md5=6ed7bace7b0bc63021c6eba7b524039e"
