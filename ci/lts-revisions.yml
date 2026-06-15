@@ -8,3 +8,4 @@ local_conf_header:
     PREFERRED_VERSION_trusted-firmware-a ?= "2.10.%"
     PREFERRED_VERSION_tf-a-tests ?= "2.10.%"
     PREFERRED_VERSION_trusted-firmware-m ?= "2.1.%"
+    PREFERRED_VERSION_trusted-firmware-m-scripts-native ?= "2.1.%"
