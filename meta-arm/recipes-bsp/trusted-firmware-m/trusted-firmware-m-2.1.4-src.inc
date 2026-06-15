@@ -54,6 +54,8 @@ SRCREV_tfm-psa-adac = "5f5490cebe66ae997f316f83c3fbf1f97deef625"
 
 SRCREV_FORMAT = "tfm_tfm-extras_tfm-tests_cmsis_mbedtls_mcuboot_qcbor_tfm-psa-adac_t-cose"
 
+EXTRA_OECMAKE += "-DMBEDCRYPTO_PATH=${S}/external/mbedtls"
+
 S = "${UNPACKDIR}/tfm"
 
 # Apply patches
