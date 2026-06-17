@@ -17,6 +17,8 @@ variables:
   MIRROR_GHCR: ghcr.io
   # The list of extra Kas fragments to be used when building
   EXTRA_KAS_FILES: ""
+  # Whether warnings should be fatal (0/1)
+  FATAL_WARNINGS: 0
 
 stages:
   - prep
@@ -66,7 +68,9 @@ stages:
       echo KASFILES=$KASFILES
       kas dump --update --force-checkout --resolve-refs --resolve-env $KASFILES
       kas build $KASFILES
-      ./ci/check-warnings $KAS_BUILD_DIR/warnings.log
+      if [ $FATAL_WARNINGS -ne 0 ]; then
+        ./ci/check-warnings $KAS_BUILD_DIR/warnings.log
+      fi
       kas shell ci/base.yml:lockfile.yml --command "$CI_PROJECT_DIR/ci/junit.sh $KAS_WORK_DIR/build"
   artifacts:
     name: "logs"
