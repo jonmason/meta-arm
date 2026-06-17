@@ -9,8 +9,10 @@ variables:
   CPU_REQUEST: ""
   # The default machine tag for the build jobs
   DEFAULT_TAG: ""
-  # The directory to use as the persistent cache (the root for DL_DIR, SSTATE_DIR, etc)
-  CACHE_DIR: $CI_BUILDS_DIR/persist
+  # The directory to use as the persistent cache (the root for DL_DIR,
+  # SSTATE_DIR, etc). The default is the build tree which will not be
+  # persistent, so this should be set in the runner.
+  CACHE_DIR: $CI_PROJECT_DIR
   # The container mirror to use
   MIRROR_GHCR: ghcr.io
   # The list of extra Kas fragments to be used when building
