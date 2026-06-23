@@ -1,4 +1,4 @@
-From 5eecdad260f13b8a400317ef3d40301e3559a3ff Mon Sep 17 00:00:00 2001
+From d8d890fc0128a32cbb04be3c4c14910bf5b5d9d9 Mon Sep 17 00:00:00 2001
 From: Jon Mason <jon.mason@arm.com>
 Date: Tue, 12 May 2026 10:06:47 -0400
 Subject: [PATCH] efi_loader: move efi_var_seed.o to objtree
@@ -14,22 +14,22 @@ in both local and out-of-tree.  However, it would require anything
 previously working to put ubootefi.vars to the objtree, but it's broken
 now anyway.
 
-Upstream-Status: Submitted [https://lists.denx.de/pipermail/u-boot/2026-June/622488.html]
+Upstream-Status: Pending
 Signed-off-by: Jon Mason <jon.mason@arm.com>
 ---
  lib/efi_loader/Makefile | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/lib/efi_loader/Makefile b/lib/efi_loader/Makefile
-index f490081f6542..9c836f6ee237 100644
+index d73ad43951b1..4feaa775a37c 100644
 --- a/lib/efi_loader/Makefile
 +++ b/lib/efi_loader/Makefile
-@@ -74,7 +74,7 @@ obj-$(CONFIG_EFI_ECPT) += efi_conformance.o
+@@ -75,7 +75,7 @@ obj-$(CONFIG_EFI_ECPT) += efi_conformance.o
  obj-$(CONFIG_EFI_DEBUG_SUPPORT) += efi_debug_support.o
  
  EFI_VAR_SEED_FILE := $(subst $\",,$(CONFIG_EFI_VAR_SEED_FILE))
 -$(obj)/efi_var_seed.o: $(srctree)/$(EFI_VAR_SEED_FILE)
-+$(obj)/efi_var_seed.o: $(objtree)/$(EFI_VAR_SEED_FILE)
++$(obj)/efi_var_seed.o: $(srctree)/lib/efi_loader/$(EFI_VAR_SEED_FILE)
  
  ifeq ($(CONFIG_EFI_CAPSULE_AUTHENTICATE),y)
  capsule_crt_path=($(subst $(quote),,$(CONFIG_EFI_CAPSULE_CRT_FILE)))
