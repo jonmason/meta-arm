@@ -2,7 +2,8 @@
 # long-description: Creates a partitioned EFI disk image that the user
 # can directly dd to boot media.
 
-part /boot --source bootimg-efi --sourceparams="loader=${EFI_PROVIDER},dtb=${KERNEL_DTB_NAME}" --label boot --active --align 1024 --use-uuid
+#part /boot --source bootimg-efi --sourceparams="loader=${EFI_PROVIDER},dtb=${KERNEL_DTB_NAME}" --label boot --active --align 1024 --use-uuid
+part /boot --source=bootimg-efi --fstype=vfat --label boot --align 1024 --use-uuid --active --sourceparams="loader=${EFI_PROVIDER},dtb=${KERNEL_DTB_NAME}"
 
 part / --source rootfs --fstype=ext4 --label root --align 1024 --use-uuid
 
