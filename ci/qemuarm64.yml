@@ -6,3 +6,7 @@ header:
     - ci/base.yml
 
 machine: qemuarm64
+
+target:
+  - core-image-minimal
+  - trusted-firmware-rmm
