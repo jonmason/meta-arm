@@ -44,3 +44,7 @@ do_deploy() {
 }
 
 addtask deploy after do_install
+
+# FIXME - working around TMPDIR issue
+INSANE_SKIP:${PN} += "buildpaths"
+INSANE_SKIP:${PN}-dbg += "buildpaths"
