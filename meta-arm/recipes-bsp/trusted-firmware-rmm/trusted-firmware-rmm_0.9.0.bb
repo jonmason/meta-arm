@@ -3,7 +3,7 @@ DESCRIPTION = "RMM Firmware for Arm reference platforms"
 LICENSE = "BSD-3-Clause AND MIT"
 
 SRC_URI = "gitsm://git.trustedfirmware.org/TF-RMM/tf-rmm.git;protocol=https;branch=main"
-SRCREV = "7f6bc132caef3596fbb88d3a419c2a3cb499cde2"
+SRCREV = "dd9ec489c09956fa748c847966397fa0aba6b0b2"
 UPSTREAM_CHECK_GITTAGREGEX = "^tf-rmm-v(?P<pver>\d+(\.\d+)+)$"
 
 LIC_FILES_CHKSUM += "file://docs/about/license.rst;md5=1375c7c641558198ffe401c2a799d79b"
