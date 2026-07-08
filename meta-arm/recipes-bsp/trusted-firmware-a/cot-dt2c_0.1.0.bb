@@ -10,6 +10,10 @@ LIC_FILES_CHKSUM = "file://docs/license.rst;md5=6ed7bace7b0bc63021c6eba7b524039e
 SRCREV = "da738d5eae93af342fdc4995dd3c05acb4c9d757"
 SRCBRANCH = "master"
 
+# The tools use the TF-A source when performing a version check, not
+# the version of this within the source.  So, disable checking
+UPSTREAM_VERSION_UNKNOWN = "1"
+
 inherit python_poetry_core
 
 BBCLASSEXTEND = "native nativesdk"
