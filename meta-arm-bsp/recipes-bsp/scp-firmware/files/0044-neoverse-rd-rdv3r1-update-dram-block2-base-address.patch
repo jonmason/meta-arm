@@ -1,0 +1,30 @@
+From e19152ca54349b7f717ab0c7912a6676c7c0cd21 Mon Sep 17 00:00:00 2001
+From: Lokesh B V <Lokesh.BV@Arm.com>
+Date: Thu, 19 Dec 2024 11:49:00 +0530
+Subject: [PATCH] neoverse-rd/rdv3r1: update dram block2 base address
+
+With a recent design change, the base address for the 2nd DRAM block
+has been updated in from 0x20000000000 to 0x20080000000
+
+Signed-off-by: Lokesh B V <Lokesh.BV@Arm.com>
+Change-Id: Idcf0d22eda2b6fc9dacccaa23c495e9849bb3062
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ product/neoverse-rd/rdv3r1/scp_ramfw/config_cmn_cyprus.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/product/neoverse-rd/rdv3r1/scp_ramfw/config_cmn_cyprus.c b/product/neoverse-rd/rdv3r1/scp_ramfw/config_cmn_cyprus.c
+index 472fcaf17dda..10ee534c14a8 100644
+--- a/product/neoverse-rd/rdv3r1/scp_ramfw/config_cmn_cyprus.c
++++ b/product/neoverse-rd/rdv3r1/scp_ramfw/config_cmn_cyprus.c
+@@ -475,7 +475,7 @@ static const struct mod_cmn_cyprus_mem_region_map mmap[] = {
+ #define CHIP_PCIE_MMIOH_BASE(chip_id) (PCI_MMIOH_BASE + (PCI_MMIOH_SIZE * (chip_id)))
+ 
+ /* Second DRAM block base */
+-#define DRAM2_BASE UINT64_C(0x20000000000)
++#define DRAM2_BASE UINT64_C(0x20080000000)
+ /* Second DRAM block size (1 TiB) */
+ #define DRAM2_SIZE (UINT64_C(1) << 40)
+ /* Second DRAM block base for a chip */

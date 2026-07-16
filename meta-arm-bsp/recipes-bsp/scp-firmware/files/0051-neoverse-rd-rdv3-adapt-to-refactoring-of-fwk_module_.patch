@@ -1,0 +1,42 @@
+From e3a4a8e21a535ad20feaf10d3ce3119dcbdd78df Mon Sep 17 00:00:00 2001
+From: Thomas Abraham <thomas.abraham@arm.com>
+Date: Mon, 16 Jun 2025 23:53:01 +0100
+Subject: [PATCH] neoverse-rd/rdv3: adapt to refactoring of
+ fwk_module_get_element_count
+
+The signature of fwk_module_get_element_count has been refactored. Adapt the
+usage of this function accordingly.
+
+Signed-off-by: Thomas Abraham <thomas.abraham@arm.com>
+Change-Id: If8363fa65c52ba681d199e4df5237b1a437ad270
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../rdv3/module/smcf_client/src/mod_smcf_client.c           | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/product/neoverse-rd/rdv3/module/smcf_client/src/mod_smcf_client.c b/product/neoverse-rd/rdv3/module/smcf_client/src/mod_smcf_client.c
+index 0330e777c273..2036d38e8a8f 100644
+--- a/product/neoverse-rd/rdv3/module/smcf_client/src/mod_smcf_client.c
++++ b/product/neoverse-rd/rdv3/module/smcf_client/src/mod_smcf_client.c
+@@ -42,7 +42,7 @@ static struct smcf_control_api *control_api;
+ static struct smcf_monitor_group_interrupt_api *interrupt_api;
+ static struct amu_api *amu_data_api;
+ static struct mod_transport_firmware_api *transport_api;
+-static uint32_t amu_sensor_count = 0;
++static size_t amu_sensor_count = 0;
+ 
+ fwk_id_t alarm_id = FWK_ID_SUB_ELEMENT_INIT(
+     FWK_MODULE_IDX_TIMER,
+@@ -56,8 +56,8 @@ static int smcf_client_init(
+ {
+     core_count = platform_get_core_count();
+     /* one sensor and one amu per core */
+-    amu_sensor_count =
+-        fwk_module_get_element_count(FWK_ID_MODULE(FWK_MODULE_IDX_SMCF));
++    fwk_module_get_element_count(FWK_ID_MODULE(FWK_MODULE_IDX_SMCF),
++        &amu_sensor_count);
+ 
+     return FWK_SUCCESS;
+ }

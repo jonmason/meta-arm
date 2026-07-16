@@ -1,0 +1,173 @@
+From e0412d01c45ce254fa7b20e89d411365aee67492 Mon Sep 17 00:00:00 2001
+From: Manoj Kumar <manojkumar.prabakaran@arm.com>
+Date: Sat, 6 Jan 2024 11:24:37 +0530
+Subject: [PATCH] neoverse-rd/rdv3 : add support for SMCF configuration
+
+Add config_smcf.c file for SMCF module for configuring all the MGIs
+including the AMUs and sensors  in the SMCF. Used the smcf utility
+get_next_smcf_ram_offset to configure for all the MGI offsets.
+
+Signed-off-by: Manoj Kumar Prabakaran <manojkumar.prabakaran@arm.com>
+Change-Id: I6e3dd758374f08871f87ae896f3cb62e3689ea94
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../neoverse-rd/rdv3/scp_ramfw/CMakeLists.txt |   4 +-
+ .../neoverse-rd/rdv3/scp_ramfw/Firmware.cmake |   1 +
+ .../neoverse-rd/rdv3/scp_ramfw/config_smcf.c  | 120 ++++++++++++++++++
+ 3 files changed, 123 insertions(+), 2 deletions(-)
+ create mode 100644 product/neoverse-rd/rdv3/scp_ramfw/config_smcf.c
+
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/CMakeLists.txt b/product/neoverse-rd/rdv3/scp_ramfw/CMakeLists.txt
+index 1a0d011cb623..019b7a730df7 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/CMakeLists.txt
++++ b/product/neoverse-rd/rdv3/scp_ramfw/CMakeLists.txt
+@@ -64,10 +64,10 @@ target_sources(
+             "${CMAKE_CURRENT_SOURCE_DIR}/config_pl011.c"
+             "${CMAKE_CURRENT_SOURCE_DIR}/config_scp_platform.c"
+             "${CMAKE_CURRENT_SOURCE_DIR}/config_sid.c"
+-            "${CMAKE_CURRENT_SOURCE_DIR}/config_sid.c"
+             "${CMAKE_CURRENT_SOURCE_DIR}/config_io_block.c"
+             "${CMAKE_CURRENT_SOURCE_DIR}/config_noc_s3.c"
+-            "${CMAKE_CURRENT_SOURCE_DIR}/config_pcie_setup.c")
++            "${CMAKE_CURRENT_SOURCE_DIR}/config_pcie_setup.c"
++	    "${CMAKE_CURRENT_SOURCE_DIR}/config_smcf.c")
+ 
+ #
+ # Some of our firmware includes require CMSIS.
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake b/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake
+index e71772e267b3..c585810e6158 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake
++++ b/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake
+@@ -71,3 +71,4 @@ list(APPEND SCP_MODULES "io-block")
+ list(APPEND SCP_MODULES "pcie_discovery")
+ list(APPEND SCP_MODULES "pcie-setup")
+ list(APPEND SCP_MODULES "scp-platform")
++list(APPEND SCP_MODULES "smcf")
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/config_smcf.c b/product/neoverse-rd/rdv3/scp_ramfw/config_smcf.c
+new file mode 100644
+index 000000000000..da7793f3b465
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/scp_ramfw/config_smcf.c
+@@ -0,0 +1,120 @@
++/*
++ * Arm SCP/MCP Software
++ * Copyright (c) 2023, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include "platform_core.h"
++#include "scp_fw_mmap.h"
++#include "smcf_utils.h"
++
++#include <mod_smcf.h>
++
++#include <fwk_log.h>
++#include <fwk_mm.h>
++#include <fwk_module.h>
++#include <fwk_module_idx.h>
++
++#include <stdio.h>
++
++#define SMCF_MGI_NAME_SIZE        UINT8_C(16)
++#define SMCF_NUM_CORE_TEMP_SENSOR UINT32_C(1)
++#define SMCF_NUM_CORE_AMU         UINT32_C(1)
++#define SMCF_TAG_LENGTH           UINT32_C(64)
++#define SMCF_LCP_COMBINED_INT     UINT32_C(63)
++
++#define LCP_PERIPHERALS_OFFSET        UINT32_C(0x60000000)
++#define SMCF_MGI_REG_SPACE            UINT32_C(0X00200000)
++#define SMCF_AMU_OFFSET               UINT32_C(0x000D0000)
++#define SMCF_TEMP_SENSOR_OFFSET       UINT32_C(0x000D1000)
++#define MGI_WR_SMCF_RAM_START_ADDRESS UINT32_C(0x70000000)
++#define SMCF_READ_RAM_START_ADDRESS   UINT32_C(0x51000000)
++
++/*
++ * MGI_COUNTER_SIZE: the current size of counter in bytes
++ */
++#define MGI_COUNTER_SIZE UINT32_C(8)
++/*
++ * MGI_NUMBER_OF_COUNTER: the current number of counters
++ */
++#define MGI_NUMBER_OF_COUNTER UINT32_C(7)
++/*
++ * MGI_DEAD_PADDING: spacing between Archi and Aux counters
++ */
++#define MGI_DEAD_PADDING UINT32_C(224)
++
++#define MGI_AMU_DATA_SIZE \
++    ((MGI_COUNTER_SIZE * MGI_NUMBER_OF_COUNTER) + MGI_DEAD_PADDING)
++#define MGI_SENSOR_DATA_SIZE UINT32_C(4)
++
++/*
++ * SMCF Context module configuration
++ */
++static void smcf_data_format_config(
++    struct mod_smcf_data_config *const data_config)
++{
++    data_config->header_format = SMCF_SAMPLE_HEADER_FORMAT_GROUP_ID |
++        SMCF_SAMPLE_HEADER_FORMAT_DATA_VALID_BITS |
++        SMCF_SAMPLE_HEADER_FORMAT_COUNT_ID |
++        SMCF_SAMPLE_HEADER_FORMAT_END_ID;
++
++    data_config->data_location = SMCF_DATA_LOCATION_RAM;
++}
++
++static const struct fwk_element *smcf_get_element_table(fwk_id_t module_id)
++{
++    struct mod_smcf_element_config *mgi_config_table, *mgi_config;
++    unsigned int const core_count = platform_get_core_count();
++    struct fwk_element *element_table, *element;
++    unsigned int core_idx;
++    uint32_t smcf_ram_wr_address = MGI_WR_SMCF_RAM_START_ADDRESS;
++    uint32_t smcf_ram_rd_address = SMCF_READ_RAM_START_ADDRESS;
++
++    element_table = fwk_mm_calloc(
++        core_count * SMCF_NUM_CORE_AMU + 1,
++        sizeof(struct fwk_element));
++
++    mgi_config_table = fwk_mm_calloc(
++            core_count * SMCF_NUM_CORE_AMU + 1,
++        sizeof(struct mod_smcf_element_config));
++
++    /* AMU MGI Configuration */
++    for (core_idx = 0; core_idx < core_count; core_idx++) {
++        element = &element_table[core_idx];
++        mgi_config = &mgi_config_table[core_idx];
++
++        element->name = fwk_mm_alloc(SMCF_MGI_NAME_SIZE, 1);
++        snprintf(
++            (char *)element->name, SMCF_MGI_NAME_SIZE, "MGI_AMU_%u", core_idx);
++        element->sub_element_count = SMCF_NUM_CORE_TEMP_SENSOR;
++        element->data = mgi_config;
++        mgi_config->reg_base = LCP_PERIPHERALS_OFFSET + SMCF_AMU_OFFSET +
++            (core_idx * SMCF_MGI_REG_SPACE);
++        mgi_config->sample_type = SMCF_SAMPLE_TYPE_TRIGGER_INPUT;
++        mgi_config->irq = SMCF_LCP_COMBINED_INT;
++
++        smcf_data_format_config(&mgi_config->data_config);
++
++        mgi_config->data_config.write_addr = (uint64_t)(smcf_ram_wr_address);
++        mgi_config->data_config.read_addr = (uint32_t *)(smcf_ram_rd_address);
++
++        smcf_ram_wr_address = get_next_smcf_ram_offset(
++            smcf_ram_wr_address,
++            mgi_config->data_config.header_format,
++            MGI_AMU_DATA_SIZE,
++            SMCF_TAG_LENGTH);
++
++        smcf_ram_rd_address = get_next_smcf_ram_offset(
++            smcf_ram_rd_address,
++            mgi_config->data_config.header_format,
++            MGI_AMU_DATA_SIZE,
++            SMCF_TAG_LENGTH);
++    }
++
++    return element_table;
++}
++
++struct fwk_module_config config_smcf = {
++    .elements = FWK_MODULE_DYNAMIC_ELEMENTS(smcf_get_element_table),
++};

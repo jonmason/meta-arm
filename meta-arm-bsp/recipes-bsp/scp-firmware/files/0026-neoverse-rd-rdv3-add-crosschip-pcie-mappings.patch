@@ -1,0 +1,313 @@
+From 77b6cf27cfb2acbd3c22b497f4603ed90e61754d Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Tue, 16 Apr 2024 00:00:25 +0100
+Subject: [PATCH] neoverse-rd/rdv3: add crosschip pcie mappings
+
+Add mappings in the cmn config for the remote chip PCIe root
+controllers. The address are divided between 4 chips. MMIOL falls in
+chip 0 default memmap range. After division, chip 0 first 64 GB address
+is split and while mapping remote chip to chip 0 mappings.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../rdv3/scp_ramfw/config_cmn_cyprus.c        | 200 +++++++++++++++++-
+ 1 file changed, 192 insertions(+), 8 deletions(-)
+
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/config_cmn_cyprus.c b/product/neoverse-rd/rdv3/scp_ramfw/config_cmn_cyprus.c
+index 878bf5404535..e1cf9bc39d30 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/config_cmn_cyprus.c
++++ b/product/neoverse-rd/rdv3/scp_ramfw/config_cmn_cyprus.c
+@@ -385,6 +385,14 @@ static const struct mod_cmn_cyprus_mem_region_map mmap[MMAP_TABLE_COUNT] = {
+             0, 0, 0 \
+         }
+ 
++#define REMOTE_NH_REGION(region_start, region_size, target) \
++{ \
++            .base = UINT64_C(region_start), \
++            .size = region_size, \
++            .type = MOD_CMN_CYPRUS_MEM_REGION_TYPE_REMOTE_NON_HASHED, \
++            .node_id = target, \
++}
++
+ #    define MESH_END \
+         { \
+             MESH_SIZE_X - 1, MESH_SIZE_Y - 1, 1 \
+@@ -412,6 +420,18 @@ static const struct mod_cmn_cyprus_cml_config \
+                                 DRAM2_SIZE, MESH_START, MESH_END),
+                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_3, CCG_PORT_2),
+             },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x68000000, 0x8000000, NODE_ID_CCG0),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_3, CCG_PORT_2),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x4010000000, 0x10000000, NODE_ID_CCG0),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_3, CCG_PORT_2),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x5040000000, 0x1000000000, NODE_ID_CCG0),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_3, CCG_PORT_2),
++            },
+         },
+         .remote_chip_id = PLATFORM_CHIP_1,
+         .enable_smp_mode = true,
+@@ -433,6 +453,18 @@ static const struct mod_cmn_cyprus_cml_config \
+                                 DRAM2_SIZE, MESH_START, MESH_END),
+                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_6, CCG_PORT_7),
+             },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x70000000, 0x8000000, NODE_ID_CCG6),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_6, CCG_PORT_7),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x4020000000, 0x10000000, NODE_ID_CCG6),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_6, CCG_PORT_7),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x6040000000, 0x1000000000, NODE_ID_CCG6),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_6, CCG_PORT_7),
++            },
+         },
+         .remote_chip_id = PLATFORM_CHIP_2,
+         .enable_smp_mode = true,
+@@ -454,6 +486,18 @@ static const struct mod_cmn_cyprus_cml_config \
+                                 DRAM2_SIZE, MESH_START, MESH_END),
+                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_4, CCG_PORT_5),
+             },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x78000000, 0x8000000, NODE_ID_CCG8),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_4, CCG_PORT_5),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x4030000000, 0x10000000, NODE_ID_CCG8),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_4, CCG_PORT_5),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x7040000000, 0x1000000000, NODE_ID_CCG8),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_4, CCG_PORT_5),
++            },
+         },
+         .remote_chip_id = PLATFORM_CHIP_3,
+         .enable_smp_mode = true,
+@@ -474,10 +518,32 @@ static const struct mod_cmn_cyprus_cml_config \
+         .haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_3, CCG_PORT_2),
+         .remote_mmap_table = {
+             {
+-               .region_mmap = REMOTE_HASHED_REGION(REMOTE_CHIP_ADDR(0), \
+-                                MULTICHIP_ADDR_OFFSET, DRAM2_CHIP_ADDR(0), \
+-                                DRAM2_SIZE, MESH_START, MESH_END),
+-               .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_0, CCG_PORT_1),
++                .region_mmap = REMOTE_HASHED_REGION(0x0, 0x40000000, 0x40000000, 0x20000000, MESH_START, MESH_END),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_0, CCG_PORT_1),
++            },
++            {
++                .region_mmap = REMOTE_HASHED_REGION(0x80000000, 0x100000000, 0x180000000, 0x800000000, MESH_START, MESH_END),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_0, CCG_PORT_1),
++            },
++            {
++                .region_mmap = REMOTE_HASHED_REGION(0x980000000, 0x400000000, 0xd80000000, 0x200000000, MESH_START, MESH_END),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_0, CCG_PORT_1),
++            },
++            {
++                .region_mmap = REMOTE_HASHED_REGION(0xf80000000, 0x80000000, 0x8080000000, 0x100000000000, MESH_START, MESH_END),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_0, CCG_PORT_1),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x60000000, 0x8000000, NODE_ID_CCG3),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_0, CCG_PORT_1),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x4000000000, 0x10000000, NODE_ID_CCG3),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_0, CCG_PORT_1),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x4040000000, 0x1000000000, NODE_ID_CCG3),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_0, CCG_PORT_1),
+             },
+         },
+         .remote_chip_id = PLATFORM_CHIP_0,
+@@ -500,6 +566,18 @@ static const struct mod_cmn_cyprus_cml_config \
+                                 DRAM2_SIZE, MESH_START, MESH_END),
+                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_8, CCG_PORT_9),
+             },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x70000000, 0x8000000, NODE_ID_CCG4),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_8, CCG_PORT_9),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x4020000000, 0x10000000, NODE_ID_CCG4),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_8, CCG_PORT_9),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x6040000000, 0x1000000000, NODE_ID_CCG4),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_8, CCG_PORT_9),
++            },
+         },
+         .remote_chip_id = PLATFORM_CHIP_2,
+         .enable_smp_mode = true,
+@@ -521,6 +599,18 @@ static const struct mod_cmn_cyprus_cml_config \
+                                 DRAM2_SIZE, MESH_START, MESH_END),
+                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_6, CCG_PORT_7),
+             },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x78000000, 0x8000000, NODE_ID_CCG6),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_6, CCG_PORT_7),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x4030000000, 0x10000000, NODE_ID_CCG6),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_6, CCG_PORT_7),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x7040000000, 0x1000000000, NODE_ID_CCG6),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_6, CCG_PORT_7),
++            },
+         },
+         .remote_chip_id = PLATFORM_CHIP_3,
+         .enable_smp_mode = true,
+@@ -541,10 +631,32 @@ static const struct mod_cmn_cyprus_cml_config \
+         .haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_6, CCG_PORT_7),
+         .remote_mmap_table = {
+             {
+-               .region_mmap = REMOTE_HASHED_REGION(REMOTE_CHIP_ADDR(0), \
+-                                MULTICHIP_ADDR_OFFSET, DRAM2_CHIP_ADDR(0), \
+-                                DRAM2_SIZE, MESH_START, MESH_END),
+-               .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_6, CCG_PORT_7),
++                .region_mmap = REMOTE_HASHED_REGION(0x0, 0x40000000, 0x40000000, 0x20000000, MESH_START, MESH_END),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_6, CCG_PORT_7),
++            },
++            {
++                .region_mmap = REMOTE_HASHED_REGION(0x80000000, 0x100000000, 0x180000000, 0x800000000, MESH_START, MESH_END),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_6, CCG_PORT_7),
++            },
++            {
++                .region_mmap = REMOTE_HASHED_REGION(0x980000000, 0x400000000, 0xd80000000, 0x200000000, MESH_START, MESH_END),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_6, CCG_PORT_7),
++            },
++            {
++                .region_mmap = REMOTE_HASHED_REGION(0xf80000000, 0x80000000, 0x8080000000, 0x100000000000, MESH_START, MESH_END),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_6, CCG_PORT_7),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x60000000, 0x8000000, NODE_ID_CCG6),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_6, CCG_PORT_7),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x4000000000, 0x10000000, NODE_ID_CCG6),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_6, CCG_PORT_7),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x4040000000, 0x1000000000, NODE_ID_CCG6),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_6, CCG_PORT_7),
+             },
+         },
+         .remote_chip_id = PLATFORM_CHIP_0,
+@@ -567,6 +679,18 @@ static const struct mod_cmn_cyprus_cml_config \
+                                 DRAM2_SIZE, MESH_START, MESH_END),
+                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_4, CCG_PORT_5),
+             },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x68000000, 0x8000000, NODE_ID_CCG8),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_4, CCG_PORT_5),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x4010000000, 0x10000000, NODE_ID_CCG8),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_4, CCG_PORT_5),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x5040000000, 0x1000000000, NODE_ID_CCG8),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_4, CCG_PORT_5),
++            },
+         },
+         .remote_chip_id = PLATFORM_CHIP_1,
+         .enable_smp_mode = true,
+@@ -588,6 +712,18 @@ static const struct mod_cmn_cyprus_cml_config \
+                                 DRAM2_SIZE, MESH_START, MESH_END),
+                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_3, CCG_PORT_2),
+             },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x78000000, 0x8000000, NODE_ID_CCG0),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_3, CCG_PORT_2),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x4030000000, 0x10000000, NODE_ID_CCG0),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_3, CCG_PORT_2),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x7040000000, 0x1000000000, NODE_ID_CCG0),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_3, CCG_PORT_2),
++            },
+         },
+         .remote_chip_id = PLATFORM_CHIP_3,
+         .enable_smp_mode = true,
+@@ -613,6 +749,30 @@ static const struct mod_cmn_cyprus_cml_config \
+                                 DRAM2_SIZE, MESH_START, MESH_END),
+                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_8, CCG_PORT_9),
+             },
++            {
++                .region_mmap = REMOTE_HASHED_REGION(0x80000000, 0x100000000, 0x180000000, 0x800000000, MESH_START, MESH_END),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_8, CCG_PORT_9),
++            },
++            {
++                .region_mmap = REMOTE_HASHED_REGION(0x980000000, 0x400000000, 0xd80000000, 0x200000000, MESH_START, MESH_END),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_8, CCG_PORT_9),
++            },
++            {
++                .region_mmap = REMOTE_HASHED_REGION(0xf80000000, 0x80000000, 0x8080000000, 0x100000000000, MESH_START, MESH_END),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_8, CCG_PORT_9),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x60000000, 0x8000000, NODE_ID_CCG4),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_8, CCG_PORT_9),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x4000000000, 0x10000000, NODE_ID_CCG4),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_8, CCG_PORT_9),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x4040000000, 0x1000000000, NODE_ID_CCG4),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_8, CCG_PORT_9),
++            },
+         },
+         .remote_chip_id = PLATFORM_CHIP_0,
+         .enable_smp_mode = true,
+@@ -634,6 +794,18 @@ static const struct mod_cmn_cyprus_cml_config \
+                                 DRAM2_SIZE, MESH_START, MESH_END),
+                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_6, CCG_PORT_7),
+             },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x68000000, 0x8000000, NODE_ID_CCG6),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_6, CCG_PORT_7),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x4010000000, 0x10000000, NODE_ID_CCG6),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_6, CCG_PORT_7),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x5040000000, 0x1000000000, NODE_ID_CCG6),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_6, CCG_PORT_7),
++            },
+         },
+         .remote_chip_id = PLATFORM_CHIP_1,
+         .enable_smp_mode = true,
+@@ -655,6 +827,18 @@ static const struct mod_cmn_cyprus_cml_config \
+                                 DRAM2_SIZE, MESH_START, MESH_END),
+                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_0, CCG_PORT_1),
+             },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x70000000, 0x8000000, NODE_ID_CCG3),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_0, CCG_PORT_1),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x4020000000, 0x10000000, NODE_ID_CCG3),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_0, CCG_PORT_1),
++            },
++            {
++                .region_mmap = REMOTE_NH_REGION(0x6040000000, 0x1000000000, NODE_ID_CCG3),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_0, CCG_PORT_1),
++            },
+         },
+         .remote_chip_id = PLATFORM_CHIP_2,
+         .enable_smp_mode = true,

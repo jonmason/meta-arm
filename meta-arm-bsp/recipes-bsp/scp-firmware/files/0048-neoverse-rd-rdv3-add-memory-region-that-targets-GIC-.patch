@@ -1,0 +1,30 @@
+From 77ac67658cdfca48db73645fa2b4b9732b1e6c2e Mon Sep 17 00:00:00 2001
+From: Jerry Wang <Jerry.Wang4@arm.com>
+Date: Thu, 24 Oct 2024 14:12:43 +0100
+Subject: [PATCH] neoverse-rd/rdv3: add memory region that targets GIC HNI
+
+Add separate IO region for Remote GIC to Local GIC (RGIC2LGIC) memory
+region which targets the HNI node that is connected to GIC. This
+region is used for routing cross chip GIC transactions.
+
+Signed-off-by: Jerry Wang <Jerry.Wang4@arm.com>
+Change-Id: Idd3d97771246cfb6dc29dea49c7a2967da2df7e1
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ product/neoverse-rd/rdv3/scp_ramfw/include/cmn_node_id.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/include/cmn_node_id.h b/product/neoverse-rd/rdv3/scp_ramfw/include/cmn_node_id.h
+index cc446f88a8b8..8b4f55e7155b 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/include/cmn_node_id.h
++++ b/product/neoverse-rd/rdv3/scp_ramfw/include/cmn_node_id.h
+@@ -83,6 +83,7 @@
+ #    define NODE_ID_HNI_GIC 0xEC
+ 
+ #    define NODE_ID_HND 0x12C
++#    define NODE_ID_HNI_GIC  0xEC
+ 
+ #    define NODE_ID_HNT0 0x4
+ #    define NODE_ID_HNT1 0x104
