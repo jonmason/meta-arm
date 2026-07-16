@@ -1,0 +1,28 @@
+From d399a5ce35a05e0377c9cd801eb704783b3d1cce Mon Sep 17 00:00:00 2001
+From: Rakshit Goyal <rakshit.goyal@arm.com>
+Date: Fri, 20 Jun 2025 18:58:18 +0000
+Subject: [PATCH] feat(rdv3): increase BL31 size
+
+Increase BL31 size to accomodate code after rebase
+
+Signed-off-by: Rakshit Goyal <rakshit.goyal@arm.com>
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../arm/board/neoverse_rd/common/include/nrd3/nrd_css_fw_def3.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_fw_def3.h b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_fw_def3.h
+index 850b4d084920..9c23b583ef1c 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_fw_def3.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_fw_def3.h
+@@ -31,7 +31,7 @@
+  * A buffer of ~35KB is added to account for future expansion of the image,
+  * making it a total of 100KB.
+  */
+-#define NRD_CSS_BL31_SIZE		UL(116 * 1024)	/* 116 KB */
++#define NRD_CSS_BL31_SIZE		UL(148 * 1024)	/* 116 KB */
+ 
+ #define NRD_CSS_DRAM1_CARVEOUT_SIZE	UL(0x0C000000)	/* 192MB */
+ 

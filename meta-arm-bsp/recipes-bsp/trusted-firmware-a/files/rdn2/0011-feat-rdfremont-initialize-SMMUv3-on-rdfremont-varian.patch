@@ -1,0 +1,95 @@
+From 5ccb4667555d6560d6c44a50780a87c0a66c485e Mon Sep 17 00:00:00 2001
+From: Rohit Mathew <Rohit.Mathew@arm.com>
+Date: Mon, 18 Dec 2023 21:51:43 +0000
+Subject: [PATCH] feat(rdfremont): initialize SMMUv3 on rdfremont variants
+
+Initialize the SMMUv3 present in the first IO virtualization block on
+RD-Fremont platforms. When Realm Management Extension (FEAT_RME) support
+is enabled, SMMUv3 Granule Protection Table (GPT) is fastened with the
+required GPCCR and GPTBBR system register configuration to allow the
+transactions coming to SMMU go through GPC checks.
+In addition, disable any transactions at boot stage by performing the
+smmuv3_security_init.
+
+Signed-off-by: Vijayenthiran Subramaniam <vijayenthiran.subramaniam@arm.com>
+Signed-off-by: Rohit Mathew <Rohit.Mathew@arm.com>
+Signed-off-by: Vivek Gautam <vivek.gautam@arm.com>
+Change-Id: I51623d90ae1cbdce5692f01d669e866e19b5dc5e
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../neoverse_rd/common/include/nrd3/nrd_css_def3.h  |  4 ++++
+ .../common/include/nrd3/nrd_css_fw_def3.h           |  6 ++++++
+ plat/arm/board/neoverse_rd/common/nrd_plat3.c       |  1 +
+ .../neoverse_rd/platform/rdv3/rdv3_bl31_setup.c     | 13 +++++++++++++
+ 4 files changed, 24 insertions(+)
+
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_def3.h b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_def3.h
+index bd2e682a96bd..5bfdd33ac8f0 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_def3.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_def3.h
+@@ -240,6 +240,10 @@
+ #define NRD_CSS_SMMU_NCI_IO_BASE		ULL(0x280000000)
+ #define NRD_CSS_SMMU_NCI_IO_SIZE		UL(0x60000000)
+ 
++/* IO Virtualization block SMMUv3 */
++#define NRD_CSS_IO_VIRT_SMMUV3_BASE		NRD_CSS_SMMU_NCI_IO_BASE
++#define NRD_CSS_IO_VIRT_SMMUV3_SIZE		UL(0x4000000)
++
+ /* GPC SMMU */
+ #define NRD_CSS_GPC_SMMUV3_BASE			UL(0x300000000)
+ #define NRD_CSS_GPC_SMMUV3_SIZE			UL(0x8000000)
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_fw_def3.h b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_fw_def3.h
+index bbfbe01407c5..8a08add74b0e 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_fw_def3.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_fw_def3.h
+@@ -81,6 +81,12 @@
+ 			NRD_CSS_GPC_SMMUV3_SIZE,			\
+ 			MT_DEVICE | MT_RW | EL3_PAS)
+ 
++#define NRD_CSS_IO_VIRT_SMMUV3_MMAP					\
++		MAP_REGION_FLAT(					\
++			NRD_CSS_IO_VIRT_SMMUV3_BASE,			\
++			NRD_CSS_IO_VIRT_SMMUV3_SIZE,			\
++			MT_DEVICE | MT_RW | EL3_PAS)
++
+ #define NRD_CSS_BL1_RW_MMAP						\
+ 		MAP_REGION_FLAT(					\
+ 			BL1_RW_BASE,					\
+diff --git a/plat/arm/board/neoverse_rd/common/nrd_plat3.c b/plat/arm/board/neoverse_rd/common/nrd_plat3.c
+index 5811bc071471..ef8150f8b799 100644
+--- a/plat/arm/board/neoverse_rd/common/nrd_plat3.c
++++ b/plat/arm/board/neoverse_rd/common/nrd_plat3.c
+@@ -63,6 +63,7 @@ const mmap_region_t plat_arm_mmap[] = {
+ 	NRD_CSS_GPT_L1_DRAM_MMAP,
+ 	NRD_CSS_EL3_RMM_SHARED_MEM_MMAP,
+ 	NRD_CSS_GPC_SMMU_SMMUV3_MMAP,
++	NRD_CSS_IO_VIRT_SMMUV3_MMAP,
+ #if RESET_TO_BL31
+ 	NRD_CSS_MAP_BL31_DTB,
+ #endif
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_bl31_setup.c b/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_bl31_setup.c
+index e32e761d33eb..eb83a58d70a3 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_bl31_setup.c
++++ b/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_bl31_setup.c
+@@ -147,6 +147,19 @@ void bl31_platform_setup(void)
+ 		WARN("Failed initializing System SMMU.\n");
+ 	}
+ 
++	/* Perform SMMUv3 configuration for IO Virtualization block SMMU */
++	if (smmuv3_security_init(NRD_CSS_IO_VIRT_SMMUV3_BASE) != 0) {
++		/*
++		 * Don't proceed for smmuv3 initialization if the
++		 * security init failed.
++		 */
++		return;
++	}
++	/* SMMUv3 initialization failure is not fatal */
++	if (smmuv3_init(NRD_CSS_IO_VIRT_SMMUV3_BASE) != 0) {
++		WARN("Failed initializing SMMU.\n");
++	}
++
+ #if (NRD_PLATFORM_VARIANT == 2)
+ 	int ret;
+ 	unsigned int i;

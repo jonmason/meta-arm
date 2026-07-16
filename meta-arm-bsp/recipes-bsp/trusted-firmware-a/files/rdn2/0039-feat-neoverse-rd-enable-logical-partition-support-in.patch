@@ -1,0 +1,266 @@
+From 07babcf445849d68bf2488b02416fb60b3eee4c8 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Wed, 10 Apr 2024 20:34:32 +0530
+Subject: [PATCH] feat(neoverse-rd): enable logical partition support in ras
+
+When SPMC at EL2 is enabled, only an SP can send a direct message to
+another SP. Add support to treat RAS handler as an EL3 SPMD logical SP.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I523afc1ba6ad735bba29c857f91132d3d27b93a8
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ include/plat/arm/common/arm_spm_def.h         |   7 +-
+ .../neoverse_rd/common/include/nrd_ras.h      |   2 +
+ plat/arm/board/neoverse_rd/common/nrd_plat3.c |   3 +
+ .../neoverse_rd/common/ras/nrd_ras_common.c   | 113 ++++++++++++++++++
+ .../neoverse_rd/common/ras/nrd_ras_cpu.c      |   7 +-
+ .../rdn2/fdts/rdn2_stmm_sel0_manifest.dts     |   2 +-
+ services/std_svc/spmd/spmd_logical_sp.c       |   2 +-
+ 7 files changed, 130 insertions(+), 6 deletions(-)
+
+diff --git a/include/plat/arm/common/arm_spm_def.h b/include/plat/arm/common/arm_spm_def.h
+index c43583de2de7..42a12693fd14 100644
+--- a/include/plat/arm/common/arm_spm_def.h
++++ b/include/plat/arm/common/arm_spm_def.h
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2017-2019, ARM Limited and Contributors. All rights reserved.
++ * Copyright (c) 2017-2024, ARM Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -17,7 +17,7 @@
+ #define ARM_SP_IMAGE_BASE		BL32_BASE
+ #define ARM_SP_IMAGE_LIMIT		BL32_LIMIT
+ /* The maximum size of the S-EL0 payload can be 3MB */
+-#define ARM_SP_IMAGE_SIZE		ULL(0x300000)
++#define ARM_SP_IMAGE_SIZE		ULL(0x600000)
+ 
+ #ifdef IMAGE_BL2
+ /* SPM Payload memory. Mapped as RW in BL2. */
+@@ -61,6 +61,7 @@
+  * requests. Mapped as RW and NS. Placed after the shared memory between EL3 and
+  * S-EL0.
+  */
++#if SPM_MM || (SPMC_AT_EL3 && SPMC_AT_EL3_SEL0_SP)
+ #define PLAT_SP_IMAGE_NS_BUF_BASE	(PLAT_SPM_BUF_BASE + PLAT_SPM_BUF_SIZE)
+ #define PLAT_SP_IMAGE_NS_BUF_SIZE	ULL(0x10000)
+ #define ARM_SP_IMAGE_NS_BUF_MMAP	MAP_REGION2(				\
+@@ -69,7 +70,7 @@
+ 						PLAT_SP_IMAGE_NS_BUF_SIZE,	\
+ 						MT_RW_DATA | MT_NS | MT_USER,	\
+ 						PAGE_SIZE)
+-
++#endif
+ /*
+  * RW memory, which uses the remaining Trusted DRAM. Placed after the memory
+  * shared between Secure and Non-secure worlds, or after the platform specific
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd_ras.h b/plat/arm/board/neoverse_rd/common/include/nrd_ras.h
+index d55e0fe51050..7885539d8072 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd_ras.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd_ras.h
+@@ -55,4 +55,6 @@ int nrd_ras_cpu_intr_handler(const struct err_record_info *err_rec,
+ 				int probe_data,
+ 				const struct err_handler_data *const data);
+ 
++uintptr_t nrd_forward_ras_event(uint64_t buffer, const struct err_handler_data *const data);
++
+ #endif /* NRD_RAS_H */
+diff --git a/plat/arm/board/neoverse_rd/common/nrd_plat3.c b/plat/arm/board/neoverse_rd/common/nrd_plat3.c
+index 6bd8095576a5..5ff559c9187a 100644
+--- a/plat/arm/board/neoverse_rd/common/nrd_plat3.c
++++ b/plat/arm/board/neoverse_rd/common/nrd_plat3.c
+@@ -82,6 +82,9 @@ const mmap_region_t plat_arm_mmap[] = {
+ 	NRD_CSS_PERIPH_MMAP(0),
+ 	NRD_ROS_PLATFORM_PERIPH_MMAP,
+ 	NRD_ROS_SYSTEM_PERIPH_MMAP,
++#if SPD_spmd && SPMD_SPM_AT_SEL2
++	ARM_SPM_BUF_EL3_MMAP,
++#endif
+ 	NRD_CSS_GPT_L1_DRAM_MMAP,
+ 	NRD_CSS_EL3_RMM_SHARED_MEM_MMAP,
+ 	NRD_CSS_GPC_SMMU_SMMUV3_MMAP,
+diff --git a/plat/arm/board/neoverse_rd/common/ras/nrd_ras_common.c b/plat/arm/board/neoverse_rd/common/ras/nrd_ras_common.c
+index 24f4506aca59..eaf2e5f05b1d 100644
+--- a/plat/arm/board/neoverse_rd/common/ras/nrd_ras_common.c
++++ b/plat/arm/board/neoverse_rd/common/ras/nrd_ras_common.c
+@@ -10,11 +10,124 @@
+ #include <bl31/interrupt_mgmt.h>
+ #include <plat/common/platform.h>
+ #include <platform_def.h>
++#include <services/el3_spmd_logical_sp.h>
++#include <services/ffa_svc.h>
++#include <smccc_helpers.h>
+ 
+ #include <nrd_ras.h>
+ 
++#define SPMD_LP_PARTITION_ID SPMD_LP_ID_START
++#define SPMD_LP_UUID {0xe98e43ad, 0xb7db524f, 0x47a3bf57, 0x1588f4e3}
++
++/* SPMD Logical SP currently only supports sending direct message. */
++#define SPMD_PARTITION_PROPERTIES FFA_PARTITION_DIRECT_REQ_SEND
++
++#define SPMD_LP_MAX_SUPPORTED_SP 10
++
+ static struct plat_nrd_ras_config *nrd_ras_config;
+ 
++static void fvp_get_partition_info(void)
++{
++	struct ffa_value ret = { 0 };
++	uint32_t target_uuid[4] = { 0 };
++	static struct ffa_partition_info_v1_1
++		part_info[SPMD_LP_MAX_SUPPORTED_SP] = { 0 };
++
++	uint16_t num_partitions = 0;
++
++	if (!spmd_el3_invoke_partition_info_get(target_uuid, 0, 0, &ret)) {
++		panic();
++	}
++
++	if (is_ffa_error(&ret)) {
++		panic();
++	}
++
++	num_partitions = ffa_partition_info_regs_get_last_idx(&ret) + 1;
++	if (num_partitions > SPMD_LP_MAX_SUPPORTED_SP) {
++		panic();
++	}
++
++	INFO("Number of secure partitions = %d\n", num_partitions);
++
++	for (uint16_t i = 0; i < num_partitions; i++) {
++		INFO("***Start Partition***\n");
++		if (!ffa_partition_info_regs_get_part_info(&ret, i, &part_info[i]))
++			panic();
++		INFO("\tPartition ID: 0x%x\n", part_info[i].ep_id);
++		INFO("\tvCPU count:0x%x\n", part_info[i].execution_ctx_count);
++		INFO("\tProperties: 0x%x\n", part_info[i].properties);
++		INFO("\tUUID: 0x%x 0x%x 0x%x 0x%x\n", part_info[i].uuid[0],
++				part_info[i].uuid[1], part_info[i].uuid[2],
++				part_info[i].uuid[3]);
++		INFO("***End Partition***\n");
++	}
++
++}
++
++static int32_t fvp_spmd_logical_partition_init(void)
++{
++	INFO("FVP SPMD LSP: Init function called.\n");
++
++	fvp_get_partition_info();
++	return 0;
++}
++
++/*
++ * Platform specific SMC handler used to translate SIP SMCs or other platform
++ * specific SMCs into FF-A direct messages.
++ */
++uintptr_t nrd_forward_ras_event(uint64_t buffer, const struct err_handler_data *const data)
++{
++	struct ffa_value retval = { 0 };
++	uint64_t send_recv_id = SPMD_LP_PARTITION_ID << 16 | 0x8001;
++
++	/*
++	 * Forward the SMC as direct request.
++	 */
++	if (!spmd_el3_ffa_msg_direct_req(send_recv_id, 0, buffer, 0, data->handle, &retval)) {
++		panic();
++	}
++
++	return 0;
++}
++
++/*
++ * Platform specific SMC handler used to translate SIP SMCs or other platform
++ * specific SMCs into FF-A direct messages.
++ */
++uintptr_t plat_spmd_logical_sp_smc_handler(unsigned int smc_fid,
++			u_register_t x1,
++			u_register_t x2,
++			u_register_t x3,
++			u_register_t x4,
++			void *cookie,
++			void *handle,
++			u_register_t flags)
++{
++	struct ffa_value retval = { 0 };
++	uint64_t send_recv_id = SPMD_LP_PARTITION_ID << 16 | 0x8001;
++
++	/*
++	 * Forward the SMC as direct request.
++	 */
++	if (!spmd_el3_ffa_msg_direct_req(send_recv_id, x2, x3, x4, handle, &retval)) {
++		panic();
++	}
++
++	SMC_RET8(handle, retval.func, retval.arg1, retval.arg2, retval.arg3,
++			retval.arg4, retval.arg5, retval.arg6, retval.arg7);
++}
++
++/* Register SPMD logical partition  */
++DECLARE_SPMD_LOGICAL_PARTITION(
++	fvp_spmd_logical_partition,
++	fvp_spmd_logical_partition_init,/* Init Function */
++	SPMD_LP_PARTITION_ID,		/* FF-A Partition ID */
++	SPMD_LP_UUID,			/* UUID */
++	SPMD_PARTITION_PROPERTIES	/* Partition Properties. */
++);
++
+ /*
+  * Find event map for a given interrupt number. On success, returns pointer to
+  * the event map. On error, returns NULL.
+diff --git a/plat/arm/board/neoverse_rd/common/ras/nrd_ras_cpu.c b/plat/arm/board/neoverse_rd/common/ras/nrd_ras_cpu.c
+index f09a48fdb68d..db1b7f2da221 100644
+--- a/plat/arm/board/neoverse_rd/common/ras/nrd_ras_cpu.c
++++ b/plat/arm/board/neoverse_rd/common/ras/nrd_ras_cpu.c
+@@ -151,7 +151,8 @@ int nrd_ras_cpu_intr_handler(const struct err_record_info *err_rec,
+ 
+ 	INFO("[CPU RAS] ERXMISC0_EL1 = 0x%lx\n", read_erxmisc0_el1());
+ 	INFO("[CPU RAS] ERXSTATUS_EL1 = 0x%lx\n", read_erxstatus_el1());
+-	INFO("[CPU RAS] ERXADDR_EL1 = 0x%lx\n", read_erxaddr_el1());
++	INFO("[CPU RAS] ERXADDR_EL1 = 0x%lx buff_base = 0x%llx\n",
++		read_erxaddr_el1(), PLAT_SPM_BUF_BASE);
+ 
+ 	/* Populate CPU Error Source Information. */
+ 	populate_cpu_err_data(&cpu_info, get_interrupt_src_ss(data->flags));
+@@ -178,6 +179,10 @@ int nrd_ras_cpu_intr_handler(const struct err_record_info *err_rec,
+ 		data->cookie, data->handle, data->flags);
+ #endif
+ 
++#if SPMD_SPM_AT_SEL2
++	nrd_forward_ras_event(PLAT_SPM_BUF_BASE, data);
++#endif
++
+ 	/*
+ 	 * Find if this is a RAS interrupt. There must be an event against
+ 	 * this interrupt
+diff --git a/plat/arm/board/neoverse_rd/platform/rdn2/fdts/rdn2_stmm_sel0_manifest.dts b/plat/arm/board/neoverse_rd/platform/rdn2/fdts/rdn2_stmm_sel0_manifest.dts
+index 7ca55b00cf06..f53357d6bb4b 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdn2/fdts/rdn2_stmm_sel0_manifest.dts
++++ b/plat/arm/board/neoverse_rd/platform/rdn2/fdts/rdn2_stmm_sel0_manifest.dts
+@@ -111,7 +111,7 @@
+ 		 */
+ 		rx-tx-buffers {
+ 			description = "shared-buff";
+-			base-address = <0x0 0xff500000>;
++			base-address = <0x0 0xff800000>;
+ 			pages-count = <0x100>;
+ 			attributes = <SECURE_RW>;
+ 		};
+diff --git a/services/std_svc/spmd/spmd_logical_sp.c b/services/std_svc/spmd/spmd_logical_sp.c
+index 132b3bee7fac..4c6cea136eb8 100644
+--- a/services/std_svc/spmd/spmd_logical_sp.c
++++ b/services/std_svc/spmd/spmd_logical_sp.c
+@@ -140,7 +140,7 @@ static void spmd_build_direct_message_req(spmd_spm_core_context_t *ctx,
+ {
+ 	gp_regs_t *gpregs = get_gpregs_ctx(&ctx->cpu_ctx);
+ 
+-	write_ctx_reg(gpregs, CTX_GPREG_X0, FFA_MSG_SEND_DIRECT_REQ_SMC32);
++	write_ctx_reg(gpregs, CTX_GPREG_X0, FFA_MSG_SEND_DIRECT_REQ_SMC64);
+ 	write_ctx_reg(gpregs, CTX_GPREG_X1, x1);
+ 	write_ctx_reg(gpregs, CTX_GPREG_X2, x2);
+ 	write_ctx_reg(gpregs, CTX_GPREG_X3, x3);

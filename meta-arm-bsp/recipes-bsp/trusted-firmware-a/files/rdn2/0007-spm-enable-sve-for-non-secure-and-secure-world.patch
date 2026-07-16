@@ -1,0 +1,49 @@
+From 93881970543e378ddf80603f1869b50b00f03797 Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Mon, 11 Mar 2024 09:58:03 +0000
+Subject: [PATCH] spm: enable sve for non secure and secure world
+
+SVE is enabled by default on the FVP. The access to the SVE registers
+are disabled in BL31. The linux kernel, during boot, reads the status
+register and tries to access it. This cause an exception during boot.
+
+Enable SVE in BL31 to fix the issue.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: I87eda1f8e5155deb51c762636100cbb4e149a580
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ plat/arm/board/neoverse_rd/common/nrd-common.mk | 3 ++-
+ services/std_svc/spm/spm_mm/spm_mm.mk           | 3 ---
+ 2 files changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/plat/arm/board/neoverse_rd/common/nrd-common.mk b/plat/arm/board/neoverse_rd/common/nrd-common.mk
+index acc5a4701f2f..eb17f53a5a0c 100644
+--- a/plat/arm/board/neoverse_rd/common/nrd-common.mk
++++ b/plat/arm/board/neoverse_rd/common/nrd-common.mk
+@@ -21,7 +21,8 @@ NRD_CHIP_COUNT		:=	1
+ NRD_PLATFORM_VARIANT	:=	0
+ 
+ # Do not enable SVE
+-ENABLE_SVE_FOR_NS		:=	0
++ENABLE_SVE_FOR_NS		:=	2
++ENABLE_SVE_FOR_SWD		:=	1
+ 
+ CTX_INCLUDE_FPREGS		:=	1
+ 
+diff --git a/services/std_svc/spm/spm_mm/spm_mm.mk b/services/std_svc/spm/spm_mm/spm_mm.mk
+index cbc794020ee1..6c643264a50a 100644
+--- a/services/std_svc/spm/spm_mm/spm_mm.mk
++++ b/services/std_svc/spm/spm_mm/spm_mm.mk
+@@ -10,9 +10,6 @@ endif
+ ifneq (${ARCH},aarch64)
+         $(error "Error: SPM_MM is only supported on aarch64.")
+ endif
+-ifneq (${ENABLE_SVE_FOR_NS},0)
+-        $(error "Error: SPM_MM is not compatible with ENABLE_SVE_FOR_NS")
+-endif
+ ifneq (${ENABLE_SME_FOR_NS},0)
+         $(error "Error: SPM_MM is not compatible with ENABLE_SME_FOR_NS")
+ endif

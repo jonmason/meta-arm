@@ -1,0 +1,50 @@
+From 6335ba4bae4c82b2acfea64c0ba7a1dd39fc2f6a Mon Sep 17 00:00:00 2001
+From: Glen Yeldho <glen.yeldho@arm.com>
+Date: Wed, 10 Apr 2024 16:24:48 +0530
+Subject: [PATCH] [TEMP] feat(rdfremont): Guards around NRD_PAS_CPER to fix
+ compilation issue
+
+CPER buffer used at Firmware First handling time only. Include those
+areas only when corresponding build flags are selected.
+
+Signed-off-by: Glen Yeldho <glen.yeldho@arm.com>
+Change-Id: Ie0c37d1fb1abdb2b7c7c3cc1263a59c7e906ad6d
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ plat/arm/board/neoverse_rd/common/include/nrd3/nrd_pas_def3.h | 2 ++
+ plat/arm/board/neoverse_rd/platform/rdv3/rdv3_bl2_setup.c     | 2 ++
+ 2 files changed, 4 insertions(+)
+
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_pas_def3.h b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_pas_def3.h
+index bc42eba66e73..e6b6d0a84a51 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_pas_def3.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_pas_def3.h
+@@ -592,10 +592,12 @@
+ 			ARM_DRAM2_SIZE,					\
+ 			GPT_GPI_NS)
+ 
++#if ENABLE_FEAT_RAS && FFH_SUPPORT
+ #define NRD_PAS_CPER		GPT_MAP_REGION_GRANULE(			\
+ 				NRD_CSS_CPER_BASE,			\
+ 				NRD_CSS_CPER_SIZE,			\
+ 				GPT_GPI_ANY)
++#endif
+ 
+ #if NRD_ERR_INJ_SUPPORT
+ #define NRD_PAS_EINJ		GPT_MAP_REGION_GRANULE(			\
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_bl2_setup.c b/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_bl2_setup.c
+index 58a12c7668ab..e13ecc3112af 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_bl2_setup.c
++++ b/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_bl2_setup.c
+@@ -68,7 +68,9 @@ static pas_region_t pas_regions[] = {
+ 	NRD_PAS_LCP_PERIPHERAL,
+ 	NRD_PAS_DDR_IO,
+ 	NRD_PAS_SMMU_NCI_IO,
++#if ENABLE_FEAT_RAS && FFH_SUPPORT
+ 	NRD_PAS_CPER,
++#endif
+ #if NRD_ERR_INJ_SUPPORT
+ 	NRD_PAS_EINJ,
+ #endif

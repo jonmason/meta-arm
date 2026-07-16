@@ -1,0 +1,156 @@
+From 1cfd414018f3041dbbcb997e99beca9c4a2a03ca Mon Sep 17 00:00:00 2001
+From: Vivek Gautam <vivek.gautam@arm.com>
+Date: Tue, 28 Mar 2023 21:44:56 +0100
+Subject: [PATCH] feat(delegated_attestation): introduce generic driver
+
+Add a generic delegated attestation driver to interface with the PSA
+delegated attestation partition APIs that use RSS to fetch the platform
+attestation token and Realm attestation key.
+
+Signed-off-by: Vivek Gautam <vivek.gautam@arm.com>
+Change-Id: I882273e97567cc068f90d2ef089410f3a93c6b00
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../rss/rss_delegated_attestation.c           | 78 +++++++++++++++++++
+ .../rss/rss_delegated_attestation.h           | 22 ++++++
+ .../rss/rss_delegated_attestation.mk          | 15 ++++
+ 3 files changed, 115 insertions(+)
+ create mode 100644 drivers/delegated_attestation/rss/rss_delegated_attestation.c
+ create mode 100644 drivers/delegated_attestation/rss/rss_delegated_attestation.h
+ create mode 100644 drivers/delegated_attestation/rss/rss_delegated_attestation.mk
+
+diff --git a/drivers/delegated_attestation/rss/rss_delegated_attestation.c b/drivers/delegated_attestation/rss/rss_delegated_attestation.c
+new file mode 100644
+index 000000000000..7352785d39c0
+--- /dev/null
++++ b/drivers/delegated_attestation/rss/rss_delegated_attestation.c
+@@ -0,0 +1,78 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++#include <assert.h>
++
++#include <psa/crypto_sizes.h>
++#include <psa/crypto_types.h>
++#include <psa/crypto_values.h>
++
++#include <delegated_attestation.h>
++#include <rss_delegated_attestation.h>
++#include <services/rmmd_svc.h>
++
++psa_status_t
++delegated_attestation_get_key(uintptr_t buf, size_t *len, unsigned int type)
++{
++	size_t buf_len;
++	size_t dak_len;
++	psa_status_t ret = PSA_SUCCESS;
++
++	/*
++	 * Current RMM implementations only support the public key size for
++	 * ECC-P384, i.e. ATTEST_KEY_CURVE_ECC_SECP384R1 attestation key.
++	 *
++	 * This ECC key has following properties:
++	 * ecc_curve:	0x12 (PSA_ECC_FAMILY_SECP_R1)
++	 * key_bits:	384
++	 * hash_alg:	0x02000009 (PSA_ALG_SHA_256)
++	 */
++	assert(type == ATTEST_KEY_CURVE_ECC_SECP384R1);
++
++	buf_len = (*len > PSA_KEY_EXPORT_ECC_KEY_PAIR_MAX_SIZE(384)) ?
++		  PSA_KEY_EXPORT_ECC_KEY_PAIR_MAX_SIZE(384) : (*len);
++	ret = rss_delegated_attest_get_delegated_key(PSA_ECC_FAMILY_SECP_R1,
++						     384, (uint8_t *)buf,
++						     buf_len, &dak_len,
++						     PSA_ALG_SHA_256);
++	if (ret != PSA_SUCCESS) {
++		return ret;
++	}
++
++	if (dak_len != PSA_BITS_TO_BYTES(384)) {
++		return PSA_ERROR_INVALID_ARGUMENT;
++	}
++
++	*len = dak_len;
++
++	return ret;
++}
++
++psa_status_t
++delegated_attestation_get_token(uintptr_t buf, size_t *len,
++				uintptr_t hash, size_t hash_size)
++{
++	size_t token_buf_len;
++	size_t token_len = 0;
++	psa_status_t ret = PSA_SUCCESS;
++
++	/*
++	 * Current support only up to token buffer length value
++	 * CCA_PLAT_ATTEST_TOKEN_MAX_SIZE.
++	 */
++	token_buf_len = ((*len) < CCA_PLAT_ATTEST_TOKEN_MAX_SIZE) ?
++			(*len) : CCA_PLAT_ATTEST_TOKEN_MAX_SIZE;
++
++	ret = rss_delegated_attest_get_token((const uint8_t *)hash, hash_size,
++					     (uint8_t *)buf, token_buf_len,
++					     &token_len);
++	if (ret != PSA_SUCCESS) {
++		return ret;
++	}
++
++	*len = token_len;
++
++	return ret;
++}
+diff --git a/drivers/delegated_attestation/rss/rss_delegated_attestation.h b/drivers/delegated_attestation/rss/rss_delegated_attestation.h
+new file mode 100644
+index 000000000000..8e84f6b81412
+--- /dev/null
++++ b/drivers/delegated_attestation/rss/rss_delegated_attestation.h
+@@ -0,0 +1,22 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#ifndef RSS_DELEGATED_ATTESTATION_H
++#define RSS_DELEGATED_ATTESTATION_H
++
++#include <stdint.h>
++#include <psa/crypto_types.h>
++
++#define CCA_PLAT_ATTEST_TOKEN_MAX_SIZE  0x800
++
++psa_status_t
++delegated_attestation_get_key(uintptr_t buf, size_t *len,
++		unsigned int type);
++psa_status_t
++delegated_attestation_get_token(uintptr_t buf, size_t *len, uintptr_t hash,
++		size_t hash_size);
++
++#endif /* RSS_DELEGATED_ATTESTATION_H */
+diff --git a/drivers/delegated_attestation/rss/rss_delegated_attestation.mk b/drivers/delegated_attestation/rss/rss_delegated_attestation.mk
+new file mode 100644
+index 000000000000..1365d0448267
+--- /dev/null
++++ b/drivers/delegated_attestation/rss/rss_delegated_attestation.mk
+@@ -0,0 +1,15 @@
++#
++# Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++#
++# SPDX-License-Identifier: BSD-3-Clause
++#
++
++LIB_PSA_DEPEND_SOURCES		:=	lib/psa/delegated_attestation.c
++
++DELEGATED_ATTESTATION_SOURCES	:= 	$(addprefix drivers/delegated_attestation/rss/,	\
++						rss_delegated_attestation.c		\
++					)
++DELEGATED_ATTESTATION_SOURCES	+=	${LIB_PSA_DEPEND_SOURCES}
++
++PLAT_INCLUDES			+=	-Idrivers/delegated_attestation/rss	\
++					-Iinclude/lib/psa

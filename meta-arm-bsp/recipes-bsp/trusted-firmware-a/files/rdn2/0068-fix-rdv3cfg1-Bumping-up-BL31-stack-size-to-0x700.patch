@@ -1,0 +1,36 @@
+From 029c00d46952492832203e0bcf76e83b5a478bd3 Mon Sep 17 00:00:00 2001
+From: Glen Yeldho <glen.yeldho@arm.com>
+Date: Mon, 23 Jun 2025 11:29:52 +0530
+Subject: [PATCH] fix(rdv3cfg1) Bumping up BL31 stack size to 0x700
+
+Fix stack overflow in BL31 during CPU error injection by
+increasing STACK_SIZE
+
+The first CPU firmware first handling  FFA call consumes more
+stack space than subsequent calls. This leads to corruption
+of critical structures like the SDEI map and the RAS event map.
+Increasing the STACK_SIZE in BL31 resolves this overflow and
+ensures reliable error injection.
+
+Signed-off-by: Glen Yeldho <glen.yeldho@arm.com>
+Change-Id: I9bad7f9d12fba6d872ef07ce9d3f82683ec98d1a
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h   | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h
+index d51dfa986bc4..84dca4365c8e 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h
+@@ -119,7 +119,7 @@
+ # define PLATFORM_STACK_SIZE		UL(0x400)
+ #elif defined(IMAGE_BL31)
+ # if SPM_MM || SPMD_SPM_AT_SEL2
+-#  define PLATFORM_STACK_SIZE		UL(0x500)
++#  define PLATFORM_STACK_SIZE		UL(0x700)
+ # else
+ #  define PLATFORM_STACK_SIZE		UL(0x400)
+ # endif

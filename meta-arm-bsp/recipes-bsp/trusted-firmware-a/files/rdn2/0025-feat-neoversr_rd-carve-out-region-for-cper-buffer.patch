@@ -1,0 +1,118 @@
+From e4ff3f834310df5e1d5343830a2ec25c5d7a3dc5 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Sat, 22 Mar 2025 08:43:24 +0530
+Subject: [PATCH] feat(neoversr_rd): carve out region for cper buffer
+
+Carve out DRAM region for CPER buffer that is used to communicate
+firmware error information to host os.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I8df9cbbb34ea33ebaaa5b262b50f59c5709d1ce6
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../common/include/nrd3/nrd_css_def3.h        |  6 +++++
+ .../common/include/nrd3/nrd_pas_def3.h        |  5 ++++
+ .../common/include/nrd3/nrd_plat_arm_def3.h   | 25 +++++++++++++++++--
+ .../platform/rdv3/rdv3_bl2_setup.c            |  1 +
+ 4 files changed, 35 insertions(+), 2 deletions(-)
+
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_def3.h b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_def3.h
+index 6b1322021ea5..4b95e4b2bde1 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_def3.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_def3.h
+@@ -275,4 +275,10 @@
+ 
+ #define NRD_CSS_RT_RAM_ECC_CE_INT		U(85)
+ 
++/* CPER region 64KB */
++#if ENABLE_FEAT_RAS && FFH_SUPPORT
++#define NRD_CSS_CPER_BASE			ARM_CPER_DRAM1_BASE
++#define NRD_CSS_CPER_SIZE			ARM_CPER_DRAM1_SIZE
++#endif
++
+ #endif /* NRD_CSS_DEF3_H */
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_pas_def3.h b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_pas_def3.h
+index 914560cc083e..2d61414f6b96 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_pas_def3.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_pas_def3.h
+@@ -592,4 +592,9 @@
+ 			ARM_DRAM2_SIZE,					\
+ 			GPT_GPI_NS)
+ 
++#define NRD_PAS_CPER		GPT_MAP_REGION_GRANULE(			\
++				NRD_CSS_CPER_BASE,			\
++				NRD_CSS_CPER_SIZE,			\
++				GPT_GPI_ANY)
++
+ #endif /* NRD_PAS_DEF3_H */
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h
+index c51d53434e5f..2f982f3b6292 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h
+@@ -636,6 +636,9 @@ typedef enum sds_region_id {
+  *
+  *                    DRAM layout
+  *               +------------------+
++ *               |     CPER region  |
++ *               |      (64 KB)     |
++ *               +------------------+
+  *               |                  |
+  *               |        BL32      |
+  *               +------------------+
+@@ -668,6 +671,8 @@ typedef enum sds_region_id {
+ #define ARM_DRAM1_END			(ARM_DRAM1_BASE +		\
+ 					 ARM_DRAM1_SIZE - 1U)
+ 
++#define NRD_DRAM1_CARVEOUT_SIZE		UL(0x0C010000)	/* 117MB */
++
+ /*******************************************************************************
+  * DRAM bank2 specific defines.
+  ******************************************************************************/
+@@ -729,7 +734,22 @@ typedef enum sds_region_id {
+ /* BL32 (1500KB) +  PLAT_ARM_SP_MAX_SIZE (3MB) + SP HEAP (5MB) */
+ /* 9692KB */
+ #define PLAT_ARM_SPMC_SIZE	(UL(1500 * 1024) + UL(0x300000) + UL(0x500000))
+-#define PLAT_ARM_SPMC_BASE	(RMM_BASE - PLAT_ARM_SPMC_SIZE)
++#define PLAT_ARM_SPMC_BASE     (RMM_BASE - PLAT_ARM_SPMC_SIZE)
++
++/*******************************************************************************
++ * CPER specific defines.
++ ******************************************************************************/
++#if ENABLE_FEAT_RAS && FFH_SUPPORT
++#define ARM_CPER_DRAM1_SIZE            UL(0x00010000)  /* 64KB */
++
++#define ARM_CPER_DRAM1_BASE            (PLAT_ARM_SPMC_BASE -     \
++                                               ARM_CPER_DRAM1_SIZE)
++#define ARM_CPER_DRAM1_END             (ARM_CPER_DRAM1_BASE +          \
++                                        ARM_CPER_DRAM1_SIZE -          \
++                                        1U)
++#else
++#define ARM_CPER_DRAM1_SIZE             UL(0)
++#endif /* ENABLE_FEAT_RAS && FFH_SUPPORT */
+ 
+ /*******************************************************************************
+  * NRD_CSS_CARVEOUT_RESERVED region specific defines.
+@@ -742,7 +762,8 @@ typedef enum sds_region_id {
+ 					(ARM_EL3_RMM_SHARED_SIZE +	\
+ 					 ARM_REALM_SIZE +		\
+ 					 ARM_L1_GPT_SIZE +		\
+-					 PLAT_ARM_SPMC_SIZE))
++					 PLAT_ARM_SPMC_SIZE +		\
++					 ARM_CPER_DRAM1_SIZE))
+ 
+ #define NRD_CSS_CARVEOUT_RESERVED_END	(NRD_CSS_CARVEOUT_RESERVED_BASE +\
+ 					 NRD_CSS_CARVEOUT_RESERVED_SIZE - 1U)
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_bl2_setup.c b/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_bl2_setup.c
+index 1ee5f5347037..7a445958f3ea 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_bl2_setup.c
++++ b/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_bl2_setup.c
+@@ -68,6 +68,7 @@ static pas_region_t pas_regions[] = {
+ 	NRD_PAS_LCP_PERIPHERAL,
+ 	NRD_PAS_DDR_IO,
+ 	NRD_PAS_SMMU_NCI_IO,
++	NRD_PAS_CPER,
+ 	NRD_PAS_DRAM2_CHIP0,
+ #if NRD_CHIP_COUNT > 1
+ 	NRD_PAS_DRAM1_CHIP1,

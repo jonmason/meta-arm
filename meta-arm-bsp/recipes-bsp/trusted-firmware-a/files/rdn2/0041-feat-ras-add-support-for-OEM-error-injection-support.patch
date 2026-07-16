@@ -1,0 +1,130 @@
+From 5c66eb7c51feac79aa120e31921edeccb2a751b8 Mon Sep 17 00:00:00 2001
+From: Glen Yeldho <glen.yeldho@arm.com>
+Date: Mon, 15 Apr 2024 13:51:00 +0530
+Subject: [PATCH] feat(ras): add support for OEM error injection support
+
+Introduce firmware error injection support. In Linux there will be sysfs
+entries under einj framework, that can be controlled for initiating
+various RAS Error injection operations. Error injection in Firmware, is enabled
+by selecting firmware-first option in sysfs entry. This allows kernel to write
+into a designated area in EINJ buffer from which TF-A RAS module will retrieve
+the error type and component for injection.
+
+Signed-off-by: Glen Yeldho <glen.yeldho@arm.com>
+Change-Id: I996de084a1bd0080f1f090beb41f65542f07fcab
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../board/neoverse_rd/common/einj/nrd_einj.c  | 46 ++++++-------------
+ .../neoverse_rd/common/include/nrd_einj.h     | 21 +++++++++
+ 2 files changed, 35 insertions(+), 32 deletions(-)
+
+diff --git a/plat/arm/board/neoverse_rd/common/einj/nrd_einj.c b/plat/arm/board/neoverse_rd/common/einj/nrd_einj.c
+index 74e2f8fd8af9..5afde29836d4 100644
+--- a/plat/arm/board/neoverse_rd/common/einj/nrd_einj.c
++++ b/plat/arm/board/neoverse_rd/common/einj/nrd_einj.c
+@@ -54,8 +54,8 @@ static void nrd_err_inj_interrupt_configure(int intr)
+ static int err_inj_el3_interrupt_handler(uint32_t intr, uint32_t flags,
+                void *handle, void *cookie)
+ {
+-       uint32_t error_type;
+-       einj_set_error_type_with_address *error_info;
++       uint32_t error_comp;
++       uint32_t error_info;
+ 
+        INFO("EINJ event received %d\n", intr);
+ 
+@@ -64,41 +64,23 @@ static int err_inj_el3_interrupt_handler(uint32_t intr, uint32_t flags,
+        mmio_write_32((GICD_BASE + GICD_CLRSPI_NSR), ERR_INJ_INTR_EVT_ID);
+ 
+        /* Read the error injection information */
+-       error_info = (einj_set_error_type_with_address *)
+-                       ACTION_SET_ERROR_TYPE_WITH_ADDRESS_BASE;
++       error_info = *((uint32_t *) \
++                       ACTION_SET_ERROR_TYPE_WITH_ADDRESS_BASE);
+ 
+        /* Process error injection event. */
+-       INFO("Error Type = 0x%x\n", error_info->errorType);
+-       error_type = error_info->errorType;
+-
+-       if (error_type & EINJ_ERROR_TYPE_VENDOR_BIT) {
+-               switch (error_type) {
+-               case EINJ_VENDOR_ERROR_TYPE_CMN_HNF:
+-                       break;
+-		case EINJ_VENDOR_ERROR_TYPE_SRAM:
+-                       nrd_sram_inject_error();
+-                       break;
+-               default:
+-                       ERROR("Error Injection failed: No device present of \
+-                               type %d\n", error_type);
+-               }
+-       } else {
+-               switch (error_type) {
+-               case EINJ_ERROR_PROCESSOR_CORRECTABLE:
+-                       INFO("EINJ_ERROR_PROCESSOR_CORRECTABLE\n");
+-                       break;
+-               case EINJ_ERROR_PROCESSOR_UNCORRECTABLE_NONFATAL:
+-                       INFO("EINJ_ERROR_PROCESSOR_UNCORRECTABLE_NONFATAL\n");
++        error_comp = get_component(error_info);
++	switch (error_comp) {
++		case EINJ_SRAM:
++			nrd_sram_inject_error();
++			break;
++		case EINJ_CPU:
+ 			nrd_cpu_inject_error();
+-                       break;
+-               case EINJ_ERROR_PROCESSOR_UNCORRECTABLE_FATAL:
+-                       INFO("EINJ_ERROR_PROCESSOR_UNCORRECTABLE_FATAL\n");
+-                       break;
++			break;
++
+                default:
+                        ERROR("Error Injection failed: No device present of \
+-                               type %d\n", error_type);
+-               }
+-       }
++                               type %d\n", error_comp);
++        }
+ 
+        return 1;
+ }
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd_einj.h b/plat/arm/board/neoverse_rd/common/include/nrd_einj.h
+index 88f9a228ada0..17af17167026 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd_einj.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd_einj.h
+@@ -25,6 +25,10 @@
+ #define EINJ_VENDOR_ERROR_TYPE_CMN_HNF ((1U << 16) | EINJ_ERROR_TYPE_VENDOR_BIT)
+ #define EINJ_VENDOR_ERROR_TYPE_SRAM    ((1U << 17) | EINJ_ERROR_TYPE_VENDOR_BIT)
+ 
++#define get_field(val,mask,shift) ((val >> shift) & mask)
++#define get_component(x) get_field(x,0xF,0)
++#define get_type(x) get_field(x,0xF,4)
++
+ #define ACTION_SET_ERROR_TYPE_WITH_ADDRESS_BASE NRD_CSS_EINJ_SET_ERROR_TYPE_ADDR
+ 
+ /* Error injection pcie SBDF structure */
+@@ -47,6 +51,23 @@ typedef struct {
+        einj_pcie_sbdf pcieSBDF;
+ } einj_set_error_type_with_address;
+ 
++/* Supported einj components */
++enum einj_device_sel {
++        EINJ_NO_DEVICE = 0,
++        EINJ_SRAM,
++        EINJ_CPU,
++        EINJ_DEVICE_MAX
++};
++
++/* Supported Error types*/
++enum einj_error_type {
++        NOT_SUPPORTED = 0,
++        EINJ_CORRECTABLE,
++        EINJ_DEFERRED,
++        EINJ_UNCORRECTABLE
++};
++
++
+ /* Error injection initialization function */
+ int nrd_err_inj_init(void);
+ 

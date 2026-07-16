@@ -1,0 +1,30 @@
+From 34d1ba3aa2f4b7785d1556e24b255842dd23562f Mon Sep 17 00:00:00 2001
+From: Glen Yeldho <glen.yeldho@arm.com>
+Date: Wed, 25 Sep 2024 22:55:53 +0530
+Subject: [PATCH] feat(ras): Modify ERXMISC0 register to be read-writeble
+
+Adds support for writing to ERXMISC0 Register for CPU CE
+error injection support.
+
+Signed-off-by: Glen Yeldho <glen.yeldho@arm.com>
+Change-Id: I83babf1c120b8c4977f771b974dc640ef4838f06
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ include/arch/aarch64/arch_helpers.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/arch/aarch64/arch_helpers.h b/include/arch/aarch64/arch_helpers.h
+index a59c5315f6d5..4fa03e381815 100644
+--- a/include/arch/aarch64/arch_helpers.h
++++ b/include/arch/aarch64/arch_helpers.h
+@@ -631,7 +631,7 @@ DEFINE_RENAME_SYSREG_READ_FUNC(erxfr_el1, ERXFR_EL1)
+ DEFINE_RENAME_SYSREG_RW_FUNCS(erxctlr_el1, ERXCTLR_EL1)
+ DEFINE_RENAME_SYSREG_RW_FUNCS(erxstatus_el1, ERXSTATUS_EL1)
+ DEFINE_RENAME_SYSREG_READ_FUNC(erxaddr_el1, ERXADDR_EL1)
+-DEFINE_RENAME_SYSREG_READ_FUNC(erxmisc0_el1, ERXMISC0_EL1)
++DEFINE_RENAME_SYSREG_RW_FUNCS(erxmisc0_el1, ERXMISC0_EL1)
+ DEFINE_RENAME_SYSREG_READ_FUNC(erxmisc1_el1, ERXMISC1_EL1)
+ 
+ DEFINE_RENAME_SYSREG_RW_FUNCS(scxtnum_el2, SCXTNUM_EL2)

@@ -1,0 +1,76 @@
+From 9d1d5debd1a3c0f0fc390017190252a644632cfc Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Wed, 3 Apr 2024 21:39:27 +0530
+Subject: [PATCH] feat(neoverse_rd): use spmd interface to forward interrupt to
+ stmm.
+
+Add an interface to forward interrupt handling requests to the secure
+partition. This return the control to the same location from where the
+call is made in interrupt service routine.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: Ie03cd67f6b6fc497f848d7b5e3e7ceac294758f6
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ plat/arm/board/neoverse_rd/common/ras/nrd_ras_cpu.c  | 8 ++++++++
+ plat/arm/board/neoverse_rd/common/ras/nrd_ras_sram.c | 8 ++++++++
+ 2 files changed, 16 insertions(+)
+
+diff --git a/plat/arm/board/neoverse_rd/common/ras/nrd_ras_cpu.c b/plat/arm/board/neoverse_rd/common/ras/nrd_ras_cpu.c
+index 40572a90cd62..f09a48fdb68d 100644
+--- a/plat/arm/board/neoverse_rd/common/ras/nrd_ras_cpu.c
++++ b/plat/arm/board/neoverse_rd/common/ras/nrd_ras_cpu.c
+@@ -13,6 +13,7 @@
+ #include <plat/common/platform.h>
+ #include <services/sdei.h>
+ #include <services/spm_mm_svc.h>
++#include <services/spmd_svc.h>
+ 
+ #include <nrd_ras.h>
+ 
+@@ -167,8 +168,15 @@ int nrd_ras_cpu_intr_handler(const struct err_record_info *err_rec,
+ 	memcpy(&header->header_guid, (void *) &cpu_ecc_event_guid,
+ 		sizeof(struct efi_guid));
+ 
++#if SPM_MM
+ 	spm_mm_sp_call(MM_COMMUNICATE_AARCH64, (uint64_t)header, 0,
+ 		       plat_my_core_pos());
++#endif
++
++#if SPMC_AT_EL3
++	spmd_forward_secure_interrupt(header, MM_COMMUNICATE_AARCH64,
++		data->cookie, data->handle, data->flags);
++#endif
+ 
+ 	/*
+ 	 * Find if this is a RAS interrupt. There must be an event against
+diff --git a/plat/arm/board/neoverse_rd/common/ras/nrd_ras_sram.c b/plat/arm/board/neoverse_rd/common/ras/nrd_ras_sram.c
+index 9e2d759f5939..7e0556cc29a4 100644
+--- a/plat/arm/board/neoverse_rd/common/ras/nrd_ras_sram.c
++++ b/plat/arm/board/neoverse_rd/common/ras/nrd_ras_sram.c
+@@ -9,6 +9,7 @@
+ #include <plat/common/platform.h>
+ #include <services/sdei.h>
+ #include <services/spm_mm_svc.h>
++#include <services/spmd_svc.h>
+ 
+ #include <platform_def.h>
+ #include <nrd_ras.h>
+@@ -70,8 +71,15 @@ int nrd_ras_sram_intr_handler(const struct err_record_info *err_rec,
+ 	memcpy(&header->header_guid, (void *)&sram_ecc_event_guid,
+ 		sizeof(struct efi_guid));
+ 
++#if SPM_MM
+ 	spm_mm_sp_call(MM_COMMUNICATE_AARCH64, (uint64_t)header, 0,
+ 			plat_my_core_pos());
++#endif
++
++#if SPMC_AT_EL3
++	spmd_forward_secure_interrupt(header, MM_COMMUNICATE_AARCH64,
++		data->cookie, data->handle, data->flags);
++#endif
+ 
+ #if SPMD_SPM_AT_SEL2
+ 	nrd_forward_ras_event(PLAT_SPM_BUF_BASE, data);

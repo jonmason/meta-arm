@@ -1,0 +1,63 @@
+From bfe2a80c362337c71af93115ef21074307d1d4f1 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Tue, 26 Mar 2024 20:01:23 +0530
+Subject: [PATCH] feat(neoverse_rd): add dts entry for cper buffer
+
+CPER buffer is used to enable firmware first error handling on platform.
+On RdFremont platform, CPER buffer is used for communication of ECC
+error information from firmware to host. The ECC error information is
+populated by secure partition running at S-EL0. Add dts entry to map
+CPER buffer region in Hafnium(Secure partition manager), so that secure
+partition can update the CPER buffer.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: Ia7d2bd4113ccb1241b7e5e0ecabe1d8e9f82aff3
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ plat/arm/board/fvp/fdts/fvp_stmm_manifest.dts     | 15 +++++++++++++++
+ .../platform/rdv3/fdts/rdv3_spmc_sp_manifest.dts  |  4 +++-
+ 2 files changed, 18 insertions(+), 1 deletion(-)
+
+diff --git a/plat/arm/board/fvp/fdts/fvp_stmm_manifest.dts b/plat/arm/board/fvp/fdts/fvp_stmm_manifest.dts
+index df6810f56805..d159cb6a4a7e 100644
+--- a/plat/arm/board/fvp/fdts/fvp_stmm_manifest.dts
++++ b/plat/arm/board/fvp/fdts/fvp_stmm_manifest.dts
+@@ -141,6 +141,21 @@
+ 			base-address = <0x0 0xFF610000>;
+ 			pages-count = <0x7F0>;
+ 			attributes = <SECURE_RW>;
++		 };
++
++		/*
++		 * Memory shared between Normal world and S-EL0 for
++		 * RAS error communication.
++		 */
++		cper_comm_buffer {
++			/*
++			 * Description is needed for StMM to identify
++			 * CPER buffer.
++			 */
++			description = "cper-buffer";
++			base-address = <0x0 0xfa879000>;
++			pages-count = <0x10>;
++			attributes = <NON_SECURE_RW>;
+ 		};
+ 	};
+ };
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3/fdts/rdv3_spmc_sp_manifest.dts b/plat/arm/board/neoverse_rd/platform/rdv3/fdts/rdv3_spmc_sp_manifest.dts
+index c9764e463d8f..235738feadf6 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3/fdts/rdv3_spmc_sp_manifest.dts
++++ b/plat/arm/board/neoverse_rd/platform/rdv3/fdts/rdv3_spmc_sp_manifest.dts
+@@ -75,7 +75,9 @@
+ 	memory@1 {
+ 		device_type = "ns-memory";
+ 		/* DRAM for SP NS mappings*/
+-		reg = <0x0 0x80000000 0x0 0x78FE0000>;
++		reg = <0x0 0x80000000 0x0 0x78FE0000
++		      /* CPER NS mappings*/
++		      0x0 0xFA879000 0x0 0x00010000>;
+ 	};
+ 	memory@2 {
+ 		device_type = "device-memory";

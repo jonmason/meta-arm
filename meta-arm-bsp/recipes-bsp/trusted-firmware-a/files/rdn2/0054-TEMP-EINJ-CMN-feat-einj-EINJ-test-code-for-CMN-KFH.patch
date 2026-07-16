@@ -1,0 +1,376 @@
+From efbd75d680912c5d47876c62472ca367dae98ef9 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Sat, 27 Apr 2024 13:53:14 +0530
+Subject: [PATCH] [TEMP][EINJ-CMN]feat(einj): EINJ test code for CMN KFH
+
+Add support to validate CMN KFH using CMN PFG registers. This patch adds
+following support.
+- Memory map entry for CMN device
+- Implementation for enable error detection for CMN device nodes.
+- Inject CE, DE, UE using the PFG registers in all supported CMN device
+nodes.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I5a72f78d169d974eb63be25263677e11b0b31f41
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ bl31/bl31.mk                                  |   5 +-
+ .../common/include/nrd3/nrd_css_fw_def3.h     |   6 +
+ .../common/include/nrd3/nrd_plat_arm_def3.h   |   4 +-
+ plat/arm/board/neoverse_rd/common/nrd_plat3.c |   1 +
+ .../common/ras_tests/cmn_cyprus/src.c         | 147 ++++++++++++++++++
+ .../neoverse_rd/common/ras_tests/cmn_ras.h    |  28 ++++
+ .../platform/rdv3/include/rdv3_ras.h          |   4 +
+ .../neoverse_rd/platform/rdv3/platform.mk     |   4 +
+ .../platform/rdv3/rdfremont_einj.c            |  37 +++++
+ .../platform/rdv3r1/rdv3r1_bl31_setup.c       |   6 +
+ 10 files changed, 239 insertions(+), 3 deletions(-)
+ create mode 100644 plat/arm/board/neoverse_rd/common/ras_tests/cmn_cyprus/src.c
+ create mode 100644 plat/arm/board/neoverse_rd/common/ras_tests/cmn_ras.h
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3/rdfremont_einj.c
+
+diff --git a/bl31/bl31.mk b/bl31/bl31.mk
+index be9d73d458a7..89c008271975 100644
+--- a/bl31/bl31.mk
++++ b/bl31/bl31.mk
+@@ -33,6 +33,8 @@ endif
+ 
+ include lib/psci/psci_lib.mk
+ 
++PLAT_INCLUDES           +=      -Iplat/arm/board/neoverse_rd/common/ras_tests/
++
+ BL31_SOURCES		+=	bl31/bl31_main.c				\
+ 				bl31/interrupt_mgmt.c				\
+ 				bl31/aarch64/bl31_entrypoint.S			\
+@@ -50,7 +52,8 @@ BL31_SOURCES		+=	bl31/bl31_main.c				\
+ 				${SPMD_SOURCES}					\
+ 				${SPM_MM_SOURCES}				\
+ 				${SPMC_SOURCES}					\
+-				${SPM_SOURCES}
++				${SPM_SOURCES}					\
++				plat/arm/board/neoverse_rd/common/ras_tests/cmn_cyprus/src.c
+ 
+ VENDOR_EL3_SRCS		+=	services/el3/ven_el3_svc.c
+ 
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_fw_def3.h b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_fw_def3.h
+index c786e618c6cb..850b4d084920 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_fw_def3.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_fw_def3.h
+@@ -105,6 +105,12 @@
+ 			ARM_NS_DRAM1_SIZE,				\
+ 			MT_MEMORY | MT_RW | MT_NS)
+ 
++#define NRD_CSS_NS_CMN_MMAP						\
++		MAP_REGION_FLAT(					\
++			NRD_CSS_CMN_BASE,				\
++			NRD_CSS_CMN_SIZE,				\
++			MT_DEVICE | MT_RW | EL3_PAS)
++
+ #define NRD_CSS_GPT_L1_DRAM_MMAP					\
+ 		MAP_REGION_FLAT(					\
+ 			ARM_L1_GPT_BASE,				\
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h
+index 428812a25f9d..695eb0d46324 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h
+@@ -56,8 +56,8 @@
+  * chips are accessed - secure ram, css device and soc device regions.
+  */
+ #if defined(IMAGE_BL31)
+-#  define PLAT_ARM_MMAP_ENTRIES		(12 + ((NRD_CHIP_COUNT - 1) * 3))
+-#  define MAX_XLAT_TABLES		(12 + ((NRD_CHIP_COUNT - 1) * 3))
++#  define PLAT_ARM_MMAP_ENTRIES		(13 + ((NRD_CHIP_COUNT - 1) * 3))
++#  define MAX_XLAT_TABLES		(13 + ((NRD_CHIP_COUNT - 1) * 3))
+ #elif defined(IMAGE_BL32)
+ # define PLAT_ARM_MMAP_ENTRIES		U(8)
+ # define MAX_XLAT_TABLES		U(5)
+diff --git a/plat/arm/board/neoverse_rd/common/nrd_plat3.c b/plat/arm/board/neoverse_rd/common/nrd_plat3.c
+index 5ff559c9187a..e5cfdefd699a 100644
+--- a/plat/arm/board/neoverse_rd/common/nrd_plat3.c
++++ b/plat/arm/board/neoverse_rd/common/nrd_plat3.c
+@@ -101,6 +101,7 @@ const mmap_region_t plat_arm_mmap[] = {
+ #if RESET_TO_BL31
+ 	NRD_CSS_MAP_BL31_DTB,
+ #endif
++	NRD_CSS_NS_CMN_MMAP,
+ 	{0}
+ };
+ #endif /* IMAGE_BL31 */
+diff --git a/plat/arm/board/neoverse_rd/common/ras_tests/cmn_cyprus/src.c b/plat/arm/board/neoverse_rd/common/ras_tests/cmn_cyprus/src.c
+new file mode 100644
+index 000000000000..902463d8ecdf
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/common/ras_tests/cmn_cyprus/src.c
+@@ -0,0 +1,147 @@
++/*
++ * CMN800 HNF error injection.
++ * Functions implemented tp support  both transaction based injection and PFG
++ * registers injection.
++ *
++ */
++
++#include <assert.h>
++#include <string.h>
++
++#include <arch_helpers.h>
++#include <common/debug.h>
++#include <drivers/console.h>
++#include <plat/common/platform.h>
++#include <cmn_ras.h>
++
++#define CMN_BASE_ADDRESS        0x00100000000
++#define HNS0_XP_11_P0           0x1700000
++#define ED_ENABLE               (1UL << 0)
++#define UI_ENABLE               (1UL << 2)
++#define FI_ENABLE               (1UL << 3)
++#define CFI_ENABLE              (1UL << 8)
++#define DUI_ENABLE              (1UL << 10)
++#define PAR_ERR_EN              (1UL << 32)
++
++/* CMN CFGM registers base */
++#define ERRGSR_SRA_BASE         0x4e00
++#define CFGM_RAS_MODE           0xA00
++
++/* CMN error records offsets */
++#define ErrFr                   0xe040
++#define ErrCtlr                 0xe048
++#define ErrStatus               0xe050
++#define ErrAddr                 0xe058
++#define ErrMisc                 0xe060
++#define ErrMisc1                0xe068
++#define HNS_ERR_INJ_OFF         0xe030
++#define HNS_PAR_ERR_INJ_OFF     0xe938
++
++/* HNF double bit error injection register specific bit fields. */
++#define HNS_ERR_INJ_EN         (1 << 0)
++#define HNS_ERR_INJ_SRC_ID_POS 16
++#define CPU0_NODE_ID            0x2C
++
++void print_rec_register(char* node_name, uint8_t idx,
++                                                 uint64_t node_base)
++{
++        INFO ("Node Base = 0x%lx\n", CMN_BASE_ADDRESS + node_base);
++        INFO ("ErrFr = 0x%lx\n", mmio_read_64 (CMN_BASE_ADDRESS + node_base + ErrFr));
++        INFO ("ErrCtlr = 0x%lx\n", mmio_read_64 (CMN_BASE_ADDRESS + node_base + ErrCtlr));
++        INFO ("ErrStatus = 0x%lx\n", mmio_read_64 (CMN_BASE_ADDRESS + node_base + ErrStatus));
++        INFO ("ErrAddr = 0x%lx\n", mmio_read_64 (CMN_BASE_ADDRESS + node_base + ErrAddr));
++        INFO ("ErrMisc = 0x%lx\n", mmio_read_64 (CMN_BASE_ADDRESS + node_base + ErrMisc));
++        INFO ("ErrMisc1 = 0x%lx\n", mmio_read_64 (CMN_BASE_ADDRESS + node_base + ErrMisc1));
++        INFO ("ErrGsr = 0x%lx\n", mmio_read_64 (CMN_BASE_ADDRESS + node_base + 0xEE00));
++
++        if ((mmio_read_64((CMN_BASE_ADDRESS + 0xA00))) == 0) {
++                INFO ("Log the ErrGsr's\n");
++                INFO ("HNF 0 ID 40 ErrFr0_sra3 = 0x%lx\n", mmio_read_64((CMN_BASE_ADDRESS + 0x7000)));
++		INFO ("HNF 0 ID 40 ErrStatus0_sra3 = 0x%lx\n", mmio_read_64((CMN_BASE_ADDRESS + 0x7010)));
++                for(int i = 0; i < 12; i++) {
++                        INFO ("ErrGsr%d_sra%d = 0x%lx\n", i, i, mmio_read_64((CMN_BASE_ADDRESS + ERRGSR_SRA_BASE + ((0x1000) * i))));
++                }
++        } else {
++                INFO ("Log the SRA's\n");
++                INFO ("HNF 0 ID 40 ErrStatus0_sra3 = 0x%lx\n", mmio_read_64((CMN_BASE_ADDRESS + 0x7000)));
++                INFO ("HNF 0 ID 40 ErrStatus0_sra3 = 0x%lx\n", mmio_read_64((CMN_BASE_ADDRESS + 0x7010)));
++                for(int i = 0; i < 12; i++) {
++                        INFO ("ErrGsr%d_sra%d = 0x%lx\n", i, i, mmio_read_64((CMN_BASE_ADDRESS + ERRGSR_SRA_BASE + ((0x1000) * i))));
++                }
++        }
++}
++
++/*********************************************************************************
++HNF error detection programming.
++**********************************************************************************/
++void enable_err_det(char* node_name, uint64_t node_base_ofset)
++{
++        /* Program the control register to enable HNS error detection */
++        INFO ("\n\n Enable HNS error detectioni for %s@0x%lx\n\n", node_name, node_base_ofset);
++        INFO ("HNF node info = 0x%lx\n", mmio_read_64(CMN_BASE_ADDRESS + node_base_ofset));
++	INFO ("RAS 2.0 enabled = 0x%lx\n", mmio_read_64((CMN_BASE_ADDRESS + 0xA00)));
++        INFO ("RAS RCR = 0x%lx\n", mmio_read_64((CMN_BASE_ADDRESS + 0xA00)));
++        INFO ("RAS SCR enabled = 0x%lx\n", mmio_read_64((CMN_BASE_ADDRESS + 0xA00)));
++	mmio_write_64((CMN_BASE_ADDRESS + 0x988), 0x1);
++	mmio_write_64((CMN_BASE_ADDRESS + 0x990), 0x1);
++	//mmio_write_64((CMN_BASE_ADDRESS + 0xA00), 0x1);
++        INFO ("RAS 2.0 enabled = 0x%lx\n", mmio_read_64((CMN_BASE_ADDRESS + 0xA00)));
++        mmio_write_64 ((CMN_BASE_ADDRESS + node_base_ofset + ErrCtlr),
++                        (ED_ENABLE|UI_ENABLE|FI_ENABLE|CFI_ENABLE));
++        INFO ("ErrCtlr = 0x%lx\n", mmio_read_64(CMN_BASE_ADDRESS + node_base_ofset +
++                                                ErrCtlr));
++        INFO ("ErrIdr = 0x%lx\n", mmio_read_64(CMN_BASE_ADDRESS + node_base_ofset +
++                                                0xEE10));
++        INFO ("ErrDevId = 0x%lx\n", mmio_read_64(CMN_BASE_ADDRESS + node_base_ofset +
++                                                0xEFC8));
++}
++
++/*********************************************************************************
++Error injection using error injection PFG registers
++**********************************************************************************/
++#define PFG_INJECT_CE 1UL<<6
++#define PFG_INJECT_DE 1UL<<5
++#define PFG_INJECT_UEU 1UL<<2
++#define PFG_INJECT_PN 1UL<<10
++#define PFG_EN_AV 1UL<<11
++#define PFG_EN_MV 1UL<<12
++#define PFG_EN_CDN 1UL<<31
++
++/* Supports PFG error injection to any nodes XP/HNF/HNI/SBSX/CCG at a time.
++   Params:
++        node_name: Name of the node
++        inj_type: type of injection CE/DE/UEU/PN
++        lid: Logical ID of the node
++        node_base_offset: Offset of the node.
++*/
++void inject_using_pfg_register(char* node_name, int inj_type, int lid,
++                                uint64_t node_base_ofset)
++{
++        uint64_t pfgctl_val;
++
++        INFO ("\n %s%d injection using PFG registers \n", node_name, lid);
++
++        switch (inj_type) {
++                case CE:
++                        pfgctl_val = PFG_INJECT_CE;
++                break;
++                case DE:
++                        pfgctl_val = PFG_INJECT_DE;
++                break;
++                case UEU:
++                        pfgctl_val = PFG_INJECT_UEU;
++                break;
++                case PN:
++                        pfgctl_val = PFG_INJECT_PN;
++                break;
++                default:
++                        INFO ("%s: Wrong injection type selected \n", __func__);
++                        return;
++        }
++        INFO ("ErrPfgf = 0x%lx\n", mmio_read_64((CMN_BASE_ADDRESS + node_base_ofset + 0xe840)));
++        /* Program PfgCdn to 1, so inject error after 1 clock tick. */
++        mmio_write_64 ((CMN_BASE_ADDRESS + node_base_ofset + 0xe850), 0x1);
++        mmio_write_64 ((CMN_BASE_ADDRESS + node_base_ofset + 0xe848), (PFG_EN_CDN | PFG_EN_MV | PFG_EN_AV | pfgctl_val));
++        INFO ("ErrPfgCtl = 0x%lx\n", mmio_read_64((CMN_BASE_ADDRESS + node_base_ofset + 0xe848)));
++        print_rec_register (node_name, lid, node_base_ofset);
++}
+diff --git a/plat/arm/board/neoverse_rd/common/ras_tests/cmn_ras.h b/plat/arm/board/neoverse_rd/common/ras_tests/cmn_ras.h
+new file mode 100644
+index 000000000000..d6fe905d042e
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/common/ras_tests/cmn_ras.h
+@@ -0,0 +1,28 @@
++#ifndef CMN_RAS_TESTS_H
++#define CMN_RAS_TESTS_H
++
++void enable_ras_2_0();
++void inject_cmn_hns0_2bit_err();
++void inject_cmn_hns0_flit_parity_err();
++void enable_err_det(char* node_name, uint64_t node_base_ofset);
++void print_rec_register(char* node_name, uint8_t idx,
++                        uint64_t node_base);
++
++enum inj_type {
++        CE,
++        DE,
++        UEU,
++        PN
++};
++
++/* Supports PFG error injection to any nodes XP/HNF/HNI/SBSX/CCG at a time.
++    Params:
++         node_name: Name of the node
++         inj_type: type of injection CE/DE/UEU/PN
++         lid: Logical ID of the node
++         node_base_offset: Offset of the node.
++ */
++ void inject_using_pfg_register(char* node_name, int inj_type, int lid,
++                                 uint64_t node_base_ofset);
++
++#endif /* CMN_RAS_TESTS_H */
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3/include/rdv3_ras.h b/plat/arm/board/neoverse_rd/platform/rdv3/include/rdv3_ras.h
+index 0ad734249156..79aa31f1e382 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3/include/rdv3_ras.h
++++ b/plat/arm/board/neoverse_rd/platform/rdv3/include/rdv3_ras.h
+@@ -8,7 +8,11 @@
+ #define RDV3_RAS_H
+ 
+ #include <nrd_ras.h>
++#include <lib/einj/einj.h>
+ 
+ extern struct plat_nrd_ras_config ras_config;
+ 
++/*error injection top level handler*/
++int nrd_einj_handler(uint64_t type, uint64_t flags,uint64_t data);
++
+ #endif /* RDV3_RAS_H */
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk b/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk
+index 8e2fcd387d10..1b0e268cc7d0 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk
++++ b/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk
+@@ -161,6 +161,10 @@ BL31_SOURCES            +=      ${RDV3_BASE}/rdv3_ras.c	\
+ endif
+ endif
+ 
++ifeq (${FAULT_INJECTION_SUPPORT}, 1)
++BL31_SOURCES            +=      ${RDV3_BASE}/rdfremont_einj.c
++endif
++
+ # Add the FDT_SOURCES and options for Dynamic Config
+ FDT_SOURCES	+=	${RDV3_BASE}/fdts/${PLAT}_fw_config.dts	\
+ 			${RDV3_BASE}/fdts/${PLAT}_tb_fw_config.dts \
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3/rdfremont_einj.c b/plat/arm/board/neoverse_rd/platform/rdv3/rdfremont_einj.c
+new file mode 100644
+index 000000000000..3fbc13acd635
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3/rdfremont_einj.c
+@@ -0,0 +1,37 @@
++/*
++ * Copyright (c) 2023-2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++#include <common/debug.h>
++#include <lib/mmio.h>
++#include <rdv3_ras.h>
++#include <platform_def.h>
++#include <cmn_ras.h>
++
++#define HNS0_XP_11_P0           0x1700000
++#define HNI0_XP_00_P0		0x300000
++#define SBSX0_XP_20_P1		0x2820000
++#define XP8_XP_22		0x2820000
++
++/*
++ * error injection EL3 interrupt handler.
++ */
++int nrd_einj_handler(uint64_t type, uint64_t flags,
++                uint64_t data)
++{ 
++     INFO ("nrd_einj_handler called\n");
++
++     enable_err_det("HNF", HNS0_XP_11_P0);
++     inject_using_pfg_register("HNS", DE, 0, HNS0_XP_11_P0);
++
++     enable_err_det("HNI", HNI0_XP_00_P0);
++     inject_using_pfg_register("HNI", DE, 0, HNI0_XP_00_P0);
++
++     enable_err_det("XP", XP8_XP_22);
++     inject_using_pfg_register("XP", DE, 0, XP8_XP_22);
++
++	enable_err_det("XP", XP8_XP_22);
++     inject_using_pfg_register("XP", CE, 0, XP8_XP_22);
++     return 0;
++}
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_bl31_setup.c b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_bl31_setup.c
+index 55f35be904be..b0f911d8d18b 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_bl31_setup.c
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_bl31_setup.c
+@@ -145,4 +145,10 @@ void bl31_platform_setup(void)
+ #if ENABLE_FEAT_RAS && FFH_SUPPORT
+         nrd_ras_platform_setup(&ras_config);
+ #endif
++
++#if FAULT_INJECTION_SUPPORT
++       /* Register handler for error injection */
++        einj_register_handler(&nrd_einj_handler);
++#endif
++
+ }

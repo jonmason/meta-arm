@@ -1,0 +1,49 @@
+From a6cd8b8a9ef93224b86963eb97c6427253cc0044 Mon Sep 17 00:00:00 2001
+From: Rakshit Goyal <rakshit.goyal@arm.com>
+Date: Fri, 20 Jun 2025 16:32:09 +0000
+Subject: [PATCH] Revert "chore: fix preprocessor checks"
+
+This reverts commit 92aa7b42d0ad4c05ddf3767dc65f6c09032a87a1.
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ drivers/arm/gic/v3/gicv3_base.c  | 9 +++++++++
+ plat/arm/common/arm_bl31_setup.c | 2 --
+ 2 files changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/arm/gic/v3/gicv3_base.c b/drivers/arm/gic/v3/gicv3_base.c
+index 57f2314788f3..5db7116b7f18 100644
+--- a/drivers/arm/gic/v3/gicv3_base.c
++++ b/drivers/arm/gic/v3/gicv3_base.c
+@@ -99,7 +99,16 @@ void plat_arm_override_gicr_frames(const uintptr_t *plat_gicr_frames)
+  *****************************************************************************/
+ void __init gic_init(unsigned int cpu_idx)
+ {
++	/*
++	 * The GICv3 driver is initialized in EL3 and does not need
++	 * to be initialized again in SEL1. This is because the S-EL1
++	 * can use GIC system registers to manage interrupts and does
++	 * not need GIC interface base addresses to be configured.
++	 */
++#if (!defined(__aarch64__) && defined(IMAGE_BL32)) || \
++	(defined(__aarch64__) && defined(IMAGE_BL31))
+ 	gicv3_driver_init(&gic_data);
++#endif
+ 	gicv3_distif_init();
+ }
+ 
+diff --git a/plat/arm/common/arm_bl31_setup.c b/plat/arm/common/arm_bl31_setup.c
+index f19626916a14..900639e08ae3 100644
+--- a/plat/arm/common/arm_bl31_setup.c
++++ b/plat/arm/common/arm_bl31_setup.c
+@@ -262,9 +262,7 @@ void __init arm_bl31_early_platform_setup(u_register_t arg0, u_register_t arg1,
+ 	 * to verify platform parameters from BL2 to BL31.
+ 	 * In release builds, it's not used.
+ 	 */
+-#if DEBUG
+ 	assert(((uintptr_t)arg3) == ARM_BL31_PLAT_PARAM_VAL);
+-#endif
+ 
+ 	/*
+ 	 * Check params passed from BL2 should not be NULL,

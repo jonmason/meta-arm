@@ -1,0 +1,39 @@
+From cca568fadc8acfcffea12dfed7d00c8145223203 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Mon, 8 Apr 2024 14:23:58 +0530
+Subject: [PATCH] feat(rdfremont): firmware first error handling support for
+ shared RAM
+
+RD-Fremont variants support shared RAM. The RAMs implement ECC that
+detects ECC 1/2-bit errors and reports them via interrupts. The error
+information is reported as error records.
+
+This patch provides reference error handler implementation to handle
+1/2-bit RAS errors that occur on Shared RAM for any root access. On
+error event the error handler logs the error information and clears the
+error interrupt.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I1a44c234be4a9682f9efeb14a761db23f84bdfd8
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../arm/board/neoverse_rd/common/include/nrd3/nrd_css_def3.h | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_def3.h b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_def3.h
+index 91e4bc7557df..6b1322021ea5 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_def3.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_def3.h
+@@ -269,5 +269,10 @@
+ #define AP_RSE_SECURE_MHU_V3_PBX	NRD_CSS_AP_RSE_SECURE_MHU_BASE
+ #define AP_RSE_SECURE_MHU_V3_MBX	NRD_CSS_AP_RSE_SECURE_MHU_BASE + \
+ 						MHU_V3_MBX_FRAME_OFFSET
++/* Base Element RAM error definitions */
++#define ERRSTATUS				U(0x10)
++#define ERRADDR					U(0x18)
++
++#define NRD_CSS_RT_RAM_ECC_CE_INT		U(85)
+ 
+ #endif /* NRD_CSS_DEF3_H */

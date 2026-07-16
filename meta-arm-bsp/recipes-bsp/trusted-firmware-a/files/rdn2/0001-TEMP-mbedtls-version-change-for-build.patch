@@ -1,0 +1,26 @@
+From 2e7751b6eb3045eef79f9bef5c3acbc089a1019e Mon Sep 17 00:00:00 2001
+From: Sammit Joshi <sammit.joshi@arm.com>
+Date: Wed, 11 Jun 2025 12:24:54 +0530
+Subject: [PATCH] [TEMP]: mbedtls version change for build
+
+Signed-off-by: Sammit Joshi <sammit.joshi@arm.com>
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ include/drivers/auth/mbedtls/default_mbedtls_config.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/drivers/auth/mbedtls/default_mbedtls_config.h b/include/drivers/auth/mbedtls/default_mbedtls_config.h
+index e097eb9a29d6..3c61d0db6d3b 100644
+--- a/include/drivers/auth/mbedtls/default_mbedtls_config.h
++++ b/include/drivers/auth/mbedtls/default_mbedtls_config.h
+@@ -13,7 +13,7 @@
+ /*
+  * This file is compatible with versions >= 3.6.3
+  */
+-#define MBEDTLS_CONFIG_VERSION         0x03060300
++#define MBEDTLS_CONFIG_VERSION         0x03060200
+ 
+ /*
+  * Key algorithms currently supported on mbed TLS libraries

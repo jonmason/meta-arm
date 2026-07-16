@@ -1,0 +1,611 @@
+From bded53b1d08aa6e6c8fbacf3dacd8329d9497c57 Mon Sep 17 00:00:00 2001
+From: Rakshit Goyal <rakshit.goyal@arm.com>
+Date: Fri, 20 Jun 2025 16:47:22 +0000
+Subject: [PATCH] Revert "refactor: make arm_gicv2.c and arm_gicv3.c common"
+
+This reverts commit 35d18d8d3cf23caedf29d97decb9eee80e178b79.
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ plat/arm/board/a5ds/platform.mk               |   2 +-
+ .../automotive_rd/platform/rd1ae/platform.mk  |   2 +-
+ plat/arm/board/corstone1000/platform.mk       |   2 +-
+ plat/arm/board/corstone700/platform.mk        |   2 +-
+ plat/arm/board/fvp/platform.mk                |   4 +-
+ plat/arm/board/fvp_ve/platform.mk             |   2 +-
+ plat/arm/board/juno/platform.mk               |   2 +-
+ plat/arm/board/morello/platform.mk            |   2 +-
+ plat/arm/board/n1sdp/platform.mk              |   2 +-
+ .../board/neoverse_rd/common/nrd-common.mk    |   2 +-
+ plat/arm/board/tc/platform.mk                 |   2 +-
+ plat/common/plat_gicv2_base.c                 | 113 --------
+ plat/common/plat_gicv3_base.c                 | 251 ------------------
+ plat/mediatek/mt8173/platform.mk              |   2 +-
+ plat/nuvoton/npcm845x/platform.mk             |   2 +-
+ plat/xilinx/versal_net/platform.mk            |   2 +-
+ plat/xilinx/zynqmp/platform.mk                |   2 +-
+ 17 files changed, 16 insertions(+), 380 deletions(-)
+ delete mode 100644 plat/common/plat_gicv2_base.c
+ delete mode 100644 plat/common/plat_gicv3_base.c
+
+diff --git a/plat/arm/board/a5ds/platform.mk b/plat/arm/board/a5ds/platform.mk
+index b94f7a5ede24..6d60cbe7ae9a 100644
+--- a/plat/arm/board/a5ds/platform.mk
++++ b/plat/arm/board/a5ds/platform.mk
+@@ -24,7 +24,7 @@ include drivers/arm/gic/v2/gicv2.mk
+ 
+ A5DS_GIC_SOURCES	:=	${GICV2_SOURCES}			\
+ 				plat/common/plat_gicv2.c		\
+-				plat/common/plat_gicv2_base.c
++				plat/arm/common/arm_gicv2.c
+ 
+ A5DS_SECURITY_SOURCES	:=	plat/arm/board/a5ds/a5ds_security.c
+ 
+diff --git a/plat/arm/board/automotive_rd/platform/rd1ae/platform.mk b/plat/arm/board/automotive_rd/platform/rd1ae/platform.mk
+index 476d42e37c68..27a2b72b95a6 100644
+--- a/plat/arm/board/automotive_rd/platform/rd1ae/platform.mk
++++ b/plat/arm/board/automotive_rd/platform/rd1ae/platform.mk
+@@ -43,7 +43,7 @@ RD1AE_CPU_SOURCES	:=	lib/cpus/aarch64/neoverse_v3.S
+ include drivers/arm/gic/v3/gicv3.mk
+ RD1AE_GIC_SOURCES	:=	${GICV3_SOURCES}	\
+ 				plat/common/plat_gicv3.c	\
+-				plat/common/plat_gicv3_base.c
++				plat/arm/common/arm_gicv3.c
+ 
+ PLAT_BL_COMMON_SOURCES	+=	${RD1AE_BASE}/rd1ae_plat.c	\
+ 				${RD1AE_BASE}/include/rd1ae_helpers.S
+diff --git a/plat/arm/board/corstone1000/platform.mk b/plat/arm/board/corstone1000/platform.mk
+index 139f3409da94..dfde5aafa17c 100644
+--- a/plat/arm/board/corstone1000/platform.mk
++++ b/plat/arm/board/corstone1000/platform.mk
+@@ -48,7 +48,7 @@ include drivers/arm/gic/v2/gicv2.mk
+ 
+ CORSTONE1000_GIC_SOURCES	:=	${GICV2_SOURCES}			\
+ 				plat/common/plat_gicv2.c		\
+-				plat/common/plat_gicv2_base.c
++				plat/arm/common/arm_gicv2.c
+ 
+ 
+ BL2_SOURCES		+=	plat/arm/board/corstone1000/common/corstone1000_security.c		\
+diff --git a/plat/arm/board/corstone700/platform.mk b/plat/arm/board/corstone700/platform.mk
+index 787cf62bf377..d6d3befac214 100644
+--- a/plat/arm/board/corstone700/platform.mk
++++ b/plat/arm/board/corstone700/platform.mk
+@@ -34,7 +34,7 @@ include drivers/arm/gic/v2/gicv2.mk
+ 
+ CORSTONE700_GIC_SOURCES	:=	${GICV2_SOURCES}			\
+ 				plat/common/plat_gicv2.c		\
+-				plat/common/plat_gicv2_base.c
++				plat/arm/common/arm_gicv2.c
+ 
+ # BL1/BL2 Image not a part of the capsule Image for Corstone700
+ override NEED_BL1	:=	no
+diff --git a/plat/arm/board/fvp/platform.mk b/plat/arm/board/fvp/platform.mk
+index 3b2db205b760..832ffdeb3b79 100644
+--- a/plat/arm/board/fvp/platform.mk
++++ b/plat/arm/board/fvp/platform.mk
+@@ -133,7 +133,7 @@ include drivers/arm/gic/v3/gicv3.mk
+ 
+ FVP_GIC_SOURCES		:=	${GICV3_SOURCES}			\
+ 				plat/common/plat_gicv3.c		\
+-				plat/common/plat_gicv3_base.c		\
++				plat/arm/common/arm_gicv3.c		\
+ 				plat/arm/board/fvp/fvp_gicv3.c
+ 
+ ifeq (${HW_ASSISTED_COHERENCY}, 0)
+@@ -163,7 +163,7 @@ include drivers/arm/gic/v2/gicv2.mk
+ 
+ FVP_GIC_SOURCES		:=	${GICV2_SOURCES}			\
+ 				plat/common/plat_gicv2.c		\
+-				plat/common/plat_gicv2_base.c
++				plat/arm/common/arm_gicv2.c
+ 
+ FVP_DT_PREFIX		:=	fvp-base-gicv2-psci
+ else
+diff --git a/plat/arm/board/fvp_ve/platform.mk b/plat/arm/board/fvp_ve/platform.mk
+index a7db88505d61..79cf3569153b 100644
+--- a/plat/arm/board/fvp_ve/platform.mk
++++ b/plat/arm/board/fvp_ve/platform.mk
+@@ -17,7 +17,7 @@ include drivers/arm/gic/v2/gicv2.mk
+ 
+ FVP_VE_GIC_SOURCES	:=	${GICV2_SOURCES}		\
+ 				plat/common/plat_gicv2.c	\
+-				plat/common/plat_gicv2_base.c
++				plat/arm/common/arm_gicv2.c
+ 
+ FVP_VE_SECURITY_SOURCES	:=	plat/arm/board/fvp_ve/fvp_ve_security.c
+ 
+diff --git a/plat/arm/board/juno/platform.mk b/plat/arm/board/juno/platform.mk
+index e6f271a637ee..9530498dc06c 100644
+--- a/plat/arm/board/juno/platform.mk
++++ b/plat/arm/board/juno/platform.mk
+@@ -11,7 +11,7 @@ include drivers/arm/gic/v2/gicv2.mk
+ 
+ JUNO_GIC_SOURCES	:=	${GICV2_SOURCES}			\
+ 				plat/common/plat_gicv2.c		\
+-				plat/common/plat_gicv2_base.c
++				plat/arm/common/arm_gicv2.c
+ 
+ JUNO_INTERCONNECT_SOURCES	:=	drivers/arm/cci/cci.c		\
+ 					plat/arm/common/arm_cci.c
+diff --git a/plat/arm/board/morello/platform.mk b/plat/arm/board/morello/platform.mk
+index 5534be025e13..8211c26ca76c 100644
+--- a/plat/arm/board/morello/platform.mk
++++ b/plat/arm/board/morello/platform.mk
+@@ -25,7 +25,7 @@ include drivers/arm/gic/v3/gicv3.mk
+ 
+ MORELLO_GIC_SOURCES	:=	${GICV3_SOURCES}			\
+ 				plat/common/plat_gicv3.c		\
+-				plat/common/plat_gicv3_base.c		\
++				plat/arm/common/arm_gicv3.c		\
+ 
+ PLAT_BL_COMMON_SOURCES	:=	${MORELLO_BASE}/morello_plat.c		\
+ 				${MORELLO_BASE}/aarch64/morello_helper.S
+diff --git a/plat/arm/board/n1sdp/platform.mk b/plat/arm/board/n1sdp/platform.mk
+index d626a2852ccd..f937ee709915 100644
+--- a/plat/arm/board/n1sdp/platform.mk
++++ b/plat/arm/board/n1sdp/platform.mk
+@@ -27,7 +27,7 @@ include drivers/arm/gic/v3/gicv3.mk
+ 
+ N1SDP_GIC_SOURCES	:=	${GICV3_SOURCES}			\
+ 				plat/common/plat_gicv3.c		\
+-				plat/common/plat_gicv3_base.c		\
++				plat/arm/common/arm_gicv3.c		\
+ 
+ PLAT_BL_COMMON_SOURCES	:=	${N1SDP_BASE}/n1sdp_plat.c	        \
+ 				${N1SDP_BASE}/aarch64/n1sdp_helper.S
+diff --git a/plat/arm/board/neoverse_rd/common/nrd-common.mk b/plat/arm/board/neoverse_rd/common/nrd-common.mk
+index d3719d60b1b7..1689d3674538 100644
+--- a/plat/arm/board/neoverse_rd/common/nrd-common.mk
++++ b/plat/arm/board/neoverse_rd/common/nrd-common.mk
+@@ -40,7 +40,7 @@ include drivers/arm/gic/v3/gicv3.mk
+ 
+ ENT_GIC_SOURCES		:=	${GICV3_SOURCES}		\
+ 				plat/common/plat_gicv3.c	\
+-				plat/common/plat_gicv3_base.c
++				plat/arm/common/arm_gicv3.c
+ 
+ PLAT_BL_COMMON_SOURCES	+=	${NRD_COMMON_BASE}/arch/aarch64/nrd_helper.S
+ 
+diff --git a/plat/arm/board/tc/platform.mk b/plat/arm/board/tc/platform.mk
+index d4602447d035..7fc3d8fdb67a 100644
+--- a/plat/arm/board/tc/platform.mk
++++ b/plat/arm/board/tc/platform.mk
+@@ -110,7 +110,7 @@ include drivers/arm/gic/v3/gicv3.mk
+ 
+ ENT_GIC_SOURCES		:=	${GICV3_SOURCES}		\
+ 				plat/common/plat_gicv3.c	\
+-				plat/common/plat_gicv3_base.c
++				plat/arm/common/arm_gicv3.c
+ 
+ TC_BASE	=	plat/arm/board/tc
+ 
+diff --git a/plat/common/plat_gicv2_base.c b/plat/common/plat_gicv2_base.c
+deleted file mode 100644
+index 7fe41c2e89e0..000000000000
+--- a/plat/common/plat_gicv2_base.c
++++ /dev/null
+@@ -1,113 +0,0 @@
+-/*
+- * Copyright (c) 2015-2025, Arm Limited and Contributors. All rights reserved.
+- *
+- * SPDX-License-Identifier: BSD-3-Clause
+- */
+-
+-#include <drivers/arm/gicv2.h>
+-#include <plat/arm/common/plat_arm.h>
+-#include <plat/common/platform.h>
+-#include <platform_def.h>
+-
+-/******************************************************************************
+- * The following functions are defined as weak to allow a platform to override
+- * the way the GICv2 driver is initialised and used.
+- *****************************************************************************/
+-#pragma weak plat_arm_gic_driver_init
+-#pragma weak plat_arm_gic_init
+-#pragma weak plat_arm_gic_cpuif_enable
+-#pragma weak plat_arm_gic_cpuif_disable
+-#pragma weak plat_arm_gic_pcpu_init
+-
+-/******************************************************************************
+- * On a GICv2 system, the Group 1 secure interrupts are treated as Group 0
+- * interrupts.
+- *****************************************************************************/
+-static const interrupt_prop_t arm_interrupt_props[] = {
+-	PLAT_ARM_G1S_IRQ_PROPS(GICV2_INTR_GROUP0),
+-	PLAT_ARM_G0_IRQ_PROPS(GICV2_INTR_GROUP0)
+-};
+-
+-static unsigned int target_mask_array[PLATFORM_CORE_COUNT];
+-
+-static const gicv2_driver_data_t arm_gic_data = {
+-	.gicd_base = PLAT_ARM_GICD_BASE,
+-	.gicc_base = PLAT_ARM_GICC_BASE,
+-	.interrupt_props = arm_interrupt_props,
+-	.interrupt_props_num = ARRAY_SIZE(arm_interrupt_props),
+-	.target_masks = target_mask_array,
+-	.target_masks_num = ARRAY_SIZE(target_mask_array),
+-};
+-
+-/******************************************************************************
+- * ARM common helper to initialize the GICv2 only driver.
+- *****************************************************************************/
+-void plat_arm_gic_driver_init(void)
+-{
+-	gicv2_driver_init(&arm_gic_data);
+-}
+-
+-void plat_arm_gic_init(void)
+-{
+-	gicv2_distif_init();
+-	gicv2_pcpu_distif_init();
+-	gicv2_set_pe_target_mask(plat_my_core_pos());
+-	gicv2_cpuif_enable();
+-}
+-
+-/******************************************************************************
+- * ARM common helper to enable the GICv2 CPU interface
+- *****************************************************************************/
+-void plat_arm_gic_cpuif_enable(void)
+-{
+-	gicv2_cpuif_enable();
+-}
+-
+-/******************************************************************************
+- * ARM common helper to disable the GICv2 CPU interface
+- *****************************************************************************/
+-void plat_arm_gic_cpuif_disable(void)
+-{
+-	gicv2_cpuif_disable();
+-}
+-
+-/******************************************************************************
+- * ARM common helper to initialize the per cpu distributor interface in GICv2
+- *****************************************************************************/
+-void plat_arm_gic_pcpu_init(void)
+-{
+-	gicv2_pcpu_distif_init();
+-	gicv2_set_pe_target_mask(plat_my_core_pos());
+-}
+-
+-/******************************************************************************
+- * Stubs for Redistributor power management. Although GICv2 doesn't have
+- * Redistributor interface, these are provided for the sake of uniform GIC API
+- *****************************************************************************/
+-void plat_arm_gic_redistif_on(void)
+-{
+-	return;
+-}
+-
+-void plat_arm_gic_redistif_off(void)
+-{
+-	return;
+-}
+-
+-
+-/******************************************************************************
+- * ARM common helper to save & restore the GICv3 on resume from system suspend.
+- * The normal world currently takes care of saving and restoring the GICv2
+- * registers due to legacy reasons. Hence we just initialize the Distributor
+- * on resume from system suspend.
+- *****************************************************************************/
+-void plat_arm_gic_save(void)
+-{
+-	return;
+-}
+-
+-void plat_arm_gic_resume(void)
+-{
+-	gicv2_distif_init();
+-	gicv2_pcpu_distif_init();
+-}
+diff --git a/plat/common/plat_gicv3_base.c b/plat/common/plat_gicv3_base.c
+deleted file mode 100644
+index df05b891c5ee..000000000000
+--- a/plat/common/plat_gicv3_base.c
++++ /dev/null
+@@ -1,251 +0,0 @@
+-/*
+- * Copyright (c) 2015-2025, Arm Limited and Contributors. All rights reserved.
+- *
+- * SPDX-License-Identifier: BSD-3-Clause
+- */
+-
+-#include <assert.h>
+-
+-#include <common/debug.h>
+-#include <common/interrupt_props.h>
+-#include <drivers/arm/gicv3.h>
+-#include <lib/utils.h>
+-#include <plat/arm/common/plat_arm.h>
+-#include <plat/common/platform.h>
+-#include <platform_def.h>
+-
+-/******************************************************************************
+- * The following functions are defined as weak to allow a platform to override
+- * the way the GICv3 driver is initialised and used.
+- *****************************************************************************/
+-#pragma weak plat_arm_gic_driver_init
+-#pragma weak plat_arm_gic_init
+-#pragma weak plat_arm_gic_cpuif_enable
+-#pragma weak plat_arm_gic_cpuif_disable
+-#pragma weak plat_arm_gic_pcpu_init
+-#pragma weak plat_arm_gic_redistif_on
+-#pragma weak plat_arm_gic_redistif_off
+-
+-/* The GICv3 driver only needs to be initialized in EL3 */
+-static uintptr_t rdistif_base_addrs[PLATFORM_CORE_COUNT];
+-
+-/* Default GICR base address to be used for GICR probe. */
+-static const uintptr_t gicr_base_addrs[2] = {
+-	PLAT_ARM_GICR_BASE,	/* GICR Base address of the primary CPU */
+-	0U			/* Zero Termination */
+-};
+-
+-/* List of zero terminated GICR frame addresses which CPUs will probe */
+-static const uintptr_t *gicr_frames = gicr_base_addrs;
+-
+-static const interrupt_prop_t arm_interrupt_props[] = {
+-	PLAT_ARM_G1S_IRQ_PROPS(INTR_GROUP1S),
+-	PLAT_ARM_G0_IRQ_PROPS(INTR_GROUP0),
+-#if ENABLE_FEAT_RAS && FFH_SUPPORT
+-	INTR_PROP_DESC(PLAT_CORE_FAULT_IRQ, PLAT_RAS_PRI, INTR_GROUP0,
+-			GIC_INTR_CFG_LEVEL)
+-#endif
+-};
+-
+-/*
+- * We save and restore the GICv3 context on system suspend. Allocate the
+- * data in the designated EL3 Secure carve-out memory. The `used` attribute
+- * is used to prevent the compiler from removing the gicv3 contexts.
+- */
+-static gicv3_redist_ctx_t rdist_ctx __section(".arm_el3_tzc_dram") __used;
+-static gicv3_dist_ctx_t dist_ctx __section(".arm_el3_tzc_dram") __used;
+-
+-/* Define accessor function to get reference to the GICv3 context */
+-DEFINE_LOAD_SYM_ADDR(rdist_ctx)
+-DEFINE_LOAD_SYM_ADDR(dist_ctx)
+-
+-/*
+- * MPIDR hashing function for translating MPIDRs read from GICR_TYPER register
+- * to core position.
+- *
+- * Calculating core position is dependent on MPIDR_EL1.MT bit. However, affinity
+- * values read from GICR_TYPER don't have an MT field. To reuse the same
+- * translation used for CPUs, we insert MT bit read from the PE's MPIDR into
+- * that read from GICR_TYPER.
+- *
+- * Assumptions:
+- *
+- *   - All CPUs implemented in the system have MPIDR_EL1.MT bit set;
+- *   - No CPUs implemented in the system use affinity level 3.
+- */
+-static unsigned int arm_gicv3_mpidr_hash(u_register_t mpidr)
+-{
+-	mpidr |= (read_mpidr_el1() & MPIDR_MT_MASK);
+-	return plat_arm_calc_core_pos(mpidr);
+-}
+-
+-gicv3_driver_data_t arm_gic_data __unused = {
+-	.gicd_base = PLAT_ARM_GICD_BASE,
+-	.gicr_base = 0U,
+-	.interrupt_props = arm_interrupt_props,
+-	.interrupt_props_num = ARRAY_SIZE(arm_interrupt_props),
+-	.rdistif_num = PLATFORM_CORE_COUNT,
+-	.rdistif_base_addrs = rdistif_base_addrs,
+-	.mpidr_to_core_pos = arm_gicv3_mpidr_hash
+-};
+-
+-/*
+- * By default, gicr_frames will be pointing to gicr_base_addrs. If
+- * the platform supports a non-contiguous GICR frames (GICR frames located
+- * at uneven offset), plat_arm_override_gicr_frames function can be used by
+- * such platform to override the gicr_frames.
+- */
+-void plat_arm_override_gicr_frames(const uintptr_t *plat_gicr_frames)
+-{
+-	assert(plat_gicr_frames != NULL);
+-	gicr_frames = plat_gicr_frames;
+-}
+-
+-void __init plat_arm_gic_driver_init(void)
+-{
+-	/*
+-	 * The GICv3 driver is initialized in EL3 and does not need
+-	 * to be initialized again in SEL1. This is because the S-EL1
+-	 * can use GIC system registers to manage interrupts and does
+-	 * not need GIC interface base addresses to be configured.
+-	 */
+-#if (!defined(__aarch64__) && defined(IMAGE_BL32)) || \
+-	(defined(__aarch64__) && defined(IMAGE_BL31))
+-	gicv3_driver_init(&arm_gic_data);
+-
+-	if (gicv3_rdistif_probe(gicr_base_addrs[0]) == -1) {
+-		ERROR("No GICR base frame found for Primary CPU\n");
+-		panic();
+-	}
+-#endif
+-}
+-
+-/******************************************************************************
+- * ARM common helper to initialize the GIC. Only invoked by BL31
+- *****************************************************************************/
+-void __init plat_arm_gic_init(void)
+-{
+-	gicv3_distif_init();
+-	gicv3_rdistif_init(plat_my_core_pos());
+-	gicv3_cpuif_enable(plat_my_core_pos());
+-}
+-
+-/******************************************************************************
+- * ARM common helper to enable the GIC CPU interface
+- *****************************************************************************/
+-void plat_arm_gic_cpuif_enable(void)
+-{
+-	gicv3_cpuif_enable(plat_my_core_pos());
+-}
+-
+-/******************************************************************************
+- * ARM common helper to disable the GIC CPU interface
+- *****************************************************************************/
+-void plat_arm_gic_cpuif_disable(void)
+-{
+-	gicv3_cpuif_disable(plat_my_core_pos());
+-}
+-
+-/******************************************************************************
+- * ARM common helper function to iterate over all GICR frames and discover the
+- * corresponding per-cpu redistributor frame as well as initialize the
+- * corresponding interface in GICv3.
+- *****************************************************************************/
+-void plat_arm_gic_pcpu_init(void)
+-{
+-	int result;
+-	const uintptr_t *plat_gicr_frames = gicr_frames;
+-
+-	do {
+-		result = gicv3_rdistif_probe(*plat_gicr_frames);
+-
+-		/* If the probe is successful, no need to proceed further */
+-		if (result == 0)
+-			break;
+-
+-		plat_gicr_frames++;
+-	} while (*plat_gicr_frames != 0U);
+-
+-	if (result == -1) {
+-		ERROR("No GICR base frame found for CPU 0x%lx\n", read_mpidr());
+-		panic();
+-	}
+-	gicv3_rdistif_init(plat_my_core_pos());
+-}
+-
+-/******************************************************************************
+- * ARM common helpers to power GIC redistributor interface
+- *****************************************************************************/
+-void plat_arm_gic_redistif_on(void)
+-{
+-	gicv3_rdistif_on(plat_my_core_pos());
+-}
+-
+-void plat_arm_gic_redistif_off(void)
+-{
+-	gicv3_rdistif_off(plat_my_core_pos());
+-}
+-
+-/******************************************************************************
+- * ARM common helper to save & restore the GICv3 on resume from system suspend
+- *****************************************************************************/
+-void plat_arm_gic_save(void)
+-{
+-	gicv3_redist_ctx_t * const rdist_context =
+-			(gicv3_redist_ctx_t *)LOAD_ADDR_OF(rdist_ctx);
+-	gicv3_dist_ctx_t * const dist_context =
+-			(gicv3_dist_ctx_t *)LOAD_ADDR_OF(dist_ctx);
+-
+-	/*
+-	 * If an ITS is available, save its context before
+-	 * the Redistributor using:
+-	 * gicv3_its_save_disable(gits_base, &its_ctx[i])
+-	 * Additionally, an implementation-defined sequence may
+-	 * be required to save the whole ITS state.
+-	 */
+-
+-	/*
+-	 * Save the GIC Redistributors and ITS contexts before the
+-	 * Distributor context. As we only handle SYSTEM SUSPEND API,
+-	 * we only need to save the context of the CPU that is issuing
+-	 * the SYSTEM SUSPEND call, i.e. the current CPU.
+-	 */
+-	gicv3_rdistif_save(plat_my_core_pos(), rdist_context);
+-
+-	/* Save the GIC Distributor context */
+-	gicv3_distif_save(dist_context);
+-
+-	/*
+-	 * From here, all the components of the GIC can be safely powered down
+-	 * as long as there is an alternate way to handle wakeup interrupt
+-	 * sources.
+-	 */
+-}
+-
+-void plat_arm_gic_resume(void)
+-{
+-	const gicv3_redist_ctx_t *rdist_context =
+-			(gicv3_redist_ctx_t *)LOAD_ADDR_OF(rdist_ctx);
+-	const gicv3_dist_ctx_t *dist_context =
+-			(gicv3_dist_ctx_t *)LOAD_ADDR_OF(dist_ctx);
+-
+-	/* Restore the GIC Distributor context */
+-	gicv3_distif_init_restore(dist_context);
+-
+-	/*
+-	 * Restore the GIC Redistributor and ITS contexts after the
+-	 * Distributor context. As we only handle SYSTEM SUSPEND API,
+-	 * we only need to restore the context of the CPU that issued
+-	 * the SYSTEM SUSPEND call.
+-	 */
+-	gicv3_rdistif_init_restore(plat_my_core_pos(), rdist_context);
+-
+-	/*
+-	 * If an ITS is available, restore its context after
+-	 * the Redistributor using:
+-	 * gicv3_its_restore(gits_base, &its_ctx[i])
+-	 * An implementation-defined sequence may be required to
+-	 * restore the whole ITS state. The ITS must also be
+-	 * re-enabled after this sequence has been executed.
+-	 */
+-}
+diff --git a/plat/mediatek/mt8173/platform.mk b/plat/mediatek/mt8173/platform.mk
+index a41c20527630..4d5a100f1025 100644
+--- a/plat/mediatek/mt8173/platform.mk
++++ b/plat/mediatek/mt8173/platform.mk
+@@ -21,7 +21,7 @@ PLAT_INCLUDES		:=	-I${MTK_PLAT}/common/				\
+ 
+ PLAT_BL_COMMON_SOURCES	:=	lib/xlat_tables/xlat_tables_common.c		\
+ 				lib/xlat_tables/aarch64/xlat_tables.c		\
+-				plat/common/plat_gicv2_base.c			\
++				plat/arm/common/arm_gicv2.c			\
+ 				plat/common/plat_gicv2.c			\
+ 				plat/common/aarch64/crash_console_helpers.S
+ 
+diff --git a/plat/nuvoton/npcm845x/platform.mk b/plat/nuvoton/npcm845x/platform.mk
+index df1809df589f..248ab96c771f 100644
+--- a/plat/nuvoton/npcm845x/platform.mk
++++ b/plat/nuvoton/npcm845x/platform.mk
+@@ -201,7 +201,7 @@ BL31_SOURCES	+=lib/cpus/aarch64/cortex_a35.S \
+ PLAT_BL_COMMON_SOURCES	:=	drivers/delay_timer/delay_timer.c \
+ 		drivers/delay_timer/generic_delay_timer.c \
+ 		plat/common/plat_gicv2.c \
+-		plat/common/plat_gicv2_base.c \
++		plat/arm/common/arm_gicv2.c \
+ 		plat/nuvoton/common/plat_nuvoton_gic.c \
+ 		${NPCM850_GIC_SOURCES} \
+ 		plat/nuvoton/npcm845x/npcm845x_common.c \
+diff --git a/plat/xilinx/versal_net/platform.mk b/plat/xilinx/versal_net/platform.mk
+index 5e8f2b44dd60..4b2c83adfd0e 100644
+--- a/plat/xilinx/versal_net/platform.mk
++++ b/plat/xilinx/versal_net/platform.mk
+@@ -141,7 +141,7 @@ BL31_SOURCES		+=	plat/xilinx/common/plat_fdt.c			\
+ 				${PLAT_PATH}/bl31_versal_net_setup.c		\
+ 				common/fdt_fixup.c				\
+ 				common/fdt_wrappers.c				\
+-				plat/common/plat_gicv3_base.c			\
++				plat/arm/common/arm_gicv3.c 			\
+ 				${LIBFDT_SRCS}					\
+ 				${PLAT_PATH}/sip_svc_setup.c			\
+ 				${XLAT_TABLES_LIB_SRCS}
+diff --git a/plat/xilinx/zynqmp/platform.mk b/plat/xilinx/zynqmp/platform.mk
+index d2cb2205221c..833a0cbb1c6a 100644
+--- a/plat/xilinx/zynqmp/platform.mk
++++ b/plat/xilinx/zynqmp/platform.mk
+@@ -101,7 +101,7 @@ PLAT_BL_COMMON_SOURCES	:=	drivers/arm/dcc/dcc_console.c			\
+ 				drivers/cadence/uart/aarch64/cdns_console.S	\
+ 				plat/arm/common/arm_cci.c			\
+ 				plat/arm/common/arm_common.c			\
+-				plat/common/plat_gicv2_base.c			\
++				plat/arm/common/arm_gicv2.c			\
+ 				plat/common/plat_gicv2.c			\
+ 				plat/xilinx/common/ipi.c			\
+ 				plat/xilinx/zynqmp/zynqmp_ipi.c			\

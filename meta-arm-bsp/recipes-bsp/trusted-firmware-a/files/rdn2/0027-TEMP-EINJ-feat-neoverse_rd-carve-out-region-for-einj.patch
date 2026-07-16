@@ -1,0 +1,142 @@
+From cdfff41cda8458fa619c57c921b2a362b35880c4 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Mon, 14 Apr 2025 12:52:11 +0530
+Subject: [PATCH] [TEMP][EINJ] feat(neoverse_rd): carve out region for einj
+ buffer
+
+Carve out DRAM region for EINJ buffer that is used to perform SRAM and
+CPU error injection
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I6319fbc53991d955f770a2caa367cae86fb87148
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../common/include/nrd3/nrd_css_def3.h        |  6 ++++
+ .../common/include/nrd3/nrd_pas_def3.h        |  7 +++++
+ .../common/include/nrd3/nrd_plat_arm_def3.h   | 29 +++++++++++++++++--
+ plat/arm/board/neoverse_rd/common/nrd_plat3.c |  3 ++
+ .../platform/rdv3/rdv3_bl2_setup.c            |  3 ++
+ 5 files changed, 45 insertions(+), 3 deletions(-)
+
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_def3.h b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_def3.h
+index 4b95e4b2bde1..6f2318514274 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_def3.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_def3.h
+@@ -281,4 +281,10 @@
+ #define NRD_CSS_CPER_SIZE			ARM_CPER_DRAM1_SIZE
+ #endif
+ 
++/* EINJ region 64KB */
++#if NRD_ERR_INJ_SUPPORT
++#define NRD_CSS_EINJ_BASE                      ARM_EINJ_DRAM1_BASE
++#define NRD_CSS_EINJ_SIZE                      ARM_EINJ_DRAM1_SIZE
++#endif
++
+ #endif /* NRD_CSS_DEF3_H */
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_pas_def3.h b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_pas_def3.h
+index 2d61414f6b96..bc42eba66e73 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_pas_def3.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_pas_def3.h
+@@ -597,4 +597,11 @@
+ 				NRD_CSS_CPER_SIZE,			\
+ 				GPT_GPI_ANY)
+ 
++#if NRD_ERR_INJ_SUPPORT
++#define NRD_PAS_EINJ		GPT_MAP_REGION_GRANULE(			\
++				NRD_CSS_EINJ_BASE,			\
++				NRD_CSS_EINJ_SIZE,			\
++				GPT_GPI_ANY)
++#endif
++
+ #endif /* NRD_PAS_DEF3_H */
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h
+index 2f982f3b6292..b7326e30a1d2 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h
+@@ -56,8 +56,8 @@
+  * chips are accessed - secure ram, css device and soc device regions.
+  */
+ #if defined(IMAGE_BL31)
+-#  define PLAT_ARM_MMAP_ENTRIES		(10 + ((NRD_CHIP_COUNT - 1) * 3))
+-#  define MAX_XLAT_TABLES		(10 + ((NRD_CHIP_COUNT - 1) * 3))
++#  define PLAT_ARM_MMAP_ENTRIES		(11 + ((NRD_CHIP_COUNT - 1) * 3))
++#  define MAX_XLAT_TABLES		(11 + ((NRD_CHIP_COUNT - 1) * 3))
+ #elif defined(IMAGE_BL32)
+ # define PLAT_ARM_MMAP_ENTRIES		U(8)
+ # define MAX_XLAT_TABLES		U(5)
+@@ -636,6 +636,9 @@ typedef enum sds_region_id {
+  *
+  *                    DRAM layout
+  *               +------------------+
++ *               |     EINJ region  |
++ *               |      (64 KB)     |
++ *               +------------------+
+  *               |     CPER region  |
+  *               |      (64 KB)     |
+  *               +------------------+
+@@ -751,6 +754,25 @@ typedef enum sds_region_id {
+ #define ARM_CPER_DRAM1_SIZE             UL(0)
+ #endif /* ENABLE_FEAT_RAS && FFH_SUPPORT */
+ 
++/*******************************************************************************
++ * EINJ specific defines.
++ ******************************************************************************/
++#define ARM_EINJ_DRAM1_SIZE		UL(0x00010000)	/* 64KB */
++
++#if NRD_ERR_INJ_SUPPORT
++#ifdef ARM_CPER_DRAM1_BASE
++#define ARM_EINJ_DRAM1_BASE		(ARM_CPER_DRAM1_BASE -	\
++						ARM_EINJ_DRAM1_SIZE)
++#define ARM_EINJ_DRAM1_END		(ARM_EINJ_DRAM1_BASE +		\
++					ARM_EINJ_DRAM1_SIZE -		\
++					1U)
++
++#define ARM_MAP_EINJ_DRAM1		MAP_REGION_FLAT(		\
++						ARM_EINJ_DRAM1_BASE,	\
++						ARM_EINJ_DRAM1_SIZE,	\
++						MT_MEMORY | MT_RW | MT_NS)
++#endif
++
+ /*******************************************************************************
+  * NRD_CSS_CARVEOUT_RESERVED region specific defines.
+  ******************************************************************************/
+@@ -763,7 +785,8 @@ typedef enum sds_region_id {
+ 					 ARM_REALM_SIZE +		\
+ 					 ARM_L1_GPT_SIZE +		\
+ 					 PLAT_ARM_SPMC_SIZE +		\
+-					 ARM_CPER_DRAM1_SIZE))
++					 ARM_CPER_DRAM1_SIZE +		\
++					 ARM_EINJ_DRAM1_SIZE))
+ 
+ #define NRD_CSS_CARVEOUT_RESERVED_END	(NRD_CSS_CARVEOUT_RESERVED_BASE +\
+ 					 NRD_CSS_CARVEOUT_RESERVED_SIZE - 1U)
+diff --git a/plat/arm/board/neoverse_rd/common/nrd_plat3.c b/plat/arm/board/neoverse_rd/common/nrd_plat3.c
+index e51686dc825e..6bd8095576a5 100644
+--- a/plat/arm/board/neoverse_rd/common/nrd_plat3.c
++++ b/plat/arm/board/neoverse_rd/common/nrd_plat3.c
+@@ -73,6 +73,9 @@ const mmap_region_t plat_arm_mmap[] = {
+ #if IMAGE_BL31
+ const mmap_region_t plat_arm_mmap[] = {
+ 	NRD_CSS_SHARED_RAM_MMAP(0),
++#if NRD_ERR_INJ_SUPPORT
++	ARM_MAP_EINJ_DRAM1,
++#endif
+ #ifdef PLAT_ARM_MEM_PROT_ADDR
+ 	NRD_ROS_V2M_MEM_PROTECT_MMAP,
+ #endif
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_bl2_setup.c b/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_bl2_setup.c
+index 7a445958f3ea..58a12c7668ab 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_bl2_setup.c
++++ b/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_bl2_setup.c
+@@ -69,6 +69,9 @@ static pas_region_t pas_regions[] = {
+ 	NRD_PAS_DDR_IO,
+ 	NRD_PAS_SMMU_NCI_IO,
+ 	NRD_PAS_CPER,
++#if NRD_ERR_INJ_SUPPORT
++	NRD_PAS_EINJ,
++#endif
+ 	NRD_PAS_DRAM2_CHIP0,
+ #if NRD_CHIP_COUNT > 1
+ 	NRD_PAS_DRAM1_CHIP1,

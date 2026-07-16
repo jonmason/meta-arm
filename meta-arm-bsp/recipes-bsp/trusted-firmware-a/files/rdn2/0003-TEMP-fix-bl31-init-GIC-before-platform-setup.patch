@@ -1,0 +1,36 @@
+From a615e752926cb01160dd4858ed57eefa5ef04e7a Mon Sep 17 00:00:00 2001
+From: Rakshit Goyal <rakshit.goyal@arm.com>
+Date: Thu, 19 Jun 2025 06:59:12 +0000
+Subject: [PATCH] [TEMP] fix(bl31): init GIC before platform setup
+
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ bl31/bl31_main.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/bl31/bl31_main.c b/bl31/bl31_main.c
+index a9f89fc30741..15c90852f89a 100644
+--- a/bl31/bl31_main.c
++++ b/bl31/bl31_main.c
+@@ -143,9 +143,6 @@ void bl31_main(void)
+ 	}
+ #endif
+ 
+-	/* Perform platform setup in BL31 */
+-	bl31_platform_setup();
+-
+ #if USE_GIC_DRIVER
+ 	/*
+ 	 * Initialize the GIC driver as well as per-cpu and global interfaces.
+@@ -158,6 +155,9 @@ void bl31_main(void)
+ 	gic_cpuif_enable(core_pos);
+ #endif /* USE_GIC_DRIVER */
+ 
++	/* Perform platform setup in BL31 */
++	bl31_platform_setup();
++
+ 	/* Initialise helper libraries */
+ 	bl31_lib_init();
+ 

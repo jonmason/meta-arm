@@ -1,0 +1,150 @@
+From 7c5cd49b3fbabe4ec7cc97bf91e4acdfeb6fbd70 Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Mon, 11 Mar 2024 09:45:45 +0000
+Subject: [PATCH] spm: move non secure buffer out of secure carveout
+
+The non secure buffer carveout overlaps with the secure DRAM carvout.
+TZC does not allow overlapping carveout and when enabled cause abort to
+any access made to that region. Previous version of TZC had a bug which
+did not detect this.
+
+Move the non secure carveout out of the secure DRAM carveout region to
+fix this issue.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: I272c841e76ee202f6e7f2f9cf35e1b3fdface591
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ include/plat/arm/common/arm_spm_def.h         |  5 +++-
+ include/plat/arm/common/plat_arm.h            |  4 +--
+ .../common/include/nrd2/nrd_plat_arm_def2.h   |  8 +++---
+ .../rdn2/fdts/rdn2_stmm_sel0_manifest.dts     | 28 +++++++++----------
+ .../neoverse_rd/platform/rdn2/rdn2_security.c |  4 +--
+ 5 files changed, 25 insertions(+), 24 deletions(-)
+
+diff --git a/include/plat/arm/common/arm_spm_def.h b/include/plat/arm/common/arm_spm_def.h
+index 42a12693fd14..76eca4dd52d5 100644
+--- a/include/plat/arm/common/arm_spm_def.h
++++ b/include/plat/arm/common/arm_spm_def.h
+@@ -56,13 +56,16 @@
+ 						MT_RO_DATA | MT_SECURE | MT_USER,\
+ 						PAGE_SIZE)
+ 
++#define ARM_SPM_HEAP_SIZE		ULL(0x5D0000)
++
+ /*
+  * Memory shared between Normal world and S-EL0 for passing data during service
+  * requests. Mapped as RW and NS. Placed after the shared memory between EL3 and
+  * S-EL0.
+  */
+ #if SPM_MM || (SPMC_AT_EL3 && SPMC_AT_EL3_SEL0_SP)
+-#define PLAT_SP_IMAGE_NS_BUF_BASE	(PLAT_SPM_BUF_BASE + PLAT_SPM_BUF_SIZE)
++#define PLAT_SP_IMAGE_NS_BUF_BASE	(ARM_EL3_TZC_DRAM1_END + \
++					 ARM_L1_GPT_SIZE + 1)
+ #define PLAT_SP_IMAGE_NS_BUF_SIZE	ULL(0x10000)
+ #define ARM_SP_IMAGE_NS_BUF_MMAP	MAP_REGION2(				\
+ 						PLAT_SP_IMAGE_NS_BUF_BASE,	\
+diff --git a/include/plat/arm/common/plat_arm.h b/include/plat/arm/common/plat_arm.h
+index aed85f5518db..5b649be7fa75 100644
+--- a/include/plat/arm/common/plat_arm.h
++++ b/include/plat/arm/common/plat_arm.h
+@@ -75,10 +75,8 @@ typedef struct arm_gpt_info {
+ 	{ARM_AP_TZC_DRAM1_BASE, (PLAT_SP_IMAGE_NS_BUF_BASE - 1),	\
+ 		TZC_REGION_S_RDWR, 0},					\
+ 	{PLAT_SP_IMAGE_NS_BUF_BASE, (PLAT_SP_IMAGE_NS_BUF_BASE +	\
+-		PLAT_SP_IMAGE_NS_BUF_SIZE - 1), TZC_REGION_S_NONE,	\
++		PLAT_SP_IMAGE_NS_BUF_SIZE - 1), ARM_TZC_NS_DRAM_S_ACCESS,	\
+ 		PLAT_ARM_TZC_NS_DEV_ACCESS},				\
+-	{PLAT_SP_IMAGE_STACK_BASE, ARM_EL3_TZC_DRAM1_END,		\
+-		TZC_REGION_S_RDWR, 0},					\
+ 	{ARM_DRAM2_BASE, ARM_DRAM2_END, ARM_TZC_NS_DRAM_S_ACCESS,	\
+ 		PLAT_ARM_TZC_NS_DEV_ACCESS}
+ 
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd2/nrd_plat_arm_def2.h b/plat/arm/board/neoverse_rd/common/include/nrd2/nrd_plat_arm_def2.h
+index 27b811ed7a02..86002182a4ac 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd2/nrd_plat_arm_def2.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd2/nrd_plat_arm_def2.h
+@@ -156,16 +156,16 @@ ENABLE_FEAT_RAS && FFH_SUPPORT
+  * Secure partition stack follows right after the memory space reserved for
+  * CPER buffer memory.
+  */
+-#define PLAT_ARM_SP_IMAGE_STACK_BASE	(PLAT_SP_IMAGE_NS_BUF_BASE +   \
+-					 PLAT_SP_IMAGE_NS_BUF_SIZE +   \
++#define PLAT_ARM_SP_IMAGE_STACK_BASE	(PLAT_SPM_BUF_BASE  +		\
++					 PLAT_SPM_BUF_SIZE  +		\
+ 					 NRD_CSS_SP_CPER_BUF_SIZE)
+ #elif (SPM_MM || (SPMC_AT_EL3 && SPMC_AT_EL3_SEL0_SP))
+ /*
+  * Secure partition stack follows right after the memory region that is shared
+  * between EL3 and S-EL0.
+  */
+-#define PLAT_ARM_SP_IMAGE_STACK_BASE	(PLAT_SP_IMAGE_NS_BUF_BASE +	\
+-					 PLAT_SP_IMAGE_NS_BUF_SIZE)
++#define PLAT_ARM_SP_IMAGE_STACK_BASE	(PLAT_SPM_BUF_BASE +		\
++					 PLAT_SPM_BUF_SIZE)
+ #endif /* SPM_MM && ENABLE_FEAT_RAS && FFH_SUPPORT */
+ 
+ /*******************************************************************************
+diff --git a/plat/arm/board/neoverse_rd/platform/rdn2/fdts/rdn2_stmm_sel0_manifest.dts b/plat/arm/board/neoverse_rd/platform/rdn2/fdts/rdn2_stmm_sel0_manifest.dts
+index f53357d6bb4b..2d4637d8d047 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdn2/fdts/rdn2_stmm_sel0_manifest.dts
++++ b/plat/arm/board/neoverse_rd/platform/rdn2/fdts/rdn2_stmm_sel0_manifest.dts
+@@ -116,20 +116,6 @@
+ 			attributes = <SECURE_RW>;
+ 		};
+ 
+-		/*
+-		 * Memory shared between Normal world and S-EL0.
+-		 */
+-		ns_comm_buffer {
+-			/*
+-			 * Description is needed for StMM to identify
+-			 * ns-communication buffer.
+-			 */
+-			description = "ns-comm";
+-			base-address = <0x0 0xff600000>;
+-			pages-count = <0x30>;
+-			attributes = <NON_SECURE_RW>;
+-		};
+-
+ 		/*
+ 		 * Heap used by SP to allocate memory for DMA.
+ 		 */
+@@ -143,5 +129,19 @@
+ 			pages-count = <0x5D0>;
+ 			attributes = <SECURE_RW>;
+ 		};
++
++		/*
++		 * Memory shared between Normal world and S-EL0.
++		 */
++		ns_comm_buffer {
++			/*
++			 * Description is needed for StMM to identify
++			 * ns-communication buffer.
++			 */
++			description = "ns-comm";
++			base-address = <0x0 0xffe00000>;
++			pages-count = <0x30>;
++			attributes = <NON_SECURE_RW>;
++		};
+ 	};
+ };
+diff --git a/plat/arm/board/neoverse_rd/platform/rdn2/rdn2_security.c b/plat/arm/board/neoverse_rd/platform/rdn2/rdn2_security.c
+index cbe25764c70e..0369847a096f 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdn2/rdn2_security.c
++++ b/plat/arm/board/neoverse_rd/platform/rdn2/rdn2_security.c
+@@ -8,9 +8,9 @@
+ #include <plat/arm/common/plat_arm.h>
+ #include <platform_def.h>
+ 
+-#define RDN2_TZC_CPER_REGION				\
++#define RDN2_TZC_CPER_REGION					\
+ 	{NRD_CSS_SP_CPER_BUF_BASE, (NRD_CSS_SP_CPER_BUF_BASE +	\
+-	NRD_CSS_SP_CPER_BUF_SIZE) - 1, TZC_REGION_S_NONE,	\
++	NRD_CSS_SP_CPER_BUF_SIZE) - 1, ARM_TZC_NS_DRAM_S_ACCESS,\
+ 	PLAT_ARM_TZC_NS_DEV_ACCESS}
+ 
+ #if NRD_ERR_INJ_SUPPORT

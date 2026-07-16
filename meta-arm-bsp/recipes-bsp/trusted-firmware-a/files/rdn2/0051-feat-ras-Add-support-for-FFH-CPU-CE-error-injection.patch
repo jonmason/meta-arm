@@ -1,0 +1,126 @@
+From b880fa510beb0d40268050f5c41b8cfd2830645b Mon Sep 17 00:00:00 2001
+From: Glen Yeldho <glen.yeldho@arm.com>
+Date: Wed, 25 Sep 2024 22:56:27 +0530
+Subject: [PATCH] feat(ras): Add support for FFH CPU CE error injection
+
+Enable CPU CE(Corrected Error) injection by writing expected
+value to ERXMISC0 register, inducing a Corrected error.
+ERXPFGCTL.MV bit is set to ensure ERXMISC0 register is flagged
+as valid in the ERXSTATUS register, allowing proper handling by
+error handler.
+
+Signed-off-by: Glen Yeldho <glen.yeldho@arm.com>
+Change-Id: I6ebe926b3d60793752e9a1e48853b69d37135db5
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ lib/extensions/ras/ras_helpers.S              |  1 +
+ .../board/neoverse_rd/common/einj/nrd_einj.c  |  5 ++++-
+ .../neoverse_rd/common/include/nrd_einj.h     |  2 +-
+ .../neoverse_rd/common/ras/nrd_ras_cpu.c      |  1 +
+ .../platform/rdv3/einj/nrd_einj_cpu.c         | 21 +++++++++++++++----
+ 5 files changed, 24 insertions(+), 6 deletions(-)
+
+diff --git a/lib/extensions/ras/ras_helpers.S b/lib/extensions/ras/ras_helpers.S
+index ddaf0feb313e..c9049baa781f 100644
+--- a/lib/extensions/ras/ras_helpers.S
++++ b/lib/extensions/ras/ras_helpers.S
+@@ -77,6 +77,7 @@ func write_cpu_pfg_ctrl_register_ce
+         mrs    x0, ERXPFGCTL_EL1
+        orr     x0, x0, #0x80000000
+        orr     x0, x0, #0x40000000
++       orr     x0, x0, #0x00001000
+        orr     x0, x0, #0x00000040
+        msr     ERXPFGCTL_EL1, x0
+        ret
+diff --git a/plat/arm/board/neoverse_rd/common/einj/nrd_einj.c b/plat/arm/board/neoverse_rd/common/einj/nrd_einj.c
+index 5afde29836d4..4d4be2ecc398 100644
+--- a/plat/arm/board/neoverse_rd/common/einj/nrd_einj.c
++++ b/plat/arm/board/neoverse_rd/common/einj/nrd_einj.c
+@@ -56,6 +56,7 @@ static int err_inj_el3_interrupt_handler(uint32_t intr, uint32_t flags,
+ {
+        uint32_t error_comp;
+        uint32_t error_info;
++       uint32_t error_type;
+ 
+        INFO("EINJ event received %d\n", intr);
+ 
+@@ -69,12 +70,14 @@ static int err_inj_el3_interrupt_handler(uint32_t intr, uint32_t flags,
+ 
+        /* Process error injection event. */
+         error_comp = get_component(error_info);
++        error_type = get_type(error_info);
++
+ 	switch (error_comp) {
+ 		case EINJ_SRAM:
+ 			nrd_sram_inject_error();
+ 			break;
+ 		case EINJ_CPU:
+-			nrd_cpu_inject_error();
++			nrd_cpu_inject_error(error_type);
+ 			break;
+ 
+                default:
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd_einj.h b/plat/arm/board/neoverse_rd/common/include/nrd_einj.h
+index 17af17167026..639180dc1f92 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd_einj.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd_einj.h
+@@ -75,4 +75,4 @@ int nrd_err_inj_init(void);
+ void nrd_sram_inject_error(void);
+ 
+ /* CPU error injection helper */
+-void nrd_cpu_inject_error(void);
++void nrd_cpu_inject_error(uint32_t error_type);
+diff --git a/plat/arm/board/neoverse_rd/common/ras/nrd_ras_cpu.c b/plat/arm/board/neoverse_rd/common/ras/nrd_ras_cpu.c
+index db1b7f2da221..f9bb2334c9ab 100644
+--- a/plat/arm/board/neoverse_rd/common/ras/nrd_ras_cpu.c
++++ b/plat/arm/board/neoverse_rd/common/ras/nrd_ras_cpu.c
+@@ -160,6 +160,7 @@ int nrd_ras_cpu_intr_handler(const struct err_record_info *err_rec,
+ 	/* Clear the interrupt. */
+ 	clear_status = read_erxstatus_el1();
+ 	write_erxstatus_el1(clear_status);
++	write_erxmisc0_el1(0x0);
+ 	plat_ic_end_of_interrupt(intr);
+ 
+ 	header = (void *) PLAT_SPM_BUF_BASE;
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3/einj/nrd_einj_cpu.c b/plat/arm/board/neoverse_rd/platform/rdv3/einj/nrd_einj_cpu.c
+index 178128ff104e..74846071af59 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3/einj/nrd_einj_cpu.c
++++ b/plat/arm/board/neoverse_rd/platform/rdv3/einj/nrd_einj_cpu.c
+@@ -8,8 +8,12 @@
+ #include <drivers/delay_timer.h>
+ #include <lib/extensions/ras_helpers.h>
+ #include <plat/common/platform.h>
++#include <nrd_einj.h>
+ 
+-void nrd_cpu_inject_error(void)
++/*Set CECO and OFO bits*/
++#define ERX_MISC0_CE_INJ	0x200810000000001
++
++void nrd_cpu_inject_error(uint32_t error_type)
+ {
+ 
+         INFO("cpu_id %d\n", plat_my_core_pos());
+@@ -29,9 +33,18 @@ void nrd_cpu_inject_error(void)
+         /* set PFG countdown register to 1 */
+         write_cpu_pfg_cdn_register(1);
+ 
+-	/* Injects CPU DE */
+-        INFO("Injecting DE...\n");
+-        write_cpu_pfg_ctrl_register_de();
++	/* Injects CPU CE/DE base on error type */
++	if(error_type == EINJ_CORRECTABLE) {
++		INFO("Injecting CE...\n");
++		write_erxmisc0_el1(ERX_MISC0_CE_INJ);
++		write_cpu_pfg_ctrl_register_ce();
++	} else if(error_type == EINJ_DEFERRED) {
++		INFO("Injecting DE...\n");
++		write_cpu_pfg_ctrl_register_de();
++	} else {
++		INFO("Unknown error type\n");
++		return;
++	}
+ 
+         INFO("ErrStatus = 0x%lx\n", read_erxstatus_el1());
+ }

@@ -1,0 +1,30 @@
+From 9813799925eb1612d50313941209f6805c4970c1 Mon Sep 17 00:00:00 2001
+From: Manoj Kumar Prabakaran <manojkumar.prabakaran@arm.com>
+Date: Fri, 21 Mar 2025 09:32:08 +0000
+Subject: [PATCH] feat(neoverse): enable mpmm in neoverse_v3 core
+
+MPMM is a core-specific microarchitectural feature. It is present in
+neoverse_v3 ARM core. Enabling it through the CPU MACRO enablement
+"enable_mpmm".
+
+Change-Id: I7d145fd61d8cccb8be455ec5cdd7997e50ee5c49
+Signed-off-by: Manoj Kumar Prabakaran <manojkumar.prabakaran@arm.com>
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ lib/cpus/aarch64/neoverse_v3.S | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/lib/cpus/aarch64/neoverse_v3.S b/lib/cpus/aarch64/neoverse_v3.S
+index ca108e77fb12..3e5b9fed0ae1 100644
+--- a/lib/cpus/aarch64/neoverse_v3.S
++++ b/lib/cpus/aarch64/neoverse_v3.S
+@@ -99,6 +99,7 @@ endfunc neoverse_v3_core_pwr_dwn
+ cpu_reset_func_start neoverse_v3
+ 	/* Disable speculative loads */
+ 	msr	SSBS, xzr
++	enable_mpmm
+ cpu_reset_func_end neoverse_v3
+ 
+ 	/* ---------------------------------------------
