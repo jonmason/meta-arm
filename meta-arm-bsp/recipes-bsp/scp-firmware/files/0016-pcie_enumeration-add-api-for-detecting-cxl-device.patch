@@ -1,0 +1,95 @@
+From 64df0a8571dbe10b3b7671f630517baaf1d98968 Mon Sep 17 00:00:00 2001
+From: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Date: Wed, 21 Sep 2022 15:17:51 +0530
+Subject: [PATCH] pcie_enumeration: add api for detecting cxl device
+
+As part of PCIe enumeration logic, extend the enumeration to CXL module
+for discovering a PCIe device with extended CXL capability. This patch
+invokes CXL module APIs for discovering CXL device and mapping Host
+address space to CXL device memory region at the end of enumeration
+proces.
+
+Signed-off-by: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Change-Id: I60df3365aa7dceca770e6da355648b82c7f144ef
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ module/pcie_discovery/CMakeLists.txt          |  3 +++
+ .../pcie_discovery/src/mod_pcie_discovery.c   | 24 +++++++++++++++++++
+ 2 files changed, 27 insertions(+)
+
+diff --git a/module/pcie_discovery/CMakeLists.txt b/module/pcie_discovery/CMakeLists.txt
+index b7ad3a93050d..8e89dc4dcbbf 100644
+--- a/module/pcie_discovery/CMakeLists.txt
++++ b/module/pcie_discovery/CMakeLists.txt
+@@ -14,3 +14,6 @@ target_include_directories(
+ target_sources(
+     ${SCP_MODULE_TARGET}
+     PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/mod_pcie_discovery.c")
++
++target_link_libraries (
++    ${SCP_MODULE_TARGET} PRIVATE module-cxl)
+diff --git a/module/pcie_discovery/src/mod_pcie_discovery.c b/module/pcie_discovery/src/mod_pcie_discovery.c
+index dda38ffdbd0f..d9f4d5b3dc69 100644
+--- a/module/pcie_discovery/src/mod_pcie_discovery.c
++++ b/module/pcie_discovery/src/mod_pcie_discovery.c
+@@ -5,6 +5,7 @@
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+ 
++#include <mod_cxl.h>
+ #include <mod_pcie_discovery.h>
+ 
+ #include <fwk_assert.h>
+@@ -19,6 +20,9 @@
+ #include <stddef.h>
+ #include <stdint.h>
+ 
++/* APIs required to find CXL capable device and operation */
++static struct mod_cxl_api *cxl_api;
++
+ /* PCIe configuration space offset definitions */
+ #define PCIE_BAR_OFFSET 0x10
+ 
+@@ -250,6 +254,8 @@ static uint8_t pcie_bus_scan(
+                 sub_bnum = sec_bnum - 1;
+                 bar_count = DEVICE_BAR_COUNT;
+             }
++            cxl_api->find_cxl_cap(config_addr);
++
+             get_mmio_memory_size(config_addr, mmap_size, rw_api, bar_count);
+         }
+     }
+@@ -299,6 +305,23 @@ static int calculate_resource(
+     /* Align for host bridge */
+     align_address_for_bridge_window(mmap_size);
+ 
++    cxl_api->map_cxl_mem_region();
++
++    return FWK_SUCCESS;
++}
++
++
++static int pcie_discovery_bind(fwk_id_t id, unsigned int round)
++{
++    int status;
++
++    status = fwk_module_bind(FWK_ID_MODULE(FWK_MODULE_IDX_CXL),
++                             FWK_ID_API(FWK_MODULE_IDX_CXL, 0),
++                             &cxl_api);
++    if (status != FWK_SUCCESS) {
++        return status;
++    }
++
+     return FWK_SUCCESS;
+ }
+ 
+@@ -336,6 +359,7 @@ const struct fwk_module module_pcie_discovery = {
+     .api_count = MOD_PCIE_DISCOVERY_API_IDX_MAP,
+     .init = pcie_discovery_init,
+     .process_bind_request = pcie_discovery_process_bind_request,
++    .bind = pcie_discovery_bind,
+ };
+ 
+ const struct fwk_module_config config_pcie_discovery = { 0 };

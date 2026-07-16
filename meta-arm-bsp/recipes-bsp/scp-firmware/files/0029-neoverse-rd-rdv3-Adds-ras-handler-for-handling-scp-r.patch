@@ -1,0 +1,421 @@
+From 4f7fe098fba8e624493382ff389dbc506ec03715 Mon Sep 17 00:00:00 2001
+From: Glen Yeldho <glen.yeldho@arm.com>
+Date: Wed, 10 Jan 2024 18:22:58 +0530
+Subject: [PATCH] neoverse-rd/rdv3: Adds ras-handler for handling scp ras
+ errors
+
+This module will handle SCP-TCM, RSM and Shared-SRAM ras errors interrupts.
+
+Signed-off-by: Glen Yeldho <glen.yeldho@arm.com>
+Change-Id: Ic9846d7312ac2962c7417b76585e008b986ce600
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../rdv3/module/ras-handler/CMakeLists.txt    |  35 +++
+ .../rdv3/module/ras-handler/Module.cmake      |  10 +
+ .../ras-handler/include/mod_ras_handler.h     |  45 ++++
+ .../module/ras-handler/src/mod_ras_handler.c  | 213 ++++++++++++++++++
+ .../neoverse-rd/rdv3/scp_ramfw/CMakeLists.txt |   3 +-
+ .../neoverse-rd/rdv3/scp_ramfw/Firmware.cmake |   4 +-
+ .../rdv3/scp_ramfw/config_ras_handler.c       |  27 +++
+ 7 files changed, 335 insertions(+), 2 deletions(-)
+ create mode 100644 product/neoverse-rd/rdv3/module/ras-handler/CMakeLists.txt
+ create mode 100644 product/neoverse-rd/rdv3/module/ras-handler/Module.cmake
+ create mode 100644 product/neoverse-rd/rdv3/module/ras-handler/include/mod_ras_handler.h
+ create mode 100644 product/neoverse-rd/rdv3/module/ras-handler/src/mod_ras_handler.c
+ create mode 100644 product/neoverse-rd/rdv3/scp_ramfw/config_ras_handler.c
+
+diff --git a/product/neoverse-rd/rdv3/module/ras-handler/CMakeLists.txt b/product/neoverse-rd/rdv3/module/ras-handler/CMakeLists.txt
+new file mode 100644
+index 000000000000..826c0f72f9ef
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/module/ras-handler/CMakeLists.txt
+@@ -0,0 +1,35 @@
++#
++# Arm SCP/MCP Software
++# Copyright (c) 2023, Arm Limited and Contributors. All rights reserved.
++#
++# SPDX-License-Identifier: BSD-3-Clause
++#
++add_library(${SCP_MODULE_TARGET} SCP_MODULE)
++
++# SCP_PLATFORM_VARIANT value for supported RD-V3 platform variants:
++# - '0' for RD-V3 platform
++# - '1' for RD-V3-Cfg1 platform
++# - '2' for RD-V3-Cfg2 platform
++
++if (SCP_PLATFORM_VARIANT STREQUAL "0")
++     target_compile_definitions(${SCP_MODULE_TARGET}
++                                 PUBLIC -DPLATFORM_VARIANT=0)
++elseif (SCP_PLATFORM_VARIANT STREQUAL "1")
++      target_compile_definitions(${SCP_MODULE_TARGET}
++                                 PUBLIC -DPLATFORM_VARIANT=1)
++elseif (SCP_PLATFORM_VARIANT STREQUAL "2")
++      target_compile_definitions(${SCP_MODULE_TARGET}
++                                 PUBLIC -DPLATFORM_VARIANT=2)
++else()
++      message(FATAL_ERROR "Please set SCP_PLATFORM_VARIANT to \n"
++                                "'0' for RD-V3\n"
++                                "'1' for RD-V3-Cfg1\n"
++                                "'2' for RD-V3-Cfg2\n")
++endif()
++
++target_include_directories(${SCP_MODULE_TARGET}
++                           PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
++
++
++target_sources(${SCP_MODULE_TARGET}
++               PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/mod_ras_handler.c")
+diff --git a/product/neoverse-rd/rdv3/module/ras-handler/Module.cmake b/product/neoverse-rd/rdv3/module/ras-handler/Module.cmake
+new file mode 100644
+index 000000000000..8bb3a5d449e1
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/module/ras-handler/Module.cmake
+@@ -0,0 +1,10 @@
++#
++# Arm SCP/MCP Software
++# Copyright (c) 2023, Arm Limited and Contributors. All rights reserved.
++#
++# SPDX-License-Identifier: BSD-3-Clause
++#
++
++set(SCP_MODULE "ras-handler")
++
++set(SCP_MODULE_TARGET "module-ras-handler")
+diff --git a/product/neoverse-rd/rdv3/module/ras-handler/include/mod_ras_handler.h b/product/neoverse-rd/rdv3/module/ras-handler/include/mod_ras_handler.h
+new file mode 100644
+index 000000000000..bfbe85b004f6
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/module/ras-handler/include/mod_ras_handler.h
+@@ -0,0 +1,45 @@
++/*
++ * Arm SCP/MCP Software
++ * Copyright (c) 2023, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ * Description:
++ *     Module for configuring PCIe rootports and its memory map.
++ */
++
++#ifndef MOD_RAS_HANDLER_H
++#define MOD_RAS_HANDLER_H
++
++#include <fwk_id.h>
++#include <fwk_module_idx.h>
++
++#include <stddef.h>
++#include <stdint.h>
++#include <stdbool.h>
++#include <fwk_interrupt.h>
++
++struct ras_isr {
++
++    /*! Interrupt number*/
++    unsigned int interrupt_no;
++
++    /*! Interrupt service routine */
++    void (*isr)(void);
++};
++
++struct mod_ras_config {
++
++    /*! Number of RAS interrupts supported */
++    unsigned int interrupt_count;
++
++    /*! Array of interrupt id */
++    const unsigned int *interrupt_id;
++
++};
++
++struct ras_context {
++    struct mod_ras_config *config;
++};
++
++#endif /* MOD_RAS_HANDLER_H */
+diff --git a/product/neoverse-rd/rdv3/module/ras-handler/src/mod_ras_handler.c b/product/neoverse-rd/rdv3/module/ras-handler/src/mod_ras_handler.c
+new file mode 100644
+index 000000000000..ef9204c45d70
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/module/ras-handler/src/mod_ras_handler.c
+@@ -0,0 +1,213 @@
++/*
++ * Arm SCP/MCP Software
++ * Copyright (c) 2023, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <fwk_id.h>
++#include <fwk_log.h>
++#include <fwk_module.h>
++#include <fwk_module_idx.h>
++#include <fwk_status.h>
++#include <fwk_mm.h>
++#include <mod_ras_handler.h>
++#include <fwk_mmio.h>
++
++#define MOD_NAME "[RAS_HANDLER]"
++#define DYNAMIC_ATU_BASE 0x9F000000
++#define TCM_ECC_BASE 0x50050000
++
++static void default_handler()
++{
++unsigned int interrupt;
++    fwk_interrupt_get_current(&interrupt);
++
++    FWK_LOG_INFO ("[SRAM_INT] fwk_int number = %d\n",
++	interrupt);
++}
++
++static void sram_handler()
++{
++    unsigned int interrupt;
++    fwk_interrupt_get_current(&interrupt);
++    uint32_t base = DYNAMIC_ATU_BASE;
++
++    FWK_LOG_INFO ("[SRAM_INT] ErrStatus = 0x%lx\n",
++	fwk_mmio_read_32(base + 0x010));
++
++    /* Clear Status register */
++    fwk_mmio_write_32((base + 0x010), 0xFFFFFFFF);
++
++    FWK_LOG_INFO ("[SRAM_INT] fwk_int number = %d\n",
++	interrupt);
++    fwk_interrupt_clear_pending(interrupt);
++    FWK_LOG_INFO ("[SRAM_INT] ErrAddr   = 0x%lx\n",
++	fwk_mmio_read_32(base + 0x018));
++}
++
++static void tcm_handler()
++{
++    unsigned int interrupt;
++    fwk_interrupt_get_current(&interrupt);
++    uint32_t base = TCM_ECC_BASE;
++
++    FWK_LOG_INFO ("[TCM_INT] ErrStatus = 0x%lx\n",
++	fwk_mmio_read_32(base + 0x080));
++
++    /* Clear Status register */
++    fwk_mmio_write_32((base + 0x080), 0xFFFFFFFF);
++ 
++    FWK_LOG_INFO ("[TCM_INT] fwk_int number = %d\n",
++        interrupt);
++    fwk_interrupt_clear_pending(interrupt);
++    FWK_LOG_INFO ("[TCM_INT] ErrCode   = 0x%lx\n",
++	fwk_mmio_read_32(base + 0x088));
++    FWK_LOG_INFO ("[TCM_INT] ErrAddr   = 0x%lx\n",
++	fwk_mmio_read_32(base + 0x08C));
++}
++
++static void rsm_handler()
++{
++    unsigned int interrupt;
++    fwk_interrupt_get_current(&interrupt);
++    uint32_t base = DYNAMIC_ATU_BASE;
++
++    FWK_LOG_INFO ("[RSM_INT] ErrStatus = 0x%lx\n",
++	 fwk_mmio_read_32(base + 0x010));
++
++    /* Clear Status register */
++    fwk_mmio_write_32((base + 0x010), 0xFFFFFFFF);
++
++    FWK_LOG_INFO ("[RSM_INT] fwk_int number = %d\n",
++        interrupt);
++    fwk_interrupt_clear_pending(interrupt);
++    FWK_LOG_INFO ("[RSM_INT] ErrAddr   = 0x%lx\n",
++	fwk_mmio_read_32(base + 0x018));
++}
++
++struct ras_isr isr_list[] = {
++	/* Shared SRAM Interrupts */
++	[0]={ .interrupt_no = 24,
++	      .isr = &sram_handler,
++	    },
++	[1]={ .interrupt_no = 25,
++	      .isr = &sram_handler,
++	    },
++        [2]={ .interrupt_no = 26,
++	      .isr = &sram_handler,
++	    },
++        [3]={ .interrupt_no = 27,
++	      .isr = &sram_handler,
++	    },
++	/* SCP TCM Interrupts */
++        [4]={ .interrupt_no = 21,
++              .isr = &tcm_handler,
++            },
++        [5]={ .interrupt_no = 22,
++              .isr = &tcm_handler,
++            },
++        [6]={ .interrupt_no = 23,
++              .isr = &tcm_handler,
++            },
++	/* RSM SRAM Interrupt */
++	[7]={ .interrupt_no = 29,
++              .isr = &rsm_handler,
++            },
++};
++
++static struct ras_context *ras_ctx;
++
++static int mod_ras_handler_init(
++    fwk_id_t module_id,
++    unsigned int element_count,
++    const void *unused)
++{
++
++    FWK_LOG_INFO("%s Initializing RAS Handler ", MOD_NAME);
++    if(element_count == 0)
++        return FWK_E_DATA;
++
++    ras_ctx = fwk_mm_calloc(element_count, sizeof(ras_ctx[0]));
++ 
++    return FWK_SUCCESS;
++}
++
++bool check_if_irq_implemented(unsigned int irq)
++{
++    for(unsigned int i = 0; i < FWK_ARRAY_SIZE(isr_list); i++) {
++    if (isr_list[i].interrupt_no == irq)
++        return true;
++    }
++
++    return false;
++}
++
++void *find_isr(unsigned int irq )
++{
++    for(unsigned int i = 0; i < FWK_ARRAY_SIZE(isr_list); i++) {
++    if(isr_list[i].interrupt_no == irq) {
++	return (void*)isr_list[i].isr;
++        }
++    }
++
++    return (void*)default_handler;
++}
++
++static int mod_ras_handler_start(fwk_id_t id)
++{
++    unsigned int irq;
++    int status;
++    /*
++     * Go through the list  of interrupt and find matching
++     * interrupt handler and initialize and enable interrupt
++     * handler
++     */
++    if (fwk_id_is_type(id, FWK_ID_TYPE_MODULE)) {
++        return FWK_SUCCESS;
++    }
++
++    FWK_LOG_INFO("%s Initializing RAS irq's. ", MOD_NAME);
++    for(unsigned int i = 0; i < ras_ctx->config->interrupt_count; i++) {
++	irq = ras_ctx->config->interrupt_id[i];
++        if(check_if_irq_implemented(irq)) {
++            status = fwk_interrupt_set_isr(irq,find_isr(irq));
++        if (status != FWK_SUCCESS) {
++            return status;
++        }
++           status = fwk_interrupt_enable(irq);
++        if (status != FWK_SUCCESS) {
++            return status;
++	}
++        } else {
++          FWK_LOG_INFO(
++	      "%s ISR not implemented for %d\n",
++	      MOD_NAME,
++	      irq);
++
++	}
++    }
++    return FWK_SUCCESS;
++}
++
++static int ras_handler_element_init(
++    fwk_id_t element_id,
++    unsigned int element_count,
++    const void *data)
++{
++    /* RAS handler context */
++    if (fwk_id_get_element_idx(element_id) == 0) {
++        ras_ctx[0].config = (struct mod_ras_config *)data;
++    }
++
++    return FWK_SUCCESS;
++}
++
++
++const struct fwk_module module_ras_handler = {
++    .type = FWK_MODULE_TYPE_SERVICE,
++    .init = mod_ras_handler_init,
++    .element_init = ras_handler_element_init,
++    .start = mod_ras_handler_start,
++};
++
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/CMakeLists.txt b/product/neoverse-rd/rdv3/scp_ramfw/CMakeLists.txt
+index 8927c2a55b08..dc5a6eaa3ccf 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/CMakeLists.txt
++++ b/product/neoverse-rd/rdv3/scp_ramfw/CMakeLists.txt
+@@ -70,7 +70,8 @@ target_sources(
+             "${CMAKE_CURRENT_SOURCE_DIR}/config_pcie_setup.c"
+             "${CMAKE_CURRENT_SOURCE_DIR}/config_smcf.c"
+             "${CMAKE_CURRENT_SOURCE_DIR}/config_amu_smcf_drv.c"
+-            "${CMAKE_CURRENT_SOURCE_DIR}/config_debugger_cli.c")
++            "${CMAKE_CURRENT_SOURCE_DIR}/config_debugger_cli.c"
++            "${CMAKE_CURRENT_SOURCE_DIR}/config_ras_handler.c")
+ 
+ #
+ # Some of our firmware includes require CMSIS.
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake b/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake
+index 986a7f45508b..205ac0191641 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake
++++ b/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake
+@@ -42,7 +42,8 @@ list(PREPEND SCP_MODULE_PATHS
+      "${CMAKE_SOURCE_DIR}/product/neoverse-rd/module/pcie_setup"
+      "${CMAKE_CURRENT_LIST_DIR}/../module/platform_smcf"
+      "${CMAKE_CURRENT_LIST_DIR}/../module/smcf_client"
+-     "${CMAKE_CURRENT_LIST_DIR}/../module/scp_einj_util")
++     "${CMAKE_CURRENT_LIST_DIR}/../module/scp_einj_util"
++     "${CMAKE_CURRENT_LIST_DIR}/../module/ras-handler")
+ 
+ # The order of the modules in the following list is the order in which the
+ # modules are initialized, bound, started during the pre-runtime phase.
+@@ -82,3 +83,4 @@ list(APPEND SCP_MODULES "platform-smcf")
+ list(APPEND SCP_MODULES "smcf-client")
+ list(APPEND SCP_MODULES "debugger-cli")
+ list(APPEND SCP_MODULES "scp-einj-util")
++list(APPEND SCP_MODULES "ras-handler")
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/config_ras_handler.c b/product/neoverse-rd/rdv3/scp_ramfw/config_ras_handler.c
+new file mode 100644
+index 000000000000..433665b8c6b5
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/scp_ramfw/config_ras_handler.c
+@@ -0,0 +1,27 @@
++#include <mod_ras_handler.h>
++
++#include <fwk_element.h>
++#include <fwk_id.h>
++#include <fwk_module.h>
++
++const unsigned int interrupt_ids[] = {21,22,23,24,25,26,27,29};
++
++static const struct fwk_element ras_element_table[] = {
++    [0] = { .name = "RD-V3-ras",
++            .data = &((struct mod_ras_config){
++                .interrupt_count = FWK_ARRAY_SIZE(interrupt_ids),
++                .interrupt_id = interrupt_ids,
++          }),
++     },
++     [1] = { 0 },
++};
++
++static const struct fwk_element *ras_get_element_table(fwk_id_t module_id)
++{
++    return ras_element_table;
++}
++
++const struct fwk_module_config config_ras_handler = {
++    .elements = FWK_MODULE_DYNAMIC_ELEMENTS(ras_get_element_table),
++};
++

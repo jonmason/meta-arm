@@ -1,0 +1,396 @@
+From 2527e273fc10de0c52ee5319c55f33632d767d46 Mon Sep 17 00:00:00 2001
+From: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Date: Wed, 10 Jan 2024 12:39:42 +0530
+Subject: [PATCH] neoverse-rd/rdv3 smcf_client: add smcf sampling control using
+ AP-SCP NS-MHU
+
+SMCF_Client module binds with Timer module's Alarm API at start()
+routine. With periodic Alarm events, SMCF Data Sampling is done by
+SMCF starting/capturing/stoping operations. This repeated process
+continues till system remains booted.
+
+This patch adds mechanism to control the SMCF sampling operation using
+AP-SCP NS-MHU channel. Adds support for AP-SCP NS-MHU channel with doorbell
+operation.
+Once from AP NS world, corresponding MHU channel doorbell is Set, MHU
+event will be generated and message will be communicated to SMCF_Client
+module via Transport module. Subsequently, SMCF_Client module will
+start SMCF sampling, capture AMU/Sensor data and stop SMCF sampling.
+
+Signed-off-by: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Change-Id: I925b3508a3b9ea61c509c7f27929e11681e0adcb
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../rdv3/module/smcf_client/CMakeLists.txt    |   2 +-
+ .../smcf_client/include/mod_smcf_client.h     |  28 +++++
+ .../module/smcf_client/src/mod_smcf_client.c  | 113 +++++++++++++-----
+ .../neoverse-rd/rdv3/scp_ramfw/config_mhu3.c  |  19 +++
+ .../rdv3/scp_ramfw/config_transport.c         |  23 ++++
+ .../rdv3/scp_ramfw/include/fmw_cmsis.h        |   2 +
+ .../rdv3/scp_ramfw/include/scp_cfgd_mhu3.h    |   1 +
+ .../scp_ramfw/include/scp_cfgd_transport.h    |   1 +
+ .../rdv3/scp_ramfw/include/scp_css_mmap.h     |   2 +
+ 9 files changed, 162 insertions(+), 29 deletions(-)
+ create mode 100644 product/neoverse-rd/rdv3/module/smcf_client/include/mod_smcf_client.h
+
+diff --git a/product/neoverse-rd/rdv3/module/smcf_client/CMakeLists.txt b/product/neoverse-rd/rdv3/module/smcf_client/CMakeLists.txt
+index 245b0fdf297a..e80acbbcc229 100644
+--- a/product/neoverse-rd/rdv3/module/smcf_client/CMakeLists.txt
++++ b/product/neoverse-rd/rdv3/module/smcf_client/CMakeLists.txt
+@@ -35,4 +35,4 @@ target_include_directories(${SCP_MODULE_TARGET}
+ target_sources(${SCP_MODULE_TARGET}
+ 	PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/mod_smcf_client.c")
+ target_link_libraries(
+-	${SCP_MODULE_TARGET} PRIVATE module-platform-smcf module-smcf  module-amu-smcf-drv module-timer)
++	${SCP_MODULE_TARGET} PRIVATE module-platform-smcf module-smcf  module-amu-smcf-drv module-timer module-transport)
+diff --git a/product/neoverse-rd/rdv3/module/smcf_client/include/mod_smcf_client.h b/product/neoverse-rd/rdv3/module/smcf_client/include/mod_smcf_client.h
+new file mode 100644
+index 000000000000..a338ccada2e8
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/module/smcf_client/include/mod_smcf_client.h
+@@ -0,0 +1,28 @@
++/*
++ * Arm SCP/MCP Software
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ * Description:
++ *     SMCF Client Support
++ */
++
++#ifndef MOD_SMCF_CLIENT_H
++#define MOD_SMCF_CLIENT_H
++
++#include <fwk_id.h>
++
++#include <stdint.h>
++
++/*!
++ *  * \brief Indices of the interfaces exposed by the module.
++ *   */
++enum mod_smcf_client_api_idx {
++    /*! Interface for Transport module */
++    MOD_SMCF_CLIENT_API_IDX_TRANSPORT_SIGNAL = 1,
++    /*! Number of exposed interfaces */
++    MOD_SMCF_CLIENT_API_COUNT
++};
++
++#endif /* MOD_SMCF_CLIENT_H */
+diff --git a/product/neoverse-rd/rdv3/module/smcf_client/src/mod_smcf_client.c b/product/neoverse-rd/rdv3/module/smcf_client/src/mod_smcf_client.c
+index cd0835bdf487..aea215d530fd 100644
+--- a/product/neoverse-rd/rdv3/module/smcf_client/src/mod_smcf_client.c
++++ b/product/neoverse-rd/rdv3/module/smcf_client/src/mod_smcf_client.c
+@@ -8,11 +8,16 @@
+ #include "platform_core.h"
+ 
+ #include <scp_cfgd_timer.h>
++#include <scp_cfgd_transport.h>
+ 
+ #include <mod_amu_smcf_drv.h>
+ #include <mod_platform_smcf.h>
+ #include <mod_smcf.h>
++#include <mod_smcf_client.h>
+ #include <mod_timer.h>
++#include <mod_transport.h>
++
++#include <interface_amu.h>
+ 
+ #include <interface_amu.h>
+ 
+@@ -26,6 +31,8 @@
+ #include <string.h>
+ 
+ #define NUM_OF_CORE_COUNTERS 7
++#define MOD_NAME "[SMCF_CLIENT] "
++
+ static unsigned int core_count;
+ 
+ static struct mod_timer_alarm_api *alarm_api;
+@@ -33,7 +40,7 @@ static struct smcf_data_api *platform_smpling_api;
+ static struct smcf_control_api *control_api;
+ static struct smcf_monitor_group_interrupt_api *interrupt_api;
+ static struct amu_api *amu_data_api;
+-
++static struct mod_transport_firmware_api *transport_api;
+ static uint32_t amu_sensor_count = 0;
+ 
+ fwk_id_t alarm_id = FWK_ID_SUB_ELEMENT_INIT(
+@@ -54,6 +61,27 @@ static int smcf_client_init(
+     return FWK_SUCCESS;
+ }
+ 
++static void alarm_callback(uintptr_t module_idx)
++{
++    uint32_t mgi;
++    uint32_t num_of_mgis = 2 * core_count; // Each core has 2 MGI (AMU, DTS)
++
++    for (mgi = 0; mgi < num_of_mgis; mgi++) {
++        platform_smpling_api->start_data_sampling(
++            FWK_ID_ELEMENT(FWK_MODULE_IDX_SMCF, mgi));
++    }
++
++    for (mgi = 0; mgi < num_of_mgis; mgi++) {
++        interrupt_api->handle_interrupt(
++            FWK_ID_ELEMENT(FWK_MODULE_IDX_SMCF, mgi));
++    }
++
++    for (mgi = 0; mgi < num_of_mgis; mgi++) {
++        platform_smpling_api->stop_data_sampling(
++            FWK_ID_ELEMENT(FWK_MODULE_IDX_SMCF, mgi));
++    }
++}
++
+ static int smcf_client_bind(fwk_id_t id, unsigned int round)
+ {
+     int status;
+@@ -102,9 +130,62 @@ static int smcf_client_bind(fwk_id_t id, unsigned int round)
+     if (status != FWK_SUCCESS) {
+         return status;
+     }
++
++    status = fwk_module_bind(
++        FWK_ID_ELEMENT(FWK_MODULE_IDX_TRANSPORT, SCP_CFGD_MOD_TRANSPORT_EIDX_SMCF_0),
++        FWK_ID_API(FWK_MODULE_IDX_TRANSPORT, MOD_TRANSPORT_API_IDX_FIRMWARE),
++        &transport_api);
++
++    if (status != FWK_SUCCESS) {
++        return status;
++    }
++
+     return fwk_module_bind(alarm_id, MOD_TIMER_API_ID_ALARM, &alarm_api);
+ }
+ 
++
++/*
++ * Transport signal API implementation
++ */
++static int signal_error(fwk_id_t unused)
++{
++    FWK_LOG_INFO(MOD_NAME "Error: message not delivered for AP-SCP NS MHU\n");
++
++    return FWK_SUCCESS;
++}
++
++static int signal_message(fwk_id_t unused)
++{
++    alarm_callback(fwk_id_get_module_idx(unused));
++    return FWK_SUCCESS;
++}
++
++const struct mod_transport_firmware_signal_api transport_signal_api = {
++    .signal_error = signal_error,
++    .signal_message = signal_message,
++};
++
++static int smcf_client_process_bind_request(
++    fwk_id_t requester_id,
++    fwk_id_t pd_id,
++    fwk_id_t api_id,
++    const void **api)
++{
++    enum mod_smcf_client_api_idx api_id_type;
++
++    api_id_type = (enum mod_smcf_client_api_idx)fwk_id_get_api_idx(api_id);
++
++    switch (api_id_type) {
++    case MOD_SMCF_CLIENT_API_IDX_TRANSPORT_SIGNAL:
++        *api = &transport_signal_api;
++        break;
++    default:
++        return FWK_E_PARAM;
++    }
++
++    return FWK_SUCCESS;
++}
++
+ static int smcf_client_process_notification(
+     const struct fwk_event *event,
+     struct fwk_event *resp_event)
+@@ -144,27 +225,6 @@ static int smcf_client_process_notification(
+     return status;
+ }
+ 
+-static void alarm_callback(uintptr_t module_idx)
+-{
+-    uint32_t mgi;
+-    uint32_t num_of_mgis = 2 * core_count; // Each core has 2 MGI (AMU, DTS)
+-
+-    for (mgi = 0; mgi < num_of_mgis; mgi++) {
+-        platform_smpling_api->start_data_sampling(
+-            FWK_ID_ELEMENT(FWK_MODULE_IDX_SMCF, mgi));
+-    }
+-
+-    for (mgi = 0; mgi < num_of_mgis; mgi++) {
+-        interrupt_api->handle_interrupt(
+-            FWK_ID_ELEMENT(FWK_MODULE_IDX_SMCF, mgi));
+-    }
+-
+-    for (mgi = 0; mgi < num_of_mgis; mgi++) {
+-        platform_smpling_api->stop_data_sampling(
+-            FWK_ID_ELEMENT(FWK_MODULE_IDX_SMCF, mgi));
+-    }
+-}
+-
+ static int smcf_client_start(fwk_id_t id)
+ {
+     uint32_t mgi, num_of_mgis;
+@@ -181,18 +241,15 @@ static int smcf_client_start(fwk_id_t id)
+             id);
+     }
+ 
+-    return alarm_api->start(
+-        alarm_id,
+-        1000,
+-        MOD_TIMER_ALARM_TYPE_PERIODIC,
+-        alarm_callback,
+-        fwk_id_get_module_idx(id));
++    return FWK_SUCCESS;
+ }
+ 
+ const struct fwk_module module_smcf_client = {
+     .type = FWK_MODULE_TYPE_SERVICE,
++    .api_count = MOD_SMCF_CLIENT_API_COUNT,
+     .init = smcf_client_init,
+     .bind = smcf_client_bind,
++    .process_bind_request = smcf_client_process_bind_request,
+     .start = smcf_client_start,
+     .process_notification = smcf_client_process_notification,
+ };
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/config_mhu3.c b/product/neoverse-rd/rdv3/scp_ramfw/config_mhu3.c
+index 51587f4a5902..25b018e19dee 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/config_mhu3.c
++++ b/product/neoverse-rd/rdv3/scp_ramfw/config_mhu3.c
+@@ -22,6 +22,9 @@
+ /* Module 'mhu3' element count */
+ #define MOD_MHU3_ELEMENT_COUNT (SCP_CFGD_MOD_MHU3_EIDX_COUNT + 1)
+ 
++/* AP<-->SCP Non-Secure MHUv3 doorbell channel count */
++#define SCP2AP_NS_DBCH_COUNT 1
++
+ /* AP<-->SCP Secure MHUv3 doorbell channel count */
+ #define SCP2AP_S_DBCH_COUNT 1
+ 
+@@ -31,6 +34,12 @@
+ /* SCP<-->MCP Secure MHUv3 Doorbell channel count */
+ #define SCP2MCP_S_DBCH_COUNT 1
+ 
++/* AP<-->SCP Non-Secure MHUv3 doorbell channel configuration */
++struct mod_mhu3_channel_config scp2ap_ns_dbch_config[SCP2AP_NS_DBCH_COUNT] = {
++    /* PBX CH 0, FLAG 0, MBX CH 0, FLAG 0 */
++    MOD_MHU3_INIT_DBCH(0, 0, 0, 0),
++};
++
+ /* AP<-->SCP Secure MHUv3 doorbell channel configuration */
+ struct mod_mhu3_channel_config scp2ap_s_dbch_config[SCP2AP_S_DBCH_COUNT] = {
+     /* PBX CH 0, FLAG 0, MBX CH 0, FLAG 0 */
+@@ -56,6 +65,16 @@ static struct mod_mhu3_channel_config
+ 
+ /* Module element table */
+ static const struct fwk_element mhu_element_table[MOD_MHU3_ELEMENT_COUNT]  = {
++    [SCP_CFGD_MOD_MHU3_EIDX_SCP_AP_NS_CLUS0] = {
++        .name = "SCP2AP_NS_MHU_DBCH",
++        .sub_element_count = 1,
++        .data = &(struct mod_mhu3_device_config) {
++            .irq = (unsigned int) MHU3_AP2SCP_IRQ_NS,
++            .in = SCP_AP2SCP_MHUV3_RCV_NS_BASE,
++            .out = SCP_SCP2AP_MHUV3_SEND_NS_BASE,
++            .channels = &scp2ap_ns_dbch_config[0],
++        },
++    },
+     [SCP_CFGD_MOD_MHU3_EIDX_SCP_AP_S_CLUS0] = {
+         .name = "SCP2AP_S_MHU_DBCH",
+         .sub_element_count = 1,
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/config_transport.c b/product/neoverse-rd/rdv3/scp_ramfw/config_transport.c
+index 5e1b11f9aad9..40e3704930da 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/config_transport.c
++++ b/product/neoverse-rd/rdv3/scp_ramfw/config_transport.c
+@@ -18,6 +18,7 @@
+ #include <mod_mhu3.h>
+ #include <mod_scmi.h>
+ #include <mod_scp_platform.h>
++#include <mod_smcf_client.h>
+ #include <mod_transport.h>
+ 
+ #include <fwk_element.h>
+@@ -68,6 +69,28 @@ static const struct fwk_element element_table[MOD_TRANSPORT_ELEMENT_COUNT]  = {
+                 },
+         }),
+     },
++    [SCP_CFGD_MOD_TRANSPORT_EIDX_SMCF_0] = {
++        .name = "SMCF_0",
++        .data = &((
++            struct mod_transport_channel_config) {
++                .transport_type = MOD_TRANSPORT_CHANNEL_TRANSPORT_TYPE_NONE,
++                .policies = MOD_TRANSPORT_POLICY_NONE,
++                .channel_type = MOD_TRANSPORT_CHANNEL_TYPE_COMPLETER,
++                .signal_api_id =
++                    FWK_ID_API_INIT(
++                        FWK_MODULE_IDX_SMCF_CLIENT,
++                        MOD_SMCF_CLIENT_API_IDX_TRANSPORT_SIGNAL),
++                .driver_id =
++                    FWK_ID_SUB_ELEMENT_INIT(
++                        FWK_MODULE_IDX_MHU3,
++                        SCP_CFGD_MOD_MHU3_EIDX_SCP_AP_NS_CLUS0,
++                        0),
++                .driver_api_id =
++                    FWK_ID_API_INIT(
++                        FWK_MODULE_IDX_MHU3,
++                        MOD_MHU3_API_IDX_TRANSPORT_DRIVER),
++        }),
++    },
+     [SCP_CFGD_MOD_TRANSPORT_EIDX_SYSTEM] = {
+         .name = "SCP_PLATFORM_TRANSPORT",
+         .data = &((
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/include/fmw_cmsis.h b/product/neoverse-rd/rdv3/scp_ramfw/include/fmw_cmsis.h
+index 09499e1de5e4..e08427924929 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/include/fmw_cmsis.h
++++ b/product/neoverse-rd/rdv3/scp_ramfw/include/fmw_cmsis.h
+@@ -54,6 +54,8 @@ typedef enum IRQn {
+     PPU_CLUSTERS2_IRQ = 61,
+     /* Consolidated Cluster PPU Interrupt for 97-128 cores, 225-256 cores */
+     PPU_CLUSTERS3_IRQ = 62,
++    /* MHUv3 non-secure IRQ between SCP and AP */
++    MHU3_AP2SCP_IRQ_NS = 82,
+     /* MHUv3 secure IRQ between SCP and AP */
+     MHU3_AP2SCP_IRQ_S = 83,
+     /* MHUv3 secure IRQ between SCP and MCP */
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/include/scp_cfgd_mhu3.h b/product/neoverse-rd/rdv3/scp_ramfw/include/scp_cfgd_mhu3.h
+index 75222842db2a..f7cdb801ee0f 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/include/scp_cfgd_mhu3.h
++++ b/product/neoverse-rd/rdv3/scp_ramfw/include/scp_cfgd_mhu3.h
+@@ -13,6 +13,7 @@
+ 
+ /* MHUv3 device indices */
+ enum scp_cfgd_mod_mhu3_device_idx {
++    SCP_CFGD_MOD_MHU3_EIDX_SCP_AP_NS_CLUS0,
+     SCP_CFGD_MOD_MHU3_EIDX_SCP_AP_S_CLUS0,
+     SCP_CFGD_MOD_MHU3_EIDX_SCP_RSS_S,
+     SCP_CFGD_MOD_MHU3_EIDX_SCP_MCP_S,
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/include/scp_cfgd_transport.h b/product/neoverse-rd/rdv3/scp_ramfw/include/scp_cfgd_transport.h
+index 155b59a0a7ad..4e1120756ffd 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/include/scp_cfgd_transport.h
++++ b/product/neoverse-rd/rdv3/scp_ramfw/include/scp_cfgd_transport.h
+@@ -15,6 +15,7 @@
+ /* Module 'transport' element indexes */
+ enum scp_cfgd_mod_transport_element_idx {
+     SCP_CFGD_MOD_TRANSPORT_EIDX_PSCI,
++    SCP_CFGD_MOD_TRANSPORT_EIDX_SMCF_0,
+     SCP_CFGD_MOD_TRANSPORT_EIDX_SYSTEM,
+     SCP_CFGD_MOD_TRANSPORT_EIDX_RSE_SCMI_MSG_SEND_CH,
+     SCP_CFGD_MOD_TRANSPORT_EIDX_RSE_SCMI_MSG_RECV_CH,
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/include/scp_css_mmap.h b/product/neoverse-rd/rdv3/scp_ramfw/include/scp_css_mmap.h
+index 1db37df5a451..69555afaa25a 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/include/scp_css_mmap.h
++++ b/product/neoverse-rd/rdv3/scp_ramfw/include/scp_css_mmap.h
+@@ -28,6 +28,8 @@
+ #define SCP_REFCLK_CNTCTL_BASE        (0x44000000)
+ #define SCP_REFCLK_CNTBASE0_BASE      (0x44001000)
+ #define SCP_UART_BASE                 (0x44002000)
++#define SCP_SCP2AP_MHUV3_SEND_NS_BASE (0x45000000)
++#define SCP_AP2SCP_MHUV3_RCV_NS_BASE  (0x45010000)
+ #define SCP_SCP2AP_MHUV3_SEND_S_BASE  (0x45020000)
+ #define SCP_AP2SCP_MHUV3_RCV_S_BASE   (0x45030000)
+ #define SCP_SCP2MCP_MHUV3_SEND_S_BASE (0x45800000)

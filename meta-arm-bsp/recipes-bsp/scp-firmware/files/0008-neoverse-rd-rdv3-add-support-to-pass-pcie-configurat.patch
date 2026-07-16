@@ -1,0 +1,274 @@
+From 33215dc05d388b2616814a410cd46e76385e70aa Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Mon, 1 Apr 2024 23:15:44 +0100
+Subject: [PATCH] neoverse-rd/rdv3: add support to pass pcie configuration via
+ sds
+
+UEFI configures and pass the memory map region info to the OS thru
+ACPI tables. Currently, this is hardcoded in the table.
+
+The memory map region info calculated at SCP is passed to UEFI via
+ARM-TF. To achieve this SCP should program it in the SDS which is then
+conusmed by ARM-TF to produce device tree. This device tree blob is then
+passed to UEFI.
+
+Add the support to bind with SDS interface and save configuration info
+for each of the block.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: I43bbb9fc1cf04a6f7d06fcd8d67f65a9cd110444
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../module/pcie_setup/CMakeLists.txt          |   2 +-
+ .../pcie_setup/include/mod_pcie_setup.h       |  22 ++++
+ .../module/pcie_setup/src/mod_pcie_setup.c    | 109 ++++++++++++++++--
+ 3 files changed, 122 insertions(+), 11 deletions(-)
+
+diff --git a/product/neoverse-rd/module/pcie_setup/CMakeLists.txt b/product/neoverse-rd/module/pcie_setup/CMakeLists.txt
+index a284d205462d..702f12093b83 100644
+--- a/product/neoverse-rd/module/pcie_setup/CMakeLists.txt
++++ b/product/neoverse-rd/module/pcie_setup/CMakeLists.txt
+@@ -16,4 +16,4 @@ target_sources(${SCP_MODULE_TARGET}
+                PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/mod_pcie_setup.c")
+ 
+ target_link_libraries(${SCP_MODULE_TARGET}
+-    PRIVATE module-system-info module-pcie_discovery)
++    PRIVATE module-system-info module-pcie_discovery module-sds)
+diff --git a/product/neoverse-rd/module/pcie_setup/include/mod_pcie_setup.h b/product/neoverse-rd/module/pcie_setup/include/mod_pcie_setup.h
+index c387c442fced..3f5eec17a8dc 100644
+--- a/product/neoverse-rd/module/pcie_setup/include/mod_pcie_setup.h
++++ b/product/neoverse-rd/module/pcie_setup/include/mod_pcie_setup.h
+@@ -39,6 +39,24 @@ struct mod_pcie_setup_mmap {
+     struct mod_pcie_setup_carveout bus;
+ };
+ 
++/*!
++ * \brief Placeholder to put ECAM, MMIOL, MMIOH and Bus number info for each RP.
++ */
++struct mod_pcie_setup_block_mmap {
++    uint64_t ep_count;
++    struct mod_pcie_setup_mmap ep[];
++};
++
++/*!
++ * \brief Placeholder to put information of all the block present on the
++ *        platform.
++ */
++struct mod_pcie_setup_block_mmap_list {
++    uint64_t block_count;
++    uint64_t table_size;
++    struct mod_pcie_setup_block_mmap blocks[];
++};
++
+ /*!
+  * \brief configuration for a single end point and memory map for non io macro.
+  */
+@@ -68,6 +86,8 @@ struct mod_pcie_setup_config {
+     uint8_t nci_source_node_id;
+     /*!* ID of the Io Virtualization block. */
+     uint8_t block_id;
++    /*! Identifier of the SDS structure to place PCIE mmap info. */
++    uint32_t sds_struct_id;
+     /*! End point config for RPs */
+     struct mod_pcie_setup_ep_config *ep_config;
+ };
+@@ -113,6 +133,8 @@ struct mod_pcie_setup_resource_info {
+     uint8_t ep_count;
+     /*! Platform notification source and notification id */
+     struct mod_pcie_setup_platform_notification plat_notification;
++    /*! Structure ID for PCIe configuration info in SDS table. */
++    uint32_t sds_struct_id;
+ };
+ 
+ /*!
+diff --git a/product/neoverse-rd/module/pcie_setup/src/mod_pcie_setup.c b/product/neoverse-rd/module/pcie_setup/src/mod_pcie_setup.c
+index e722119a0546..e9cfae148c60 100644
+--- a/product/neoverse-rd/module/pcie_setup/src/mod_pcie_setup.c
++++ b/product/neoverse-rd/module/pcie_setup/src/mod_pcie_setup.c
+@@ -10,6 +10,7 @@
+ 
+ #include <mod_pcie_discovery.h>
+ #include <mod_pcie_setup.h>
++#include <mod_sds.h>
+ #include <mod_system_info.h>
+ 
+ #include <interface_address_remapper.h>
+@@ -62,10 +63,64 @@ struct mod_pcie_setup_context {
+ 
+     /* AP remap Address read write APIs */
+     struct interface_address_remapper_rw_api *remapper_rw_api;
++
++    /* APIs to program PCIe memory map configuration info in SDS. */
++    struct mod_sds_api *sds_api;
++
++    /*
++     * Size of block config. This depends on the number of rootport in
++     * the block.
++     */
++    size_t block_config_size;
+ };
+ 
+ struct mod_pcie_setup_context pcie_setup_context;
+ 
++static int pcie_setup_update_sds(
++    struct mod_pcie_setup_block_mmap *block_info,
++    struct mod_pcie_setup_config *config)
++{
++    static uint32_t offset = sizeof(struct mod_pcie_setup_block_mmap_list);
++    static uint64_t count = 0;
++    static uint64_t table_size = sizeof(struct mod_pcie_setup_block_mmap_list);
++    size_t block_size;
++    int status;
++
++    count++;
++    status = pcie_setup_context.sds_api->struct_write(
++        config->sds_struct_id,
++        offsetof(struct mod_pcie_setup_block_mmap_list, block_count),
++        &count,
++        sizeof(((struct mod_pcie_setup_block_mmap_list *)0)->block_count));
++    if (status != FWK_SUCCESS) {
++        FWK_LOG_ERR("Block count: SDS Update failed, error:%d", status);
++        return status;
++    }
++
++    block_size = sizeof(struct mod_pcie_setup_block_mmap) +
++        (block_info->ep_count * sizeof(struct mod_pcie_setup_mmap));
++
++    table_size += block_size;
++    status = pcie_setup_context.sds_api->struct_write(
++        config->sds_struct_id,
++        offsetof(struct mod_pcie_setup_block_mmap_list, table_size),
++        &table_size,
++        sizeof(((struct mod_pcie_setup_block_mmap_list *)0)->table_size));
++    if (status != FWK_SUCCESS) {
++        FWK_LOG_ERR("Table Size: SDS Update failed, error:%d", status);
++        return status;
++    }
++
++    status = pcie_setup_context.sds_api->struct_write(
++        config->sds_struct_id, offset, block_info, block_size);
++    offset += block_size;
++    if (status != FWK_SUCCESS) {
++        FWK_LOG_ERR("PCIe Table: SDS Update failed, error:%d", status);
++    }
++
++    return status;
++}
++
+ static void allocate_ecam_address(
+     struct mod_pcie_setup_mmap *mmap,
+     struct pcie_mmap_size *mmap_size)
+@@ -325,10 +380,12 @@ static int discover_and_configure_pcie_device(
+     return FWK_SUCCESS;
+ }
+ 
+-static int configure_pcie_endpoint(struct mod_pcie_setup_config *config)
++static int configure_pcie_endpoint(
++    struct mod_pcie_setup_config *config,
++    struct mod_pcie_setup_block_mmap *block_mmap)
+ {
+     struct interface_cmn_memmap_rnsam_api *cmn_memmap_rnsam_api;
+-    struct mod_pcie_setup_mmap ep_mmap;
++    struct mod_pcie_setup_mmap *ep_mmap;
+     struct mod_pcie_setup_resource_info *res_info;
+     uint64_t ecam_start;
+     uint64_t mmiol_start;
+@@ -359,18 +416,23 @@ static int configure_pcie_endpoint(struct mod_pcie_setup_config *config)
+ 
+     for (index = 0; index < res_info->ep_count; index++) {
+         if (config->ep_config[index].valid) {
+-            memset(&ep_mmap, 0, sizeof(ep_mmap));
+-            status =
+-                discover_and_configure_pcie_device(config, index, &ep_mmap);
++            ep_mmap = &block_mmap->ep[block_mmap->ep_count];
++            block_mmap->ep_count++;
++            status = discover_and_configure_pcie_device(config, index, ep_mmap);
+             if (status != FWK_SUCCESS) {
+                 return status;
+             }
+-            ecam_size += ep_mmap.ecam.size;
+-            mmiol_size += ep_mmap.mmiol.size;
+-            mmioh_size += ep_mmap.mmioh.size;
++            ecam_size += ep_mmap->ecam.size;
++            mmiol_size += ep_mmap->mmiol.size;
++            mmioh_size += ep_mmap->mmioh.size;
+         }
+     }
+ 
++    status = pcie_setup_update_sds(block_mmap, config);
++    if (status != FWK_SUCCESS) {
++        return status;
++    }
++
+     if (ecam_size != 0) {
+         status = cmn_memmap_rnsam_api->map_io_region(
+             ecam_start, ecam_size, config->cmn_node_id);
+@@ -402,10 +464,16 @@ static int configure_pcie_ecam_mmio_space(
+     struct mod_pcie_setup_config *config,
+     unsigned int element)
+ {
++    struct mod_pcie_setup_block_mmap *block_mmap;
+     int status = FWK_SUCCESS;
+ 
+     FWK_LOG_INFO(MOD_NAME "Configuring PCIe: %d", element);
+-    status = configure_pcie_endpoint(config);
++    block_mmap = fwk_mm_calloc(pcie_setup_context.block_config_size, 1);
++    if (block_mmap == NULL) {
++        return FWK_E_NOMEM;
++    }
++    status = configure_pcie_endpoint(config, block_mmap);
++    fwk_mm_free(block_mmap);
+ 
+     return status;
+ }
+@@ -417,6 +485,7 @@ static int mod_pcie_setup_init(
+     const void *data)
+ {
+     const struct mod_pcie_setup_module_config *module_config;
++    size_t block_config_size;
+ 
+     if (block_count == 0) {
+         /* There must be at least one pcie setup config data */
+@@ -449,6 +518,11 @@ static int mod_pcie_setup_init(
+         return FWK_E_NOMEM;
+     }
+ 
++    block_config_size = sizeof(struct mod_pcie_setup_block_mmap) +
++        (sizeof(struct mod_pcie_setup_mmap) *
++         pcie_setup_context.resource_info.ep_count);
++    pcie_setup_context.block_config_size = block_config_size;
++
+     return FWK_SUCCESS;
+ }
+ 
+@@ -509,12 +583,27 @@ static int mod_pcie_setup_bind(fwk_id_t id, unsigned int round)
+         return status;
+     }
+ 
+-    return fwk_module_bind(
++    status= fwk_module_bind(
+         FWK_ID_MODULE(FWK_MODULE_IDX_PCIE_DISCOVERY),
+         FWK_ID_API(
+             FWK_MODULE_IDX_PCIE_DISCOVERY,
+             MOD_PCIE_DISCOVERY_API_IDX_CALCULATE_RESOURCES),
+         &pcie_setup_context.pcie_discovery_api);
++    if (status != FWK_SUCCESS) {
++        return status;
++    }
++
++    if (pcie_setup_context.sds_api == NULL) {
++        status = fwk_module_bind(
++                FWK_ID_MODULE(FWK_MODULE_IDX_SDS),
++                FWK_ID_API(FWK_MODULE_IDX_SDS, 0),
++                &pcie_setup_context.sds_api);
++        if (status != FWK_SUCCESS) {
++            return status;
++        }
++    }
++
++    return status;
+ }
+ 
+ static int mod_pcie_setup_start(fwk_id_t id)

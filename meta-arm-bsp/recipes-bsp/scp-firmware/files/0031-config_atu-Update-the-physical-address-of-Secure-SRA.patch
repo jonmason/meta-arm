@@ -1,0 +1,30 @@
+From 1c8d76f5295fede043dab51c889664331dbde99c Mon Sep 17 00:00:00 2001
+From: Glen Yeldho <glen.yeldho@arm.com>
+Date: Fri, 19 Apr 2024 12:58:14 +0530
+Subject: [PATCH] config_atu: Update the physical address of Secure SRAM Region
+
+Update secure-sram region address from 0x00000 to 0x1A000, this
+region is accessed by scp-einj-util for shared-sram error injection.
+
+Signed-off-by: Glen Yeldho <glen.yeldho@arm.com>
+Change-Id: I0065ad981cb3e8ff35958013b9cb73256b1d335f
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ product/neoverse-rd/rdv3/scp_ramfw/config_atu.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/config_atu.c b/product/neoverse-rd/rdv3/scp_ramfw/config_atu.c
+index 032ee1ac24fd..e96ff9a67eff 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/config_atu.c
++++ b/product/neoverse-rd/rdv3/scp_ramfw/config_atu.c
+@@ -90,7 +90,7 @@ static struct atu_region_map atu_regions[ATU_REGION_IDX_COUNT] = {
+     [ATU_REGION_IDX_SHARED_SRAM_SECURE] = {
+ 	.region_owner_id = FWK_ID_MODULE_INIT(FWK_MODULE_IDX_SCP_PLATFORM),
+ 	.log_addr_base = SCP_ATW0_SHARED_SRAM_SECURE_BASE,
+-	.phy_addr_base = 0x00000000,
++	.phy_addr_base = 0x1A000,
+ 	.region_size = SCP_ATW0_SHARED_SRAM_SECURE_SIZE,
+ 	.attributes = ATU_ENCODE_ATTRIBUTES_SECURE_PAS,
+     },

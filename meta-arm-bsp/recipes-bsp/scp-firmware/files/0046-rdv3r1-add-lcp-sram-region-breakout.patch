@@ -1,0 +1,43 @@
+From 5f432f0795ae259cc4c22ee0810ffa6af913a282 Mon Sep 17 00:00:00 2001
+From: "Nancy ." <nancy@arm.com>
+Date: Wed, 11 Dec 2024 13:01:02 +0000
+Subject: [PATCH] rdv3r1: add lcp sram region breakout
+
+Signed-off-by: Nancy . <nancy@arm.com>
+Change-Id: If07d1cd65cca5aa02bd7e47c48a60af5f82d42d2
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../rdv3r1/lcp_ramfw/include/lcp_css_mmap.h    | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
+
+diff --git a/product/neoverse-rd/rdv3r1/lcp_ramfw/include/lcp_css_mmap.h b/product/neoverse-rd/rdv3r1/lcp_ramfw/include/lcp_css_mmap.h
+index cd120b9ea19f..ca1fbf419152 100644
+--- a/product/neoverse-rd/rdv3r1/lcp_ramfw/include/lcp_css_mmap.h
++++ b/product/neoverse-rd/rdv3r1/lcp_ramfw/include/lcp_css_mmap.h
+@@ -30,6 +30,24 @@
+ #define LCP_CORE_PERIPHERAL_REGION_START (0x30010000)
+ #define LCP_CORE_PERIPHERAL_REGION_END   (0x6FFFFFFF)
+ 
++/*
++ * SRAM region breakout
++ *  ______________________________ (0xB007_FFFF)
++ * |______________________________|
++ * |                              |(0x7400_FFFF)
++ * |  AP_LCP Shared SRAM (64 KB)  |
++ * |______________________________|(0x7400_0000)
++ * |______________________________|(0x7040_7FFF)
++ * |                              |
++ * |    LCP SMCF SRAM (32 KB)     |
++ * |______________________________|(0x7040_0000)
++ * |______________________________|(0x700F_FFFF)
++ * |                              |
++ * |     SCP SMCF SRAM (1 MB)     |
++ * |______________________________|(0x7000_0000)
++ *
++ */
++
+ #define LCP_SRAM_REGION_START (0x70000000)
+ #define LCP_SRAM_REGION_END   (0xB007FFFF)
+ 

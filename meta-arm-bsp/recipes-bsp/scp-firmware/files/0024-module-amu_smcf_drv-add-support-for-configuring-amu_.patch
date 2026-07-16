@@ -1,0 +1,73 @@
+From 02ed4508257a85e7080bbc71010f1a32c507c306 Mon Sep 17 00:00:00 2001
+From: Manoj Kumar Prabakaran <manojkumar.prabakaran@arm.com>
+Date: Mon, 8 Apr 2024 18:15:40 +0530
+Subject: [PATCH] module/amu_smcf_drv: add support for configuring
+ amu_smcf_tag_size
+
+Adding support for configuring amu_smcf_tag_size and updating
+the max size of AMU SMCF tag buffer. This makes platforms to
+configure the AMU SMCF tag buffer size.
+
+Change-Id: I70a30b6e4c411e6be0082bbbd33e888041da61e0
+Signed-off-by: Manoj Kumar Prabakaran <manojkumar.prabakaran@arm.com>
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ module/amu_smcf_drv/include/mod_amu_smcf_drv.h | 5 ++++-
+ module/amu_smcf_drv/src/mod_amu_smcf_drv.c     | 7 ++++---
+ 2 files changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/module/amu_smcf_drv/include/mod_amu_smcf_drv.h b/module/amu_smcf_drv/include/mod_amu_smcf_drv.h
+index 83930137dbab..56f1e2cde640 100644
+--- a/module/amu_smcf_drv/include/mod_amu_smcf_drv.h
++++ b/module/amu_smcf_drv/include/mod_amu_smcf_drv.h
+@@ -10,7 +10,7 @@
+ 
+ #include <fwk_id.h>
+ 
+-#define AMU_TAG_BUFFER_SIZE 16
++#define AMU_TAG_BUFFER_SIZE_MAX 128
+ 
+ /*!
+  * \brief amu_smcf_drv element config.
+@@ -28,6 +28,9 @@ struct amu_smcf_drv_element_config {
+ 
+     /*! Table of counter offsets per core. */
+     uint32_t *counter_offsets;
++
++    /*! SMCF Tag buffer size */
++    uint32_t amu_tag_buffer_size;
+ };
+ 
+ /*!
+diff --git a/module/amu_smcf_drv/src/mod_amu_smcf_drv.c b/module/amu_smcf_drv/src/mod_amu_smcf_drv.c
+index a3449eb9c9c9..7029751243ee 100644
+--- a/module/amu_smcf_drv/src/mod_amu_smcf_drv.c
++++ b/module/amu_smcf_drv/src/mod_amu_smcf_drv.c
+@@ -51,7 +51,7 @@ static int amu_smcf_drv_get_counter_value(
+     unsigned int i, core_idx, amu_counter_idx;
+     struct amu_smcf_drv_element_config *core_counters_cfg;
+     struct mod_smcf_buffer smcf_tag_buf;
+-    static uint32_t tag_buf[AMU_TAG_BUFFER_SIZE];
++    static uint32_t tag_buf[AMU_TAG_BUFFER_SIZE_MAX];
+ 
+     /* arguments check */
+     if (!fwk_module_is_valid_sub_element_id(start_counter_id) ||
+@@ -68,13 +68,14 @@ static int amu_smcf_drv_get_counter_value(
+     }
+ 
+     /* Prepare smcf get_data arguments */
+-    memset(tag_buf, 0, sizeof(uint32_t) * AMU_TAG_BUFFER_SIZE);
++    memset(
++        tag_buf, 0, sizeof(uint32_t) * core_counters_cfg->amu_tag_buffer_size);
+     memset(
+         amu_smcf_drv_ctx.amu_smcf_data_buf.ptr,
+         0,
+         amu_smcf_drv_ctx.amu_smcf_data_buf.size);
+     smcf_tag_buf.ptr = tag_buf;
+-    smcf_tag_buf.size = AMU_TAG_BUFFER_SIZE;
++    smcf_tag_buf.size = core_counters_cfg->amu_tag_buffer_size;
+     amu_smcf_data = amu_smcf_drv_ctx.amu_smcf_data_buf.ptr;
+ 
+     status = amu_smcf_drv_ctx.data_api->get_data(

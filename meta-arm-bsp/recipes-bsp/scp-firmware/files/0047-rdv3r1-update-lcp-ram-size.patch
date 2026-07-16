@@ -1,0 +1,34 @@
+From 4c78edd8253ff4b899fdb1004af9aeb651d50d12 Mon Sep 17 00:00:00 2001
+From: "Nancy ." <nancy@arm.com>
+Date: Fri, 29 Nov 2024 06:02:57 +0000
+Subject: [PATCH] rdv3r1: update lcp ram size
+
+With a recent design change, update ITCM SRAM to 128KB, DTCM SRAM to
+64KB.
+
+Signed-off-by: Nancy . <nancy@arm.com>
+Change-Id: Ie7990c7d8dd14616d61fb14e2eb7cb4ccfdfb16f
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ product/neoverse-rd/rdv3r1/lcp_ramfw/include/lcp_css_mmap.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/product/neoverse-rd/rdv3r1/lcp_ramfw/include/lcp_css_mmap.h b/product/neoverse-rd/rdv3r1/lcp_ramfw/include/lcp_css_mmap.h
+index ca1fbf419152..ac4dd26ffd94 100644
+--- a/product/neoverse-rd/rdv3r1/lcp_ramfw/include/lcp_css_mmap.h
++++ b/product/neoverse-rd/rdv3r1/lcp_ramfw/include/lcp_css_mmap.h
+@@ -16,10 +16,10 @@
+ // clang-format off
+ 
+ #define LCP_ITCM_S_BASE (0x10000000)
+-#define LCP_ITCM_SIZE   (64 * 1024)
++#define LCP_ITCM_SIZE   (128 * 1024)
+ 
+ #define LCP_DTCM_S_BASE (0x30000000)
+-#define LCP_DTCM_SIZE   (32 * 1024)
++#define LCP_DTCM_SIZE   (64 * 1024)
+ 
+ #define LCP_CORE_ITCM_REGION_START LCP_ITCM_S_BASE
+ #define LCP_CORE_ITCM_REGION_END   (LCP_ITCM_S_BASE + LCP_ITCM_SIZE - 1)

@@ -1,0 +1,1502 @@
+From e5210f1d3b26d33ff1b0b5ecc26ccd8cd79fc4be Mon Sep 17 00:00:00 2001
+From: Lokesh B V <Lokesh.BV@Arm.com>
+Date: Wed, 3 Jul 2024 15:08:29 -0400
+Subject: [PATCH] neoverse-rd/rdv3r1cfg1: add platform Support
+
+RDV3R1-Cfg1 Platform configuration:
+- 4 Chips
+- 4 LCP (1:4 AP:LCP)
+- 16 AP Cores
+- CMN Cyprush Mesh: 3x4
+  - 5 CCG Nodes
+  - 2 SNF Nodes
+- 2 IO Blocks : 1 for PCIe and 1 for Non-PCIe devices
+
++ Increased System cache backed region to accomodate remote chips
+DRAM2 regions.
+
+Signed-off-by: Lokesh B V <Lokesh.BV@Arm.com>
+Change-Id: Id4f482bea51787689313e6bdce4aaeef0a3d4f91
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../rdv3r1/include/platform_variant.h         |  17 +
+ .../rdv3r1/lcp_ramfw/CMakeLists.txt           |  16 +
+ .../rdv3r1/mcp_ramfw/CMakeLists.txt           |  18 +
+ .../rdv3r1/module/mcp_platform/CMakeLists.txt |  19 +
+ .../rdv3r1/scp_ramfw/CMakeLists.txt           |  16 +
+ .../rdv3r1/scp_ramfw/config_clock.c           |   3 +
+ .../rdv3r1/scp_ramfw/config_cmn_cyprus.c      | 817 +++++++++++++++++-
+ .../rdv3r1/scp_ramfw/config_io_block.c        |   5 +-
+ .../rdv3r1/scp_ramfw/config_pcie_setup.c      |  19 +
+ .../rdv3r1/scp_ramfw/config_pik_clock.c       |   3 +
+ .../rdv3r1/scp_ramfw/include/cmn_node_id.h    |  42 +
+ .../rdv3r1/scp_ramfw/include/platform_core.h  |  37 +-
+ .../rdv3r1/scp_ramfw/include/scp_clock.h      |   5 +
+ .../module/scp_platform/CMakeLists.txt        |  16 +
+ 14 files changed, 1018 insertions(+), 15 deletions(-)
+ create mode 100644 product/neoverse-rd/rdv3r1/include/platform_variant.h
+
+diff --git a/product/neoverse-rd/rdv3r1/include/platform_variant.h b/product/neoverse-rd/rdv3r1/include/platform_variant.h
+new file mode 100644
+index 000000000000..239500e2e011
+--- /dev/null
++++ b/product/neoverse-rd/rdv3r1/include/platform_variant.h
+@@ -0,0 +1,17 @@
++/*
++ * Arm SCP/MCP Software
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ * Description:
++ *     RD-V3-R1 platform variants.
++ */
++
++#ifndef PLATFORM_VARIANT_H
++#define PLATFORM_VARIANT_H
++
++#define RD_V3_R1      0
++#define RD_V3_R1_CFG1 1
++
++#endif
+diff --git a/product/neoverse-rd/rdv3r1/lcp_ramfw/CMakeLists.txt b/product/neoverse-rd/rdv3r1/lcp_ramfw/CMakeLists.txt
+index 4fa7d3d0fd6e..44c9841c677d 100644
+--- a/product/neoverse-rd/rdv3r1/lcp_ramfw/CMakeLists.txt
++++ b/product/neoverse-rd/rdv3r1/lcp_ramfw/CMakeLists.txt
+@@ -11,6 +11,22 @@
+ 
+ add_executable(rdv3r1-lcp-bl2)
+ 
++# SCP_PLATFORM_VARIANT value for supported RD-V3-R1 platform variants:
++# - '0' for RD-V3-R1 platform
++# - '1' for RD-V3-R1-Cfg1 platform
++
++if (SCP_PLATFORM_VARIANT STREQUAL "0")
++      target_compile_definitions(rdv3r1-lcp-bl2
++                                 PUBLIC -DPLATFORM_VARIANT=0)
++elseif (SCP_PLATFORM_VARIANT STREQUAL "1")
++      target_compile_definitions(rdv3r1-lcp-bl2
++                                 PUBLIC -DPLATFORM_VARIANT=1)
++else()
++      message(FATAL_ERROR "Please set SCP_PLATFORM_VARIANT to \n"
++                                "'0' for RD-V3-R1\n"
++                                "'1' for RD-V3-R1-Cfg1\n")
++endif()
++
+ target_include_directories(
+     rdv3r1-lcp-bl2 PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}"
+                     "${CMAKE_CURRENT_SOURCE_DIR}/include")
+diff --git a/product/neoverse-rd/rdv3r1/mcp_ramfw/CMakeLists.txt b/product/neoverse-rd/rdv3r1/mcp_ramfw/CMakeLists.txt
+index ba2d5975b580..3d27195fb620 100644
+--- a/product/neoverse-rd/rdv3r1/mcp_ramfw/CMakeLists.txt
++++ b/product/neoverse-rd/rdv3r1/mcp_ramfw/CMakeLists.txt
+@@ -10,6 +10,24 @@
+ #
+ add_executable(rdv3r1-mcp-bl2)
+ 
++# SCP_PLATFORM_VARIANT value for supported RD-V3-R1 platform variants:
++# - '0' for RD-V3-R1 platform
++# - '1' for RD-V3-R1-Cfg1 platform
++
++if (SCP_PLATFORM_VARIANT STREQUAL "0")
++      target_compile_definitions(rdv3r1-mcp-bl2
++                                 PUBLIC -DPLATFORM_VARIANT=0)
++elseif (SCP_PLATFORM_VARIANT STREQUAL "1")
++      target_compile_definitions(rdv3r1-mcp-bl2
++                                 PUBLIC -DPLATFORM_VARIANT=1)
++else()
++      message(FATAL_ERROR "Please set SCP_PLATFORM_VARIANT to \n"
++                                "'0' for RD-V3-R1\n"
++                                "'1' for RD-V3-R1-Cfg1\n")
++endif()
++
++target_compile_definitions(rdv3r1-mcp-bl2 PRIVATE BUILD_HAS_ATU_MANAGE)
++
+ target_include_directories(
+     rdv3r1-mcp-bl2
+     PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include"
+diff --git a/product/neoverse-rd/rdv3r1/module/mcp_platform/CMakeLists.txt b/product/neoverse-rd/rdv3r1/module/mcp_platform/CMakeLists.txt
+index 0b2153c8df89..e53ed6a4d60c 100644
+--- a/product/neoverse-rd/rdv3r1/module/mcp_platform/CMakeLists.txt
++++ b/product/neoverse-rd/rdv3r1/module/mcp_platform/CMakeLists.txt
+@@ -6,5 +6,24 @@
+ #
+ add_library(${SCP_MODULE_TARGET} SCP_MODULE)
+ 
++# SCP_PLATFORM_VARIANT value for supported RD-V3-R1 platform variants:
++# - '0' for RD-V3-R1 platform
++# - '1' for RD-V3-R1-Cfg1 platform
++
++if (SCP_PLATFORM_VARIANT STREQUAL "0")
++     target_compile_definitions(${SCP_MODULE_TARGET}
++                                 PUBLIC -DPLATFORM_VARIANT=0)
++elseif (SCP_PLATFORM_VARIANT STREQUAL "1")
++     target_compile_definitions(${SCP_MODULE_TARGET}
++                                 PUBLIC -DPLATFORM_VARIANT=1)
++else()
++      message(FATAL_ERROR "Please set SCP_PLATFORM_VARIANT to \n"
++                                "'0' for RD-V3-R1\n"
++                                "'1' for RD-V3-R1-Cfg1\n")
++endif()
++
++target_include_directories(${SCP_MODULE_TARGET}
++                           PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
++
+ target_sources(${SCP_MODULE_TARGET}
+                PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/mod_mcp_platform.c")
+diff --git a/product/neoverse-rd/rdv3r1/scp_ramfw/CMakeLists.txt b/product/neoverse-rd/rdv3r1/scp_ramfw/CMakeLists.txt
+index 9dadc8eb65c6..a046be16e32c 100644
+--- a/product/neoverse-rd/rdv3r1/scp_ramfw/CMakeLists.txt
++++ b/product/neoverse-rd/rdv3r1/scp_ramfw/CMakeLists.txt
+@@ -12,6 +12,22 @@
+ #
+ add_executable(rdv3r1-bl2)
+ 
++# SCP_PLATFORM_VARIANT value for supported RD-V3-R1 platform variants:
++# - '0' for RD-V3-R1 platform
++# - '1' for RD-V3-R1-Cfg1 platform
++
++if (SCP_PLATFORM_VARIANT STREQUAL "0")
++     target_compile_definitions(rdv3r1-bl2
++                                PUBLIC -DPLATFORM_VARIANT=0)
++elseif (SCP_PLATFORM_VARIANT STREQUAL "1")
++     target_compile_definitions(rdv3r1-bl2
++                                PUBLIC -DPLATFORM_VARIANT=1)
++else()
++      message(FATAL_ERROR "Please set SCP_PLATFORM_VARIANT to \n"
++                                "'0' for RD-V3-R1\n"
++                                "'1' for RD-V3-R1-Cfg1\n")
++endif()
++
+ target_include_directories(
+     rdv3r1-bl2
+     PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include"
+diff --git a/product/neoverse-rd/rdv3r1/scp_ramfw/config_clock.c b/product/neoverse-rd/rdv3r1/scp_ramfw/config_clock.c
+index abe698e9eb8f..673fadf58efc 100644
+--- a/product/neoverse-rd/rdv3r1/scp_ramfw/config_clock.c
++++ b/product/neoverse-rd/rdv3r1/scp_ramfw/config_clock.c
+@@ -11,6 +11,7 @@
+ #include "platform_core.h"
+ #include "scp_cfgd_power_domain.h"
+ #include "scp_clock.h"
++#include "platform_variant.h"
+ 
+ #include <mod_clock.h>
+ #include <mod_pik_clock.h>
+@@ -48,12 +49,14 @@ static const struct fwk_element clock_dev_table[] = {
+     CFGD_MOD_CLOCK_ELEMENT_CPU(5),
+     CFGD_MOD_CLOCK_ELEMENT_CPU(6),
+     CFGD_MOD_CLOCK_ELEMENT_CPU(7),
++#if (PLATFORM_VARIANT == RD_V3_R1)
+     CFGD_MOD_CLOCK_ELEMENT_CPU(8),
+     CFGD_MOD_CLOCK_ELEMENT_CPU(9),
+     CFGD_MOD_CLOCK_ELEMENT_CPU(10),
+     CFGD_MOD_CLOCK_ELEMENT_CPU(11),
+     CFGD_MOD_CLOCK_ELEMENT_CPU(12),
+     CFGD_MOD_CLOCK_ELEMENT_CPU(13),
++#endif
+     [CFGD_MOD_CLOCK_EIDX_CMN] = {
+         .name = "CMN-Cyprus",
+         .data = &((struct mod_clock_dev_config) {
+diff --git a/product/neoverse-rd/rdv3r1/scp_ramfw/config_cmn_cyprus.c b/product/neoverse-rd/rdv3r1/scp_ramfw/config_cmn_cyprus.c
+index 10ee534c14a8..6144ac0fa042 100644
+--- a/product/neoverse-rd/rdv3r1/scp_ramfw/config_cmn_cyprus.c
++++ b/product/neoverse-rd/rdv3r1/scp_ramfw/config_cmn_cyprus.c
+@@ -11,6 +11,7 @@
+ #include "cmn_node_id.h"
+ #include "platform_core.h"
+ #include "scp_atw1_mmap.h"
++#include "platform_variant.h"
+ 
+ #include <mod_cmn_cyprus.h>
+ 
+@@ -45,6 +46,7 @@
+ 
+ // clang-format on
+ 
++#if (PLATFORM_VARIANT == RD_V3_R1)
+ /*
+  * List of nodes to be isolated in the mesh.
+  */
+@@ -121,12 +123,23 @@ struct isolated_hns_node_info isolated_hns_nodes[]= {
+         .hns_mpam_ns_base = (uintptr_t)0xbd640000,
+     },
+ };
++#endif
+ 
+ /*
+  * HN-F to SN-F mapping table.
+  */
+ // clang-format off
+ static const unsigned int snf_table[] = {
++#if (PLATFORM_VARIANT == RD_V3_R1_CFG1)
++    MEM_CNTRL00_ID, /* Maps to HN-S logical node 00 */
++    MEM_CNTRL00_ID, /* Maps to HN-S logical node 01 */
++    MEM_CNTRL00_ID, /* Maps to HN-S logical node 02 */
++    MEM_CNTRL00_ID, /* Maps to HN-S logical node 03 */
++    MEM_CNTRL01_ID, /* Maps to HN-S logical node 04 */
++    MEM_CNTRL01_ID, /* Maps to HN-S logical node 05 */
++    MEM_CNTRL01_ID, /* Maps to HN-S logical node 06 */
++    MEM_CNTRL01_ID, /* Maps to HN-S logical node 07 */
++#else
+     MEM_CNTRL00_ID,
+     MEM_CNTRL01_ID,
+     MEM_CNTRL02_ID,
+@@ -139,6 +152,7 @@ static const unsigned int snf_table[] = {
+     MEM_CNTRL09_ID,
+     MEM_CNTRL10_ID,
+     MEM_CNTRL11_ID,
++#endif
+ };
+ // clang-format on
+ 
+@@ -151,6 +165,7 @@ enum rdv3r1_cmn_cyprus_ccg_port {
+     CCG_PORT_02,
+     CCG_PORT_03,
+     CCG_PORT_04,
++#if (PLATFORM_VARIANT == RD_V3_R1)
+     CCG_PORT_05,
+     CCG_PORT_06,
+     CCG_PORT_07,
+@@ -172,6 +187,7 @@ enum rdv3r1_cmn_cyprus_ccg_port {
+     CCG_PORT_23,
+     CCG_PORT_24,
+     CCG_PORT_25,
++#endif
+     CCG_PER_CHIP,
+ };
+ 
+@@ -182,10 +198,10 @@ static const struct mod_cmn_cyprus_mem_region_map mmap[] = {
+     {
+         /*
+          * System cache backed region
+-         * Map: 0x0000_0000_0000 - 0x03FF_FFFF_FFFF (4 TiB)
++         * Map: 0x0000_0000_0000 - 0xFFFF_FFFF_FFFF (256 TiB)
+          */
+         .base = UINT64_C(0x000000000000),
+-        .size = UINT64_C(4) * FWK_TIB,
++        .size = UINT64_C(256) * FWK_TIB,
+         .type = MOD_CMN_CYPRUS_MEM_REGION_TYPE_SYSCACHE,
+         .hns_pos_start = MESH_START_POS,
+         .hns_pos_end = MESH_END_POS,
+@@ -208,7 +224,11 @@ static const struct mod_cmn_cyprus_mem_region_map mmap[] = {
+         .base = UINT64_C(0x0008000000),
+         .size = UINT64_C(128) * FWK_MIB,
+         .type = MOD_CMN_CYPRUS_MEM_REGION_TYPE_IO,
++#if (PLATFORM_VARIANT == RD_V3_R1_CFG1)
++        .node_id = NODE_ID_HND,
++#else
+         .node_id = NODE_ID_HNT1,
++#endif
+     },
+     {
+         /*
+@@ -260,6 +280,7 @@ static const struct mod_cmn_cyprus_mem_region_map mmap[] = {
+         .type = MOD_CMN_CYPRUS_MEM_REGION_TYPE_IO,
+         .node_id = NODE_ID_HND,
+     },
++#if (PLATFORM_VARIANT == RD_V3_R1)
+     {
+         /*
+          * LCP0
+@@ -330,6 +351,28 @@ static const struct mod_cmn_cyprus_mem_region_map mmap[] = {
+         .type = MOD_CMN_CYPRUS_MEM_REGION_TYPE_IO,
+         .node_id = NODE_ID_HNI6,
+     },
++#elif (PLATFORM_VARIANT == RD_V3_R1_CFG1)
++    {
++        /*
++         * LCP0
++         * Map: 0x1_6000_0000 - 0x1_601F_FFFF (2 MB)
++         */
++        .base = UINT64_C(0x160000000),
++        .size = UINT64_C(2) * FWK_MIB,
++        .type = MOD_CMN_CYPRUS_MEM_REGION_TYPE_IO,
++        .node_id = NODE_ID_HNI2,
++    },
++    {
++        /*
++         * LCP1
++         * Map: 0x1_6020_0000 - 0x1_603F_FFFF (2 MB)
++         */
++        .base = UINT64_C(0x160200000),
++        .size = UINT64_C(2) * FWK_MIB,
++        .type = MOD_CMN_CYPRUS_MEM_REGION_TYPE_IO,
++        .node_id = NODE_ID_HNI4,
++    },
++#endif
+     {
+         /*
+          * Peripherals - Memory Controller
+@@ -360,6 +403,7 @@ static const struct mod_cmn_cyprus_mem_region_map mmap[] = {
+         .type = MOD_CMN_CYPRUS_MEM_REGION_TYPE_IO,
+         .node_id = IOVB_NODE_ID1,
+     },
++#if (PLATFORM_VARIANT == RD_V3_R1)
+     {
+         /*
+          * Peripherals, NCI GPV Memory Map 2
+@@ -370,6 +414,7 @@ static const struct mod_cmn_cyprus_mem_region_map mmap[] = {
+         .type = MOD_CMN_CYPRUS_MEM_REGION_TYPE_IO,
+         .node_id = IOVB_NODE_ID2,
+     },
++#endif
+     {
+         /*
+          * GPC_SMMU region
+@@ -463,7 +508,11 @@ static const struct mod_cmn_cyprus_mem_region_map mmap[] = {
+ /* PCIe MMIO_L Base */
+ #define PCI_MMIOL_BASE UINT64_C(0x60000000)
+ /* PCIe MMIO_L size (256 MiB) */
++#if (PLATFORM_VARIANT == RD_V3_R1_CFG1)
++#define PCI_MMIOL_SIZE (UINT64_C(128) * FWK_MIB)
++#else
+ #define PCI_MMIOL_SIZE (UINT64_C(256) * FWK_MIB)
++#endif
+ /* PCIe MMIO_L Base for a chip*/
+ #define CHIP_PCIE_MMIOL_BASE(chip_id) (PCI_MMIOL_BASE + (PCI_MMIOL_SIZE * (chip_id)))
+ 
+@@ -481,6 +530,7 @@ static const struct mod_cmn_cyprus_mem_region_map mmap[] = {
+ /* Second DRAM block base for a chip */
+ #define CHIP_DRAM2_BASE(chip_id) (DRAM2_BASE + (DRAM2_SIZE * chip_id))
+ 
++#if (PLATFORM_VARIANT == RD_V3_R1)
+ /*
+  * RD-V3-R1 Multichip configuration data
+  *
+@@ -546,7 +596,7 @@ static const struct mod_cmn_cyprus_cml_config chip0_cml_config[] = {
+             {
+                 /*
+                  * Chip 1 PCIe MMIO_L space.
+-                 * Map: 0x10_6000_0000 - 0x10_6FFF_FFFF
++                 * Map: 0x00_7000_0000 - 0x00_7FFF_FFFF
+                  */
+                 .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOL_BASE(1),
+                                 PCI_MMIOL_SIZE, NODE_ID_CCG00),
+@@ -556,7 +606,7 @@ static const struct mod_cmn_cyprus_cml_config chip0_cml_config[] = {
+             {
+                 /*
+                  * Chip 1 PCIe ECAM space.
+-                 * Map: 0x110_0000_0000 - 0x110_0FFF_FFFF
++                 * Map: 0x100_1000_0000 - 0x100_1FFF_FFFF
+                  */
+                 .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_ECAM_BASE(1),
+                                 PCI_ECAM_SIZE, NODE_ID_CCG00),
+@@ -585,7 +635,7 @@ static const struct mod_cmn_cyprus_cml_config chip0_cml_config[] = {
+     },
+ };
+ 
+-/* Chip 0 CML configuration */
++/* Chip 1 CML configuration */
+ static const struct mod_cmn_cyprus_cml_config chip1_cml_config[] = {
+     {
+         /* Chip 1 to Chip 0 */
+@@ -645,6 +695,701 @@ static const struct mod_cmn_cyprus_cml_config chip1_cml_config[] = {
+         },
+     },
+ };
++#elif (PLATFORM_VARIANT == RD_V3_R1_CFG1)
++
++/*
++ * Note: Re-defined followings for all CPAGs as unequal CPAG CCG count
++ * is not supported
++ */
++#undef CCG_PER_CPAG
++/* Number of CCG nodes per CML Port Aggregation group (CPAG) */
++#define CCG_PER_CPAG 1
++
++#undef CCG_HAID_LIST
++/* List of Home Agent IDs of CCG nodes in the CPAG */
++#define CCG_HAID_LIST(chip_id, ccg_port_x) \
++    ((unsigned int[]){ GET_HAID(chip_id, ccg_port_x) })
++
++/*
++ * RD-V3-R1-Cfg1 Multichip configuration data
++ *
++ * Cross chip CCG connections between the chips:
++ *
++ *  +------------------+        +------------------+
++ *  |       CCG2       |        |      CCG4        |
++ *  |              CCG3+--------+CCG3              |
++ *  |                  |        |                  |
++ *  |      CHIP 0      |        |      CHIP 2      |
++ *  |              CCG4+--+     |                  |
++ *  |                  |  |  +--+CCG2              |
++ *  |   CCG0    CCG1   |  |  |  |   CCG0    CCG1   |
++ *  +-----+------+-----+  |  |  +-----+------+-----+
++ *        |      |        |  |        |      |
++ *        |      |        |  |        |      |
++ *  +-----+------+-----+  |  |  +-----+------+-----+
++ *  |   CCG1    CCG0   |  |  |  |  CCG1    CCG0    |
++ *  |              CCG2|--|--+  |                  |
++ *  |                  |  +-----+CCG4              |
++ *  |      CHIP 1      |        |     CHIP 3       |
++ *  |                  |        |                  |
++ *  |              CCG3+--------+CCG3              |
++ *  |       CCG4       |        |      CCG2        |
++ *  +------------------+        +------------------+
++ *
++ */
++
++/* Chip 0 CML configuration */
++static const struct mod_cmn_cyprus_cml_config chip0_cml_config[] = {
++    {
++        /* Chip 0 to Chip 1 */
++        .ccg_ldid = CCG_LDID_LIST(CCG_PORT_00),
++        .haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_00),
++        .remote_mmap_table = {
++            {
++                /*
++                 * Chip 1 peripheral address space and DRAM.
++                 * Map: 0x10_0000_0000 - 0x1F_FFFF_FFFF (primary)
++                 *      0x300_0000_0000 - 0x3FF_FFFF_FFFF (secondary)
++                 */
++                .region_mmap = REMOTE_HASHED_REGION(CHIP_PERIPH_MEM_BASE(1),
++                                PERIPH_MEM_SIZE, CHIP_DRAM2_BASE(1),
++                                DRAM2_SIZE, MESH_START_POS, MESH_END_POS),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_01),
++            },
++            {
++                /*
++                 * Chip 1 PCIe MMIO_L space.
++                 * Map: 0x00_6800_0000 - 0x00_67FF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOL_BASE(1),
++                                PCI_MMIOL_SIZE, NODE_ID_CCG00),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_01),
++            },
++            {
++                /*
++                 * Chip 1 PCIe ECAM space.
++                 * Map: 0x100_1000_0000 - 0x100_1FFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_ECAM_BASE(1),
++                                PCI_ECAM_SIZE, NODE_ID_CCG00),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_01),
++            },
++            {
++                /*
++                 * Chip 1 PCIe MMIO_H space.
++                 * Map: 0x111_0000_0000 - 0x120_FFFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOH_BASE(1),
++                                PCI_MMIOH_SIZE, NODE_ID_CCG00),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_01),
++            },
++        },
++        .remote_chip_id = PLATFORM_CHIP_1,
++        .enable_smp_mode = true,
++        .enable_direct_connect_mode = true,
++        .enable_cpa_mode = true,
++        .cpag_config = {
++            .cpag_id = 0,
++            .ccg_count = CCG_PER_CPAG,
++        },
++    },
++    {
++        /* Chip 0 to Chip 2 */
++        .ccg_ldid = CCG_LDID_LIST(CCG_PORT_03),
++        .haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_03),
++        .remote_mmap_table = {
++            {
++                /*
++                 * Chip 2 peripheral address space and DRAM.
++                 * Map: 0x20_0000_0000 - 0x2F_FFFF_FFFF (primary)
++                 *      0x400_0000_0000 - 0x4FF_FFFF_FFFF (secondary)
++                 */
++                .region_mmap = REMOTE_HASHED_REGION(CHIP_PERIPH_MEM_BASE(2),
++                                PERIPH_MEM_SIZE, CHIP_DRAM2_BASE(2),
++                                DRAM2_SIZE, MESH_START_POS, MESH_END_POS),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_03),
++            },
++            {
++                /*
++                 * Chip 2 PCIe MMIO_L space.
++                 * Map: 0x00_7000_0000 - 0x00_77FF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOL_BASE(2),
++                                PCI_MMIOL_SIZE, NODE_ID_CCG03),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_03),
++            },
++            {
++                /*
++                 * Chip 2 PCIe ECAM space.
++                 * Map: 0x100_2000_0000 - 0x100_2FFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_ECAM_BASE(2),
++                                PCI_ECAM_SIZE, NODE_ID_CCG03),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_03),
++            },
++            {
++                /*
++                 * Chip 2 PCIe MMIO_H space.
++                 * Map: 0x121_0000_0000 - 0x130_FFFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOH_BASE(2),
++                                PCI_MMIOH_SIZE, NODE_ID_CCG03),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_03),
++            },
++        },
++        .remote_chip_id = PLATFORM_CHIP_2,
++        .enable_smp_mode = true,
++        .enable_direct_connect_mode = true,
++        .enable_cpa_mode = true,
++        .cpag_config = {
++            .cpag_id = 1,
++            .ccg_count = CCG_PER_CPAG,
++        },
++    },
++    {
++        /* Chip 0 to Chip 3 */
++        .ccg_ldid = CCG_LDID_LIST(CCG_PORT_04),
++        .haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_04),
++        .remote_mmap_table = {
++            {
++                /*
++                 * Chip 3 peripheral address space and DRAM.
++                 * Map: 0x30_0000_0000 - 0x3F_FFFF_FFFF (primary)
++                 *      0x500_0000_0000 - 0x5FF_FFFF_FFFF (secondary)
++                 */
++                .region_mmap = REMOTE_HASHED_REGION(CHIP_PERIPH_MEM_BASE(3),
++                                PERIPH_MEM_SIZE, CHIP_DRAM2_BASE(3),
++                                DRAM2_SIZE, MESH_START_POS, MESH_END_POS),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_04),
++            },
++            {
++                /*
++                 * Chip 3 PCIe MMIO_L space.
++                 * Map: 0x00_7800_0000 - 0x00_7FFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOL_BASE(3),
++                                PCI_MMIOL_SIZE, NODE_ID_CCG04),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_04),
++            },
++            {
++                /*
++                 * Chip 3 PCIe ECAM space.
++                 * Map: 0x100_3000_0000 - 0x100_3FFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_ECAM_BASE(3),
++                                PCI_ECAM_SIZE, NODE_ID_CCG04),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_04),
++            },
++            {
++                /*
++                 * Chip 3 PCIe MMIO_H space.
++                 * Map: 0x131_0000_0000 - 0x140_FFFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOH_BASE(3),
++                                PCI_MMIOH_SIZE, NODE_ID_CCG04),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_04),
++            },
++        },
++        .remote_chip_id = PLATFORM_CHIP_3,
++        .enable_smp_mode = true,
++        .enable_direct_connect_mode = true,
++        .enable_cpa_mode = true,
++        .cpag_config = {
++            .cpag_id = 2,
++            .ccg_count = CCG_PER_CPAG,
++        },
++    },
++};
++
++/* Chip 1 CML configuration */
++static const struct mod_cmn_cyprus_cml_config chip1_cml_config[] = {
++    {
++        /* Chip 1 to Chip 0 */
++        .ccg_ldid = CCG_LDID_LIST(CCG_PORT_01),
++        .haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_01),
++        .remote_mmap_table = {
++            {
++                /*
++                 * Chip 0 peripheral address space and DRAM.
++                 * Map: 0x0 - 0x0F_FFFF_FFFF (primary)
++                 *      0x200_0000_0000 - 0x2FF_FFFF_FFFF (secondary)
++                 */
++                .region_mmap = REMOTE_HASHED_REGION(CHIP_PERIPH_MEM_BASE(0),
++                                PERIPH_MEM_SIZE, CHIP_DRAM2_BASE(0),
++                                DRAM2_SIZE, MESH_START_POS, MESH_END_POS),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_00),
++            },
++            {
++                /*
++                 * Chip 0 PCIe MMIO_L space.
++                 * Map: 0x00_6000_0000 - 0x00_6FFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOL_BASE(0),
++                                PCI_MMIOL_SIZE, NODE_ID_CCG01),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_00),
++            },
++            {
++                /*
++                 * Chip 0 PCIe ECAM space.
++                 * Map: 0x100_0000_0000 - 0x100_0FFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_ECAM_BASE(0),
++                                PCI_ECAM_SIZE, NODE_ID_CCG01),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_00),
++            },
++            {
++                /*
++                 * Chip 0 PCIe MMIO_H space.
++                 * Map: 0x101_0000_0000 - 0x110_FFFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOH_BASE(0),
++                                PCI_MMIOH_SIZE, NODE_ID_CCG01),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_00),
++            },
++        },
++        .remote_chip_id = PLATFORM_CHIP_0,
++        .enable_smp_mode = true,
++        .enable_direct_connect_mode = true,
++        .enable_cpa_mode = true,
++        .cpag_config = {
++            .cpag_id = 0,
++            .ccg_count = CCG_PER_CPAG,
++        },
++    },
++    {
++        /* Chip 1 to Chip 2 */
++        .ccg_ldid = CCG_LDID_LIST(CCG_PORT_02),
++        .haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_02),
++        .remote_mmap_table = {
++            {
++                /*
++                 * Chip 2 peripheral address space and DRAM.
++                 * Map: 0x20_0000_0000 - 0x2F_FFFF_FFFF (primary)
++                 *      0x400_0000_0000 - 0x4FF_FFFF_FFFF (secondary)
++                 */
++                .region_mmap = REMOTE_HASHED_REGION(CHIP_PERIPH_MEM_BASE(2),
++                                PERIPH_MEM_SIZE, CHIP_DRAM2_BASE(2),
++                                DRAM2_SIZE, MESH_START_POS, MESH_END_POS),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_02),
++            },
++            {
++                /*
++                 * Chip 2 PCIe MMIO_L space.
++                 * Map: 0x00_7000_0000 - 0x00_77FF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOL_BASE(2),
++                                PCI_MMIOL_SIZE, NODE_ID_CCG02),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_02),
++            },
++            {
++                /*
++                 * Chip 2 PCIe ECAM space.
++                 * Map: 0x100_2000_0000 - 0x100_2FFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_ECAM_BASE(2),
++                                PCI_ECAM_SIZE, NODE_ID_CCG02),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_02),
++            },
++            {
++                /*
++                 * Chip 2 PCIe MMIO_H space.
++                 * Map: 0x121_0000_0000 - 0x130_FFFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOH_BASE(2),
++                                PCI_MMIOH_SIZE, NODE_ID_CCG02),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_02),
++            },
++        },
++        .remote_chip_id = PLATFORM_CHIP_2,
++        .enable_smp_mode = true,
++        .enable_direct_connect_mode = true,
++        .enable_cpa_mode = true,
++        .cpag_config = {
++            .cpag_id = 1,
++            .ccg_count = CCG_PER_CPAG,
++        },
++    },
++    {
++        /* Chip 1 to Chip 3 */
++        .ccg_ldid = CCG_LDID_LIST(CCG_PORT_03),
++        .haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_03),
++        .remote_mmap_table = {
++            {
++                /*
++                 * Chip 3 peripheral address space and DRAM.
++                 * Map: 0x30_0000_0000 - 0x3F_FFFF_FFFF (primary)
++                 *      0x500_0000_0000 - 0x5FF_FFFF_FFFF (secondary)
++                 */
++                .region_mmap = REMOTE_HASHED_REGION(CHIP_PERIPH_MEM_BASE(3),
++                                PERIPH_MEM_SIZE, CHIP_DRAM2_BASE(3),
++                                DRAM2_SIZE, MESH_START_POS, MESH_END_POS),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_03),
++            },
++            {
++                /*
++                 * Chip 3 PCIe MMIO_L space.
++                 * Map: 0x00_7800_0000 - 0x00_7FFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOL_BASE(3),
++                                PCI_MMIOL_SIZE, NODE_ID_CCG03),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_03),
++            },
++            {
++                /*
++                 * Chip 3 PCIe ECAM space.
++                 * Map: 0x100_3000_0000 - 0x100_3FFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_ECAM_BASE(3),
++                                PCI_ECAM_SIZE, NODE_ID_CCG03),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_03),
++            },
++            {
++                /*
++                 * Chip 3 PCIe MMIO_H space.
++                 * Map: 0x131_0000_0000 - 0x140_FFFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOH_BASE(3),
++                                PCI_MMIOH_SIZE, NODE_ID_CCG03),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_03),
++            },
++        },
++        .remote_chip_id = PLATFORM_CHIP_3,
++        .enable_smp_mode = true,
++        .enable_direct_connect_mode = true,
++        .enable_cpa_mode = true,
++        .cpag_config = {
++            .cpag_id = 2,
++            .ccg_count = CCG_PER_CPAG,
++        },
++    },
++};
++
++/* Chip 2 CML configuration */
++static const struct mod_cmn_cyprus_cml_config chip2_cml_config[] = {
++    {
++        /* Chip 2 to Chip 0 */
++        .ccg_ldid = CCG_LDID_LIST(CCG_PORT_03),
++        .haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_03),
++        .remote_mmap_table = {
++            {
++                /*
++                 * Chip 0 peripheral address space and DRAM.
++                 * Map: 0x0 - 0x0F_FFFF_FFFF (primary)
++                 *      0x200_0000_0000 - 0x2FF_FFFF_FFFF (secondary)
++                 */
++                .region_mmap = REMOTE_HASHED_REGION(CHIP_PERIPH_MEM_BASE(0),
++                                PERIPH_MEM_SIZE, CHIP_DRAM2_BASE(0),
++                                DRAM2_SIZE, MESH_START_POS, MESH_END_POS),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_03),
++            },
++            {
++                /*
++                 * Chip 0 PCIe MMIO_L space.
++                 * Map: 0x00_6000_0000 - 0x00_6FFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOL_BASE(0),
++                                PCI_MMIOL_SIZE, NODE_ID_CCG03),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_03),
++            },
++            {
++                /*
++                 * Chip 0 PCIe ECAM space.
++                 * Map: 0x100_0000_0000 - 0x100_0FFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_ECAM_BASE(0),
++                                PCI_ECAM_SIZE, NODE_ID_CCG03),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_03),
++            },
++            {
++                /*
++                 * Chip 0 PCIe MMIO_H space.
++                 * Map: 0x101_0000_0000 - 0x110_FFFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOH_BASE(0),
++                                PCI_MMIOH_SIZE, NODE_ID_CCG03),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_03),
++            },
++        },
++        .remote_chip_id = PLATFORM_CHIP_0,
++        .enable_smp_mode = true,
++        .enable_direct_connect_mode = true,
++        .enable_cpa_mode = true,
++        .cpag_config = {
++            .cpag_id = 0,
++            .ccg_count = CCG_PER_CPAG,
++        },
++    },
++    {
++        /* Chip 2 to Chip 1 */
++        .ccg_ldid = CCG_LDID_LIST(CCG_PORT_02),
++        .haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_02),
++        .remote_mmap_table = {
++            {
++                /*
++                 * Chip 1 peripheral address space and DRAM.
++                 * Map: 0x10_0000_0000 - 0x1F_FFFF_FFFF (primary)
++                 *      0x300_0000_0000 - 0x3FF_FFFF_FFFF (secondary)
++                 */
++                .region_mmap = REMOTE_HASHED_REGION(CHIP_PERIPH_MEM_BASE(1),
++                                PERIPH_MEM_SIZE, CHIP_DRAM2_BASE(1),
++                                DRAM2_SIZE, MESH_START_POS, MESH_END_POS),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_02),
++            },
++            {
++                /*
++                 * Chip 1 PCIe MMIO_L space.
++                 * Map: 0x00_6800_0000 - 0x00_67FF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOL_BASE(1),
++                                PCI_MMIOL_SIZE, NODE_ID_CCG02),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_02),
++            },
++            {
++                /*
++                 * Chip 1 PCIe ECAM space.
++                 * Map: 0x100_1000_0000 - 0x100_1FFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_ECAM_BASE(1),
++                                PCI_ECAM_SIZE, NODE_ID_CCG02),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_02),
++            },
++            {
++                /*
++                 * Chip 1 PCIe MMIO_H space.
++                 * Map: 0x111_0000_0000 - 0x120_FFFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOH_BASE(1),
++                                PCI_MMIOH_SIZE, NODE_ID_CCG02),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_02),
++            },
++        },
++        .remote_chip_id = PLATFORM_CHIP_1,
++        .enable_smp_mode = true,
++        .enable_direct_connect_mode = true,
++        .enable_cpa_mode = true,
++        .cpag_config = {
++            .cpag_id = 1,
++            .ccg_count = CCG_PER_CPAG,
++        },
++    },
++    {
++        /* Chip 2 to Chip 3 */
++        .ccg_ldid = CCG_LDID_LIST(CCG_PORT_00),
++        .haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_00),
++        .remote_mmap_table = {
++            {
++                /*
++                 * Chip 3 peripheral address space and DRAM.
++                 * Map: 0x30_0000_0000 - 0x3F_FFFF_FFFF (primary)
++                 *      0x500_0000_0000 - 0x5FF_FFFF_FFFF (secondary)
++                 */
++                .region_mmap = REMOTE_HASHED_REGION(CHIP_PERIPH_MEM_BASE(3),
++                                PERIPH_MEM_SIZE, CHIP_DRAM2_BASE(3),
++                                DRAM2_SIZE, MESH_START_POS, MESH_END_POS),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_01),
++            },
++            {
++                /*
++                 * Chip 3 PCIe MMIO_L space.
++                 * Map: 0x00_7800_0000 - 0x00_7FFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOL_BASE(3),
++                                PCI_MMIOL_SIZE, NODE_ID_CCG00),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_01),
++            },
++            {
++                /*
++                 * Chip 3 PCIe ECAM space.
++                 * Map: 0x100_3000_0000 - 0x100_3FFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_ECAM_BASE(3),
++                                PCI_ECAM_SIZE, NODE_ID_CCG00),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_01),
++            },
++            {
++                /*
++                 * Chip 3 PCIe MMIO_H space.
++                 * Map: 0x131_0000_0000 - 0x140_FFFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOH_BASE(3),
++                                PCI_MMIOH_SIZE, NODE_ID_CCG00),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_01),
++            },
++        },
++        .remote_chip_id = PLATFORM_CHIP_3,
++        .enable_smp_mode = true,
++        .enable_direct_connect_mode = true,
++        .enable_cpa_mode = true,
++        .cpag_config = {
++            .cpag_id = 2,
++            .ccg_count = CCG_PER_CPAG,
++        },
++    },
++};
++
++/* Chip 3 CML configuration */
++static const struct mod_cmn_cyprus_cml_config chip3_cml_config[] = {
++    {
++        /* Chip 3 to Chip 0 */
++        .ccg_ldid = CCG_LDID_LIST(CCG_PORT_04),
++        .haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_04),
++        .remote_mmap_table = {
++            {
++                /*
++                 * Chip 0 peripheral address space and DRAM.
++                 * Map: 0x0 - 0x0F_FFFF_FFFF (primary)
++                 *      0x200_0000_0000 - 0x2FF_FFFF_FFFF (secondary)
++                 */
++                .region_mmap = REMOTE_HASHED_REGION(CHIP_PERIPH_MEM_BASE(0),
++                                PERIPH_MEM_SIZE, CHIP_DRAM2_BASE(0),
++                                DRAM2_SIZE, MESH_START_POS, MESH_END_POS),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_04),
++            },
++            {
++                /*
++                 * Chip 0 PCIe MMIO_L space.
++                 * Map: 0x00_6000_0000 - 0x00_6FFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOL_BASE(0),
++                                PCI_MMIOL_SIZE, NODE_ID_CCG04),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_04),
++            },
++            {
++                /*
++                 * Chip 0 PCIe ECAM space.
++                 * Map: 0x100_0000_0000 - 0x100_0FFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_ECAM_BASE(0),
++                                PCI_ECAM_SIZE, NODE_ID_CCG04),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_04),
++            },
++            {
++                /*
++                 * Chip 0 PCIe MMIO_H space.
++                 * Map: 0x101_0000_0000 - 0x110_FFFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOH_BASE(0),
++                                PCI_MMIOH_SIZE, NODE_ID_CCG04),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_04),
++            },
++        },
++        .remote_chip_id = PLATFORM_CHIP_0,
++        .enable_smp_mode = true,
++        .enable_direct_connect_mode = true,
++        .enable_cpa_mode = true,
++        .cpag_config = {
++            .cpag_id = 0,
++            .ccg_count = CCG_PER_CPAG,
++        },
++    },
++    {
++        /* Chip 3 to Chip 1 */
++        .ccg_ldid = CCG_LDID_LIST(CCG_PORT_03),
++        .haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_03),
++        .remote_mmap_table = {
++            {
++                /*
++                 * Chip 1 peripheral address space and DRAM.
++                 * Map: 0x10_0000_0000 - 0x1F_FFFF_FFFF (primary)
++                 *      0x300_0000_0000 - 0x3FF_FFFF_FFFF (secondary)
++                 */
++                .region_mmap = REMOTE_HASHED_REGION(CHIP_PERIPH_MEM_BASE(1),
++                                PERIPH_MEM_SIZE, CHIP_DRAM2_BASE(1),
++                                DRAM2_SIZE, MESH_START_POS, MESH_END_POS),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_03),
++            },
++            {
++                /*
++                 * Chip 1 PCIe MMIO_L space.
++                 * Map: 0x00_6800_0000 - 0x00_67FF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOL_BASE(1),
++                                PCI_MMIOL_SIZE, NODE_ID_CCG03),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_03),
++            },
++            {
++                /*
++                 * Chip 1 PCIe ECAM space.
++                 * Map: 0x100_1000_0000 - 0x100_1FFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_ECAM_BASE(1),
++                                PCI_ECAM_SIZE, NODE_ID_CCG03),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_03),
++            },
++            {
++                /*
++                 * Chip 1 PCIe MMIO_H space.
++                 * Map: 0x111_0000_0000 - 0x120_FFFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOH_BASE(1),
++                                PCI_MMIOH_SIZE, NODE_ID_CCG03),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_03),
++            },
++        },
++        .remote_chip_id = PLATFORM_CHIP_1,
++        .enable_smp_mode = true,
++        .enable_direct_connect_mode = true,
++        .enable_cpa_mode = true,
++        .cpag_config = {
++            .cpag_id = 1,
++            .ccg_count = CCG_PER_CPAG,
++        },
++    },
++    {
++        /* Chip 3 to Chip 2 */
++        .ccg_ldid = CCG_LDID_LIST(CCG_PORT_01),
++        .haid = CCG_HAID_LIST(PLATFORM_CHIP_3, CCG_PORT_01),
++        .remote_mmap_table = {
++            {
++                /*
++                 * Chip 2 peripheral address space and DRAM.
++                 * Map: 0x20_0000_0000 - 0x2F_FFFF_FFFF (primary)
++                 *      0x400_0000_0000 - 0x4FF_FFFF_FFFF (secondary)
++                 */
++                .region_mmap = REMOTE_HASHED_REGION(CHIP_PERIPH_MEM_BASE(2),
++                                PERIPH_MEM_SIZE, CHIP_DRAM2_BASE(2),
++                                DRAM2_SIZE, MESH_START_POS, MESH_END_POS),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_00),
++            },
++            {
++                /*
++                 * Chip 2 PCIe MMIO_L space.
++                 * Map: 0x00_7000_0000 - 0x00_77FF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOL_BASE(2),
++                                PCI_MMIOL_SIZE, NODE_ID_CCG01),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_00),
++            },
++            {
++                /*
++                 * Chip 2 PCIe ECAM space.
++                 * Map: 0x100_2000_0000 - 0x100_2FFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_ECAM_BASE(2),
++                                PCI_ECAM_SIZE, NODE_ID_CCG01),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_00),
++            },
++            {
++                /*
++                 * Chip 2 PCIe MMIO_H space.
++                 * Map: 0x121_0000_0000 - 0x130_FFFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOH_BASE(2),
++                                PCI_MMIOH_SIZE, NODE_ID_CCG01),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_2, CCG_PORT_00),
++            },
++        },
++        .remote_chip_id = PLATFORM_CHIP_2,
++        .enable_smp_mode = true,
++        .enable_direct_connect_mode = true,
++        .enable_cpa_mode = true,
++        .cpag_config = {
++            .cpag_id = 2,
++            .ccg_count = CCG_PER_CPAG,
++        },
++    },
++};
++#endif
+ 
+ static struct mod_cmn_cyprus_config cmn_config_table[] = {
+     [PLATFORM_CHIP_0] = {
+@@ -654,6 +1399,13 @@ static struct mod_cmn_cyprus_config cmn_config_table[] = {
+         .hnf_sam_config = {
+             .snf_table = snf_table,
+             .snf_count = FWK_ARRAY_SIZE(snf_table),
++#if (PLATFORM_VARIANT == RD_V3_R1_CFG1)
++            .hnf_sam_mode = MOD_CMN_CYPRUS_HNF_SAM_MODE_DIRECT_MAPPING,
++        },
++        .rnsam_scg_config = {
++            .scg_hashing_mode = MOD_CMN_CYPRUS_RNSAM_SCG_POWER_OF_TWO_HASHING,
++        },
++#else
+             .hnf_sam_mode = MOD_CMN_CYPRUS_HNF_SAM_MODE_RANGE_BASED_HASHING,
+             .hashed_mode_config = {
+                 .sn_mode = MOD_CMN_CYPRUS_HNF_SAM_HASHED_MODE_3_SN,
+@@ -669,6 +1421,7 @@ static struct mod_cmn_cyprus_config cmn_config_table[] = {
+                 .num_cluster_groups = 4,
+             },
+         },
++#endif
+         .hns_cal_mode = true,
+         .mmap_table = mmap,
+         .mmap_count = FWK_ARRAY_SIZE(mmap),
+@@ -686,6 +1439,13 @@ static struct mod_cmn_cyprus_config cmn_config_table[] = {
+         .hnf_sam_config = {
+             .snf_table = snf_table,
+             .snf_count = FWK_ARRAY_SIZE(snf_table),
++#if (PLATFORM_VARIANT == RD_V3_R1_CFG1)
++            .hnf_sam_mode = MOD_CMN_CYPRUS_HNF_SAM_MODE_DIRECT_MAPPING,
++        },
++        .rnsam_scg_config = {
++            .scg_hashing_mode = MOD_CMN_CYPRUS_RNSAM_SCG_POWER_OF_TWO_HASHING,
++        },
++#else
+             .hnf_sam_mode = MOD_CMN_CYPRUS_HNF_SAM_MODE_RANGE_BASED_HASHING,
+             .hashed_mode_config = {
+                 .sn_mode = MOD_CMN_CYPRUS_HNF_SAM_HASHED_MODE_3_SN,
+@@ -701,6 +1461,7 @@ static struct mod_cmn_cyprus_config cmn_config_table[] = {
+                 .num_cluster_groups = 4,
+             },
+         },
++#endif
+         .hns_cal_mode = true,
+         .mmap_table = mmap,
+         .mmap_count = FWK_ARRAY_SIZE(mmap),
+@@ -711,6 +1472,52 @@ static struct mod_cmn_cyprus_config cmn_config_table[] = {
+         .cml_poll_timeout_us = UINT32_C(100),
+         .enable_lcn = true,
+     },
++#if (PLATFORM_VARIANT == RD_V3_R1_CFG1)
++    [PLATFORM_CHIP_2] = {
++        .periphbase = SCP_CMN_BASE,
++        .mesh_size_x = MESH_SIZE_X,
++        .mesh_size_y = MESH_SIZE_Y,
++        .hnf_sam_config = {
++            .snf_table = snf_table,
++            .snf_count = FWK_ARRAY_SIZE(snf_table),
++            .hnf_sam_mode = MOD_CMN_CYPRUS_HNF_SAM_MODE_DIRECT_MAPPING,
++        },
++        .rnsam_scg_config = {
++            .scg_hashing_mode = MOD_CMN_CYPRUS_RNSAM_SCG_POWER_OF_TWO_HASHING,
++        },
++        .hns_cal_mode = true,
++        .mmap_table = mmap,
++        .mmap_count = FWK_ARRAY_SIZE(mmap),
++        .chip_addr_space = UINT64_C(64) * FWK_GIB,
++        .cml_config_table = chip2_cml_config,
++        .cml_table_count =
++            FWK_ARRAY_SIZE(chip2_cml_config),
++        .cml_poll_timeout_us = UINT32_C(100),
++        .enable_lcn = true,
++    },
++    [PLATFORM_CHIP_3] = {
++        .periphbase = SCP_CMN_BASE,
++        .mesh_size_x = MESH_SIZE_X,
++        .mesh_size_y = MESH_SIZE_Y,
++        .hnf_sam_config = {
++            .snf_table = snf_table,
++            .snf_count = FWK_ARRAY_SIZE(snf_table),
++            .hnf_sam_mode = MOD_CMN_CYPRUS_HNF_SAM_MODE_DIRECT_MAPPING,
++        },
++        .rnsam_scg_config = {
++            .scg_hashing_mode = MOD_CMN_CYPRUS_RNSAM_SCG_POWER_OF_TWO_HASHING,
++        },
++        .hns_cal_mode = true,
++        .mmap_table = mmap,
++        .mmap_count = FWK_ARRAY_SIZE(mmap),
++        .chip_addr_space = UINT64_C(64) * FWK_GIB,
++        .cml_config_table = chip3_cml_config,
++        .cml_table_count =
++            FWK_ARRAY_SIZE(chip3_cml_config),
++        .cml_poll_timeout_us = UINT32_C(100),
++        .enable_lcn = true,
++    },
++#endif
+ };
+ 
+ struct mod_cmn_cyprus_config_table cmn_config = {
+diff --git a/product/neoverse-rd/rdv3r1/scp_ramfw/config_io_block.c b/product/neoverse-rd/rdv3r1/scp_ramfw/config_io_block.c
+index cf136888b836..63f96c9a5c2a 100644
+--- a/product/neoverse-rd/rdv3r1/scp_ramfw/config_io_block.c
++++ b/product/neoverse-rd/rdv3r1/scp_ramfw/config_io_block.c
+@@ -11,6 +11,7 @@
+ #include "io_macro_layout.h"
+ #include "scp_css_mmap.h"
+ #include "scp_fw_mmap.h"
++#include "platform_variant.h"
+ 
+ #include <mod_atu.h>
+ #include <mod_io_block.h>
+@@ -32,8 +33,8 @@
+             .region_mem_maps = ((struct interface_io_block_setup_mmap[]) \
+             { \
+ /*
+-* From NOC-S3 TRM:
+ * "Warning: The address region that corresponds to the internal configuration
++* From NOC-S3 TRM:
+ * space must be programmed in the address map as one of the non-striped
+ * regions.
+ * The target for this non-striped region must be the
+@@ -126,7 +127,9 @@ static struct mod_io_block_config io_block_module_config = {
+ 
+ static const struct fwk_element io_block_element_table[] = {
+     IO_MACRO_ELEMENT_CONFIG(0),
++#if (PLATFORM_VARIANT == RD_V3_R1)
+     IO_MACRO_ELEMENT_CONFIG(1),
++#endif
+     { 0 }
+ };
+ 
+diff --git a/product/neoverse-rd/rdv3r1/scp_ramfw/config_pcie_setup.c b/product/neoverse-rd/rdv3r1/scp_ramfw/config_pcie_setup.c
+index d1a5600dd164..fd8dff25358d 100644
+--- a/product/neoverse-rd/rdv3r1/scp_ramfw/config_pcie_setup.c
++++ b/product/neoverse-rd/rdv3r1/scp_ramfw/config_pcie_setup.c
+@@ -8,10 +8,12 @@
+  *     Configuration data for module 'pcie'.
+  */
+ 
++#include "platform_variant.h"
+ #include "cmn_node_id.h"
+ #include "io_macro_layout.h"
+ #include "scp_cfgd_sds.h"
+ #include "scp_fw_mmap.h"
++#include "platform_variant.h"
+ 
+ #include <mod_atu_mmio.h>
+ #include <mod_cmn_cyprus.h>
+@@ -34,7 +36,11 @@
+ /* PCIe MMIO_L Base */
+ #define MMIOL_BASE UINT64_C(0x60000000)
+ /* PCIe MMIO_L size (256 MiB) */
++#if (PLATFORM_VARIANT == RD_V3_R1_CFG1)
++#define MMIOL_SIZE (UINT64_C(128) * FWK_MIB)
++#else
+ #define MMIOL_SIZE (UINT64_C(256) * FWK_MIB)
++#endif
+ /* PCIe MMIO_L base for a chip */
+ #define CHIP_MMIOL_BASE(chip_id) (MMIOL_BASE + (chip_id * MMIOL_SIZE))
+ 
+@@ -49,7 +55,13 @@
+ #define CHIP_PCIE_BUS_SIZE 256
+ 
+ #define NUMBER_OF_ENDPOINTS 5
++
++/* Number of Chiplets */
++#if (PLATFORM_VARIANT == RD_V3_R1_CFG1)
++#define NUMBER_OF_CHIPS 4
++#else
+ #define NUMBER_OF_CHIPS 2
++#endif
+ 
+ #define CHIP_MEMMAP(chip_id) \
+     { \
+@@ -132,7 +144,9 @@
+ 
+ static const struct fwk_element pcie_setup_element_table[] = {
+     IO_MACRO_PCIE_ELEMENT_CONFIG(0, false, false, false, false, true),
++#if (PLATFORM_VARIANT == RD_V3_R1)
+     IO_MACRO_PCIE_ELEMENT_CONFIG(1, false, false, false, false, true),
++#endif
+     { 0 }
+ };
+ 
+@@ -141,6 +155,11 @@ static const struct mod_pcie_setup_module_config module_config = {
+     .resource_info = ((struct mod_pcie_setup_resource_info[NUMBER_OF_CHIPS]) {
+         CHIP_MEMMAP(0),
+         CHIP_MEMMAP(1),
++#if (PLATFORM_VARIANT == RD_V3_R1_CFG1)
++        CHIP_MEMMAP(2),
++        CHIP_MEMMAP(3),
++#endif
++
+ /*
+  * Keep the basic memory map regions identical. The module during runtime
+  * will detect the chip number and update the translation fields
+diff --git a/product/neoverse-rd/rdv3r1/scp_ramfw/config_pik_clock.c b/product/neoverse-rd/rdv3r1/scp_ramfw/config_pik_clock.c
+index 718a8d09d449..01d200fb5e7b 100644
+--- a/product/neoverse-rd/rdv3r1/scp_ramfw/config_pik_clock.c
++++ b/product/neoverse-rd/rdv3r1/scp_ramfw/config_pik_clock.c
+@@ -12,6 +12,7 @@
+ #include "scp_clock.h"
+ #include "scp_pwrctrl.h"
+ #include "system_pik.h"
++#include "platform_variant.h"
+ 
+ #include <mod_pik_clock.h>
+ 
+@@ -116,12 +117,14 @@ static const struct fwk_element pik_clock_table[] = {
+     CFGD_MOD_PIK_CLOCK_ELEMENT_CPU(5),
+     CFGD_MOD_PIK_CLOCK_ELEMENT_CPU(6),
+     CFGD_MOD_PIK_CLOCK_ELEMENT_CPU(7),
++#if (PLATFORM_VARIANT == RD_V3_R1)
+     CFGD_MOD_PIK_CLOCK_ELEMENT_CPU(8),
+     CFGD_MOD_PIK_CLOCK_ELEMENT_CPU(9),
+     CFGD_MOD_PIK_CLOCK_ELEMENT_CPU(10),
+     CFGD_MOD_PIK_CLOCK_ELEMENT_CPU(11),
+     CFGD_MOD_PIK_CLOCK_ELEMENT_CPU(12),
+     CFGD_MOD_PIK_CLOCK_ELEMENT_CPU(13),
++#endif
+     [CFGD_MOD_PIK_CLOCK_EIDX_CMN] = {
+         .name = "PIK CLK CMN",
+         .data = &((struct mod_pik_clock_dev_config) {
+diff --git a/product/neoverse-rd/rdv3r1/scp_ramfw/include/cmn_node_id.h b/product/neoverse-rd/rdv3r1/scp_ramfw/include/cmn_node_id.h
+index d40008c952fc..5c154e365b80 100644
+--- a/product/neoverse-rd/rdv3r1/scp_ramfw/include/cmn_node_id.h
++++ b/product/neoverse-rd/rdv3r1/scp_ramfw/include/cmn_node_id.h
+@@ -11,6 +11,9 @@
+ #ifndef CMN_NODE_ID
+ #define CMN_NODE_ID
+ 
++#include "platform_variant.h"
++
++#if (PLATFORM_VARIANT == RD_V3_R1)
+ #define MEM_CNTRL00_ID 8
+ #define MEM_CNTRL01_ID 16
+ #define MEM_CNTRL02_ID 24
+@@ -57,4 +60,43 @@
+ #define IOVB_NODE_ID1 NODE_ID_HNP1
+ #define IOVB_NODE_ID2 NODE_ID_HNP2
+ 
++#elif (PLATFORM_VARIANT == RD_V3_R1_CFG1)
++
++#define MEM_CNTRL00_ID 32
++#define MEM_CNTRL01_ID 64
++
++#define NODE_ID_HND 68
++
++#define NODE_ID_HNP0 2
++#define NODE_ID_HNP1 3
++#define NODE_ID_HNP2 26
++#define NODE_ID_HNP3 27
++
++#define NODE_ID_HNI0 0
++#define NODE_ID_HNI1 70
++#define NODE_ID_HNI2 60
++#define NODE_ID_HNI3 88
++#define NODE_ID_HNI4 92
++
++#define NODE_ID_SBSX 66
++
++/* D2D */
++#define NODE_ID_CCG00 34
++#define NODE_ID_CCG01 10
++
++ /* S2S */
++#define NODE_ID_CCG02 12
++#define NODE_ID_CCG03 18
++#define NODE_ID_CCG04 28
++
++#define MESH_SIZE_X 3
++#define MESH_SIZE_Y 4
++
++#define IOVB_NODE_ID0 NODE_ID_HNP0
++#define IOVB_NODE_ID1 NODE_ID_HNP2
++
++#else
++# error "Unsupported PLATFORM_VARIANT value"
++#endif
++
+ #endif /* CMN_NODE_ID */
+diff --git a/product/neoverse-rd/rdv3r1/scp_ramfw/include/platform_core.h b/product/neoverse-rd/rdv3r1/scp_ramfw/include/platform_core.h
+index ff5ed007eb12..f6c23a4a27da 100644
+--- a/product/neoverse-rd/rdv3r1/scp_ramfw/include/platform_core.h
++++ b/product/neoverse-rd/rdv3r1/scp_ramfw/include/platform_core.h
+@@ -13,9 +13,7 @@
+ 
+ #include <fwk_assert.h>
+ 
+-/* Actual number of core and clusters implemented */
+-#define CORES_PER_CLUSTER  1
+-#define NUMBER_OF_CLUSTERS 14
++#include "platform_variant.h"
+ 
+ /* Maximum number of clusters supported */
+ #define MAX_NUM_CLUSTERS 70
+@@ -23,14 +21,35 @@
+ /* Maximum number of LCP sub-system instances supported */
+ #define MAX_NUM_LCP 7
+ 
+-/* Number of PCIe Integration Control Register Blocks */
+-#define NUM_PCIE_INTEG_CTRL 4
++/*
++* NUM_OF_LCP: Actual number of LCP sub-system instances implemented
++* SHARED_NUM_CORE_PER_LCP: Number of AP cores that share an LCP
++* NUM_PCIE_INTEG_CTRL: Number of PCIe Integration Control Register Blocks
++*/
++#if (PLATFORM_VARIANT == RD_V3_R1)
++#   define NUM_OF_LCP 7
++#   define SHARED_NUM_CORE_PER_LCP 2
++#   define NUM_PCIE_INTEG_CTRL 2
++/* Number of chips supported on the platform: 2 */
++enum platform_chip_id { PLATFORM_CHIP_0, PLATFORM_CHIP_1, PLATFORM_CHIP_COUNT };
++#elif (PLATFORM_VARIANT == RD_V3_R1_CFG1)
++#   define NUM_OF_LCP 2
++#   define SHARED_NUM_CORE_PER_LCP 4
++#   define NUM_PCIE_INTEG_CTRL 1
++/* Number of chips supported on the platform: 4 */
++enum platform_chip_id { PLATFORM_CHIP_0, PLATFORM_CHIP_1, PLATFORM_CHIP_2, PLATFORM_CHIP_3, PLATFORM_CHIP_COUNT };
++#else
++#   error "Unsupported PLATFORM_VARIANT value"
++#endif
+ 
+-/* Number of PCIe Root Ports */
+-#define NUMBER_OF_ROOTPORTS 5
++/* Actual number of AP clusters implemented */
++#define NUMBER_OF_CLUSTERS (NUM_OF_LCP * SHARED_NUM_CORE_PER_LCP)
+ 
+-/* Number of chips supported on the platform. */
+-enum platform_chip_id { PLATFORM_CHIP_0, PLATFORM_CHIP_1, PLATFORM_CHIP_COUNT };
++/* Number of cores per cluster */
++#define CORES_PER_CLUSTER 1
++
++/* Number of PCIe root ports */
++#define NUMBER_OF_ROOTPORTS 5
+ 
+ static inline unsigned int platform_get_cluster_count(void)
+ {
+diff --git a/product/neoverse-rd/rdv3r1/scp_ramfw/include/scp_clock.h b/product/neoverse-rd/rdv3r1/scp_ramfw/include/scp_clock.h
+index 8fc76a081e39..839e0a116c81 100644
+--- a/product/neoverse-rd/rdv3r1/scp_ramfw/include/scp_clock.h
++++ b/product/neoverse-rd/rdv3r1/scp_ramfw/include/scp_clock.h
+@@ -12,6 +12,7 @@
+ #define SCP_CLOCK_H
+ 
+ #include "css_common.h"
++#include "platform_variant.h"
+ 
+ #include <fwk_macros.h>
+ 
+@@ -29,12 +30,14 @@ enum clock_pik_idx {
+     CFGD_MOD_PIK_CLOCK_EIDX_CPU5,
+     CFGD_MOD_PIK_CLOCK_EIDX_CPU6,
+     CFGD_MOD_PIK_CLOCK_EIDX_CPU7,
++#if (PLATFORM_VARIANT == RD_V3_R1)
+     CFGD_MOD_PIK_CLOCK_EIDX_CPU8,
+     CFGD_MOD_PIK_CLOCK_EIDX_CPU9,
+     CFGD_MOD_PIK_CLOCK_EIDX_CPU10,
+     CFGD_MOD_PIK_CLOCK_EIDX_CPU11,
+     CFGD_MOD_PIK_CLOCK_EIDX_CPU12,
+     CFGD_MOD_PIK_CLOCK_EIDX_CPU13,
++#endif
+     CFGD_MOD_PIK_CLOCK_EIDX_CMN,
+     CFGD_MOD_PIK_CLOCK_EIDX_SCP,
+     CFGD_MOD_PIK_CLOCK_EIDX_GIC,
+@@ -56,12 +59,14 @@ enum cfgd_mod_clock_element_idx {
+     CFGD_MOD_CLOCK_EIDX_CPU5,
+     CFGD_MOD_CLOCK_EIDX_CPU6,
+     CFGD_MOD_CLOCK_EIDX_CPU7,
++#if (PLATFORM_VARIANT == RD_V3_R1)
+     CFGD_MOD_CLOCK_EIDX_CPU8,
+     CFGD_MOD_CLOCK_EIDX_CPU9,
+     CFGD_MOD_CLOCK_EIDX_CPU10,
+     CFGD_MOD_CLOCK_EIDX_CPU11,
+     CFGD_MOD_CLOCK_EIDX_CPU12,
+     CFGD_MOD_CLOCK_EIDX_CPU13,
++#endif
+     CFGD_MOD_CLOCK_EIDX_CMN,
+     CFGD_MOD_CLOCK_EIDX_COUNT
+ };
+diff --git a/product/neoverse-rd/rdv3r1/scp_ramfw/module/scp_platform/CMakeLists.txt b/product/neoverse-rd/rdv3r1/scp_ramfw/module/scp_platform/CMakeLists.txt
+index 15549194afbd..9dfcf78c4594 100644
+--- a/product/neoverse-rd/rdv3r1/scp_ramfw/module/scp_platform/CMakeLists.txt
++++ b/product/neoverse-rd/rdv3r1/scp_ramfw/module/scp_platform/CMakeLists.txt
+@@ -6,6 +6,22 @@
+ #
+ add_library(${SCP_MODULE_TARGET} SCP_MODULE)
+ 
++# SCP_PLATFORM_VARIANT value for supported RD-V3-R1 platform variants:
++# - '0' for RD-V3-R1 platform
++# - '1' for RD-V3-R1-Cfg1 platform
++
++if (SCP_PLATFORM_VARIANT STREQUAL "0")
++     target_compile_definitions(${SCP_MODULE_TARGET}
++                                 PUBLIC -DPLATFORM_VARIANT=0)
++elseif (SCP_PLATFORM_VARIANT STREQUAL "1")
++     target_compile_definitions(${SCP_MODULE_TARGET}
++                                 PUBLIC -DPLATFORM_VARIANT=1)
++else()
++      message(FATAL_ERROR "Please set SCP_PLATFORM_VARIANT to \n"
++                                "'0' for RD-V3-R1-Cfg1\n"
++                                "'1' for RD-V3-R1\n")
++endif()
++
+ target_include_directories(${SCP_MODULE_TARGET}
+                            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+ 

@@ -1,0 +1,705 @@
+From e40801156f73641a72add4ebf29b188167f2974b Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Thu, 28 Mar 2024 00:56:57 +0000
+Subject: [PATCH] neoverse-rd/rdn2: enable dynamic pcie setup
+
+This patch enables the supprot for dynamically discovering PCIe and then
+configuring it using pcie_setup module.
+
+Add the pcie_setup config file.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: If71d2439287cf806eb889958ec59cabf7dd03e9f
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../pcie_integ_ctrl/src/mod_pcie_integ_ctrl.c |   3 +-
+ .../module/platform_system/CMakeLists.txt     |   5 +-
+ .../neoverse-rd/rdn2/scp_ramfw/CMakeLists.txt |   3 +-
+ .../neoverse-rd/rdn2/scp_ramfw/Firmware.cmake |   8 +-
+ .../rdn2/scp_ramfw/config_cmn700.c            | 216 +-----------------
+ .../rdn2/scp_ramfw/config_cmn700.h            | 110 +++++++++
+ .../rdn2/scp_ramfw/config_pcie_integ_ctrl.c   |  31 +--
+ .../rdn2/scp_ramfw/config_pcie_setup.c        | 153 +++++++++++++
+ .../neoverse-rd/rdn2/scp_ramfw/config_sds.c   |  11 +-
+ 9 files changed, 289 insertions(+), 251 deletions(-)
+ create mode 100644 product/neoverse-rd/rdn2/scp_ramfw/config_cmn700.h
+ create mode 100644 product/neoverse-rd/rdn2/scp_ramfw/config_pcie_setup.c
+
+diff --git a/product/neoverse-rd/rdn2/module/pcie_integ_ctrl/src/mod_pcie_integ_ctrl.c b/product/neoverse-rd/rdn2/module/pcie_integ_ctrl/src/mod_pcie_integ_ctrl.c
+index 8517a20a8534..09d4d2bb322e 100644
+--- a/product/neoverse-rd/rdn2/module/pcie_integ_ctrl/src/mod_pcie_integ_ctrl.c
++++ b/product/neoverse-rd/rdn2/module/pcie_integ_ctrl/src/mod_pcie_integ_ctrl.c
+@@ -124,8 +124,7 @@ static int pcie_integ_ctrl_init(
+ {
+     if (element_count == 0) {
+         /* There must be at least one pcie integ config data */
+-        fwk_unexpected();
+-        return FWK_E_PARAM;
++        return FWK_SUCCESS;
+     }
+ 
+     ctx_table = fwk_mm_calloc(element_count, sizeof(ctx_table[0]));
+diff --git a/product/neoverse-rd/rdn2/module/platform_system/CMakeLists.txt b/product/neoverse-rd/rdn2/module/platform_system/CMakeLists.txt
+index 0d1668ff774c..e6a0098d6565 100644
+--- a/product/neoverse-rd/rdn2/module/platform_system/CMakeLists.txt
++++ b/product/neoverse-rd/rdn2/module/platform_system/CMakeLists.txt
+@@ -1,6 +1,6 @@
+ #
+ # Arm SCP/MCP Software
+-# Copyright (c) 2021-2022, Arm Limited and Contributors. All rights reserved.
++# Copyright (c) 2021-2024, Arm Limited and Contributors. All rights reserved.
+ #
+ # SPDX-License-Identifier: BSD-3-Clause
+ #
+@@ -40,4 +40,5 @@ target_sources(${SCP_MODULE_TARGET}
+ 
+ target_link_libraries(${SCP_MODULE_TARGET}
+     PRIVATE module-sds module-clock module-power-domain module-ppu-v1
+-            module-scmi module-system-power module-apremap module-system-info)
++            module-scmi module-system-power module-apremap module-system-info
++            module-pcie-setup)
+diff --git a/product/neoverse-rd/rdn2/scp_ramfw/CMakeLists.txt b/product/neoverse-rd/rdn2/scp_ramfw/CMakeLists.txt
+index 969f64ed361f..7bf59cefc1f2 100644
+--- a/product/neoverse-rd/rdn2/scp_ramfw/CMakeLists.txt
++++ b/product/neoverse-rd/rdn2/scp_ramfw/CMakeLists.txt
+@@ -75,7 +75,8 @@ target_sources(
+             "${CMAKE_CURRENT_SOURCE_DIR}/config_sp805.c"
+             "${CMAKE_CURRENT_SOURCE_DIR}/../src/config_system_info.c"
+             "${CMAKE_CURRENT_SOURCE_DIR}/../src/config_pl011.c"
+-            "${CMAKE_CURRENT_SOURCE_DIR}/../src/config_sid.c")
++            "${CMAKE_CURRENT_SOURCE_DIR}/../src/config_sid.c"
++            "${CMAKE_CURRENT_SOURCE_DIR}/config_pcie_setup.c")
+ 
+ if(SCP_ENABLE_SCMI_PERF_FAST_CHANNELS)
+     target_sources(rdn2-bl2 PRIVATE "config_fch_polled.c")
+diff --git a/product/neoverse-rd/rdn2/scp_ramfw/Firmware.cmake b/product/neoverse-rd/rdn2/scp_ramfw/Firmware.cmake
+index c1e255090e86..da6dafe70376 100644
+--- a/product/neoverse-rd/rdn2/scp_ramfw/Firmware.cmake
++++ b/product/neoverse-rd/rdn2/scp_ramfw/Firmware.cmake
+@@ -43,6 +43,10 @@ list(PREPEND SCP_MODULE_PATHS
+     "${CMAKE_CURRENT_LIST_DIR}/../module/apremap")
+ list(PREPEND SCP_MODULE_PATHS
+      "${CMAKE_CURRENT_LIST_DIR}/../module/pcie_integ_ctrl")
++list(PREPEND SCP_MODULE_PATHS
++     "${CMAKE_CURRENT_LIST_DIR}/../../module/pcie_setup")
++ list(PREPEND SCP_MODULE_PATHS
++     "${CMAKE_SOURCE_DIR}/module/pcie_discovery")
+ 
+ # The order of the modules in the following list is the order in which the
+ # modules are initialized, bound, started during the pre-runtime phase.
+@@ -64,7 +68,6 @@ list(APPEND SCP_MODULES "gtimer")
+ list(APPEND SCP_MODULES "timer")
+ list(APPEND SCP_MODULES "cmn700")
+ list(APPEND SCP_MODULES "apcontext")
+-list(APPEND SCP_MODULES "pcie_integ_ctrl")
+ list(APPEND SCP_MODULES "mhu2")
+ list(APPEND SCP_MODULES "transport")
+ list(APPEND SCP_MODULES "scmi")
+@@ -72,6 +75,9 @@ list(APPEND SCP_MODULES "sds")
+ list(APPEND SCP_MODULES "system-pll")
+ list(APPEND SCP_MODULES "scmi-power-domain")
+ list(APPEND SCP_MODULES "scmi-system-power")
++list(APPEND SCP_MODULES "pcie_discovery")
++list(APPEND SCP_MODULES "pcie-setup")
++list(APPEND SCP_MODULES "pcie_integ_ctrl")
+ list(APPEND SCP_MODULES "platform-system")
+ list(APPEND SCP_MODULES "sp805")
+ list(APPEND SCP_MODULES "psu")
+diff --git a/product/neoverse-rd/rdn2/scp_ramfw/config_cmn700.c b/product/neoverse-rd/rdn2/scp_ramfw/config_cmn700.c
+index 4335a71a997d..3b614dd181bc 100644
+--- a/product/neoverse-rd/rdn2/scp_ramfw/config_cmn700.c
++++ b/product/neoverse-rd/rdn2/scp_ramfw/config_cmn700.c
+@@ -1,11 +1,12 @@
+ /*
+  * Arm SCP/MCP Software
+- * Copyright (c) 2020-2023, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2020-2024, Arm Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+ 
+ #include "clock_soc.h"
++#include "config_cmn700.h"
+ #include "platform_core.h"
+ #include "platform_def.h"
+ #include "scp_css_mmap.h"
+@@ -22,105 +23,6 @@
+ #include <stddef.h>
+ #include <stdint.h>
+ 
+-/* CCG ports available on the variant 2. */
+-enum rdn2cfg2_cmn700_ccg_port {
+-    CCG_PORT_0,
+-    CCG_PORT_1,
+-    CCG_PORT_2,
+-    CCG_PORT_3,
+-    CCG_PORT_4,
+-    CCG_PER_CHIP,
+-};
+-
+-/* Total RN-Fs (N2 CPUs) per chips for variant 2. */
+-#define RNF_PER_CHIP_CFG2 4
+-
+-/*
+- * CMN700 nodes
+- */
+-#if (PLATFORM_VARIANT == 0)
+-#    define MEM_CNTRL0_ID 64
+-#    define MEM_CNTRL1_ID 128
+-#    define MEM_CNTRL2_ID 192
+-#    define MEM_CNTRL3_ID 256
+-#    define MEM_CNTRL4_ID 108
+-#    define MEM_CNTRL5_ID 172
+-#    define MEM_CNTRL6_ID 234
+-#    define MEM_CNTRL7_ID 298
+-
+-#    define NODE_ID_HND  260
+-#    define NODE_ID_HNI0 0
+-#    define NODE_ID_HNP0 324
+-#    define NODE_ID_HNP1 340
+-#    define NODE_ID_HNP2 348
+-#    define NODE_ID_HNP3 362
+-#    define NODE_ID_HNP4 364
+-#    define NODE_ID_SBSX 196
+-
+-#    define NODE_ID_NON_PCIE_IO_MACRO NODE_ID_HNP4
+-
+-#    define MESH_SIZE_X 6
+-#    define MESH_SIZE_Y 6
+-
+-#elif (PLATFORM_VARIANT == 1)
+-#    define MEM_CNTRL0_ID 32
+-#    define MEM_CNTRL1_ID 64
+-
+-#    define NODE_ID_HND  68
+-#    define NODE_ID_HNI0 0
+-#    define NODE_ID_HNP0 2
+-#    define NODE_ID_HNP1 3
+-#    define NODE_ID_SBSX 66
+-
+-#    define NODE_ID_NON_PCIE_IO_MACRO NODE_ID_HNP1
+-
+-#    define MESH_SIZE_X 3
+-#    define MESH_SIZE_Y 3
+-
+-#elif (PLATFORM_VARIANT == 2)
+-#    define MEM_CNTRL0_ID 108
+-#    define MEM_CNTRL1_ID 172
+-#    define MEM_CNTRL2_ID 234
+-#    define MEM_CNTRL3_ID 298
+-
+-#    define NODE_ID_HND  256
+-#    define NODE_ID_HNI0 0
+-#    define NODE_ID_HNP0 0x144
+-#    define NODE_ID_HNP1 0x154
+-#    define NODE_ID_HNP2 0x15c
+-#    define NODE_ID_HNP3 0x16a
+-#    define NODE_ID_SBSX 196
+-
+-#    define NODE_ID_NON_PCIE_IO_MACRO NODE_ID_HNP1
+-
+-#    define MESH_SIZE_X 6
+-#    define MESH_SIZE_Y 6
+-
+-#elif (PLATFORM_VARIANT == 3)
+-#    define MEM_CNTRL0_ID 16
+-#    define MEM_CNTRL1_ID 1168
+-#    define MEM_CNTRL2_ID 8
+-#    define MEM_CNTRL3_ID 1160
+-#    define MEM_CNTRL4_ID 24
+-#    define MEM_CNTRL5_ID 1176
+-#    define MEM_CNTRL6_ID 32
+-#    define MEM_CNTRL7_ID 1184
+-
+-#    define NODE_ID_HND  42
+-#    define NODE_ID_HNI0 256
+-#    define NODE_ID_HNP0 44
+-#    define NODE_ID_HNP1 298
+-#    define NODE_ID_HNP2 554
+-#    define NODE_ID_HNP3 682
+-#    define NODE_ID_HNP4 938
+-#    define NODE_ID_SBSX 172
+-
+-#    define NODE_ID_NON_PCIE_IO_MACRO NODE_ID_HNP4
+-
+-#    define MESH_SIZE_X 10
+-#    define MESH_SIZE_Y 6
+-#endif
+-
+ #if (PLATFORM_VARIANT == 0 || PLATFORM_VARIANT == 3)
+ static const unsigned int snf_table[] = {
+     MEM_CNTRL0_ID, /* Maps to HN-F logical node 0  */
+@@ -341,120 +243,6 @@ static const struct mod_cmn700_mem_region_map mmap[] = {
+         .type = MOD_CMN700_MEM_REGION_TYPE_IO,
+         .node_id = NODE_ID_HNP4,
+     },
+-#endif
+-    {
+-        /*
+-         * Peripherals, PCIe 32-bit MMIO to IO Macro 0
+-         */
+-        .base = AP_PCIE_MMIOL_BASE,
+-        .size = AP_PCIE_MMIOL_SIZE_PER_RC,
+-        .type = MOD_CMN700_MEM_REGION_TYPE_IO,
+-        .node_id = NODE_ID_HNP0,
+-    },
+-#if (PLATFORM_VARIANT == 0 || PLATFORM_VARIANT == 3)
+-    {
+-        /*
+-         * Peripherals, PCIe 32-bit MMIO to IO Macro 1
+-         */
+-        .base = AP_PCIE_MMIOL_BASE + (1 * AP_PCIE_MMIOL_SIZE_PER_RC),
+-        .size = AP_PCIE_MMIOL_SIZE_PER_RC,
+-        .type = MOD_CMN700_MEM_REGION_TYPE_IO,
+-        .node_id = NODE_ID_HNP1,
+-    },
+-    {
+-        /*
+-         * Peripherals, PCIe 32-bit MMIO to IO Macro 2
+-         */
+-        .base = AP_PCIE_MMIOL_BASE + (2 * AP_PCIE_MMIOL_SIZE_PER_RC),
+-        .size = AP_PCIE_MMIOL_SIZE_PER_RC,
+-        .type = MOD_CMN700_MEM_REGION_TYPE_IO,
+-        .node_id = NODE_ID_HNP2,
+-    },
+-    {
+-        /*
+-         * Peripherals, PCIe 32-bit MMIO to IO Macro 3
+-         */
+-        .base = AP_PCIE_MMIOL_BASE + (3 * AP_PCIE_MMIOL_SIZE_PER_RC),
+-        .size = AP_PCIE_MMIOL_SIZE_PER_RC,
+-        .type = MOD_CMN700_MEM_REGION_TYPE_IO,
+-        .node_id = NODE_ID_HNP3,
+-    },
+-#endif
+-    {
+-        /*
+-         * PCIe ECAM0 to IO Macro 0
+-         */
+-        .base = AP_PCIE_ECAM_BASE,
+-        .size = AP_PCIE_ECAM_SIZE_PER_RC,
+-        .type = MOD_CMN700_MEM_REGION_TYPE_IO,
+-        .node_id = NODE_ID_HNP0,
+-    },
+-#if (PLATFORM_VARIANT == 0 || PLATFORM_VARIANT == 3)
+-    {
+-        /*
+-         * PCIe ECAM0 to IO Macro 1
+-         */
+-        .base = AP_PCIE_ECAM_BASE + (1 * AP_PCIE_ECAM_SIZE_PER_RC),
+-        .size = AP_PCIE_ECAM_SIZE_PER_RC,
+-        .type = MOD_CMN700_MEM_REGION_TYPE_IO,
+-        .node_id = NODE_ID_HNP1,
+-    },
+-    {
+-        /*
+-         * PCIe ECAM0 to IO Macro 2
+-         */
+-        .base = AP_PCIE_ECAM_BASE + (2 * AP_PCIE_ECAM_SIZE_PER_RC),
+-        .size = AP_PCIE_ECAM_SIZE_PER_RC,
+-        .type = MOD_CMN700_MEM_REGION_TYPE_IO,
+-        .node_id = NODE_ID_HNP2,
+-    },
+-    {
+-        /*
+-         * PCIe ECAM0 to IO Macro 3
+-         */
+-        .base = AP_PCIE_ECAM_BASE + (3 * AP_PCIE_ECAM_SIZE_PER_RC),
+-        .size = AP_PCIE_ECAM_SIZE_PER_RC,
+-        .type = MOD_CMN700_MEM_REGION_TYPE_IO,
+-        .node_id = NODE_ID_HNP3,
+-    },
+-#endif
+-    {
+-        /*
+-         * Peripherals, PCIe 64-bit MMIO to IO Macro 0
+-         */
+-        .base = AP_PCIE_MMIOH_BASE,
+-        .size = AP_PCIE_MMIOH_SIZE_PER_RC,
+-        .type = MOD_CMN700_MEM_REGION_TYPE_IO,
+-        .node_id = NODE_ID_HNP0,
+-    },
+-#if (PLATFORM_VARIANT == 0 || PLATFORM_VARIANT == 3)
+-    {
+-        /*
+-         * Peripherals, PCIe 64-bit MMIO to IO Macro 1
+-         */
+-        .base = AP_PCIE_MMIOH_BASE + (1 * AP_PCIE_MMIOH_SIZE_PER_RC),
+-        .size = AP_PCIE_MMIOH_SIZE_PER_RC,
+-        .type = MOD_CMN700_MEM_REGION_TYPE_IO,
+-        .node_id = NODE_ID_HNP1,
+-    },
+-    {
+-        /*
+-         * Peripherals, PCIe 64-bit MMIO to IO Macro 2
+-         */
+-        .base = AP_PCIE_MMIOH_BASE + (2 * AP_PCIE_MMIOH_SIZE_PER_RC),
+-        .size = AP_PCIE_MMIOH_SIZE_PER_RC,
+-        .type = MOD_CMN700_MEM_REGION_TYPE_IO,
+-        .node_id = NODE_ID_HNP2,
+-    },
+-    {
+-        /*
+-         * Peripherals, PCIe 64-bit MMIO to IO Macro 3
+-         */
+-        .base = AP_PCIE_MMIOH_BASE + (3 * AP_PCIE_MMIOH_SIZE_PER_RC),
+-        .size = AP_PCIE_MMIOH_SIZE_PER_RC,
+-        .type = MOD_CMN700_MEM_REGION_TYPE_IO,
+-        .node_id = NODE_ID_HNP3,
+-    },
+ #endif
+     {
+         /*
+diff --git a/product/neoverse-rd/rdn2/scp_ramfw/config_cmn700.h b/product/neoverse-rd/rdn2/scp_ramfw/config_cmn700.h
+new file mode 100644
+index 000000000000..1423ad3e6ce9
+--- /dev/null
++++ b/product/neoverse-rd/rdn2/scp_ramfw/config_cmn700.h
+@@ -0,0 +1,110 @@
++/*
++ * Arm SCP/MCP Software
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#ifndef CONFIG_CMN700_H
++#define CONFIG_CMN700_H
++
++/* CCG ports available on the variant 2. */
++enum rdn2cfg2_cmn700_ccg_port {
++    CCG_PORT_0,
++    CCG_PORT_1,
++    CCG_PORT_2,
++    CCG_PORT_3,
++    CCG_PORT_4,
++    CCG_PER_CHIP,
++};
++
++/* Total RN-Fs (N2 CPUs) per chips for variant 2. */
++#define RNF_PER_CHIP_CFG2 4
++
++/*
++ * CMN700 nodes
++ */
++#if (PLATFORM_VARIANT == 0)
++#    define MEM_CNTRL0_ID 64
++#    define MEM_CNTRL1_ID 128
++#    define MEM_CNTRL2_ID 192
++#    define MEM_CNTRL3_ID 256
++#    define MEM_CNTRL4_ID 108
++#    define MEM_CNTRL5_ID 172
++#    define MEM_CNTRL6_ID 234
++#    define MEM_CNTRL7_ID 298
++
++#    define NODE_ID_HND  260
++#    define NODE_ID_HNI0 0
++#    define NODE_ID_HNP0 324
++#    define NODE_ID_HNP1 340
++#    define NODE_ID_HNP2 348
++#    define NODE_ID_HNP3 362
++#    define NODE_ID_HNP4 364
++#    define NODE_ID_SBSX 196
++
++#    define NODE_ID_NON_PCIE_IO_MACRO NODE_ID_HNP4
++
++#    define MESH_SIZE_X 6
++#    define MESH_SIZE_Y 6
++
++#elif (PLATFORM_VARIANT == 1)
++#    define MEM_CNTRL0_ID 32
++#    define MEM_CNTRL1_ID 64
++
++#    define NODE_ID_HND  68
++#    define NODE_ID_HNI0 0
++#    define NODE_ID_HNP0 2
++#    define NODE_ID_HNP1 3
++#    define NODE_ID_SBSX 66
++
++#    define NODE_ID_NON_PCIE_IO_MACRO NODE_ID_HNP1
++
++#    define MESH_SIZE_X 3
++#    define MESH_SIZE_Y 3
++
++#elif (PLATFORM_VARIANT == 2)
++#    define MEM_CNTRL0_ID 108
++#    define MEM_CNTRL1_ID 172
++#    define MEM_CNTRL2_ID 234
++#    define MEM_CNTRL3_ID 298
++
++#    define NODE_ID_HND  256
++#    define NODE_ID_HNI0 0
++#    define NODE_ID_HNP0 0x144
++#    define NODE_ID_HNP1 0x154
++#    define NODE_ID_HNP2 0x15c
++#    define NODE_ID_HNP3 0x16a
++#    define NODE_ID_SBSX 196
++
++#    define NODE_ID_NON_PCIE_IO_MACRO NODE_ID_HNP1
++
++#    define MESH_SIZE_X 6
++#    define MESH_SIZE_Y 6
++
++#elif (PLATFORM_VARIANT == 3)
++#    define MEM_CNTRL0_ID 16
++#    define MEM_CNTRL1_ID 1168
++#    define MEM_CNTRL2_ID 8
++#    define MEM_CNTRL3_ID 1160
++#    define MEM_CNTRL4_ID 24
++#    define MEM_CNTRL5_ID 1176
++#    define MEM_CNTRL6_ID 32
++#    define MEM_CNTRL7_ID 1184
++
++#    define NODE_ID_HND  42
++#    define NODE_ID_HNI0 256
++#    define NODE_ID_HNP0 44
++#    define NODE_ID_HNP1 298
++#    define NODE_ID_HNP2 554
++#    define NODE_ID_HNP3 682
++#    define NODE_ID_HNP4 938
++#    define NODE_ID_SBSX 172
++
++#    define NODE_ID_NON_PCIE_IO_MACRO NODE_ID_HNP4
++
++#    define MESH_SIZE_X 10
++#    define MESH_SIZE_Y 6
++#endif
++
++#endif /* CONFIG_CMN700_H */
+diff --git a/product/neoverse-rd/rdn2/scp_ramfw/config_pcie_integ_ctrl.c b/product/neoverse-rd/rdn2/scp_ramfw/config_pcie_integ_ctrl.c
+index 8ebc641f81cb..255a469ea03f 100644
+--- a/product/neoverse-rd/rdn2/scp_ramfw/config_pcie_integ_ctrl.c
++++ b/product/neoverse-rd/rdn2/scp_ramfw/config_pcie_integ_ctrl.c
+@@ -1,6 +1,6 @@
+ /*
+  * Arm SCP/MCP Software
+- * Copyright (c) 2021-2023, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2021-2024, Arm Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -53,35 +53,6 @@
+ #endif
+ 
+ static const struct fwk_element pcie_integ_ctrl_element_table[] = {
+-    IO_MACRO_ELEMENT_CONFIG(
+-        0,
+-        PCIE_INTEG_CTRL_REG_BASE(0),
+-        AP_PCIE_ECAM_SIZE_PER_RC,
+-        AP_PCIE_MMIOL_SIZE_PER_RC,
+-        AP_PCIE_MMIOH_SIZE_PER_RC),
+-
+-#if (PLATFORM_VARIANT == 0 || PLATFORM_VARIANT == 3)
+-    IO_MACRO_ELEMENT_CONFIG(
+-        1,
+-        PCIE_INTEG_CTRL_REG_BASE(1),
+-        AP_PCIE_ECAM_SIZE_PER_RC,
+-        AP_PCIE_MMIOL_SIZE_PER_RC,
+-        AP_PCIE_MMIOH_SIZE_PER_RC),
+-
+-    IO_MACRO_ELEMENT_CONFIG(
+-        2,
+-        PCIE_INTEG_CTRL_REG_BASE(2),
+-        AP_PCIE_ECAM_SIZE_PER_RC,
+-        AP_PCIE_MMIOL_SIZE_PER_RC,
+-        AP_PCIE_MMIOH_SIZE_PER_RC),
+-
+-    IO_MACRO_ELEMENT_CONFIG(
+-        3,
+-        PCIE_INTEG_CTRL_REG_BASE(3),
+-        AP_PCIE_ECAM_SIZE_PER_RC,
+-        AP_PCIE_MMIOL_SIZE_PER_RC,
+-        AP_PCIE_MMIOH_SIZE_PER_RC),
+-#endif
+     {
+         .name = "Non-PCIe IO Macro",
+         .data = &((struct mod_pcie_integ_ctrl_config) {
+diff --git a/product/neoverse-rd/rdn2/scp_ramfw/config_pcie_setup.c b/product/neoverse-rd/rdn2/scp_ramfw/config_pcie_setup.c
+new file mode 100644
+index 000000000000..720236c3f446
+--- /dev/null
++++ b/product/neoverse-rd/rdn2/scp_ramfw/config_pcie_setup.c
+@@ -0,0 +1,153 @@
++/*
++ * Arm SCP/MCP Software
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include "clock_soc.h"
++#include "config_cmn700.h"
++#include "platform_def.h"
++#include "platform_sds.h"
++#include "scp_css_mmap.h"
++#include "scp_software_mmap.h"
++
++#include <mod_apremap.h>
++#include <mod_cmn700.h>
++#include <mod_pcie_integ_ctrl.h>
++#include <mod_pcie_setup.h>
++
++#include <fwk_id.h>
++#include <fwk_module.h>
++#include <fwk_module_idx.h>
++
++#define ECAM_BASE_ADDRESS              (0x1010000000ULL)
++#define MMIOH_BASE_ADDRESS             (0x4000000000ULL)
++#define CHIP_ADDRESS_SPACE_SIZE        (UINT64_C(64) * FWK_TIB)
++#define CHIP_ADDRESS_SPACE_OFFSET(idx) (idx * CHIP_ADDRESS_SPACE_SIZE)
++/* PCIe ECAM and MMIO addresses */
++#define CHIP_PCIE_ECAM_SIZE      (0x40000000UL)
++#define CHIP_PCIE_MMIOH_SIZE     (0x4000000000ULL)
++#define CHIP_PCIE_BUS_SIZE       256
++#define CHIP_PCIE_MMIOL_SIZE     (0x8000000UL)
++#define CHIP0_PCIE_MMIOL_BASE    (0x60000000UL)
++#define CHIP1_PCIE_MMIOL_BASE    (CHIP0_PCIE_MMIOL_BASE + CHIP_PCIE_MMIOL_SIZE)
++#define CHIP2_PCIE_MMIOL_BASE    (CHIP1_PCIE_MMIOL_BASE + CHIP_PCIE_MMIOL_SIZE)
++#define CHIP3_PCIE_MMIOL_BASE    (CHIP2_PCIE_MMIOL_BASE + CHIP_PCIE_MMIOL_SIZE)
++#define NUMBER_OF_ENDPOINTS      4
++#define NUMBER_OF_CHIPS          4
++#define SMMU_REGISTER_BLOCK_BASE 0x40000000
++#define SMMU_REGISTER_BLOCK_SIZE 0x2000000
++#define SMMU_REGISTER_BLOCK_ADDRESS(idx) \
++    (SMMU_REGISTER_BLOCK_BASE + (idx * SMMU_REGISTER_BLOCK_SIZE))
++#define CHIP_MEMMAP(idx) \
++    { \
++        .translation = CHIP_ADDRESS_SPACE_SIZE * idx, \
++        .mmap = { \
++            .ecam = { \
++                .start = ECAM_BASE_ADDRESS, \
++                .size = CHIP_PCIE_ECAM_SIZE, \
++            }, \
++            .mmiol = { \
++                .start = CHIP##idx##_PCIE_MMIOL_BASE, \
++                .size = CHIP_PCIE_MMIOL_SIZE, \
++            }, \
++            .mmioh = { \
++                .start = MMIOH_BASE_ADDRESS, \
++                .size = CHIP_PCIE_MMIOH_SIZE \
++            }, \
++            .bus = { \
++                .start = 0, \
++                .size = CHIP_PCIE_BUS_SIZE \
++            } \
++        }, \
++        .cmn_id = FWK_ID_MODULE(FWK_MODULE_IDX_CMN700), \
++        .io_block_id = FWK_ID_MODULE(FWK_MODULE_IDX_PCIE_INTEG_CTRL), \
++        .cmn_api_id = FWK_ID_API(FWK_MODULE_IDX_CMN700, \
++                                 MOD_CMN700_API_IDX_MAP_IO_REGION), \
++        .io_block_api_id = FWK_ID_API(FWK_MODULE_IDX_PCIE_INTEG_CTRL, \
++                                      MOD_PCIE_INTEG_CTRL_API_IDX_MAP_REGION), \
++        .address_remapper_id = FWK_ID_MODULE(FWK_MODULE_IDX_APREMAP), \
++        .address_remapper_api_id = FWK_ID_API(FWK_MODULE_IDX_APREMAP, \
++                                          MOD_APREMAP_API_IDX_AP_MEM_RW),\
++        .ep_interrupt_ids = ((uint64_t [NUMBER_OF_ENDPOINTS]) { \
++                0, \
++                0x10000, \
++                0x20000, \
++                0x30000, \
++                }), \
++        .ep_count = NUMBER_OF_ENDPOINTS \
++    }
++
++#define IO_MACRO_EP_CONFIG(x40_en, x41_en, x8_en, x16_en) \
++    ((struct mod_pcie_setup_ep_config[4]){ \
++        { .valid = x40_en, \
++          .allow_ns_access = true, \
++          .rp_node_id = MOD_PCIE_INTEG_CTRL_NODE_X4_0 }, \
++        { .valid = x41_en, \
++          .allow_ns_access = true, \
++          .rp_node_id = MOD_PCIE_INTEG_CTRL_NODE_X4_1 }, \
++        { .valid = x8_en, \
++          .allow_ns_access = true, \
++          .rp_node_id = MOD_PCIE_INTEG_CTRL_NODE_X8 }, \
++        { .valid = x16_en, \
++          .allow_ns_access = true, \
++          .rp_node_id = MOD_PCIE_INTEG_CTRL_NODE_X16 }, \
++    })
++
++#define IO_MACRO_PCIE_ELEMENT_CONFIG(idx, x40_en, x41_en, x8_en, x16_en) \
++    { \
++        .name = "IO Macro " #idx, \
++        .data = &((struct mod_pcie_setup_config){ \
++            .reg_base = PCIE_INTEG_CTRL_REG_BASE(idx), \
++            .cmn_node_id = NODE_ID_HNP##idx, \
++            .block_id = idx, \
++            .smmu_base = SMMU_REGISTER_BLOCK_ADDRESS(idx), \
++            .sds_struct_id = PLATFORM_SDS_PCIE_MMAP, \
++            .ep_config = IO_MACRO_EP_CONFIG(x40_en, x41_en, x8_en, x16_en) }) \
++    }
++
++#if (PLATFORM_VARIANT == 0 || PLATFORM_VARIANT == 3)
++#    define NON_PCIE_IO_MACRO_REG_BASE PCIE_INTEG_CTRL_REG_BASE(4)
++#elif (PLATFORM_VARIANT == 1) || \
++    (PLATFORM_VARIANT == 2) /* RD-N2 Cfg1 and RD-N2-Cfg2 */
++#    define NON_PCIE_IO_MACRO_REG_BASE PCIE_INTEG_CTRL_REG_BASE(1)
++#endif
++
++static const struct fwk_element pcie_setup_element_table[] = {
++#if (PLATFORM_VARIANT == 1)
++    IO_MACRO_PCIE_ELEMENT_CONFIG(0, true, true, true, true),
++#else
++    IO_MACRO_PCIE_ELEMENT_CONFIG(0, false, false, false, true),
++#endif
++
++#if (PLATFORM_VARIANT == 0 || PLATFORM_VARIANT == 3)
++    IO_MACRO_PCIE_ELEMENT_CONFIG(1, false, false, false, true),
++
++    IO_MACRO_PCIE_ELEMENT_CONFIG(2, false, false, false, true),
++
++    IO_MACRO_PCIE_ELEMENT_CONFIG(3, false, false, false, true),
++#endif
++    { 0 }
++};
++
++static const struct mod_pcie_setup_module_config module_config = {
++    .resource_info_count = NUMBER_OF_CHIPS,
++    .resource_info = ((struct mod_pcie_setup_resource_info[NUMBER_OF_CHIPS]) {
++        CHIP_MEMMAP(0),
++#if (PLATFORM_VARIANT == 2)
++            CHIP_MEMMAP(1), CHIP_MEMMAP(2), CHIP_MEMMAP(3),
++#endif
++    }),
++};
++
++static const struct fwk_element *pcie_setup_get_element_table(
++    fwk_id_t module_id)
++{
++    return pcie_setup_element_table;
++}
++
++struct fwk_module_config config_pcie_setup = {
++    .data = &module_config,
++    .elements = FWK_MODULE_DYNAMIC_ELEMENTS(pcie_setup_get_element_table),
++};
+diff --git a/product/neoverse-rd/rdn2/scp_ramfw/config_sds.c b/product/neoverse-rd/rdn2/scp_ramfw/config_sds.c
+index cf6c0bd20f64..a65dc161ae48 100644
+--- a/product/neoverse-rd/rdn2/scp_ramfw/config_sds.c
++++ b/product/neoverse-rd/rdn2/scp_ramfw/config_sds.c
+@@ -1,6 +1,6 @@
+ /*
+  * Arm SCP/MCP Software
+- * Copyright (c) 2020-2023, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2020-2024, Arm Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -101,6 +101,15 @@ static struct fwk_element sds_element_table[] = {
+                 .finalize = true,
+                 }),
+     },
++    [PLATFORM_SDS_PCIE_MMAP_IDX] = {
++        .name = "PCIE MMAP",
++        .data = &((struct mod_sds_structure_desc){
++                .id = PLATFORM_SDS_PCIE_MMAP,
++                .size = PLATFORM_SDS_PCIE_MMAP_SIZE,
++                .region_id = PLATFORM_SDS_REGION_SECURE,
++                .finalize = true,
++                }),
++    },
+     [PLATFORM_SDS_IDX_COUNT] = { 0 }, /* Termination description. */
+ };
+ 

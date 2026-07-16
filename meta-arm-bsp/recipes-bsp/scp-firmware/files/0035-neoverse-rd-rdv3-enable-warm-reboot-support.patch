@@ -1,0 +1,378 @@
+From 2427472af35e70882b4448560e723f48af18fad3 Mon Sep 17 00:00:00 2001
+From: Pranav Madhu <pranav.madhu@arm.com>
+Date: Wed, 18 Sep 2024 15:46:35 +0530
+Subject: [PATCH] neoverse-rd/rdv3: enable warm reboot support
+
+Enable warm reboot support for the RD-V3 platform. During a warm reboot,
+all AP cores are powered off, after which the primary core is powered on
+to complete the reboot cycle.
+
+Change-Id: Icb6f024ac3bd5610e106d3146b32fd73b53f90aa
+Signed-off-by: Pranav Madhu <pranav.madhu@arm.com>
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../include/internal/scp_platform.h           |  33 +++++
+ .../scp_platform/include/mod_scp_platform.h   |  20 +++
+ .../scp_platform/src/mod_scp_platform.c       |  79 +++++++++++
+ .../scp_platform/src/platform_power_mgmt.c    | 125 ++++++++++++++++++
+ 4 files changed, 257 insertions(+)
+
+diff --git a/product/neoverse-rd/rdv3/module/scp_platform/include/internal/scp_platform.h b/product/neoverse-rd/rdv3/module/scp_platform/include/internal/scp_platform.h
+index 2568f4174d78..1343f14a45d9 100644
+--- a/product/neoverse-rd/rdv3/module/scp_platform/include/internal/scp_platform.h
++++ b/product/neoverse-rd/rdv3/module/scp_platform/include/internal/scp_platform.h
+@@ -24,6 +24,9 @@ struct scp_platform_ctx {
+ 
+     /* System Information HAL API pointer */
+     struct mod_system_info_get_info_api *system_info_api;
++
++    /* Count of number of warm reset completion check iterations */
++    unsigned int warm_reset_check_cnt;
+ };
+ 
+ /*
+@@ -125,4 +128,34 @@ int platform_power_mgmt_bind(void);
+  */
+ int init_ap_core(uint8_t core_idx);
+ 
++/*!
++ * \brief Power off all the AP cores.
++ *
++ * \param None.
++ *
++ * \retval None.
++ */
++void power_off_all_cores(void);
++
++/*!
++ * \brief check weather all AP cores are powered down. Reboot the primary CPU
++ * if all cores are powered down.
++ *
++ * \param None.
++ *
++ * \retval ::FWK_SUCCESS Operation succeeded.
++ * \retval One of the standard error codes for implementation-defined errors.
++ */
++int check_and_reboot_ap_cores(void);
++
++/*!
++ * \brief Issue a system wide cold reboot.
++ *
++ * \param None.
++ *
++ * \retval ::FWK_SUCCESS Operation succeeded.
++ * \retval One of the standard error codes for implementation-defined errors.
++ */
++int reboot_system(void);
++
+ #endif /* SCP_PLATFORM_H */
+diff --git a/product/neoverse-rd/rdv3/module/scp_platform/include/mod_scp_platform.h b/product/neoverse-rd/rdv3/module/scp_platform/include/mod_scp_platform.h
+index 17d62ce26105..86784ffbe0b8 100644
+--- a/product/neoverse-rd/rdv3/module/scp_platform/include/mod_scp_platform.h
++++ b/product/neoverse-rd/rdv3/module/scp_platform/include/mod_scp_platform.h
+@@ -17,6 +17,8 @@
+ 
+ #include <stdint.h>
+ 
++#define WARM_RESET_MAX_RETRIES 10
++
+ /*!
+  * \addtogroup GroupPLATFORMModule PLATFORM Product Modules
+  * @{
+@@ -44,6 +46,24 @@ enum mod_scp_platform_api_idx {
+     MOD_SCP_PLATFORM_API_COUNT
+ };
+ 
++/*!
++ * \brief Events used by scp platform module.
++ */
++enum mod_scp_platform_event_idx {
++    /*! Event requesting check for power domain OFF */
++    MOD_SCP_PLATFORM_CHECK_PD_OFF,
++
++    /*! Number of defined events */
++    MOD_SCP_PLATFORM_EVENT_COUNT
++};
++
++/*!
++ * \brief Event to check all CPUs are powered off.
++ */
++static const fwk_id_t mod_scp_platform_event_check_ppu_off = FWK_ID_EVENT(
++    FWK_MODULE_IDX_SCP_PLATFORM,
++    MOD_SCP_PLATFORM_CHECK_PD_OFF);
++
+ /*!
+  * \brief Notification indices.
+  */
+diff --git a/product/neoverse-rd/rdv3/module/scp_platform/src/mod_scp_platform.c b/product/neoverse-rd/rdv3/module/scp_platform/src/mod_scp_platform.c
+index 74a4d8baeab0..4bd3b8678b92 100644
+--- a/product/neoverse-rd/rdv3/module/scp_platform/src/mod_scp_platform.c
++++ b/product/neoverse-rd/rdv3/module/scp_platform/src/mod_scp_platform.c
+@@ -13,10 +13,12 @@
+ 
+ #include <internal/scp_platform.h>
+ 
++#include <mod_power_domain.h>
+ #include <mod_scp_platform.h>
+ #include <mod_system_info.h>
+ 
+ #include <fwk_assert.h>
++#include <fwk_core.h>
+ #include <fwk_id.h>
+ #include <fwk_log.h>
+ #include <fwk_module.h>
+@@ -132,6 +134,71 @@ static int scp_platform_process_bind_request(
+     return status;
+ }
+ 
++static int scp_platform_process_event(
++    const struct fwk_event *event,
++    struct fwk_event *resp)
++{
++    int status;
++
++    switch (fwk_id_get_event_idx(event->id)) {
++    case MOD_SCP_PLATFORM_CHECK_PD_OFF:
++        status = check_and_reboot_ap_cores();
++        fwk_assert(status == FWK_SUCCESS);
++
++        break; /* MOD_SCP_PLATFORM_CHECK_PD_OFF */
++    default:
++        FWK_LOG_WARN(MOD_NAME "unrecognized event received, event ignored\n");
++        status = FWK_E_PARAM;
++    }
++
++    return status;
++}
++
++int scp_platform_process_notification(
++    const struct fwk_event *event,
++    struct fwk_event *resp_event)
++{
++    int status;
++
++    /* Event for checking power domain status */
++    struct fwk_event_light check_pd_off_event = {
++        .id = mod_scp_platform_event_check_ppu_off,
++        .target_id = FWK_ID_MODULE_INIT(FWK_MODULE_IDX_SCP_PLATFORM),
++    };
++
++    fwk_assert(fwk_id_is_type(event->target_id, FWK_ID_TYPE_MODULE));
++
++    if (fwk_id_is_equal(event->id, mod_pd_notification_id_pre_warm_reset)) {
++        /*
++         * Notification handler for warm reset.
++         *
++         * On receiving warm reset request, the power domain (PD) module will
++         * issue the warm reset notification. The notification is handled by
++         * the scp platform module. The notification handler requests PD to
++         * power off all the CPU cores through the HAL API exposed by PD. After
++         * requesting for power off for all the cores, the platform system
++         * module will send an event to itself to check whether all core power
++         * domains are powered off. After all the core power domains are powered
++         * off, the event handler will then power up the boot CPU.
++         */
++        power_off_all_cores();
++
++        scp_platform_ctx.warm_reset_check_cnt = 0;
++        status = fwk_put_event(&check_pd_off_event);
++        if (status != FWK_SUCCESS) {
++            FWK_LOG_ERR(MOD_NAME "PD power off check event failed with %d",
++                status);
++            FWK_LOG_ERR(MOD_NAME "Issuing cold reboot to recover.");
++            status = reboot_system();
++            fwk_assert(status == FWK_SUCCESS);
++        }
++    } else {
++        status = FWK_E_PARAM;
++    }
++
++    return status;
++}
++
+ static int scp_platform_start(fwk_id_t id)
+ {
+     int status;
+@@ -191,6 +258,15 @@ static int scp_platform_start(fwk_id_t id)
+         fwk_trap();
+     }
+ 
++    /* Subscribe to warm reset notifications */
++    status = fwk_notification_subscribe(
++        mod_pd_notification_id_pre_warm_reset,
++        FWK_ID_MODULE(FWK_MODULE_IDX_POWER_DOMAIN),
++        id);
++    if (status != FWK_SUCCESS) {
++        FWK_LOG_WARN(MOD_NAME "failed to subscribe to warm reset notification");
++    }
++
+     return FWK_SUCCESS;
+ }
+ 
+@@ -198,8 +274,11 @@ const struct fwk_module module_scp_platform = {
+     .type = FWK_MODULE_TYPE_DRIVER,
+     .api_count = MOD_SCP_PLATFORM_API_COUNT,
+     .notification_count = MOD_SCP_PLATFORM_NOTIFICATION_COUNT,
++    .event_count = (unsigned int)MOD_SCP_PLATFORM_EVENT_COUNT,
+     .init = scp_platform_mod_init,
+     .bind = scp_platform_bind,
+     .process_bind_request = scp_platform_process_bind_request,
++    .process_event = scp_platform_process_event,
++    .process_notification = scp_platform_process_notification,
+     .start = scp_platform_start,
+ };
+diff --git a/product/neoverse-rd/rdv3/module/scp_platform/src/platform_power_mgmt.c b/product/neoverse-rd/rdv3/module/scp_platform/src/platform_power_mgmt.c
+index a238bd70315a..5c027205dd2a 100644
+--- a/product/neoverse-rd/rdv3/module/scp_platform/src/platform_power_mgmt.c
++++ b/product/neoverse-rd/rdv3/module/scp_platform/src/platform_power_mgmt.c
+@@ -9,6 +9,7 @@
+  */
+ 
+ #include "nrd_scmi.h"
++#include "platform_core.h"
+ #include "scp_cfgd_scmi.h"
+ 
+ #include <internal/scp_platform.h>
+@@ -18,12 +19,16 @@
+ #include <mod_scmi_std.h>
+ #include <mod_system_power.h>
+ 
++#include <fwk_core.h>
+ #include <fwk_log.h>
+ #include <fwk_module.h>
+ #include <fwk_status.h>
+ 
+ #include <fmw_cmsis.h>
+ 
++/* Module context data */
++extern struct scp_platform_ctx scp_platform_ctx;
++
+ /*! SCMI protocol API */
+ static const struct mod_scmi_from_protocol_req_api *scmi_protocol_req_api;
+ 
+@@ -160,3 +165,123 @@ int init_ap_core(uint8_t core_idx)
+ 
+     return pd_restricted_api->set_state(pd_id, resp_requested, pd_state);
+ }
++
++/* Poweroff all AP cores */
++void power_off_all_cores(void)
++{
++    unsigned int pd_idx;
++    unsigned int core_count;
++    int status;
++
++    core_count = platform_get_core_count();
++
++    for (pd_idx = 0; pd_idx < core_count; pd_idx++) {
++        FWK_LOG_INFO(MOD_NAME "Powering down %s",
++            fwk_module_get_element_name(
++                FWK_ID_ELEMENT(FWK_MODULE_IDX_POWER_DOMAIN, pd_idx)));
++
++        status = pd_restricted_api->set_state(
++            FWK_ID_ELEMENT(FWK_MODULE_IDX_POWER_DOMAIN, pd_idx),
++            false,
++            MOD_PD_COMPOSITE_STATE(MOD_PD_LEVEL_0, 0, 0, 0, MOD_PD_STATE_OFF));
++
++        if (status != FWK_SUCCESS) {
++            FWK_LOG_ERR(MOD_NAME "Power down of %s failed",
++                fwk_module_get_element_name(
++                    FWK_ID_ELEMENT(FWK_MODULE_IDX_POWER_DOMAIN, pd_idx)));
++        }
++        fwk_assert(status == FWK_SUCCESS);
++    }
++}
++
++/* Check weather all AP cores are powered OFF */
++static int check_power_off_all_cores(void)
++{
++    unsigned int core_count;
++    unsigned int power_state;
++    unsigned int pd_idx;
++    int status = 0;
++
++    core_count = platform_get_core_count();
++
++    /* Check if all the CPU power domain are powered down */
++    for (pd_idx = 0; pd_idx < core_count; pd_idx++) {
++        status = pd_restricted_api->get_state(
++            FWK_ID_ELEMENT(FWK_MODULE_IDX_POWER_DOMAIN, pd_idx), &power_state);
++        if (status != FWK_SUCCESS) {
++            FWK_LOG_ERR(MOD_NAME "failed to get state of %s",
++                fwk_module_get_element_name(
++                    FWK_ID_ELEMENT(FWK_MODULE_IDX_POWER_DOMAIN, pd_idx)));
++            return status;
++        }
++
++        /* Exit if any core is not powered down */
++        if ((power_state &
++             (MOD_PD_CS_STATE_MASK << MOD_PD_CS_LEVEL_0_STATE_SHIFT)) !=
++            MOD_PD_STATE_OFF) {
++            FWK_LOG_INFO(MOD_NAME "%s not yet powered down",
++                fwk_module_get_element_name(
++                    FWK_ID_ELEMENT(FWK_MODULE_IDX_POWER_DOMAIN, pd_idx)));
++            return FWK_PENDING;
++        }
++    }
++    return status;
++}
++
++/*
++ * Power ON the primary core only after all AP cores have powered OFF to
++ * complete the warm reboot.
++ */
++int check_and_reboot_ap_cores()
++{
++    int status;
++
++    /* Event for checking power domain status */
++    struct fwk_event_light check_pd_off_event = {
++        .id = mod_scp_platform_event_check_ppu_off,
++        .target_id = FWK_ID_MODULE_INIT(FWK_MODULE_IDX_SCP_PLATFORM),
++    };
++
++    status = check_power_off_all_cores();
++
++    if (status != FWK_SUCCESS) {
++        /*
++         * Increment the retry count. The count is initialized in the warm
++         * reset notification handler
++         */
++        scp_platform_ctx.warm_reset_check_cnt++;
++        if (scp_platform_ctx.warm_reset_check_cnt >=
++            WARM_RESET_MAX_RETRIES) {
++            FWK_LOG_ERR(MOD_NAME "Fail: warm reboot reached maximum retries");
++            fwk_assert(
++                scp_platform_ctx.warm_reset_check_cnt <
++                WARM_RESET_MAX_RETRIES);
++        }
++
++        /*
++         * Continue monitoring core PPUs until all the core power domains
++         * are powered down.
++         */
++        status = fwk_put_event(&check_pd_off_event);
++        if (status != FWK_SUCCESS) {
++            FWK_LOG_ERR(MOD_NAME "Failed to send event, returned %d", status);
++        }
++        fwk_assert(status == FWK_SUCCESS);
++    } else {
++        /*
++         * All the CPU power domain are powered off. Start the process to
++         * power on the first application core to complete the warm reboot
++         * sequence.
++         */
++        status = init_ap_core(0);
++        fwk_assert(status == FWK_SUCCESS);
++    }
++
++    return status;
++}
++
++/* Issue system wide cold reboot. */
++int reboot_system(void)
++{
++    return pd_restricted_api->system_shutdown(MOD_PD_SYSTEM_COLD_RESET);
++}

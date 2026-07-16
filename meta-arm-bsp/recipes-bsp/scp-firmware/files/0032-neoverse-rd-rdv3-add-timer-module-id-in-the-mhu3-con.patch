@@ -1,0 +1,67 @@
+From e913756a975a356bd24b46aa1e7c471801f2f742 Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Thu, 13 Jun 2024 10:09:54 +0100
+Subject: [PATCH] neoverse-rd/rdv3: add timer module id in the mhu3 config
+
+Due to a recent change, now MHU3 config needs a valid timer module
+element id to complete the bind sucessfully.
+
+Add timer module id in the config.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ product/neoverse-rd/rdv3/mcp_ramfw/config_mhu3.c | 1 +
+ product/neoverse-rd/rdv3/scp_ramfw/config_mhu3.c | 4 ++++
+ 2 files changed, 5 insertions(+)
+
+diff --git a/product/neoverse-rd/rdv3/mcp_ramfw/config_mhu3.c b/product/neoverse-rd/rdv3/mcp_ramfw/config_mhu3.c
+index d180d72bb2fb..422b6e499a9c 100644
+--- a/product/neoverse-rd/rdv3/mcp_ramfw/config_mhu3.c
++++ b/product/neoverse-rd/rdv3/mcp_ramfw/config_mhu3.c
+@@ -35,6 +35,7 @@ static const struct fwk_element element_table[] = {
+             .in = MCP_SCP2MCP_MHUV3_RCV_S_BASE,
+             .out = MCP_MCP2SCP_MHUV3_SEND_S_BASE,
+             .channels = &mcp2scp_s_dbch_config[0],
++            .timer_id = FWK_ID_ELEMENT(FWK_MODULE_IDX_TIMER, 0),
+         },
+     },
+     [MCP_CFGD_MOD_MHU3_EIDX_COUNT] = { 0 },
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/config_mhu3.c b/product/neoverse-rd/rdv3/scp_ramfw/config_mhu3.c
+index 25b018e19dee..85f4f0c12c93 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/config_mhu3.c
++++ b/product/neoverse-rd/rdv3/scp_ramfw/config_mhu3.c
+@@ -73,6 +73,7 @@ static const struct fwk_element mhu_element_table[MOD_MHU3_ELEMENT_COUNT]  = {
+             .in = SCP_AP2SCP_MHUV3_RCV_NS_BASE,
+             .out = SCP_SCP2AP_MHUV3_SEND_NS_BASE,
+             .channels = &scp2ap_ns_dbch_config[0],
++            .timer_id = FWK_ID_ELEMENT(FWK_MODULE_IDX_TIMER, 0),
+         },
+     },
+     [SCP_CFGD_MOD_MHU3_EIDX_SCP_AP_S_CLUS0] = {
+@@ -83,6 +84,7 @@ static const struct fwk_element mhu_element_table[MOD_MHU3_ELEMENT_COUNT]  = {
+             .in = SCP_AP2SCP_MHUV3_RCV_S_BASE,
+             .out = SCP_SCP2AP_MHUV3_SEND_S_BASE,
+             .channels = &scp2ap_s_dbch_config[0],
++            .timer_id = FWK_ID_ELEMENT(FWK_MODULE_IDX_TIMER, 0),
+         },
+     },
+     [SCP_CFGD_MOD_MHU3_EIDX_SCP_RSS_S] = {
+@@ -93,6 +95,7 @@ static const struct fwk_element mhu_element_table[MOD_MHU3_ELEMENT_COUNT]  = {
+             .in = SCP_RSS2SCP_MHUV3_RCV_S_BASE,
+             .out = SCP_SCP2RSS_MHUV3_SEND_S_BASE,
+             .channels = &scp2rss_s_dbch_config[0],
++            .timer_id = FWK_ID_ELEMENT(FWK_MODULE_IDX_TIMER, 0),
+         },
+     },
+     [SCP_CFGD_MOD_MHU3_EIDX_SCP_MCP_S] = {
+@@ -103,6 +106,7 @@ static const struct fwk_element mhu_element_table[MOD_MHU3_ELEMENT_COUNT]  = {
+             .in = SCP_MCP2SCP_MHUV3_RCV_S_BASE,
+             .out = SCP_SCP2MCP_MHUV3_SEND_S_BASE,
+             .channels = &scp2mcp_s_dbch_config[0],
++            .timer_id = FWK_ID_ELEMENT(FWK_MODULE_IDX_TIMER, 0),
+         },
+     },
+     [SCP_CFGD_MOD_MHU3_EIDX_COUNT] = { 0 },

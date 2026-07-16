@@ -1,0 +1,452 @@
+From 9a77c9b88475db106287f6c420977fb62ee156a5 Mon Sep 17 00:00:00 2001
+From: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Date: Mon, 10 Jan 2022 21:17:54 +0530
+Subject: [PATCH] module/cmn700: configuring CCG for mapping Host address to
+ CXL mem
+
+A Memory region is reserved for CXL Memory.
+CXL.Mem (0x3fe_0000_0000) comes under 4TB Chip-0 memory and the whole
+region is by default configured as SCG. Configured CXL.Mem region in
+HNF-SAM HTG and CCG SA node IDs for HTGs in following order -
+
+HNF_SAM_CCG_SA_NODEID_REG
+HNF_SAM_HTG_CFG3_MEMREGION
+HNF_SAM_HTG_CFG2_MEMREGION
+HNF_SAM_HTG_CFG1_MEMREGION
+
+CXL Memory region is accessible as Normal memory with above
+configuration.
+
+This patch maps Host address space to CXL device mem area through CCG
+node,  based on the CXL device memory size, which is discovered by CXL
+module. CXL module invokes runtime CMN700 API for mapping the host
+address space and configuring CCG node.
+
+This patch also adds a flag "cxl_mem" in CCG_Config structure for
+identifying host region and configuration reserved for CXL device
+memory purpose and thus differentiating from Remote chip memory.
+
+Signed-off-by: Sayanta Pattanayak <sayanta.pattanayak@arm.com>
+Change-Id: I988f471db6a6a55f97320519413daedd8ea524fb
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ interface/cmn/interface_cmn.h                 | 10 +-
+ module/cmn700/CMakeLists.txt                  |  4 +-
+ module/cmn700/include/mod_cmn700.h            |  5 +-
+ module/cmn700/src/cmn700.h                    | 22 ++++-
+ module/cmn700/src/cmn700_ccg.c                | 95 ++++++++++++++++++-
+ module/cmn700/src/cmn700_ccg.h                |  7 +-
+ module/cmn700/src/mod_cmn700.c                | 29 ++++++
+ .../rdn2/scp_ramfw/config_cmn700.c            | 31 +++++-
+ .../rdn2/scp_ramfw/config_cmn700.h            |  9 ++
+ 9 files changed, 201 insertions(+), 11 deletions(-)
+
+diff --git a/interface/cmn/interface_cmn.h b/interface/cmn/interface_cmn.h
+index 81321ada46d7..deaa3261ab60 100644
+--- a/interface/cmn/interface_cmn.h
++++ b/interface/cmn/interface_cmn.h
+@@ -1,6 +1,6 @@
+ /*
+  * Arm SCP/MCP Software
+- * Copyright (c) 2023, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2023-2024, Arm Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -45,6 +45,14 @@ struct interface_cmn_memmap_rnsam_api {
+      * \return One of the standard framework status codes
+      */
+     int (*map_io_region)(uint64_t base, size_t size, uint32_t node_id);
++
++    /*!
++     * \brief Configure CCG and HNF SAM for mapping Host address space to
++     *        access CXL Mem region.
++     *
++     * \param size Mapping memory region size
++     */
++    int (*map_ccg_for_cxl_mem)(uint64_t size);
+ };
+ 
+ /*!
+diff --git a/module/cmn700/CMakeLists.txt b/module/cmn700/CMakeLists.txt
+index 51e3dbb28d3f..f3f3261359d0 100644
+--- a/module/cmn700/CMakeLists.txt
++++ b/module/cmn700/CMakeLists.txt
+@@ -1,6 +1,6 @@
+ #
+ # Arm SCP/MCP Software
+-# Copyright (c) 2021-2023, Arm Limited and Contributors. All rights reserved.
++# Copyright (c) 2021-2024, Arm Limited and Contributors. All rights reserved.
+ #
+ # SPDX-License-Identifier: BSD-3-Clause
+ #
+@@ -17,4 +17,4 @@ target_sources(
+                                  "${CMAKE_CURRENT_SOURCE_DIR}/src/cmn700_ccg.c")
+ 
+ target_link_libraries(${SCP_MODULE_TARGET}
+-    PRIVATE module-clock module-timer module-sds module-system-info)
++    PRIVATE module-clock module-timer module-sds module-system-info module-cxl)
+diff --git a/module/cmn700/include/mod_cmn700.h b/module/cmn700/include/mod_cmn700.h
+index 4331c81aeca5..f7b0a3c8791f 100644
+--- a/module/cmn700/include/mod_cmn700.h
++++ b/module/cmn700/include/mod_cmn700.h
+@@ -1,6 +1,6 @@
+ /*
+  * Arm SCP/MCP Software
+- * Copyright (c) 2020-2023, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2020-2024, Arm Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -314,6 +314,9 @@ struct mod_cmn700_ccg_config {
+     /*! SMP Mode */
+     bool smp_mode;
+ 
++    /*! CXL Mem enabled */
++    bool cxl_mem;
++
+     /*!
+      * \brief CCLA to CCLA direct connect mode
+      *
+diff --git a/module/cmn700/src/cmn700.h b/module/cmn700/src/cmn700.h
+index 77598d1d244e..c7d31e47eda9 100644
+--- a/module/cmn700/src/cmn700.h
++++ b/module/cmn700/src/cmn700.h
+@@ -1,6 +1,6 @@
+ /*
+  * Arm SCP/MCP Software
+- * Copyright (c) 2020-2023, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2020-2024, Arm Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  *
+@@ -190,6 +190,14 @@ struct cmn700_hnf_reg {
+             uint8_t   RESERVED6[0x3C00 - 0x1C08];
+     FWK_RW  uint64_t
+         HNF_RN_CLUSTER_PHYSID[HNF_RN_CLUSTER_MAX][HNF_RN_PHYIDS_REG_MAX];
++            uint8_t   RESERVED7[0x5400 - 0x4C00];
++    FWK_RW  uint64_t  HNF_SAM_HTG_CFG1_MEMREGION[8];
++            uint8_t   RESERVED8[0x5480 - 0x5440];
++    FWK_RW  uint64_t  HNF_SAM_HTG_CFG2_MEMREGION[8];
++            uint8_t   RESERVED9[0x5500 - 0x54C0];
++    FWK_RW  uint64_t  HNF_SAM_HTG_CFG3_MEMREGION[8];
++            uint8_t   RESERVED10[0x5700 - 0x5540];
++    FWK_RW  uint64_t  HNF_SAM_CCG_SA_NODEID_REG[4];
+ };
+ 
+ /*
+@@ -419,6 +427,18 @@ struct cmn700_mxp_reg {
+ #define CMN700_PPU_PWPR_OPMODE_FAM      UINT64_C(0x0000000000000030)
+ #define CMN700_PPU_PWPR_DYN_EN          UINT64_C(0x0000000000000100)
+ 
++/* Used by HNSAM HTG configuration */
++#define CMN700_HNF_SAM_HTG_REGION_VALID_POS                63
++#define CMN700_HNF_SAM_HTG_REGION_ADDR_RES_MASK            UINT64_C(0xfffff)
++#define CMN700_HNF_SAM_HTG_SA_DEVICE_INTERLEAVE_CNTL_MASK  UINT64_C(0xf)
++#define CMN700_HNF_SAM_HTG_SA_DEVICE_INTERLEAVE_CNTL_POS   32
++#define CMN700_HNF_SAM_HTG_SA_PORTS_CNT_MASK               UINT64_C(0x7)
++#define CMN700_HNF_SAM_HTG_SA_PORTS_CNT_POS                40
++#define CMN700_HNF_SAM_HTG_SN_MODE_MASK                    UINT64_C(0x7)
++#define CMN700_HNF_SAM_HTG_SN_MODE_POS                     25
++#define CMN700_HNF_SAM_HTG_MODE_CXSA                       UINT64_C(0x7)
++#define CMN700_HNF_SAM_CCG_SA_NODEID_MASK                  UINT64_C(0x7FF)
++
+ /* Mesh and Node ID mapping */
+ #define CMN700_MESH_X_MAX 12
+ #define CMN700_MESH_Y_MAX 12
+diff --git a/module/cmn700/src/cmn700_ccg.c b/module/cmn700/src/cmn700_ccg.c
+index c25398c74d41..9270bb5b6b89 100644
+--- a/module/cmn700/src/cmn700_ccg.c
++++ b/module/cmn700/src/cmn700_ccg.c
+@@ -1,6 +1,6 @@
+ /*
+  * Arm SCP/MCP Software
+- * Copyright (c) 2021-2022, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2021-2024, Arm Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -10,6 +10,7 @@
+ 
+ #include <internal/cmn700_ctx.h>
+ 
++#include <mod_cxl.h>
+ #include <mod_timer.h>
+ 
+ #include <fwk_assert.h>
+@@ -661,6 +662,78 @@ static int enable_and_start_ccg_link_up_sequence(
+     return FWK_SUCCESS;
+ }
+ 
++int ccg_setup_for_remote_mem(
++    uint64_t size,
++    struct cmn700_device_ctx *ctx,
++    const struct mod_cmn700_ccg_config *ccg_config)
++{
++    uint64_t reg_val;
++    unsigned int index;
++    unsigned int ccg_ldid;
++    struct cmn700_hnf_reg *hnf_reg;
++    struct cmn700_ccg_ra_reg *ccg_ra_reg;
++
++    cmn700_ccg_ctx.is_prog_for_port_agg = false;
++    /* Enable CXSA */
++    ccg_ldid = get_ldid(ctx, cmn700_ccg_ctx.is_prog_for_port_agg);
++    ccg_ra_reg = ctx->ccg_ra_reg_table[ccg_ldid].ccg_ra_reg;
++
++    for (index = 0; index < ctx->hnf_count; index++) {
++        /* Programming sequence to enable CXL.mem regions inside HNSAM */
++
++        hnf_reg = (struct cmn700_hnf_reg *)ctx->hnf_node[index];
++
++        /* Configuring CCG SA node IDs for HTGs in the HNSAM */
++        reg_val = hnf_reg->HNF_SAM_CCG_SA_NODEID_REG[0];
++        reg_val &= ~(CMN700_HNF_SAM_CCG_SA_NODEID_MASK);
++        reg_val |= get_node_id(ccg_ra_reg);
++        hnf_reg->HNF_SAM_CCG_SA_NODEID_REG[0] = reg_val;
++
++        /* CXSA/CXLSA aggregated SA selection function */
++        hnf_reg->HNF_SAM_HTG_CFG3_MEMREGION[0] |=
++            (CMN700_HNF_SAM_HTG_MODE_CXSA <<
++            CMN700_HNF_SAM_HTG_SN_MODE_POS);
++
++        /* 64B interleaved */
++        reg_val = hnf_reg->HNF_SAM_HTG_CFG3_MEMREGION[0];
++        reg_val &= ~(CMN700_HNF_SAM_HTG_SA_DEVICE_INTERLEAVE_CNTL_MASK <<
++               CMN700_HNF_SAM_HTG_SA_DEVICE_INTERLEAVE_CNTL_POS);
++        hnf_reg->HNF_SAM_HTG_CFG3_MEMREGION[0] |= reg_val;
++
++        /* 1 CXSA/CXLSA port used */
++        reg_val = hnf_reg->HNF_SAM_HTG_CFG3_MEMREGION[0];
++        reg_val &= ~(CMN700_HNF_SAM_HTG_SA_PORTS_CNT_MASK <<
++               CMN700_HNF_SAM_HTG_SA_PORTS_CNT_POS);
++        hnf_reg->HNF_SAM_HTG_CFG3_MEMREGION[0] |= reg_val;
++
++        /* htg_region_end_addr[51:20] = end address of HTG region */
++        reg_val = ccg_config->ra_mmap_table[0].base +
++              (size - 1);
++        reg_val &= ~(CMN700_HNF_SAM_HTG_REGION_ADDR_RES_MASK);
++        hnf_reg->HNF_SAM_HTG_CFG2_MEMREGION[0] |= reg_val;
++
++        /* htg_region_base_addr[51:20] = start address of HTG region */
++        reg_val = ccg_config->ra_mmap_table[0].base;
++        reg_val &= ~(CMN700_HNF_SAM_HTG_REGION_ADDR_RES_MASK);
++        hnf_reg->HNF_SAM_HTG_CFG1_MEMREGION[0] |= reg_val;
++
++        /* Configuring HTG region as Valid */
++        hnf_reg->HNF_SAM_HTG_CFG1_MEMREGION[0] |=
++            (UINT64_C(0x1) << CMN700_HNF_SAM_HTG_REGION_VALID_POS);
++    }
++
++    /*
++     * Program the CXRA SAM with the address range and the corresponding
++     * remote HAID.
++     */
++    program_ccg_ra_sam_addr_region(ctx, ccg_config);
++
++    update_cxl_mem_region(ccg_config->ra_mmap_table[0].base,
++                          ccg_config->ra_mmap_table[0].size);
++
++    return FWK_SUCCESS;
++}
++
+ int ccg_setup(
+     const unsigned int chip_id,
+     struct cmn700_device_ctx *ctx,
+@@ -695,9 +768,14 @@ int ccg_setup(
+         /* Set the global config data */
+         config = ccg_config;
+ 
+-        if (ccg_config->smp_mode) {
+-            enable_smp_mode(ctx, ccg_config);
+-        }
++        /* If the CCG port config is for remote CXL mem, then following
++         * port configuration sequence is not necessary, so return from
++         * this point.
++         */
++        if (ccg_config->cxl_mem == true)
++            return FWK_SUCCESS;
++
++        enable_smp_mode(ctx, ccg_config);
+ 
+         /*
+          * In order to assign unique AgentIDs across multiple chips, chip_id is
+@@ -817,6 +895,9 @@ int ccg_exchange_protocol_credit(
+     struct cmn700_ccg_ra_reg *ccg_ra_reg;
+     struct cmn700_ccg_ha_reg *ccg_ha_reg;
+ 
++    if (ccg_config->cxl_mem == true)
++        return FWK_SUCCESS;
++
+     cmn700_ccg_ctx.is_prog_for_port_agg = false;
+ 
+     do {
+@@ -862,6 +943,9 @@ int ccg_enter_system_coherency(
+ 
+     cmn700_ccg_ctx.is_prog_for_port_agg = false;
+ 
++    if (ccg_config->cxl_mem == true)
++        return FWK_SUCCESS;
++
+     do {
+         config = ccg_config;
+         ccg_ldid = get_ldid(ctx, cmn700_ccg_ctx.is_prog_for_port_agg);
+@@ -919,6 +1003,9 @@ int ccg_enter_dvm_domain(
+ 
+     cmn700_ccg_ctx.is_prog_for_port_agg = false;
+ 
++    if (ccg_config->cxl_mem == true)
++        return FWK_SUCCESS;
++
+     do {
+         config = ccg_config;
+         ccg_ldid = get_ldid(ctx, cmn700_ccg_ctx.is_prog_for_port_agg);
+diff --git a/module/cmn700/src/cmn700_ccg.h b/module/cmn700/src/cmn700_ccg.h
+index 3bc330e2d5d7..fa12a9af008c 100644
+--- a/module/cmn700/src/cmn700_ccg.h
++++ b/module/cmn700/src/cmn700_ccg.h
+@@ -1,6 +1,6 @@
+ /*
+  * Arm SCP/MCP Software
+- * Copyright (c) 2021-2022, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2021-2024, Arm Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  *
+@@ -20,6 +20,11 @@ int ccg_setup(
+     struct cmn700_device_ctx *ctx,
+     const struct mod_cmn700_ccg_config *ccg_config);
+ 
++int ccg_setup_for_remote_mem(
++    uint64_t size,
++    struct cmn700_device_ctx *ctx,
++    const struct mod_cmn700_ccg_config *ccg_config);
++
+ int ccg_exchange_protocol_credit(
+     struct cmn700_device_ctx *ctx,
+     const struct mod_cmn700_ccg_config *ccg_config);
+diff --git a/module/cmn700/src/mod_cmn700.c b/module/cmn700/src/mod_cmn700.c
+index 20aced9e0db9..91f58375bf9e 100644
+--- a/module/cmn700/src/mod_cmn700.c
++++ b/module/cmn700/src/mod_cmn700.c
+@@ -582,6 +582,14 @@ static int cmn700_setup_rnsam_ccg_regions(void)
+             region->base + region->size - 1,
+             mmap_type_name[region->type]);
+ 
++        /* If the region is for extended memory area like CXL.Mem
++         * and connected through CCG then the region shouldn't be
++         * marked as Non-Hash region. CXL.Mem region should be part
++         * of Hashed cache group area.
++         */
++        if (config->ccg_config_table[idx].cxl_mem == true)
++            continue;
++
+         for (count = 0; count < ctx->internal_rnsam_count; count++) {
+             rnsam = ctx->internal_rnsam_table[count];
+ 
+@@ -1096,6 +1104,26 @@ static int map_io_region(uint64_t base, size_t size, uint32_t node_id)
+     return FWK_SUCCESS;
+ }
+ 
++static int map_ccg_for_cxl_mem(uint64_t size)
++{
++    uint32_t idx;
++    const struct mod_cmn700_config *config = ctx->config;
++    const struct mod_cmn700_ccg_config *ccg_config;
++
++    cmn700_rnsam_stall();
++
++    /* Do configuration of CCG Node for mapping remote CXL Mem area. */
++    for (idx = 0; idx < config->ccg_table_count; idx++) {
++        ccg_config = &(config->ccg_config_table[idx]);
++        if (ccg_config->cxl_mem == true)
++            ccg_setup_for_remote_mem(size, ctx, ccg_config);
++    }
++
++    cmn700_rnsam_unstall();
++
++    return FWK_SUCCESS;
++}
++
+ /*
+  * Framework handlers
+  */
+@@ -1234,6 +1262,7 @@ static int cmn700_process_notification(
+ 
+ static struct interface_cmn_memmap_rnsam_api memmap_rnsam_api = {
+     .map_io_region = map_io_region,
++    .map_ccg_for_cxl_mem = map_ccg_for_cxl_mem,
+ };
+ 
+ static int cmn700_process_bind_request(
+diff --git a/product/neoverse-rd/rdn2/scp_ramfw/config_cmn700.c b/product/neoverse-rd/rdn2/scp_ramfw/config_cmn700.c
+index 3b614dd181bc..c398483d0358 100644
+--- a/product/neoverse-rd/rdn2/scp_ramfw/config_cmn700.c
++++ b/product/neoverse-rd/rdn2/scp_ramfw/config_cmn700.c
+@@ -286,6 +286,35 @@ static const struct mod_cmn700_mem_region_map mmap[] = {
+     },
+ };
+ 
++#if (PLATFORM_VARIANT == 1)
++static const struct mod_cmn700_ccg_config ccg_config_table_chip_0[] = {
++    {
++        .remote_rnf_count = 0,
++        .remote_mmap_table = {
++            .base = UINT64_C(0x3fe00000000),
++            .size = UINT64_C(8) * FWK_GIB,
++            .type = MOD_CMN700_REGION_TYPE_CCG,
++        },
++        .ra_mmap_table = {
++            {
++                .base = UINT64_C(0x3fe00000000),
++                .size = UINT64_C(8) * FWK_GIB,
++                .remote_haid = 0,
++            },
++            { 0 }
++        },
++        .remote_agentid_to_linkid_map = {
++            {
++                .remote_agentid_start = (RNF_PER_CHIP * CHIP_0),
++                .remote_agentid_end = (RNF_PER_CHIP * CHIP_0)
++            },
++        },
++        .smp_mode = false,
++        .cxl_mem  = true,
++    },
++};
++#endif
++
+ #if (PLATFORM_VARIANT == 2)
+ /* Multichip Related configuration data */
+ 
+@@ -670,7 +699,7 @@ static const struct fwk_element cmn700_device_table[] = {
+                               .snf_count = FWK_ARRAY_SIZE(snf_table),
+                               .mmap_table = mmap,
+                               .mmap_count = FWK_ARRAY_SIZE(mmap),
+-#if (PLATFORM_VARIANT == 2)
++#if ((PLATFORM_VARIANT == 2) || (PLATFORM_VARIANT == 1))
+                               .ccg_config_table = ccg_config_table_chip_0,
+                               .ccg_table_count =
+                                   FWK_ARRAY_SIZE(ccg_config_table_chip_0),
+diff --git a/product/neoverse-rd/rdn2/scp_ramfw/config_cmn700.h b/product/neoverse-rd/rdn2/scp_ramfw/config_cmn700.h
+index 1423ad3e6ce9..7877b5f8fbb3 100644
+--- a/product/neoverse-rd/rdn2/scp_ramfw/config_cmn700.h
++++ b/product/neoverse-rd/rdn2/scp_ramfw/config_cmn700.h
+@@ -8,6 +8,15 @@
+ #ifndef CONFIG_CMN700_H
+ #define CONFIG_CMN700_H
+ 
++/* CCIX Related macros */
++#define CHIP_0 0
++#define CHIP_1 1
++#define CHIP_2 2
++#define CHIP_3 3
++
++#define RNF_PER_CHIP 8
++#define CHIP_COUNT   4
++
+ /* CCG ports available on the variant 2. */
+ enum rdn2cfg2_cmn700_ccg_port {
+     CCG_PORT_0,

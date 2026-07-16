@@ -1,0 +1,158 @@
+From c29fbe1ab850346b2932eeaea16306968d96d706 Mon Sep 17 00:00:00 2001
+From: Lokesh B V <Lokesh.BV@Arm.com>
+Date: Thu, 5 Dec 2024 21:24:07 +0530
+Subject: [PATCH] neoverse-rd/rdv3r1: add crosschip pcie mappings
+
+Add mappings in the cmn config for the remote chip PCIe root
+controllers. The address are divided between 2 chips. MMIOL falls in
+chip 0 default memmap range. After division, chip 0 first 64 GB address
+is split and while mapping remote chip to chip 0 mappings.
+
+Signed-off-by: Lokesh B V <Lokesh.BV@Arm.com>
+Change-Id: I9b0e41098af35b3f94e3b3dc37eaf82f05a6395c
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../rdv3r1/scp_ramfw/config_cmn_cyprus.c      | 89 +++++++++++++++++++
+ .../rdv3r1/scp_ramfw/include/cmn_node_id.h    |  6 ++
+ 2 files changed, 95 insertions(+)
+
+diff --git a/product/neoverse-rd/rdv3r1/scp_ramfw/config_cmn_cyprus.c b/product/neoverse-rd/rdv3r1/scp_ramfw/config_cmn_cyprus.c
+index 07fba3cf069f..472fcaf17dda 100644
+--- a/product/neoverse-rd/rdv3r1/scp_ramfw/config_cmn_cyprus.c
++++ b/product/neoverse-rd/rdv3r1/scp_ramfw/config_cmn_cyprus.c
+@@ -438,6 +438,14 @@ static const struct mod_cmn_cyprus_mem_region_map mmap[] = {
+         .hns_pos_start = start_pos, \
+         .hns_pos_end = end_pos, \
+     }
++
++#define REMOTE_NH_REGION(region_start, region_size, target) \
++{ \
++    .base = (region_start), \
++    .size = (region_size), \
++    .type = MOD_CMN_CYPRUS_MEM_REGION_TYPE_REMOTE_NON_HASHED, \
++    .node_id = target, \
++}
+ // clang-format on
+ 
+ /* Peripheral memory size for a chip (64 GiB) */
+@@ -445,6 +453,27 @@ static const struct mod_cmn_cyprus_mem_region_map mmap[] = {
+ /* Peripheral memory base for a chip */
+ #define CHIP_PERIPH_MEM_BASE(chip_id) (chip_id * PERIPH_MEM_SIZE)
+ 
++/* PCIe ECAM Base */
++#define PCI_ECAM_BASE UINT64_C(0x10000000000)
++/* PCIe ECAM size (256 MiB) */
++#define PCI_ECAM_SIZE (UINT64_C(256) * FWK_MIB)
++/* PCIe ECAM Base for a chip*/
++#define CHIP_PCIE_ECAM_BASE(chip_id) (PCI_ECAM_BASE + (PCI_ECAM_SIZE * (chip_id)))
++
++/* PCIe MMIO_L Base */
++#define PCI_MMIOL_BASE UINT64_C(0x60000000)
++/* PCIe MMIO_L size (256 MiB) */
++#define PCI_MMIOL_SIZE (UINT64_C(256) * FWK_MIB)
++/* PCIe MMIO_L Base for a chip*/
++#define CHIP_PCIE_MMIOL_BASE(chip_id) (PCI_MMIOL_BASE + (PCI_MMIOL_SIZE * (chip_id)))
++
++/* PCIe MMIO_H Base */
++#define PCI_MMIOH_BASE UINT64_C(0x10100000000)
++/* PCIe MMIO_H size (64 GiB) */
++#define PCI_MMIOH_SIZE (UINT64_C(64) * FWK_GIB)
++/* PCIe MMIO_H Base for a chip*/
++#define CHIP_PCIE_MMIOH_BASE(chip_id) (PCI_MMIOH_BASE + (PCI_MMIOH_SIZE * (chip_id)))
++
+ /* Second DRAM block base */
+ #define DRAM2_BASE UINT64_C(0x20000000000)
+ /* Second DRAM block size (1 TiB) */
+@@ -514,6 +543,36 @@ static const struct mod_cmn_cyprus_cml_config chip0_cml_config[] = {
+                 .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_07,
+                                 CCG_PORT_06),
+             },
++            {
++                /*
++                 * Chip 1 PCIe MMIO_L space.
++                 * Map: 0x10_6000_0000 - 0x10_6FFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOL_BASE(1),
++                                PCI_MMIOL_SIZE, NODE_ID_CCG00),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_07,
++                                CCG_PORT_06),
++            },
++            {
++                /*
++                 * Chip 1 PCIe ECAM space.
++                 * Map: 0x110_0000_0000 - 0x110_0FFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_ECAM_BASE(1),
++                                PCI_ECAM_SIZE, NODE_ID_CCG00),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_07,
++                                CCG_PORT_06),
++            },
++            {
++                /*
++                 * Chip 1 PCIe MMIO_H space.
++                 * Map: 0x111_0000_0000 - 0x120_FFFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOH_BASE(1),
++                                PCI_MMIOH_SIZE, NODE_ID_CCG00),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_1, CCG_PORT_07,
++                                CCG_PORT_06),
++            },
+         },
+         .remote_chip_id = PLATFORM_CHIP_1,
+         .enable_smp_mode = true,
+@@ -545,6 +604,36 @@ static const struct mod_cmn_cyprus_cml_config chip1_cml_config[] = {
+                 .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_00,
+                                 CCG_PORT_01),
+             },
++            {
++                /*
++                 * Chip 0 PCIe MMIO_L space.
++                 * Map: 0x00_6000_0000 - 0x00_6FFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOL_BASE(0),
++                                PCI_MMIOL_SIZE, NODE_ID_CCG07),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_00,
++                                CCG_PORT_01),
++            },
++            {
++                /*
++                 * Chip 0 PCIe ECAM space.
++                 * Map: 0x100_0000_0000 - 0x100_0FFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_ECAM_BASE(0),
++                                PCI_ECAM_SIZE, NODE_ID_CCG07),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_00,
++                                CCG_PORT_01),
++            },
++            {
++                /*
++                 * Chip 0 PCIe MMIO_H space.
++                 * Map: 0x101_0000_0000 - 0x110_FFFF_FFFF
++                 */
++                .region_mmap = REMOTE_NH_REGION(CHIP_PCIE_MMIOH_BASE(0),
++                                PCI_MMIOH_SIZE, NODE_ID_CCG07),
++                .target_haid = CCG_HAID_LIST(PLATFORM_CHIP_0, CCG_PORT_00,
++                                CCG_PORT_01),
++            },
+         },
+         .remote_chip_id = PLATFORM_CHIP_0,
+         .enable_smp_mode = true,
+diff --git a/product/neoverse-rd/rdv3r1/scp_ramfw/include/cmn_node_id.h b/product/neoverse-rd/rdv3r1/scp_ramfw/include/cmn_node_id.h
+index 5ebe835a06cd..d40008c952fc 100644
+--- a/product/neoverse-rd/rdv3r1/scp_ramfw/include/cmn_node_id.h
++++ b/product/neoverse-rd/rdv3r1/scp_ramfw/include/cmn_node_id.h
+@@ -44,6 +44,12 @@
+ 
+ #define NODE_ID_SBSX 952
+ 
++/* D2D */
++#define NODE_ID_CCG00 4
++#define NODE_ID_CCG01 12
++#define NODE_ID_CCG06 52
++#define NODE_ID_CCG07 132
++
+ #define MESH_SIZE_X 9
+ #define MESH_SIZE_Y 8
+ 
