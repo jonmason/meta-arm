@@ -1,0 +1,63 @@
+From 556a411e0c7ca9b416e0c39ef5c850e1887d981b Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Tue, 9 Apr 2024 17:23:24 +0530
+Subject: [PATCH] feat(rdfremont): enable Poseidon CPU error handling support
+
+Defines Poseidon CPU error for Rd-Fremont platform variants. Enables
+poseidon CPU error handling on Rd-Fremont platform variants.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I8e44bcb314a51e1dfb5d29151b95dacdf84a9666
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ plat/arm/board/neoverse_rd/platform/rdv3/platform.mk | 3 ++-
+ plat/arm/board/neoverse_rd/platform/rdv3/rdv3_ras.c  | 9 ++++++++-
+ 2 files changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk b/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk
+index 3b46241cd9c9..a3c94f54955a 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk
++++ b/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk
+@@ -146,7 +146,8 @@ ifeq (${ENABLE_FEAT_RAS}, 1)
+ ifeq (${FFH_SUPPORT}, 1)
+ BL31_SOURCES            +=      ${RDV3_BASE}/rdv3_ras.c	\
+                                 ${NRD_COMMON_BASE}/ras/nrd_ras_common.c	\
+-                                ${NRD_COMMON_BASE}/ras/nrd_ras_sram.c
++                                ${NRD_COMMON_BASE}/ras/nrd_ras_sram.c	\
++				${NRD_COMMON_BASE}/ras/nrd_ras_cpu.c
+ endif
+ endif
+ 
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_ras.c b/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_ras.c
+index 47a78eee0cb6..8072e42335be 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_ras.c
++++ b/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_ras.c
+@@ -12,6 +12,9 @@
+ struct nrd_ras_ev_map plat_ras_map[] = {
+ 	/* Peripheral Shared RAM Root ECC CE interrupt */
+ 	{NRD_SDEI_DS_EVENT_0, NRD_CSS_RT_RAM_ECC_CE_INT, NRD_RAS_INTR_TYPE_SPI},
++
++	/* CPU 1-bit ECC CE error interrupt */
++        {NRD_SDEI_DS_EVENT_1, PLAT_CORE_FAULT_IRQ, NRD_RAS_INTR_TYPE_PPI}
+ };
+ 
+ /* RAS error record list definition, used by the common RAS framework. */
+@@ -19,11 +22,15 @@ struct err_record_info plat_err_records[] = {
+ 	/* Peripheral Shared RAM Root error record. */
+ 	ERR_RECORD_MEMMAP_V1(NRD_CSS_ROOT_SRAM_ERB_AP_BASE, 4, NULL,
+ 				&nrd_ras_sram_intr_handler, 0),
++	ERR_RECORD_SYSREG_V1(0, 1, NULL, &nrd_ras_cpu_intr_handler, 0),
+ };
+ 
+ /* RAS error interrupt list definition, used by the common RAS framework. */
+ struct ras_interrupt plat_ras_interrupts[] = {
+-       {
++	{
++                .intr_number = PLAT_CORE_FAULT_IRQ,
++                .err_record = &plat_err_records[1],
++        }, {
+                .intr_number = NRD_CSS_RT_RAM_ECC_CE_INT,
+ 		.err_record = &plat_err_records[0],
+ 	},

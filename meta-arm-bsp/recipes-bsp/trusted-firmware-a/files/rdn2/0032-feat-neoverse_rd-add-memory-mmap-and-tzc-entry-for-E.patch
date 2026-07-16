@@ -1,0 +1,130 @@
+From 28167096883a9d74fcb35490e34d4cbff94bfbd7 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Fri, 12 Apr 2024 11:30:31 +0530
+Subject: [PATCH] feat(neoverse_rd): add memory mmap and tzc entry for EINJ
+
+EINJ table is action and instruction based ACPI table. EINJ table
+consists of series of such actions. Each action is associated with a
+instruction and a firmware reserved memory region. Instruction is either
+a read or a write operation to be performed on that memory region.
+Memory region for a given action can be as simple as an integer or can
+be a complete data structure as defined in the ACPI spec. OS when
+exercises the EINJ ACPI table executes these actions sequentially and
+performs the defined instructions on the reserved memory region.
+
+So carve out firmware memory space for the EINJ actions to store its
+data and also add memory map entry for that space on RdN2 platform
+variants.
+
+Also add trustzone configuration for EINJ firmware reserved memory to
+make non-secure memory accesses. This space will be used by the OS while
+parsing the EINJ table and excercising the instructions on the reserved
+memory regions. As OS and firmware both access this region it is marked
+for non-secure access.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: Ia6014122cb8fd0129466306bd5914ae7adf1e775
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../common/include/nrd2/nrd_css_fw_def2.h        | 16 +++++++++++++---
+ plat/arm/board/neoverse_rd/common/nrd_plat2.c    |  6 ++++++
+ .../neoverse_rd/platform/rdn2/rdn2_security.c    | 10 ++++++++++
+ 3 files changed, 29 insertions(+), 3 deletions(-)
+
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd2/nrd_css_fw_def2.h b/plat/arm/board/neoverse_rd/common/include/nrd2/nrd_css_fw_def2.h
+index 52613f377e09..858de7d06d38 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd2/nrd_css_fw_def2.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd2/nrd_css_fw_def2.h
+@@ -56,12 +56,14 @@
+  * EINJ buffer of 64KB reserved of ACPI EINJ action entries.
+  * It is placed adjacent to memory shared between EL3 and S-EL0.
+  */
++#if NRD_ERR_INJ_SUPPORT
+ #define NRD_CSS_EINJ_INSTR_BUF_BASE     (PLAT_SP_IMAGE_NS_BUF_BASE + \
+                                          PLAT_SP_IMAGE_NS_BUF_SIZE)
+ #define NRD_CSS_EINJ_INSTR_BUF_SIZE     ULL(0x10000)
+ 
+ /* EINJ Set error type with address. */
+-#define NRD_CSS_EINJ_SET_ERROR_TYPE_ADDR	0xFFE10100
++#define NRD_CSS_EINJ_SET_ERROR_TYPE_ADDR	0xFFE12038
++#endif
+ 
+ #if (SPM_MM || (SPMC_AT_EL3 && SPMC_AT_EL3_SEL0_SP))			\
+ 	&& ENABLE_FEAT_RAS && FFH_SUPPORT
+@@ -69,8 +71,8 @@
+  * CPER buffer memory of 128KB is reserved and it is placed adjacent to the
+  * memory shared between EL3 and S-EL0.
+  */
+-#define NRD_CSS_SP_CPER_BUF_BASE	(PLAT_SP_IMAGE_NS_BUF_BASE +	\
+-					 PLAT_SP_IMAGE_NS_BUF_SIZE)
++#define NRD_CSS_SP_CPER_BUF_BASE	(NRD_CSS_EINJ_INSTR_BUF_BASE +	\
++					 NRD_CSS_EINJ_INSTR_BUF_SIZE)
+ #define NRD_CSS_SP_CPER_BUF_SIZE	UL(0x10000)
+ #endif /* SPM_MM && ENABLE_FEAT_RAS && FFH_SUPPORT */
+ 
+@@ -92,6 +94,14 @@
+ 			NRD_CSS_PERIPH_SIZE,				\
+ 			MT_DEVICE | MT_RW | MT_SECURE)
+ 
++/* EINJ memory map */
++#define NRD_CSS_EINJ_BUF_MMAP		MAP_REGION2(                           \
++                                                NRD_CSS_EINJ_INSTR_BUF_BASE,      \
++                                                NRD_CSS_EINJ_INSTR_BUF_BASE,      \
++                                                NRD_CSS_EINJ_INSTR_BUF_SIZE,      \
++                                                MT_RW_DATA | MT_NS | MT_USER,  \
++                                                PAGE_SIZE)
++
+ #if (SPM_MM || (SPMC_AT_EL3 && SPMC_AT_EL3_SEL0_SP)) &&			\
+ ENABLE_FEAT_RAS && FFH_SUPPORT
+ /*
+diff --git a/plat/arm/board/neoverse_rd/common/nrd_plat2.c b/plat/arm/board/neoverse_rd/common/nrd_plat2.c
+index 3b7b9383acad..31d972488866 100644
+--- a/plat/arm/board/neoverse_rd/common/nrd_plat2.c
++++ b/plat/arm/board/neoverse_rd/common/nrd_plat2.c
+@@ -79,6 +79,9 @@ const mmap_region_t plat_arm_mmap[] = {
+ 	NRD_CSS_PERIPH_MMAP(0),
+ 	NRD_ROS_PLATFORM_PERIPH_MMAP,
+ 	NRD_ROS_SYSTEM_PERIPH_MMAP,
++#if NRD_ERR_INJ_SUPPORT
++	NRD_CSS_EINJ_BUF_MMAP,
++#endif
+ #if SPM_MM || (SPMC_AT_EL3 && SPMC_AT_EL3_SEL0_SP)
+ 	ARM_SPM_BUF_EL3_MMAP,
+ #endif
+@@ -96,6 +99,9 @@ const mmap_region_t plat_arm_secure_partition_mmap[] = {
+ 	ARM_MAP_NSRAM,
+ #if ENABLE_FEAT_RAS && FFH_SUPPORT
+ 	NRD_CSS_SP_CPER_BUF_MMAP,
++#endif
++#if NRD_ERR_INJ_SUPPORT
++	NRD_CSS_EINJ_BUF_MMAP,
+ #endif
+ 	ARM_SP_IMAGE_RW_MMAP,
+ 	ARM_SPM_BUF_EL0_MMAP,
+diff --git a/plat/arm/board/neoverse_rd/platform/rdn2/rdn2_security.c b/plat/arm/board/neoverse_rd/platform/rdn2/rdn2_security.c
+index 7319d1a4f5cb..cbe25764c70e 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdn2/rdn2_security.c
++++ b/plat/arm/board/neoverse_rd/platform/rdn2/rdn2_security.c
+@@ -13,10 +13,20 @@
+ 	NRD_CSS_SP_CPER_BUF_SIZE) - 1, TZC_REGION_S_NONE,	\
+ 	PLAT_ARM_TZC_NS_DEV_ACCESS}
+ 
++#if NRD_ERR_INJ_SUPPORT
++#define RDN2_TZC_EINJ_REGION                                           \
++       {NRD_CSS_EINJ_INSTR_BUF_BASE, (NRD_CSS_EINJ_INSTR_BUF_BASE +    \
++       NRD_CSS_EINJ_INSTR_BUF_SIZE) - 1, TZC_REGION_S_NONE,            \
++       PLAT_ARM_TZC_NS_DEV_ACCESS}
++#endif
++
+ static const arm_tzc_regions_info_t tzc_regions[] = {
+ 	ARM_TZC_REGIONS_DEF,
+ #if ENABLE_FEAT_RAS && FFH_SUPPORT
+ 	RDN2_TZC_CPER_REGION,
++#endif
++#if NRD_ERR_INJ_SUPPORT
++	RDN2_TZC_EINJ_REGION,
+ #endif
+ 	{}
+ };

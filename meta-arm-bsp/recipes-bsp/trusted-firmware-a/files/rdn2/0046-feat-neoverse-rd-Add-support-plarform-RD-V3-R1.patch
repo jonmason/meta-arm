@@ -1,0 +1,2213 @@
+From b7c3092f38e026c310809d3d894a30225b2ef7ef Mon Sep 17 00:00:00 2001
+From: Joel Goddard <Joel.Goddard@arm.com>
+Date: Mon, 13 May 2024 11:55:21 +0100
+Subject: [PATCH] feat(neoverse-rd): Add support plarform RD-V3-R1
+
+Add board support for RD-V3-R1 platform, which is a dual chip variant.
+Each chip has reduced core count of 14 CPUs.
+
+Signed-off-by: Joel Goddard <joel.goddard@arm.com>
+Signed-off-by: Vijayenthiran Subramaniam <vijayenthiran.subramaniam@arm.com>
+Signed-off-by: Lokesh B V <Lokesh.BV@Arm.com>
+Change-Id: Iaf26bc901245712e525cace18c47657d6cd78ef3
+
+(feat)neoverse_rd/rdv3r1: Increase core count to 14 per chip
+
+Signed-off-by: Lokesh B V <Lokesh.BV@Arm.com>
+Change-Id: Ice4b48f6ed54730b183733ac55ae03a8451064a7
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ fdts/rdv3r1-defs.dtsi                         | 124 +++++++++++
+ .../common/include/nrd4/nrd_plat_arm_def4.h   |   4 +-
+ .../neoverse_rd/common/include/nrd_variant.h  |   3 +
+ .../board/neoverse_rd/common/nrd_bl31_setup.c |   3 +-
+ .../platform/rdv3r1/einj/nrd_einj_cpu.c       |  37 ++++
+ .../platform/rdv3r1/einj/nrd_einj_sram.c      |  55 +++++
+ .../platform/rdv3r1/fdts/rdv3r1_fw_config.dts |  40 ++++
+ .../rdv3r1/fdts/rdv3r1_fw_config_fragment.dts |   5 +
+ .../platform/rdv3r1/fdts/rdv3r1_hw_config.dts |  81 ++++++++
+ .../rdv3r1/fdts/rdv3r1_nt_fw_config.dts       |  57 ++++++
+ .../rdv3r1/fdts/rdv3r1_spmc_sp_manifest.dts   | 101 +++++++++
+ .../rdv3r1/fdts/rdv3r1_stmm_config.dts        | 168 +++++++++++++++
+ .../rdv3r1/fdts/rdv3r1_tb_fw_config.dts       |  33 +++
+ .../platform/rdv3r1/include/platform_def.h    |  56 +++++
+ .../platform/rdv3r1/include/rdv3r1_mhuv3.h    |  12 ++
+ .../platform/rdv3r1/include/rdv3r1_ras.h      |  14 ++
+ .../rdv3r1/include/rdv3r1_rse_comms.h         |  12 ++
+ .../neoverse_rd/platform/rdv3r1/platform.mk   | 166 +++++++++++++++
+ .../rdv3r1/rdv3r1_bl1_measured_boot.c         |  60 ++++++
+ .../rdv3r1/rdv3r1_bl2_measured_boot.c         |  69 +++++++
+ .../platform/rdv3r1/rdv3r1_bl2_setup.c        | 115 +++++++++++
+ .../platform/rdv3r1/rdv3r1_bl31_setup.c       | 148 ++++++++++++++
+ .../platform/rdv3r1/rdv3r1_common.c           | 192 ++++++++++++++++++
+ .../rdv3r1/rdv3r1_common_measured_boot.c      |  41 ++++
+ .../neoverse_rd/platform/rdv3r1/rdv3r1_err.c  |  17 ++
+ .../platform/rdv3r1/rdv3r1_mhuv3.c            |  31 +++
+ .../rdv3r1/rdv3r1_plat_attest_token.c         |  26 +++
+ .../neoverse_rd/platform/rdv3r1/rdv3r1_ras.c  |  48 +++++
+ .../platform/rdv3r1/rdv3r1_realm_attest_key.c |  26 +++
+ .../platform/rdv3r1/rdv3r1_security.c         |  10 +
+ .../platform/rdv3r1/rdv3r1_sp_layout.json     |  14 ++
+ .../platform/rdv3r1/rdv3r1_topology.c         | 120 +++++++++++
+ .../platform/rdv3r1/rdv3r1_trusted_boot.c     |  26 +++
+ 33 files changed, 1911 insertions(+), 3 deletions(-)
+ create mode 100644 fdts/rdv3r1-defs.dtsi
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/einj/nrd_einj_cpu.c
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/einj/nrd_einj_sram.c
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_fw_config.dts
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_fw_config_fragment.dts
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_hw_config.dts
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_nt_fw_config.dts
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_spmc_sp_manifest.dts
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_stmm_config.dts
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_tb_fw_config.dts
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/include/platform_def.h
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/include/rdv3r1_mhuv3.h
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/include/rdv3r1_ras.h
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/include/rdv3r1_rse_comms.h
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/platform.mk
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_bl1_measured_boot.c
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_bl2_measured_boot.c
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_bl2_setup.c
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_bl31_setup.c
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_common.c
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_common_measured_boot.c
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_err.c
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_mhuv3.c
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_plat_attest_token.c
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_ras.c
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_realm_attest_key.c
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_security.c
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_sp_layout.json
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_topology.c
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_trusted_boot.c
+
+diff --git a/fdts/rdv3r1-defs.dtsi b/fdts/rdv3r1-defs.dtsi
+new file mode 100644
+index 000000000000..0b382b7bb9b2
+--- /dev/null
++++ b/fdts/rdv3r1-defs.dtsi
+@@ -0,0 +1,124 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#ifndef	RDV3R1_DEFS_DTSI
++#define	RDV3R1_DEFS_DTSI
++
++/* Set default topology values if not passed from platform's makefile */
++#define	CLUSTER_COUNT		14
++
++#define	CPUS_PER_CLUSTER	1
++
++/* Get platform's topology */
++#define	CPUS_COUNT		(CLUSTER_COUNT * CPUS_PER_CLUSTER)
++
++#define CONCAT(x, y)	x##y
++#define CONC(x, y)	CONCAT(x, y)
++
++/* CPU's cluster */
++#define	CLS(n)	(n / CPUS_PER_CLUSTER)
++
++/* CPU's position in cluster */
++#define	POS(n)	(n % CPUS_PER_CLUSTER)
++
++#define	ADR(n)	\
++	CPU##n:cpu@n##0000 {
++
++#define	PRE			\
++	device_type = "cpu";	\
++	compatible = "arm,armv8";
++
++#define	POST				\
++	enable-method = "psci";		\
++	cpu-idle-states = <&CPU_SLEEP_0 &CLUSTER_SLEEP_0>;	\
++	next-level-cache = <&L2_0>;	\
++	};
++
++#define	CPU_0		\
++	CPU0:cpu@0 {	\
++	PRE		\
++	reg = <0x0 0x0>;\
++	POST
++
++/*
++ * n - CPU number
++ */
++#define	CPU(n)	\
++	ADR(n)	\
++	PRE		\
++	reg = <0x0 CONC(0x, CONC(n, 0000))>;	\
++	POST
++
++
++#define	CORE(n)		\
++	core##n {	\
++		cpu = <&CONC(CPU, __COUNTER__)>;	\
++	};
++
++/* Max 4 CPUs per cluster */
++#if (CPUS_PER_CLUSTER == 1)
++#define	CLUSTER(n)		\
++	cluster##n {		\
++		CORE(0)		\
++	};
++#elif (CPUS_PER_CLUSTER == 2)
++#define	CLUSTER(n)		\
++	cluster##n {		\
++		CORE(0)		\
++		CORE(1)		\
++	};
++
++#elif (CPUS_PER_CLUSTER == 3)
++#define	CLUSTER(n)		\
++	cluster##n {		\
++		CORE(0)		\
++		CORE(1)		\
++		CORE(2)		\
++	};
++
++#else
++#define	CLUSTER(n)		\
++	cluster##n {		\
++		CORE(0)		\
++		CORE(1)		\
++		CORE(2)		\
++		CORE(3)		\
++	};
++#endif	/* CPUS_PER_CLUSTER */
++
++/* Max 4 clusters */
++#if (CLUSTER_COUNT == 1)
++#define	CPU_MAP			\
++	cpu-map {		\
++		CLUSTER(0)	\
++	};
++
++#elif (CLUSTER_COUNT == 2)
++#define	CPU_MAP			\
++	cpu-map {		\
++		CLUSTER(0)	\
++		CLUSTER(1)	\
++	};
++
++#elif (CLUSTER_COUNT == 3)
++#define	CPU_MAP			\
++	cpu-map {		\
++		CLUSTER(0)	\
++		CLUSTER(1)	\
++		CLUSTER(2)	\
++	};
++
++#else
++#define	CPU_MAP			\
++	cpu-map {		\
++		CLUSTER(0)	\
++		CLUSTER(1)	\
++		CLUSTER(2)	\
++		CLUSTER(3)	\
++	};
++#endif	/* CLUSTER_COUNT */
++
++#endif	/* RDV3R1_DEFS_DTSI */
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_plat_arm_def4.h b/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_plat_arm_def4.h
+index 511078953580..f7eedf21f854 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_plat_arm_def4.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_plat_arm_def4.h
+@@ -650,8 +650,8 @@ typedef enum sds_region_id {
+  */
+ 
+ /* Number of DRAM banks */
+-#if (NRD_PLATFORM_VARIANT == 2)
+-#define ARM_DRAM_NUM_BANKS		U(8)
++#if (NRD_PLATFORM_VARIANT == 0)
++#define ARM_DRAM_NUM_BANKS		U(12)
+ #else
+ #define ARM_DRAM_NUM_BANKS		U(2)
+ #endif
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd_variant.h b/plat/arm/board/neoverse_rd/common/include/nrd_variant.h
+index 901cbf147fa4..a3470a436998 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd_variant.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd_variant.h
+@@ -26,6 +26,9 @@
+ #define RD_V3_CFG1_SID_VER_PART_NUM	0x07F9
+ #define RD_V3_CFG2_SID_VER_PART_NUM	0x07EE
+ 
++/* SID Version values for RD-V3-R1 */
++#define RD_V3_R1_SID_VER_PART_NUM		0x7C5
++
+ /* Structure containing Neoverse RD platform variant information */
+ typedef struct nrd_platform_info {
+ 	unsigned int platform_id;	/* Part Number of the platform */
+diff --git a/plat/arm/board/neoverse_rd/common/nrd_bl31_setup.c b/plat/arm/board/neoverse_rd/common/nrd_bl31_setup.c
+index 3512293449aa..85c23a3ad126 100644
+--- a/plat/arm/board/neoverse_rd/common/nrd_bl31_setup.c
++++ b/plat/arm/board/neoverse_rd/common/nrd_bl31_setup.c
+@@ -126,7 +126,8 @@ scmi_channel_plat_info_t *plat_css_get_scmi_info(unsigned int channel_id)
+ 		return &plat_rd_scmi_info[channel_id];
+ 	} else if (nrd_plat_info.platform_id == RD_V3_SID_VER_PART_NUM ||
+ 		nrd_plat_info.platform_id == RD_V3_CFG1_SID_VER_PART_NUM ||
+-		nrd_plat_info.platform_id == RD_V3_CFG2_SID_VER_PART_NUM) {
++		nrd_plat_info.platform_id == RD_V3_CFG2_SID_VER_PART_NUM ||
++		nrd_plat_info.platform_id == RD_V3_R1_SID_VER_PART_NUM) {
+ 		if (channel_id >= ARRAY_SIZE(plat3_rd_scmi_info)) {
+ 			panic();
+ 		}
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/einj/nrd_einj_cpu.c b/plat/arm/board/neoverse_rd/platform/rdv3r1/einj/nrd_einj_cpu.c
+new file mode 100644
+index 000000000000..178128ff104e
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/einj/nrd_einj_cpu.c
+@@ -0,0 +1,37 @@
++/*
++ * Copyright (c) 2022, ARM Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <common/debug.h>
++#include <drivers/delay_timer.h>
++#include <lib/extensions/ras_helpers.h>
++#include <plat/common/platform.h>
++
++void nrd_cpu_inject_error(void)
++{
++
++        INFO("cpu_id %d\n", plat_my_core_pos());
++
++        /* Select error record 1 which is for L1 L2 caches */
++        write_errselr_el1(0);
++
++        /* Enable CFI, FI and ED for node */
++        write_erxctlr_el1(0x109);
++
++        /* Clear PFG control register */
++        clear_cpu_pfg_ctrl_register();
++
++        /* Clear the status register */
++        write_erxstatus_el1(0xFFC00000);
++
++        /* set PFG countdown register to 1 */
++        write_cpu_pfg_cdn_register(1);
++
++	/* Injects CPU DE */
++        INFO("Injecting DE...\n");
++        write_cpu_pfg_ctrl_register_de();
++
++        INFO("ErrStatus = 0x%lx\n", read_erxstatus_el1());
++}
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/einj/nrd_einj_sram.c b/plat/arm/board/neoverse_rd/platform/rdv3r1/einj/nrd_einj_sram.c
+new file mode 100644
+index 000000000000..af8276116e64
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/einj/nrd_einj_sram.c
+@@ -0,0 +1,55 @@
++/*
++ * Copyright (c) 2023-2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++#include <common/debug.h>
++#include <lib/mmio.h>
++#include <rdv3r1_ras.h>
++#include <platform_def.h>
++
++#define AP_RT_RAM_ECC_RAS_BASE  NRD_CSS_ROOT_SRAM_ERB_AP_BASE
++#define ROOT_RAM_BASE_ADDR      0x19100UL
++
++/*Shared SRAM ECC RAS register offsets*/
++#define SRAM_ENABLE_ECC              (1U << 0)
++#define SRAM_INJECT_CE_BIT           (1U << 8)
++#define SRAM_INJECT_ERROR_CE         (1U << 4)
++#define SRAM_INJECT_UE_BIT           (1U << 3)
++#define SRAM_INJECT_ERROR_UE         (1U << 3)
++
++#define SRAM_ERR_CTRL_OFFSET          0x08UL
++#define SRAM_ERR_STATUS_OFFSET        0x10UL
++#define SRAM_ERR_ADDR_OFFSET          0x18UL
++#define SRAM_ERR_MISC1_OFFSET         0x28UL
++
++/*
++ * Function that performs 1-bit CE injection into Secure base element ram.
++ * Programs error control register belonging to register bank AP secure ram ecc
++ * ras registers to inject 1-bit CE. After that initiates a read operation to
++ * any secure ram location. This triggers the injection, populates the error
++ * and generates a fault handling interrupt to AP.
++ */
++void nrd_sram_inject_error(void)
++{
++        uint64_t addr_s = ROOT_RAM_BASE_ADDR;
++        volatile uint32_t data;
++
++        /* Program AP Secure RAM error record control register to inject 1-bit
++         * error
++         */
++        mmio_write_32((AP_RT_RAM_ECC_RAS_BASE + SRAM_ERR_CTRL_OFFSET),
++            SRAM_INJECT_CE_BIT |
++            SRAM_INJECT_UE_BIT |
++            SRAM_ENABLE_ECC);
++
++        INFO("Injecting CE\n");
++        mmio_write_32((AP_RT_RAM_ECC_RAS_BASE + SRAM_ERR_MISC1_OFFSET),
++                    SRAM_INJECT_ERROR_CE);
++
++        /* For injection to take effect make read access to any Secure RAM
++         * location from AP.
++         */
++        data = *(volatile uint32_t *)addr_s;
++        INFO("Accessing Root RAM location 0x%lx = 0x%x\n", addr_s, data);
++}
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_fw_config.dts b/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_fw_config.dts
+new file mode 100644
+index 000000000000..aea5e4ebd909
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_fw_config.dts
+@@ -0,0 +1,40 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <common/tbbr/tbbr_img_def.h>
++
++/dts-v1/;
++
++/ {
++	dtb-registry {
++		compatible = "fconf,dyn_cfg-dtb_registry";
++
++		tb_fw-config {
++			load-address = <0x0 0x01f300>;
++			max-size = <0x200>;
++			id = <TB_FW_CONFIG_ID>;
++		};
++
++		tos_fw-config {
++			load-address = <0x0 0x01f500>;
++			secondary-load-address = <0x0 0xF9200000>;
++			max-size = <0x1000>;
++			id = <TOS_FW_CONFIG_ID>;
++		};
++
++		nt_fw-config {
++			load-address = <0x0 0xF3000000>;
++			max-size = <0x0100000>;
++			id = <NT_FW_CONFIG_ID>;
++		};
++
++		hw-config {
++			load-address = <0x0 0x21000>;
++			max-size = <0x1000>;
++			id = <HW_CONFIG_ID>;
++		};
++	};
++};
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_fw_config_fragment.dts b/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_fw_config_fragment.dts
+new file mode 100644
+index 000000000000..37a7153628be
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_fw_config_fragment.dts
+@@ -0,0 +1,5 @@
++stmm {
++	uuid = "eaba83d8-baaf-4eaf-8144-f7fdcbe544a7";
++	load-address = <0xF4300000>;
++	owner = "Plat";
++};
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_hw_config.dts b/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_hw_config.dts
+new file mode 100644
+index 000000000000..f0e6994ab592
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_hw_config.dts
+@@ -0,0 +1,81 @@
++/*
++ * Copyright (c) 2020-2024, Arm Limited. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++/dts-v1/;
++#include "rdv3r1-defs.dtsi"
++#undef POST
++#define POST \
++        amu = <&amu>; \
++        supports-mpmm; \
++        };
++
++/ {
++	compatible = "arm,rd-v3-r1";
++	#address-cells = <0x2>;
++	#size-cells = <0x2>;
++
++
++	cpus {
++		#address-cells = <0x2>;
++		#size-cells = <0x0>;
++                amus {
++                        amu: amu-0 {
++                                #address-cells = <1>;
++                                #size-cells = <0>;
++
++                                aux_counter0: counter@0 {
++                                        reg = <0>;
++
++                                        enable-at-el3;
++                                };
++
++                                aux_counter1: counter@1 {
++                                        reg = <1>;
++
++                                        enable-at-el3;
++                                };
++
++                                aux_counter2: counter@2 {
++                                        reg = <2>;
++
++                                        enable-at-el3;
++                                };
++                        };
++                };
++
++				CPU_0
++				CPU(1)
++				CPU(2)
++				CPU(3)
++				CPU(4)
++				CPU(5)
++				CPU(6)
++				CPU(7)
++				CPU(8)
++				CPU(9)
++				CPU(A)
++				CPU(B)
++				CPU(C)
++				CPU(D)
++				CPU(E)
++				CPU(F)
++#if (NRD_PLATFORM_VARIANT == 0)
++				CPU(10)
++				CPU(11)
++				CPU(12)
++				CPU(13)
++				CPU(14)
++				CPU(15)
++				CPU(16)
++				CPU(17)
++				CPU(18)
++				CPU(19)
++				CPU(1A)
++				CPU(1B)
++#endif
++		};
++
++};
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_nt_fw_config.dts b/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_nt_fw_config.dts
+new file mode 100644
+index 000000000000..ecbbd1cb2e8d
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_nt_fw_config.dts
+@@ -0,0 +1,57 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++/dts-v1/;
++/ {
++	/* compatible string */
++	compatible = "arm,rd-v3-r1";
++
++	/*
++	 * Place holder for system-id node with default values. The
++	 * value of platform-id and config-id will be set to the
++	 * correct values during the BL2 stage of boot.
++	 */
++	system-id {
++		platform-id = <0x0>;
++		config-id = <0x0>;
++		multi-chip-mode = <0x0>;
++		pcie-mmap = <0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0>;
++	};
++
++};
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_spmc_sp_manifest.dts b/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_spmc_sp_manifest.dts
+new file mode 100644
+index 000000000000..b47b52c9b16d
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_spmc_sp_manifest.dts
+@@ -0,0 +1,101 @@
++/*
++ * Copyright (c) 2022, Arm Limited. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++/dts-v1/;
++
++#define	AFF	00
++
++#include "rdv3r1-defs.dtsi"
++#undef POST
++#define	POST \
++	};
++
++/ {
++	compatible = "arm,ffa-core-manifest-1.0";
++	#address-cells = <2>;
++	#size-cells = <2>;
++
++	attribute {
++		spmc_id = <0x8000>;
++		maj_ver = <0x1>;
++		min_ver = <0x1>;
++		exec_state = <0x0>;
++		load_address = <0x0 0xF3FE0000>;
++		entrypoint = <0x0 0xF3FE0000>;
++		binary_size = <0x80000>;
++	};
++
++	hypervisor {
++		compatible = "hafnium,hafnium";
++		vm1 {
++			is_ffa_partition;
++			debug_name = "stmm";
++			load_address = <0xf4300000>;
++			vcpu_count = <1>;
++			mem_size = <0x300000>;
++		};
++	};
++
++	cpus {
++		#address-cells = <0x2>;
++		#size-cells = <0x0>;
++
++		CPU_0
++
++		/*
++		 * SPMC (Hafnium) requires secondary core nodes are declared
++		 * in descending order.
++		 */
++#if (NRD_PLATFORM_VARIANT == 1)
++		CPU(1B)
++		CPU(1A)
++		CPU(19)
++		CPU(18)
++		CPU(17)
++		CPU(16)
++		CPU(15)
++		CPU(14)
++		CPU(13)
++		CPU(12)
++		CPU(11)
++		CPU(10)
++#endif
++		CPU(F)
++		CPU(E)
++		CPU(D)
++		CPU(C)
++		CPU(B)
++		CPU(A)
++		CPU(9)
++		CPU(8)
++		CPU(7)
++		CPU(6)
++		CPU(5)
++		CPU(4)
++		CPU(3)
++		CPU(2)
++		CPU(1)
++	};
++
++	memory@0 {
++		device_type = "memory";
++		reg = <0x0 0xF3FE0000 0x0 0xdff000>; /* Trusted DRAM */
++	};
++
++	memory@1 {
++		device_type = "ns-memory";
++		reg = <0x0 0x80000000 0x0 0x78FE0000
++		       0x0 0xFB1EF000 0x0 0x00010000>;
++	};
++
++	memory@2 {
++		device_type = "device-memory";
++		reg = <0x0 0x0C010000 0x0 0x00010000
++		       0x0 0x0C170000 0x0 0x00001000
++		       0x0 0x0E000000 0x0 0x02000000
++		       0x0 0x20000000 0x0 0x20000000
++		       0x6 0x04000000 0x0 0x04000000>;
++	};
++};
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_stmm_config.dts b/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_stmm_config.dts
+new file mode 100644
+index 000000000000..9b3f28eab690
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_stmm_config.dts
+@@ -0,0 +1,168 @@
++/*
++ * Copyright (c) 2020-21, ARM Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++/dts-v1/;
++
++/ {
++#define MODE_SEL0	(0x1)
++#define MODE_SEL1	(0x2)
++
++#define SECURE_RO 0x1
++#define SECURE_RW 0x3
++#define SECURE_EXECUTE_RO 0x5
++#define SECURE_EXECUTE_RW 0x7
++#define NON_SECURE_RO 0x9
++#define NON_SECURE_RW 0xB
++#define NON_SECURE_EXECUTE_RO 0xD
++#define NONSECURE_EXECUTE_RW 0xF
++	/*
++	 * FF-A compatible Secure Partition Manager parses the
++	 * config file and fetch the following booting arguments to
++	 * pass on to the StandAloneMM(StMM) Secure Partition.
++	 */
++	compatible = "arm,ffa-manifest-1.0";
++
++	description = "NRD StMM";
++	ffa-version = <0x00010001>; /* 31:16 - Major, 15:0 - Minor */
++	uuid = <0x378daedc 0xf06b4446 0x831440ab 0x933c87a3>;
++	id = <0x8001>;
++	execution-ctx-count = <1>;
++	exception-level = <MODE_SEL0>; /* SEL0*/
++	execution-state = <0>; /* AArch64*/
++	load-address = <0x0 0xF4300000>;
++	entrypoint-offset = <0x2000>;
++	image-size = <0x0 0x300000>;
++	xlat-granule = <0>; /* 4KiB */
++	boot-order = <0>;
++	messaging-method = <0x3>; /* Direct request/response supported. */
++	power-management-messages = <0x0>;
++	gp-register-num = <0>;
++
++	boot-info {
++		compatible = "arm,ffa-manifest-boot-info";
++		ffa_manifest;
++	};
++
++	device-regions {
++		compatible = "arm,ffa-manifest-device-regions";
++
++		/*
++		 * System registers region for access from S-EL0.
++		 * Similar to PLAT_ARM_SECURE_MAP_SYSTEMREG.
++		 */
++		sys-regs {
++			base-address = <0x0 0x0C010000>;
++			pages-count = <0x10>;
++			attributes = <SECURE_RW>;
++		};
++
++		/*
++		 * RTC region.
++		 */
++		rtc {
++			base-address = <0x0 0x0C170000>;
++			pages-count = <0x1>;
++			attributes = <SECURE_RW>;
++		};
++
++		/*
++		 * ARM CSS SoC Peripherals and PCIe expansion area.
++		 * Similar to SOC_CSS_MAP_DEVICE.
++		 */
++		soc_components {
++			base-address = <0x0 0x0E000000>;
++			pages-count = <0x2000>;
++			attributes = <SECURE_RW>;
++		};
++
++		/*
++		 * RTC region.
++		 */
++		cluster_utility {
++			base-address = <0x0 0x20000000>;
++			pages-count = <0x20000>;
++			attributes = <SECURE_RW>;
++		};
++
++		/*
++		 * Secure UART region.
++		 */
++		secure_uart {
++			base-address = <0x0 0x1A410000>;
++			pages-count = <0x10>;
++			attributes = <SECURE_RW>;
++		};
++
++		/*
++		 * NOR2 Flash region, used for Secure booting.
++		 */
++		nor_flash2 {
++			base-address = <0x6 0x04000000>;
++			pages-count = <0x4000>;
++			attributes = <SECURE_RW>;
++		};
++	};
++
++	memory-regions {
++		compatible = "arm,ffa-manifest-memory-regions";
++
++
++		/*
++		 * Memory shared between EL3 and S-EL0.
++		 * Similar to ARM_SPM_BUF_EL0_MMAP.
++		 */
++		rx-tx-buffers {
++			description = "shared-buff";
++			base-address = <0x0 0xf4600000>;
++			pages-count = <0x100>;
++			attributes = <SECURE_RW>;
++		};
++
++		/*
++		 * Heap used by SP to allocate memory for DMA.
++		 */
++		heap {
++			/*
++			 * Description is needed for StMM to identify
++			 * heap buffer.
++			 */
++			description = "heap";
++			base-address = <0x0 0xF4700000>;
++			pages-count = <0x500>;
++			attributes = <SECURE_RW>;
++		};
++
++		/*
++		 * Memory shared between Normal world and S-EL0.
++		 * Similar to ARM_SP_IMAGE_NS_BUF_MMAP.
++		 */
++		ns_comm_buffer {
++			/*
++			 * Description is needed for StMM to identify
++			 * ns-communication buffer.
++			 */
++			description = "ns-comm";
++			base-address = <0x0 0xf3200000>;
++			pages-count = <0x30>;
++			attributes = <NON_SECURE_RW>;
++		};
++
++		/*
++		 * Memory shared between Normal world and S-EL0 for
++		 * RAS error communication.
++		 */
++		cper_comm_buffer {
++			/*
++			 * Description is needed for StMM to identify
++			 * CPER buffer.
++			 */
++			description = "cper-buffer";
++			base-address = <0x0 0xfb1ef000>;
++			pages-count = <0x10>;
++			attributes = <NON_SECURE_RW>;
++		};
++	};
++};
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_tb_fw_config.dts b/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_tb_fw_config.dts
+new file mode 100644
+index 000000000000..dec35c799155
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_tb_fw_config.dts
+@@ -0,0 +1,33 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++/dts-v1/;
++
++/ {
++	tb_fw-config {
++		compatible = "arm,tb_fw";
++
++		/* Disable authentication for development */
++		disable_auth = <0x0>;
++
++		/*
++		 * The following two entries are placeholders for Mbed TLS
++		 * heap information. The default values don't matter since
++		 * they will be overwritten by BL1.
++		 * In case of having shared Mbed TLS heap between BL1 and BL2,
++		 * BL1 will populate these two properties with the respective
++		 * info about the shared heap. This info will be available for
++		 * BL2 in order to locate and re-use the heap.
++		 */
++		mbedtls_heap_addr = <0x0 0x0>;
++		mbedtls_heap_size = <0x0>;
++	};
++
++	secure-partitions {
++		compatible = "arm,sp";
++		#include "rdv3r1_fw_config_fragment.dts"
++	};
++};
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/include/platform_def.h b/plat/arm/board/neoverse_rd/platform/rdv3r1/include/platform_def.h
+new file mode 100644
+index 000000000000..7b6a63c6be50
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/include/platform_def.h
+@@ -0,0 +1,56 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#ifndef PLATFORM_DEF_H
++#define PLATFORM_DEF_H
++
++#include <plat/arm/css/common/css_def.h>
++#include <nrd_css_fw_def4.h>
++#include <nrd_pas_def4.h>
++#include <nrd_plat_arm_def4.h>
++#include <nrd_ros_fw_def4.h>
++
++/* Remote chip address offset */
++#define NRD_REMOTE_CHIP_MEM_OFFSET(n)	\
++		((ULL(1) << NRD_ADDR_BITS_PER_CHIP) * (n))
++
++/* Remote dram address offset */
++#define NRD_REMOTE_DRAM_MEM_OFFSET(n)	\
++		((ULL(1) << NRD_DRAM_ADDR_BITS_PER_CHIP) * (n))
++
++/* PE-Cluster count */
++#define PLAT_ARM_CLUSTER_COUNT		U(14)
++#define NRD_MAX_CPUS_PER_CLUSTER	U(1)
++#define NRD_MAX_PE_PER_CPU		U(1)
++
++/* Shared RAM*/
++#define NRD_CSS_SHARED_SRAM_SIZE	UL(0x000100000)
++
++/* DRAM1 */
++#define NRD_CSS_DRAM1_SIZE		ULL(0x80000000)
++
++/* DRAM2 */
++#define NRD_CSS_DRAM2_SIZE		ULL(0x180000000)
++
++/* Address bits */
++#define NRD_ADDR_BITS_PER_CHIP		U(36)  /* 64GB */
++#define NRD_DRAM_ADDR_BITS_PER_CHIP		U(40)
++
++/*
++ * In the current implementation, the RoT Service request that requires the
++ * biggest message buffer is the RSE_DELEGATED_ATTEST_GET_PLATFORM_TOKEN. The
++ * maximum required buffer size is calculated based on the platform-specific
++ * needs of this request.
++ */
++#define PLAT_RSE_COMMS_PAYLOAD_MAX_SIZE	UL(0x1000)
++
++#define PLAT_ARM_SPMC_BASE NRD_CSS_CARVEOUT_RESERVED_BASE
++#define PLAT_ARM_SPMC_SIZE NRD_CSS_CARVEOUT_RESERVED_SIZE
++
++#include <nrd_sdei.h>
++#include <nrd_plat_arm_def4.h>
++
++#endif /* PLATFORM_DEF_H */
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/include/rdv3r1_mhuv3.h b/plat/arm/board/neoverse_rd/platform/rdv3r1/include/rdv3r1_mhuv3.h
+new file mode 100644
+index 000000000000..f228511ac903
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/include/rdv3r1_mhuv3.h
+@@ -0,0 +1,12 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#ifndef RDV3R1_MHUV3_H
++#define RDV3R1_MHUV3_H
++
++void mhu_v3_get_secure_device_base(uintptr_t *base, bool sender);
++
++#endif /* RDV3R1_MHUV3_H */
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/include/rdv3r1_ras.h b/plat/arm/board/neoverse_rd/platform/rdv3r1/include/rdv3r1_ras.h
+new file mode 100644
+index 000000000000..9c9ef422727b
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/include/rdv3r1_ras.h
+@@ -0,0 +1,14 @@
++/*
++ * Copyright (c) 2024, ARM Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#ifndef RDV3R1_RAS_H
++#define RDV3R1_RAS_H
++
++#include <nrd_ras.h>
++
++extern struct plat_nrd_ras_config ras_config;
++
++#endif /* RDV3R1_RAS_H */
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/include/rdv3r1_rse_comms.h b/plat/arm/board/neoverse_rd/platform/rdv3r1/include/rdv3r1_rse_comms.h
+new file mode 100644
+index 000000000000..bc3ca7cf7dba
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/include/rdv3r1_rse_comms.h
+@@ -0,0 +1,12 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#ifndef RDV3R1_RSE_COMMS_H
++#define RDV3R1_RSE_COMMS_H
++
++int plat_rse_comms_init(void);
++
++#endif /* RDV3R1_RSE_COMMS_H */
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/platform.mk b/plat/arm/board/neoverse_rd/platform/rdv3r1/platform.mk
+new file mode 100644
+index 000000000000..f7bf9d59c594
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/platform.mk
+@@ -0,0 +1,166 @@
++# Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++#
++# SPDX-License-Identifier: BSD-3-Clause
++#
++
++RD_V3_R1_VARIANTS := 0
++ifneq ($(NRD_PLATFORM_VARIANT),						\
++	$(filter $(NRD_PLATFORM_VARIANT),$(RD_V3_R1_VARIANTS)))
++	$(error "NRD_PLATFORM_VARIANT for RD-V3-R1 should be 0"
++	"currently set to ${NRD_PLATFORM_VARIANT}.")
++endif
++
++$(eval $(call CREATE_SEQ,SEQ,4))
++ifneq ($(NRD_CHIP_COUNT),$(filter $(NRD_CHIP_COUNT),$(SEQ)))
++	$(error  "Chip count for RD-V3-R1-MC should be either $(SEQ) \
++	currently it is set to ${NRD_CHIP_COUNT}.")
++endif
++
++# Build options
++# Major and Minor versions
++override ARM_ARCH_MAJOR			:= 8
++override ARM_ARCH_MINOR			:= 7
++
++# Image flags
++override CSS_SYSTEM_GRACEFUL_RESET	:= 0
++override EL3_EXCEPTION_HANDLING	:= 0
++
++# Misc options
++override CTX_INCLUDE_AARCH32_REGS	:= 0
++
++# RD-V3-R1 platform uses GIC-700 which is based on GICv4.1
++GIC_ENABLE_V4_EXTN			:= 1
++
++# Enable GIC multichip extension only for multichip platforms
++GICV3_IMPL_GIC600_MULTICHIP	:= 1
++
++# RD-V3-R1 uses MHUv3
++PLAT_MHU_VERSION := 3
++
++include plat/arm/board/neoverse_rd/common/nrd-common.mk
++include drivers/arm/rse/rse_comms.mk
++include drivers/auth/mbedtls/mbedtls_common.mk
++ifeq (${MEASURED_BOOT},1)
++include drivers/measured_boot/rse/rse_measured_boot.mk
++endif
++
++RDV3_R1_BASE	=	plat/arm/board/neoverse_rd/platform/rdv3r1
++
++PLAT_INCLUDES	+=	-I${NRD_COMMON_BASE}/include/nrd4/		\
++			-I${RDV3_R1_BASE}/include/
++ifeq (${MEASURED_BOOT},1)
++PLAT_INCLUDES	+=	-Iinclude/lib/psa
++endif
++
++NRD_CPU_SOURCES	:=	lib/cpus/aarch64/neoverse_v3.S
++
++# Source files for RD-V3-R1 variants
++PLAT_BL_COMMON_SOURCES							\
++		+=	${NRD_COMMON_BASE}/nrd_plat4.c			\
++			${RDV3_R1_BASE}/rdv3r1_common.c
++
++PLAT_MEASURED_BOOT_SOURCES						\
++		:=	${MEASURED_BOOT_SOURCES} 			\
++			${RSE_COMMS_SOURCES}				\
++			${RDV3_R1_BASE}/rdv3r1_common_measured_boot.c \
++			lib/psa/measured_boot.c
++
++BL1_SOURCES	+=	${NRD_CPU_SOURCES}				\
++			${RDV3_R1_BASE}/rdv3r1_err.c		\
++			${RDV3_R1_BASE}/rdv3r1_mhuv3.c
++ifeq (${TRUSTED_BOARD_BOOT}, 1)
++BL1_SOURCES	+=	${RDV3_R1_BASE}/rdv3r1_trusted_boot.c
++endif
++ifeq (${MEASURED_BOOT},1)
++BL1_SOURCES	+=	${PLAT_MEASURED_BOOT_SOURCES}			\
++			${RDV3_R1_BASE}/rdv3r1_bl1_measured_boot.c
++endif
++
++BL2_SOURCES	+=	${RDV3_R1_BASE}/rdv3r1_bl2_setup.c		\
++			${RDV3_R1_BASE}/rdv3r1_err.c		\
++			${RDV3_R1_BASE}/rdv3r1_mhuv3.c		\
++			${RDV3_R1_BASE}/rdv3r1_security.c		\
++			lib/utils/mem_region.c				\
++			plat/arm/common/arm_nor_psci_mem_protect.c	\
++			drivers/arm/smmu/smmu_v3.c
++ifeq (${TRUSTED_BOARD_BOOT}, 1)
++BL2_SOURCES	+=	${RDV3_R1_BASE}/rdv3r1_trusted_boot.c
++endif
++ifeq (${MEASURED_BOOT},1)
++BL2_SOURCES	+=	${PLAT_MEASURED_BOOT_SOURCES}			\
++			${RDV3_R1_BASE}/rdv3r1_bl2_measured_boot.c
++endif
++
++BL31_SOURCES	+=	${NRD_CPU_SOURCES}				\
++			${MBEDTLS_SOURCES}				\
++			${RSE_COMMS_SOURCES}				\
++			${RDV3_R1_BASE}/rdv3r1_bl31_setup.c	\
++			${RDV3_R1_BASE}/rdv3r1_mhuv3.c		\
++			${RDV3_R1_BASE}/rdv3r1_topology.c		\
++			${RDV3_R1_BASE}/rdv3r1_plat_attest_token.c	\
++			${RDV3_R1_BASE}/rdv3r1_realm_attest_key.c	\
++			drivers/arm/gic/v3/gic600_multichip.c	\
++			drivers/arm/smmu/smmu_v3.c			\
++			drivers/cfi/v2m/v2m_flash.c			\
++			lib/psa/cca_attestation.c			\
++			lib/psa/delegated_attestation.c			\
++			lib/utils/mem_region.c				\
++			plat/arm/common/arm_dyn_cfg.c			\
++			plat/arm/common/arm_nor_psci_mem_protect.c
++
++ifeq (${NRD_ERR_INJ_SUPPORT},1)
++BL31_SOURCES           +=      ${RDV3_R1_BASE}/einj/nrd_einj_sram.c	\
++				${RDV3_R1_BASE}/einj/nrd_einj_cpu.c
++endif
++
++# XLAT options for RD-V3-R1 variants
++BL31_CFLAGS	+=      -DPLAT_XLAT_TABLES_DYNAMIC
++BL2_CFLAGS	+=      -DPLAT_XLAT_TABLES_DYNAMIC
++
++ifeq (${ENABLE_FEAT_RAS}, 1)
++ifeq (${FFH_SUPPORT}, 1)
++BL31_SOURCES            +=      ${RDV3_R1_BASE}/rdv3r1_ras.c	\
++                                ${NRD_COMMON_BASE}/ras/nrd_ras_common.c	\
++                                ${NRD_COMMON_BASE}/ras/nrd_ras_sram.c	\
++				${NRD_COMMON_BASE}/ras/nrd_ras_cpu.c
++endif
++endif
++
++# Add the FDT_SOURCES and options for Dynamic Config
++FDT_SOURCES	+=	${RDV3_R1_BASE}/fdts/${PLAT}_fw_config.dts	\
++			${RDV3_R1_BASE}/fdts/${PLAT}_tb_fw_config.dts \
++			${RDV3_R1_BASE}/fdts/${PLAT}_nt_fw_config.dts \
++			${RDV3_R1_BASE}/fdts/${PLAT}_hw_config.dts
++
++FW_CONFIG	:=	${BUILD_PLAT}/fdts/${PLAT}_fw_config.dtb
++TB_FW_CONFIG	:=	${BUILD_PLAT}/fdts/${PLAT}_tb_fw_config.dtb
++NT_FW_CONFIG	:=	${BUILD_PLAT}/fdts/${PLAT}_nt_fw_config.dtb
++HW_CONFIG	:=	${BUILD_PLAT}/fdts/${PLAT}_hw_config.dtb
++
++# Add the FW_CONFIG to FIP and specify the same to certtool
++$(eval $(call TOOL_ADD_PAYLOAD,${FW_CONFIG},--fw-config,${FW_CONFIG}))
++# Add the TB_FW_CONFIG to FIP and specify the same to certtool
++$(eval $(call TOOL_ADD_PAYLOAD,${TB_FW_CONFIG},--tb-fw-config,${TB_FW_CONFIG}))
++# Add the NT_FW_CONFIG to FIP and specify the same to certtool
++$(eval $(call TOOL_ADD_PAYLOAD,${NT_FW_CONFIG},--nt-fw-config))
++$(eval $(call TOOL_ADD_PAYLOAD,${HW_CONFIG},--hw-config))
++
++# Features for RD-V3-R1 variants
++override ENABLE_FEAT_MPAM	:= 2
++override ENABLE_FEAT_AMU	:= 2
++override ENABLE_SVE_FOR_SWD	:= 1
++override ENABLE_SVE_FOR_NS	:= 2
++override ENABLE_FEAT_MTE2	:= 2
++
++ifeq (${SPMD_SPM_AT_SEL2}, 1)
++BL32_CONFIG_DTS		:=	${RDV3_R1_BASE}/fdts/${PLAT}_spmc_sp_manifest.dts
++FDT_SOURCES		+=	${BL32_CONFIG_DTS}
++TOS_FW_CONFIG		:=	${BUILD_PLAT}/fdts/$(notdir $(basename ${BL32_CONFIG_DTS})).dtb
++endif
++
++# Firmware Configuration Framework sources
++include lib/fconf/fconf.mk
++
++BL1_SOURCES	+=	${FCONF_SOURCES} ${FCONF_DYN_SOURCES}
++BL2_SOURCES	+=	${FCONF_SOURCES} ${FCONF_DYN_SOURCES}
++BL31_SOURCES	+=	${FCONF_SOURCES} ${FCONF_DYN_SOURCES}
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_bl1_measured_boot.c b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_bl1_measured_boot.c
+new file mode 100644
+index 000000000000..d452e5335aee
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_bl1_measured_boot.c
+@@ -0,0 +1,60 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <stdint.h>
++
++#include <drivers/arm/rse_comms.h>
++#include <drivers/measured_boot/rse/rse_measured_boot.h>
++#include <lib/psa/measured_boot.h>
++#include <plat/arm/common/plat_arm.h>
++#include <platform_def.h>
++
++#include <nrd_plat.h>
++#include <rdv3r1_rse_comms.h>
++
++/*
++ * Platform specific table with image IDs and metadata. Intentionally not a
++ * const struct, some members might set by bootloaders during trusted boot.
++ */
++struct rse_mboot_metadata rdv3r1_rse_mboot_metadata[] = {
++	{
++		.id = FW_CONFIG_ID,
++		.slot = U(8),
++		.signer_id_size = SIGNER_ID_MIN_SIZE,
++		.sw_type = MBOOT_FW_CONFIG_STRING,
++		.lock_measurement = false
++	},
++	{
++		.id = TB_FW_CONFIG_ID,
++		.slot = U(9),
++		.signer_id_size = SIGNER_ID_MIN_SIZE,
++		.sw_type = MBOOT_TB_FW_CONFIG_STRING,
++		.lock_measurement = false
++	},
++	{
++		.id = BL2_IMAGE_ID,
++		.slot = U(10),
++		.signer_id_size = SIGNER_ID_MIN_SIZE,
++		.sw_type = MBOOT_BL2_IMAGE_STRING,
++		.lock_measurement = false
++	},
++	{
++		.id = RSE_MBOOT_INVALID_ID
++	}
++};
++
++void bl1_plat_mboot_init(void)
++{
++	/* Initialize the communication channel between AP and RSE */
++	(void)plat_rse_comms_init();
++
++	rse_measured_boot_init(rdv3r1_rse_mboot_metadata);
++}
++
++void bl1_plat_mboot_finish(void)
++{
++	/* Nothing to do. */
++}
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_bl2_measured_boot.c b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_bl2_measured_boot.c
+new file mode 100644
+index 000000000000..f5c2c0252e9f
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_bl2_measured_boot.c
+@@ -0,0 +1,69 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <stdint.h>
++
++#include <drivers/arm/rse_comms.h>
++#include <drivers/measured_boot/rse/rse_measured_boot.h>
++#include <lib/psa/measured_boot.h>
++#include <plat/common/common_def.h>
++#include <platform_def.h>
++
++#include <nrd_plat.h>
++#include <rdv3r1_rse_comms.h>
++
++/*
++ * Platform specific table with image IDs and metadata. Intentionally not a
++ * const struct, some members might set by bootloaders during trusted boot.
++ */
++struct rse_mboot_metadata rdv3r1_rse_mboot_metadata[] = {
++	{
++		.id = BL31_IMAGE_ID,
++		.slot = U(11),
++		.signer_id_size = SIGNER_ID_MIN_SIZE,
++		.sw_type = MBOOT_BL31_IMAGE_STRING,
++		.lock_measurement = false
++	},
++	{
++		.id = HW_CONFIG_ID,
++		.slot = U(12),
++		.signer_id_size = SIGNER_ID_MIN_SIZE,
++		.sw_type = MBOOT_HW_CONFIG_STRING,
++		.lock_measurement = false
++	},
++	{
++		.id = SOC_FW_CONFIG_ID,
++		.slot = U(13),
++		.signer_id_size = SIGNER_ID_MIN_SIZE,
++		.sw_type = MBOOT_SOC_FW_CONFIG_STRING,
++		.lock_measurement = false
++	},
++#if ENABLE_RME
++	{
++		.id = RMM_IMAGE_ID,
++		.slot = U(14),
++		.signer_id_size = SIGNER_ID_MIN_SIZE,
++		.sw_type = MBOOT_RMM_IMAGE_STRING,
++		.lock_measurement = false
++	},
++#endif /* ENABLE_RME */
++	{
++		.id = RSE_MBOOT_INVALID_ID
++	}
++};
++
++void bl2_plat_mboot_init(void)
++{
++	/* Initialize the communication channel between AP and RSE */
++	(void)plat_rse_comms_init();
++
++	rse_measured_boot_init(rdv3r1_rse_mboot_metadata);
++}
++
++void bl2_plat_mboot_finish(void)
++{
++	/* Nothing to do. */
++}
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_bl2_setup.c b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_bl2_setup.c
+new file mode 100644
+index 000000000000..6a22187ba42e
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_bl2_setup.c
+@@ -0,0 +1,115 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <common/debug.h>
++#include <lib/gpt_rme/gpt_rme.h>
++#include <plat/arm/common/plat_arm.h>
++#include <plat/common/platform.h>
++#include <nrd_plat.h>
++
++#if defined(ENABLE_RME)
++/*
++ * The GPT library might modify the gpt regions structure to optimize
++ * the layout, so the array cannot be constant.
++ */
++static pas_region_t pas_regions[] = {
++	NRD_PAS_SHARED_SRAM,
++	NRD_PAS_SYSTEM_NCI,
++	NRD_PAS_DEBUG_NIC,
++	NRD_PAS_NS_UART,
++	NRD_PAS_REALM_UART,
++	NRD_PAS_AP_NS_WDOG,
++	NRD_PAS_AP_ROOT_WDOG,
++	NRD_PAS_AP_SECURE_WDOG,
++	NRD_PAS_SECURE_SRAM_ERB_AP,
++	NRD_PAS_NS_SRAM_ERB_AP,
++	NRD_PAS_ROOT_SRAM_ERB_AP,
++	NRD_PAS_REALM_SRAM_ERB_AP,
++	NRD_PAS_SECURE_SRAM_ERB_SCP,
++	NRD_PAS_NS_SRAM_ERB_SCP,
++	NRD_PAS_ROOT_SRAM_ERB_SCP,
++	NRD_PAS_REALM_SRAM_ERB_SCP,
++	NRD_PAS_SECURE_SRAM_ERB_MCP,
++	NRD_PAS_NS_SRAM_ERB_MCP,
++	NRD_PAS_ROOT_SRAM_ERB_MCP,
++	NRD_PAS_REALM_SRAM_ERB_MCP,
++	NRD_PAS_SECURE_SRAM_ERB_RSE,
++	NRD_PAS_NS_SRAM_ERB_RSE,
++	NRD_PAS_ROOT_SRAM_ERB_RSE,
++	NRD_PAS_REALM_SRAM_ERB_RSE,
++	NRD_PAS_RSE_SECURE_SRAM_ERB_RSM,
++	NRD_PAS_RSE_NS_SRAM_ERB_RSM,
++	NRD_PAS_SCP_SECURE_SRAM_ERB_RSM,
++	NRD_PAS_SCP_NS_SRAM_ERB_RSM,
++	NRD_PAS_MCP_SECURE_SRAM_ERB_RSM,
++	NRD_PAS_MCP_NS_SRAM_ERB_RSM,
++	NRD_PAS_AP_SCP_ROOT_MHU,
++	NRD_PAS_AP_MCP_NS_MHU,
++	NRD_PAS_AP_MCP_SECURE_MHU,
++	NRD_PAS_AP_MCP_ROOT_MHU,
++	NRD_PAS_AP_RSE_NS_MHU,
++	NRD_PAS_AP_RSE_SECURE_MHU,
++	NRD_PAS_AP_RSE_ROOT_MHU,
++	NRD_PAS_AP_RSE_REALM_MHU,
++	NRD_PAS_SCP_MCP_RSE_CROSS_CHIP_MHU,
++	NRD_PAS_SYNCNT_MSTUPDTVAL_ADDR,
++	NRD_PAS_STM,
++	NRD_PAS_SCP_MCP_RSE_SHARED_SRAM,
++	NRD_PAS_GIC,
++	NRD_PAS_MMIO_L,
++	NRD_PAS_NS_DRAM,
++#if (defined(SPD_tspd) || defined(SPD_opteed) || defined(SPD_spmd)) && \
++	defined(MEASURED_BOOT)
++	NRD_PAS_EVENT_LOG,
++#endif
++#if defined(SPD_spmd)
++	NRD_PAS_BL32,
++#endif
++	NRD_PAS_RMM,
++	NRD_PAS_L1GPT,
++	NRD_PAS_CMN,
++	NRD_PAS_LCP_PERIPHERAL,
++	NRD_PAS_DDR_IO,
++	NRD_PAS_SMMU_NCI_IO,
++	NRD_PAS_ECAM,
++	NRD_PAS_MMIO_H,
++#if ENABLE_FEAT_RAS && FFH_SUPPORT
++	NRD_PAS_CPER,
++#endif
++#if NRD_ERR_INJ_SUPPORT
++	NRD_PAS_EINJ,
++#endif
++	NRD_PAS_DRAM2_CHIP0,
++#if NRD_CHIP_COUNT > 1
++	NRD_PAS_DRAM1_CHIP1,
++	NRD_PAS_DRAM2_CHIP1,
++#endif
++#if NRD_CHIP_COUNT > 2
++	NRD_PAS_DRAM1_CHIP2,
++	NRD_PAS_DRAM2_CHIP2,
++#endif
++#if NRD_CHIP_COUNT > 3
++	NRD_PAS_DRAM1_CHIP3,
++	NRD_PAS_DRAM2_CHIP3
++#endif
++};
++
++static const arm_gpt_info_t arm_gpt_info = {
++	.pas_region_base  = pas_regions,
++	.pas_region_count = (unsigned int)ARRAY_SIZE(pas_regions),
++	.l0_base = (uintptr_t)ARM_L0_GPT_BASE,
++	.l1_base = (uintptr_t)ARM_L1_GPT_BASE,
++	.l0_size = (size_t)ARM_L0_GPT_SIZE,
++	.l1_size = (size_t)ARM_L1_GPT_SIZE,
++	.pps = GPCCR_PPS_256TB,
++	.pgs = GPCCR_PGS_4K
++};
++
++const arm_gpt_info_t *plat_arm_get_gpt_info(void)
++{
++	return &arm_gpt_info;
++}
++#endif /* ENABLE_RME */
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_bl31_setup.c b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_bl31_setup.c
+new file mode 100644
+index 000000000000..55f35be904be
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_bl31_setup.c
+@@ -0,0 +1,148 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <common/debug.h>
++#include <drivers/arm/gic600_multichip.h>
++#include <drivers/arm/rse_comms.h>
++#include <drivers/arm/smmu_v3.h>
++
++#include <plat/arm/common/plat_arm.h>
++#include <plat/common/platform.h>
++#include <nrd_plat.h>
++#include <nrd_variant.h>
++#include <rdv3r1_rse_comms.h>
++#include <lib/fconf/fconf.h>
++#include <lib/fconf/fconf_dyn_cfg_getter.h>
++#include <rdv3r1_ras.h>
++
++static const mmap_region_t rdv3r1mc_dynamic_mmap[] = {
++#if NRD_CHIP_COUNT > 1
++	NRD_CSS_SHARED_RAM_MMAP(1),
++	NRD_CSS_PERIPH_MMAP(1),
++#endif
++#if NRD_CHIP_COUNT > 2
++	NRD_CSS_SHARED_RAM_MMAP(2),
++	NRD_CSS_PERIPH_MMAP(2),
++#endif
++#if NRD_CHIP_COUNT > 3
++	NRD_CSS_SHARED_RAM_MMAP(3),
++	NRD_CSS_PERIPH_MMAP(3),
++#endif
++};
++
++static struct gic600_multichip_data rdv3r1mc_multichip_data __init = {
++	.rt_owner_base = PLAT_ARM_GICD_BASE,
++	.rt_owner = 0,
++	.chip_count = NRD_CHIP_COUNT,
++	.chip_addrs = {
++		PLAT_ARM_GICD_BASE >> 16,
++#if NRD_CHIP_COUNT > 1
++		(PLAT_ARM_GICD_BASE + NRD_REMOTE_CHIP_MEM_OFFSET(1)) >> 16,
++#endif
++#if NRD_CHIP_COUNT > 2
++		(PLAT_ARM_GICD_BASE + NRD_REMOTE_CHIP_MEM_OFFSET(2)) >> 16,
++#endif
++#if NRD_CHIP_COUNT > 3
++		(PLAT_ARM_GICD_BASE + NRD_REMOTE_CHIP_MEM_OFFSET(3)) >> 16,
++#endif
++	},
++	.spi_ids = {
++		{PLAT_ARM_GICD_BASE, 32, 511},
++#if NRD_CHIP_COUNT > 1
++		{PLAT_ARM_GICD_BASE, 512, 991},
++#endif
++#if NRD_CHIP_COUNT > 2
++		{PLAT_ARM_GICD_BASE, 4096, 4575},
++#endif
++#if NRD_CHIP_COUNT > 3
++		{PLAT_ARM_GICD_BASE, 4576, 5055},
++#endif
++	}
++};
++
++static uintptr_t rdv3r1mc_multichip_gicr_frames[] = {
++	/* Chip 0's GICR Base */
++	PLAT_ARM_GICR_BASE,
++#if NRD_CHIP_COUNT > 1
++	/* Chip 1's GICR BASE */
++	PLAT_ARM_GICR_BASE + NRD_REMOTE_CHIP_MEM_OFFSET(1),
++#endif
++#if NRD_CHIP_COUNT > 2
++	/* Chip 2's GICR BASE */
++	PLAT_ARM_GICR_BASE + NRD_REMOTE_CHIP_MEM_OFFSET(2),
++#endif
++#if NRD_CHIP_COUNT > 3
++	/* Chip 3's GICR BASE */
++	PLAT_ARM_GICR_BASE + NRD_REMOTE_CHIP_MEM_OFFSET(3),
++#endif
++	UL(0)	/* Zero Termination */
++};
++
++void bl31_platform_setup(void)
++{
++	/*
++	 * Perform SMMUv3 GPT configuration for the GPC SMMU present in system
++	 * control block on RD-V3-R1 platforms. This SMMUv3 initialization is
++	 * not fatal.
++	 *
++	 * Don't perform smmuv3_security_init() for this instance of SMMUv3 as
++	 * the global aborts need not be configured to allow the components in
++	 * system control block send transations downstream to SMMUv3.
++	 */
++	if (smmuv3_init(NRD_CSS_GPC_SMMUV3_BASE) != 0) {
++		WARN("Failed initializing System SMMU.\n");
++	}
++
++	/* Perform SMMUv3 configuration for IO Virtualization block SMMU */
++	if (smmuv3_security_init(NRD_CSS_IO_VIRT_SMMUV3_BASE) != 0) {
++		/*
++		 * Don't proceed for smmuv3 initialization if the
++		 * security init failed.
++		 */
++		return;
++	}
++	/* SMMUv3 initialization failure is not fatal */
++	if (smmuv3_init(NRD_CSS_IO_VIRT_SMMUV3_BASE) != 0) {
++		WARN("Failed initializing SMMU.\n");
++	}
++
++	int ret;
++	unsigned int i;
++
++	if (plat_arm_nrd_get_multi_chip_mode() == 0) {
++		ERROR("Chip Count is %u but multi-chip mode is not enabled\n",
++		       NRD_CHIP_COUNT);
++		panic();
++	} else {
++		INFO("Enabling multi-chip support for RD-V3-R1 variant\n");
++
++		for (i = 0; i < ARRAY_SIZE(rdv3r1mc_dynamic_mmap); i++) {
++			ret = mmap_add_dynamic_region(
++					rdv3r1mc_dynamic_mmap[i].base_pa,
++					rdv3r1mc_dynamic_mmap[i].base_va,
++					rdv3r1mc_dynamic_mmap[i].size,
++					rdv3r1mc_dynamic_mmap[i].attr);
++			if (ret != 0) {
++				ERROR("Failed to add entry i: %d (ret=%d)\n",
++				       i, ret);
++				panic();
++			}
++		}
++
++		plat_arm_override_gicr_frames(
++			rdv3r1mc_multichip_gicr_frames);
++		gic600_multichip_init(&rdv3r1mc_multichip_data);
++	}
++	nrd_bl31_common_platform_setup();
++
++	if (plat_rse_comms_init() != 0) {
++		WARN("Failed initializing AP-RSE comms.\n");
++	}
++
++#if ENABLE_FEAT_RAS && FFH_SUPPORT
++        nrd_ras_platform_setup(&ras_config);
++#endif
++}
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_common.c b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_common.c
+new file mode 100644
+index 000000000000..9c952d97cab6
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_common.c
+@@ -0,0 +1,192 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <common/debug.h>
++#include <drivers/arm/gic600_multichip.h>
++#include <drivers/arm/rse_comms.h>
++#include <plat/arm/common/plat_arm.h>
++#include <plat/common/platform.h>
++#include <platform_def.h>
++#include <nrd_plat.h>
++#include <rdv3r1_mhuv3.h>
++#include <rdv3r1_rse_comms.h>
++
++unsigned int plat_arm_nrd_get_platform_id(void)
++{
++	return mmio_read_32(NRD_CSS_SID_BASE + SID_SYSTEM_ID_OFFSET) &
++	       SID_SYSTEM_ID_PART_NUM_MASK;
++}
++
++unsigned int plat_arm_nrd_get_config_id(void)
++{
++	return mmio_read_32(NRD_CSS_SID_BASE + SID_SYSTEM_CFG_OFFSET);
++}
++
++unsigned int plat_arm_nrd_get_multi_chip_mode(void)
++{
++	return (mmio_read_32(NRD_CSS_SID_BASE + SID_NODE_ID_OFFSET) &
++		SID_MULTI_CHIP_MODE_MASK) >> SID_MULTI_CHIP_MODE_SHIFT;
++}
++
++#if ENABLE_RME
++/*
++ * Get a pointer to the RMM-EL3 shared buffer and return it
++ * through the pointer passed as parameter.
++ *
++ * This function returns the size of the shared buffer.
++ */
++size_t plat_rmmd_get_el3_rmm_shared_mem(uintptr_t *shared)
++{
++	*shared = (uintptr_t)RMM_SHARED_BASE;
++
++	return (size_t)RMM_SHARED_SIZE;
++}
++
++int plat_rmmd_load_manifest(struct rmm_manifest *manifest)
++{
++	uint64_t checksum, num_banks, num_consoles;
++	struct ns_dram_bank *bank_ptr;
++	struct console_info *console_ptr;
++
++	assert(manifest != NULL);
++
++	/* DRAM Bank-1 and Bank-2 */
++	num_banks = 2;
++	assert(num_banks <= ARM_DRAM_NUM_BANKS);
++
++	/* Set number of consoles */
++	num_consoles = NRD_CSS_RMM_CONSOLE_COUNT;
++
++	manifest->version = RMMD_MANIFEST_VERSION;
++	manifest->padding = 0U; /* RES0 */
++	manifest->plat_data = (uintptr_t)NULL;
++	manifest->plat_dram.num_banks = num_banks;
++	manifest->plat_console.num_consoles = num_consoles;
++
++	/*
++	 * Boot Manifest structure illustration, with two dram banks and
++	 * a single console.
++	 *
++	 * +----------------------------------------+
++	 * | offset |     field      |    comment   |
++	 * +--------+----------------+--------------+
++	 * |   0    |    version     |  0x00000003  |
++	 * +--------+----------------+--------------+
++	 * |   4    |    padding     |  0x00000000  |
++	 * +--------+----------------+--------------+
++	 * |   8    |   plat_data    |     NULL     |
++	 * +--------+----------------+--------------+
++	 * |   16   |   num_banks    |              |
++	 * +--------+----------------+              |
++	 * |   24   |     banks      |   plat_dram  |
++	 * +--------+----------------+              |
++	 * |   32   |    checksum    |              |
++	 * +--------+----------------+--------------+
++	 * |   40   |  num_consoles  |              |
++	 * +--------+----------------+              |
++	 * |   48   |    consoles    | plat_console |
++	 * +--------+----------------+              |
++	 * |   56   |    checksum    |              |
++	 * +--------+----------------+--------------+
++	 * |   64   |     base 0     |              |
++	 * +--------+----------------+    bank[0]   |
++	 * |   72   |     size 0     |              |
++	 * +--------+----------------+--------------+
++	 * |   80   |     base 1     |              |
++	 * +--------+----------------+    bank[1]   |
++	 * |   88   |     size 1     |              |
++	 * +--------+----------------+--------------+
++	 * |   96   |     base       |              |
++	 * +--------+----------------+              |
++	 * |   104  |   map_pages    |              |
++	 * +--------+----------------+              |
++	 * |   112  |     name       |              |
++	 * +--------+----------------+  consoles[0] |
++	 * |   120  |   clk_in_hz    |              |
++	 * +--------+----------------+              |
++	 * |   128  |   baud_rate    |              |
++	 * +--------+----------------+              |
++	 * |   136  |     flags      |              |
++	 * +--------+----------------+--------------+
++	 */
++
++	bank_ptr = (struct ns_dram_bank *)
++			(((uintptr_t)manifest) + sizeof(*manifest));
++	console_ptr = (struct console_info *)
++			((uintptr_t)bank_ptr + (num_banks * sizeof(*bank_ptr)));
++
++	manifest->plat_dram.banks = bank_ptr;
++	manifest->plat_console.consoles = console_ptr;
++
++	/* Ensure the manifest is not larger than the shared buffer */
++	assert((sizeof(struct rmm_manifest) +
++		(sizeof(struct console_info) * manifest->plat_console.num_consoles) +
++		(sizeof(struct ns_dram_bank) * manifest->plat_dram.num_banks))
++		<= ARM_EL3_RMM_SHARED_SIZE);
++
++	/* Calculate checksum of plat_dram structure */
++	checksum = num_banks + (uint64_t)bank_ptr;
++
++	/* Store FVP DRAM banks data in Boot Manifest */
++	bank_ptr[0].base = ARM_NS_DRAM1_BASE;
++	bank_ptr[0].size = ARM_NS_DRAM1_SIZE;
++
++	bank_ptr[1].base = ARM_DRAM2_BASE;
++	bank_ptr[1].size = ARM_DRAM2_SIZE;
++
++	/* Update checksum */
++	checksum += bank_ptr[0].base + bank_ptr[0].size + bank_ptr[1].base +
++		bank_ptr[1].size;
++
++	/* Checksum must be 0 */
++	manifest->plat_dram.checksum = ~checksum + 1UL;
++
++	/* Calculate the checksum of the plat_consoles structure */
++	checksum = num_consoles + (uint64_t)console_ptr;
++
++	/* Zero out the console info struct */
++	memset((void *)console_ptr, '\0', sizeof(struct console_info) * num_consoles);
++
++	console_ptr[0].map_pages = 1;
++	console_ptr[0].base = NRD_CSS_RMM_CONSOLE_BASE;
++	console_ptr[0].clk_in_hz = NRD_CSS_RMM_CONSOLE_CLK_IN_HZ;
++	console_ptr[0].baud_rate = NRD_CSS_RMM_CONSOLE_BAUD;
++
++	strlcpy(console_ptr[0].name, NRD_CSS_RMM_CONSOLE_NAME, RMM_CONSOLE_MAX_NAME_LEN-1UL);
++
++	/* Update checksum */
++	checksum += console_ptr[0].base + console_ptr[0].map_pages +
++		console_ptr[0].clk_in_hz + console_ptr[0].baud_rate;
++
++	/* Checksum must be 0 */
++	manifest->plat_console.checksum = ~checksum + 1UL;
++
++	return 0;
++}
++#endif
++
++int plat_rse_comms_init(void)
++{
++	uintptr_t snd_base, rcv_base;
++
++	/* Get sender and receiver frames for AP-RSE communication */
++	mhu_v3_get_secure_device_base(&snd_base, true);
++	mhu_v3_get_secure_device_base(&rcv_base, false);
++
++	VERBOSE("Initializing the rse_comms now\n");
++	/* Initialize the communication channel between AP and RSE */
++	return rse_comms_init(snd_base, rcv_base);
++}
++
++int plat_spmd_handle_group0_interrupt(uint32_t intid)
++{
++	/*
++	 * As of now, there are no sources of Group0 secure interrupt enabled
++	 * for FVP.
++	 */
++	(void)intid;
++	return -1;
++}
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_common_measured_boot.c b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_common_measured_boot.c
+new file mode 100644
+index 000000000000..33b24bf84034
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_common_measured_boot.c
+@@ -0,0 +1,41 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <assert.h>
++#include <stdint.h>
++
++#include <common/desc_image_load.h>
++#include <drivers/measured_boot/rse/rse_measured_boot.h>
++
++extern struct rse_mboot_metadata rdv3r1_rse_mboot_metadata[];
++
++struct rse_mboot_metadata *plat_rse_mboot_get_metadata(void)
++{
++	return rdv3r1_rse_mboot_metadata;
++}
++
++int plat_mboot_measure_image(unsigned int image_id, image_info_t *image_data)
++{
++	int err;
++
++	/* Calculate image hash and record data in RSE */
++	err = rse_mboot_measure_and_record(rdv3r1_rse_mboot_metadata,
++					   image_data->image_base,
++					   image_data->image_size,
++					   image_id);
++	if (err != 0) {
++		ERROR("Measure and record failed for image id %u, err (%i)\n",
++		      image_id, err);
++	}
++
++	return err;
++}
++
++int plat_mboot_measure_key(void *pk_oid, void *pk_ptr, unsigned int pk_len)
++{
++	return rse_mboot_set_signer_id(rdv3r1_rse_mboot_metadata, pk_oid,
++				       pk_ptr, pk_len);
++}
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_err.c b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_err.c
+new file mode 100644
+index 000000000000..5e53d572c9d0
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_err.c
+@@ -0,0 +1,17 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <plat/arm/common/plat_arm.h>
++
++/*
++ * rdv3r1 error handler
++ */
++void __dead2 plat_arm_error_handler(int err)
++{
++	while (1) {
++		wfi();
++	}
++}
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_mhuv3.c b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_mhuv3.c
+new file mode 100644
+index 000000000000..43d3cd2d1d20
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_mhuv3.c
+@@ -0,0 +1,31 @@
++/*
++ * Copyright (c) 2024, ARM Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <stdbool.h>
++#include <stdint.h>
++
++#include <common/debug.h>
++
++#include <nrd_css_def4.h>
++#include <nrd_plat.h>
++#include <rdv3r1_mhuv3.h>
++
++void mhu_v3_get_secure_device_base(uintptr_t *base, bool sender)
++{
++#if ENABLE_RME
++	if (sender) {
++		*base = AP_RSE_ROOT_MHU_V3_PBX;
++	} else {
++		*base = AP_RSE_ROOT_MHU_V3_MBX;
++	}
++#else
++	if (sender) {
++		*base = AP_RSE_SECURE_MHU_V3_PBX;
++	} else {
++		*base = AP_RSE_SECURE_MHU_V3_MBX;
++	}
++#endif
++}
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_plat_attest_token.c b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_plat_attest_token.c
+new file mode 100644
+index 000000000000..188a09f98b7f
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_plat_attest_token.c
+@@ -0,0 +1,26 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <errno.h>
++#include <stdint.h>
++
++#include <cca_attestation.h>
++#include <common/debug.h>
++#include <psa/error.h>
++
++int plat_rmmd_get_cca_attest_token(uintptr_t buf, size_t *len,
++				   uintptr_t hash, size_t hash_size)
++{
++	psa_status_t ret;
++
++	ret = cca_attestation_get_plat_token(buf, len, hash, hash_size);
++	if (ret != PSA_SUCCESS) {
++		ERROR("Unable to fetch CCA attestation token\n");
++		return -1;
++	}
++
++	return 0;
++}
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_ras.c b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_ras.c
+new file mode 100644
+index 000000000000..8072e42335be
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_ras.c
+@@ -0,0 +1,48 @@
++/*
++ * Copyright (c) 2023-2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <platform_def.h>
++
++#include <nrd_ras.h>
++#include <nrd_sdei.h>
++
++struct nrd_ras_ev_map plat_ras_map[] = {
++	/* Peripheral Shared RAM Root ECC CE interrupt */
++	{NRD_SDEI_DS_EVENT_0, NRD_CSS_RT_RAM_ECC_CE_INT, NRD_RAS_INTR_TYPE_SPI},
++
++	/* CPU 1-bit ECC CE error interrupt */
++        {NRD_SDEI_DS_EVENT_1, PLAT_CORE_FAULT_IRQ, NRD_RAS_INTR_TYPE_PPI}
++};
++
++/* RAS error record list definition, used by the common RAS framework. */
++struct err_record_info plat_err_records[] = {
++	/* Peripheral Shared RAM Root error record. */
++	ERR_RECORD_MEMMAP_V1(NRD_CSS_ROOT_SRAM_ERB_AP_BASE, 4, NULL,
++				&nrd_ras_sram_intr_handler, 0),
++	ERR_RECORD_SYSREG_V1(0, 1, NULL, &nrd_ras_cpu_intr_handler, 0),
++};
++
++/* RAS error interrupt list definition, used by the common RAS framework. */
++struct ras_interrupt plat_ras_interrupts[] = {
++	{
++                .intr_number = PLAT_CORE_FAULT_IRQ,
++                .err_record = &plat_err_records[1],
++        }, {
++               .intr_number = NRD_CSS_RT_RAM_ECC_CE_INT,
++		.err_record = &plat_err_records[0],
++	},
++};
++
++/* Registers the RAS error record list with common RAS framework. */
++REGISTER_ERR_RECORD_INFO(plat_err_records);
++/* Registers the RAS error interrupt info list with common RAS framework. */
++REGISTER_RAS_INTERRUPTS(plat_ras_interrupts);
++
++/* Platform RAS handling config data definition */
++struct plat_nrd_ras_config ras_config = {
++	plat_ras_map,
++	ARRAY_SIZE(plat_ras_map)
++};
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_realm_attest_key.c b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_realm_attest_key.c
+new file mode 100644
+index 000000000000..224c20b9a830
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_realm_attest_key.c
+@@ -0,0 +1,26 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <errno.h>
++#include <stdint.h>
++
++#include <cca_attestation.h>
++#include <common/debug.h>
++#include <psa/error.h>
++
++int plat_rmmd_get_cca_realm_attest_key(uintptr_t buf, size_t *len,
++				       unsigned int type)
++{
++	psa_status_t ret;
++
++	ret = cca_attestation_get_realm_key(buf, len, type);
++	if (ret != PSA_SUCCESS) {
++		ERROR("Unable to fetch CCA attestation key\n");
++		return -1;
++	}
++
++	return 0;
++}
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_security.c b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_security.c
+new file mode 100644
+index 000000000000..a12d3e22a708
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_security.c
+@@ -0,0 +1,10 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++/* Placeholder function to resolve build dependency */
++void plat_arm_security_setup(void)
++{
++}
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_sp_layout.json b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_sp_layout.json
+new file mode 100644
+index 000000000000..42d59fc81b56
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_sp_layout.json
+@@ -0,0 +1,14 @@
++{
++	"stmm" : {
++		"image": {
++			"file": "../../../../../output/rdv3r1/components/css-common/mm_standalone.bin",
++			"offset":"0x2000"
++		},
++		"pm": {
++			"file": "fdts/rdv3r1_stmm_config.dts",
++			"offset":"0x1000"
++		},
++		"uuid": "eaba83d8-baaf-4eaf-8144-f7fdcbe544a7",
++		"owner": "Plat"
++	}
++}
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_topology.c b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_topology.c
+new file mode 100644
+index 000000000000..a27941fc3f2b
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_topology.c
+@@ -0,0 +1,120 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <plat/arm/common/plat_arm.h>
++#include <plat/arm/css/common/css_pm.h>
++
++/******************************************************************************
++ * The power domain tree descriptor.
++ ******************************************************************************/
++const unsigned char rd_v3r1_pd_tree_desc[] = {
++	(PLAT_ARM_CLUSTER_COUNT) * (NRD_CHIP_COUNT),
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++#if (NRD_PLATFORM_VARIANT == 0)
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++#endif
++#if (NRD_CHIP_COUNT > 1)
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++#if (NRD_PLATFORM_VARIANT == 0)
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++#endif
++#endif
++};
++
++/*******************************************************************************
++ * This function returns the topology tree information.
++ ******************************************************************************/
++const unsigned char *plat_get_power_domain_tree_desc(void)
++{
++	return rd_v3r1_pd_tree_desc;
++}
++
++/*******************************************************************************
++ * The array mapping platform core position (implemented by plat_my_core_pos())
++ * to the SCMI power domain ID implemented by SCP.
++ ******************************************************************************/
++#if (NRD_PLATFORM_VARIANT == 2)
++const uint32_t plat_css_core_pos_to_scmi_dmn_id_map[] = {
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x0)),
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x1)),
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x2)),
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x3)),
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x4)),
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x5)),
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x6)),
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x7)),
++#if (NRD_PLATFORM_VARIANT == 0)
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x8)),
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x9)),
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0xA)),
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0xB)),
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0xC)),
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0xD)),
++#endif
++#if (NRD_CHIP_COUNT > 1)
++	(SET_SCMI_CHANNEL_ID(0x1) | SET_SCMI_DOMAIN_ID(0x0)),
++	(SET_SCMI_CHANNEL_ID(0x1) | SET_SCMI_DOMAIN_ID(0x1)),
++	(SET_SCMI_CHANNEL_ID(0x1) | SET_SCMI_DOMAIN_ID(0x2)),
++	(SET_SCMI_CHANNEL_ID(0x1) | SET_SCMI_DOMAIN_ID(0x3)),
++	(SET_SCMI_CHANNEL_ID(0x1) | SET_SCMI_DOMAIN_ID(0x4)),
++	(SET_SCMI_CHANNEL_ID(0x1) | SET_SCMI_DOMAIN_ID(0x5)),
++	(SET_SCMI_CHANNEL_ID(0x1) | SET_SCMI_DOMAIN_ID(0x6)),
++	(SET_SCMI_CHANNEL_ID(0x1) | SET_SCMI_DOMAIN_ID(0x7)),
++#if (NRD_PLATFORM_VARIANT == 0)
++	(SET_SCMI_CHANNEL_ID(0x1) | SET_SCMI_DOMAIN_ID(0x8)),
++	(SET_SCMI_CHANNEL_ID(0x1) | SET_SCMI_DOMAIN_ID(0x9)),
++	(SET_SCMI_CHANNEL_ID(0x1) | SET_SCMI_DOMAIN_ID(0xA)),
++	(SET_SCMI_CHANNEL_ID(0x1) | SET_SCMI_DOMAIN_ID(0xB)),
++	(SET_SCMI_CHANNEL_ID(0x1) | SET_SCMI_DOMAIN_ID(0xC)),
++	(SET_SCMI_CHANNEL_ID(0x1) | SET_SCMI_DOMAIN_ID(0xD)),
++#endif
++};
++#else
++const uint32_t plat_css_core_pos_to_scmi_dmn_id_map[] = {
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x0)),
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x1)),
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x2)),
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x3)),
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x4)),
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x5)),
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x6)),
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x7)),
++#if (NRD_PLATFORM_VARIANT == 0)
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x8)),
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x9)),
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0xA)),
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0xB)),
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0xC)),
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0xD)),
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0xE)),
++	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0xF)),
++#endif
++};
++#endif
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_trusted_boot.c b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_trusted_boot.c
+new file mode 100644
+index 000000000000..6aec208d4817
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_trusted_boot.c
+@@ -0,0 +1,26 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <plat/arm/common/plat_arm.h>
++
++/*
++ * Return the ROTPK hash in the following ASN.1 structure in DER format:
++ *
++ * AlgorithmIdentifier  ::=  SEQUENCE  {
++ *     algorithm         OBJECT IDENTIFIER,
++ *     parameters        ANY DEFINED BY algorithm OPTIONAL
++ * }
++ *
++ * DigestInfo ::= SEQUENCE {
++ *     digestAlgorithm   AlgorithmIdentifier,
++ *     digest            OCTET STRING
++ * }
++ */
++int plat_get_rotpk_info(void *cookie, void **key_ptr, unsigned int *key_len,
++			unsigned int *flags)
++{
++	return arm_get_rotpk_info(cookie, key_ptr, key_len, flags);
++}

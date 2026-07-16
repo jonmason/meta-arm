@@ -1,0 +1,45 @@
+From fed03c67891d39cd949ff8be4d6e1bd67875558e Mon Sep 17 00:00:00 2001
+From: Sammit Joshi <sammit.joshi@arm.com>
+Date: Tue, 10 Dec 2024 22:09:31 +0530
+Subject: [PATCH] fix(neoverse_rd): remove redundant NRD_DRAM1_CARVEOUT_SIZE
+ macro
+
+Remove the unused NRD_DRAM1_CARVEOUT_SIZE macro to clean up the
+codebase and improve maintainability.
+
+Change-Id: Iecb18f39bdafe9da17048409782d8fbdd08c5f27
+Signed-off-by: Sammit Joshi <sammit.joshi@arm.com>
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h   | 2 --
+ .../board/neoverse_rd/common/include/nrd4/nrd_plat_arm_def4.h   | 2 --
+ 2 files changed, 4 deletions(-)
+
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h
+index 695eb0d46324..d51dfa986bc4 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h
+@@ -682,8 +682,6 @@ typedef enum sds_region_id {
+ #define ARM_DRAM1_END			(ARM_DRAM1_BASE +		\
+ 					 ARM_DRAM1_SIZE - 1U)
+ 
+-#define NRD_DRAM1_CARVEOUT_SIZE		UL(0x0C010000)	/* 117MB */
+-
+ /*******************************************************************************
+  * DRAM bank2 specific defines.
+  ******************************************************************************/
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_plat_arm_def4.h b/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_plat_arm_def4.h
+index a3b6b74e917b..45ad2a144ab2 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_plat_arm_def4.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_plat_arm_def4.h
+@@ -669,8 +669,6 @@ typedef enum sds_region_id {
+ #define ARM_DRAM1_END			(ARM_DRAM1_BASE +		\
+ 					 ARM_DRAM1_SIZE - 1U)
+ 
+-#define NRD_DRAM1_CARVEOUT_SIZE		UL(0x0C010000)	/* 117MB */
+-
+ /*******************************************************************************
+  * DRAM bank2 specific defines.
+  ******************************************************************************/

@@ -1,0 +1,80 @@
+From 3e1e06bfe7d2df614325ee2172fc3913e4466a70 Mon Sep 17 00:00:00 2001
+From: Manoj Kumar Prabakaran <manojkumar.prabakaran@arm.com>
+Date: Fri, 21 Mar 2025 10:04:57 +0000
+Subject: [PATCH] feat(rdv3): Enable MPMM in RDV3 platform variant
+
+Enable the MPMM (Maximum Power Mitigation Mechanism) in RDV3 platform
+Maximum Power Mitigation Mechanism (MPMM) is a power management feature
+that detects and limits high activity events, specifically vector unit
+instructions. MPMM provides three gears that enable it to limit certain
+classes of workloads. Each MPMM gear limits workloads at a different
+level of aggressiveness, where gear 0 produces the most aggressive
+throttling and gear 2 the least aggressive. The Activity Monitoring Unit
+(AMU) provides metrics for each gear. An external power controller can
+use these metrics to budget SoC power in the following ways:
+        1. By limiting the number of cores that can execute higher
+           activity workloads.
+        2. By switching to a different Dynamic Voltage and Frequency
+           Scaling (DVFS) operating point.
+
+MPMM is enabled on a per-core basis by the EL3 runtime firmware.
+
+Change-Id: I88dbf5076c89665b9a78232428ee300255119548
+Signed-off-by: Manoj Kumar Prabakaran <manojkumar.prabakaran@arm.com>
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ plat/arm/board/neoverse_rd/platform/rdv3/platform.mk  |  2 ++
+ .../board/neoverse_rd/platform/rdv3/rdv3_bl31_setup.c | 11 +++++++++++
+ 2 files changed, 13 insertions(+)
+
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk b/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk
+index 1b0e268cc7d0..b1d48ea8d302 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk
++++ b/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk
+@@ -193,6 +193,8 @@ override ENABLE_FEAT_AMU	:= 2
+ override ENABLE_SVE_FOR_SWD	:= 1
+ override ENABLE_SVE_FOR_NS	:= 2
+ override ENABLE_FEAT_MTE2	:= 2
++override ENABLE_AMU_AUXILIARY_COUNTERS  := 1
++override ENABLE_MPMM                    := 1
+ 
+ # FEAT_SVE related flags
+ override SVE_VECTOR_LEN		:= 128
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_bl31_setup.c b/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_bl31_setup.c
+index 7d8b50aca096..c7a505369cd1 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_bl31_setup.c
++++ b/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_bl31_setup.c
+@@ -17,6 +17,11 @@
+ #include <rdv3_ras.h>
+ 
+ #define RT_OWNER 0
++/*
++ * The bottom 3 counters are AUX counters
++ */
++#define MPMM_GEARS ((1 << 0) | (1 << 1) | (1 << 2))
++uint16_t plat_amu_aux_enables[PLATFORM_CORE_COUNT];
+ 
+ /*
+  * Base addr of the frame that allocated by the platform
+@@ -132,6 +137,11 @@ static uintptr_t rdv3mc_multichip_gicr_frames[] = {
+ 	UL(0)	/* Zero Termination */
+ };
+ #endif /* NRD_PLATFORM_VARIANT == 2 */
++void initialize_plat_amu_aux_enables(void) {
++    for (int i = 0; i < PLATFORM_CORE_COUNT; i++) {
++        plat_amu_aux_enables[i] = MPMM_GEARS;
++    }
++}
+ 
+ void bl31_platform_setup(void)
+ {
+@@ -144,6 +154,7 @@ void bl31_platform_setup(void)
+ 	 * the global aborts need not be configured to allow the components in
+ 	 * system control block send transations downstream to SMMUv3.
+ 	 */
++	initialize_plat_amu_aux_enables();
+ 	if (smmuv3_init(NRD_CSS_GPC_SMMUV3_BASE) != 0) {
+ 		WARN("Failed initializing System SMMU.\n");
+ 	}

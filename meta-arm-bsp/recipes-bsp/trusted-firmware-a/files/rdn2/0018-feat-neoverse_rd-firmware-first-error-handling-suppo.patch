@@ -1,0 +1,73 @@
+From 0895ae6c96aadc929bc140737a429eb70abcfcf1 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Wed, 10 Apr 2024 21:41:57 +0530
+Subject: [PATCH] feat(neoverse_rd): firmware first error handling support for
+ shared RAM
+
+Neoverse RD platforms implement shared RAM. The RAMs support ECC that
+detects 1/2-bit errors and reports them via interrupts. The error
+information is logged in the error records.
+
+This patch provides reference error handler implementation to handle
+1/2-bit RAS errors that occur on Shared RAM access. On an error event
+the error handler logs the error information and clears the error
+interrupt.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: Ic7fff27e721835d652370ac861814d6422c86aeb
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../board/neoverse_rd/common/ras/nrd_ras_sram.c | 17 +++++------------
+ 1 file changed, 5 insertions(+), 12 deletions(-)
+
+diff --git a/plat/arm/board/neoverse_rd/common/ras/nrd_ras_sram.c b/plat/arm/board/neoverse_rd/common/ras/nrd_ras_sram.c
+index a96d11413733..9e2d759f5939 100644
+--- a/plat/arm/board/neoverse_rd/common/ras/nrd_ras_sram.c
++++ b/plat/arm/board/neoverse_rd/common/ras/nrd_ras_sram.c
+@@ -13,18 +13,12 @@
+ #include <platform_def.h>
+ #include <nrd_ras.h>
+ 
+-/* Base Element RAM Error Record offsets. */
+-#define ERRSTATUS	U(0)
+-#define ERRCODE		U(8)
+-#define ERRADDR		U(12)
+-
+ /*
+  * Base Element RAM error information data structure communicated as part of MM
+  * Communication data payload.
+  */
+ typedef struct nrd_sram_err_info {
+ 	uint32_t err_status;
+-	uint32_t err_code;
+ 	uint32_t err_addr;
+ } nrd_sram_err_info_t;
+ 
+@@ -57,13 +51,8 @@ int nrd_ras_sram_intr_handler(const struct err_record_info *err_rec,
+ 	INFO("NRD: Base element RAM interrupt [%d] handler\n", intr);
+ 
+ 	/* Determine error record base address to read. */
+-	base_addr = 0;
+-	if (intr == NRD_CSS_NS_RAM_ECC_CE_INT ||
+-		intr == NRD_CSS_NS_RAM_ECC_UE_INT) {
+-		base_addr = NRD_CSS_NS_RAM_ERR_REC_BASE;
+-	}
++	base_addr = err_rec->memmap.base_addr;
+ 	sram_info.err_status = mmio_read_32(base_addr + ERRSTATUS);
+-	sram_info.err_code = mmio_read_32(base_addr + ERRCODE);
+ 	sram_info.err_addr = mmio_read_32(base_addr + ERRADDR);
+ 
+ 	/* Clear the interrupt. */
+@@ -84,6 +73,10 @@ int nrd_ras_sram_intr_handler(const struct err_record_info *err_rec,
+ 	spm_mm_sp_call(MM_COMMUNICATE_AARCH64, (uint64_t)header, 0,
+ 			plat_my_core_pos());
+ 
++#if SPMD_SPM_AT_SEL2
++	nrd_forward_ras_event(PLAT_SPM_BUF_BASE, data);
++#endif
++
+ 	plat_ic_end_of_interrupt(intr);
+ 
+ 	/*

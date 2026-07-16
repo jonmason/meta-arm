@@ -1,0 +1,39 @@
+From c394e5958febecc3e6f8ea542d00f25813061d7f Mon Sep 17 00:00:00 2001
+From: Pranav Madhu <pranav.madhu@arm.com>
+Date: Wed, 18 Sep 2024 20:18:03 +0530
+Subject: [PATCH] feat(neoverse-rd): set interrupt priority for reboot
+ interrupt
+
+For reference design platforms, when the non-secure OS requests a
+shutdown or reboot, one of the application cores will invoke a PSCI
+call to enter TF-A. Upon receiving the PSCI command, this CPU core
+will notify the other online CPU cores using SGI 15. Set the priority
+for SGI 15 to the highest available value (zero).
+
+Change-Id: I5eb0618bad24c675350315dfd7bee8475b829d5c
+Signed-off-by: Pranav Madhu <pranav.madhu@arm.com>
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h      | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h
+index 88b8865b2ae9..428812a25f9d 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h
+@@ -253,9 +253,12 @@
+ #define PLAT_SP_PRI			U(0x10)
+ #endif
+ 
++/* Interrupt priority level for shutdown/reboot */
++#define PLAT_REBOOT_PRI		GIC_HIGHEST_SEC_PRIORITY
+ /* Interrupt priority level for error injection */
+ #define PLAT_EINJ_PRI		0x20
+-#define PLAT_EHF_DESC		EHF_PRI_DESC(PLAT_PRI_BITS, PLAT_EINJ_PRI)
++#define PLAT_EHF_DESC		EHF_PRI_DESC(PLAT_PRI_BITS, PLAT_REBOOT_PRI), \
++				EHF_PRI_DESC(PLAT_PRI_BITS, PLAT_EINJ_PRI)
+ 
+ 
+ #define ARM_IRQ_SEC_PHY_TIMER		U(29)

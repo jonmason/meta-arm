@@ -1,0 +1,34 @@
+From 7b0eccf876407cf07167c0ca1e11e3be2564c9d3 Mon Sep 17 00:00:00 2001
+From: Vijayenthiran Subramaniam <vijayenthiran.subramaniam@arm.com>
+Date: Wed, 23 Oct 2019 11:48:02 +0530
+Subject: [PATCH] [HACK] spinlock: send explicit event after store release
+ instruction
+
+stlr instruction in the spin_unlock function is expected to send an
+implicit event to all CPU cores. In a cross chip scenario, FVP has
+stability issues while sending this implicit event across chips.
+To avoid the stability issues, add sev instruction which sends explicit
+events to all cores. Explicit events are propagated across chips without
+any stability issues.
+
+Change-Id: I94db4f940e98f9b60f4120d0bde4930f9d31440c
+Signed-off-by: Vijayenthiran Subramaniam <vijayenthiran.subramaniam@arm.com>
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ lib/locks/exclusive/aarch64/spinlock.S | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/lib/locks/exclusive/aarch64/spinlock.S b/lib/locks/exclusive/aarch64/spinlock.S
+index 77bb7fe45f94..0008a505c98e 100644
+--- a/lib/locks/exclusive/aarch64/spinlock.S
++++ b/lib/locks/exclusive/aarch64/spinlock.S
+@@ -73,6 +73,7 @@ endfunc spin_lock
+  */
+ func spin_unlock
+ 	stlr	wzr, [x0]
++	sev
+ 	ret
+ endfunc spin_unlock
+ 

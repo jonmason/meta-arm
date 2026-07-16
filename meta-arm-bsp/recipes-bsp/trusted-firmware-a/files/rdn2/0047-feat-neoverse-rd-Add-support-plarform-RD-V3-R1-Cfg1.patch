@@ -1,0 +1,242 @@
+From 3d595eeb422394923f6cf9623d68e09180c8a6d0 Mon Sep 17 00:00:00 2001
+From: Lokesh B V <Lokesh.BV@Arm.com>
+Date: Fri, 20 Sep 2024 03:30:19 +0530
+Subject: [PATCH] feat(neoverse-rd): Add support plarform RD-V3-R1-Cfg1
+
+Add board support for RD-V3-R1-Cfg1 platform, which is a quad chip variant.
+Each chip has 8 CPUs.
+
+Signed-off-by: Lokesh B V <Lokesh.BV@Arm.com>
+Signed-off-by: Vijayenthiran Subramaniam <vijayenthiran.subramaniam@arm.com>
+Change-Id: Ic07a660e6845aebc76892355510a505a47a2bae9
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../common/include/nrd4/nrd_plat_arm_def4.h   |  7 ++-
+ .../neoverse_rd/common/include/nrd_variant.h  |  5 +-
+ .../board/neoverse_rd/common/nrd_bl31_setup.c |  3 +-
+ .../platform/rdv3r1/fdts/rdv3r1_hw_config.dts |  6 +-
+ .../rdv3r1/fdts/rdv3r1_spmc_sp_manifest.dts   |  8 ++-
+ .../platform/rdv3r1/include/platform_def.h    |  6 +-
+ .../neoverse_rd/platform/rdv3r1/platform.mk   |  3 +-
+ .../platform/rdv3r1/rdv3r1_topology.c         | 62 ++++++++++++-------
+ 8 files changed, 69 insertions(+), 31 deletions(-)
+
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_plat_arm_def4.h b/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_plat_arm_def4.h
+index f7eedf21f854..a3b6b74e917b 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_plat_arm_def4.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_plat_arm_def4.h
+@@ -375,10 +375,13 @@
+ #define SDS_PCIE_MMAP_IDX			U(129)
+ 
+ #define MAX_RP_PER_CONTROLLER			5
++
+ #if (NRD_PLATFORM_VARIANT == 0)
+-#define MAX_NUM_PCIE_CONTROLLER	        	4
++#define MAX_NUM_PCIE_CONTROLLER		4
++#elif (NRD_PLATFORM_VARIANT == 1)
++#define MAX_NUM_PCIE_CONTROLLER		2
+ #else
+-#define MAX_NUM_PCIE_CONTROLLER			1
++#define MAX_NUM_PCIE_CONTROLLER		1
+ #endif
+ 
+ #define NRD_CSS_SDS_BASE(n) \
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd_variant.h b/plat/arm/board/neoverse_rd/common/include/nrd_variant.h
+index a3470a436998..dde855fb0c7b 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd_variant.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd_variant.h
+@@ -27,7 +27,10 @@
+ #define RD_V3_CFG2_SID_VER_PART_NUM	0x07EE
+ 
+ /* SID Version values for RD-V3-R1 */
+-#define RD_V3_R1_SID_VER_PART_NUM		0x7C5
++#define RD_V3_R1_SID_VER_PART_NUM	0x7C5
++
++/* SID Version values for RD-V3-R1 Variants */
++#define RD_V3_R1_CFG1_SID_VER_PART_NUM	0x7C5
+ 
+ /* Structure containing Neoverse RD platform variant information */
+ typedef struct nrd_platform_info {
+diff --git a/plat/arm/board/neoverse_rd/common/nrd_bl31_setup.c b/plat/arm/board/neoverse_rd/common/nrd_bl31_setup.c
+index 85c23a3ad126..654ee6ae026e 100644
+--- a/plat/arm/board/neoverse_rd/common/nrd_bl31_setup.c
++++ b/plat/arm/board/neoverse_rd/common/nrd_bl31_setup.c
+@@ -127,7 +127,8 @@ scmi_channel_plat_info_t *plat_css_get_scmi_info(unsigned int channel_id)
+ 	} else if (nrd_plat_info.platform_id == RD_V3_SID_VER_PART_NUM ||
+ 		nrd_plat_info.platform_id == RD_V3_CFG1_SID_VER_PART_NUM ||
+ 		nrd_plat_info.platform_id == RD_V3_CFG2_SID_VER_PART_NUM ||
+-		nrd_plat_info.platform_id == RD_V3_R1_SID_VER_PART_NUM) {
++		nrd_plat_info.platform_id == RD_V3_R1_SID_VER_PART_NUM ||
++		nrd_plat_info.platform_id == RD_V3_R1_CFG1_SID_VER_PART_NUM) {
+ 		if (channel_id >= ARRAY_SIZE(plat3_rd_scmi_info)) {
+ 			panic();
+ 		}
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_hw_config.dts b/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_hw_config.dts
+index f0e6994ab592..7edeebe99d30 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_hw_config.dts
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_hw_config.dts
+@@ -62,7 +62,6 @@
+ 				CPU(D)
+ 				CPU(E)
+ 				CPU(F)
+-#if (NRD_PLATFORM_VARIANT == 0)
+ 				CPU(10)
+ 				CPU(11)
+ 				CPU(12)
+@@ -75,6 +74,11 @@
+ 				CPU(19)
+ 				CPU(1A)
+ 				CPU(1B)
++#if (NRD_PLATFORM_VARIANT == 1)
++				CPU(1C)
++				CPU(1D)
++				CPU(1E)
++				CPU(1F)
+ #endif
+ 		};
+ 
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_spmc_sp_manifest.dts b/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_spmc_sp_manifest.dts
+index b47b52c9b16d..e30e2c640a1f 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_spmc_sp_manifest.dts
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/fdts/rdv3r1_spmc_sp_manifest.dts
+@@ -48,7 +48,12 @@
+ 		 * SPMC (Hafnium) requires secondary core nodes are declared
+ 		 * in descending order.
+ 		 */
+-#if (NRD_PLATFORM_VARIANT == 1)
++#if (NRD_PLATFORM_VARIANT == 0)
++		CPU(1F)
++		CPU(1E)
++		CPU(1D)
++		CPU(1C)
++#endif
+ 		CPU(1B)
+ 		CPU(1A)
+ 		CPU(19)
+@@ -61,7 +66,6 @@
+ 		CPU(12)
+ 		CPU(11)
+ 		CPU(10)
+-#endif
+ 		CPU(F)
+ 		CPU(E)
+ 		CPU(D)
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/include/platform_def.h b/plat/arm/board/neoverse_rd/platform/rdv3r1/include/platform_def.h
+index 7b6a63c6be50..dcd361b59f00 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3r1/include/platform_def.h
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/include/platform_def.h
+@@ -22,7 +22,11 @@
+ 		((ULL(1) << NRD_DRAM_ADDR_BITS_PER_CHIP) * (n))
+ 
+ /* PE-Cluster count */
+-#define PLAT_ARM_CLUSTER_COUNT		U(14)
++#if (NRD_PLATFORM_VARIANT == 0)
++	#define PLAT_ARM_CLUSTER_COUNT	U(14)
++#elif (NRD_PLATFORM_VARIANT == 1)
++	#define PLAT_ARM_CLUSTER_COUNT	U(8)
++#endif
+ #define NRD_MAX_CPUS_PER_CLUSTER	U(1)
+ #define NRD_MAX_PE_PER_CPU		U(1)
+ 
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/platform.mk b/plat/arm/board/neoverse_rd/platform/rdv3r1/platform.mk
+index f7bf9d59c594..0eaf0ad1046d 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3r1/platform.mk
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/platform.mk
+@@ -3,7 +3,8 @@
+ # SPDX-License-Identifier: BSD-3-Clause
+ #
+ 
+-RD_V3_R1_VARIANTS := 0
++# 0: RD_V3_R1, 1: RD_V3_R1_Cfg1
++RD_V3_R1_VARIANTS := 0 1
+ ifneq ($(NRD_PLATFORM_VARIANT),						\
+ 	$(filter $(NRD_PLATFORM_VARIANT),$(RD_V3_R1_VARIANTS)))
+ 	$(error "NRD_PLATFORM_VARIANT for RD-V3-R1 should be 0"
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_topology.c b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_topology.c
+index a27941fc3f2b..328f5002f02a 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_topology.c
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_topology.c
+@@ -45,6 +45,26 @@ const unsigned char rd_v3r1_pd_tree_desc[] = {
+ 	NRD_MAX_CPUS_PER_CLUSTER,
+ 	NRD_MAX_CPUS_PER_CLUSTER,
+ #endif
++#if (NRD_PLATFORM_VARIANT == 1 && NRD_CHIP_COUNT > 2)
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++#endif
++#if (NRD_PLATFORM_VARIANT == 1 && NRD_CHIP_COUNT > 3)
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++	NRD_MAX_CPUS_PER_CLUSTER,
++#endif
+ #endif
+ };
+ 
+@@ -60,7 +80,6 @@ const unsigned char *plat_get_power_domain_tree_desc(void)
+  * The array mapping platform core position (implemented by plat_my_core_pos())
+  * to the SCMI power domain ID implemented by SCP.
+  ******************************************************************************/
+-#if (NRD_PLATFORM_VARIANT == 2)
+ const uint32_t plat_css_core_pos_to_scmi_dmn_id_map[] = {
+ 	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x0)),
+ 	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x1)),
+@@ -95,26 +114,25 @@ const uint32_t plat_css_core_pos_to_scmi_dmn_id_map[] = {
+ 	(SET_SCMI_CHANNEL_ID(0x1) | SET_SCMI_DOMAIN_ID(0xC)),
+ 	(SET_SCMI_CHANNEL_ID(0x1) | SET_SCMI_DOMAIN_ID(0xD)),
+ #endif
+-};
+-#else
+-const uint32_t plat_css_core_pos_to_scmi_dmn_id_map[] = {
+-	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x0)),
+-	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x1)),
+-	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x2)),
+-	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x3)),
+-	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x4)),
+-	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x5)),
+-	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x6)),
+-	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x7)),
+-#if (NRD_PLATFORM_VARIANT == 0)
+-	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x8)),
+-	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0x9)),
+-	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0xA)),
+-	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0xB)),
+-	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0xC)),
+-	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0xD)),
+-	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0xE)),
+-	(SET_SCMI_CHANNEL_ID(0x0) | SET_SCMI_DOMAIN_ID(0xF)),
+ #endif
+-};
++#if (NRD_PLATFORM_VARIANT == 1 && NRD_CHIP_COUNT > 2)
++	(SET_SCMI_CHANNEL_ID(0x2) | SET_SCMI_DOMAIN_ID(0x0)),
++	(SET_SCMI_CHANNEL_ID(0x2) | SET_SCMI_DOMAIN_ID(0x1)),
++	(SET_SCMI_CHANNEL_ID(0x2) | SET_SCMI_DOMAIN_ID(0x2)),
++	(SET_SCMI_CHANNEL_ID(0x2) | SET_SCMI_DOMAIN_ID(0x3)),
++	(SET_SCMI_CHANNEL_ID(0x2) | SET_SCMI_DOMAIN_ID(0x4)),
++	(SET_SCMI_CHANNEL_ID(0x2) | SET_SCMI_DOMAIN_ID(0x5)),
++	(SET_SCMI_CHANNEL_ID(0x2) | SET_SCMI_DOMAIN_ID(0x6)),
++	(SET_SCMI_CHANNEL_ID(0x2) | SET_SCMI_DOMAIN_ID(0x7)),
+ #endif
++#if (NRD_PLATFORM_VARIANT == 1 && NRD_CHIP_COUNT > 3)
++	(SET_SCMI_CHANNEL_ID(0x3) | SET_SCMI_DOMAIN_ID(0x0)),
++	(SET_SCMI_CHANNEL_ID(0x3) | SET_SCMI_DOMAIN_ID(0x1)),
++	(SET_SCMI_CHANNEL_ID(0x3) | SET_SCMI_DOMAIN_ID(0x2)),
++	(SET_SCMI_CHANNEL_ID(0x3) | SET_SCMI_DOMAIN_ID(0x3)),
++	(SET_SCMI_CHANNEL_ID(0x3) | SET_SCMI_DOMAIN_ID(0x4)),
++	(SET_SCMI_CHANNEL_ID(0x3) | SET_SCMI_DOMAIN_ID(0x5)),
++	(SET_SCMI_CHANNEL_ID(0x3) | SET_SCMI_DOMAIN_ID(0x6)),
++	(SET_SCMI_CHANNEL_ID(0x3) | SET_SCMI_DOMAIN_ID(0x7)),
++#endif
++};

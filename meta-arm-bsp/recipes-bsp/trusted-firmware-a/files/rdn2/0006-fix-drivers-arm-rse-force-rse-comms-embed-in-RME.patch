@@ -1,0 +1,38 @@
+From f19b6b50b29583e00d3818cea2201331b1416074 Mon Sep 17 00:00:00 2001
+From: Joel Goddard <Joel.Goddard@arm.com>
+Date: Wed, 21 Feb 2024 10:30:55 +0000
+Subject: [PATCH] fix(drivers/arm/rse) force rse comms embed in RME
+
+RSE COMMS pointer access protocol is not support with RME enabled as
+pointers could have NS, S, RT or RM access permissions and this is not
+currently supported on RSS. Therefore when RME is enabled rse comms
+should always use the embed protocol.
+
+Change-Id: Ice48b14ae139d5bcfa607a36bf901a0f68b0400c
+Signed-off-by: Joel Goddard <joel.goddard@arm.com>
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ drivers/arm/rse/rse_comms.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/drivers/arm/rse/rse_comms.c b/drivers/arm/rse/rse_comms.c
+index 48023bcb01e5..85532a17ce92 100644
+--- a/drivers/arm/rse/rse_comms.c
++++ b/drivers/arm/rse/rse_comms.c
+@@ -30,6 +30,13 @@ static uint8_t select_protocol_version(const psa_invec *in_vec, size_t in_len,
+ 	size_t out_size_total = 0;
+ 	size_t i;
+ 
++	#ifdef ENABLE_RME
++	/* Force use of embeded protocol as RSS_COMMS_PROTOCOL_POINTER_ACCESS
++	 * is not supported in RME.
++	 */
++	return RSE_COMMS_PROTOCOL_EMBED;
++	#endif /* ENABLE_RME */
++
+ 	for (i = 0U; i < in_len; ++i) {
+ 		in_size_total += in_vec[i].len;
+ 	}

@@ -1,0 +1,30 @@
+From 997c35d406a3f545c209a3ec3ca76645890f6aae Mon Sep 17 00:00:00 2001
+From: Rakshit Goyal <rakshit.goyal@arm.com>
+Date: Thu, 19 Jun 2025 06:58:25 +0000
+Subject: [PATCH] fix(neoverse-rd): fix UART console init regression
+
+Commit b6e6e2e caused a regression by which BL31 uart logs stopped
+coming up due to removal of console_init from early platform setup
+code. Fix the regression by setting up console from Neoverse RD
+platform code.
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ plat/arm/board/neoverse_rd/common/nrd_bl31_setup.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/plat/arm/board/neoverse_rd/common/nrd_bl31_setup.c b/plat/arm/board/neoverse_rd/common/nrd_bl31_setup.c
+index 3ad586b355b5..53f6997e32fa 100644
+--- a/plat/arm/board/neoverse_rd/common/nrd_bl31_setup.c
++++ b/plat/arm/board/neoverse_rd/common/nrd_bl31_setup.c
+@@ -138,6 +138,9 @@ scmi_channel_plat_info_t *plat_css_get_scmi_info(unsigned int channel_id)
+ void bl31_early_platform_setup2(u_register_t arg0, u_register_t arg1,
+ 				u_register_t arg2, u_register_t arg3)
+ {
++	/* Initialize the console to provide early debug support */
++	arm_console_boot_init();
++
+ 	nrd_plat_info.platform_id = plat_arm_nrd_get_platform_id();
+ 	nrd_plat_info.config_id = plat_arm_nrd_get_config_id();
+ 	nrd_plat_info.multi_chip_mode = plat_arm_nrd_get_multi_chip_mode();

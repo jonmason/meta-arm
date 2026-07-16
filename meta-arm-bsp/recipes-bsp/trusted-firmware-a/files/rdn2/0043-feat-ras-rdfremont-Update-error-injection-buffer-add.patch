@@ -1,0 +1,30 @@
+From 26113cb905559e86ea30ffb8de7cd5543a0a1dd0 Mon Sep 17 00:00:00 2001
+From: Glen Yeldho <glen.yeldho@arm.com>
+Date: Mon, 15 Apr 2024 13:46:06 +0530
+Subject: [PATCH] feat(ras-rdfremont): Update error injection buffer address
+
+Kernel will use a reserved region for performing error injection. This
+patch updates the address for same.
+
+Signed-off-by: Glen Yeldho <glen.yeldho@arm.com>
+Change-Id: Ia06163d488305ff1a48beddd18fc20472ea79535
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../arm/board/neoverse_rd/common/include/nrd3/nrd_css_fw_def3.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_fw_def3.h b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_fw_def3.h
+index a1560088ea18..c786e618c6cb 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_fw_def3.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_fw_def3.h
+@@ -60,7 +60,7 @@
+ /*******************************************************************************
+ * EINJ Set error type with address.
+ *******************************************************************************/
+-#define NRD_CSS_EINJ_SET_ERROR_TYPE_ADDR	0xFA86B000
++#define NRD_CSS_EINJ_SET_ERROR_TYPE_ADDR	0xFA86B038
+ 
+ /*******************************************************************************
+  * MMU mapping
