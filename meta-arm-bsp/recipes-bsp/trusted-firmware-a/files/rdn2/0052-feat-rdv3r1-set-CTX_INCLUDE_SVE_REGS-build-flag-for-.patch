@@ -1,0 +1,33 @@
+From d01282727fff2999cf56b49176ca5410809da83d Mon Sep 17 00:00:00 2001
+From: Lokesh B V <Lokesh.BV@Arm.com>
+Date: Thu, 26 Sep 2024 14:32:37 +0530
+Subject: [PATCH] feat(rdv3r1): set CTX_INCLUDE_SVE_REGS build flag for
+ RD-V3-R1 variants
+
+Commit 4242262(feat(simd):add sve state to simd ctxt struct)
+introduced the CTX_INCLUDE_SVE_REGS build flag that needs to be set
+if SVE is enabled for more than one world, which is the case for
+RD-V3-R1. This build flag enables SVE registers to be included when
+saving and restoring the CPU context.
+
+Signed-off-by: Lokesh B V <Lokesh.BV@Arm.com>
+Change-Id: I903045519e1e5a9d33419982df4cc91b0683b4fc
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ plat/arm/board/neoverse_rd/platform/rdv3r1/platform.mk | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/platform.mk b/plat/arm/board/neoverse_rd/platform/rdv3r1/platform.mk
+index 0eaf0ad1046d..69e94bfe0a91 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3r1/platform.mk
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/platform.mk
+@@ -152,6 +152,7 @@ override ENABLE_FEAT_AMU	:= 2
+ override ENABLE_SVE_FOR_SWD	:= 1
+ override ENABLE_SVE_FOR_NS	:= 2
+ override ENABLE_FEAT_MTE2	:= 2
++override CTX_INCLUDE_SVE_REGS	:= 1
+ 
+ ifeq (${SPMD_SPM_AT_SEL2}, 1)
+ BL32_CONFIG_DTS		:=	${RDV3_R1_BASE}/fdts/${PLAT}_spmc_sp_manifest.dts

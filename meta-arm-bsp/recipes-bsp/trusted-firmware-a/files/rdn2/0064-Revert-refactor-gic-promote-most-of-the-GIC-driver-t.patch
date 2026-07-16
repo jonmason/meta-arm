@@ -1,0 +1,724 @@
+From e51e8e83361253fc6bdde1041c4e317c5d10591a Mon Sep 17 00:00:00 2001
+From: Rakshit Goyal <rakshit.goyal@arm.com>
+Date: Fri, 20 Jun 2025 16:46:44 +0000
+Subject: [PATCH] Revert "refactor(gic): promote most of the GIC driver to
+ common code"
+
+This reverts commit 5d893410026b590aa8af8d6f7009d3c2e000fe3e.
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ Makefile                                      |  4 --
+ bl31/bl31_main.c                              | 13 ----
+ docs/getting_started/build-options.rst        | 31 +--------
+ drivers/arm/gic/gic.mk                        | 44 ------------
+ include/drivers/arm/gic.h                     | 18 -----
+ include/plat/arm/common/plat_arm.h            |  5 --
+ lib/psci/psci_off.c                           | 10 +--
+ lib/psci/psci_on.c                            | 10 +--
+ lib/psci/psci_suspend.c                       | 17 +----
+ lib/psci/psci_system_off.c                    | 18 +----
+ make_helpers/defaults.mk                      |  3 -
+ plat/arm/board/fvp/fvp_gicv3.c                |  4 +-
+ .../arm/common/arm_gicv2.c                    | 42 ++++++++----
+ .../arm/common/arm_gicv3.c                    | 68 ++++++++++++-------
+ plat/arm/common/sp_min/arm_sp_min_setup.c     |  7 +-
+ 15 files changed, 85 insertions(+), 209 deletions(-)
+ delete mode 100644 drivers/arm/gic/gic.mk
+ delete mode 100644 include/drivers/arm/gic.h
+ rename drivers/arm/gic/v2/gicv2_base.c => plat/arm/common/arm_gicv2.c (74%)
+ rename drivers/arm/gic/v3/gicv3_base.c => plat/arm/common/arm_gicv3.c (82%)
+
+diff --git a/Makefile b/Makefile
+index cbf0a8a449e0..e54f844c630e 100644
+--- a/Makefile
++++ b/Makefile
+@@ -739,10 +739,6 @@ ifeq (${OVERRIDE_LIBC},0)
+ include lib/libc/libc.mk
+ endif
+ 
+-ifneq (${USE_GIC_DRIVER},0)
+-include drivers/arm/gic/gic.mk
+-endif
+-
+ ################################################################################
+ # Check incompatible options and dependencies
+ ################################################################################
+diff --git a/bl31/bl31_main.c b/bl31/bl31_main.c
+index 15c90852f89a..5944b91e76c6 100644
+--- a/bl31/bl31_main.c
++++ b/bl31/bl31_main.c
+@@ -17,7 +17,6 @@
+ #include <common/debug.h>
+ #include <common/feat_detect.h>
+ #include <common/runtime_svc.h>
+-#include <drivers/arm/gic.h>
+ #include <drivers/console.h>
+ #include <lib/bootmarker_capture.h>
+ #include <lib/el3_runtime/context_debug.h>
+@@ -143,18 +142,6 @@ void bl31_main(void)
+ 	}
+ #endif
+ 
+-#if USE_GIC_DRIVER
+-	/*
+-	 * Initialize the GIC driver as well as per-cpu and global interfaces.
+-	 * Platform has had an opportunity to initialise specifics.
+-	 */
+-	unsigned int core_pos = plat_my_core_pos();
+-
+-	gic_init(core_pos);
+-	gic_pcpu_init(core_pos);
+-	gic_cpuif_enable(core_pos);
+-#endif /* USE_GIC_DRIVER */
+-
+ 	/* Perform platform setup in BL31 */
+ 	bl31_platform_setup();
+ 
+diff --git a/docs/getting_started/build-options.rst b/docs/getting_started/build-options.rst
+index e80f3d1a6f46..7a18f7fe4cb2 100644
+--- a/docs/getting_started/build-options.rst
++++ b/docs/getting_started/build-options.rst
+@@ -1294,38 +1294,11 @@ Common build options
+   This option should only be enabled on a need basis if there is a use case for
+   reading characters from the console.
+ 
+-GIC driver options
++GICv3 driver options
+ --------------------
+ 
+-The generic GIC driver can be included with the ``USE_GIC_DRIVER`` option. It is
+-a numeric option that can take the following values:
+-
+- - ``0``: generic GIC driver not enabled. Any support is entirely in platform
+-   code. Strongly discouraged for GIC based interrupt controllers.
+-
+- - ``1``: enable the use of the generic GIC driver but do not include any files
+-   or function definitions. It is then the platform's responsibility to provide
+-   these. This is useful if the platform either has a custom GIC implementation
+-   or an alternative interrupt controller design. Use of this option is strongly
+-   discouraged for standard GIC implementations.
+-
+- - ``2``: use the GICv2 driver
+-
+- - ``3``: use the GICv3 driver. See the next section on how to further configure
+-   it. Use this option for GICv4 implementations.
+- - ``5``: use the EXPERIMENTAL GICv5 driver. Requires ``ENABLE_FEAT_GCIE=1``.
+-
+- For GIC driver versions other than ``1``, deciding when to save and restore GIC
+- context on a power domain state transition, as well as any GIC actions outside
+- of the PSCI library's visibility are the platform's responsibility. The driver
+- provides implementations of all necessary subroutines, they only need to be
+- called as appropriate.
+-
+-GICv3 driver options
+-~~~~~~~~~~~~~~~~~~~~
++GICv3 driver files are included using directive:
+ 
+-``USE_GIC_DRIVER=3`` is the preferred way of including GICv3 driver files. The
+-old (deprecated) way of included them is using the directive:
+ ``include drivers/arm/gic/v3/gicv3.mk``
+ 
+ The driver can be configured with the following options set in the platform
+diff --git a/drivers/arm/gic/gic.mk b/drivers/arm/gic/gic.mk
+deleted file mode 100644
+index 8b28f219b40b..000000000000
+--- a/drivers/arm/gic/gic.mk
++++ /dev/null
+@@ -1,44 +0,0 @@
+-#
+-# Copyright (c) 2025, Arm Limited and Contributors. All rights reserved.
+-#
+-# SPDX-License-Identifier: BSD-3-Clause
+-#
+-
+-GIC_REVISIONS_ := 1 2 3 5
+-ifeq ($(filter $(USE_GIC_DRIVER),$(GIC_REVISIONS_)),)
+-$(error USE_GIC_DRIVER can only be one of $(GIC_REVISIONS_))
+-endif
+-
+-ifeq (${USE_GIC_DRIVER},2)
+-include drivers/arm/gic/v2/gicv2.mk
+-GIC_SOURCES	:=	${GICV2_SOURCES}			\
+-			drivers/arm/gic/v2/gicv2_base.c	\
+-			plat/common/plat_gicv2.c
+-else ifeq (${USE_GIC_DRIVER},3)
+-include drivers/arm/gic/v3/gicv3.mk
+-GIC_SOURCES	:=	${GICV3_SOURCES}			\
+-			drivers/arm/gic/v3/gicv3_base.c	\
+-			plat/common/plat_gicv3.c
+-else ifeq (${USE_GIC_DRIVER},5)
+-ifneq (${ENABLE_FEAT_GCIE},1)
+-$(error USE_GIC_DRIVER=5 requires ENABLE_FEAT_GCIE=1)
+-endif
+-$(warning GICv5 support is experimental!)
+-GIC_SOURCES	:=	drivers/arm/gicv5/gicv5_iri.c		\
+-			plat/common/plat_gicv5.c
+-endif
+-
+-ifneq (${ENABLE_FEAT_GCIE},0)
+-GIC_SOURCES	+=	drivers/arm/gicv5/gicv5_cpuif.c		\
+-			drivers/arm/gicv5/gicv5_main.c
+-endif
+-
+-ifeq ($(ARCH),aarch64)
+-BL31_SOURCES	+=	${GIC_SOURCES}
+-else
+-BL32_SOURCES	+=	${GIC_SOURCES}
+-endif
+-
+-$(eval $(call add_defines,\
+-	USE_GIC_DRIVER \
+-))
+diff --git a/include/drivers/arm/gic.h b/include/drivers/arm/gic.h
+deleted file mode 100644
+index e98737af02c4..000000000000
+--- a/include/drivers/arm/gic.h
++++ /dev/null
+@@ -1,18 +0,0 @@
+-/*
+- * Copyright (c) 2024-2025, Arm Limited and Contributors. All rights reserved.
+- *
+- * SPDX-License-Identifier: BSD-3-Clause
+- */
+-#ifndef GIC_H
+-#define GIC_H
+-/* the function names conflict with some platform implementations. */
+-#if USE_GIC_DRIVER
+-void gic_init(unsigned int cpu_idx);
+-void gic_cpuif_enable(unsigned int cpu_idx);
+-void gic_cpuif_disable(unsigned int cpu_idx);
+-void gic_pcpu_off(unsigned int cpu_idx);
+-void gic_pcpu_init(unsigned int cpu_idx);
+-void gic_save(void);
+-void gic_resume(void);
+-#endif
+-#endif /* GIC_H */
+diff --git a/include/plat/arm/common/plat_arm.h b/include/plat/arm/common/plat_arm.h
+index 5b649be7fa75..a586d00cd915 100644
+--- a/include/plat/arm/common/plat_arm.h
++++ b/include/plat/arm/common/plat_arm.h
+@@ -10,7 +10,6 @@
+ #include <stdint.h>
+ 
+ #include <common/desc_image_load.h>
+-#include <drivers/arm/gic.h>
+ #include <drivers/arm/tzc_common.h>
+ #include <lib/bakery_lock.h>
+ #include <lib/cassert.h>
+@@ -358,9 +357,6 @@ void arm_xlat_make_tables_readonly(void);
+  * Mandatory functions required in ARM standard platforms
+  */
+ unsigned int plat_arm_get_cluster_core_count(u_register_t mpidr);
+-
+-/* should not be used, but keep for compatibility */
+-#if USE_GIC_DRIVER == 0
+ void plat_arm_gic_driver_init(void);
+ void plat_arm_gic_init(void);
+ void plat_arm_gic_cpuif_enable(void);
+@@ -370,7 +366,6 @@ void plat_arm_gic_redistif_off(void);
+ void plat_arm_gic_pcpu_init(void);
+ void plat_arm_gic_save(void);
+ void plat_arm_gic_resume(void);
+-#endif
+ void plat_arm_security_setup(void);
+ void plat_arm_pwrc_setup(void);
+ void plat_arm_interconnect_init(void);
+diff --git a/lib/psci/psci_off.c b/lib/psci/psci_off.c
+index 24856019a24d..932a03946a7b 100644
+--- a/lib/psci/psci_off.c
++++ b/lib/psci/psci_off.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2013-2025, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2013-2024, Arm Limited and Contributors. All rights reserved.
+  * Copyright (c) 2023, NVIDIA Corporation. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+@@ -11,7 +11,6 @@
+ #include <arch.h>
+ #include <arch_helpers.h>
+ #include <common/debug.h>
+-#include <drivers/arm/gic.h>
+ #include <lib/pmf/pmf.h>
+ #include <lib/runtime_instr.h>
+ #include <plat/common/platform.h>
+@@ -118,13 +117,6 @@ int psci_do_cpu_off(unsigned int end_pwrlvl)
+ 	 */
+ 	psci_pwrdown_cpu_start(psci_find_max_off_lvl(&state_info));
+ 
+-#if USE_GIC_DRIVER
+-	/* turn the GIC off before we hand off to the platform */
+-	gic_cpuif_disable(idx);
+-	/* we don't want any wakeups until explicitly turned on */
+-	gic_pcpu_off(idx);
+-#endif /* USE_GIC_DRIVER */
+-
+ 	/*
+ 	 * Plat. management: Perform platform specific actions to turn this
+ 	 * cpu off e.g. exit cpu coherency, program the power controller etc.
+diff --git a/lib/psci/psci_on.c b/lib/psci/psci_on.c
+index 4ae07e158754..1bbea7a014fd 100644
+--- a/lib/psci/psci_on.c
++++ b/lib/psci/psci_on.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2013-2025, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2013-2022, Arm Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -11,7 +11,6 @@
+ #include <arch_helpers.h>
+ #include <common/bl_common.h>
+ #include <common/debug.h>
+-#include <drivers/arm/gic.h>
+ #include <lib/el3_runtime/context_mgmt.h>
+ #include <lib/el3_runtime/pubsub_events.h>
+ #include <plat/common/platform.h>
+@@ -184,13 +183,6 @@ void psci_cpu_on_finish(unsigned int cpu_idx, const psci_power_state_t *state_in
+ 	if (psci_plat_pm_ops->pwr_domain_on_finish_late != NULL) {
+ 		psci_plat_pm_ops->pwr_domain_on_finish_late(state_info);
+ 	}
+-
+-#if USE_GIC_DRIVER
+-	/* GIC init after platform has had a say with MMU on */
+-	gic_pcpu_init(cpu_idx);
+-	gic_cpuif_enable(cpu_idx);
+-#endif /* USE_GIC_DRIVER */
+-
+ 	/*
+ 	 * All the platform specific actions for turning this cpu
+ 	 * on have completed. Perform enough arch.initialization
+diff --git a/lib/psci/psci_suspend.c b/lib/psci/psci_suspend.c
+index 73b9a67e88a1..a7b53cb7ed31 100644
+--- a/lib/psci/psci_suspend.c
++++ b/lib/psci/psci_suspend.c
+@@ -12,7 +12,6 @@
+ #include <common/bl_common.h>
+ #include <common/debug.h>
+ #include <context.h>
+-#include <drivers/arm/gic.h>
+ #include <lib/el3_runtime/context_mgmt.h>
+ #include <lib/el3_runtime/cpu_data.h>
+ #include <lib/el3_runtime/pubsub_events.h>
+@@ -199,17 +198,13 @@ int psci_cpu_suspend_start(unsigned int idx,
+ 		psci_suspend_to_pwrdown_start(idx, end_pwrlvl, end_pwrlvl, state_info);
+ 	}
+ 
+-#if USE_GIC_DRIVER
+-	/* turn the GIC off before we hand off to the platform */
+-	gic_cpuif_disable(idx);
+-#endif /* USE_GIC_DRIVER */
+-
+ 	/*
+ 	 * Plat. management: Allow the platform to perform the
+ 	 * necessary actions to turn off this cpu e.g. set the
+ 	 * platform defined mailbox with the psci entrypoint,
+ 	 * program the power controller etc.
+ 	 */
++
+ 	psci_plat_pm_ops->pwr_domain_suspend(state_info);
+ 
+ #if ENABLE_PSCI_STAT
+@@ -285,11 +280,6 @@ int psci_cpu_suspend_start(unsigned int idx,
+ 		psci_cpu_suspend_to_standby_finish(end_pwrlvl, state_info);
+ 	}
+ 
+-#if USE_GIC_DRIVER
+-	/* Turn GIC on after platform has had a chance to do state management */
+-	gic_cpuif_enable(idx);
+-#endif /* USE_GIC_DRIVER */
+-
+ 	/*
+ 	 * Set the requested and target state of this CPU and all the higher
+ 	 * power domain levels for this CPU to run.
+@@ -330,11 +320,6 @@ void psci_cpu_suspend_to_powerdown_finish(unsigned int cpu_idx, unsigned int max
+ 	psci_do_pwrup_cache_maintenance();
+ #endif
+ 
+-#if USE_GIC_DRIVER
+-	/* GIC on after platform has had its say and MMU is on */
+-	gic_cpuif_enable(cpu_idx);
+-#endif /* USE_GIC_DRIVER */
+-
+ 	/* Re-init the cntfrq_el0 register */
+ 	counter_freq = plat_get_syscnt_freq2();
+ 	write_cntfrq_el0(counter_freq);
+diff --git a/lib/psci/psci_system_off.c b/lib/psci/psci_system_off.c
+index 19f24765d0ba..1dcaa2318bdb 100644
+--- a/lib/psci/psci_system_off.c
++++ b/lib/psci/psci_system_off.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2014-2025, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2014-2024, Arm Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -9,7 +9,6 @@
+ 
+ #include <arch_helpers.h>
+ #include <common/debug.h>
+-#include <drivers/arm/gic.h>
+ #include <drivers/console.h>
+ #include <plat/common/platform.h>
+ 
+@@ -28,11 +27,6 @@ void __dead2 psci_system_off(void)
+ 
+ 	console_flush();
+ 
+-#if USE_GIC_DRIVER
+-	/* turn the GIC off before we hand off to the platform */
+-	gic_cpuif_disable(plat_my_core_pos());
+-#endif /* USE_GIC_DRIVER */
+-
+ 	/* Call the platform specific hook */
+ 	psci_plat_pm_ops->system_off();
+ 
+@@ -52,11 +46,6 @@ void __dead2 psci_system_reset(void)
+ 
+ 	console_flush();
+ 
+-#if USE_GIC_DRIVER
+-	/* turn the GIC off before we hand off to the platform */
+-	gic_cpuif_disable(plat_my_core_pos());
+-#endif /* USE_GIC_DRIVER */
+-
+ 	/* Call the platform specific hook */
+ 	psci_plat_pm_ops->system_reset();
+ 
+@@ -91,11 +80,6 @@ u_register_t psci_system_reset2(uint32_t reset_type, u_register_t cookie)
+ 	}
+ 	console_flush();
+ 
+-#if USE_GIC_DRIVER
+-	/* turn the GIC off before we hand off to the platform */
+-	gic_cpuif_disable(plat_my_core_pos());
+-#endif /* USE_GIC_DRIVER */
+-
+ 	u_register_t ret =
+ 		(u_register_t) psci_plat_pm_ops->system_reset2((int) is_vendor, reset_type, cookie);
+ 	if (ret != PSCI_E_SUCCESS)
+diff --git a/make_helpers/defaults.mk b/make_helpers/defaults.mk
+index 4ccca9f91f0e..2b0d8c77db64 100644
+--- a/make_helpers/defaults.mk
++++ b/make_helpers/defaults.mk
+@@ -156,9 +156,6 @@ RME_GPT_MAX_BLOCK		:= 512
+ # default, they are for Secure EL1.
+ GICV2_G0_FOR_EL3		:= 0
+ 
+-# Generic implementation of a GICvX driver
+-USE_GIC_DRIVER			:= 0
+-
+ # Route NS External Aborts to EL3. Disabled by default; External Aborts are handled
+ # by lower ELs.
+ HANDLE_EA_EL3_FIRST_NS		:= 0
+diff --git a/plat/arm/board/fvp/fvp_gicv3.c b/plat/arm/board/fvp/fvp_gicv3.c
+index aa99d7db1203..fe64bec6bb51 100644
+--- a/plat/arm/board/fvp/fvp_gicv3.c
++++ b/plat/arm/board/fvp/fvp_gicv3.c
+@@ -69,7 +69,7 @@ void fvp_pcpu_init(void)
+ void fvp_gic_driver_pre_init(void)
+ {
+ /* FCONF won't be used in these cases, so we couldn't do this */
+-#if !(BL2_AT_EL3 || RESET_TO_BL31 || RESET_TO_SP_MIN || RESET_TO_BL2)
++#if !(BL2_AT_EL3 || RESET_TO_BL31 || RESET_TO_SP_MIN)
+ 	/*
+ 	 * Get GICD and GICR base addressed through FCONF APIs.
+ 	 * FCONF is not supported in BL32 for FVP.
+@@ -97,5 +97,5 @@ void fvp_gic_driver_pre_init(void)
+ 	arm_gic_data.interrupt_props_num = ARRAY_SIZE(fvp_interrupt_props);
+ #endif
+ 	plat_arm_override_gicr_frames(fvp_gicr_base_addrs);
+-#endif /* !(BL2_AT_EL3 || RESET_TO_BL31 || RESET_TO_SP_MIN || RESET_TO_BL2) */
++#endif /* !(BL2_AT_EL3 || RESET_TO_BL31 || RESET_TO_SP_MIN) */
+ }
+diff --git a/drivers/arm/gic/v2/gicv2_base.c b/plat/arm/common/arm_gicv2.c
+similarity index 74%
+rename from drivers/arm/gic/v2/gicv2_base.c
+rename to plat/arm/common/arm_gicv2.c
+index c51c1955f580..80a845fa12b2 100644
+--- a/drivers/arm/gic/v2/gicv2_base.c
++++ b/plat/arm/common/arm_gicv2.c
+@@ -1,19 +1,24 @@
+ /*
+- * Copyright (c) 2015-2025, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2015-2017, ARM Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+ 
+ #include <platform_def.h>
+ 
+-#include <drivers/arm/gic.h>
+ #include <drivers/arm/gicv2.h>
+ #include <plat/arm/common/plat_arm.h>
+ #include <plat/common/platform.h>
+ 
+-#if USE_GIC_DRIVER != 2
+-#error "This file should only be used with USE_GIC_DRIVER=2"
+-#endif
++/******************************************************************************
++ * The following functions are defined as weak to allow a platform to override
++ * the way the GICv2 driver is initialised and used.
++ *****************************************************************************/
++#pragma weak plat_arm_gic_driver_init
++#pragma weak plat_arm_gic_init
++#pragma weak plat_arm_gic_cpuif_enable
++#pragma weak plat_arm_gic_cpuif_disable
++#pragma weak plat_arm_gic_pcpu_init
+ 
+ /******************************************************************************
+  * On a GICv2 system, the Group 1 secure interrupts are treated as Group 0
+@@ -38,16 +43,23 @@ static const gicv2_driver_data_t arm_gic_data = {
+ /******************************************************************************
+  * ARM common helper to initialize the GICv2 only driver.
+  *****************************************************************************/
+-void __init gic_init(unsigned int cpu_idx)
++void plat_arm_gic_driver_init(void)
+ {
+ 	gicv2_driver_init(&arm_gic_data);
++}
++
++void plat_arm_gic_init(void)
++{
+ 	gicv2_distif_init();
++	gicv2_pcpu_distif_init();
++	gicv2_set_pe_target_mask(plat_my_core_pos());
++	gicv2_cpuif_enable();
+ }
+ 
+ /******************************************************************************
+  * ARM common helper to enable the GICv2 CPU interface
+  *****************************************************************************/
+-void gic_cpuif_enable(unsigned int cpu_idx)
++void plat_arm_gic_cpuif_enable(void)
+ {
+ 	gicv2_cpuif_enable();
+ }
+@@ -55,7 +67,7 @@ void gic_cpuif_enable(unsigned int cpu_idx)
+ /******************************************************************************
+  * ARM common helper to disable the GICv2 CPU interface
+  *****************************************************************************/
+-void gic_cpuif_disable(unsigned int cpu_idx)
++void plat_arm_gic_cpuif_disable(void)
+ {
+ 	gicv2_cpuif_disable();
+ }
+@@ -63,7 +75,7 @@ void gic_cpuif_disable(unsigned int cpu_idx)
+ /******************************************************************************
+  * ARM common helper to initialize the per cpu distributor interface in GICv2
+  *****************************************************************************/
+-void gic_pcpu_init(unsigned int cpu_idx)
++void plat_arm_gic_pcpu_init(void)
+ {
+ 	gicv2_pcpu_distif_init();
+ 	gicv2_set_pe_target_mask(plat_my_core_pos());
+@@ -73,23 +85,29 @@ void gic_pcpu_init(unsigned int cpu_idx)
+  * Stubs for Redistributor power management. Although GICv2 doesn't have
+  * Redistributor interface, these are provided for the sake of uniform GIC API
+  *****************************************************************************/
+-void gic_pcpu_off(unsigned int cpu_idx)
++void plat_arm_gic_redistif_on(void)
++{
++	return;
++}
++
++void plat_arm_gic_redistif_off(void)
+ {
+ 	return;
+ }
+ 
++
+ /******************************************************************************
+  * ARM common helper to save & restore the GICv3 on resume from system suspend.
+  * The normal world currently takes care of saving and restoring the GICv2
+  * registers due to legacy reasons. Hence we just initialize the Distributor
+  * on resume from system suspend.
+  *****************************************************************************/
+-void gic_save(void)
++void plat_arm_gic_save(void)
+ {
+ 	return;
+ }
+ 
+-void gic_resume(void)
++void plat_arm_gic_resume(void)
+ {
+ 	gicv2_distif_init();
+ 	gicv2_pcpu_distif_init();
+diff --git a/drivers/arm/gic/v3/gicv3_base.c b/plat/arm/common/arm_gicv3.c
+similarity index 82%
+rename from drivers/arm/gic/v3/gicv3_base.c
+rename to plat/arm/common/arm_gicv3.c
+index 5db7116b7f18..180da2f14e29 100644
+--- a/drivers/arm/gic/v3/gicv3_base.c
++++ b/plat/arm/common/arm_gicv3.c
+@@ -9,18 +9,25 @@
+ 
+ #include <common/debug.h>
+ #include <common/interrupt_props.h>
+-#include <drivers/arm/gic.h>
+ #include <drivers/arm/gicv3.h>
+ #include <lib/utils.h>
+ #include <plat/arm/common/plat_arm.h>
+ #include <plat/common/platform.h>
+ 
+-#if USE_GIC_DRIVER != 3
+-#error "This file should only be used with USE_GIC_DRIVER=3"
+-#endif
++/******************************************************************************
++ * The following functions are defined as weak to allow a platform to override
++ * the way the GICv3 driver is initialised and used.
++ *****************************************************************************/
++#pragma weak plat_arm_gic_driver_init
++#pragma weak plat_arm_gic_init
++#pragma weak plat_arm_gic_cpuif_enable
++#pragma weak plat_arm_gic_cpuif_disable
++#pragma weak plat_arm_gic_pcpu_init
++#pragma weak plat_arm_gic_redistif_on
++#pragma weak plat_arm_gic_redistif_off
+ 
+ /* The GICv3 driver only needs to be initialized in EL3 */
+-uintptr_t rdistif_base_addrs[PLATFORM_CORE_COUNT];
++static uintptr_t rdistif_base_addrs[PLATFORM_CORE_COUNT];
+ 
+ /* Default GICR base address to be used for GICR probe. */
+ static const uintptr_t gicr_base_addrs[2] = {
+@@ -72,7 +79,7 @@ static unsigned int arm_gicv3_mpidr_hash(u_register_t mpidr)
+ 	return plat_arm_calc_core_pos(mpidr);
+ }
+ 
+-gicv3_driver_data_t gic_data __unused = {
++gicv3_driver_data_t arm_gic_data __unused = {
+ 	.gicd_base = PLAT_ARM_GICD_BASE,
+ 	.gicr_base = 0U,
+ 	.interrupt_props = arm_interrupt_props,
+@@ -94,10 +101,7 @@ void plat_arm_override_gicr_frames(const uintptr_t *plat_gicr_frames)
+ 	gicr_frames = plat_gicr_frames;
+ }
+ 
+-/******************************************************************************
+- * ARM common helper to initialize the GIC. Only invoked by BL31
+- *****************************************************************************/
+-void __init gic_init(unsigned int cpu_idx)
++void __init plat_arm_gic_driver_init(void)
+ {
+ 	/*
+ 	 * The GICv3 driver is initialized in EL3 and does not need
+@@ -107,25 +111,39 @@ void __init gic_init(unsigned int cpu_idx)
+ 	 */
+ #if (!defined(__aarch64__) && defined(IMAGE_BL32)) || \
+ 	(defined(__aarch64__) && defined(IMAGE_BL31))
+-	gicv3_driver_init(&gic_data);
++	gicv3_driver_init(&arm_gic_data);
++
++	if (gicv3_rdistif_probe(gicr_base_addrs[0]) == -1) {
++		ERROR("No GICR base frame found for Primary CPU\n");
++		panic();
++	}
+ #endif
++}
++
++/******************************************************************************
++ * ARM common helper to initialize the GIC. Only invoked by BL31
++ *****************************************************************************/
++void __init plat_arm_gic_init(void)
++{
+ 	gicv3_distif_init();
++	gicv3_rdistif_init(plat_my_core_pos());
++	gicv3_cpuif_enable(plat_my_core_pos());
+ }
+ 
+ /******************************************************************************
+  * ARM common helper to enable the GIC CPU interface
+  *****************************************************************************/
+-void gic_cpuif_enable(unsigned int cpu_idx)
++void plat_arm_gic_cpuif_enable(void)
+ {
+-	gicv3_cpuif_enable(cpu_idx);
++	gicv3_cpuif_enable(plat_my_core_pos());
+ }
+ 
+ /******************************************************************************
+  * ARM common helper to disable the GIC CPU interface
+  *****************************************************************************/
+-void gic_cpuif_disable(unsigned int cpu_idx)
++void plat_arm_gic_cpuif_disable(void)
+ {
+-	gicv3_cpuif_disable(cpu_idx);
++	gicv3_cpuif_disable(plat_my_core_pos());
+ }
+ 
+ /******************************************************************************
+@@ -133,7 +151,7 @@ void gic_cpuif_disable(unsigned int cpu_idx)
+  * corresponding per-cpu redistributor frame as well as initialize the
+  * corresponding interface in GICv3.
+  *****************************************************************************/
+-void gic_pcpu_init(unsigned int cpu_idx)
++void plat_arm_gic_pcpu_init(void)
+ {
+ 	int result;
+ 	const uintptr_t *plat_gicr_frames = gicr_frames;
+@@ -152,22 +170,26 @@ void gic_pcpu_init(unsigned int cpu_idx)
+ 		ERROR("No GICR base frame found for CPU 0x%lx\n", read_mpidr());
+ 		panic();
+ 	}
+-	gicv3_rdistif_init(cpu_idx);
++	gicv3_rdistif_init(plat_my_core_pos());
+ }
+ 
+ /******************************************************************************
+  * ARM common helpers to power GIC redistributor interface
+  *****************************************************************************/
+-void gic_pcpu_off(unsigned int cpu_idx)
++void plat_arm_gic_redistif_on(void)
++{
++	gicv3_rdistif_on(plat_my_core_pos());
++}
++
++void plat_arm_gic_redistif_off(void)
+ {
+-	gicv3_rdistif_off(cpu_idx);
++	gicv3_rdistif_off(plat_my_core_pos());
+ }
+ 
+ /******************************************************************************
+- * Common helper to save & restore the GICv3 on resume from system suspend. It
+- * is the platform's responsibility to call these.
++ * ARM common helper to save & restore the GICv3 on resume from system suspend
+  *****************************************************************************/
+-void gic_save(void)
++void plat_arm_gic_save(void)
+ {
+ 	gicv3_redist_ctx_t * const rdist_context =
+ 			(gicv3_redist_ctx_t *)LOAD_ADDR_OF(rdist_ctx);
+@@ -200,7 +222,7 @@ void gic_save(void)
+ 	 */
+ }
+ 
+-void gic_resume(void)
++void plat_arm_gic_resume(void)
+ {
+ 	const gicv3_redist_ctx_t *rdist_context =
+ 			(gicv3_redist_ctx_t *)LOAD_ADDR_OF(rdist_ctx);
+diff --git a/plat/arm/common/sp_min/arm_sp_min_setup.c b/plat/arm/common/sp_min/arm_sp_min_setup.c
+index 6b15b730f2d5..cc4ae5903d6b 100644
+--- a/plat/arm/common/sp_min/arm_sp_min_setup.c
++++ b/plat/arm/common/sp_min/arm_sp_min_setup.c
+@@ -207,11 +207,8 @@ void sp_min_platform_setup(void)
+ 	struct transfer_list_entry *te __unused;
+ 
+ 	/* Initialize the GIC driver, cpu and distributor interfaces */
+-	unsigned int core_pos = plat_my_core_pos();
+-
+-	gic_init(core_pos);
+-	gic_pcpu_init(core_pos);
+-	gic_cpuif_enable(core_pos);
++	plat_arm_gic_driver_init();
++	plat_arm_gic_init();
+ 
+ #if TRANSFER_LIST
+ 	ns_tl = transfer_list_ensure((void *)FW_NS_HANDOFF_BASE,

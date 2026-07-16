@@ -1,0 +1,191 @@
+From 6f72b72cf8ce97a8f353d54134a30d7ce8772d19 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Sat, 13 Apr 2024 20:48:07 +0530
+Subject: [PATCH] feat(ras): add CPU error injection support
+
+This patch introduces the helper functions that are required to program
+the CPU pseudo fault generation (PFG) registers. The PFG registers are
+injection register and writing them initiates error injection on CPU.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: Ic2b624f733373161876d7ec1ebb9c579f153bedf
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ include/lib/extensions/ras_helpers.h |  21 +++++
+ lib/extensions/ras/ras_helpers.S     | 123 +++++++++++++++++++++++++++
+ plat/arm/common/arm_common.mk        |   2 +
+ 3 files changed, 146 insertions(+)
+ create mode 100644 include/lib/extensions/ras_helpers.h
+ create mode 100644 lib/extensions/ras/ras_helpers.S
+
+diff --git a/include/lib/extensions/ras_helpers.h b/include/lib/extensions/ras_helpers.h
+new file mode 100644
+index 000000000000..27ca59a9ab9d
+--- /dev/null
++++ b/include/lib/extensions/ras_helpers.h
+@@ -0,0 +1,21 @@
++/*
++ * Copyright (c) 2022, ARM Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#ifndef RAS_HELPERS_H
++#define RAS_HELPERS_H
++
++#include <stdint.h>
++
++uint64_t read_cpu_pfg_cdn_register(void);
++uint64_t read_cpu_pfg_feature_register(void);
++void write_cpu_pfg_cdn_register(int val);
++void write_cpu_pfg_ctrl_register_de(void);
++void write_cpu_pfg_ctrl_register_ce(void);
++void write_cpu_pfg_ctrl_register_uc(void);
++uint64_t read_cpu_pfg_ctrl_register(void);
++void clear_cpu_pfg_ctrl_register(void);
++
++#endif /* RAS_HELPERS_H */
+diff --git a/lib/extensions/ras/ras_helpers.S b/lib/extensions/ras/ras_helpers.S
+new file mode 100644
+index 000000000000..ddaf0feb313e
+--- /dev/null
++++ b/lib/extensions/ras/ras_helpers.S
+@@ -0,0 +1,123 @@
++/*
++ * Copyright (c) 2022, ARM Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <arch.h>
++#include <assert_macros.S>
++#include <asm_macros.S>
++
++       .globl read_cpu_pfg_cdn_register
++       .globl read_cpu_pfg_feature_register
++       .globl write_cpu_pfg_cdn_register
++       .globl write_cpu_pfg_ctrl_register_de
++       .globl write_cpu_pfg_ctrl_register_ce
++       .globl write_cpu_pfg_ctrl_register_uc
++       .globl read_cpu_pfg_ctrl_register
++       .globl clear_cpu_pfg_ctrl_register
++
++/*
++ * uint64_t read_cpu_pfg_feature_register();
++ *
++ * Read the error pseudo fault generation feature reg
++ * and return it in `x0`.
++ */
++func read_cpu_pfg_feature_register
++       mrs     x0, ERXPFGF_EL1
++       ret
++endfunc read_cpu_pfg_feature_register
++
++/*
++ *
++ * void write_cpu_pfg_cdn_register(int val)
++ *
++ */
++func write_cpu_pfg_cdn_register
++       mrs     x0, ERXPFGCDN_EL1
++       orr     x0, x0, #0x1
++       msr     ERXPFGCDN_EL1, x0
++       ret
++endfunc write_cpu_pfg_cdn_register
++
++/*
++ * uint64_t read_cpu_pfg_cdn_register();
++ *
++ * Read the error pseudo fault generation count down reg
++ * and return it in `x0`.
++ */
++func read_cpu_pfg_cdn_register
++       mrs     x0, ERXPFGCDN_EL1
++       ret
++endfunc read_cpu_pfg_cdn_register
++
++/*
++ *
++ * void write_cpu_pfg_ctrl_register_de()
++ *
++ * Program fault generation control register to generate deferred error
++ * 0x80000020: inject DE
++ */
++func write_cpu_pfg_ctrl_register_de
++        mrs    x0, ERXPFGCTL_EL1
++       orr     x0, x0, #0x80000000
++       orr     x0, x0, #0x00000020
++       msr     ERXPFGCTL_EL1, x0
++       ret
++endfunc write_cpu_pfg_ctrl_register_de
++
++/*
++ *
++ * void write_cpu_pfg_ctrl_register_ce()
++ *
++ * Program fault generation control register to generate corrected error
++ * 0x80000040: inject CE
++ */
++func write_cpu_pfg_ctrl_register_ce
++        mrs    x0, ERXPFGCTL_EL1
++       orr     x0, x0, #0x80000000
++       orr     x0, x0, #0x40000000
++       orr     x0, x0, #0x00000040
++       msr     ERXPFGCTL_EL1, x0
++       ret
++endfunc write_cpu_pfg_ctrl_register_ce
++
++/*
++ *
++ * void write_cpu_pfg_ctrl_register_uc()
++ *
++ * Program fault generation register to generate uncorrected errors
++ * 0x80000002: inject UC: Uncontainable error
++ */
++func write_cpu_pfg_ctrl_register_uc
++        mrs    x0, ERXPFGCTL_EL1
++       orr     x0, x0, #0x80000000
++       orr     x0, x0, #0x00000002
++       msr     ERXPFGCTL_EL1, x0
++       ret
++endfunc write_cpu_pfg_ctrl_register_uc
++
++/*
++ *
++ * void clear_cpu_pfg_ctrl_register()
++ * Clear the fault genration register to inject new error
++ *
++ */
++func clear_cpu_pfg_ctrl_register
++        mrs     x0, ERXPFGCTL_EL1
++        mov     x1, #0
++        and     x0, x0, x1
++        msr     ERXPFGCTL_EL1, x0
++        ret
++endfunc clear_cpu_pfg_ctrl_register
++
++/*
++ *
++ * uint64_t read_cpu_pfg_ctrl_register()
++ *
++ * read back the programmed value in psedo fault genration control register
++ */
++func read_cpu_pfg_ctrl_register
++       mrs     x0, ERXPFGCTL_EL1
++       ret
++endfunc read_cpu_pfg_ctrl_register
+diff --git a/plat/arm/common/arm_common.mk b/plat/arm/common/arm_common.mk
+index 53fe806a3677..d4b7b6b9601f 100644
+--- a/plat/arm/common/arm_common.mk
++++ b/plat/arm/common/arm_common.mk
+@@ -229,6 +229,8 @@ PLAT_BL_COMMON_SOURCES	+=	plat/arm/common/${ARCH}/arm_helpers.S		\
+ 				plat/arm/common/arm_common.c			\
+ 				plat/arm/common/arm_console.c
+ 
++PLAT_BL_COMMON_SOURCES +=      lib/extensions/ras/ras_helpers.S
++
+ ifeq (${ARM_XLAT_TABLES_LIB_V1}, 1)
+ PLAT_BL_COMMON_SOURCES 	+=	lib/xlat_tables/xlat_tables_common.c	      \
+ 				lib/xlat_tables/${ARCH}/xlat_tables.c

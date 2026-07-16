@@ -1,0 +1,85 @@
+From 3d3239c54b6aa13f1a93b43621345eb2e7caadf2 Mon Sep 17 00:00:00 2001
+From: Rakshit Goyal <rakshit.goyal@arm.com>
+Date: Wed, 25 Jun 2025 09:07:25 +0000
+Subject: [PATCH] fix(rdv3r1): update with upstream changes
+
+Merge this patch back into the patch that introduced RDV3R1 in TF-A.
+Change-ID for that patch is Ice4b48f6ed54730b183733ac55ae03a8451064a7
+
+Signed-off-by: Rakshit Goyal <rakshit.goyal@arm.com>
+Change-Id: I81f9311519cfea5dcf973b794f99bd96d67aef7f
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../neoverse_rd/platform/rdv3r1/rdv3r1_common.c | 17 +++++++++--------
+ 1 file changed, 9 insertions(+), 8 deletions(-)
+
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_common.c b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_common.c
+index cb63a25e7de0..46242f571fb2 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_common.c
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_common.c
+@@ -6,6 +6,7 @@
+ 
+ #include <common/debug.h>
+ #include <drivers/arm/gic600_multichip.h>
++#include <drivers/arm/mhu.h>
+ #include <drivers/arm/rse_comms.h>
+ #include <plat/arm/common/plat_arm.h>
+ #include <plat/common/platform.h>
+@@ -65,7 +66,7 @@ size_t plat_rmmd_get_el3_rmm_shared_mem(uintptr_t *shared)
+ int plat_rmmd_load_manifest(struct rmm_manifest *manifest)
+ {
+ 	uint64_t checksum, num_banks, num_consoles;
+-	struct ns_dram_bank *bank_ptr;
++	struct memory_bank *bank_ptr;
+ 	struct console_info *console_ptr;
+ 
+ 	assert(manifest != NULL);
+@@ -130,7 +131,7 @@ int plat_rmmd_load_manifest(struct rmm_manifest *manifest)
+ 	 * +--------+----------------+--------------+
+ 	 */
+ 
+-	bank_ptr = (struct ns_dram_bank *)
++	bank_ptr = (struct memory_bank *)
+ 			(((uintptr_t)manifest) + sizeof(*manifest));
+ 	console_ptr = (struct console_info *)
+ 			((uintptr_t)bank_ptr + (num_banks * sizeof(*bank_ptr)));
+@@ -141,7 +142,7 @@ int plat_rmmd_load_manifest(struct rmm_manifest *manifest)
+ 	/* Ensure the manifest is not larger than the shared buffer */
+ 	assert((sizeof(struct rmm_manifest) +
+ 		(sizeof(struct console_info) * manifest->plat_console.num_consoles) +
+-		(sizeof(struct ns_dram_bank) * manifest->plat_dram.num_banks))
++		(sizeof(struct memory_bank) * manifest->plat_dram.num_banks))
+ 		<= ARM_EL3_RMM_SHARED_SIZE);
+ 
+ 	/* Calculate checksum of plat_dram structure */
+@@ -156,7 +157,7 @@ int plat_rmmd_load_manifest(struct rmm_manifest *manifest)
+ 
+ 	/* Update checksum */
+ 	checksum += checksum_calc((uint64_t *)bank_ptr,
+-		sizeof(struct ns_dram_bank) * num_banks);
++		sizeof(struct memory_bank) * num_banks);
+ 
+ 	/* Checksum must be 0 */
+ 	manifest->plat_dram.checksum = ~checksum + 1UL;
+@@ -189,15 +190,15 @@ int plat_rmmd_load_manifest(struct rmm_manifest *manifest)
+ 
+ int plat_rse_comms_init(void)
+ {
+-	uintptr_t snd_base, rcv_base;
++	struct mhu_addr mhu_addresses;
+ 
+ 	/* Get sender and receiver frames for AP-RSE communication */
+-	mhu_v3_get_secure_device_base(&snd_base, true);
+-	mhu_v3_get_secure_device_base(&rcv_base, false);
++	mhu_v3_get_secure_device_base(&mhu_addresses.sender_base, true);
++	mhu_v3_get_secure_device_base(&mhu_addresses.receiver_base, false);
+ 
+ 	VERBOSE("Initializing the rse_comms now\n");
+ 	/* Initialize the communication channel between AP and RSE */
+-	return rse_comms_init(snd_base, rcv_base);
++	return rse_mbx_init(&mhu_addresses);
+ }
+ 
+ int plat_spmd_handle_group0_interrupt(uint32_t intid)

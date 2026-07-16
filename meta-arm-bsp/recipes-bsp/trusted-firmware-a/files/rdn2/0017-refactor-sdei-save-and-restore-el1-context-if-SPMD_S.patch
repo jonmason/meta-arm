@@ -1,0 +1,50 @@
+From 589631c17f209ddeb66c105ac5932abbf823cb1c Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Tue, 15 Apr 2025 17:07:26 +0530
+Subject: [PATCH] refactor(sdei): save and restore el1 context if
+ SPMD_SPM_AT_SEL2=0
+
+el1 context is not saved if SPMD_SPM_AT_SEL2=1. Add appropriate checks
+to disable el1 context save and restore.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I40e36bcebc08bf2b5111522586288b5686c458b6
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ services/std_svc/sdei/sdei_intr_mgmt.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/services/std_svc/sdei/sdei_intr_mgmt.c b/services/std_svc/sdei/sdei_intr_mgmt.c
+index 40c3c245a5ed..85cce757c176 100644
+--- a/services/std_svc/sdei/sdei_intr_mgmt.c
++++ b/services/std_svc/sdei/sdei_intr_mgmt.c
+@@ -219,13 +219,17 @@ static void restore_event_ctx(const sdei_dispatch_context_t *disp_ctx, void *tgt
+ 
+ static void save_secure_context(void)
+ {
++#if (!CTX_INCLUDE_EL2_REGS)
+ 	cm_el1_sysregs_context_save(SECURE);
++#endif
+ }
+ 
+ /* Restore Secure context and arrange to resume it at the next ERET */
+ static void restore_and_resume_secure_context(void)
+ {
++#if (!CTX_INCLUDE_EL2_REGS)
+ 	cm_el1_sysregs_context_restore(SECURE);
++#endif
+ 	cm_set_next_eret_context(SECURE);
+ }
+ 
+@@ -237,7 +241,9 @@ static cpu_context_t *restore_and_resume_ns_context(void)
+ {
+ 	cpu_context_t *ns_ctx;
+ 
++#if (!CTX_INCLUDE_EL2_REGS)
+ 	cm_el1_sysregs_context_restore(NON_SECURE);
++#endif
+ 	cm_set_next_eret_context(NON_SECURE);
+ 
+ 	ns_ctx = cm_get_context(NON_SECURE);

@@ -1,0 +1,75 @@
+From ac785d8c3ef88d58050a8787485a6cafa2daff6d Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Sat, 13 Apr 2024 22:50:23 +0530
+Subject: [PATCH] feat(rdfremont): enable cpu error injectio on RD-Fremont-Cfg1
+
+Enable Correctable Error (CE) injection on N2 CPU for RD-Fremont-Cfg1 platform.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: Ibf0dae7f14c350acea681e1bd35ea47d0af6eb1f
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../platform/rdv3/einj/nrd_einj_cpu.c         | 37 +++++++++++++++++++
+ .../neoverse_rd/platform/rdv3/platform.mk     |  3 +-
+ 2 files changed, 39 insertions(+), 1 deletion(-)
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3/einj/nrd_einj_cpu.c
+
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3/einj/nrd_einj_cpu.c b/plat/arm/board/neoverse_rd/platform/rdv3/einj/nrd_einj_cpu.c
+new file mode 100644
+index 000000000000..178128ff104e
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3/einj/nrd_einj_cpu.c
+@@ -0,0 +1,37 @@
++/*
++ * Copyright (c) 2022, ARM Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <common/debug.h>
++#include <drivers/delay_timer.h>
++#include <lib/extensions/ras_helpers.h>
++#include <plat/common/platform.h>
++
++void nrd_cpu_inject_error(void)
++{
++
++        INFO("cpu_id %d\n", plat_my_core_pos());
++
++        /* Select error record 1 which is for L1 L2 caches */
++        write_errselr_el1(0);
++
++        /* Enable CFI, FI and ED for node */
++        write_erxctlr_el1(0x109);
++
++        /* Clear PFG control register */
++        clear_cpu_pfg_ctrl_register();
++
++        /* Clear the status register */
++        write_erxstatus_el1(0xFFC00000);
++
++        /* set PFG countdown register to 1 */
++        write_cpu_pfg_cdn_register(1);
++
++	/* Injects CPU DE */
++        INFO("Injecting DE...\n");
++        write_cpu_pfg_ctrl_register_de();
++
++        INFO("ErrStatus = 0x%lx\n", read_erxstatus_el1());
++}
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk b/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk
+index f9d32c2175a8..f4cb601d17e9 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk
++++ b/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk
+@@ -129,7 +129,8 @@ BL31_SOURCES	+=	${NRD_CPU_SOURCES}				\
+ 			plat/arm/common/arm_nor_psci_mem_protect.c
+ 
+ ifeq (${NRD_ERR_INJ_SUPPORT},1)
+-BL31_SOURCES           +=      ${RDV3_BASE}/einj/nrd_einj_sram.c
++BL31_SOURCES           +=      ${RDV3_BASE}/einj/nrd_einj_sram.c \
++			       ${RDV3_BASE}/einj/nrd_einj_cpu.c
+ endif
+ 
+ ifeq (${NRD_PLATFORM_VARIANT}, 2)

@@ -1,0 +1,207 @@
+From a87d5e26c90e295893ca73f099bd2cbb22b37d40 Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Wed, 15 Dec 2021 07:55:59 +0100
+Subject: [PATCH] feat(plat/arm/sgi): Enable support to read pcie data from sds
+
+To enable the support of dynamic PCIe region calculation, SCP
+calculates and programs the region information in SDS.
+The UEFI consumes this information and then updates the ACPI table
+accordingly.
+
+This patch enables the support to read the data from SDS and then
+program it into FDT for UEFI to consume.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: If11b526bc2e76a547e9b9507957acc5c84a40810
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../common/include/nrd2/nrd_plat_arm_def2.h   |   9 ++
+ .../common/include/nrd3/nrd_plat_arm_def3.h   |   9 ++
+ .../board/neoverse_rd/common/nrd_image_load.c | 111 ++++++++++++++++++
+ 3 files changed, 129 insertions(+)
+
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd2/nrd_plat_arm_def2.h b/plat/arm/board/neoverse_rd/common/include/nrd2/nrd_plat_arm_def2.h
+index 3ee413f67cf5..917209cfea5c 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd2/nrd_plat_arm_def2.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd2/nrd_plat_arm_def2.h
+@@ -273,6 +273,15 @@ ENABLE_FEAT_RAS && FFH_SUPPORT
+ 
+ /* SDS ID for unusable CPU MPID list structure */
+ #define SDS_ISOLATED_CPU_LIST_ID	U(128)
++/* SDS ID for PCIe rootport configuration list structure */
++#define SDS_PCIE_MMAP_IDX			U(129)
++
++#define MAX_RP_PER_CONTROLLER			4
++#if (NRD_PLATFORM_VARIANT == 0)
++#define MAX_NUM_PCIE_CONTROLLER	        	4
++#else
++#define MAX_NUM_PCIE_CONTROLLER			1
++#endif
+ 
+ /* Index of SDS region used in the communication with SCP */
+ #define SDS_SCP_AP_REGION_ID		U(0)
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h
+index 49363449d3d4..b1f7a257f65b 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h
+@@ -357,6 +357,15 @@
+ 
+ /* SDS ID for unusable CPU MPID list structure */
+ #define SDS_ISOLATED_CPU_LIST_ID	U(128)
++/* SDS ID for PCIe rootport configuration list structure */
++#define SDS_PCIE_MMAP_IDX			U(129)
++
++#define MAX_RP_PER_CONTROLLER			5
++#if (NRD_PLATFORM_VARIANT == 0)
++#define MAX_NUM_PCIE_CONTROLLER	        	4
++#else
++#define MAX_NUM_PCIE_CONTROLLER			1
++#endif
+ 
+ /* Index of SDS region used in the communication with SCP */
+ #define SDS_SCP_AP_REGION_ID		U(0)
+diff --git a/plat/arm/board/neoverse_rd/common/nrd_image_load.c b/plat/arm/board/neoverse_rd/common/nrd_image_load.c
+index ee1f2657b3cc..89e0d6cda272 100644
+--- a/plat/arm/board/neoverse_rd/common/nrd_image_load.c
++++ b/plat/arm/board/neoverse_rd/common/nrd_image_load.c
+@@ -4,6 +4,8 @@
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+ 
++#include <inttypes.h>
++
+ #include <libfdt.h>
+ 
+ #include <arch_helpers.h>
+@@ -18,6 +20,104 @@
+ 
+ #include <nrd_variant.h>
+ 
++/* Information about the ECAM, MMIOL, MMIOH carveouts and Bus start and end */
++#define MAX_PCIE_BLOCK_SIZE (sizeof(struct pcie_block_mmap_list) + \
++	(MAX_NUM_PCIE_CONTROLLER * (sizeof (struct pcie_block_mmio_mmap) + \
++		(MAX_RP_PER_CONTROLLER * sizeof(struct pcie_ep_config)))))
++
++struct pcie_mem_carveout {
++	uint64_t start;
++	uint64_t size;
++};
++
++struct pcie_ep_config {
++	struct pcie_mem_carveout ecam;
++	struct pcie_mem_carveout mmiol;
++	struct pcie_mem_carveout mmioh;
++	struct pcie_mem_carveout bus;
++	uint64_t base_interrupt_id;
++};
++
++struct pcie_block_mmio_mmap {
++	uint64_t hostbridge_id;
++	uint64_t segment;
++	uint64_t translation;
++	uint64_t smmu_base;
++	uint64_t count;
++	struct pcie_ep_config mmap[];
++};
++
++struct pcie_block_mmap_list {
++	uint64_t block_count;
++	uint64_t table_size;
++	struct pcie_block_mmio_mmap block_map[];
++};
++
++void plat_arm_nrd_print_pcie_carveout(struct pcie_mem_carveout *carveout,
++				      char *type)
++{
++	INFO("%s: Start: 0x%"PRIx64", Size: 0x%"PRIx64"\n", type,
++	     carveout->start, carveout->size);
++}
++
++void plat_arm_nrd_print_pcie_info(struct pcie_block_mmap_list *mmap_list)
++{
++	struct pcie_block_mmio_mmap *block_map;
++	struct pcie_ep_config *ep_mmap;
++	int block_count;
++	int ep_count;
++
++	block_map = mmap_list->block_map;
++	INFO("Number of blocks: %"PRId64"\n", mmap_list->block_count);
++	INFO("Table Size: %"PRId64"\n", mmap_list->table_size);
++	for (block_count = 0; block_count < mmap_list->block_count;
++		block_count++) {
++		ep_mmap = block_map->mmap;
++		for (ep_count = 0; ep_count < block_map->count; ep_count++) {
++			plat_arm_nrd_print_pcie_carveout(
++					&ep_mmap[ep_count].ecam, "ECAM");
++			plat_arm_nrd_print_pcie_carveout(
++					&ep_mmap[ep_count].mmiol, "MMIOL");
++			plat_arm_nrd_print_pcie_carveout(
++					&ep_mmap[ep_count].mmioh, "MMIOH");
++			plat_arm_nrd_print_pcie_carveout(
++					&ep_mmap[ep_count].bus, "BUS");
++		}
++		block_map =
++			(struct pcie_block_mmio_mmap *)((uint8_t *)block_map +
++			(sizeof(struct pcie_block_mmio_mmap) +
++			(block_map->count * sizeof(struct pcie_ep_config))));
++	}
++}
++
++/* Copy PCIe memmap data from sds to a local buffer. */
++void plat_arm_nrd_get_pcie_mmap(struct pcie_block_mmap_list *mmap_list)
++{
++	int ret;
++
++	ret = sds_init(SDS_SCP_AP_REGION_ID);
++	if (ret != SDS_OK) {
++		ERROR("SDS initialization failed. ret: %d\n", ret);
++		panic();
++	}
++
++	ret = sds_struct_read(SDS_SCP_AP_REGION_ID,
++			      SDS_PCIE_MMAP_IDX, 0, mmap_list,
++			      sizeof(struct pcie_block_mmap_list),
++			      SDS_ACCESS_MODE_CACHED);
++	if (ret != SDS_OK) {
++		ERROR("SDS PCIE MMAP header read failed. ret: %d\n", ret);
++	}
++
++	ret = sds_struct_read(SDS_SCP_AP_REGION_ID,
++			      SDS_PCIE_MMAP_IDX, 0, mmap_list,
++			      mmap_list->table_size,
++			      SDS_ACCESS_MODE_CACHED);
++	if (ret != SDS_OK) {
++		ERROR("SDS PCIE MMAP header read failed. ret: %d\n", ret);
++	}
++}
++
+ /*
+  * Information about the isolated CPUs obtained from SDS.
+  */
+@@ -83,6 +183,9 @@ static int plat_nrd_append_config_node(void)
+ 	int nodeoffset, err;
+ 	unsigned int platid = 0, platcfg = 0;
+ 	struct isolated_cpu_mpid_list cpu_mpid_list = {0};
++	uint8_t block_mem[MAX_PCIE_BLOCK_SIZE] = {0};
++	struct pcie_block_mmap_list *mmap_list =
++		(struct pcie_block_mmap_list *)block_mem;
+ 
+ 	mem_params = get_bl_mem_params_node(NT_FW_CONFIG_ID);
+ 	if (mem_params == NULL) {
+@@ -137,6 +240,14 @@ static int plat_nrd_append_config_node(void)
+ 		}
+ 	}
+ 
++	plat_arm_nrd_get_pcie_mmap(mmap_list);
++	plat_arm_nrd_print_pcie_info(mmap_list);
++	err = fdt_setprop(fdt, nodeoffset, "pcie-mmap", mmap_list,
++			  mmap_list->table_size);
++	if (err < 0) {
++		ERROR("Failed to set pcie-mmap, ERROR: %d\n", err);
++	}
++
+ 	flush_dcache_range((uintptr_t)fdt, mem_params->image_info.image_size);
+ 
+ 	return 0;

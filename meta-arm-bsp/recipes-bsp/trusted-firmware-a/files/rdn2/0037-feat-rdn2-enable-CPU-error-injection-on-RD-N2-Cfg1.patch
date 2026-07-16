@@ -1,0 +1,30 @@
+From f52c571e8056cbd6451ca1f1bbbc697723cc7727 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Sat, 13 Apr 2024 21:27:44 +0530
+Subject: [PATCH] feat(rdn2): enable CPU error injection on RD-N2-Cfg1
+
+Enable Correctable Error(CE) injection on N2 CPU for RD-N2-Cfg1 platform.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: Ib3e0deb7d931ef469ca999873cded0d41b0ec927
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ plat/arm/board/neoverse_rd/platform/rdn2/platform.mk | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/plat/arm/board/neoverse_rd/platform/rdn2/platform.mk b/plat/arm/board/neoverse_rd/platform/rdn2/platform.mk
+index 41b775414d12..ef0b93c52286 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdn2/platform.mk
++++ b/plat/arm/board/neoverse_rd/platform/rdn2/platform.mk
+@@ -59,7 +59,8 @@ BL31_SOURCES		+=	${NRD_CPU_SOURCES}			\
+ 				plat/arm/common/arm_nor_psci_mem_protect.c
+ 
+ ifeq (${NRD_ERR_INJ_SUPPORT},1)
+-BL31_SOURCES           +=      ${RDN2_BASE}/einj/nrd_einj_sram.c
++BL31_SOURCES           +=      ${RDN2_BASE}/einj/nrd_einj_sram.c	\
++				${RDN2_BASE}/einj/nrd_einj_cpu.c
+ endif
+ 
+ ifeq (${TRUSTED_BOARD_BOOT}, 1)

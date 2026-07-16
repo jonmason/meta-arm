@@ -1,0 +1,29 @@
+From 10892d5724866cb6ba9af6e4e9368af57bc97126 Mon Sep 17 00:00:00 2001
+From: Lokesh B V <Lokesh.BV@Arm.com>
+Date: Tue, 16 Jul 2024 00:43:21 +0530
+Subject: [PATCH] feat(neoverse-rd): Add support build multiple platform
+ variants
+
+Signed-off-by: Lokesh B V <Lokesh.BV@Arm.com>
+Change-Id: I59cf393dac3bfedf8724ebcae7c5646da1dd3562
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ plat/arm/board/neoverse_rd/platform/rdv3/platform.mk | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk b/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk
+index c587a5559bf6..dbe07b1440c0 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk
++++ b/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk
+@@ -10,6 +10,9 @@ ifneq ($(NRD_PLATFORM_VARIANT),						\
+ 	"currently set to ${NRD_PLATFORM_VARIANT}.")
+ endif
+ 
++# modify BUILD_PLAT to point to NRD_PLATFORM_VARIANT specific build directory
++BUILD_PLAT	:=	${BUILD_BASE}/${PLAT}/${NRD_PLATFORM_VARIANT}/${BUILD_TYPE}
++
+ $(eval $(call CREATE_SEQ,SEQ,4))
+ ifneq ($(NRD_CHIP_COUNT),$(filter $(NRD_CHIP_COUNT),$(SEQ)))
+ 	$(error  "Chip count for RD-V3-MC should be either $(SEQ) \

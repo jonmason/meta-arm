@@ -1,0 +1,39 @@
+From a4b376b128bb5b91771002f7808566f53c8d9f3a Mon Sep 17 00:00:00 2001
+From: Rakshit Goyal <rakshit.goyal@arm.com>
+Date: Wed, 25 Jun 2025 19:41:29 +0000
+Subject: [PATCH] fix(rdv3r1): update PLAT_MHU flag
+
+This flash got updated upstream from PLAT_MHU_VERSION to PLAT_MHU.
+
+Signed-off-by: Rakshit Goyal <rakshit.goyal@arm.com>
+Change-Id: Ica4474b639918875801d260088f1679dac5b5858
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ plat/arm/board/neoverse_rd/platform/rdv3r1/platform.mk | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/platform.mk b/plat/arm/board/neoverse_rd/platform/rdv3r1/platform.mk
+index 69e94bfe0a91..ea5cdb8754fd 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3r1/platform.mk
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/platform.mk
+@@ -11,6 +11,9 @@ ifneq ($(NRD_PLATFORM_VARIANT),						\
+ 	"currently set to ${NRD_PLATFORM_VARIANT}.")
+ endif
+ 
++# modify BUILD_PLAT to point to NRD_PLATFORM_VARIANT specific build directory
++BUILD_PLAT	:=	${BUILD_BASE}/${PLAT}/${NRD_PLATFORM_VARIANT}/${BUILD_TYPE}
++
+ $(eval $(call CREATE_SEQ,SEQ,4))
+ ifneq ($(NRD_CHIP_COUNT),$(filter $(NRD_CHIP_COUNT),$(SEQ)))
+ 	$(error  "Chip count for RD-V3-R1-MC should be either $(SEQ) \
+@@ -36,7 +39,7 @@ GIC_ENABLE_V4_EXTN			:= 1
+ GICV3_IMPL_GIC600_MULTICHIP	:= 1
+ 
+ # RD-V3-R1 uses MHUv3
+-PLAT_MHU_VERSION := 3
++PLAT_MHU := MHUv3
+ 
+ include plat/arm/board/neoverse_rd/common/nrd-common.mk
+ include drivers/arm/rse/rse_comms.mk

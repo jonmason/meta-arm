@@ -1,0 +1,174 @@
+From 69c926c076c72181955844743f4457b7a8e1ccda Mon Sep 17 00:00:00 2001
+From: Glen Yeldho <glen.yeldho@arm.com>
+Date: Thu, 4 Apr 2024 00:23:45 +0530
+Subject: [PATCH] [TEMP][EINJ-CMN]feat(einj): Extends ARM SIP for Platform
+ specific firmware-first error injection
+
+Extends ARM SIP(Silicon Provider Service) for Firmware-first
+error injection from kernel.This enables platforms to
+register error injection handlers with the framework.
+
+Signed-off-by: Glen Yeldho <glen.yeldho@arm.com>
+Change-Id: Iac4e0deae2d49e3b0deb6e9f75e3a288d572f620
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ bl31/bl31.mk                  |  4 +++
+ include/lib/einj/einj.h       | 39 ++++++++++++++++++++++++
+ lib/einj/einj_smc.c           | 56 +++++++++++++++++++++++++++++++++++
+ plat/arm/common/arm_sip_svc.c | 10 +++++++
+ 4 files changed, 109 insertions(+)
+ create mode 100644 include/lib/einj/einj.h
+ create mode 100644 lib/einj/einj_smc.c
+
+diff --git a/bl31/bl31.mk b/bl31/bl31.mk
+index e39091528992..be9d73d458a7 100644
+--- a/bl31/bl31.mk
++++ b/bl31/bl31.mk
+@@ -59,6 +59,10 @@ BL31_SOURCES		+=	lib/pmf/pmf_main.c				\
+ 				${VENDOR_EL3_SRCS}
+ endif
+ 
++ifeq (${FAULT_INJECTION_SUPPORT}, 1)
++BL31_SOURCES		+=	lib/einj/einj_smc.c
++endif
++
+ include lib/debugfs/debugfs.mk
+ ifeq (${USE_DEBUGFS},1)
+ BL31_SOURCES		+=	${DEBUGFS_SRCS}					\
+diff --git a/include/lib/einj/einj.h b/include/lib/einj/einj.h
+new file mode 100644
+index 000000000000..a5573bab91df
+--- /dev/null
++++ b/include/lib/einj/einj.h
+@@ -0,0 +1,39 @@
++/*
++ * Copyright (c) 2016-2020, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#ifndef EINJ_H
++#define EINJ_H
++
++#include <lib/cassert.h>
++#include <lib/utils_def.h>
++
++/*
++ * The macros below are used to identify
++ * EINJ calls from the SMC function ID.
++ */
++#define EINJ_FID_VALUE	(0xff16)
++#define is_einj_fid(_fid)	\
++	(((_fid) & FUNCID_NUM_MASK) == EINJ_FID_VALUE)
++
++
++/*******************************************************************************
++ * Function & variable prototypes
++ ******************************************************************************/
++typedef int (*einj_handler_t)(uint64_t type, uint64_t flags, uint64_t data);
++
++/*Platform specific error injection registration*/
++void einj_register_handler(einj_handler_t handler);
++
++uintptr_t einj_smc_handler(unsigned int smc_fid,
++		u_register_t x1,
++		u_register_t x2,
++		u_register_t x3,
++		u_register_t x4,
++		void *cookie,
++		void *handle,
++		u_register_t flags);
++
++#endif /* EINJ_H */
+diff --git a/lib/einj/einj_smc.c b/lib/einj/einj_smc.c
+new file mode 100644
+index 000000000000..6df6ae2c1c5e
+--- /dev/null
++++ b/lib/einj/einj_smc.c
+@@ -0,0 +1,56 @@
++/*
++ * Copyright (c) 2016-2018, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <assert.h>
++#include <lib/einj/einj.h>
++#include <common/debug.h>
++#include <smccc_helpers.h>
++
++einj_handler_t callback = NULL;
++/*
++ * Register an platform specific einj
++ * handler
++ */
++void einj_register_handler(einj_handler_t handler)
++{
++    /*Sanity check for handler*/
++    assert(handler != NULL);
++
++    /*Register error injection function*/
++    callback = handler;
++    INFO("EINJ Platform handler registered successfully\n");
++}
++
++
++/*
++ * This function is responsible for handling all EINJ SMC calls.
++ */
++uintptr_t einj_smc_handler(unsigned int smc_fid,
++			u_register_t x1,
++			u_register_t x2,
++			u_register_t x3,
++			u_register_t x4,
++			void *cookie,
++			void *handle,
++			u_register_t flags)
++{
++    int ret;
++
++    if(callback == NULL) {
++	NOTICE("EINJ Platform handler not registered");
++	SMC_RET1(handle, SMC_UNK);
++    }
++
++   /*Call Platform specific error injection function*/
++    ret = callback(x1,x2,x3);
++    if(ret) {
++	NOTICE("Error injection failed\n");
++	SMC_RET2(handle, SMC_UNK,ret);
++    }
++
++    SMC_RET1(handle, SMC_OK);
++
++}
+diff --git a/plat/arm/common/arm_sip_svc.c b/plat/arm/common/arm_sip_svc.c
+index 18e9381ae0ca..de0780d13c0d 100644
+--- a/plat/arm/common/arm_sip_svc.c
++++ b/plat/arm/common/arm_sip_svc.c
+@@ -11,6 +11,7 @@
+ #include <drivers/arm/ethosn.h>
+ #include <lib/debugfs.h>
+ #include <lib/pmf/pmf.h>
++#include <lib/einj/einj.h>
+ #include <plat/arm/common/arm_sip_svc.h>
+ #include <plat/arm/common/plat_arm.h>
+ #include <tools_share/uuid.h>
+@@ -61,6 +62,15 @@ static uintptr_t arm_sip_handler(unsigned int smc_fid,
+ {
+ 	int call_count = 0;
+ 
++#if FAULT_INJECTION_SUPPORT
++
++	if (is_einj_fid(smc_fid)) {
++		return einj_smc_handler(smc_fid, x1, x2, x3, x4, cookie,
++				handle, flags);
++	}
++
++#endif /* FAULT_INJECTION_SUPPORT */
++
+ #if ENABLE_PMF
+ 	/*
+ 	 * Dispatch PMF calls to PMF SMC handler and return its return

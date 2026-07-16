@@ -1,0 +1,277 @@
+From 3b6297e54390d80835480bdbcec3edc8202197ce Mon Sep 17 00:00:00 2001
+From: Rakshit Goyal <rakshit.goyal@arm.com>
+Date: Fri, 20 Jun 2025 16:48:13 +0000
+Subject: [PATCH] Revert "refactor(fvp): use more arm generic code for gicv3"
+
+This reverts commit cb331826718c8489a6556386b320c32d305c6084.
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ plat/arm/board/fvp/fvp_bl31_setup.c |   8 --
+ plat/arm/board/fvp/fvp_gicv3.c      | 115 +++++++++++++++++++++++-----
+ plat/arm/board/fvp/fvp_pm.c         |   3 +-
+ plat/arm/board/fvp/fvp_private.h    |   5 +-
+ plat/arm/board/fvp/platform.mk      |   8 +-
+ plat/arm/common/arm_gicv3.c         |   4 +-
+ 6 files changed, 105 insertions(+), 38 deletions(-)
+
+diff --git a/plat/arm/board/fvp/fvp_bl31_setup.c b/plat/arm/board/fvp/fvp_bl31_setup.c
+index 83b514a9235a..aa7b875b1d3c 100644
+--- a/plat/arm/board/fvp/fvp_bl31_setup.c
++++ b/plat/arm/board/fvp/fvp_bl31_setup.c
+@@ -91,14 +91,6 @@ void __init bl31_early_platform_setup2(u_register_t arg0,
+ 	}
+ }
+ 
+-void __init bl31_platform_setup(void)
+-{
+-	arm_bl31_platform_setup();
+-
+-	fvp_pcpu_init();
+-	fvp_gic_driver_pre_init();
+-}
+-
+ #if !TRANSFER_LIST
+ void __init bl31_plat_arch_setup(void)
+ {
+diff --git a/plat/arm/board/fvp/fvp_gicv3.c b/plat/arm/board/fvp/fvp_gicv3.c
+index fe64bec6bb51..e780f21f226e 100644
+--- a/plat/arm/board/fvp/fvp_gicv3.c
++++ b/plat/arm/board/fvp/fvp_gicv3.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2015-2025, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2015-2021, ARM Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -21,15 +21,51 @@
+ static bool fvp_gicr_rw_region_init[PLATFORM_CORE_COUNT] = {false};
+ #endif /* FVP_GICR_REGION_PROTECTION */
+ 
++/* The GICv3 driver only needs to be initialized in EL3 */
++static uintptr_t fvp_rdistif_base_addrs[PLATFORM_CORE_COUNT];
++
+ /* Default GICR base address to be used for GICR probe. */
+-static uintptr_t __unused fvp_gicr_base_addrs[2] = { 0U };
++static uint64_t fvp_gicr_base_addrs[2] = { 0U };
++
++/* List of zero terminated GICR frame addresses which CPUs will probe */
++static uint64_t *fvp_gicr_frames = fvp_gicr_base_addrs;
+ 
+-static const interrupt_prop_t __unused fvp_interrupt_props[] = {
++#if  !(SEC_INT_DESC_IN_FCONF && ((!defined(__aarch64__) && defined(IMAGE_BL32)) || \
++	(defined(__aarch64__) && defined(IMAGE_BL31))))
++static const interrupt_prop_t fvp_interrupt_props[] = {
+ 	PLAT_ARM_G1S_IRQ_PROPS(INTR_GROUP1S),
+ 	PLAT_ARM_G0_IRQ_PROPS(INTR_GROUP0)
+ };
++#endif
+ 
+-extern gicv3_driver_data_t arm_gic_data;
++/*
++ * MPIDR hashing function for translating MPIDRs read from GICR_TYPER register
++ * to core position.
++ *
++ * Calculating core position is dependent on MPIDR_EL1.MT bit. However, affinity
++ * values read from GICR_TYPER don't have an MT field. To reuse the same
++ * translation used for CPUs, we insert MT bit read from the PE's MPIDR into
++ * that read from GICR_TYPER.
++ *
++ * Assumptions:
++ *
++ *   - All CPUs implemented in the system have MPIDR_EL1.MT bit set;
++ *   - No CPUs implemented in the system use affinity level 3.
++ */
++static unsigned int fvp_gicv3_mpidr_hash(u_register_t mpidr)
++{
++	u_register_t temp_mpidr = mpidr;
++
++	temp_mpidr |= (read_mpidr_el1() & MPIDR_MT_MASK);
++	return plat_arm_calc_core_pos(temp_mpidr);
++}
++
++
++static gicv3_driver_data_t fvp_gic_data = {
++	.rdistif_num = PLATFORM_CORE_COUNT,
++	.rdistif_base_addrs = fvp_rdistif_base_addrs,
++	.mpidr_to_core_pos = fvp_gicv3_mpidr_hash
++};
+ 
+ /******************************************************************************
+  * This function gets called per core to make its redistributor frame rw
+@@ -61,41 +97,78 @@ static void fvp_gicv3_make_rdistrif_rw(void)
+ #endif /* FVP_GICR_REGION_PROTECTION */
+ }
+ 
+-void fvp_pcpu_init(void)
++void plat_arm_gic_driver_init(void)
+ {
+ 	fvp_gicv3_make_rdistrif_rw();
+-}
+-
+-void fvp_gic_driver_pre_init(void)
+-{
+-/* FCONF won't be used in these cases, so we couldn't do this */
+-#if !(BL2_AT_EL3 || RESET_TO_BL31 || RESET_TO_SP_MIN)
+ 	/*
+ 	 * Get GICD and GICR base addressed through FCONF APIs.
+ 	 * FCONF is not supported in BL32 for FVP.
+ 	 */
+ #if (!defined(__aarch64__) && defined(IMAGE_BL32)) || \
+ 	(defined(__aarch64__) && defined(IMAGE_BL31))
+-	arm_gic_data.gicd_base = (uintptr_t)FCONF_GET_PROPERTY(hw_config,
++	fvp_gic_data.gicd_base = (uintptr_t)FCONF_GET_PROPERTY(hw_config,
+ 							       gicv3_config,
+ 							       gicd_base);
+ 	fvp_gicr_base_addrs[0] = FCONF_GET_PROPERTY(hw_config, gicv3_config,
+ 						    gicr_base);
+ #if SEC_INT_DESC_IN_FCONF
+-	arm_gic_data.interrupt_props = FCONF_GET_PROPERTY(hw_config,
++	fvp_gic_data.interrupt_props = FCONF_GET_PROPERTY(hw_config,
+ 					sec_intr_prop, descriptor);
+-	arm_gic_data.interrupt_props_num = FCONF_GET_PROPERTY(hw_config,
++	fvp_gic_data.interrupt_props_num = FCONF_GET_PROPERTY(hw_config,
+ 					sec_intr_prop, count);
+ #else
+-	arm_gic_data.interrupt_props = fvp_interrupt_props;
+-	arm_gic_data.interrupt_props_num = ARRAY_SIZE(fvp_interrupt_props);
++	fvp_gic_data.interrupt_props = fvp_interrupt_props;
++	fvp_gic_data.interrupt_props_num = ARRAY_SIZE(fvp_interrupt_props);
+ #endif
+ #else
+-	arm_gic_data.gicd_base = PLAT_ARM_GICD_BASE;
++	fvp_gic_data.gicd_base = PLAT_ARM_GICD_BASE;
+ 	fvp_gicr_base_addrs[0] = PLAT_ARM_GICR_BASE;
+-	arm_gic_data.interrupt_props = fvp_interrupt_props;
+-	arm_gic_data.interrupt_props_num = ARRAY_SIZE(fvp_interrupt_props);
++	fvp_gic_data.interrupt_props = fvp_interrupt_props;
++	fvp_gic_data.interrupt_props_num = ARRAY_SIZE(fvp_interrupt_props);
+ #endif
+-	plat_arm_override_gicr_frames(fvp_gicr_base_addrs);
+-#endif /* !(BL2_AT_EL3 || RESET_TO_BL31 || RESET_TO_SP_MIN) */
++
++	/*
++	 * The GICv3 driver is initialized in EL3 and does not need
++	 * to be initialized again in SEL1. This is because the S-EL1
++	 * can use GIC system registers to manage interrupts and does
++	 * not need GIC interface base addresses to be configured.
++	 */
++
++#if (!defined(__aarch64__) && defined(IMAGE_BL32)) || \
++	(defined(__aarch64__) && defined(IMAGE_BL31))
++	gicv3_driver_init(&fvp_gic_data);
++	if (gicv3_rdistif_probe((uintptr_t)fvp_gicr_base_addrs[0]) == -1) {
++		ERROR("No GICR base frame found for Primary CPU\n");
++		panic();
++	}
++#endif
++}
++
++/******************************************************************************
++ * Function to iterate over all GICR frames and discover the corresponding
++ * per-cpu redistributor frame as well as initialize the corresponding
++ * interface in GICv3.
++ *****************************************************************************/
++void plat_arm_gic_pcpu_init(void)
++{
++	int result;
++	const uint64_t *plat_gicr_frames = fvp_gicr_frames;
++
++	fvp_gicv3_make_rdistrif_rw();
++
++	do {
++		result = gicv3_rdistif_probe(*plat_gicr_frames);
++
++		/* If the probe is successful, no need to proceed further */
++		if (result == 0)
++			break;
++
++		plat_gicr_frames++;
++	} while (*plat_gicr_frames != 0U);
++
++	if (result == -1) {
++		ERROR("No GICR base frame found for CPU 0x%lx\n", read_mpidr());
++		panic();
++	}
++	gicv3_rdistif_init(plat_my_core_pos());
+ }
+diff --git a/plat/arm/board/fvp/fvp_pm.c b/plat/arm/board/fvp/fvp_pm.c
+index f01678b0a7e4..2a0bb935fb63 100644
+--- a/plat/arm/board/fvp/fvp_pm.c
++++ b/plat/arm/board/fvp/fvp_pm.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2013-2025, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2013-2024, Arm Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -263,7 +263,6 @@ static void fvp_pwr_domain_on_finish(const psci_power_state_t *target_state)
+  ******************************************************************************/
+ static void fvp_pwr_domain_on_finish_late(const psci_power_state_t *target_state)
+ {
+-	fvp_pcpu_init();
+ 	/* Program GIC per-cpu distributor or re-distributor interface */
+ 	plat_arm_gic_pcpu_init();
+ 
+diff --git a/plat/arm/board/fvp/fvp_private.h b/plat/arm/board/fvp/fvp_private.h
+index 7e53a65ba7d7..3590370dff33 100644
+--- a/plat/arm/board/fvp/fvp_private.h
++++ b/plat/arm/board/fvp/fvp_private.h
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2014-2025, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2014-2019, ARM Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -19,7 +19,6 @@ void fvp_interconnect_init(void);
+ void fvp_interconnect_enable(void);
+ void fvp_interconnect_disable(void);
+ void fvp_timer_init(void);
+-void fvp_pcpu_init(void);
+-void fvp_gic_driver_pre_init(void);
++void tsp_early_platform_setup(void);
+ 
+ #endif /* FVP_PRIVATE_H */
+diff --git a/plat/arm/board/fvp/platform.mk b/plat/arm/board/fvp/platform.mk
+index 832ffdeb3b79..3dcae1bfa6be 100644
+--- a/plat/arm/board/fvp/platform.mk
++++ b/plat/arm/board/fvp/platform.mk
+@@ -133,8 +133,12 @@ include drivers/arm/gic/v3/gicv3.mk
+ 
+ FVP_GIC_SOURCES		:=	${GICV3_SOURCES}			\
+ 				plat/common/plat_gicv3.c		\
+-				plat/arm/common/arm_gicv3.c		\
+-				plat/arm/board/fvp/fvp_gicv3.c
++				plat/arm/common/arm_gicv3.c
++
++	ifeq ($(filter 1,${RESET_TO_BL2} \
++		${RESET_TO_BL31} ${RESET_TO_SP_MIN}),)
++		FVP_GIC_SOURCES += plat/arm/board/fvp/fvp_gicv3.c
++	endif
+ 
+ ifeq (${HW_ASSISTED_COHERENCY}, 0)
+ FVP_DT_PREFIX			:= fvp-base-gicv3-psci
+diff --git a/plat/arm/common/arm_gicv3.c b/plat/arm/common/arm_gicv3.c
+index 180da2f14e29..5becbcd5c4be 100644
+--- a/plat/arm/common/arm_gicv3.c
++++ b/plat/arm/common/arm_gicv3.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2015-2025, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2015-2019, ARM Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -79,7 +79,7 @@ static unsigned int arm_gicv3_mpidr_hash(u_register_t mpidr)
+ 	return plat_arm_calc_core_pos(mpidr);
+ }
+ 
+-gicv3_driver_data_t arm_gic_data __unused = {
++static const gicv3_driver_data_t arm_gic_data __unused = {
+ 	.gicd_base = PLAT_ARM_GICD_BASE,
+ 	.gicr_base = 0U,
+ 	.interrupt_props = arm_interrupt_props,

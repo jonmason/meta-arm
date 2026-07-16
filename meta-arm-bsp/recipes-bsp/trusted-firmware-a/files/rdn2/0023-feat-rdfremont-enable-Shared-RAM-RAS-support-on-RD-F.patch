@@ -1,0 +1,149 @@
+From 0b1d69d38d3127a23670428c0d84ac488a2db368 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Tue, 26 Mar 2024 16:36:28 +0530
+Subject: [PATCH] feat(rdfremont): enable Shared RAM RAS support on RD-Fremont
+ platform
+
+To enable firmware first handling for Shared RAM on RD-Fremont platform
+this patch adds following support
+- Includes SDEI header to enable SDEI feature on RD-Fremont platform.
+- Define CE for root Shared RAM access.
+- Defines a platform RAS event map and respective RAS config data
+  structure.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I6a4dcbf47808c92d2ef07709e41f4c7e51ca73cb
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../platform/rdv3/include/platform_def.h      |  3 ++
+ .../platform/rdv3/include/rdv3_ras.h          | 14 +++++++
+ .../neoverse_rd/platform/rdv3/platform.mk     |  8 ++++
+ .../platform/rdv3/rdv3_bl31_setup.c           |  5 +++
+ .../neoverse_rd/platform/rdv3/rdv3_ras.c      | 41 +++++++++++++++++++
+ 5 files changed, 71 insertions(+)
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3/include/rdv3_ras.h
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3/rdv3_ras.c
+
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3/include/platform_def.h b/plat/arm/board/neoverse_rd/platform/rdv3/include/platform_def.h
+index 0d0db773b0bd..049137ee28a2 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3/include/platform_def.h
++++ b/plat/arm/board/neoverse_rd/platform/rdv3/include/platform_def.h
+@@ -51,4 +51,7 @@
+ /* Protected physical address size */
+ #define PLAT_ARM_PPS			(256 * SZ_1T)
+ 
++#include <nrd_sdei.h>
++#include <nrd_plat_arm_def3.h>
++
+ #endif /* PLATFORM_DEF_H */
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3/include/rdv3_ras.h b/plat/arm/board/neoverse_rd/platform/rdv3/include/rdv3_ras.h
+new file mode 100644
+index 000000000000..0ad734249156
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3/include/rdv3_ras.h
+@@ -0,0 +1,14 @@
++/*
++ * Copyright (c) 2024, ARM Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#ifndef RDV3_RAS_H
++#define RDV3_RAS_H
++
++#include <nrd_ras.h>
++
++extern struct plat_nrd_ras_config ras_config;
++
++#endif /* RDV3_RAS_H */
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk b/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk
+index c1b40e19b5f0..3b46241cd9c9 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk
++++ b/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk
+@@ -142,6 +142,14 @@ endif
+ BL31_CFLAGS	+=      -DPLAT_XLAT_TABLES_DYNAMIC
+ BL2_CFLAGS	+=      -DPLAT_XLAT_TABLES_DYNAMIC
+ 
++ifeq (${ENABLE_FEAT_RAS}, 1)
++ifeq (${FFH_SUPPORT}, 1)
++BL31_SOURCES            +=      ${RDV3_BASE}/rdv3_ras.c	\
++                                ${NRD_COMMON_BASE}/ras/nrd_ras_common.c	\
++                                ${NRD_COMMON_BASE}/ras/nrd_ras_sram.c
++endif
++endif
++
+ # Add the FDT_SOURCES and options for Dynamic Config
+ FDT_SOURCES	+=	${RDV3_BASE}/fdts/${PLAT}_fw_config.dts	\
+ 			${RDV3_BASE}/fdts/${PLAT}_tb_fw_config.dts \
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_bl31_setup.c b/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_bl31_setup.c
+index eb83a58d70a3..7d8b50aca096 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_bl31_setup.c
++++ b/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_bl31_setup.c
+@@ -14,6 +14,7 @@
+ #include <nrd_plat.h>
+ #include <nrd_variant.h>
+ #include <rdv3_rse_comms.h>
++#include <rdv3_ras.h>
+ 
+ #define RT_OWNER 0
+ 
+@@ -194,6 +195,10 @@ void bl31_platform_setup(void)
+ 	if (plat_rse_comms_init() != 0) {
+ 		WARN("Failed initializing AP-RSE comms.\n");
+ 	}
++
++#if ENABLE_FEAT_RAS && FFH_SUPPORT
++        nrd_ras_platform_setup(&ras_config);
++#endif
+ }
+ 
+ #if RESET_TO_BL31
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_ras.c b/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_ras.c
+new file mode 100644
+index 000000000000..47a78eee0cb6
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3/rdv3_ras.c
+@@ -0,0 +1,41 @@
++/*
++ * Copyright (c) 2023-2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <platform_def.h>
++
++#include <nrd_ras.h>
++#include <nrd_sdei.h>
++
++struct nrd_ras_ev_map plat_ras_map[] = {
++	/* Peripheral Shared RAM Root ECC CE interrupt */
++	{NRD_SDEI_DS_EVENT_0, NRD_CSS_RT_RAM_ECC_CE_INT, NRD_RAS_INTR_TYPE_SPI},
++};
++
++/* RAS error record list definition, used by the common RAS framework. */
++struct err_record_info plat_err_records[] = {
++	/* Peripheral Shared RAM Root error record. */
++	ERR_RECORD_MEMMAP_V1(NRD_CSS_ROOT_SRAM_ERB_AP_BASE, 4, NULL,
++				&nrd_ras_sram_intr_handler, 0),
++};
++
++/* RAS error interrupt list definition, used by the common RAS framework. */
++struct ras_interrupt plat_ras_interrupts[] = {
++       {
++               .intr_number = NRD_CSS_RT_RAM_ECC_CE_INT,
++		.err_record = &plat_err_records[0],
++	},
++};
++
++/* Registers the RAS error record list with common RAS framework. */
++REGISTER_ERR_RECORD_INFO(plat_err_records);
++/* Registers the RAS error interrupt info list with common RAS framework. */
++REGISTER_RAS_INTERRUPTS(plat_ras_interrupts);
++
++/* Platform RAS handling config data definition */
++struct plat_nrd_ras_config ras_config = {
++	plat_ras_map,
++	ARRAY_SIZE(plat_ras_map)
++};

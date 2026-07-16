@@ -1,0 +1,118 @@
+From 10e9860fea256c24d6907d0e682b1ad0dcff7b63 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Tue, 15 Apr 2025 16:52:25 +0530
+Subject: [PATCH] refactor(ras): save and restore el1 context if
+ SPMD_SPM_AT_SEL2=0
+
+el1 context is not saved if SPMD_SPM_AT_SEL2=1. Add appropriate checks
+to disable el1 context save and restore. This patch also replaces the
+use of el1 context to read el1 system registers and rather uses the
+newly defined macros.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I12001c1adc9edd5c7c4b3127d161f368cd4f949c
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../neoverse_rd/common/ras/nrd_ras_cpu.c      | 41 ++++++++-----------
+ .../neoverse_rd/common/ras/nrd_ras_sram.c     |  4 ++
+ 2 files changed, 21 insertions(+), 24 deletions(-)
+
+diff --git a/plat/arm/board/neoverse_rd/common/ras/nrd_ras_cpu.c b/plat/arm/board/neoverse_rd/common/ras/nrd_ras_cpu.c
+index 19fb79654959..40572a90cd62 100644
+--- a/plat/arm/board/neoverse_rd/common/ras/nrd_ras_cpu.c
++++ b/plat/arm/board/neoverse_rd/common/ras/nrd_ras_cpu.c
+@@ -62,35 +62,24 @@ static void populate_cpu_err_data(cpu_err_info *cpu_info,
+ 	cpu_info->SecurityState = security_state;
+ 
+ 	/* populate CPU EL1 context information. */
+-	cpu_info->ErrCtxEl1Reg[0]  = read_el1_ctx_common(get_el1_sysregs_ctx(ctx),
+-						  elr_el1);
+-	cpu_info->ErrCtxEl1Reg[1]  = read_el1_ctx_common(get_el1_sysregs_ctx(ctx),
+-						  esr_el1);
+-	cpu_info->ErrCtxEl1Reg[2]  = read_el1_ctx_common(get_el1_sysregs_ctx(ctx),
+-						  far_el1);
++	cpu_info->ErrCtxEl1Reg[0]  = read_elr_el1();
++	cpu_info->ErrCtxEl1Reg[1]  = read_esr_el1();
++	cpu_info->ErrCtxEl1Reg[2]  = read_far_el1();
+ 	cpu_info->ErrCtxEl1Reg[3]  = read_isr_el1();
+-	cpu_info->ErrCtxEl1Reg[4]  = read_el1_ctx_common(get_el1_sysregs_ctx(ctx),
+-						  mair_el1);
++	cpu_info->ErrCtxEl1Reg[4]  = read_mair_el1();
+ 	cpu_info->ErrCtxEl1Reg[5]  = read_midr_el1();
+ 	cpu_info->ErrCtxEl1Reg[6]  = read_mpidr_el1();
+-	cpu_info->ErrCtxEl1Reg[7] = read_ctx_sctlr_el1_reg_errata(ctx);
++	cpu_info->ErrCtxEl1Reg[7]  = read_sctlr_el1();
+ 	cpu_info->ErrCtxEl1Reg[8]  = read_ctx_reg(get_gpregs_ctx(ctx),
+ 						  CTX_GPREG_SP_EL0);
+-	cpu_info->ErrCtxEl1Reg[9]  = read_el1_ctx_common(get_el1_sysregs_ctx(ctx),
+-						  sp_el1);
+-	cpu_info->ErrCtxEl1Reg[10] = read_el1_ctx_common(get_el1_sysregs_ctx(ctx),
+-						  spsr_el1);
+-	cpu_info->ErrCtxEl1Reg[11] = read_ctx_tcr_el1_reg_errata(ctx);
+-	cpu_info->ErrCtxEl1Reg[12] = read_el1_ctx_common(get_el1_sysregs_ctx(ctx),
+-						  tpidr_el0);
+-	cpu_info->ErrCtxEl1Reg[13] = read_el1_ctx_common(get_el1_sysregs_ctx(ctx),
+-						  tpidr_el1);
+-	cpu_info->ErrCtxEl1Reg[14] = read_el1_ctx_common(get_el1_sysregs_ctx(ctx),
+-						  tpidrro_el0);
+-	cpu_info->ErrCtxEl1Reg[15] = read_el1_ctx_common(get_el1_sysregs_ctx(ctx),
+-						  ttbr0_el1);
+-	cpu_info->ErrCtxEl1Reg[16] = read_el1_ctx_common(get_el1_sysregs_ctx(ctx),
+-						  ttbr1_el1);
++	cpu_info->ErrCtxEl1Reg[9]  = read_sp_el1();
++	cpu_info->ErrCtxEl1Reg[10] = read_spsr_el1();
++	cpu_info->ErrCtxEl1Reg[11] = read_tcr_el1();
++	cpu_info->ErrCtxEl1Reg[12] = read_tpidr_el0();
++	cpu_info->ErrCtxEl1Reg[13] = read_tpidr_el1();
++	cpu_info->ErrCtxEl1Reg[14] = read_tpidrro_el0();
++	cpu_info->ErrCtxEl1Reg[15] = read_ttbr0_el1();
++	cpu_info->ErrCtxEl1Reg[16] = read_ttbr1_el1();
+ 
+ #if (CTX_INCLUDE_EL2_REGS && IMAGE_BL31)
+ 	cpu_info->ErrCtxEl2Reg[0]   = read_el2_ctx_common(get_el2_sysregs_ctx(ctx),
+@@ -151,7 +140,9 @@ int nrd_ras_cpu_intr_handler(const struct err_record_info *err_rec,
+ 	uint32_t intr;
+ 	int ret;
+ 
++#if (!CTX_INCLUDE_EL2_REGS)
+ 	cm_el1_sysregs_context_save(NON_SECURE);
++#endif
+ 	intr = data->interrupt;
+ 
+ 	INFO("[CPU RAS] CPU intr received = %d on cpu_id = %d\n",
+@@ -200,7 +191,9 @@ int nrd_ras_cpu_intr_handler(const struct err_record_info *err_rec,
+ 		 * context when sdei_dispatch_event() returns failing result.
+ 		 */
+ 		ERROR("SDEI dispatch failed: %d", ret);
++#if (!CTX_INCLUDE_EL2_REGS)
+ 		cm_el1_sysregs_context_restore(NON_SECURE);
++#endif
+ 		cm_set_next_eret_context(NON_SECURE);
+ 	}
+ 
+diff --git a/plat/arm/board/neoverse_rd/common/ras/nrd_ras_sram.c b/plat/arm/board/neoverse_rd/common/ras/nrd_ras_sram.c
+index 96aa864324c5..a96d11413733 100644
+--- a/plat/arm/board/neoverse_rd/common/ras/nrd_ras_sram.c
++++ b/plat/arm/board/neoverse_rd/common/ras/nrd_ras_sram.c
+@@ -49,7 +49,9 @@ int nrd_ras_sram_intr_handler(const struct err_record_info *err_rec,
+ 	uint32_t clear_status, intr;
+ 	int ret;
+ 
++#if (!CTX_INCLUDE_EL2_REGS)
+ 	cm_el1_sysregs_context_save(NON_SECURE);
++#endif
+ 	intr = data->interrupt;
+ 
+ 	INFO("NRD: Base element RAM interrupt [%d] handler\n", intr);
+@@ -105,7 +107,9 @@ int nrd_ras_sram_intr_handler(const struct err_record_info *err_rec,
+ 		 * context when sdei_dispatch_event() returns failing result.
+ 		 */
+ 		ERROR("SDEI dispatch failed: %d", ret);
++#if (!CTX_INCLUDE_EL2_REGS)
+ 		cm_el1_sysregs_context_restore(NON_SECURE);
++#endif
+ 		cm_set_next_eret_context(NON_SECURE);
+ 	}
+ 

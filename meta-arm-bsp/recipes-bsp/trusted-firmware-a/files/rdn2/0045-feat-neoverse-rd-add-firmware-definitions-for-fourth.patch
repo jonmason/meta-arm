@@ -1,0 +1,2323 @@
+From e2693f7f335d4544620e844c91f459c5966dda2e Mon Sep 17 00:00:00 2001
+From: Joel Goddard <Joel.Goddard@arm.com>
+Date: Mon, 13 May 2024 11:54:57 +0100
+Subject: [PATCH] feat(neoverse-rd): add firmware definitions for fourth gen
+ platforms
+
+Add firmware definitions for the fourth generation of platforms. The
+following files are added -
+
+- nrd_css_fw_def4.h	: for CSS firmware definitions
+- nrd_ros_fw_def4.h 	: for RoS firmware definitions
+- nrd_plat_arm_def4.h	: for platform port macros
+- nrd_pas_def4.h 	: for PAS definitions
+
+All the common files for these platforms are housed under nrd4
+directory.
+
+Signed-off-by: Joel Goddard <joel.goddard@arm.com>
+Signed-off-by: Vijayenthiran Subramaniam <vijayenthiran.subramaniam@arm.com>
+Signed-off-by: Lokesh B V <Lokesh.BV@Arm.com>
+Change-Id: I92ca66c00216eabf2c674d3135c0652d4df7a404
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ drivers/arm/rse/rse_comms.c                   |   2 +-
+ .../common/include/nrd4/nrd_css_def4.h        | 302 ++++++
+ .../common/include/nrd4/nrd_css_fw_def4.h     | 142 +++
+ .../common/include/nrd4/nrd_pas_def4.h        | 649 +++++++++++++
+ .../common/include/nrd4/nrd_plat_arm_def4.h   | 900 ++++++++++++++++++
+ .../common/include/nrd4/nrd_ros_def4.h        |  29 +
+ .../common/include/nrd4/nrd_ros_fw_def4.h     |  44 +
+ plat/arm/board/neoverse_rd/common/nrd_plat4.c | 160 ++++
+ 8 files changed, 2227 insertions(+), 1 deletion(-)
+ create mode 100644 plat/arm/board/neoverse_rd/common/include/nrd4/nrd_css_def4.h
+ create mode 100644 plat/arm/board/neoverse_rd/common/include/nrd4/nrd_css_fw_def4.h
+ create mode 100644 plat/arm/board/neoverse_rd/common/include/nrd4/nrd_pas_def4.h
+ create mode 100644 plat/arm/board/neoverse_rd/common/include/nrd4/nrd_plat_arm_def4.h
+ create mode 100644 plat/arm/board/neoverse_rd/common/include/nrd4/nrd_ros_def4.h
+ create mode 100644 plat/arm/board/neoverse_rd/common/include/nrd4/nrd_ros_fw_def4.h
+ create mode 100644 plat/arm/board/neoverse_rd/common/nrd_plat4.c
+
+diff --git a/drivers/arm/rse/rse_comms.c b/drivers/arm/rse/rse_comms.c
+index 85532a17ce92..c5ed64948dd5 100644
+--- a/drivers/arm/rse/rse_comms.c
++++ b/drivers/arm/rse/rse_comms.c
+@@ -31,7 +31,7 @@ static uint8_t select_protocol_version(const psa_invec *in_vec, size_t in_len,
+ 	size_t i;
+ 
+ 	#ifdef ENABLE_RME
+-	/* Force use of embeded protocol as RSS_COMMS_PROTOCOL_POINTER_ACCESS
++	/* Force use of embeded protocol as RSE_COMMS_PROTOCOL_POINTER_ACCESS
+ 	 * is not supported in RME.
+ 	 */
+ 	return RSE_COMMS_PROTOCOL_EMBED;
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_css_def4.h b/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_css_def4.h
+new file mode 100644
+index 000000000000..af44ad61a239
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_css_def4.h
+@@ -0,0 +1,302 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ * This file contains the CSS specific definitions for the third generation of
++ * platforms.
++ */
++
++#ifndef NRD_CSS_DEF4_H
++#define NRD_CSS_DEF4_H
++
++/*******************************************************************************
++ * CSS memory map related defines
++ ******************************************************************************/
++
++/* Shared RAM */
++#define NRD_CSS_SHARED_SRAM_BASE		UL(0x00000000)
++
++/* General Peripherals */
++#define NRD_CSS_PERIPH_BASE			UL(0x10000000)
++#define NRD_CSS_PERIPH_SIZE			UL(0x20000000)
++
++/* System NCI */
++#define NRD_CSS_SYSTEM_NCI_BASE			UL(0x10000000)
++#define NRD_CSS_SYSTEM_NCI_SIZE			UL(0x04000000)
++
++/* Debug NIC */
++#define NRD_CSS_DEBUG_NIC_BASE			UL(0x18000000)
++#define NRD_CSS_DEBUG_NIC_SIZE			UL(0x01000000)
++
++/* NS UART */
++#define NRD_CSS_NS_UART_BASE			UL(0x1A400000)
++#define NRD_CSS_NS_UART_SIZE			UL(0x00010000)
++
++/* Secure UART */
++#define NRD_CSS_SECURE_UART_BASE		UL(0x1A410000)
++#define NRD_CSS_SECURE_UART_SIZE		UL(0x00010000)
++
++/* Realm UART */
++#define NRD_CSS_REALM_UART_BASE			UL(0x1A420000)
++#define NRD_CSS_REALM_UART_SIZE			UL(0x00010000)
++
++/* Generic Refclk */
++#define NRD_CSS_GENERIC_REFCLK_BASE		UL(0x1A430000)
++#define NRD_CSS_GENERIC_REFCLK_SIZE		UL(0x00010000)
++
++/* NS Watchdog */
++#define NRD_CSS_AP_NS_WDOG_BASE			UL(0x1A440000)
++#define NRD_CSS_AP_NS_WDOG_SIZE			UL(0x00020000)
++
++/* Root Watchdog */
++#define NRD_CSS_AP_ROOT_WDOG_BASE		UL(0x1A460000)
++#define NRD_CSS_AP_ROOT_WDOG_SIZE		UL(0x00020000)
++
++/* Secure Watchdog */
++#define NRD_CSS_AP_SECURE_WDOG_BASE		UL(0x1A480000)
++#define NRD_CSS_AP_SECURE_WDOG_SIZE		UL(0x00020000)
++
++/* SID */
++#define NRD_CSS_SID_BASE			UL(0x1A4A0000)
++#define NRD_CSS_SID_SIZE			UL(0x00010000)
++
++/* SRAM Secure Error Record Block - AP */
++#define NRD_CSS_SECURE_SRAM_ERB_AP_BASE		UL(0x1A4B0000)
++#define NRD_CSS_SECURE_SRAM_ERB_AP_SIZE		UL(0x00010000)
++
++/* SRAM NS Error Record Block - AP */
++#define NRD_CSS_NS_SRAM_ERB_AP_BASE		UL(0x1A4C0000)
++#define NRD_CSS_NS_SRAM_ERB_AP_SIZE		UL(0x00010000)
++
++/* SRAM Root Error Record Block - AP */
++#define NRD_CSS_ROOT_SRAM_ERB_AP_BASE		UL(0x1A4D0000)
++#define NRD_CSS_ROOT_SRAM_ERB_AP_SIZE		UL(0x00010000)
++
++/* SRAM Realm Error Record Block - AP */
++#define NRD_CSS_REALM_SRAM_ERB_AP_BASE		UL(0x1A4E0000)
++#define NRD_CSS_REALM_SRAM_ERB_AP_SIZE		UL(0x00010000)
++
++/* SRAM Secure Error Record Block - SCP */
++#define NRD_CSS_SECURE_SRAM_ERB_SCP_BASE	UL(0x1A4F0000)
++#define NRD_CSS_SECURE_SRAM_ERB_SCP_SIZE	UL(0x00010000)
++
++/* SRAM NS Error Record Block - SCP */
++#define NRD_CSS_NS_SRAM_ERB_SCP_BASE		UL(0x1A500000)
++#define NRD_CSS_NS_SRAM_ERB_SCP_SIZE		UL(0x00010000)
++
++/* SRAM Root Error Record Block - SCP */
++#define NRD_CSS_ROOT_SRAM_ERB_SCP_BASE		UL(0x1A510000)
++#define NRD_CSS_ROOT_SRAM_ERB_SCP_SIZE		UL(0x00010000)
++
++/* SRAM Realm Error Record Block - SCP */
++#define NRD_CSS_REALM_SRAM_ERB_SCP_BASE		UL(0x1A520000)
++#define NRD_CSS_REALM_SRAM_ERB_SCP_SIZE		UL(0x00010000)
++
++/* SRAM Secure Error Record Block - MCP */
++#define NRD_CSS_SECURE_SRAM_ERB_MCP_BASE	UL(0x1A530000)
++#define NRD_CSS_SECURE_SRAM_ERB_MCP_SIZE	UL(0x00010000)
++
++/* SRAM NS Error Record Block - MCP */
++#define NRD_CSS_NS_SRAM_ERB_MCP_BASE		UL(0x1A540000)
++#define NRD_CSS_NS_SRAM_ERB_MCP_SIZE		UL(0x00010000)
++
++/* SRAM Root Error Record Block - MCP */
++#define NRD_CSS_ROOT_SRAM_ERB_MCP_BASE		UL(0x1A550000)
++#define NRD_CSS_ROOT_SRAM_ERB_MCP_SIZE		UL(0x00010000)
++
++/* SRAM Realm Error Record Block - MCP */
++#define NRD_CSS_REALM_SRAM_ERB_MCP_BASE		UL(0x1A560000)
++#define NRD_CSS_REALM_SRAM_ERB_MCP_SIZE		UL(0x00010000)
++
++/* SRAM Secure Error Record Block - RSE */
++#define NRD_CSS_SECURE_SRAM_ERB_RSE_BASE	UL(0x1A570000)
++#define NRD_CSS_SECURE_SRAM_ERB_RSE_SIZE	UL(0x00010000)
++
++/* SRAM NS Error Record Block - RSE */
++#define NRD_CSS_NS_SRAM_ERB_RSE_BASE		UL(0x1A580000)
++#define NRD_CSS_NS_SRAM_ERB_RSE_SIZE		UL(0x00010000)
++
++/* SRAM Root Error Record Block - RSE */
++#define NRD_CSS_ROOT_SRAM_ERB_RSE_BASE		UL(0x1A590000)
++#define NRD_CSS_ROOT_SRAM_ERB_RSE_SIZE		UL(0x00010000)
++
++/* SRAM Realm Error Record Block - RSE */
++#define NRD_CSS_REALM_SRAM_ERB_RSE_BASE		UL(0x1A5A0000)
++#define NRD_CSS_REALM_SRAM_ERB_RSE_SIZE		UL(0x00010000)
++
++/* RSE SRAM Secure Error Record Block - RSM */
++#define NRD_CSS_RSE_SECURE_SRAM_ERB_RSM_BASE	UL(0x1A5B0000)
++#define NRD_CSS_RSE_SECURE_SRAM_ERB_RSM_SIZE	UL(0x00010000)
++
++/* RSE SRAM Secure Error Record Block - RSM */
++#define NRD_CSS_RSE_NS_SRAM_ERB_RSM_BASE	UL(0x1A5C0000)
++#define NRD_CSS_RSE_NS_SRAM_ERB_RSM_SIZE	UL(0x00010000)
++
++/* SCP SRAM Secure Error Record Block - RSM */
++#define NRD_CSS_SCP_SECURE_SRAM_ERB_RSM_BASE	UL(0x1A5D0000)
++#define NRD_CSS_SCP_SECURE_SRAM_ERB_RSM_SIZE	UL(0x00010000)
++
++/* SCP SRAM NS Error Record Block - RSM */
++#define NRD_CSS_SCP_NS_SRAM_ERB_RSM_BASE	UL(0x1A5E0000)
++#define NRD_CSS_SCP_NS_SRAM_ERB_RSM_SIZE	UL(0x00010000)
++
++/* MCP SRAM Secure Error Record Block - RSM */
++#define NRD_CSS_MCP_SECURE_SRAM_ERB_RSM_BASE	UL(0x1A5F0000)
++#define NRD_CSS_MCP_SECURE_SRAM_ERB_RSM_SIZE	UL(0x00010000)
++
++/* MCP SRAM NS Error Record Block - RSM */
++#define NRD_CSS_MCP_NS_SRAM_ERB_RSM_BASE	UL(0x1A600000)
++#define NRD_CSS_MCP_NS_SRAM_ERB_RSM_SIZE	UL(0x00010000)
++
++/* CNTCTL Refclk Readframe */
++#define NRD_CSS_CNTCTL_REFCLK_READFRAME_BASE	UL(0x1A800000)
++#define NRD_CSS_CNTCTL_REFCLK_READFRAME_SIZE	UL(0x00020000)
++
++/* CNTCTL base */
++#define NRD_CSS_SYS_TIMCTL_BASE			UL(0x1A810000)
++
++/* Secure Timer */
++#define NRD_CSS_SECURE_TIMER_CTL_BASE		UL(0x1A820000)
++#define NRD_CSS_SECURE_TIMER_CTL_SIZE		UL(0x00010000)
++
++/* NS Timer */
++#define NRD_CSS_NS_TIMER_CTL_BASE		UL(0x1A830000)
++#define NRD_CSS_NS_TIMER_CTL_SIZE		UL(0x00010000)
++
++/* AP - SCP NS MHU */
++#define NRD_CSS_AP_SCP_NS_MHU_BASE		UL(0x1A900000)
++#define NRD_CSS_AP_SCP_NS_MHU_SIZE		UL(0x00020000)
++
++/* AP - SCP Secure MHU */
++#define NRD_CSS_AP_SCP_SECURE_MHU_BASE		UL(0x1A920000)
++#define NRD_CSS_AP_SCP_SECURE_MHU_SIZE		UL(0x00020000)
++
++/* AP - SCP Root MHU */
++#define NRD_CSS_AP_SCP_ROOT_MHU_BASE		UL(0x1A940000)
++#define NRD_CSS_AP_SCP_ROOT_MHU_SIZE		UL(0x00020000)
++
++/* AP - MCP NS MHU */
++#define NRD_CSS_AP_MCP_NS_MHU_BASE		UL(0x1AA00000)
++#define NRD_CSS_AP_MCP_NS_MHU_SIZE		UL(0x00020000)
++
++/* AP - MCP Secure MHU */
++#define NRD_CSS_AP_MCP_SECURE_MHU_BASE		UL(0x1AA20000)
++#define NRD_CSS_AP_MCP_SECURE_MHU_SIZE		UL(0x00020000)
++
++/* AP - MCP Root MHU */
++#define NRD_CSS_AP_MCP_ROOT_MHU_BASE		UL(0x1AA40000)
++#define NRD_CSS_AP_MCP_ROOT_MHU_SIZE		UL(0x00020000)
++
++/* AP - RSE NS MHU */
++#define NRD_CSS_AP_RSE_NS_MHU_BASE		UL(0x1AB00000)
++#define NRD_CSS_AP_RSE_NS_MHU_SIZE		UL(0x00020000)
++
++/* AP - RSE Secure MHU */
++#define NRD_CSS_AP_RSE_SECURE_MHU_BASE		UL(0x1AB20000)
++#define NRD_CSS_AP_RSE_SECURE_MHU_SIZE		UL(0x00020000)
++
++/* AP - RSE Root MHU */
++#define NRD_CSS_AP_RSE_ROOT_MHU_BASE		UL(0x1AB40000)
++#define NRD_CSS_AP_RSE_ROOT_MHU_SIZE		UL(0x00020000)
++
++/* AP - RSE Realm MHU */
++#define NRD_CSS_AP_RSE_REALM_MHU_BASE		UL(0x1AB60000)
++#define NRD_CSS_AP_RSE_REALM_MHU_SIZE		UL(0x00020000)
++
++/* SCP - MCP - RSE Cross chip MHU */
++#define NRD_CSS_SCP_MCP_RSE_CROSS_CHIP_MHU_BASE	UL(0x1AC00000)
++#define NRD_CSS_SCP_MCP_RSE_CROSS_CHIP_MHU_SIZE	UL(0x00300000)
++
++/* Synchronization Master Tupdate */
++#define NRD_CSS_SYNCNT_MSTUPDTVAL_ADDR_BASE	UL(0x1AF00000)
++#define NRD_CSS_SYNCNT_MSTUPDTVAL_ADDR_SIZE	UL(0x00030000)
++
++/* AP - RSE NS MHU */
++#define NRD_CSS_STM_BASE		UL(0x1E000000)
++#define NRD_CSS_STM_SIZE		UL(0x01000000)
++
++/* SCP - MCP - RSE Shared SRAM */
++#define NRD_CSS_SCP_MCP_RSE_SHARED_SRAM_BASE	UL(0x1F000000)
++#define NRD_CSS_SCP_MCP_RSE_SHARED_SRAM_SIZE	UL(0x00400000)
++
++/* GIC base */
++#define NRD_CSS_GIC_BASE			UL(0x20000000)
++#define NRD_CSS_GIC_SIZE			UL(0x08000000)
++
++/* PCIe MMIO Low */
++#define NRD_CSS_MMIO_L_BASE			UL(0x60000000)
++#define NRD_CSS_MMIO_L_SIZE			UL(0x20000000)
++
++/* CMN */
++#define NRD_CSS_CMN_BASE			ULL(0x100000000)
++#define NRD_CSS_CMN_SIZE			UL(0x40000000)
++
++/* LCP Peripherals */
++#define NRD_CSS_LCP_PERIPHERAL_BASE		ULL(0x140000000)
++#define NRD_CSS_LCP_PERIPHERAL_SIZE		UL(0x40000000)
++
++/* DDR IO */
++#define NRD_CSS_DDR_IO_BASE			ULL(0x180000000)
++#define NRD_CSS_DDR_IO_SIZE			UL(0x40000000)
++
++/* SMMU & NCI IO */
++#define NRD_CSS_SMMU_NCI_IO_BASE		ULL(0x1C0000000)
++#define NRD_CSS_SMMU_NCI_IO_SIZE		UL(0x60000000)
++
++/* IO Virtualization block SMMUv3 */
++#define NRD_CSS_IO_VIRT_SMMUV3_BASE		NRD_CSS_SMMU_NCI_IO_BASE
++#define NRD_CSS_IO_VIRT_SMMUV3_SIZE		UL(0x8000000 * \
++						   MAX_NUM_PCIE_CONTROLLER)
++
++/* GPC SMMU */
++#define NRD_CSS_GPC_SMMUV3_BASE			UL(0x240000000)
++#define NRD_CSS_GPC_SMMUV3_SIZE			UL(0x8000000)
++
++/* DRAM1 */
++#define NRD_CSS_DRAM1_BASE			UL(0x80000000)
++
++/* PCIe ECAM */
++#define NRD_CSS_ECAM_BASE			ULL(0x10000000000)
++#define NRD_CSS_ECAM_SIZE			ULL(0x40000000)
++
++/* PCIe MMIO High */
++#define NRD_CSS_MMIO_H_BASE			ULL(0x10100000000)
++#define NRD_CSS_MMIO_H_SIZE			ULL(0xFE00000000)
++
++/* DRAM2 */
++#define NRD_CSS_DRAM2_BASE			ULL(0x20000000000)
++
++/*******************************************************************************
++ * MHUv3 related definitions
++ ******************************************************************************/
++
++#define MHU_V3_MBX_FRAME_OFFSET			UL(0x10000)
++
++/* MHUv3 Postbox and Mailbox register frame base */
++#define AP_RSE_ROOT_MHU_V3_PBX		NRD_CSS_AP_RSE_ROOT_MHU_BASE
++#define AP_RSE_ROOT_MHU_V3_MBX		NRD_CSS_AP_RSE_ROOT_MHU_BASE + \
++						MHU_V3_MBX_FRAME_OFFSET
++
++#define AP_RSE_SECURE_MHU_V3_PBX	NRD_CSS_AP_RSE_SECURE_MHU_BASE
++#define AP_RSE_SECURE_MHU_V3_MBX	NRD_CSS_AP_RSE_SECURE_MHU_BASE + \
++						MHU_V3_MBX_FRAME_OFFSET
++/* Base Element RAM error definitions */
++#define ERRSTATUS				U(0x10)
++#define ERRADDR					U(0x18)
++
++#define NRD_CSS_RT_RAM_ECC_CE_INT		U(85)
++
++/* CPER region 64KB */
++#if ENABLE_FEAT_RAS && FFH_SUPPORT
++#define NRD_CSS_CPER_BASE			ARM_CPER_DRAM1_BASE
++#define NRD_CSS_CPER_SIZE			ARM_CPER_DRAM1_SIZE
++#endif
++
++/* EINJ region 64KB */
++#if NRD_ERR_INJ_SUPPORT
++#define NRD_CSS_EINJ_BASE			ARM_EINJ_DRAM1_BASE
++#define NRD_CSS_EINJ_SIZE			ARM_EINJ_DRAM1_SIZE
++#endif
++
++#endif /* NRD_CSS_DEF4_H */
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_css_fw_def4.h b/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_css_fw_def4.h
+new file mode 100644
+index 000000000000..c10a7fd19a9b
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_css_fw_def4.h
+@@ -0,0 +1,142 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ * This file contains the CSS-firmware specific definitions for the third
++ * generation of platforms.
++ */
++
++#ifndef NRD_CSS_FW_DEF4_H
++#define NRD_CSS_FW_DEF4_H
++
++#include <nrd_css_def4.h>
++
++/*******************************************************************************
++ * BL sizes
++ ******************************************************************************/
++
++#define NRD_CSS_BL1_RW_SIZE		UL(64 * 1024)	/* 64KB */
++
++#define NRD_CSS_BL1_RO_BASE		NRD_CSS_SHARED_SRAM_BASE
++#define NRD_CSS_BL1_RO_SIZE		UL(0x00019000)
++
++# define NRD_CSS_BL2_SIZE		UL(0x40000)
++
++/*
++ * Since BL31 NOBITS overlays BL2 and BL1-RW, PLAT_ARM_MAX_BL31_SIZE is
++ * calculated using the current BL31 PROGBITS debug size plus the sizes of BL2
++ * and BL1-RW. NRD_BL31_SIZE - is tuned with respect to the actual BL31
++ * PROGBITS size which is around 64-68KB at the time this change is being made.
++ * A buffer of ~35KB is added to account for future expansion of the image,
++ * making it a total of 100KB.
++ */
++#define NRD_CSS_BL31_SIZE		UL(116 * 1024)	/* 116 KB */
++
++#define NRD_CSS_DRAM1_CARVEOUT_SIZE	UL(0x0C000000)	/* 117MB */
++
++/*******************************************************************************
++ * Console config
++ ******************************************************************************/
++
++#define NRD_CSS_UART_CLK_IN_HZ		UL(7372800)
++
++/*******************************************************************************
++ * HW config
++ ******************************************************************************/
++/*
++ * NRD_HW_CONFIG image is reserved and it is placed in this shared
++ * memory location.
++ */
++#define NRD_CSS_HW_CONFIG_IMAGE_BASE        UL(0x21000)
++#define NRD_CSS_HW_CONFIG_IMAGE_SIZE        UL(0x1000)
++
++#define NRD_CSS_HW_CONFIG_MMAP						\
++                MAP_REGION_FLAT(					\
++                        NRD_CSS_HW_CONFIG_IMAGE_BASE,			\
++                        NRD_CSS_HW_CONFIG_IMAGE_SIZE,			\
++                        MT_MEMORY | MT_RW |  EL3_PAS)
++
++/*******************************************************************************
++ * Watchdog config
++ ******************************************************************************/
++
++#define NRD_CSS_AP_SECURE_WDOG_TIMEOUT	UL(100)
++
++/*******************************************************************************
++ * RMM Console Config
++ ******************************************************************************/
++
++#define NRD_CSS_RMM_CONSOLE_BASE		NRD_CSS_REALM_UART_BASE
++#define NRD_CSS_RMM_CONSOLE_BAUD		ARM_CONSOLE_BAUDRATE
++#define NRD_CSS_RMM_CONSOLE_CLK_IN_HZ		UL(14745600)
++#define NRD_CSS_RMM_CONSOLE_NAME		"pl011"
++#define NRD_CSS_RMM_CONSOLE_COUNT		UL(1)
++
++/*******************************************************************************
++* EINJ Set error type with address.
++*******************************************************************************/
++#define NRD_CSS_EINJ_SET_ERROR_TYPE_ADDR	0xFB1E1038
++
++/*******************************************************************************
++ * MMU mapping
++ ******************************************************************************/
++
++#define NRD_CSS_PERIPH_MMAP(n)						\
++		MAP_REGION_FLAT(					\
++			NRD_REMOTE_CHIP_MEM_OFFSET(n) +			\
++			NRD_CSS_PERIPH_BASE,				\
++			NRD_CSS_PERIPH_SIZE,				\
++			MT_DEVICE | MT_RW | EL3_PAS)
++
++#define NRD_CSS_SHARED_RAM_MMAP(n)					\
++		MAP_REGION_FLAT(					\
++			NRD_REMOTE_CHIP_MEM_OFFSET(n) +			\
++			ARM_SHARED_RAM_BASE,				\
++			ARM_SHARED_RAM_SIZE,				\
++			MT_MEMORY | MT_RW | EL3_PAS)
++
++#define NRD_CSS_GPC_SMMU_SMMUV3_MMAP					\
++		MAP_REGION_FLAT(					\
++			NRD_CSS_GPC_SMMUV3_BASE,			\
++			NRD_CSS_GPC_SMMUV3_SIZE,			\
++			MT_DEVICE | MT_RW | EL3_PAS)
++
++#define NRD_CSS_IO_VIRT_SMMUV3_MMAP(n)					\
++		MAP_REGION_FLAT(					\
++			NRD_REMOTE_CHIP_MEM_OFFSET(n) +			\
++			NRD_CSS_IO_VIRT_SMMUV3_BASE,			\
++			NRD_CSS_IO_VIRT_SMMUV3_SIZE,			\
++			MT_DEVICE | MT_RW | EL3_PAS)
++
++#define NRD_CSS_BL1_RW_MMAP						\
++		MAP_REGION_FLAT(					\
++			BL1_RW_BASE,					\
++			BL1_RW_LIMIT - BL1_RW_BASE,			\
++			MT_MEMORY | MT_RW | EL3_PAS)
++
++#define NRD_CSS_NS_DRAM1_MMAP						\
++		MAP_REGION_FLAT(					\
++			ARM_NS_DRAM1_BASE,				\
++			ARM_NS_DRAM1_SIZE,				\
++			MT_MEMORY | MT_RW | MT_NS)
++
++#define NRD_CSS_GPT_L1_DRAM_MMAP					\
++		MAP_REGION_FLAT(					\
++			ARM_L1_GPT_BASE,				\
++			ARM_L1_GPT_SIZE,				\
++			MT_MEMORY | MT_RW | EL3_PAS)
++
++#define NRD_CSS_EL3_RMM_SHARED_MEM_MMAP					\
++		MAP_REGION_FLAT(					\
++			ARM_EL3_RMM_SHARED_BASE,			\
++			ARM_EL3_RMM_SHARED_SIZE,			\
++			MT_MEMORY | MT_RW | MT_REALM)
++
++#define NRD_CSS_RMM_REGION_MMAP						\
++		MAP_REGION_FLAT(					\
++			ARM_REALM_BASE,					\
++			ARM_REALM_SIZE,					\
++			MT_DEVICE | MT_RW | MT_REALM)
++
++#endif /* NRD_CSS_FW_DEF4_H */
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_pas_def4.h b/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_pas_def4.h
+new file mode 100644
+index 000000000000..ebf170df513a
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_pas_def4.h
+@@ -0,0 +1,649 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#ifndef NRD_PAS_DEF4_H
++#define NRD_PAS_DEF4_H
++
++#ifndef __ASSEMBLER__
++#include <stddef.h>
++#include <lib/gpt_rme/gpt_rme.h>
++#endif
++
++#include <nrd_css_def4.h>
++
++/*****************************************************************************
++ * PAS regions used to initialize the Granule Protection Table (GPT)
++ ****************************************************************************/
++
++/*
++ * =====================================================================
++ * Base Addr        |Size    |L? GPT |PAS    |Content                  |
++ * =====================================================================
++ * 0x00000000       |256MB   |L0 GPT |ANY    |SHARED RAM               |
++ * 0x0FFFFFFF       |        |       |       |AP EXPANSION             |
++ * ---------------------------------------------------------------------
++ * 0x10000000       |64MB    |L1 GPT |ROOT   |SYSTEM NCI               |
++ * 0x13FFFFFF       |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x18000000       |16MB    |L1 GPT |SECURE |DEBUG NIC                |
++ * 0x18FFFFFF       |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x1A400000       |64KB    |L1 GPT |NS     |NS UART                  |
++ * 0x1A40FFFF       |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x1A410000       |64KB    |L1 GPT |SECURE |SECURE UART              |
++ * 0x1A41FFFF       |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x1A420000       |64KB    |L1 GPT |REALM  |REALM UART               |
++ * 0x1A42FFFF       |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x1A430000       |64KB    |L1 GPT |SECURE |GENERIC REFCLK           |
++ * 0x1A43FFFF       |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x1A440000       |128KB   |L1 GPT |NS     |AP NS WDOG               |
++ * 0x1A45FFFF       |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x1A460000       |128KB   |L1 GPT |ROOT   |AP ROOT WDOG             |
++ * 0x1A47FFFF       |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x1A480000       |128KB   |L1 GPT |SECURE |AP SECURE WDOG           |
++ * 0x1A49FFFF       |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x1A4A0000       |64KB    |L1 GPT |NS     |SID                      |
++ * 0x1A4AFFFF       |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x1A4B0000       |64KB    |L1 GPT |SECURE |SECURE SRAM ERROR        |
++ * 0x1A4BFFFF       |        |       |       |RECORD BLOCK - AP        |
++ * ---------------------------------------------------------------------
++ * 0x1A4C0000       |64KB    |L1 GPT |NS     |NS SRAM ERROR            |
++ * 0x1A4CFFFF       |        |       |       |RECORD BLOCK - AP        |
++ * ---------------------------------------------------------------------
++ * 0x1A4D0000       |64KB    |L1 GPT |ROOT   |ROOT SRAM ERROR          |
++ * 0x1A4DFFFF       |        |       |       |RECORD BLOCK - AP        |
++ * ---------------------------------------------------------------------
++ * 0x1A4E0000       |64KB    |L1 GPT |REALM  |REALM SRAM ERROR         |
++ * 0x1A4EFFFF       |        |       |       |RECORD BLOCK - AP        |
++ * ---------------------------------------------------------------------
++ * 0x1A4F0000       |64KB    |L1 GPT |SECURE |SECURE SRAM ERROR        |
++ * 0x1A4FFFFF       |        |       |       |RECORD BLOCK - SCP       |
++ * ---------------------------------------------------------------------
++ * 0x1A500000       |64KB    |L1 GPT |NS     |NS SRAM ERROR            |
++ * 0x1A50FFFF       |        |       |       |RECORD BLOCK - SCP       |
++ * ---------------------------------------------------------------------
++ * 0x1A510000       |64KB    |L1 GPT |ROOT   |ROOT SRAM ERROR          |
++ * 0x1A51FFFF       |        |       |       |RECORD BLOCK - SCP       |
++ * ---------------------------------------------------------------------
++ * 0x1A520000       |64KB    |L1 GPT |REALM  |REALM SRAM ERROR         |
++ * 0x1A52FFFF       |        |       |       |RECORD BLOCK - SCP       |
++ * ---------------------------------------------------------------------
++ * 0x1A530000       |64KB    |L1 GPT |SECURE |SECURE SRAM ERROR        |
++ * 0x1A53FFFF       |        |       |       |RECORD BLOCK - MCP       |
++ * ---------------------------------------------------------------------
++ * 0x1A540000       |64KB    |L1 GPT |NS     |NS SRAM ERROR            |
++ * 0x1A54FFFF       |        |       |       |RECORD BLOCK - MCP       |
++ * ---------------------------------------------------------------------
++ * 0x1A550000       |64KB    |L1 GPT |ROOT   |ROOT SRAM ERROR          |
++ * 0x1A55FFFF       |        |       |       |RECORD BLOCK - MCP       |
++ * ---------------------------------------------------------------------
++ * 0x1A560000       |64KB    |L1 GPT |REALM  |REALM SRAM ERROR         |
++ * 0x1A56FFFF       |        |       |       |RECORD BLOCK - MCP       |
++ * ---------------------------------------------------------------------
++ * 0x1A570000       |64KB    |L1 GPT |SECURE |SECURE SRAM ERROR        |
++ * 0x1A57FFFF       |        |       |       |RECORD BLOCK - RSE       |
++ * ---------------------------------------------------------------------
++ * 0x1A580000       |64KB    |L1 GPT |NS     |NS SRAM ERROR            |
++ * 0x1A58FFFF       |        |       |       |RECORD BLOCK - RSE       |
++ * ---------------------------------------------------------------------
++ * 0x1A590000       |64KB    |L1 GPT |ROOT   |ROOT SRAM ERROR          |
++ * 0x1A59FFFF       |        |       |       |RECORD BLOCK - RSE       |
++ * ---------------------------------------------------------------------
++ * 0x1A5A0000       |64KB    |L1 GPT |REALM  |REALM SRAM ERROR         |
++ * 0x1A5AFFFF       |        |       |       |RECORD BLOCK - RSE       |
++ * ---------------------------------------------------------------------
++ * 0x1A5B0000       |64KB    |L1 GPT |SECURE |RSE SECURE SRAM ERROR    |
++ * 0x1A5BFFFF       |        |       |       |RECORD BLOCK - RSM       |
++ * ---------------------------------------------------------------------
++ * 0x1A5C0000       |64KB    |L1 GPT |NS     |RSE NS SRAM ERROR        |
++ * 0x1A5CFFFF       |        |       |       |RECORD BLOCK - RSM       |
++ * ---------------------------------------------------------------------
++ * 0x1A5D0000       |64KB    |L1 GPT |SECURE |SCP SECURE SRAM ERROR    |
++ * 0x1A5DFFFF       |        |       |       |RECORD BLOCK - RSM       |
++ * ---------------------------------------------------------------------
++ * 0x1A5E0000       |64KB    |L1 GPT |NS     |SCP NS SRAM ERROR        |
++ * 0x1A5EFFFF       |        |       |       |RECORD BLOCK - RSM       |
++ * ---------------------------------------------------------------------
++ * 0x1A5F0000       |64KB    |L1 GPT |SECURE |MCP SECURE SRAM ERROR    |
++ * 0x1A5FFFFF       |        |       |       |RECORD BLOCK - RSM       |
++ * ---------------------------------------------------------------------
++ * 0x1A600000       |64KB    |L1 GPT |NS     |MCP NS SRAM ERROR        |
++ * 0x1A60FFFF       |        |       |       |RECORD BLOCK - RSM       |
++ * ---------------------------------------------------------------------
++ * 0x1A800000       |128KB   |L1 GPT |NS     |CNTCTL REFCLK            |
++ * 0x1A81FFFF       |        |       |       |READ FRAME               |
++ * ---------------------------------------------------------------------
++ * 0x1A820000       |64KB    |L1 GPT |SECURE |SECURE TIMER CTL         |
++ * 0x1A82FFFF       |        |       |       |BASE FRAME               |
++ * ---------------------------------------------------------------------
++ * 0x1A830000       |64KB    |L1 GPT |NS     |NS TIMER CTL             |
++ * 0x1A83FFFF       |        |       |       |BASE FRAME               |
++ * ---------------------------------------------------------------------
++ * 0x1A900000       |128KB   |L1 GPT |NS     |AP-SCP NS                |
++ * 0x1A91FFFF       |        |       |       |MHU                      |
++ * ---------------------------------------------------------------------
++ * 0x1A920000       |128KB   |L1 GPT |SECURE |AP-SCP SECURE            |
++ * 0x1A93FFFF       |        |       |       |MHU                      |
++ * ---------------------------------------------------------------------
++ * 0x1A940000       |128KB   |L1 GPT |ROOT   |AP-SCP ROOT              |
++ * 0x1A95FFFF       |        |       |       |MHU                      |
++ * ---------------------------------------------------------------------
++ * 0x1AA00000       |128KB   |L1 GPT |NS     |AP-MCP NS                |
++ * 0x1AA1FFFF       |        |       |       |MHU                      |
++ * ---------------------------------------------------------------------
++ * 0x1AA20000       |128KB   |L1 GPT |SECURE |AP-MCP SECURE            |
++ * 0x1AA3FFFF       |        |       |       |MHU                      |
++ * ---------------------------------------------------------------------
++ * 0x1AA40000       |128KB   |L1 GPT |ROOT   |AP-MCP ROOT              |
++ * 0x1AA5FFFF       |        |       |       |MHU                      |
++ * ---------------------------------------------------------------------
++ * 0x1AB00000       |128KB   |L1 GPT |NS     |AP-MCP NS                |
++ * 0x1AB1FFFF       |        |       |       |MHU                      |
++ * ---------------------------------------------------------------------
++ * 0x1AB20000       |128KB   |L1 GPT |SECURE |AP-RSE SECURE            |
++ * 0x1AB3FFFF       |        |       |       |MHU                      |
++ * ---------------------------------------------------------------------
++ * 0x1AB40000       |128KB   |L1 GPT |ROOT   |AP-RSE ROOT              |
++ * 0x1AB5FFFF       |        |       |       |MHU                      |
++ * ---------------------------------------------------------------------
++ * 0x1AB60000       |128KB   |L1 GPT |REALM  |AP-RSE REALM             |
++ * 0x1AB7FFFF       |        |       |       |MHU                      |
++ * ---------------------------------------------------------------------
++ * 0x1AC00000       |3MB     |L1 GPT |ROOT   |SCP MCP RSE              |
++ * 0x1AEFFFFF       |        |       |       |CROSS CHIP MHU           |
++ * ---------------------------------------------------------------------
++ * 0x1AF00000       |192KB   |L1 GPT |SECURE |SYNCNT                   |
++ * 0x1AF2FFFF       |        |       |       |MSTUPDTVAL_ADDR          |
++ * ---------------------------------------------------------------------
++ * 0x1E000000       |16MB    |L1 GPT |NS     |STM                      |
++ * 0x1EFFFFFF       |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x1F000000       |4MB     |L1 GPT |ANY    |SHARED SRAM              |
++ * 0x1F3FFFFF       |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x20000000       |128MB   |L1 GPT |ANY    |GIC CLAYTON              |
++ * 0x27FFFFFF       |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x60000000       |512MB   |L1 GPT |ANY    |MMIO_L                   |
++ * 0x7FFFFFFF       |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x80000000       |2GB -   |L1 GPT |NS     |NS DRAM                  |
++ * 0xFFFE2BFF       |117MB   |       |       |                         |
++ * --------------------------------------------------------------------|
++ * 0x80000000       |117MB - |L1 GPT |SECURE |BL32                     |
++ * 0x37FFFFFF       |64MB    |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x80000000       |4KB     |L1 GPT |SECURE |EVENT LOG                |
++ * 0x37FFFFFF       |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x80000000       |26MB    |L1 GPT |REALM  |RMM                      |
++ * 0x37FFFFFF       |        |       |       |TF-A SHARED              |
++ * ---------------------------------------------------------------------
++ * 0x80000000       |2MB     |L1 GPT |ROOT   |L1GPT                    |
++ * 0x37FFFFFF       |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x100080000000   |2GB     |L1 GPT |NS     |DRAM 1 CHIP 3            |
++ * 0x1000FFFFFFFF   |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x200080000000   |2GB     |L1 GPT |NS     |DRAM 1 CHIP 2            |
++ * 0x2000FFFFFFFF   |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x300080000000   |2GB     |L1 GPT |NS     |DRAM 1 CHIP 1            |
++ * 0x3000FFFFFFFF   |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x100000000      |1GB     |L1 GPT |ANY    |CMN                      |
++ * 0x13FFFFFFF      |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x140000000      |1GB     |L1 GPT |ANY    |LCP PERIPHERALS          |
++ * 0x13FFFFFFF      |        |       |       |DDR                      |
++ * ---------------------------------------------------------------------
++ * 0x180000000      |1GB     |L1 GPT |ANY    |DDR IO                   |
++ * 0x27FFFFFFF      |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x1C0000000      |1.5GB   |L1 GPT |ANY    |SMMU & NCI IO            |
++ * 0x21FFFFFFF      |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x240000000      |128MB   |L1 GPT |ROOT   |GPC SMMU                 |
++ * 0x248000000      |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x10000000000    |1GB     |L1 GPT |ANY    |ECAM                     |
++ * 0x1003FFFFFFF    |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x10100000000    |0.996TB |L1 GPT |ANY    |MMIO_H                   |
++ * 0x1FFFFFFFFFF    |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x20000000000    |6GB     |L1 GPT |ANY    |DRAM 2 CHIP 0            |
++ * 0x2017FFFFFFF    |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x30000000000    |6GB     |L1 GPT |ANY    |DRAM 2 CHIP 1            |
++ * 0x3017FFFFFFF    |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x40000000000    |6GB     |L1 GPT |ANY    |DRAM 2 CHIP 2            |
++ * 0x4017FFFFFFF    |        |       |       |                         |
++ * ---------------------------------------------------------------------
++ * 0x50000000000    |6GB     |L1 GPT |ANY    |DRAM 2 CHIP 3            |
++ * 0x5017FFFFFFF    |        |       |       |                         |
++ * =====================================================================
++ */
++
++/*******************************************************************************
++ * Multichip config
++ ******************************************************************************/
++
++#define NRD_MC_BASE(base, n)		(NRD_REMOTE_CHIP_MEM_OFFSET(n) + base)
++#define NRD_MC_DRAM_BASE(base, n)	(NRD_REMOTE_DRAM_MEM_OFFSET(n) + base)
++
++/*******************************************************************************
++ * PAS mappings
++ ******************************************************************************/
++
++#define NRD_PAS_SHARED_SRAM						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_SHARED_SRAM_BASE,			\
++			NRD_CSS_SHARED_SRAM_SIZE,			\
++			GPT_GPI_ANY)
++
++#define NRD_PAS_SYSTEM_NCI						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_SYSTEM_NCI_BASE,			\
++			NRD_CSS_SYSTEM_NCI_SIZE,			\
++			GPT_GPI_ROOT)
++
++#define NRD_PAS_DEBUG_NIC						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_DEBUG_NIC_BASE,				\
++			NRD_CSS_DEBUG_NIC_SIZE,				\
++			GPT_GPI_SECURE)
++
++#define NRD_PAS_NS_UART							\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_NS_UART_BASE,				\
++			NRD_CSS_NS_UART_SIZE,				\
++			GPT_GPI_NS)
++
++#define NRD_PAS_REALM_UART						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_REALM_UART_BASE,			\
++			NRD_CSS_REALM_UART_SIZE,			\
++			GPT_GPI_REALM)
++
++#define NRD_PAS_AP_NS_WDOG						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_AP_NS_WDOG_BASE,			\
++			NRD_CSS_AP_NS_WDOG_SIZE,			\
++			GPT_GPI_NS)
++
++#define NRD_PAS_AP_ROOT_WDOG						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_AP_ROOT_WDOG_BASE,			\
++			NRD_CSS_AP_ROOT_WDOG_SIZE,			\
++			GPT_GPI_ROOT)
++
++#define NRD_PAS_AP_SECURE_WDOG						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_AP_SECURE_WDOG_BASE,			\
++			NRD_CSS_AP_SECURE_WDOG_SIZE,			\
++			GPT_GPI_SECURE)
++
++#define NRD_PAS_SECURE_SRAM_ERB_AP					\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_SECURE_SRAM_ERB_AP_BASE,		\
++			NRD_CSS_SECURE_SRAM_ERB_AP_SIZE,		\
++			GPT_GPI_SECURE)
++
++#define NRD_PAS_NS_SRAM_ERB_AP						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_NS_SRAM_ERB_AP_BASE,			\
++			NRD_CSS_NS_SRAM_ERB_AP_SIZE,			\
++			GPT_GPI_NS)
++
++#define NRD_PAS_ROOT_SRAM_ERB_AP					\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_ROOT_SRAM_ERB_AP_BASE,			\
++			NRD_CSS_ROOT_SRAM_ERB_AP_SIZE,			\
++			GPT_GPI_ROOT)
++
++#define NRD_PAS_REALM_SRAM_ERB_AP					\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_REALM_SRAM_ERB_AP_BASE,			\
++			NRD_CSS_REALM_SRAM_ERB_AP_SIZE,			\
++			GPT_GPI_REALM)
++
++#define NRD_PAS_SECURE_SRAM_ERB_SCP					\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_SECURE_SRAM_ERB_SCP_BASE,		\
++			NRD_CSS_SECURE_SRAM_ERB_SCP_SIZE,		\
++			GPT_GPI_SECURE)
++
++#define NRD_PAS_NS_SRAM_ERB_SCP						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_NS_SRAM_ERB_SCP_BASE,			\
++			NRD_CSS_NS_SRAM_ERB_SCP_SIZE,			\
++			GPT_GPI_NS)
++
++#define NRD_PAS_ROOT_SRAM_ERB_SCP					\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_ROOT_SRAM_ERB_SCP_BASE,			\
++			NRD_CSS_ROOT_SRAM_ERB_SCP_SIZE,			\
++			GPT_GPI_ROOT)
++
++#define NRD_PAS_REALM_SRAM_ERB_SCP					\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_REALM_SRAM_ERB_SCP_BASE,		\
++			NRD_CSS_REALM_SRAM_ERB_SCP_SIZE,		\
++			GPT_GPI_REALM)
++
++#define NRD_PAS_SECURE_SRAM_ERB_MCP					\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_SECURE_SRAM_ERB_MCP_BASE,		\
++			NRD_CSS_SECURE_SRAM_ERB_MCP_SIZE,		\
++			GPT_GPI_SECURE)
++
++#define NRD_PAS_NS_SRAM_ERB_MCP						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_NS_SRAM_ERB_MCP_BASE,			\
++			NRD_CSS_NS_SRAM_ERB_MCP_SIZE,			\
++			GPT_GPI_NS)
++
++#define NRD_PAS_ROOT_SRAM_ERB_MCP					\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_ROOT_SRAM_ERB_MCP_BASE,			\
++			NRD_CSS_ROOT_SRAM_ERB_MCP_SIZE,			\
++			GPT_GPI_ROOT)
++
++#define NRD_PAS_REALM_SRAM_ERB_MCP					\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_REALM_SRAM_ERB_MCP_BASE,		\
++			NRD_CSS_REALM_SRAM_ERB_MCP_SIZE,		\
++			GPT_GPI_REALM)
++
++#define NRD_PAS_SECURE_SRAM_ERB_RSE					\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_SECURE_SRAM_ERB_RSE_BASE,		\
++			NRD_CSS_SECURE_SRAM_ERB_RSE_SIZE,		\
++			GPT_GPI_SECURE)
++
++#define NRD_PAS_NS_SRAM_ERB_RSE						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_NS_SRAM_ERB_RSE_BASE,			\
++			NRD_CSS_NS_SRAM_ERB_RSE_SIZE,			\
++			GPT_GPI_NS)
++
++#define NRD_PAS_ROOT_SRAM_ERB_RSE					\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_ROOT_SRAM_ERB_RSE_BASE,			\
++			NRD_CSS_ROOT_SRAM_ERB_RSE_SIZE,			\
++			GPT_GPI_ROOT)
++
++#define NRD_PAS_REALM_SRAM_ERB_RSE					\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_REALM_SRAM_ERB_RSE_BASE,		\
++			NRD_CSS_REALM_SRAM_ERB_RSE_SIZE,		\
++			GPT_GPI_REALM)
++
++#define NRD_PAS_RSE_SECURE_SRAM_ERB_RSM					\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_RSE_SECURE_SRAM_ERB_RSM_BASE,		\
++			NRD_CSS_RSE_SECURE_SRAM_ERB_RSM_SIZE,		\
++			GPT_GPI_SECURE)
++
++#define NRD_PAS_RSE_NS_SRAM_ERB_RSM					\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_RSE_NS_SRAM_ERB_RSM_BASE,		\
++			NRD_CSS_RSE_NS_SRAM_ERB_RSM_SIZE,		\
++			GPT_GPI_NS)
++
++#define NRD_PAS_SCP_SECURE_SRAM_ERB_RSM					\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_SCP_SECURE_SRAM_ERB_RSM_BASE,		\
++			NRD_CSS_SCP_SECURE_SRAM_ERB_RSM_SIZE,		\
++			GPT_GPI_SECURE)
++
++#define NRD_PAS_SCP_NS_SRAM_ERB_RSM					\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_SCP_NS_SRAM_ERB_RSM_BASE,		\
++			NRD_CSS_SCP_NS_SRAM_ERB_RSM_SIZE,		\
++			GPT_GPI_NS)
++
++#define NRD_PAS_MCP_SECURE_SRAM_ERB_RSM					\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_MCP_SECURE_SRAM_ERB_RSM_BASE,		\
++			NRD_CSS_MCP_SECURE_SRAM_ERB_RSM_SIZE,		\
++			GPT_GPI_SECURE)
++
++#define	NRD_PAS_MCP_NS_SRAM_ERB_RSM					\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_MCP_NS_SRAM_ERB_RSM_BASE,		\
++			NRD_CSS_MCP_NS_SRAM_ERB_RSM_SIZE,		\
++			GPT_GPI_NS)
++
++#define NRD_PAS_AP_SCP_ROOT_MHU						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_AP_SCP_ROOT_MHU_BASE,			\
++			NRD_CSS_AP_SCP_ROOT_MHU_SIZE,			\
++			GPT_GPI_ROOT)
++
++#define NRD_PAS_AP_MCP_NS_MHU						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_AP_MCP_NS_MHU_BASE,			\
++			NRD_CSS_AP_MCP_NS_MHU_SIZE,			\
++			GPT_GPI_NS)
++
++#define NRD_PAS_AP_MCP_SECURE_MHU					\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_AP_MCP_SECURE_MHU_BASE,			\
++			NRD_CSS_AP_MCP_SECURE_MHU_SIZE,			\
++			GPT_GPI_SECURE)
++
++#define NRD_PAS_AP_MCP_ROOT_MHU						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_AP_MCP_ROOT_MHU_BASE,			\
++			NRD_CSS_AP_MCP_ROOT_MHU_SIZE,			\
++			GPT_GPI_ROOT)
++
++#define NRD_PAS_AP_RSE_NS_MHU						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_AP_RSE_NS_MHU_BASE,			\
++			NRD_CSS_AP_RSE_NS_MHU_SIZE,			\
++			GPT_GPI_NS)
++
++#define NRD_PAS_AP_RSE_SECURE_MHU					\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_AP_RSE_SECURE_MHU_BASE,			\
++			NRD_CSS_AP_RSE_SECURE_MHU_SIZE,			\
++			GPT_GPI_SECURE)
++
++#define NRD_PAS_AP_RSE_ROOT_MHU						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_AP_RSE_ROOT_MHU_BASE,			\
++			NRD_CSS_AP_RSE_ROOT_MHU_SIZE,			\
++			GPT_GPI_ROOT)
++
++#define NRD_PAS_AP_RSE_REALM_MHU					\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_AP_RSE_REALM_MHU_BASE,			\
++			NRD_CSS_AP_RSE_REALM_MHU_SIZE,			\
++			GPT_GPI_REALM)
++
++#define NRD_PAS_SCP_MCP_RSE_CROSS_CHIP_MHU				\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_SCP_MCP_RSE_CROSS_CHIP_MHU_BASE,	\
++			NRD_CSS_SCP_MCP_RSE_CROSS_CHIP_MHU_SIZE,	\
++			GPT_GPI_ROOT)
++
++#define NRD_PAS_SYNCNT_MSTUPDTVAL_ADDR					\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_SYNCNT_MSTUPDTVAL_ADDR_BASE,		\
++			NRD_CSS_SYNCNT_MSTUPDTVAL_ADDR_SIZE,		\
++			GPT_GPI_SECURE)
++
++#define NRD_PAS_STM						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_STM_BASE,			\
++			NRD_CSS_STM_SIZE,			\
++			GPT_GPI_NS)
++
++#define NRD_PAS_SCP_MCP_RSE_SHARED_SRAM					\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_SCP_MCP_RSE_SHARED_SRAM_BASE,		\
++			NRD_CSS_SCP_MCP_RSE_SHARED_SRAM_SIZE,		\
++			GPT_GPI_ANY)
++
++#define NRD_PAS_GIC							\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_GIC_BASE,				\
++			NRD_CSS_GIC_SIZE,				\
++			GPT_GPI_ANY)
++
++#define NRD_PAS_MMIO_L							\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_MMIO_L_BASE,				\
++			NRD_CSS_MMIO_L_SIZE,				\
++			GPT_GPI_ANY)
++
++#define NRD_PAS_NS_DRAM							\
++		GPT_MAP_REGION_GRANULE(					\
++			ARM_NS_DRAM1_BASE,				\
++			ARM_NS_DRAM1_SIZE,				\
++			GPT_GPI_NS)
++
++#define NRD_PAS_DRAM1_CHIP1						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_MC_BASE(NRD_CSS_DRAM1_BASE, 1),		\
++			ARM_DRAM1_SIZE,					\
++			GPT_GPI_NS)
++
++#define NRD_PAS_DRAM1_CHIP2						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_MC_BASE(NRD_CSS_DRAM1_BASE, 2),		\
++			ARM_DRAM1_SIZE,					\
++			GPT_GPI_NS)
++
++#define NRD_PAS_DRAM1_CHIP3						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_MC_BASE(NRD_CSS_DRAM1_BASE, 3),		\
++			ARM_DRAM1_SIZE,					\
++			GPT_GPI_NS)
++
++#if (defined(SPD_tspd) || defined(SPD_opteed) || defined(SPD_spmd)) &&	\
++	defined(MEASURED_BOOT)
++#define NRD_PAS_EVENT_LOG						\
++		GPT_MAP_REGION_GRANULE(					\
++			ARM_EVENT_LOG_DRAM1_BASE,			\
++			ARM_EVENT_LOG_DRAM1_SIZE,			\
++			GPT_GPI_SECURE)
++#endif
++
++#if defined(SPD_spmd)
++#define NRD_PAS_BL32							\
++		GPT_MAP_REGION_GRANULE(					\
++			PLAT_ARM_SPMC_BASE,				\
++			PLAT_ARM_SPMC_SIZE,				\
++			GPT_GPI_SECURE)
++#endif
++
++#define NRD_PAS_RMM							\
++		GPT_MAP_REGION_GRANULE(					\
++			ARM_REALM_BASE,					\
++			ARM_REALM_SIZE +				\
++			ARM_EL3_RMM_SHARED_SIZE,			\
++			GPT_GPI_REALM)
++
++#define NRD_PAS_L1GPT							\
++		GPT_MAP_REGION_GRANULE(					\
++			ARM_L1_GPT_BASE,				\
++			ARM_L1_GPT_SIZE,				\
++			GPT_GPI_ROOT)
++
++#define NRD_PAS_CMN							\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_CMN_BASE,				\
++			NRD_CSS_CMN_SIZE,				\
++			GPT_GPI_ANY)
++
++#define NRD_PAS_LCP_PERIPHERAL						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_LCP_PERIPHERAL_BASE,			\
++			NRD_CSS_LCP_PERIPHERAL_SIZE,			\
++			GPT_GPI_ANY)
++
++#define NRD_PAS_DDR_IO							\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_DDR_IO_BASE,				\
++			NRD_CSS_DDR_IO_SIZE,				\
++			GPT_GPI_ANY)
++
++#define NRD_PAS_SMMU_NCI_IO						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_SMMU_NCI_IO_BASE,			\
++			NRD_CSS_SMMU_NCI_IO_SIZE,			\
++			GPT_GPI_ANY)
++
++#define NRD_PAS_GPC_SMMUV3						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_GPC_SMMUV3_BASE,			\
++			NRD_CSS_GPC_SMMUV3_SIZE,			\
++			GPT_GPI_ROOT)
++
++#define NRD_PAS_ECAM							\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_ECAM_BASE,				\
++			NRD_CSS_ECAM_SIZE,				\
++			GPT_GPI_ANY)
++
++#define NRD_PAS_MMIO_H							\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_CSS_MMIO_H_BASE,				\
++			NRD_CSS_MMIO_H_SIZE,				\
++			GPT_GPI_ANY)
++
++#define NRD_PAS_DRAM2_CHIP0						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_MC_DRAM_BASE(NRD_CSS_DRAM2_BASE, 0),		\
++			ARM_DRAM2_SIZE,					\
++			GPT_GPI_NS)
++
++#define NRD_PAS_DRAM2_CHIP1						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_MC_DRAM_BASE(NRD_CSS_DRAM2_BASE, 1),		\
++			ARM_DRAM2_SIZE,					\
++			GPT_GPI_NS)
++
++#define NRD_PAS_DRAM2_CHIP2						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_MC_DRAM_BASE(NRD_CSS_DRAM2_BASE, 2),		\
++			ARM_DRAM2_SIZE,					\
++			GPT_GPI_NS)
++
++#define NRD_PAS_DRAM2_CHIP3						\
++		GPT_MAP_REGION_GRANULE(					\
++			NRD_MC_DRAM_BASE(NRD_CSS_DRAM2_BASE, 3),		\
++			ARM_DRAM2_SIZE,					\
++			GPT_GPI_NS)
++
++#if ENABLE_FEAT_RAS && FFH_SUPPORT
++#define NRD_PAS_CPER		GPT_MAP_REGION_GRANULE(			\
++				NRD_CSS_CPER_BASE,			\
++				NRD_CSS_CPER_SIZE,			\
++				GPT_GPI_ANY)
++#endif
++
++#if NRD_ERR_INJ_SUPPORT
++#define NRD_PAS_EINJ		GPT_MAP_REGION_GRANULE(                 \
++				NRD_CSS_EINJ_BASE,			\
++				NRD_CSS_EINJ_SIZE,			\
++				GPT_GPI_ANY)
++#endif
++
++#endif /* NRD_PAS_DEF4_H */
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_plat_arm_def4.h b/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_plat_arm_def4.h
+new file mode 100644
+index 000000000000..511078953580
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_plat_arm_def4.h
+@@ -0,0 +1,900 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ * This file is limited to include the platform port definitions for the
++ * third generation of platforms.
++ */
++
++#ifndef NRD_PLAT_ARM_DEF4_H
++#define NRD_PLAT_ARM_DEF4_H
++
++#include <common/tbbr/tbbr_img_def.h>
++
++#ifndef __ASSEMBLER__
++#include <lib/mmio.h>
++#endif /* __ASSEMBLER__ */
++
++#include <plat/arm/common/arm_spm_def.h>
++#include <plat/common/common_def.h>
++#include <nrd_css_fw_def4.h>
++#include <nrd_ros_fw_def4.h>
++
++/*******************************************************************************
++ * Core count
++ ******************************************************************************/
++
++#define PLATFORM_CORE_COUNT		(NRD_CHIP_COUNT *		\
++					PLAT_ARM_CLUSTER_COUNT *	\
++					NRD_MAX_CPUS_PER_CLUSTER *	\
++					NRD_MAX_PE_PER_CPU)
++
++/*******************************************************************************
++ * PA/VA config
++ ******************************************************************************/
++
++#ifdef __aarch64__
++#define PLAT_PHY_ADDR_SPACE_SIZE	NRD_REMOTE_CHIP_MEM_OFFSET( \
++						NRD_CHIP_COUNT)
++#define PLAT_VIRT_ADDR_SPACE_SIZE	NRD_REMOTE_CHIP_MEM_OFFSET( \
++						NRD_CHIP_COUNT)
++#else
++#define PLAT_PHY_ADDR_SPACE_SIZE	(1ULL << 32)
++#define PLAT_VIRT_ADDR_SPACE_SIZE	(1ULL << 32)
++#endif
++
++/*******************************************************************************
++ * XLAT definitions
++ ******************************************************************************/
++
++/*
++ * PLAT_ARM_MMAP_ENTRIES depends on the number of entries in the
++ * plat_arm_mmap array defined for each BL stage. In addition to that, on
++ * multi-chip platforms, address regions on each of the remote chips are
++ * also mapped. In BL31, for instance, three address regions on the remote
++ * chips are accessed - secure ram, css device and soc device regions.
++ */
++#if defined(IMAGE_BL31)
++#  define PLAT_ARM_MMAP_ENTRIES		(12 + ((NRD_CHIP_COUNT - 1) * 3))
++#  define MAX_XLAT_TABLES		(12 + ((NRD_CHIP_COUNT - 1) * 3))
++#elif defined(IMAGE_BL32)
++# define PLAT_ARM_MMAP_ENTRIES		U(8)
++# define MAX_XLAT_TABLES		U(5)
++#elif defined(IMAGE_BL2)
++# define PLAT_ARM_MMAP_ENTRIES		(19 + (NRD_CHIP_COUNT - 1))
++# define MAX_XLAT_TABLES		(14  + ((NRD_CHIP_COUNT - 1) * 2))
++#else
++# define PLAT_ARM_MMAP_ENTRIES		U(7)
++# define MAX_XLAT_TABLES		U(7)
++#endif
++
++/*******************************************************************************
++ * BL sizes
++ ******************************************************************************/
++
++#define PLAT_ARM_MAX_ROMLIB_RW_SIZE	UL(0)
++#define PLAT_ARM_MAX_ROMLIB_RO_SIZE	UL(0)
++
++#define PLAT_ARM_MAX_BL1_RW_SIZE	NRD_CSS_BL1_RW_SIZE
++
++/*
++ * PLAT_ARM_MAX_BL2_SIZE is calculated using the current BL2 debug size plus a
++ * little space for growth. Additional 8KiB space is added per chip in
++ * order to accommodate the additional level of translation required for "TZC"
++ * peripheral access which lies in >4TB address space.
++ *
++ */
++#define PLAT_ARM_MAX_BL2_SIZE		(NRD_CSS_BL2_SIZE +		\
++						((NRD_CHIP_COUNT - 1) * 0x2000))
++
++#define PLAT_ARM_MAX_BL31_SIZE		(NRD_CSS_BL31_SIZE +		\
++						PLAT_ARM_MAX_BL2_SIZE +	\
++						PLAT_ARM_MAX_BL1_RW_SIZE)
++
++/*******************************************************************************
++ * BL31 plat param
++ ******************************************************************************/
++
++/* Special value used to verify platform parameters from BL2 to BL31 */
++#define ARM_BL31_PLAT_PARAM_VAL		ULL(0x0f1e2d3c4b5a6978)
++
++/*******************************************************************************
++ * Stack sizes
++ ******************************************************************************/
++
++#if defined(IMAGE_BL1)
++# if TRUSTED_BOARD_BOOT
++#  define PLATFORM_STACK_SIZE		UL(0x1000)
++# else
++#  define PLATFORM_STACK_SIZE		UL(0x440)
++# endif
++#elif defined(IMAGE_BL2)
++# if TRUSTED_BOARD_BOOT
++#  define PLATFORM_STACK_SIZE		UL(0x1800)
++# else
++#  define PLATFORM_STACK_SIZE		UL(0x400)
++# endif
++#elif defined(IMAGE_BL2U)
++# define PLATFORM_STACK_SIZE		UL(0x400)
++#elif defined(IMAGE_BL31)
++# if SPM_MM || SPMD_SPM_AT_SEL2
++#  define PLATFORM_STACK_SIZE		UL(0x500)
++# else
++#  define PLATFORM_STACK_SIZE		UL(0x400)
++# endif
++#elif defined(IMAGE_BL32)
++# define PLATFORM_STACK_SIZE		UL(0x440)
++#endif
++
++/*******************************************************************************
++ * Console config
++ ******************************************************************************/
++
++#define ARM_CONSOLE_BAUDRATE		(115200)
++
++/* UART related constants */
++#define PLAT_ARM_BOOT_UART_BASE		NRD_CSS_SECURE_UART_BASE
++#define PLAT_ARM_BOOT_UART_CLK_IN_HZ	NRD_CSS_UART_CLK_IN_HZ
++
++#define PLAT_ARM_RUN_UART_BASE		NRD_CSS_SECURE_UART_BASE
++#define PLAT_ARM_RUN_UART_CLK_IN_HZ	NRD_CSS_UART_CLK_IN_HZ
++
++#define PLAT_ARM_CRASH_UART_BASE	NRD_CSS_SECURE_UART_BASE
++#define PLAT_ARM_CRASH_UART_CLK_IN_HZ	NRD_CSS_UART_CLK_IN_HZ
++
++/*******************************************************************************
++ * System counter and timer config
++ ******************************************************************************/
++
++#define ARM_SYS_CNTCTL_BASE		NRD_CSS_GENERIC_REFCLK_BASE
++#define ARM_SYS_CNTREAD_BASE		NRD_CSS_CNTCTL_REFCLK_READFRAME_BASE
++#define ARM_SYS_TIMCTL_BASE		NRD_CSS_SYS_TIMCTL_BASE
++#define ARM_SYS_CNT_BASE_S		NRD_CSS_SECURE_TIMER_CTL_BASE
++#define ARM_SYS_CNT_BASE_NS		NRD_CSS_NS_TIMER_CTL_BASE
++
++/*******************************************************************************
++ * SRAM and DRAM config for FW
++ ******************************************************************************/
++
++#define PLAT_ARM_TRUSTED_ROM_BASE	NRD_CSS_SECURE_ROM_BASE
++#define PLAT_ARM_TRUSTED_ROM_SIZE	NRD_CSS_SECURE_ROM_SIZE
++
++#define PLAT_ARM_DRAM2_BASE		NRD_CSS_DRAM2_BASE
++#define PLAT_ARM_DRAM2_SIZE		NRD_CSS_DRAM2_SIZE
++
++#define PLAT_ARM_TRUSTED_SRAM_SIZE	NRD_CSS_SECURE_SRAM_SIZE
++
++#define PLAT_ARM_NSTIMER_FRAME_ID	(0)
++
++#define PLAT_ARM_NSRAM_BASE		NRD_CSS_NS_SRAM_BASE
++#define PLAT_ARM_NSRAM_SIZE		NRD_CSS_NS_SRAM_SIZE
++
++/*******************************************************************************
++ * GPT config
++ ******************************************************************************/
++
++#define PLATFORM_L0GPTSZ		GPCCR_L0GPTSZ_30BITS
++
++/*******************************************************************************
++ * Power config
++ ******************************************************************************/
++
++/*
++ * Macros mapping the MPIDR Affinity levels to ARM Platform Power levels. The
++ * power levels have a 1:1 mapping with the MPIDR affinity levels.
++ */
++#define ARM_PWR_LVL0			MPIDR_AFFLVL0
++#define ARM_PWR_LVL1			MPIDR_AFFLVL1
++#define ARM_PWR_LVL2			MPIDR_AFFLVL2
++#define ARM_PWR_LVL3			MPIDR_AFFLVL3
++
++/* Local power state for power domains in Run state. */
++#define ARM_LOCAL_STATE_RUN		U(0)
++/* Local power state for retention. Valid only for CPU power domains */
++#define ARM_LOCAL_STATE_RET		U(1)
++/*
++ * Local power state for OFF/power-down. Valid for CPU and cluster power
++ * domains
++ */
++#define ARM_LOCAL_STATE_OFF		U(2)
++/*
++ * This macro defines the deepest retention state possible. A higher state
++ * id will represent an invalid or a power down state.
++ */
++#define PLAT_MAX_RET_STATE		ARM_LOCAL_STATE_RET
++/*
++ * This macro defines the deepest power down states possible. Any state ID
++ * higher than this is invalid.
++ */
++#define PLAT_MAX_OFF_STATE		ARM_LOCAL_STATE_OFF
++
++#define CSS_SYSTEM_PWR_DMN_LVL		ARM_PWR_LVL2
++#define PLAT_MAX_PWR_LVL		ARM_PWR_LVL1
++
++/*******************************************************************************
++ * MHU config
++ ******************************************************************************/
++
++#define PLAT_CSS_MHU_BASE		NRD_CSS_AP_SCP_SECURE_MHU_BASE
++#define PLAT_MHUV2_BASE			PLAT_CSS_MHU_BASE
++
++/*******************************************************************************
++ * Cache config
++ ******************************************************************************/
++
++#define ARM_CACHE_WRITEBACK_SHIFT	U(6)
++
++/*
++ * Some data must be aligned on the biggest cache line size in the platform.
++ * This is known only to the platform as it might have a combination of
++ * integrated and external caches.
++ */
++#define CACHE_WRITEBACK_GRANULE		(U(1) << ARM_CACHE_WRITEBACK_SHIFT)
++
++/*******************************************************************************
++ * SCMI config
++ ******************************************************************************/
++
++/* Number of SCMI channels on the platform */
++#define PLAT_ARM_SCMI_CHANNEL_COUNT	NRD_CHIP_COUNT
++
++/*******************************************************************************
++ * GIC/EHF config
++ ******************************************************************************/
++
++/* CPU Fault Handling Interrupt(FHI) PPI interrupt ID */
++#define PLAT_CORE_FAULT_IRQ		U(17)
++
++/* ARM platforms use 3 upper bits of secure interrupt priority */
++#define PLAT_PRI_BITS			U(3)
++
++#if ENABLE_FEAT_RAS && FFH_SUPPORT
++#define PLAT_RAS_PRI			U(0x10)
++#endif
++
++#if ENABLE_FEAT_RAS && FFH_SUPPORT
++#define PLAT_SP_PRI			PLAT_RAS_PRI
++#else
++#define PLAT_SP_PRI			U(0x10)
++#endif
++
++/* Interrupt priority level for error injection */
++#define PLAT_EINJ_PRI		0x20
++#define PLAT_EHF_DESC		EHF_PRI_DESC(PLAT_PRI_BITS, PLAT_EINJ_PRI)
++
++
++#define ARM_IRQ_SEC_PHY_TIMER		U(29)
++
++#define ARM_IRQ_SEC_SGI_0		U(8)
++#define ARM_IRQ_SEC_SGI_1		U(9)
++#define ARM_IRQ_SEC_SGI_2		U(10)
++#define ARM_IRQ_SEC_SGI_3		U(11)
++#define ARM_IRQ_SEC_SGI_4		U(12)
++#define ARM_IRQ_SEC_SGI_5		U(13)
++#define ARM_IRQ_SEC_SGI_6		U(14)
++#define ARM_IRQ_SEC_SGI_7		U(15)
++
++#define ARM_G0_IRQ_PROPS(grp)						\
++	INTR_PROP_DESC(ARM_IRQ_SEC_SGI_0, PLAT_SDEI_NORMAL_PRI,		\
++			(grp), GIC_INTR_CFG_EDGE),			\
++	INTR_PROP_DESC(ARM_IRQ_SEC_SGI_6, GIC_HIGHEST_SEC_PRIORITY,	\
++			(grp), GIC_INTR_CFG_EDGE)
++
++/*
++ * Define a list of Group 1 Secure and Group 0 interrupt properties as per GICv3
++ * terminology. On a GICv2 system or mode, the lists will be merged and treated
++ * as Group 0 interrupts.
++ */
++#define ARM_G1S_IRQ_PROPS(grp)						\
++	INTR_PROP_DESC(ARM_IRQ_SEC_PHY_TIMER, GIC_HIGHEST_SEC_PRIORITY,	\
++			(grp), GIC_INTR_CFG_LEVEL),			\
++	INTR_PROP_DESC(ARM_IRQ_SEC_SGI_1, GIC_HIGHEST_SEC_PRIORITY,	\
++			(grp), GIC_INTR_CFG_EDGE),			\
++	INTR_PROP_DESC(ARM_IRQ_SEC_SGI_2, GIC_HIGHEST_SEC_PRIORITY,	\
++			(grp), GIC_INTR_CFG_EDGE),			\
++	INTR_PROP_DESC(ARM_IRQ_SEC_SGI_3, GIC_HIGHEST_SEC_PRIORITY,	\
++			(grp), GIC_INTR_CFG_EDGE),			\
++	INTR_PROP_DESC(ARM_IRQ_SEC_SGI_4, GIC_HIGHEST_SEC_PRIORITY,	\
++			(grp), GIC_INTR_CFG_EDGE),			\
++	INTR_PROP_DESC(ARM_IRQ_SEC_SGI_5, GIC_HIGHEST_SEC_PRIORITY,	\
++			(grp), GIC_INTR_CFG_EDGE),			\
++	INTR_PROP_DESC(ARM_IRQ_SEC_SGI_7, GIC_HIGHEST_SEC_PRIORITY,	\
++			(grp), GIC_INTR_CFG_EDGE)
++
++#define ARM_G0_IRQ_PROPS(grp)						\
++	INTR_PROP_DESC(ARM_IRQ_SEC_SGI_0, PLAT_SDEI_NORMAL_PRI,		\
++			(grp), GIC_INTR_CFG_EDGE),			\
++	INTR_PROP_DESC(ARM_IRQ_SEC_SGI_6, GIC_HIGHEST_SEC_PRIORITY,	\
++			(grp), GIC_INTR_CFG_EDGE)
++
++#define PLAT_ARM_G1S_IRQ_PROPS(grp)	CSS_G1S_IRQ_PROPS(grp)
++#define PLAT_ARM_G0_IRQ_PROPS(grp)	ARM_G0_IRQ_PROPS(grp)
++
++#define PLAT_ARM_GICD_BASE		NRD_CSS_GIC_BASE
++
++#define PLAT_ARM_GIC_ITS_BLOCK_SIZE	UL(0x00040000)
++#if (NRD_PLATFORM_VARIANT == 0)
++#define PLAT_ARM_GIC_ITS_CNT		4
++#elif (NRD_PLATFORM_VARIANT == 1)
++#define PLAT_ARM_GIC_ITS_CNT		3
++#endif
++#define PLAT_ARM_GICR_BASE		NRD_CSS_GIC_BASE + ((PLAT_ARM_GIC_ITS_CNT + 1) * PLAT_ARM_GIC_ITS_BLOCK_SIZE)
++
++/*******************************************************************************
++ * SDEI config
++ ******************************************************************************/
++
++#define PLAT_SDEI_CRITICAL_PRI		U(0x60)
++#define PLAT_SDEI_NORMAL_PRI		U(0x70)
++
++/* SGI used for SDEI signalling */
++#define ARM_SDEI_SGI			ARM_IRQ_SEC_SGI_0
++
++#if SDEI_IN_FCONF
++/* ARM SDEI dynamic private event max count */
++#define ARM_SDEI_DP_EVENT_MAX_CNT	U(3)
++
++/* ARM SDEI dynamic shared event max count */
++#define ARM_SDEI_DS_EVENT_MAX_CNT	U(3)
++#else
++/* ARM SDEI dynamic private event numbers */
++#define ARM_SDEI_DP_EVENT_0		UL(1000)
++#define ARM_SDEI_DP_EVENT_1		UL(1001)
++#define ARM_SDEI_DP_EVENT_2		UL(1002)
++
++/* ARM SDEI dynamic shared event numbers */
++#define ARM_SDEI_DS_EVENT_0		UL(2000)
++#define ARM_SDEI_DS_EVENT_1		UL(2001)
++#define ARM_SDEI_DS_EVENT_2		UL(2002)
++
++#define ARM_SDEI_PRIVATE_EVENTS						\
++	SDEI_DEFINE_EVENT_0(ARM_SDEI_SGI),				\
++	SDEI_PRIVATE_EVENT(ARM_SDEI_DP_EVENT_0,				\
++	SDEI_DYN_IRQ, SDEI_MAPF_DYNAMIC),				\
++	SDEI_PRIVATE_EVENT(ARM_SDEI_DP_EVENT_1,				\
++	SDEI_DYN_IRQ, SDEI_MAPF_DYNAMIC),				\
++	SDEI_PRIVATE_EVENT(ARM_SDEI_DP_EVENT_2, SDEI_DYN_IRQ, SDEI_MAPF_DYNAMIC)
++
++#define ARM_SDEI_SHARED_EVENTS						\
++	SDEI_SHARED_EVENT(ARM_SDEI_DS_EVENT_0,				\
++	SDEI_DYN_IRQ, SDEI_MAPF_DYNAMIC),				\
++	SDEI_SHARED_EVENT(ARM_SDEI_DS_EVENT_1,				\
++	SDEI_DYN_IRQ, SDEI_MAPF_DYNAMIC),				\
++	SDEI_SHARED_EVENT(ARM_SDEI_DS_EVENT_2,				\
++	SDEI_DYN_IRQ, SDEI_MAPF_DYNAMIC)
++#endif /* SDEI_IN_FCONF */
++
++/*******************************************************************************
++ * SDS config
++ ******************************************************************************/
++
++/* SDS ID for unusable CPU MPID list structure */
++#define SDS_ISOLATED_CPU_LIST_ID	U(128)
++/* SDS ID for PCIe rootport configuration list structure */
++#define SDS_PCIE_MMAP_IDX			U(129)
++
++#define MAX_RP_PER_CONTROLLER			5
++#if (NRD_PLATFORM_VARIANT == 0)
++#define MAX_NUM_PCIE_CONTROLLER	        	4
++#else
++#define MAX_NUM_PCIE_CONTROLLER			1
++#endif
++
++#define NRD_CSS_SDS_BASE(n) \
++	(PLAT_ARM_SDS_MEM_BASE + NRD_REMOTE_CHIP_MEM_OFFSET(n))
++
++#if !defined(__ASSEMBLER__)
++/* Index of SDS region used in the communication with SCP */
++typedef enum sds_region_id {
++	SDS_SCP_AP_CHIP0_REGION_ID,
++#if NRD_CHIP_COUNT > 1
++	SDS_SCP_AP_CHIP1_REGION_ID,
++#endif
++#if NRD_CHIP_COUNT > 2
++	SDS_SCP_AP_CHIP2_REGION_ID,
++#endif
++#if NRD_CHIP_COUNT > 3
++	SDS_SCP_AP_CHIP3_REGION_ID,
++#endif
++	SDS_SCP_AP_REGION_ID_MAX,
++} sds_region_id_t;
++#endif
++
++/*******************************************************************************
++ * SMMUv3 Config
++ ******************************************************************************/
++
++/* SMMUv3 root offset register */
++#define PLAT_ARM_SMMUV3_ROOT_REG_OFFSET	UL(0xA0000)
++
++/*******************************************************************************
++ * Platform type identification macro
++ ******************************************************************************/
++
++/* Platform ID related accessors */
++#define BOARD_CSS_PLAT_ID_REG_ID_MASK		U(0x0F)
++#define BOARD_CSS_PLAT_ID_REG_ID_SHIFT		U(0x00)
++#define BOARD_CSS_PLAT_ID_REG_VERSION_MASK	U(0xF00)
++#define BOARD_CSS_PLAT_ID_REG_VERSION_SHIFT	U(0x08)
++#define BOARD_CSS_PLAT_TYPE_RTL			U(0x00)
++#define BOARD_CSS_PLAT_TYPE_FPGA		U(0x01)
++#define BOARD_CSS_PLAT_TYPE_EMULATOR		U(0x02)
++#define BOARD_CSS_PLAT_TYPE_FVP			U(0x03)
++
++#ifndef __ASSEMBLER__
++#define BOARD_CSS_GET_PLAT_TYPE(addr)					\
++	((mmio_read_32(addr) & BOARD_CSS_PLAT_ID_REG_ID_MASK)		\
++	>> BOARD_CSS_PLAT_ID_REG_ID_SHIFT)
++#endif /* __ASSEMBLER__ */
++
++/* Platform ID address */
++#define BOARD_CSS_PLAT_ID_REG_ADDR	NRD_ROS_PLATFORM_PERIPH_BASE +	\
++						UL(0x00FE00E0)
++
++/*******************************************************************************
++ * Flash config
++ ******************************************************************************/
++
++#define MAX_IO_DEVICES			U(3)
++#define MAX_IO_HANDLES			U(4)
++
++#define V2M_SYS_LED			U(0x8)
++
++#define V2M_SYS_LED_SS_SHIFT		U(0)
++#define V2M_SYS_LED_EL_SHIFT		U(1)
++#define V2M_SYS_LED_EC_SHIFT		U(3)
++
++#define V2M_SYS_LED_SS_MASK		U(0x01)
++#define V2M_SYS_LED_EL_MASK		U(0x03)
++#define V2M_SYS_LED_EC_MASK		U(0x1f)
++
++#define PLAT_ARM_MEM_PROTEC_VA_FRAME	UL(0xC0000000)
++
++#define V2M_SYSREGS_BASE		NRD_ROS_SYSTEM_PERIPH_BASE +	\
++						UL(0x00010000)
++#define V2M_FLASH0_BASE			NRD_ROS_SMC0_BASE
++#define V2M_FLASH0_SIZE			NRD_ROS_SMC0_SIZE
++#define V2M_FLASH_BLOCK_SIZE		UL(0x00040000)	/* 256 KB */
++
++#define PLAT_ARM_FLASH_IMAGE_BASE	V2M_FLASH0_BASE
++#define PLAT_ARM_FLASH_IMAGE_MAX_SIZE	(V2M_FLASH0_SIZE - V2M_FLASH_BLOCK_SIZE)
++
++#define PLAT_ARM_MEM_PROT_ADDR		(V2M_FLASH0_BASE +	\
++					V2M_FLASH0_SIZE - V2M_FLASH_BLOCK_SIZE)
++
++#define PLAT_ARM_NVM_BASE		V2M_FLASH0_BASE
++#define PLAT_ARM_NVM_SIZE		(V2M_FLASH0_SIZE - V2M_FLASH_BLOCK_SIZE)
++
++/*******************************************************************************
++ * ROS peripheral config
++ ******************************************************************************/
++
++/* Non-volatile counters */
++#define SOC_TRUSTED_NVCTR_BASE		NRD_ROS_PLATFORM_PERIPH_BASE +	\
++						UL(0x00E70000)
++#define TFW_NVCTR_BASE			(SOC_TRUSTED_NVCTR_BASE	+ 0x0000)
++#define TFW_NVCTR_SIZE			U(4)
++#define NTFW_CTR_BASE			(SOC_TRUSTED_NVCTR_BASE + 0x0004)
++#define NTFW_CTR_SIZE			U(4)
++
++/*******************************************************************************
++ * SRAM layout
++ ******************************************************************************/
++
++/*
++ *              Trusted SRAM
++ * 0x00100000 +--------------+
++ *            |    L0 GPT    |
++ * 0x000E0000 +--------------+  loaded by BL2  +----------------+
++ *            |   BL1 (rw)   |  <<<<<<<<<<<<<  |                |
++ *            |--------------|  <<<<<<<<<<<<<  |  BL31 NOBITS   |
++ *            |     BL2      |  <<<<<<<<<<<<<  |                |
++ *            |--------------|  <<<<<<<<<<<<<  |----------------|
++ *            |              |  <<<<<<<<<<<<<  | BL31 PROGBITS  |
++ *            |              |                 +----------------+
++ *            +--------------+
++ *            |    CONFIG    |
++ * 0x0001A000 +--------------+
++ *            |    Shared    |
++ * 0x00019000 +--------------+
++ *            |   BL1 (ro)   |
++ * 0x00000000 +--------------+
++ */
++
++/*******************************************************************************
++ * BL1 RO specifics
++ ******************************************************************************/
++
++/*
++ * SRAM region to store BL1 code and RO. This has been carved out at the bottom
++ * of SRAM
++ */
++
++#define BL1_RO_BASE			NRD_CSS_BL1_RO_BASE
++#define BL1_RO_LIMIT			(NRD_CSS_BL1_RO_BASE		\
++					 + NRD_CSS_BL1_RO_SIZE)
++
++/*******************************************************************************
++ * L0 GPT specifics
++ ******************************************************************************/
++
++/*
++ * L0 GPT has to be aligned to its size. In order to avoid holes due to
++ * alignment, place L0 GPT at the top of SRAM.
++ */
++#define ARM_L0_GPT_SIZE			UL(0x00020000) /* 128KB */
++#define ARM_L0_GPT_BASE			NRD_CSS_SHARED_SRAM_SIZE -	\
++					ARM_L0_GPT_SIZE
++
++#define ARM_L0_GPT_LIMIT		(ARM_L0_GPT_BASE + ARM_L0_GPT_SIZE)
++
++/*******************************************************************************
++ * Arm shared RAM specifics
++ ******************************************************************************/
++
++#define ARM_SHARED_RAM_BASE		(NRD_CSS_BL1_RO_BASE +		\
++					 NRD_CSS_BL1_RO_SIZE)
++#define ARM_SHARED_RAM_SIZE		UL(0x00001000)	/* 4 KB */
++
++/*******************************************************************************
++ * Arm BL RAM specifics
++ ******************************************************************************/
++
++/*Rest of SRAM till L0 GPT base */
++#define ARM_BL_RAM_BASE			(ARM_SHARED_RAM_BASE +		\
++					 ARM_SHARED_RAM_SIZE)
++#define ARM_BL_RAM_SIZE			(ARM_L0_GPT_BASE -		\
++					 ARM_BL_RAM_BASE)
++
++/*******************************************************************************
++ * FW_CONFIG specifics
++ ******************************************************************************/
++
++/*
++ * To enable FW_CONFIG to be loaded by BL1, define the corresponding base
++ * and limit. Leave enough space of BL2 meminfo.
++ */
++#define ARM_FW_CONFIG_BASE		(ARM_BL_RAM_BASE + sizeof(meminfo_t))
++#define ARM_FW_CONFIG_LIMIT		((ARM_BL_RAM_BASE + PAGE_SIZE) \
++					+ (PAGE_SIZE / 2U))
++
++/*
++ * Boot parameters passed from BL2 to BL31/BL32 are stored here
++ */
++#define ARM_BL2_MEM_DESC_BASE		(ARM_FW_CONFIG_LIMIT)
++#define ARM_BL2_MEM_DESC_LIMIT		(ARM_BL2_MEM_DESC_BASE		\
++					+ (PAGE_SIZE / 2U))
++
++/*
++ * Define limit of firmware configuration memory:
++ * ARM_FW_CONFIG + ARM_BL2_MEM_DESC memory
++ */
++#define ARM_FW_CONFIGS_SIZE		(PAGE_SIZE * 2)
++#define ARM_FW_CONFIGS_LIMIT		(ARM_BL_RAM_BASE + ARM_FW_CONFIGS_SIZE)
++
++/*******************************************************************************
++ * BL1 RW specifics
++ ******************************************************************************/
++
++#define BL1_RW_BASE			(ARM_BL_RAM_BASE +		\
++					 ARM_BL_RAM_SIZE -		\
++					 PLAT_ARM_MAX_BL1_RW_SIZE)
++#define BL1_RW_LIMIT			(ARM_BL_RAM_BASE +		\
++					 ARM_BL_RAM_SIZE)
++
++/*******************************************************************************
++ * BL2 specific defines.
++ ******************************************************************************/
++
++/* Put BL2 just below BL1. */
++#define BL2_BASE			(BL1_RW_BASE - PLAT_ARM_MAX_BL2_SIZE)
++#define BL2_LIMIT			BL1_RW_BASE
++
++/*******************************************************************************
++ * BL31 specific defines.
++ ******************************************************************************/
++
++/* Keep BL31 below BL2 in the Trusted SRAM.*/
++#define BL31_BASE			((ARM_BL_RAM_BASE +		\
++					  ARM_BL_RAM_SIZE) -		\
++					  PLAT_ARM_MAX_BL31_SIZE)
++#define BL31_PROGBITS_LIMIT		BL2_BASE
++#define BL31_LIMIT			(ARM_BL_RAM_BASE + ARM_BL_RAM_SIZE)
++
++/*
++ * The max number of regions like RO(code), coherent and data required by
++ * different BL stages which need to be mapped in the MMU.
++ */
++#define ARM_BL_REGIONS			7
++
++#define MAX_MMAP_REGIONS		(PLAT_ARM_MMAP_ENTRIES +	\
++					 ARM_BL_REGIONS)
++
++/*******************************************************************************
++ * DRAM layout
++ ******************************************************************************/
++
++/*
++ * The top 100MB of DRAM1 is configured as follows:
++ *   - L1 GPT DRAM: Reserved for L1 GPT if RME is enabled
++ *   - TF-A <-> RMM SHARED: Area shared for communication between TF-A and RMM
++ *   - REALM DRAM: Reserved for Realm world if RME is enabled
++ *   - Event Log: Area for Event Log if MEASURED_BOOT feature is enabled
++ *   - BL32: Carveout for BL32 image if BL32 is present
++ *
++ *                    DRAM layout
++ *               +------------------+
++ *               |                  |
++ *               |        BL32      |
++ *               +------------------+
++ *               |   EINJ region    |
++ *               |     (64 KB)      |
++ *               +------------------+
++ *               |     CPER region  |
++ *               |      (64 KB)     |
++ *               --------------------
++ *               |     Event Log    |
++ *               |      (4KB)       |
++ *               +------------------+
++ *               |   REALM (RMM)    |
++ *               |   (32MB - 4KB)   |
++ *               +------------------+
++ *               |                  |
++ *               |   TF-A <-> RMM   |
++ *               |   SHARED (4KB)   |
++ *               +------------------+
++ *               |       L1 GPT     |
++ *               |                  |
++ *     DRAM1 End +------------------+
++ */
++
++/* Number of DRAM banks */
++#if (NRD_PLATFORM_VARIANT == 2)
++#define ARM_DRAM_NUM_BANKS		U(8)
++#else
++#define ARM_DRAM_NUM_BANKS		U(2)
++#endif
++
++/*******************************************************************************
++ * DRAM bank1 specific defines.
++ ******************************************************************************/
++
++/* Bank-1 DRAM */
++#define ARM_DRAM1_BASE			UL(0x80000000)
++#define ARM_DRAM1_SIZE			UL(0x80000000)
++#define ARM_DRAM1_END			(ARM_DRAM1_BASE +		\
++					 ARM_DRAM1_SIZE - 1U)
++
++#define NRD_DRAM1_CARVEOUT_SIZE		UL(0x0C010000)	/* 117MB */
++
++/*******************************************************************************
++ * DRAM bank2 specific defines.
++ ******************************************************************************/
++
++/* Bank-2 DRAM */
++#define ARM_DRAM2_BASE			PLAT_ARM_DRAM2_BASE
++#define ARM_DRAM2_SIZE			PLAT_ARM_DRAM2_SIZE
++#define ARM_DRAM2_END			(ARM_DRAM2_BASE +		\
++					 ARM_DRAM2_SIZE - 1U)
++
++/*******************************************************************************
++ * L1GPT specific defines.
++ ******************************************************************************/
++
++/* 2MB per L1 entry, PPS - 48 bits, PGS - 4KB, L0GPTSZ - 16GB */
++#define ARM_L1_GPT_SIZE			(UL(140 * 1024 * 1024) +		\
++					((NRD_CHIP_COUNT - 1) *		\
++					(4 * 1024 * 1024)))
++
++#define ARM_L1_GPT_BASE			(ARM_DRAM1_BASE +		\
++					 ARM_DRAM1_SIZE -		\
++					 ARM_L1_GPT_SIZE)
++#define ARM_L1_GPT_END			(ARM_L1_GPT_BASE +		\
++					 ARM_L1_GPT_SIZE - 1U)
++
++/*******************************************************************************
++ * "RMM TF-A shared region" specific defines.
++ ******************************************************************************/
++
++/* PLAT_ARM_EL3_RMM_SHARED_SIZE */
++#define ARM_EL3_RMM_SHARED_SIZE		(PAGE_SIZE)    /* 4KB */
++
++#define ARM_EL3_RMM_SHARED_BASE		(ARM_L1_GPT_BASE -		\
++					 ARM_EL3_RMM_SHARED_SIZE)
++
++#define ARM_EL3_RMM_SHARED_END		(ARM_EL3_RMM_SHARED_BASE +	\
++					 ARM_EL3_RMM_SHARED_SIZE - 1U)
++
++/*******************************************************************************
++ * RMM specific defines.
++ ******************************************************************************/
++
++/* ARM_REALM_SIZE */
++#define ARM_REALM_SIZE			(UL(0x02600000) -		\
++					 ARM_EL3_RMM_SHARED_SIZE)
++#define ARM_REALM_BASE			(ARM_EL3_RMM_SHARED_BASE -	\
++					 ARM_REALM_SIZE)
++
++#define ARM_REALM_END			(ARM_REALM_BASE + ARM_REALM_SIZE - 1U)
++
++#define RMM_BASE			(ARM_REALM_BASE)
++#define RMM_LIMIT			(RMM_BASE + ARM_REALM_SIZE)
++#define RMM_SHARED_BASE			(ARM_EL3_RMM_SHARED_BASE)
++#define RMM_SHARED_SIZE			(ARM_EL3_RMM_SHARED_SIZE)
++
++
++/*******************************************************************************
++ * Event log specific defines.
++ ******************************************************************************/
++
++# if (defined(SPD_tspd) || defined(SPD_opteed) || defined(SPD_spmd)) && \
++MEASURED_BOOT
++#define ARM_EVENT_LOG_DRAM1_SIZE	UL(0x00001000)	/* 4KB */
++
++#define ARM_EVENT_LOG_DRAM1_BASE	(ARM_REALM_BASE -		\
++					 ARM_EVENT_LOG_DRAM1_SIZE)
++#define ARM_EVENT_LOG_DRAM1_END		(ARM_EVENT_LOG_DRAM1_BASE +	\
++					 ARM_EVENT_LOG_DRAM1_SIZE -	\
++					 1U)
++#else
++#define ARM_EVENT_LOG_DRAM1_SIZE	UL(0)
++#endif /* (SPD_tspd || SPD_opteed || SPD_spmd) && MEASURED_BOOT */
++
++/*******************************************************************************
++ * CPER specific defines.
++ ******************************************************************************/
++#if ENABLE_FEAT_RAS && FFH_SUPPORT
++#define ARM_CPER_DRAM1_SIZE            UL(0x00010000)  /* 64KB */
++
++#define ARM_CPER_DRAM1_BASE            (ARM_EVENT_LOG_DRAM1_BASE -     \
++                                               ARM_CPER_DRAM1_SIZE)
++#define ARM_CPER_DRAM1_END             (ARM_CPER_DRAM1_BASE +          \
++                                        ARM_CPER_DRAM1_SIZE -          \
++                                        1U)
++#else
++#define ARM_CPER_DRAM1_SIZE             UL(0x00010000) /* 64KB *//*TODO: remove*/
++#endif /* ENABLE_FEAT_RAS && FFH_SUPPORT */
++
++/*******************************************************************************
++ * EINJ specific defines.
++ ******************************************************************************/
++#define ARM_EINJ_DRAM1_SIZE            UL(0x00010000)  /* 64KB */
++
++#if NRD_ERR_INJ_SUPPORT
++#ifdef ARM_CPER_DRAM1_BASE
++#define ARM_EINJ_DRAM1_BASE            (ARM_CPER_DRAM1_BASE -  \
++                                               ARM_EINJ_DRAM1_SIZE)
++#else
++#define ARM_EINJ_DRAM1_BASE            (ARM_EVENT_LOG_DRAM1_BASE - \
++                                        ARM_CPER_DRAM1_SIZE - \
++                                        ARM_EINJ_DRAM1_SIZE)
++#endif
++#define ARM_EINJ_DRAM1_END             (ARM_EINJ_DRAM1_BASE +          \
++                                        ARM_EINJ_DRAM1_SIZE -          \
++                                        1U)
++
++#define ARM_MAP_EINJ_DRAM1             MAP_REGION_FLAT(                \
++                                               ARM_EINJ_DRAM1_BASE,    \
++                                               ARM_EINJ_DRAM1_SIZE,    \
++                                               MT_MEMORY | MT_RW | MT_NS)
++#endif
++
++/*******************************************************************************
++ * NRD_CSS_CARVEOUT_RESERVED region specific defines.
++ ******************************************************************************/
++
++#define NRD_CSS_CARVEOUT_RESERVED_BASE	(ARM_DRAM1_BASE +		\
++					 ARM_DRAM1_SIZE -		\
++					 NRD_CSS_DRAM1_CARVEOUT_SIZE)
++#define NRD_CSS_CARVEOUT_RESERVED_SIZE	(NRD_CSS_DRAM1_CARVEOUT_SIZE -	\
++					(ARM_EL3_RMM_SHARED_SIZE +	\
++					 ARM_REALM_SIZE +		\
++					 ARM_L1_GPT_SIZE +		\
++					 ARM_EVENT_LOG_DRAM1_SIZE +	\
++					 ARM_CPER_DRAM1_SIZE +		\
++					 ARM_EINJ_DRAM1_SIZE))
++
++#define NRD_CSS_CARVEOUT_RESERVED_END	(NRD_CSS_CARVEOUT_RESERVED_BASE +\
++					 NRD_CSS_CARVEOUT_RESERVED_SIZE - 1U)
++
++/*******************************************************************************
++ * BL32 specific defines for EL3 runtime in AArch64 mode
++ ******************************************************************************/
++
++# if defined(SPD_spmd)
++#  define BL32_BASE			PLAT_ARM_SPMC_BASE
++#  define BL32_LIMIT			(PLAT_ARM_SPMC_BASE +		\
++					 PLAT_ARM_SPMC_SIZE)
++# endif
++
++/*
++ * BL32 is mandatory in AArch32. In AArch64, undefine BL32_BASE if there is no
++ * SPD and no SPM-MM and no SPMC-AT-EL3, as they are the only ones that can be
++ * used as BL32.
++ */
++# if defined(SPD_none) && !SPM_MM && !SPMC_AT_EL3
++#  undef BL32_BASE
++# endif /* defined(SPD_none) && !SPM_MM || !SPMC_AT_EL3 */
++
++/*******************************************************************************
++ * NS RAM specific defines specific defines.
++ ******************************************************************************/
++
++#define ARM_NS_DRAM1_BASE		ARM_DRAM1_BASE
++#define ARM_NS_DRAM1_SIZE		(ARM_DRAM1_SIZE -		\
++					 NRD_CSS_DRAM1_CARVEOUT_SIZE)
++
++#define ARM_NS_DRAM1_END		(ARM_NS_DRAM1_BASE +		\
++					 ARM_NS_DRAM1_SIZE - 1U)
++
++/*******************************************************************************
++ * MMU mapping
++ ******************************************************************************/
++
++#define V2M_MAP_FLASH0_RW						\
++		MAP_REGION_FLAT(					\
++			V2M_FLASH0_BASE,				\
++			V2M_FLASH0_SIZE,				\
++			MT_DEVICE | MT_RW | EL3_PAS)
++
++#define V2M_MAP_FLASH0_RO						\
++		MAP_REGION_FLAT(					\
++			V2M_FLASH0_BASE,				\
++			V2M_FLASH0_SIZE,				\
++			MT_RO_DATA | EL3_PAS)
++
++#define ARM_MAP_L0_GPT_REGION						\
++		MAP_REGION_FLAT(					\
++			ARM_L0_GPT_BASE,				\
++			ARM_L0_GPT_SIZE,				\
++			MT_MEMORY | MT_RW | MT_ROOT)
++
++#define ARM_MAP_BL_CONFIG_REGION					\
++		MAP_REGION_FLAT(					\
++			ARM_BL_RAM_BASE,				\
++			(ARM_FW_CONFIGS_LIMIT - ARM_BL_RAM_BASE),	\
++			MT_MEMORY | MT_RW | EL3_PAS)
++
++#if SEPARATE_CODE_AND_RODATA
++#define ARM_MAP_BL_RO							\
++		MAP_REGION_FLAT(					\
++			BL_CODE_BASE,					\
++			(BL_CODE_END - BL_CODE_BASE),			\
++			MT_CODE | EL3_PAS),				\
++		MAP_REGION_FLAT(					\
++			BL_RO_DATA_BASE,				\
++			(BL_RO_DATA_END - BL_RO_DATA_BASE),		\
++			MT_RO_DATA | EL3_PAS)
++#else
++#define ARM_MAP_BL_RO							\
++		MAP_REGION_FLAT(					\
++			BL_CODE_BASE,					\
++			(BL_CODE_END - BL_CODE_BASE),			\
++			MT_CODE | EL3_PAS)
++#endif
++
++#if USE_COHERENT_MEM
++#define ARM_MAP_BL_COHERENT_RAM						\
++		MAP_REGION_FLAT(					\
++			BL_COHERENT_RAM_BASE,				\
++			BL_COHERENT_RAM_END - BL_COHERENT_RAM_BASE,	\
++			MT_DEVICE | MT_RW | EL3_PAS)
++#endif
++
++#define ARM_MAP_DRAM2							\
++		MAP_REGION_FLAT(					\
++			ARM_DRAM2_BASE,					\
++			ARM_DRAM2_SIZE,					\
++			MT_MEMORY | MT_RW | MT_NS)
++
++# if (defined(SPD_tspd) || defined(SPD_opteed) || defined(SPD_spmd)) && \
++MEASURED_BOOT
++#define ARM_MAP_EVENT_LOG_DRAM1						\
++		MAP_REGION_FLAT(					\
++			ARM_EVENT_LOG_DRAM1_BASE,			\
++			ARM_EVENT_LOG_DRAM1_SIZE,			\
++			MT_MEMORY | MT_RW | MT_SECURE)
++#endif
++
++#endif /* NRD_PLAT_ARM_DEF4_H */
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_ros_def4.h b/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_ros_def4.h
+new file mode 100644
+index 000000000000..e4dba85c1f99
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_ros_def4.h
+@@ -0,0 +1,29 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ * This file contains the RoS specific definitions for the third generation of
++ * platforms.
++ */
++
++#ifndef NRD_ROS_DEF4_H
++#define NRD_ROS_DEF4_H
++
++/*******************************************************************************
++ * RoS memory map related defines
++ ******************************************************************************/
++
++/* System peripherals */
++#define NRD_ROS_SYSTEM_PERIPH_BASE		UL(0x0C000000)
++#define NRD_ROS_SYSTEM_PERIPH_SIZE		UL(0x02000000)
++
++/* Platform peripherals */
++#define NRD_ROS_PLATFORM_PERIPH_BASE		UL(0x0E000000)
++#define NRD_ROS_PLATFORM_PERIPH_SIZE		UL(0x02000000)
++
++/* SMC0 */
++#define NRD_ROS_SMC0_BASE			UL(0x08000000)
++#define NRD_ROS_SMC0_SIZE			UL(0x04000000)
++
++#endif /* NRD_ROS_DEF4_H */
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_ros_fw_def4.h b/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_ros_fw_def4.h
+new file mode 100644
+index 000000000000..0cfa3108f570
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_ros_fw_def4.h
+@@ -0,0 +1,44 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ * This file is limited to include the RoS firmware specific definitions for the
++ * third generation of platforms. RoS (Rest Of System) is used to refer to the
++ * part of the reference design platform that excludes CSS.
++ */
++
++#ifndef NRD_ROS_FW_DEF4_H
++#define NRD_ROS_FW_DEF4_H
++
++#include <nrd_ros_def4.h>
++
++/*******************************************************************************
++ * MMU mapping
++ ******************************************************************************/
++
++#define NRD_ROS_PLATFORM_PERIPH_MMAP					\
++		MAP_REGION_FLAT(					\
++			NRD_ROS_PLATFORM_PERIPH_BASE,			\
++			NRD_ROS_PLATFORM_PERIPH_SIZE,			\
++			MT_DEVICE | MT_RW | MT_SECURE)
++
++#define NRD_ROS_SYSTEM_PERIPH_MMAP					\
++		MAP_REGION_FLAT(					\
++			NRD_ROS_SYSTEM_PERIPH_BASE,			\
++			NRD_ROS_SYSTEM_PERIPH_SIZE,			\
++			MT_DEVICE | MT_RW | MT_SECURE)
++
++#define NRD_ROS_V2M_MEM_PROTECT_MMAP					\
++		MAP_REGION_FLAT(					\
++			PLAT_ARM_MEM_PROT_ADDR,				\
++			V2M_FLASH_BLOCK_SIZE,				\
++			MT_DEVICE | MT_RW | EL3_PAS)
++
++#define NRD_ROS_FLASH0_RO_MMAP						\
++		MAP_REGION_FLAT(					\
++			V2M_FLASH0_BASE,				\
++			V2M_FLASH0_SIZE,				\
++			MT_DEVICE | MT_RO | MT_SECURE)
++
++#endif /* NRD_ROS_FW_DEF4_H */
+diff --git a/plat/arm/board/neoverse_rd/common/nrd_plat4.c b/plat/arm/board/neoverse_rd/common/nrd_plat4.c
+new file mode 100644
+index 000000000000..bfd91496c365
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/common/nrd_plat4.c
+@@ -0,0 +1,160 @@
++/*
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <assert.h>
++
++#include <drivers/arm/css/sds.h>
++#include <drivers/arm/sbsa.h>
++#include <lib/utils_def.h>
++#include <plat/arm/common/plat_arm.h>
++#include <plat/common/platform.h>
++
++#include <platform_def.h>
++
++/*
++ * Table of regions for different BL stages to map using the MMU.
++ */
++
++#if SPD_spmd && SPMD_SPM_AT_SEL2
++#define ARM_MAP_SPMC_CORE_MEM		MAP_REGION_FLAT(		\
++						BL32_BASE,		\
++						BL32_LIMIT - BL32_BASE,	\
++						MT_MEMORY | MT_RW | \
++						MT_SECURE)
++#endif
++
++#if IMAGE_BL1
++const mmap_region_t plat_arm_mmap[] = {
++	NRD_CSS_SHARED_RAM_MMAP(0),
++	NRD_ROS_FLASH0_RO_MMAP,
++	NRD_CSS_PERIPH_MMAP(0),
++	NRD_ROS_PLATFORM_PERIPH_MMAP,
++	NRD_ROS_SYSTEM_PERIPH_MMAP,
++	{0}
++};
++#endif /* IMAGE_BL3 */
++
++#if IMAGE_BL2
++const mmap_region_t plat_arm_mmap[] = {
++	NRD_CSS_SHARED_RAM_MMAP(0),
++	NRD_ROS_FLASH0_RO_MMAP,
++#ifdef PLAT_ARM_MEM_PROT_ADDR
++	NRD_ROS_V2M_MEM_PROTECT_MMAP,
++#endif
++	NRD_CSS_PERIPH_MMAP(0),
++	NRD_ROS_PLATFORM_PERIPH_MMAP,
++	NRD_ROS_SYSTEM_PERIPH_MMAP,
++	NRD_CSS_NS_DRAM1_MMAP,
++#if SPD_spmd && SPMD_SPM_AT_SEL2
++	ARM_MAP_SPMC_CORE_MEM,
++#endif
++#if TRUSTED_BOARD_BOOT && !RESET_TO_BL2
++	NRD_CSS_BL1_RW_MMAP,
++#endif
++#if ENABLE_RME
++	NRD_CSS_GPT_L1_DRAM_MMAP,
++	NRD_CSS_RMM_REGION_MMAP,
++	NRD_CSS_IO_VIRT_SMMUV3_MMAP(0),
++#if NRD_CHIP_COUNT > 1
++	NRD_CSS_IO_VIRT_SMMUV3_MMAP(1),
++#endif
++#if NRD_CHIP_COUNT > 2
++	NRD_CSS_IO_VIRT_SMMUV3_MMAP(2),
++#endif
++#if NRD_CHIP_COUNT > 3
++	NRD_CSS_IO_VIRT_SMMUV3_MMAP(3),
++#endif
++#endif
++#if NRD_CHIP_COUNT > 1
++	NRD_CSS_SHARED_RAM_MMAP(1),
++#endif
++#if NRD_CHIP_COUNT > 2
++	NRD_CSS_SHARED_RAM_MMAP(2),
++#endif
++#if NRD_CHIP_COUNT > 3
++	NRD_CSS_SHARED_RAM_MMAP(3),
++#endif
++	{0}
++};
++#endif /* IMAGE_BL2 */
++
++#if IMAGE_BL31
++const mmap_region_t plat_arm_mmap[] = {
++	NRD_CSS_SHARED_RAM_MMAP(0),
++	NRD_CSS_HW_CONFIG_MMAP,
++#if NRD_ERR_INJ_SUPPORT
++	ARM_MAP_EINJ_DRAM1,
++#endif
++#ifdef PLAT_ARM_MEM_PROT_ADDR
++	NRD_ROS_V2M_MEM_PROTECT_MMAP,
++#endif
++	NRD_CSS_PERIPH_MMAP(0),
++	NRD_ROS_PLATFORM_PERIPH_MMAP,
++	NRD_ROS_SYSTEM_PERIPH_MMAP,
++#if SPD_spmd && SPMD_SPM_AT_SEL2
++	ARM_SPM_BUF_EL3_MMAP,
++#endif
++#if ENABLE_RME
++	NRD_CSS_GPT_L1_DRAM_MMAP,
++	NRD_CSS_EL3_RMM_SHARED_MEM_MMAP,
++	NRD_CSS_GPC_SMMU_SMMUV3_MMAP,
++	NRD_CSS_IO_VIRT_SMMUV3_MMAP(0),
++#if NRD_CHIP_COUNT > 1
++	NRD_CSS_IO_VIRT_SMMUV3_MMAP(1),
++#endif
++#if NRD_CHIP_COUNT > 2
++	NRD_CSS_IO_VIRT_SMMUV3_MMAP(2),
++#endif
++#if NRD_CHIP_COUNT > 3
++	NRD_CSS_IO_VIRT_SMMUV3_MMAP(3),
++#endif
++#endif
++	{0}
++};
++#endif /* IMAGE_BL31 */
++
++ARM_CASSERT_MMAP
++
++#if TRUSTED_BOARD_BOOT
++int plat_get_mbedtls_heap(void **heap_addr, size_t *heap_size)
++{
++	assert(heap_addr != NULL);
++	assert(heap_size != NULL);
++
++	return arm_get_mbedtls_heap(heap_addr, heap_size);
++}
++#endif
++
++void plat_arm_secure_wdt_start(void)
++{
++	sbsa_wdog_start(NRD_CSS_AP_SECURE_WDOG_BASE,
++			NRD_CSS_AP_SECURE_WDOG_TIMEOUT);
++}
++
++void plat_arm_secure_wdt_stop(void)
++{
++	sbsa_wdog_stop(NRD_CSS_AP_SECURE_WDOG_BASE);
++}
++
++static sds_region_desc_t nrd_sds_regions[] = {
++	{ .base = NRD_CSS_SDS_BASE(0) },
++#if NRD_CHIP_COUNT > 1
++	{ .base = NRD_CSS_SDS_BASE(1) },
++#endif
++#if NRD_CHIP_COUNT > 2
++	{ .base = NRD_CSS_SDS_BASE(2) },
++#endif
++#if NRD_CHIP_COUNT > 3
++	{ .base = NRD_CSS_SDS_BASE(3) },
++#endif
++};
++
++sds_region_desc_t *plat_sds_get_regions(unsigned int *region_count)
++{
++	*region_count = ARRAY_SIZE(nrd_sds_regions);
++
++	return nrd_sds_regions;
++}
