@@ -1,0 +1,324 @@
+From 07687ec819e167d29be853f582c42c36ebe89186 Mon Sep 17 00:00:00 2001
+From: Manoj Kumar <manojkumar.prabakaran@arm.com>
+Date: Sat, 6 Jan 2024 14:58:07 +0530
+Subject: [PATCH] neoverse-rd/rdv3 smcf: Add smcf_client module to read out MGI
+ data
+
+Currently, SMCF_Client module is added to read out MGI datas
+periodicaly. Only AMU data is being read, this module can be used to read
+out the sensor data too.This module helps in validating the SMCF
+data collection using the platform-smcf module and
+amu_smcf_drv module.
+
+Change-Id: I7f2e54b19a1206b6df6c3f97d791b309a59d6f23
+Signed-off-by: Manoj Kumar Prabakaran <manojkumar.prabakaran@arm.com>
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../rdv3/module/smcf_client/CMakeLists.txt    |  38 ++++
+ .../rdv3/module/smcf_client/Module.cmake      |  10 +
+ .../module/smcf_client/src/mod_smcf_client.c  | 199 ++++++++++++++++++
+ .../neoverse-rd/rdv3/scp_ramfw/Firmware.cmake |   4 +-
+ .../rdv3/scp_ramfw/include/scp_cfgd_timer.h   |   1 +
+ 5 files changed, 251 insertions(+), 1 deletion(-)
+ create mode 100644 product/neoverse-rd/rdv3/module/smcf_client/CMakeLists.txt
+ create mode 100644 product/neoverse-rd/rdv3/module/smcf_client/Module.cmake
+ create mode 100644 product/neoverse-rd/rdv3/module/smcf_client/src/mod_smcf_client.c
+
+diff --git a/product/neoverse-rd/rdv3/module/smcf_client/CMakeLists.txt b/product/neoverse-rd/rdv3/module/smcf_client/CMakeLists.txt
+new file mode 100644
+index 000000000000..245b0fdf297a
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/module/smcf_client/CMakeLists.txt
+@@ -0,0 +1,38 @@
++#
++# Arm SCP/MCP Software
++# Copyright (c) 2023, Arm Limited and Contributors. All rights reserved.
++#
++# SPDX-License-Identifier: BSD-3-Clause
++#
++
++add_library(${SCP_MODULE_TARGET} SCP_MODULE)
++# SCP_PLATFORM_VARIANT value for supported RD-V3 platform variants:
++# - '0' for RD-V3 platform
++# - '1' for RD-V3-Cfg1 platform
++# - '2' for RD-V3-Cfg2 platform
++
++if (SCP_PLATFORM_VARIANT STREQUAL "0")
++     target_compile_definitions(${SCP_MODULE_TARGET}
++                                 PUBLIC -DPLATFORM_VARIANT=0)
++elseif (SCP_PLATFORM_VARIANT STREQUAL "1")
++      target_compile_definitions(${SCP_MODULE_TARGET}
++                                 PUBLIC -DPLATFORM_VARIANT=1)
++elseif (SCP_PLATFORM_VARIANT STREQUAL "2")
++      target_compile_definitions(${SCP_MODULE_TARGET}
++                                 PUBLIC -DPLATFORM_VARIANT=2)
++else()
++      message(FATAL_ERROR "Please set SCP_PLATFORM_VARIANT to \n"
++                                "'0' for RD-V3\n"
++                                "'1' for RD-V3-Cfg1\n"
++                                "'2' for RD-V3-Cfg2\n")
++endif()
++
++
++target_include_directories(${SCP_MODULE_TARGET}
++	PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include"
++	"${CMAKE_SOURCE_DIR}/interface/amu/")
++
++target_sources(${SCP_MODULE_TARGET}
++	PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/mod_smcf_client.c")
++target_link_libraries(
++	${SCP_MODULE_TARGET} PRIVATE module-platform-smcf module-smcf  module-amu-smcf-drv module-timer)
+diff --git a/product/neoverse-rd/rdv3/module/smcf_client/Module.cmake b/product/neoverse-rd/rdv3/module/smcf_client/Module.cmake
+new file mode 100644
+index 000000000000..75581ed19075
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/module/smcf_client/Module.cmake
+@@ -0,0 +1,10 @@
++#
++# Arm SCP/MCP Software
++# Copyright (c) 2023, Arm Limited and Contributors. All rights reserved.
++#
++# SPDX-License-Identifier: BSD-3-Clause
++#
++
++set(SCP_MODULE "smcf-client")
++
++set(SCP_MODULE_TARGET "module-smcf-client")
+diff --git a/product/neoverse-rd/rdv3/module/smcf_client/src/mod_smcf_client.c b/product/neoverse-rd/rdv3/module/smcf_client/src/mod_smcf_client.c
+new file mode 100644
+index 000000000000..cd0835bdf487
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/module/smcf_client/src/mod_smcf_client.c
+@@ -0,0 +1,199 @@
++/*
++ * Arm SCP/MCP Software
++ * Copyright (c) 2023, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include "platform_core.h"
++
++#include <scp_cfgd_timer.h>
++
++#include <mod_amu_smcf_drv.h>
++#include <mod_platform_smcf.h>
++#include <mod_smcf.h>
++#include <mod_timer.h>
++
++#include <interface_amu.h>
++
++#include <fwk_assert.h>
++#include <fwk_id.h>
++#include <fwk_log.h>
++#include <fwk_module.h>
++#include <fwk_notification.h>
++#include <fwk_status.h>
++
++#include <string.h>
++
++#define NUM_OF_CORE_COUNTERS 7
++static unsigned int core_count;
++
++static struct mod_timer_alarm_api *alarm_api;
++static struct smcf_data_api *platform_smpling_api;
++static struct smcf_control_api *control_api;
++static struct smcf_monitor_group_interrupt_api *interrupt_api;
++static struct amu_api *amu_data_api;
++
++static uint32_t amu_sensor_count = 0;
++
++fwk_id_t alarm_id = FWK_ID_SUB_ELEMENT_INIT(
++    FWK_MODULE_IDX_TIMER,
++    0,
++    SCP_CFGD_MOD_TIMER_SEIDX_SMCF_CLIENT_TIMER);
++
++static int smcf_client_init(
++    fwk_id_t module_id,
++    unsigned int element_count,
++    const void *data)
++{
++    core_count = platform_get_core_count();
++    /* one sensor and one amu per core */
++    amu_sensor_count =
++        fwk_module_get_element_count(FWK_ID_MODULE(FWK_MODULE_IDX_SMCF));
++
++    return FWK_SUCCESS;
++}
++
++static int smcf_client_bind(fwk_id_t id, unsigned int round)
++{
++    int status;
++    uint32_t mgi_idx;
++
++    /* Only bind in the first round of calls */
++    if (round > 0)
++        return FWK_SUCCESS;
++
++    status = fwk_module_bind(
++        FWK_ID_MODULE(FWK_MODULE_IDX_PLATFORM_SMCF),
++        FWK_ID_API(
++            FWK_MODULE_IDX_PLATFORM_SMCF,
++            MOD_SMCF_PLATFORM_API_IDX_SAMPLING_API),
++        &platform_smpling_api);
++
++    if (status != FWK_SUCCESS) {
++        return status;
++    }
++
++    status = fwk_module_bind(
++        FWK_ID_MODULE(FWK_MODULE_IDX_SMCF),
++        FWK_ID_API(FWK_MODULE_IDX_SMCF, MOD_SMCF_API_IDX_CONTROL),
++        &control_api);
++
++    if (status != FWK_SUCCESS) {
++        return status;
++    }
++
++    for (mgi_idx = 0; mgi_idx < amu_sensor_count; mgi_idx++) {
++        status = fwk_module_bind(
++            FWK_ID_ELEMENT(FWK_MODULE_IDX_SMCF, mgi_idx),
++            FWK_ID_API(FWK_MODULE_IDX_SMCF, MOD_SMCF_API_IDX_INTERRUPT),
++            &interrupt_api);
++
++        if (status != FWK_SUCCESS) {
++            return status;
++        }
++    }
++
++    status = fwk_module_bind(
++        FWK_ID_MODULE(FWK_MODULE_IDX_AMU_SMCF_DRV),
++        FWK_ID_API(FWK_MODULE_IDX_AMU_SMCF_DRV, MOD_AMU_SMCF_DRV_API_IDX_DATA),
++        &amu_data_api);
++
++    if (status != FWK_SUCCESS) {
++        return status;
++    }
++    return fwk_module_bind(alarm_id, MOD_TIMER_API_ID_ALARM, &alarm_api);
++}
++
++static int smcf_client_process_notification(
++    const struct fwk_event *event,
++    struct fwk_event *resp_event)
++{
++    int status = FWK_SUCCESS;
++    unsigned int cntr_idx, mgi_idx;
++    uint64_t counter_value[NUM_OF_CORE_COUNTERS];
++
++    if (!fwk_id_is_equal(
++            event->id, mod_smcf_notification_id_new_data_sample_ready)) {
++        return FWK_E_BUSY;
++    }
++
++    mgi_idx = fwk_id_get_element_idx(event->source_id);
++    FWK_LOG_INFO("CLIENT: Data successfully fetched for MGI[%u]", mgi_idx);
++
++    if (mgi_idx < core_count) { // AMUs
++
++        memset(counter_value, 0, 2 * NUM_OF_CORE_COUNTERS);
++        status = amu_data_api->get_counters(
++            FWK_ID_SUB_ELEMENT(FWK_MODULE_IDX_SMCF, mgi_idx, 0),
++            counter_value,
++            NUM_OF_CORE_COUNTERS);
++
++        if (status != FWK_SUCCESS) {
++            FWK_LOG_ERR(
++                "Failed to get amu data for core %u ERROR %d", mgi_idx, status);
++            return status;
++        }
++        for (cntr_idx = 0; cntr_idx < NUM_OF_CORE_COUNTERS; ++cntr_idx)
++            FWK_LOG_ERR(
++                "CLIENT: MGI[%u] AMU_COUNTER[%u] data = %llu",
++                mgi_idx,
++                cntr_idx,
++                counter_value[cntr_idx]);
++    }
++    return status;
++}
++
++static void alarm_callback(uintptr_t module_idx)
++{
++    uint32_t mgi;
++    uint32_t num_of_mgis = 2 * core_count; // Each core has 2 MGI (AMU, DTS)
++
++    for (mgi = 0; mgi < num_of_mgis; mgi++) {
++        platform_smpling_api->start_data_sampling(
++            FWK_ID_ELEMENT(FWK_MODULE_IDX_SMCF, mgi));
++    }
++
++    for (mgi = 0; mgi < num_of_mgis; mgi++) {
++        interrupt_api->handle_interrupt(
++            FWK_ID_ELEMENT(FWK_MODULE_IDX_SMCF, mgi));
++    }
++
++    for (mgi = 0; mgi < num_of_mgis; mgi++) {
++        platform_smpling_api->stop_data_sampling(
++            FWK_ID_ELEMENT(FWK_MODULE_IDX_SMCF, mgi));
++    }
++}
++
++static int smcf_client_start(fwk_id_t id)
++{
++    uint32_t mgi, num_of_mgis;
++
++    if (!fwk_module_is_valid_module_id(id)) {
++        return FWK_SUCCESS;
++    }
++
++    num_of_mgis = 2 * core_count; // Each core has 2 MGI (AMU, DTS)
++    for (mgi = 0; mgi < num_of_mgis; mgi++) {
++        fwk_notification_subscribe(
++            mod_smcf_notification_id_new_data_sample_ready,
++            FWK_ID_ELEMENT(FWK_MODULE_IDX_SMCF, mgi),
++            id);
++    }
++
++    return alarm_api->start(
++        alarm_id,
++        1000,
++        MOD_TIMER_ALARM_TYPE_PERIODIC,
++        alarm_callback,
++        fwk_id_get_module_idx(id));
++}
++
++const struct fwk_module module_smcf_client = {
++    .type = FWK_MODULE_TYPE_SERVICE,
++    .init = smcf_client_init,
++    .bind = smcf_client_bind,
++    .start = smcf_client_start,
++    .process_notification = smcf_client_process_notification,
++};
++const struct fwk_module_config config_smcf_client = { 0 };
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake b/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake
+index ff1125850386..588156df02eb 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake
++++ b/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake
+@@ -38,7 +38,8 @@ list(PREPEND SCP_MODULE_PATHS
+      "${CMAKE_CURRENT_LIST_DIR}/../module/system_pik"
+      "${CMAKE_SOURCE_DIR}/module/pcie_discovery"
+      "${CMAKE_SOURCE_DIR}/product/neoverse-rd/module/pcie_setup"
+-     "${CMAKE_CURRENT_LIST_DIR}/../module/platform_smcf")
++     "${CMAKE_CURRENT_LIST_DIR}/../module/platform_smcf"
++     "${CMAKE_CURRENT_LIST_DIR}/../module/smcf_client")
+ 
+ # The order of the modules in the following list is the order in which the
+ # modules are initialized, bound, started during the pre-runtime phase.
+@@ -75,3 +76,4 @@ list(APPEND SCP_MODULES "scp-platform")
+ list(APPEND SCP_MODULES "smcf")
+ list(APPEND SCP_MODULES "amu-smcf-drv")
+ list(APPEND SCP_MODULES "platform-smcf")
++list(APPEND SCP_MODULES "smcf-client")
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/include/scp_cfgd_timer.h b/product/neoverse-rd/rdv3/scp_ramfw/include/scp_cfgd_timer.h
+index 9432ac8543a5..5158e2bab313 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/include/scp_cfgd_timer.h
++++ b/product/neoverse-rd/rdv3/scp_ramfw/include/scp_cfgd_timer.h
+@@ -22,6 +22,7 @@ enum scp_cfgd_mod_timer_alarm_idx {
+ #ifdef BUILD_HAS_SCMI_NOTIFICATIONS
+     SCP_CFGD_SCMI_SYSPWR_MGMT_NOTIFY_ALARM_IDX,
+ #endif
++    SCP_CFGD_MOD_TIMER_SEIDX_SMCF_CLIENT_TIMER,
+     SCP_CFGD_MOD_TIMER_ALARM_IDX_COUNT,
+ };
+ 

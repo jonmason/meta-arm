@@ -1,0 +1,81 @@
+From b9c5bd5aeeeb61158bf6a3533e26da9c6cf6881b Mon Sep 17 00:00:00 2001
+From: Vijayenthiran Subramaniam <vijayenthiran.subramaniam@arm.com>
+Date: Wed, 19 Jul 2023 20:16:58 +0530
+Subject: [PATCH] rdv3: program the AP RVBAR for RESET_TO_BL31
+
+Program the AP RVBAR register with the SRAM address 0x63000 which is
+where the AP BL31 binary is loaded. Also, added a build flag
+AP_RESET_TO_BL31 to control this.
+
+Signed-off-by: Vijayenthiran Subramaniam <vijayenthiran.subramaniam@arm.com>
+Signed-off-by: Vivek Gautam <vivek.gautam@arm.com>
+Signed-off-by: Rakshit Goyal <rakshit.goyal@arm.com>
+Change-Id: I681eb8e67eb875a0f1d93898ec9def43860d48ea
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../rdv3/module/scp_platform/CMakeLists.txt   |  3 ++
+ .../scp_platform/src/mod_scp_platform.c       | 28 +++++++++++++++++++
+ 2 files changed, 31 insertions(+)
+
+diff --git a/product/neoverse-rd/rdv3/module/scp_platform/CMakeLists.txt b/product/neoverse-rd/rdv3/module/scp_platform/CMakeLists.txt
+index 3de394575177..490b9b7acb21 100644
+--- a/product/neoverse-rd/rdv3/module/scp_platform/CMakeLists.txt
++++ b/product/neoverse-rd/rdv3/module/scp_platform/CMakeLists.txt
+@@ -27,6 +27,9 @@ else()
+                                 "'2' for RD-V3-Cfg2\n")
+ endif()
+ 
++target_compile_definitions(${SCP_MODULE_TARGET}
++                           PUBLIC $<$<BOOL:${PLAT_RESET_TO_BL31}>:AP_RESET_TO_BL31>)
++
+ target_include_directories(${SCP_MODULE_TARGET}
+                            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+ 
+diff --git a/product/neoverse-rd/rdv3/module/scp_platform/src/mod_scp_platform.c b/product/neoverse-rd/rdv3/module/scp_platform/src/mod_scp_platform.c
+index 4bd3b8678b92..9905066fd017 100644
+--- a/product/neoverse-rd/rdv3/module/scp_platform/src/mod_scp_platform.c
++++ b/product/neoverse-rd/rdv3/module/scp_platform/src/mod_scp_platform.c
+@@ -29,6 +29,26 @@
+ /* Module context data */
+ struct scp_platform_ctx scp_platform_ctx;
+ 
++#ifdef AP_RESET_TO_BL31
++
++/* SRAM address where TF-A BL31 binary will be preloaded in the FVP */
++#    define ARM_TF_BL31_SRAM_ADDR (0x00063000)
++
++/* Helper function to program the AP Core RVBAR */
++void program_ap_rvbar()
++{
++    uint8_t core_idx;
++
++    for (core_idx = 0; core_idx < platform_get_core_count(); core_idx++) {
++        /* Set RVBAR to TF-A BL31 DRAM address */
++        SCP_CLUSTER_UTILITY_CORE_MANAGER_PTR(core_idx)->PE_RVBARADDR_LW =
++            ARM_TF_BL31_SRAM_ADDR;
++        SCP_CLUSTER_UTILITY_CORE_MANAGER_PTR(core_idx)->PE_RVBARADDR_UP = 0;
++    }
++}
++
++#endif /* AP_RESET_TO_BL31 */
++
+ static void platform_update_gpt_size(void)
+ {
+     unsigned int core_idx;
+@@ -238,6 +258,14 @@ static int scp_platform_start(fwk_id_t id)
+     /* Update L0GPTSZ for all cores */
+     platform_update_gpt_size();
+ 
++#ifdef AP_RESET_TO_BL31
++
++    /* Set the AP RVBAR to DRAM address where the TF-A BL31 binary is preloaded
++     */
++    program_ap_rvbar();
++
++#endif /* AP_RESET_TO_BL31 */
++
+     /* Determine the chip information */
+     status = scp_platform_ctx.system_info_api->get_system_info(&system_info);
+     if (status != FWK_SUCCESS) {

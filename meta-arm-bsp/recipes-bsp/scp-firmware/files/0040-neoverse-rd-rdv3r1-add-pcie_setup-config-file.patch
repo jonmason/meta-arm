@@ -1,0 +1,332 @@
+From 7eaee5076570c31741647907e612e7cf64818928 Mon Sep 17 00:00:00 2001
+From: Lokesh B V <Lokesh.BV@Arm.com>
+Date: Mon, 1 Jul 2024 11:26:05 -0400
+Subject: [PATCH] neoverse-rd/rdv3r1: add pcie_setup config file
+
+This enables the support for pcie_setup module by adding the relavent
+configuration information and adding the module for RDV3R1 scp_ram
+firmware.
+
+Number of EPs are 6: x16_0_en, x16_1_en, x1_0_en, x4_0_en, x4_1_en, x8_0_en
+
+Signed-off-by: Lokesh B V <Lokesh.BV@Arm.com>
+Change-Id: I0c62d3e58a45b9aabc59f3c3c589a5fec99695d5
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../rdv3r1/scp_ramfw/CMakeLists.txt           |   1 +
+ .../rdv3r1/scp_ramfw/Firmware.cmake           |   7 +-
+ .../rdv3r1/scp_ramfw/config_pcie_setup.c      | 180 ++++++++++++++++++
+ .../neoverse-rd/rdv3r1/scp_ramfw/config_sds.c |  10 +
+ .../rdv3r1/scp_ramfw/include/platform_core.h  |   6 +
+ .../rdv3r1/scp_ramfw/include/scp_cfgd_sds.h   |  10 +
+ 6 files changed, 213 insertions(+), 1 deletion(-)
+ create mode 100644 product/neoverse-rd/rdv3r1/scp_ramfw/config_pcie_setup.c
+
+diff --git a/product/neoverse-rd/rdv3r1/scp_ramfw/CMakeLists.txt b/product/neoverse-rd/rdv3r1/scp_ramfw/CMakeLists.txt
+index d3adec9dc618..9dadc8eb65c6 100644
+--- a/product/neoverse-rd/rdv3r1/scp_ramfw/CMakeLists.txt
++++ b/product/neoverse-rd/rdv3r1/scp_ramfw/CMakeLists.txt
+@@ -45,6 +45,7 @@ target_sources(
+             "${CMAKE_CURRENT_SOURCE_DIR}/config_sid.c"
+             "${CMAKE_CURRENT_SOURCE_DIR}/config_noc_s3.c"
+             "${CMAKE_CURRENT_SOURCE_DIR}/config_io_block.c"
++            "${CMAKE_CURRENT_SOURCE_DIR}/config_pcie_setup.c"
+     )
+ 
+ #
+diff --git a/product/neoverse-rd/rdv3r1/scp_ramfw/Firmware.cmake b/product/neoverse-rd/rdv3r1/scp_ramfw/Firmware.cmake
+index 0aef2f0d80bc..6874109b4ac1 100644
+--- a/product/neoverse-rd/rdv3r1/scp_ramfw/Firmware.cmake
++++ b/product/neoverse-rd/rdv3r1/scp_ramfw/Firmware.cmake
+@@ -35,7 +35,10 @@ set(SCP_ENABLE_SCMI_NOTIFICATIONS TRUE)
+ list(PREPEND SCP_MODULE_PATHS
+      "${CMAKE_CURRENT_LIST_DIR}/module/scp_platform"
+      "${CMAKE_CURRENT_LIST_DIR}/module/system_pik"
+-     "${CMAKE_CURRENT_LIST_DIR}/../module/io_block")
++     "${CMAKE_CURRENT_LIST_DIR}/../module/io_block"
++     "${CMAKE_SOURCE_DIR}/module/pcie_discovery"
++     "${CMAKE_SOURCE_DIR}/product/neoverse-rd/module/pcie_setup"
++)
+ 
+ # The order of the modules in the following list is the order in which the
+ # modules are initialized, bound, started during the pre-runtime phase.
+@@ -66,4 +69,6 @@ list(APPEND SCP_MODULES "sds")
+ list(APPEND SCP_MODULES "scmi-power-domain")
+ list(APPEND SCP_MODULES "scmi-system-power")
+ list(APPEND SCP_MODULES "io-block")
++list(APPEND SCP_MODULES "pcie_discovery")
++list(APPEND SCP_MODULES "pcie-setup")
+ list(APPEND SCP_MODULES "scp-platform")
+diff --git a/product/neoverse-rd/rdv3r1/scp_ramfw/config_pcie_setup.c b/product/neoverse-rd/rdv3r1/scp_ramfw/config_pcie_setup.c
+new file mode 100644
+index 000000000000..d1a5600dd164
+--- /dev/null
++++ b/product/neoverse-rd/rdv3r1/scp_ramfw/config_pcie_setup.c
+@@ -0,0 +1,180 @@
++/*
++ * Arm SCP/MCP Software
++ * Copyright (c) 2024 Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ * Description:
++ *     Configuration data for module 'pcie'.
++ */
++
++#include "cmn_node_id.h"
++#include "io_macro_layout.h"
++#include "scp_cfgd_sds.h"
++#include "scp_fw_mmap.h"
++
++#include <mod_atu_mmio.h>
++#include <mod_cmn_cyprus.h>
++#include <mod_io_block.h>
++#include <mod_pcie_setup.h>
++#include <mod_scp_platform.h>
++
++#include <fwk_id.h>
++#include <fwk_log.h>
++#include <fwk_module.h>
++#include <fwk_module_idx.h>
++
++/* PCIe ECAM Base */
++#define ECAM_BASE UINT64_C(0x10000000000)
++/* PCIe ECAM size (256 MiB) */
++#define ECAM_SIZE (UINT64_C(256) * FWK_MIB)
++/* PCIe ECAM base for a chip */
++#define CHIP_ECAM_BASE(chip_id) (ECAM_BASE + (chip_id * ECAM_SIZE))
++
++/* PCIe MMIO_L Base */
++#define MMIOL_BASE UINT64_C(0x60000000)
++/* PCIe MMIO_L size (256 MiB) */
++#define MMIOL_SIZE (UINT64_C(256) * FWK_MIB)
++/* PCIe MMIO_L base for a chip */
++#define CHIP_MMIOL_BASE(chip_id) (MMIOL_BASE + (chip_id * MMIOL_SIZE))
++
++/* PCIe MMIO_H Base */
++#define MMIOH_BASE UINT64_C(0x10100000000)
++/* PCIe MMIO_H size (64 GiB) */
++#define MMIOH_SIZE (UINT64_C(64) * FWK_GIB)
++/* PCIe MMIO_H base for a chip */
++#define CHIP_MMIOH_BASE(chip_id) (MMIOH_BASE + (chip_id * MMIOH_SIZE))
++
++/* PCIe bus size for a chip */
++#define CHIP_PCIE_BUS_SIZE 256
++
++#define NUMBER_OF_ENDPOINTS 5
++#define NUMBER_OF_CHIPS 2
++
++#define CHIP_MEMMAP(chip_id) \
++    { \
++        .mmap = { \
++            .ecam = { \
++                .start = CHIP_ECAM_BASE(chip_id), \
++                .size = ECAM_SIZE, \
++            }, \
++            .mmiol = { \
++                .start = CHIP_MMIOL_BASE(chip_id), \
++                .size = MMIOL_SIZE, \
++            }, \
++            .mmioh = { \
++                .start = CHIP_MMIOH_BASE(chip_id), \
++                .size = MMIOH_SIZE \
++            }, \
++            .bus = { \
++                .start = 0, \
++                .size = CHIP_PCIE_BUS_SIZE \
++            } \
++        }, \
++        .cmn_id = FWK_ID_MODULE(FWK_MODULE_IDX_CMN_CYPRUS), \
++        .io_block_id = FWK_ID_MODULE(FWK_MODULE_IDX_IO_BLOCK), \
++        .cmn_api_id = FWK_ID_API(FWK_MODULE_IDX_CMN_CYPRUS, \
++                                 MOD_CMN_CYPRUS_API_IDX_MAP_IO_REGION), \
++        .io_block_api_id = FWK_ID_API(FWK_MODULE_IDX_IO_BLOCK, \
++                                      MOD_IO_BLOCK_API_IDX_MAP_REGION), \
++        .address_remapper_id = FWK_ID_MODULE(FWK_MODULE_IDX_ATU_MMIO), \
++        .address_remapper_api_id = FWK_ID_API(FWK_MODULE_IDX_ATU_MMIO, \
++                                          MOD_ATU_MMIO_API_IDX_MEM_RW),\
++        .plat_notification = { \
++            .notification_id = FWK_ID_NOTIFICATION_INIT( \
++                    FWK_MODULE_IDX_SCP_PLATFORM, \
++                    MOD_SCP_PLATFORM_NOTIFICATION_IDX_SUBSYS_INITIALIZED), \
++            .source_id = FWK_ID_MODULE_INIT( \
++                    FWK_MODULE_IDX_SCP_PLATFORM), \
++        }, \
++        .ep_count = NUMBER_OF_ENDPOINTS, \
++        .ep_interrupt_ids = ((uint64_t [NUMBER_OF_ENDPOINTS]) { \
++                0, \
++                0x10000, \
++                0x20000, \
++                0x30000, \
++                0x40000, \
++         }), \
++    }
++
++#define IO_MACRO_EP_CONFIG(x16_0_en, x1_0_en, x4_0_en, x4_1_en, x8_0_en) \
++    ((struct mod_pcie_setup_ep_config[NUMBER_OF_ENDPOINTS]){ \
++        { .valid = x16_0_en, \
++          .allow_ns_access = true, \
++          .rp_node_id = AMNI_PCIEX16_0 }, \
++        { .valid = x1_0_en, \
++          .allow_ns_access = true, \
++          .rp_node_id = AMNI_PCIEX1_0 }, \
++        { .valid = x4_0_en, \
++          .allow_ns_access = true, \
++          .rp_node_id = AMNI_PCIEX4_0 }, \
++        { .valid = x4_1_en, \
++          .allow_ns_access = true, \
++          .rp_node_id = AMNI_PCIEX4_1 }, \
++        { .valid = x8_0_en, \
++          .allow_ns_access = true, \
++          .rp_node_id = AMNI_PCIEX8_0 }, \
++    })
++
++#define IO_MACRO_PCIE_ELEMENT_CONFIG(idx, x16_0_en, x1_0_en, x4_0_en, x4_1_en, x8_0_en) \
++    { \
++        .name = "IO Macro " #idx, \
++        .data = &((struct mod_pcie_setup_config){ \
++            .reg_base = IO_NOC_S3_GPV_BLOCK_BASE(idx), \
++            .cmn_node_id = IOVB_NODE_ID##idx, \
++            .nci_source_node_id = ASNI_HNP0_CMN, \
++            .block_id = idx, \
++            .smmu_base = TCU_REG_BASE(idx), \
++            .sds_struct_id = SDS_PCIE_MMAP, \
++            .ep_config = \
++                IO_MACRO_EP_CONFIG(x16_0_en, x1_0_en, x4_0_en, x4_1_en, x8_0_en) }) \
++    }
++
++static const struct fwk_element pcie_setup_element_table[] = {
++    IO_MACRO_PCIE_ELEMENT_CONFIG(0, false, false, false, false, true),
++    IO_MACRO_PCIE_ELEMENT_CONFIG(1, false, false, false, false, true),
++    { 0 }
++};
++
++static const struct mod_pcie_setup_module_config module_config = {
++    .resource_info_count = NUMBER_OF_CHIPS,
++    .resource_info = ((struct mod_pcie_setup_resource_info[NUMBER_OF_CHIPS]) {
++        CHIP_MEMMAP(0),
++        CHIP_MEMMAP(1),
++/*
++ * Keep the basic memory map regions identical. The module during runtime
++ * will detect the chip number and update the translation fields
++ * accordingly.
++ */
++    }),
++};
++
++void pcie_setup_add_chip_offset(struct mod_pcie_setup_config *pci_setup_config)
++{
++    uint64_t chip_offset = platform_get_chip_offset();
++
++    pci_setup_config->reg_base += chip_offset;
++    pci_setup_config->smmu_base += chip_offset;
++}
++
++static const struct fwk_element *pcie_setup_get_element_table(
++    fwk_id_t module_id)
++{
++    uint8_t chip_id = 0;
++
++    chip_id = platform_get_chip_id();
++
++    FWK_LOG_INFO("[PCIe Setup] chip_id: %d", chip_id);
++
++    uint8_t idx;
++    for (idx = 0; pcie_setup_element_table[idx].data != NULL; idx++) {
++        pcie_setup_add_chip_offset((struct mod_pcie_setup_config *)pcie_setup_element_table[idx].data);
++    }
++
++    return pcie_setup_element_table;
++}
++
++struct fwk_module_config config_pcie_setup = {
++    .data = &module_config,
++    .elements = FWK_MODULE_DYNAMIC_ELEMENTS(pcie_setup_get_element_table),
++};
+diff --git a/product/neoverse-rd/rdv3r1/scp_ramfw/config_sds.c b/product/neoverse-rd/rdv3r1/scp_ramfw/config_sds.c
+index 6ce71a1ccefb..1130d16ee0e5 100644
+--- a/product/neoverse-rd/rdv3r1/scp_ramfw/config_sds.c
++++ b/product/neoverse-rd/rdv3r1/scp_ramfw/config_sds.c
+@@ -96,11 +96,21 @@ static struct fwk_element sds_element_table[] = {
+             .finalize = true,
+         }),
+     },
++    [SCP_CFGD_MOD_SDS_EIDX_PCIE_MMAP] = {
++        .name = "PCIe Mmap",
++        .data = &((struct mod_sds_structure_desc){
++            .id = SDS_PCIE_MMAP,
++            .size = SCP_CFGD_MOD_SDS_PCIE_MMAP_SIZE,
++            .region_id = SCP_CFGD_MOD_SDS_REGION_IDX_SECURE,
++            .finalize = true,
++        }),
++    },
+     [SCP_CFGD_MOD_SDS_EIDX_COUNT] = { 0 }, /* Termination description. */
+ };
+ 
+ static_assert(
+     SCP_SDS_SECURE_SIZE > SCP_CFGD_MOD_SDS_CPU_INFO_SIZE +
++            SCP_CFGD_MOD_SDS_PCIE_MMAP_SIZE +
+             SCP_CFGD_MOD_SDS_ROM_VERSION_SIZE +
+             SCP_CFGD_MOD_SDS_RAM_VERSION_SIZE +
+             SCP_CFGD_MOD_SDS_RESET_SYNDROME_SIZE +
+diff --git a/product/neoverse-rd/rdv3r1/scp_ramfw/include/platform_core.h b/product/neoverse-rd/rdv3r1/scp_ramfw/include/platform_core.h
+index fbde7b8c9374..ff5ed007eb12 100644
+--- a/product/neoverse-rd/rdv3r1/scp_ramfw/include/platform_core.h
++++ b/product/neoverse-rd/rdv3r1/scp_ramfw/include/platform_core.h
+@@ -23,6 +23,12 @@
+ /* Maximum number of LCP sub-system instances supported */
+ #define MAX_NUM_LCP 7
+ 
++/* Number of PCIe Integration Control Register Blocks */
++#define NUM_PCIE_INTEG_CTRL 4
++
++/* Number of PCIe Root Ports */
++#define NUMBER_OF_ROOTPORTS 5
++
+ /* Number of chips supported on the platform. */
+ enum platform_chip_id { PLATFORM_CHIP_0, PLATFORM_CHIP_1, PLATFORM_CHIP_COUNT };
+ 
+diff --git a/product/neoverse-rd/rdv3r1/scp_ramfw/include/scp_cfgd_sds.h b/product/neoverse-rd/rdv3r1/scp_ramfw/include/scp_cfgd_sds.h
+index ef0baa20e3b0..92cd9d685c3e 100644
+--- a/product/neoverse-rd/rdv3r1/scp_ramfw/include/scp_cfgd_sds.h
++++ b/product/neoverse-rd/rdv3r1/scp_ramfw/include/scp_cfgd_sds.h
+@@ -11,6 +11,9 @@
+ #ifndef SCP_CFGD_SDS_H
+ #define SCP_CFGD_SDS_H
+ 
++#include <platform_core.h>
++
++#include <mod_pcie_setup.h>
+ #include <mod_sds.h>
+ 
+ #include <stdint.h>
+@@ -24,6 +27,7 @@ enum scp_cfgd_mod_sds_struct_id {
+     SDS_RAM_VERSION_STRUCT_ID = SDS_STRUCT_ID(3),
+     SDS_RESET_SYNDROME_STRUCT_ID = SDS_STRUCT_ID(5),
+     SDS_FEATURE_AVAIL_STRUCT_ID = SDS_STRUCT_ID(6),
++    SDS_PCIE_MMAP = SDS_STRUCT_ID(129),
+ };
+ 
+ /* Memory region identifiers that hold the SDS structures. */
+@@ -39,6 +43,7 @@ enum scp_cfgd_mod_sds_element_idx {
+     SCP_CFGD_MOD_SDS_EIDX_RAM_VERSION,
+     SCP_CFGD_MOD_SDS_EIDX_RESET_SYNDROME,
+     SCP_CFGD_MOD_SDS_EIDX_FEATURE_AVAILABILITY,
++    SCP_CFGD_MOD_SDS_EIDX_PCIE_MMAP,
+     SCP_CFGD_MOD_SDS_EIDX_COUNT
+ };
+ 
+@@ -48,6 +53,11 @@ enum scp_cfgd_mod_sds_element_idx {
+ #define SCP_CFGD_MOD_SDS_RAM_VERSION_SIZE          4
+ #define SCP_CFGD_MOD_SDS_RESET_SYNDROME_SIZE       4
+ #define SCP_CFGD_MOD_SDS_FEATURE_AVAILABILITY_SIZE 4
++#define SCP_CFGD_MOD_SDS_PCIE_MMAP_SIZE \
++    (sizeof(struct mod_pcie_setup_block_mmap_list)) + \
++        (NUM_PCIE_INTEG_CTRL * \
++         (sizeof(struct mod_pcie_setup_block_mmap) + \
++          (sizeof(struct mod_pcie_setup_mmap) * NUMBER_OF_ROOTPORTS)))
+ 
+ /* Flags to indicate the available features */
+ #define PLATFORM_SDS_FEATURE_FIRMWARE_MASK 0x1

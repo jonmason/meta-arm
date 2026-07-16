@@ -1,0 +1,84 @@
+From 2f1e032fd8b1a8858defc9cb6929b863b0e45b56 Mon Sep 17 00:00:00 2001
+From: Manoj Kumar Prabakaran <manojkumar.prabakaran@arm.com>
+Date: Mon, 1 Apr 2024 12:35:01 +0530
+Subject: [PATCH] neoverse-rd/rdv3 smcf: Add Stop Sampling in smcf module
+
+Add support for the SMCF stop sampling in SMCF module
+
+Signed-off-by: Manoj Kumar Prabakaran <manojkumar.prabakaran@arm.com>
+Change-Id: I3402ea0d670ede482f2b994acd61c427a2472f8b
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ module/smcf/include/mod_smcf.h |  9 ++++++++-
+ module/smcf/src/mgi.h          |  3 +++
+ module/smcf/src/mod_smcf.c     | 14 ++++++++++++++
+ 3 files changed, 25 insertions(+), 1 deletion(-)
+
+diff --git a/module/smcf/include/mod_smcf.h b/module/smcf/include/mod_smcf.h
+index 4eefafe3c62a..064e5668e74e 100644
+--- a/module/smcf/include/mod_smcf.h
++++ b/module/smcf/include/mod_smcf.h
+@@ -110,7 +110,14 @@ struct smcf_data_api {
+      * \retval ::FWK_E_PARAM The identifier is invalid.
+      */
+     int (*start_data_sampling)(fwk_id_t elmenent_id);
+-
++    /*!brief Stop data sampling
++     *
++     * \param element_id Identifier of the element
++     *
++     * \retval ::FWK_SUCCESS Operation successful.
++     * \retval ::FWK_E_PARAM The identifier is invalid.
++     */
++    int (*stop_data_sampling)(fwk_id_t elmenent_id);
+     /*!
+      * \brief Get the last data value available
+      *
+diff --git a/module/smcf/src/mgi.h b/module/smcf/src/mgi.h
+index d13c04733179..4cf42832d078 100644
+--- a/module/smcf/src/mgi.h
++++ b/module/smcf/src/mgi.h
+@@ -479,6 +479,9 @@ int mgi_set_sample_type(struct smcf_mgi_reg *smcf_mgi, uint32_t type);
+ /* Enable sample */
+ void mgi_enable_sample(struct smcf_mgi_reg *smcf_mgi);
+ 
++/* Disable sample */
++void mgi_disable_sample(struct smcf_mgi_reg *smcf_mgi);
++
+ /* Is sampling ongoing */
+ bool mgi_is_sample_ongoing(struct smcf_mgi_reg *smcf_mgi);
+ 
+diff --git a/module/smcf/src/mod_smcf.c b/module/smcf/src/mod_smcf.c
+index 20b3a95f7afb..3fcf54b4d4f0 100644
+--- a/module/smcf/src/mod_smcf.c
++++ b/module/smcf/src/mod_smcf.c
+@@ -97,6 +97,19 @@ static int smcf_start_data_sample(fwk_id_t element_id)
+     return FWK_SUCCESS;
+ }
+ 
++static int smcf_stop_data_sample(fwk_id_t element_id)
++{
++    struct smcf_element_ctx *element_ctx;
++
++    element_ctx = get_domain_ctx(element_id);
++    if (element_ctx == NULL) {
++        return FWK_E_PARAM;
++    }
++
++    mgi_disable_sample(element_ctx->mgi);
++    return FWK_SUCCESS;
++}
++
+ static int smcf_validate_tag(
+     struct smcf_element_ctx *element_ctx,
+     struct mod_smcf_buffer tag_buffer)
+@@ -358,6 +371,7 @@ static int smcf_mli_disable(fwk_id_t mli_id)
+ 
+ static const struct smcf_data_api data_api = {
+     .start_data_sampling = smcf_start_data_sample,
++    .stop_data_sampling = smcf_stop_data_sample,
+     .get_data = smcf_get_element_data,
+ };
+ 

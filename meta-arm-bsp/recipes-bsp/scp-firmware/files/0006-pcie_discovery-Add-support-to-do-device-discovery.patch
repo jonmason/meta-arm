@@ -1,0 +1,536 @@
+From 88cf14033f0de2ea2febfc49a02ad9ce237d9d80 Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Thu, 9 Dec 2021 23:18:43 +0000
+Subject: [PATCH] pcie_discovery: Add support to do device discovery
+
+Currently, The ECAM and MMIO (L and H) regions available on platform
+are divided equally between all of root ports and their configuration
+values are hardcoded.
+
+This is the initial patch to enable dynamic calculation of PCIe ECAM
+and MMIO (L and H) regions and configuration of the same in CMN.
+This adds the support to enumerate and calculate the MMIO carveouts
+size requirement for all the devices present under a given root port.
+
+This can further reduce the number of devices that can be attached to
+the device tree and user may not be able to move the device from one
+RP to another RP.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: Ia947568b89a9177a0d6fe4b389b967c625046983
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ module/pcie_discovery/CMakeLists.txt          |  16 +
+ module/pcie_discovery/Module.cmake            |   9 +
+ .../include/mod_pcie_discovery.h              | 112 ++++++
+ .../pcie_discovery/src/mod_pcie_discovery.c   | 341 ++++++++++++++++++
+ 4 files changed, 478 insertions(+)
+ create mode 100644 module/pcie_discovery/CMakeLists.txt
+ create mode 100644 module/pcie_discovery/Module.cmake
+ create mode 100644 module/pcie_discovery/include/mod_pcie_discovery.h
+ create mode 100644 module/pcie_discovery/src/mod_pcie_discovery.c
+
+diff --git a/module/pcie_discovery/CMakeLists.txt b/module/pcie_discovery/CMakeLists.txt
+new file mode 100644
+index 000000000000..b7ad3a93050d
+--- /dev/null
++++ b/module/pcie_discovery/CMakeLists.txt
+@@ -0,0 +1,16 @@
++#
++# Arm SCP/MCP Software
++# Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++#
++# SPDX-License-Identifier: BSD-3-Clause
++#
++
++add_library(${SCP_MODULE_TARGET} SCP_MODULE)
++
++target_include_directories(
++    ${SCP_MODULE_TARGET}
++    PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
++
++target_sources(
++    ${SCP_MODULE_TARGET}
++    PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/mod_pcie_discovery.c")
+diff --git a/module/pcie_discovery/Module.cmake b/module/pcie_discovery/Module.cmake
+new file mode 100644
+index 000000000000..e37e66bb20bf
+--- /dev/null
++++ b/module/pcie_discovery/Module.cmake
+@@ -0,0 +1,9 @@
++#
++# Arm SCP/MCP Software
++# Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++#
++# SPDX-License-Identifier: BSD-3-Clause
++#
++
++set(SCP_MODULE "pcie_discovery")
++set(SCP_MODULE_TARGET "module-pcie_discovery")
+diff --git a/module/pcie_discovery/include/mod_pcie_discovery.h b/module/pcie_discovery/include/mod_pcie_discovery.h
+new file mode 100644
+index 000000000000..faf3987b0b5a
+--- /dev/null
++++ b/module/pcie_discovery/include/mod_pcie_discovery.h
+@@ -0,0 +1,112 @@
++/*
++ * Arm SCP/MCP Software
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#ifndef MOD_PCIE_DISCOVERY_H
++#define MOD_PCIE_DISCOVERY_H
++
++#include <fwk_macros.h>
++
++#include <stdbool.h>
++#include <stdint.h>
++
++/*!
++ * \brief Module API indices
++ */
++enum mod_pcie_discovery_api_idx {
++    /*!
++     * Interface to calculate ECAM, MMIOL and MMIOH resource size by doing PCIe
++     * Bus Walk.
++     */
++    MOD_PCIE_DISCOVERY_API_IDX_CALCULATE_RESOURCES,
++    /*! Total API Count */
++    MOD_PCIE_DISCOVERY_API_IDX_MAP
++};
++
++/*!
++ * \brief APIs to perform memory read and write operations.
++ */
++struct pcie_discovery_rw_api {
++    /*!
++     * \brief Read a byte from the given memory address
++     *
++     * \param addr Memory address
++     *
++     * \return byte value read from the memory address
++     */
++    uint8_t (*read8)(uint64_t addr);
++
++    /*!
++     * \brief Write a byte to the given memory address
++     *
++     * \param addr Memory address.
++     * \param value Byte value to be written.
++     */
++    void (*write8)(uint64_t addr, uint8_t value);
++
++    /*!
++     * \brief Read a word from the given memory address
++     *
++     * \param addr Memory address
++     *
++     * \return word value read from the memory address
++     */
++    uint32_t (*read32)(uint64_t addr);
++
++    /*!
++     * \brief Write a word to the given memory address
++     *
++     * \param addr Memory address.
++     * \param value Word value to be written.
++     */
++    void (*write32)(uint64_t addr, uint32_t value);
++};
++
++/*!
++ * Datastructure to capture the size of memory required by all of the devices
++ * present under the given host bridge.
++ */
++struct pcie_mmap_size {
++    /*! ECAM region size */
++    uint64_t ecam;
++
++    /*! 32-bit MMIO space start size */
++    uint64_t mmiol;
++
++    /*! 64-bit MMIO space size */
++    uint64_t mmioh;
++
++    /*! Range of bus numbers consumed by the Root port */
++    uint8_t bus;
++};
++
++struct mod_pcie_discovery_api {
++    /*!
++     * \brief Captures the size of memory required by the devices present in the
++     *        tree.
++     *        This does a depth first search, identify the device and then
++     *        capture the memory required by the device in ECAM, MMIOL and MMIOH
++     *        regions.
++     *
++     * \param ecam_base_address Base address of RP's ECAM region
++     * \param mmap_size Placeholder for filling IO memory carveout sizes
++     *                  required by all the endpoints under the given RP.
++     * \param primary_bus_number Starting bus number.
++     * \param rw_api Customised APIs use to do MMIO transactions in AP memory
++     *               region. NOTE: The default read/write
++     *               APIs are used this is NULL.
++     *
++     * \return FWK_E_PARAM If the ecam address and mmap_size are not valid.
++     * \return FWK_SUCCESS On successful completion.
++     */
++    int (*calculate_resource)(
++        uint64_t ecam_base_address,
++        struct pcie_mmap_size *mmap_size,
++        uint8_t primary_bus_number,
++        struct pcie_discovery_rw_api *rw_api);
++};
++
++#endif /* MOD_PCIE_DISCOVERY_H */
+diff --git a/module/pcie_discovery/src/mod_pcie_discovery.c b/module/pcie_discovery/src/mod_pcie_discovery.c
+new file mode 100644
+index 000000000000..dda38ffdbd0f
+--- /dev/null
++++ b/module/pcie_discovery/src/mod_pcie_discovery.c
+@@ -0,0 +1,341 @@
++/*
++ * Arm SCP/MCP Software
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <mod_pcie_discovery.h>
++
++#include <fwk_assert.h>
++#include <fwk_attributes.h>
++#include <fwk_log.h>
++#include <fwk_macros.h>
++#include <fwk_module.h>
++
++#include <fmw_cmsis.h>
++
++#include <stdbool.h>
++#include <stddef.h>
++#include <stdint.h>
++
++/* PCIe configuration space offset definitions */
++#define PCIE_BAR_OFFSET 0x10
++
++#define PCIE_BAR_SIZE 0x4
++
++/*
++ * ECAM space per bus
++ * 32 devices * 8 functions * 4kB config space = 1MB
++ */
++#define MAX_ECAM_SPACE_PER_BUS (FWK_MIB)
++
++/*
++ * MAX ECAM space
++ * MAX ECAM space per bus * Max numbers of bus(256)
++ */
++#define MAX_ECAM_SPACE (256 * MAX_ECAM_SPACE_PER_BUS)
++
++/* PCIe configuration space offset definitions */
++#define PCIE_HEADER_TYPE_OFFSET         0xE
++#define PCIE_PRIMARY_BUS_NUM_OFFSET     0x18
++#define PCIE_SECONDARY_BUS_NUM_OFFSET   0x19
++#define PCIE_SUBORDINATE_BUS_NUM_OFFSET 0x1A
++
++#define PCIE_HEADER_TYPE_MASK     0x7F
++#define PCIE_HEADER_TYPE_ENDPOINT 0
++#define PCIE_HEADER_TYPE_BRIDGE   1
++
++/* BDF table offsets for PCIe & CCIX controllers */
++#define PCIE_BDF_TABLE_OFFSET 0
++
++/* PCIe standard definitions */
++#define PCIE_BUS_NUM_MAX         0xFF
++#define DEVICES_PER_BUS_MAX      32
++#define FUNCTIONS_PER_DEVICE_MAX 8
++#define BRIDGE_BAR_COUNT         2
++#define DEVICE_BAR_COUNT         6
++
++#define BDF_ADDR_SHIFT_BUS      20
++#define BDF_ADDR_SHIFT_DEVICE   15
++#define BDF_ADDR_SHIFT_FUNCTION 12
++
++#define PCIE_MEM_TYPE_MASK 0x06
++#define PCIE_MEM_TYPE_32   0x00 /* 32 bit address */
++#define PCIE_MEM_TYPE_64   0x04 /* 64 bit address */
++#define PCIE_MEM_MASK      ~(0xFULL)
++
++#define PCIE_GET_MMIO_SIZE64(BAR) (~(BAR & PCIE_MEM_MASK) + 1)
++#define PCIE_GET_MMIO_SIZE32(BAR) (~((uint32_t)(BAR & PCIE_MEM_MASK)) + 1)
++
++#define PCIE_BRIDGE_MEM_WINDOW_ALIGNMENT (1UL << 20)
++
++/* Default API to do 1 byte read */
++uint8_t read8(uint64_t addr)
++{
++    return *((volatile uint8_t *)(uint32_t)addr);
++}
++
++/* Default API to do 1 byte write */
++void write8(uint64_t addr, uint8_t value)
++{
++    *((volatile uint8_t *)(uint32_t)addr) = value;
++}
++
++/* Default API to do 4 byte read */
++uint32_t read32(uint64_t addr)
++{
++    return *((volatile uint32_t *)(uint32_t)addr);
++}
++
++/* Default API to do 4 byte write */
++void write32(uint64_t addr, uint32_t value)
++{
++    *((volatile uint32_t *)(uint32_t)addr) = value;
++}
++
++struct pcie_discovery_rw_api default_rw_api = {
++    .read8 = read8,
++    .write8 = write8,
++    .read32 = read32,
++    .write32 = write32,
++};
++
++/* The bridge expects the mmio window address to be 1M align */
++static void align_address_for_bridge_window(struct pcie_mmap_size *mmap_size)
++{
++    mmap_size->mmiol =
++        FWK_ALIGN_NEXT(mmap_size->mmiol, PCIE_BRIDGE_MEM_WINDOW_ALIGNMENT);
++    mmap_size->mmioh =
++        FWK_ALIGN_NEXT(mmap_size->mmioh, PCIE_BRIDGE_MEM_WINDOW_ALIGNMENT);
++}
++
++/* Program sequence to get the configuration size of a PCIe device */
++static void get_mmio_memory_size(
++    uint64_t ecam_addr,
++    struct pcie_mmap_size *mmap_size,
++    struct pcie_discovery_rw_api *rw_api,
++    uint8_t num_bar)
++{
++    uint8_t idx;
++    uint64_t pcie_bar_addr;
++    uint64_t mmio_size;
++
++    /*
++     * Write 0xFFFFFFFF to all the BARs sequentially to get the configuration
++     * size.
++     */
++    pcie_bar_addr = ecam_addr + PCIE_BAR_OFFSET;
++    for (idx = 0; idx < num_bar; idx++) {
++        rw_api->write32(pcie_bar_addr, 0xFFFFFFFF);
++        pcie_bar_addr += PCIE_BAR_SIZE;
++    }
++
++    /*
++     * This section treats IO and Memory address space as Memory address space.
++     */
++    pcie_bar_addr = ecam_addr + PCIE_BAR_OFFSET;
++    for (idx = 0; idx < num_bar; idx++) {
++        mmio_size = rw_api->read32(pcie_bar_addr);
++        if ((mmio_size != 0) && (mmio_size != 0xFFFFFFFF)) {
++            if ((mmio_size & PCIE_MEM_TYPE_MASK) == PCIE_MEM_TYPE_64) {
++                /*
++                 * Device supports 64 bit addressing. Increase the counter and
++                 * address and read the next 32 bits of 64 bit mmap size.
++                 */
++                idx++;
++                pcie_bar_addr += PCIE_BAR_SIZE;
++                mmio_size |= ((uint64_t)(rw_api->read32(pcie_bar_addr))) << 32;
++                mmio_size = PCIE_GET_MMIO_SIZE64(mmio_size);
++                mmap_size->mmioh = FWK_ALIGN_NEXT(mmap_size->mmioh, mmio_size);
++                mmap_size->mmioh += mmio_size;
++            } else {
++                /* Device supports 32 bit addressing. */
++                mmio_size = PCIE_GET_MMIO_SIZE32(mmio_size);
++                mmap_size->mmiol = FWK_ALIGN_NEXT(mmap_size->mmiol, mmio_size);
++                mmap_size->mmiol += mmio_size;
++            }
++        }
++        pcie_bar_addr += PCIE_BAR_SIZE;
++    }
++}
++
++/*
++ * Procedure to do PCIe bus walk. This will also calculate the total mmio region
++ * size required for each root port.
++ */
++static uint8_t pcie_bus_scan(
++    uint64_t ecam_addr,
++    uint8_t pri_bnum,
++    uint8_t sec_bnum,
++    struct pcie_mmap_size *mmap_size,
++    struct pcie_discovery_rw_api *rw_api)
++{
++    int dev_num;
++    int fn_num;
++    uint8_t bar_count;
++    uint8_t header_type;
++    uint8_t sub_bnum;
++    uint32_t df_addr;
++    uint32_t vid;
++    uint64_t config_addr;
++
++    sub_bnum = pri_bnum;
++    /* Loop over all devices on pri_bnum bus */
++    for (dev_num = 0; dev_num < DEVICES_PER_BUS_MAX; dev_num++) {
++        /* Loop over all functions on dev_num device */
++        for (fn_num = 0; fn_num < FUNCTIONS_PER_DEVICE_MAX; fn_num++) {
++            df_addr = (dev_num << BDF_ADDR_SHIFT_DEVICE) |
++                (fn_num << BDF_ADDR_SHIFT_FUNCTION);
++            config_addr = ecam_addr + df_addr;
++
++            vid = rw_api->read32(config_addr);
++            /* If function 0 of any device has invalid VID break the loop */
++            if ((vid & 0xFFFF) == 0xFFFF) {
++                if (fn_num == 0) {
++                    break;
++                } else {
++                    continue;
++                }
++            }
++
++            FWK_LOG_INFO(
++                "[PCIE]: Found device: %d:%d:%d\n", pri_bnum, dev_num, fn_num);
++
++            /*
++             * Read the header type to identify if the device
++             * is an endpoint or a PCI-PCI bridge.
++             */
++            header_type = rw_api->read8(config_addr + PCIE_HEADER_TYPE_OFFSET);
++            if ((header_type & PCIE_HEADER_TYPE_MASK) ==
++                PCIE_HEADER_TYPE_BRIDGE) {
++                /*
++                 * PCI-PCI bridge is identified. Set primary and secondary bus
++                 * numbers. Let subordinate bus number be max possible bus
++                 * number as we need to further identify devices downstream.
++                 */
++                rw_api->write8(
++                    config_addr + PCIE_PRIMARY_BUS_NUM_OFFSET, pri_bnum);
++                rw_api->write8(
++                    config_addr + PCIE_SECONDARY_BUS_NUM_OFFSET, sec_bnum);
++                rw_api->write8(
++                    config_addr + PCIE_SUBORDINATE_BUS_NUM_OFFSET,
++                    PCIE_BUS_NUM_MAX);
++                /*
++                 * Recursively call the scan function with incremented
++                 * primary and secondary bus numbers.
++                 */
++                sub_bnum = pcie_bus_scan(
++                    ecam_addr + ((sec_bnum - pri_bnum) << BDF_ADDR_SHIFT_BUS),
++                    sec_bnum,
++                    sec_bnum + 1,
++                    mmap_size,
++                    rw_api);
++                /*
++                 * The recursive call has returned from an endpoint
++                 * identification so use the returned bus number as the
++                 * bridge's subordinate bus number.
++                 */
++                rw_api->write8(
++                    config_addr + PCIE_SUBORDINATE_BUS_NUM_OFFSET, sub_bnum);
++                sec_bnum = sub_bnum + 1;
++                bar_count = BRIDGE_BAR_COUNT;
++                /* Memory carveout under bridge should be 1 MB aligned. */
++                align_address_for_bridge_window(mmap_size);
++            } else {
++                /*
++                 * Endpoint is identified. Proceed to other functions &
++                 * devices in this bus and return to previous recursive call.
++                 */
++                sub_bnum = sec_bnum - 1;
++                bar_count = DEVICE_BAR_COUNT;
++            }
++            get_mmio_memory_size(config_addr, mmap_size, rw_api, bar_count);
++        }
++    }
++    /* Return the subordinate bus number to previous recursive call */
++    return sub_bnum;
++}
++
++static int calculate_resource(
++    uint64_t ecam_base_address,
++    struct pcie_mmap_size *mmap_size,
++    uint8_t primary_bus_number,
++    struct pcie_discovery_rw_api *rw_api)
++{
++    uint8_t pri_bnum;
++    uint8_t sec_bnum;
++    uint8_t sub_bnum;
++
++    if ((ecam_base_address == 0) || (mmap_size == NULL) ||
++        (primary_bus_number == UINT8_MAX)) {
++        return FWK_E_PARAM;
++    }
++
++    if (rw_api == NULL) {
++        if (ecam_base_address > UINT32_MAX) {
++            return FWK_E_PARAM;
++        }
++
++        rw_api = &default_rw_api;
++    }
++
++    pri_bnum = primary_bus_number;
++    sec_bnum = primary_bus_number + 1;
++
++    sub_bnum =
++        pcie_bus_scan(ecam_base_address, pri_bnum, sec_bnum, mmap_size, rw_api);
++
++    mmap_size->bus = (sub_bnum - pri_bnum) + 1;
++    mmap_size->ecam = mmap_size->bus * MAX_ECAM_SPACE_PER_BUS;
++
++    /*
++     * Linux/EDK2 expects the mmiol size to be minumum size of
++     * (Number of bus * 1M)
++     */
++    mmap_size->mmiol = FWK_ALIGN_NEXT(
++        mmap_size->mmiol, mmap_size->bus * MAX_ECAM_SPACE_PER_BUS);
++
++    /* Align for host bridge */
++    align_address_for_bridge_window(mmap_size);
++
++    return FWK_SUCCESS;
++}
++
++static int pcie_discovery_init(
++    fwk_id_t module_id,
++    unsigned int unused,
++    const void *unused2)
++{
++    return FWK_SUCCESS;
++}
++
++static struct mod_pcie_discovery_api pcie_discovery_api = {
++    .calculate_resource = calculate_resource,
++};
++
++static int pcie_discovery_process_bind_request(
++    fwk_id_t requester_id,
++    fwk_id_t id,
++    fwk_id_t api_id,
++    const void **api)
++{
++    enum mod_pcie_discovery_api_idx api_idx;
++
++    api_idx = (enum mod_pcie_discovery_api_idx)fwk_id_get_api_idx(api_id);
++    if (api_idx != MOD_PCIE_DISCOVERY_API_IDX_CALCULATE_RESOURCES) {
++        return FWK_E_PARAM;
++    }
++
++    *api = &pcie_discovery_api;
++    return FWK_SUCCESS;
++}
++
++const struct fwk_module module_pcie_discovery = {
++    .type = FWK_MODULE_TYPE_SERVICE,
++    .api_count = MOD_PCIE_DISCOVERY_API_IDX_MAP,
++    .init = pcie_discovery_init,
++    .process_bind_request = pcie_discovery_process_bind_request,
++};
++
++const struct fwk_module_config config_pcie_discovery = { 0 };

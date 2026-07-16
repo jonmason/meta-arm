@@ -1,0 +1,72 @@
+From 518eba9a27e784b82d23851c89a483d630d40c7f Mon Sep 17 00:00:00 2001
+From: Karthikeyan Subramani <karthikeyan.subramani@arm.com>
+Date: Tue, 24 Sep 2024 16:06:50 +0530
+Subject: [PATCH] neoverse-rd/rdv3: clear LCP reset syndrome register
+
+add support to clear Power-On-Reset event in LCP's System Control
+Reset Syndrome register.
+
+Signed-off-by: Karthikeyan Subramani <karthikeyan.subramani@arm.com>
+Change-Id: I17d5ccc84c2361257e646258b30f0d1e657f6eab
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../rdv3/lcp_ramfw/include/lcp_css_mmap.h           |  8 ++++++++
+ .../module/mod_lcp_platform/src/mod_lcp_platform.c  | 13 ++++++++++++-
+ 2 files changed, 20 insertions(+), 1 deletion(-)
+
+diff --git a/product/neoverse-rd/rdv3/lcp_ramfw/include/lcp_css_mmap.h b/product/neoverse-rd/rdv3/lcp_ramfw/include/lcp_css_mmap.h
+index 50e99c6d8b2f..acee003849ba 100644
+--- a/product/neoverse-rd/rdv3/lcp_ramfw/include/lcp_css_mmap.h
++++ b/product/neoverse-rd/rdv3/lcp_ramfw/include/lcp_css_mmap.h
+@@ -85,4 +85,12 @@
+ 
+ #define LCP_DVFS_FRAME_BASE 0xB0081000
+ 
++/* LCP System Control Registers */
++#define LCP_SYS_CTRL_BASE                         0x58021000
++
++#define LCP_SYS_CTRL_RESET_SYNDROME_OFFSET        0x100
++#define LCP_SYS_CTRL_RESET_SYNDROME_REG           \
++    (LCP_SYS_CTRL_BASE + LCP_SYS_CTRL_RESET_SYNDROME_OFFSET)
++#define LCP_SYS_CTRL_RESET_SYNDROME_POR_BIT_POS   0U
++
+ #endif /* LCP_CSS_MMAP_H */
+diff --git a/product/neoverse-rd/rdv3/module/mod_lcp_platform/src/mod_lcp_platform.c b/product/neoverse-rd/rdv3/module/mod_lcp_platform/src/mod_lcp_platform.c
+index e830292365a5..14e89a045839 100644
+--- a/product/neoverse-rd/rdv3/module/mod_lcp_platform/src/mod_lcp_platform.c
++++ b/product/neoverse-rd/rdv3/module/mod_lcp_platform/src/mod_lcp_platform.c
+@@ -1,6 +1,6 @@
+ /*
+  * Arm SCP/MCP Software
+- * Copyright (c) 2022-2023, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2022-2024, Arm Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -34,6 +34,15 @@ void mod_lcp_config_timer()
+     LCP_TIMER_REG_S->RELOAD = LCP_TIMER_RELOAD;
+ }
+ 
++void clear_reset_syndrome()
++{
++    FWK_RW uint32_t *reset_syndrome_reg =
++        (FWK_RW uint32_t *)LCP_SYS_CTRL_RESET_SYNDROME_REG;
++
++    /* Clear Power-On-Reset event */
++    *reset_syndrome_reg &= ~(1U << LCP_SYS_CTRL_RESET_SYNDROME_POR_BIT_POS);
++}
++
+ static int mod_lcp_platform_init(
+     fwk_id_t module_id,
+     unsigned int element_count,
+@@ -49,6 +58,8 @@ static int mod_lcp_platform_init(
+ 
+ static int mod_lcp_platform_start(fwk_id_t id)
+ {
++    clear_reset_syndrome();
++
+     fwk_interrupt_set_isr(TIMER_IRQ, timer_isr);
+ 
+     fwk_interrupt_enable(TIMER_IRQ);

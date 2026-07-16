@@ -1,0 +1,258 @@
+From 5948d33e986ad77d77062fcf2cdb51b2af91e96f Mon Sep 17 00:00:00 2001
+From: Manoj Kumar <manojkumar.prabakaran@arm.com>
+Date: Sat, 6 Jan 2024 14:31:41 +0530
+Subject: [PATCH] neoverse-rd/rdv3 smcf: Add platform smcf module for RD-V3
+
+This change added platform smcf module for RD-V3.
+The platform-smcf module exposes platform specific
+data sampling apis for using the SMCF data collections.
+
+Signed-off-by: Manoj Kumar Prabakaran <manojkumar.prabakaran@arm.com>
+Change-Id: I3d2d98507c127ac77267bd235f4fb679af6acbd3
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../rdv3/module/platform_smcf/CMakeLists.txt  |  35 ++++++
+ .../rdv3/module/platform_smcf/Module.cmake    |  10 ++
+ .../platform_smcf/include/mod_platform_smcf.h |  25 ++++
+ .../platform_smcf/src/mod_platform_smcf.c     | 119 ++++++++++++++++++
+ .../neoverse-rd/rdv3/scp_ramfw/Firmware.cmake |   4 +-
+ 5 files changed, 192 insertions(+), 1 deletion(-)
+ create mode 100644 product/neoverse-rd/rdv3/module/platform_smcf/CMakeLists.txt
+ create mode 100644 product/neoverse-rd/rdv3/module/platform_smcf/Module.cmake
+ create mode 100644 product/neoverse-rd/rdv3/module/platform_smcf/include/mod_platform_smcf.h
+ create mode 100644 product/neoverse-rd/rdv3/module/platform_smcf/src/mod_platform_smcf.c
+
+diff --git a/product/neoverse-rd/rdv3/module/platform_smcf/CMakeLists.txt b/product/neoverse-rd/rdv3/module/platform_smcf/CMakeLists.txt
+new file mode 100644
+index 000000000000..4631811ecf02
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/module/platform_smcf/CMakeLists.txt
+@@ -0,0 +1,35 @@
++#
++# Arm SCP/MCP Software
++# Copyright (c) 2023, Arm Limited and Contributors. All rights reserved.
++#
++# SPDX-License-Identifier: BSD-3-Clause
++#
++add_library(${SCP_MODULE_TARGET} SCP_MODULE)
++# SCP_PLATFORM_VARIANT value for supported RD-V3 platform variants:
++# - '0' for RD-V3 platform
++# - '1' for RD-V3-Cfg1 platform
++# - '2' for RD-V3-Cfg2 platform
++
++if (SCP_PLATFORM_VARIANT STREQUAL "0")
++     target_compile_definitions(${SCP_MODULE_TARGET}
++                                 PUBLIC -DPLATFORM_VARIANT=0)
++elseif (SCP_PLATFORM_VARIANT STREQUAL "1")
++      target_compile_definitions(${SCP_MODULE_TARGET}
++                                 PUBLIC -DPLATFORM_VARIANT=1)
++elseif (SCP_PLATFORM_VARIANT STREQUAL "2")
++      target_compile_definitions(${SCP_MODULE_TARGET}
++                                 PUBLIC -DPLATFORM_VARIANT=2)
++else()
++      message(FATAL_ERROR "Please set SCP_PLATFORM_VARIANT to \n"
++                                "'0' for RD-V3\n"
++                                "'1' for RD-V3-Cfg1\n"
++                                "'2' for RD-V3-Cfg2\n")
++endif()
++
++
++target_include_directories(${SCP_MODULE_TARGET}
++                           PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
++target_sources(${SCP_MODULE_TARGET}
++               PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/mod_platform_smcf.c")
++target_link_libraries(${SCP_MODULE_TARGET}
++                      PRIVATE module-smcf module-amu-smcf-drv)
+diff --git a/product/neoverse-rd/rdv3/module/platform_smcf/Module.cmake b/product/neoverse-rd/rdv3/module/platform_smcf/Module.cmake
+new file mode 100644
+index 000000000000..04b7d1a56b65
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/module/platform_smcf/Module.cmake
+@@ -0,0 +1,10 @@
++#
++# Arm SCP/MCP Software
++# Copyright (c) 2023, Arm Limited and Contributors. All rights reserved.
++#
++# SPDX-License-Identifier: BSD-3-Clause
++#
++
++set(SCP_MODULE "platform-smcf")
++
++set(SCP_MODULE_TARGET "module-platform-smcf")
+diff --git a/product/neoverse-rd/rdv3/module/platform_smcf/include/mod_platform_smcf.h b/product/neoverse-rd/rdv3/module/platform_smcf/include/mod_platform_smcf.h
+new file mode 100644
+index 000000000000..0b613dbe0274
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/module/platform_smcf/include/mod_platform_smcf.h
+@@ -0,0 +1,25 @@
++/*
++ * Arm SCP/MCP Software
++ * Copyright (c) 2023, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ * Description:
++ *     Platform System Support
++ */
++
++#ifndef MOD_PLATFORM_SMCF_H
++#define MOD_PLATFORM_SMCF_H
++
++/*!
++ * \brief Indices of the interfaces exposed by the module.
++ */
++enum mod_platform_smcf_api_idx {
++    /*! API index for the data api of the SMCF module */
++    MOD_SMCF_PLATFORM_API_IDX_SAMPLING_API,
++
++    /*! Number of exposed interfaces */
++    MOD_SMCF_PLATFORM_API_COUNT
++};
++
++#endif /* MOD_PLATFORM_SMCF_H */
+diff --git a/product/neoverse-rd/rdv3/module/platform_smcf/src/mod_platform_smcf.c b/product/neoverse-rd/rdv3/module/platform_smcf/src/mod_platform_smcf.c
+new file mode 100644
+index 000000000000..6b7e75a7fdf2
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/module/platform_smcf/src/mod_platform_smcf.c
+@@ -0,0 +1,119 @@
++/*
++ * Arm SCP/MCP Software
++ * Copyright (c) 2023, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ * Description:
++ *     RD-V3 System Support.
++ */
++#include <mod_amu_smcf_drv.h>
++#include <mod_platform_smcf.h>
++#include <mod_smcf.h>
++
++#include <fwk_event.h>
++#include <fwk_id.h>
++#include <fwk_log.h>
++#include <fwk_macros.h>
++#include <fwk_module.h>
++#include <fwk_module_idx.h>
++#include <fwk_notification.h>
++#include <fwk_status.h>
++#define MOD_NAME              "[PLATFORM_SMCF]"
++#define SMCF_MGI_TRIGGER_ADDR 0x50000C10
++
++/* Module context */
++struct platform_smcf_ctx {
++    /* SMCF data sampling API */
++    struct smcf_data_api *data_api;
++};
++
++static struct platform_smcf_ctx platform_smcf_ctx;
++
++/*
++ * SMCF data samping api
++ */
++static int smcf_start_sampling(fwk_id_t element_id)
++{
++    int status;
++    status = platform_smcf_ctx.data_api->start_data_sampling(element_id);
++    if (status != FWK_SUCCESS) {
++        return status;
++    }
++    *((uint32_t *)SMCF_MGI_TRIGGER_ADDR) = UINT32_C(0x1);
++    return FWK_SUCCESS;
++}
++
++/*
++ * SMCF data samping api
++ */
++static int smcf_stop_sampling(fwk_id_t element_id)
++{
++    int status;
++    status = platform_smcf_ctx.data_api->stop_data_sampling(element_id);
++    if (status != FWK_SUCCESS) {
++        return status;
++    }
++    *((uint32_t *)SMCF_MGI_TRIGGER_ADDR) = UINT32_C(0x0);
++    return FWK_SUCCESS;
++}
++
++static const struct smcf_data_api platform_smcf_sampling_api = {
++    .start_data_sampling = smcf_start_sampling,
++    .stop_data_sampling = smcf_stop_sampling,
++};
++
++/*
++ * Framework handlers
++ */
++static int platform_smcf_mod_init(
++    fwk_id_t module_id,
++    unsigned int unused,
++    const void *unused2)
++{
++    return FWK_SUCCESS;
++}
++
++static int platform_smcf_bind(fwk_id_t id, unsigned int round)
++{
++    int status;
++
++    /* Bind to SMCF Data API */
++    status = fwk_module_bind(
++        FWK_ID_MODULE(FWK_MODULE_IDX_SMCF),
++        FWK_ID_API(FWK_MODULE_IDX_SMCF, MOD_SMCF_API_IDX_DATA),
++        &platform_smcf_ctx.data_api);
++    if (status != FWK_SUCCESS) {
++        return status;
++    }
++    return FWK_SUCCESS;
++}
++
++static int platform_smcf_process_bind_request(
++    fwk_id_t requester_id,
++    fwk_id_t pd_id,
++    fwk_id_t api_id,
++    const void **api)
++{
++    enum mod_platform_smcf_api_idx api_id_type;
++    api_id_type = (enum mod_platform_smcf_api_idx)fwk_id_get_api_idx(api_id);
++    switch (api_id_type) {
++    case MOD_SMCF_PLATFORM_API_IDX_SAMPLING_API:
++        *api = &platform_smcf_sampling_api;
++        break;
++    default:
++        return FWK_E_PARAM;
++    }
++
++    return FWK_SUCCESS;
++}
++
++const struct fwk_module module_platform_smcf = {
++    .type = FWK_MODULE_TYPE_HAL,
++    .api_count = MOD_SMCF_PLATFORM_API_COUNT,
++    .init = platform_smcf_mod_init,
++    .bind = platform_smcf_bind,
++    .process_bind_request = platform_smcf_process_bind_request,
++};
++
++const struct fwk_module_config config_platform_smcf = { 0 };
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake b/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake
+index 261e469d9a97..ff1125850386 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake
++++ b/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake
+@@ -37,7 +37,8 @@ list(PREPEND SCP_MODULE_PATHS
+      "${CMAKE_CURRENT_LIST_DIR}/../module/scp_platform"
+      "${CMAKE_CURRENT_LIST_DIR}/../module/system_pik"
+      "${CMAKE_SOURCE_DIR}/module/pcie_discovery"
+-     "${CMAKE_SOURCE_DIR}/product/neoverse-rd/module/pcie_setup")
++     "${CMAKE_SOURCE_DIR}/product/neoverse-rd/module/pcie_setup"
++     "${CMAKE_CURRENT_LIST_DIR}/../module/platform_smcf")
+ 
+ # The order of the modules in the following list is the order in which the
+ # modules are initialized, bound, started during the pre-runtime phase.
+@@ -73,3 +74,4 @@ list(APPEND SCP_MODULES "pcie-setup")
+ list(APPEND SCP_MODULES "scp-platform")
+ list(APPEND SCP_MODULES "smcf")
+ list(APPEND SCP_MODULES "amu-smcf-drv")
++list(APPEND SCP_MODULES "platform-smcf")

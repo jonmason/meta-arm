@@ -1,0 +1,226 @@
+From 291789d81a81d55b68de5f4093393c47b63cd924 Mon Sep 17 00:00:00 2001
+From: Pranav Madhu <pranav.madhu@arm.com>
+Date: Fri, 5 Jan 2024 21:14:29 +0530
+Subject: [PATCH] neoverse-rd/rdv3: add system pik module
+
+Add a platform module for System PIK register and initialize
+IOMACRO_OVERRIDE register.
+
+Change-Id: I67f383f94d9f47c66ff903102e9ff6977607a623
+Signed-off-by: Pranav Madhu <pranav.madhu@arm.com>
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../rdv3/module/system_pik/CMakeLists.txt     | 16 ++++++
+ .../rdv3/module/system_pik/Module.cmake       |  9 ++++
+ .../system_pik/include/mod_system_pik.h       | 43 +++++++++++++++
+ .../module/system_pik/src/mod_system_pik.c    | 52 +++++++++++++++++++
+ .../neoverse-rd/rdv3/scp_ramfw/CMakeLists.txt |  1 +
+ .../neoverse-rd/rdv3/scp_ramfw/Firmware.cmake |  1 +
+ .../rdv3/scp_ramfw/config_system_pik.c        | 24 +++++++++
+ 7 files changed, 146 insertions(+)
+ create mode 100644 product/neoverse-rd/rdv3/module/system_pik/CMakeLists.txt
+ create mode 100644 product/neoverse-rd/rdv3/module/system_pik/Module.cmake
+ create mode 100644 product/neoverse-rd/rdv3/module/system_pik/include/mod_system_pik.h
+ create mode 100644 product/neoverse-rd/rdv3/module/system_pik/src/mod_system_pik.c
+ create mode 100644 product/neoverse-rd/rdv3/scp_ramfw/config_system_pik.c
+
+diff --git a/product/neoverse-rd/rdv3/module/system_pik/CMakeLists.txt b/product/neoverse-rd/rdv3/module/system_pik/CMakeLists.txt
+new file mode 100644
+index 000000000000..23995f7c34fe
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/module/system_pik/CMakeLists.txt
+@@ -0,0 +1,16 @@
++#
++# Arm SCP/MCP Software
++# Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++#
++# SPDX-License-Identifier: BSD-3-Clause
++#
++add_library(${SCP_MODULE_TARGET} SCP_MODULE)
++
++target_include_directories(${SCP_MODULE_TARGET}
++                           PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
++
++target_sources(${SCP_MODULE_TARGET}
++               PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/mod_system_pik.c")
++
++#target_link_libraries(${SCP_MODULE_TARGET}
++#    PRIVATE module-timer)
+diff --git a/product/neoverse-rd/rdv3/module/system_pik/Module.cmake b/product/neoverse-rd/rdv3/module/system_pik/Module.cmake
+new file mode 100644
+index 000000000000..cc9d71339f0f
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/module/system_pik/Module.cmake
+@@ -0,0 +1,9 @@
++#
++# Arm SCP/MCP Software
++# Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++#
++# SPDX-License-Identifier: BSD-3-Clause
++#
++
++set(SCP_MODULE "system-pik")
++set(SCP_MODULE_TARGET "module_system_pik")
+diff --git a/product/neoverse-rd/rdv3/module/system_pik/include/mod_system_pik.h b/product/neoverse-rd/rdv3/module/system_pik/include/mod_system_pik.h
+new file mode 100644
+index 000000000000..78e968dad9e3
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/module/system_pik/include/mod_system_pik.h
+@@ -0,0 +1,43 @@
++/*
++ * Arm SCP/MCP Software
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#ifndef MOD_SYSTEM_PIK_H
++#define MOD_SYSTEM_PIK_H
++
++#include <fwk_attributes.h>
++#include <fwk_id.h>
++
++#include <stdbool.h>
++#include <stddef.h>
++#include <stdint.h>
++
++#include "system_pik.h"
++
++#define TCU_L0GPTSZ_SHIFT       2UL
++#define TCU_L0GPTSZ_MASK        0x0FUL
++#define L0GPTSZ_16GIB           0x04UL
++
++/*!
++ * \brief System PIK module configuration data.
++ */
++struct mod_system_pik_ctx {
++
++    struct system_pik_reg *system_pik_reg;
++};
++
++struct mod_system_pik_device_config {
++    /*! Base address of the system PIK register */
++    uintptr_t system_pik_base;
++
++    uint32_t l0_gpt_size;
++};
++
++/*!
++ * \}
++ */
++
++#endif /* MOD_SYSTEM_PIK_H */
+diff --git a/product/neoverse-rd/rdv3/module/system_pik/src/mod_system_pik.c b/product/neoverse-rd/rdv3/module/system_pik/src/mod_system_pik.c
+new file mode 100644
+index 000000000000..22b05603bed6
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/module/system_pik/src/mod_system_pik.c
+@@ -0,0 +1,52 @@
++/*
++ * Arm SCP/MCP Software
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ * Description:
++ *      System PIK device driver.
++ */
++
++#include <fwk_id.h>
++#include <fwk_module.h>
++#include <fwk_status.h>
++
++#include <mod_system_pik.h>
++
++/* System PIK module context */
++struct mod_system_pik_ctx system_pik_ctx;
++
++/*
++ * Framework handlers
++ */
++static int mod_system_pik_init(
++    fwk_id_t module_id,
++    unsigned int device_count,
++    const void *data)
++{
++    struct mod_system_pik_device_config *config =
++        (struct mod_system_pik_device_config *)data;
++
++    system_pik_ctx.system_pik_reg =
++        (struct system_pik_reg *)config->system_pik_base;
++
++    if (config->l0_gpt_size != 0) {
++        system_pik_ctx.system_pik_reg->IOMACRO_OVERRIDE =
++            (config->l0_gpt_size << TCU_L0GPTSZ_SHIFT);
++    }
++
++    return FWK_SUCCESS;
++}
++
++static int mod_system_pik_start(fwk_id_t id)
++{
++    return FWK_SUCCESS;
++}
++
++/* System PIK module definition */
++const struct fwk_module module_system_pik = {
++    .type = FWK_MODULE_TYPE_DRIVER,
++    .init = mod_system_pik_init,
++    .start = mod_system_pik_start,
++};
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/CMakeLists.txt b/product/neoverse-rd/rdv3/scp_ramfw/CMakeLists.txt
+index dc5a6eaa3ccf..0f7fcd574803 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/CMakeLists.txt
++++ b/product/neoverse-rd/rdv3/scp_ramfw/CMakeLists.txt
+@@ -44,6 +44,7 @@ target_sources(
+     rdv3-bl2
+     PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/config_system_power.c"
+             "${CMAKE_CURRENT_SOURCE_DIR}/config_armv7m_mpu.c"
++            "${CMAKE_CURRENT_SOURCE_DIR}/config_system_pik.c"
+             "${CMAKE_CURRENT_SOURCE_DIR}/config_atu.c"
+             "${CMAKE_CURRENT_SOURCE_DIR}/config_atu_mmio.c"
+             "${CMAKE_CURRENT_SOURCE_DIR}/config_power_domain.c"
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake b/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake
+index 205ac0191641..2f7fc82de92c 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake
++++ b/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake
+@@ -51,6 +51,7 @@ list(PREPEND SCP_MODULE_PATHS
+ 
+ list(APPEND SCP_MODULES "armv7m-mpu")
+ list(APPEND SCP_MODULES "pl011")
++list(APPEND SCP_MODULES "system-pik")
+ list(APPEND SCP_MODULES "atu")
+ list(APPEND SCP_MODULES "atu-mmio")
+ list(APPEND SCP_MODULES "noc-s3")
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/config_system_pik.c b/product/neoverse-rd/rdv3/scp_ramfw/config_system_pik.c
+new file mode 100644
+index 000000000000..b95b8f2524aa
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/scp_ramfw/config_system_pik.c
+@@ -0,0 +1,24 @@
++/*
++ * Arm SCP/MCP Software
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ * Description:
++ *     Configuration data for module 'system_pik'.
++ */
++
++#include <fwk_id.h>
++#include <fwk_module.h>
++#include <fwk_module_idx.h>
++
++#include <mod_system_pik.h>
++
++static const struct mod_system_pik_device_config system_pik_data = {
++    .system_pik_base = (uintptr_t)SYSTEM_PIK_PTR,
++    .l0_gpt_size = L0GPTSZ_16GIB,
++};
++
++struct fwk_module_config config_system_pik = {
++    .data = &system_pik_data,
++};

@@ -1,0 +1,1063 @@
+From 25e6e79fe2970cbe5be160e6c6a0db0f6e780b9f Mon Sep 17 00:00:00 2001
+From: Glen Yeldho <glen.yeldho@arm.com>
+Date: Wed, 10 Jan 2024 17:27:15 +0530
+Subject: [PATCH] neoverse-rd/rdv3: Adds command-line utility to excercise
+ various SCP RAS error-injection
+
+The einj-util is a command-line utility designed for injecting RAS  errors into
+various components, accessible from the SCP CLI Debugger environment. This
+utility helps to testing error scenarios of various components.Supported
+components, including CPU, AP Shared SRAM area, RSM SRAM area, and SCP ITCM/DTCM.
+
+Signed-off-by: Shaileshwar M <shaileshwar.mahadevabatla@arm.com>
+Signed-off-by: Glen Yeldho <glen.yeldho@arm.com>
+Change-Id: I3846b6693c14e6d2d740359f7bb091dca221c27e
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../rdv3/module/scp_einj_util/CMakeLists.txt  |  39 +++
+ .../rdv3/module/scp_einj_util/Module.cmake    |  10 +
+ .../scp_einj_util/include/common_einj.h       | 138 ++++++++
+ .../scp_einj_util/include/component_einj.h    | 176 +++++++++++
+ .../scp_einj_util/include/mod_scp_einj_util.h | 108 +++++++
+ .../module/scp_einj_util/src/component_einj.c | 296 ++++++++++++++++++
+ .../scp_einj_util/src/mod_scp_einj_util.c     | 200 ++++++++++++
+ .../neoverse-rd/rdv3/scp_ramfw/Firmware.cmake |   4 +-
+ 8 files changed, 970 insertions(+), 1 deletion(-)
+ create mode 100644 product/neoverse-rd/rdv3/module/scp_einj_util/CMakeLists.txt
+ create mode 100644 product/neoverse-rd/rdv3/module/scp_einj_util/Module.cmake
+ create mode 100644 product/neoverse-rd/rdv3/module/scp_einj_util/include/common_einj.h
+ create mode 100644 product/neoverse-rd/rdv3/module/scp_einj_util/include/component_einj.h
+ create mode 100644 product/neoverse-rd/rdv3/module/scp_einj_util/include/mod_scp_einj_util.h
+ create mode 100644 product/neoverse-rd/rdv3/module/scp_einj_util/src/component_einj.c
+ create mode 100644 product/neoverse-rd/rdv3/module/scp_einj_util/src/mod_scp_einj_util.c
+
+diff --git a/product/neoverse-rd/rdv3/module/scp_einj_util/CMakeLists.txt b/product/neoverse-rd/rdv3/module/scp_einj_util/CMakeLists.txt
+new file mode 100644
+index 000000000000..09318bb7492a
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/module/scp_einj_util/CMakeLists.txt
+@@ -0,0 +1,39 @@
++#
++# Arm SCP/MCP Software
++# Copyright (c) 2023, Arm Limited and Contributors. All rights reserved.
++#
++# SPDX-License-Identifier: BSD-3-Clause
++#
++add_library(${SCP_MODULE_TARGET} SCP_MODULE)
++
++# SCP_PLATFORM_VARIANT value for supported RD-V3 platform variants:
++# - '0' for RD-V3 platform
++# - '1' for RD-V3-Cfg1 platform
++# - '2' for RD-V3-Cfg2 platform
++
++if (SCP_PLATFORM_VARIANT STREQUAL "0")
++     target_compile_definitions(${SCP_MODULE_TARGET}
++                                 PUBLIC -DPLATFORM_VARIANT=0)
++elseif (SCP_PLATFORM_VARIANT STREQUAL "1")
++      target_compile_definitions(${SCP_MODULE_TARGET}
++                                 PUBLIC -DPLATFORM_VARIANT=1)
++elseif (SCP_PLATFORM_VARIANT STREQUAL "2")
++      target_compile_definitions(${SCP_MODULE_TARGET}
++                                 PUBLIC -DPLATFORM_VARIANT=2)
++else()
++      message(FATAL_ERROR "Please set SCP_PLATFORM_VARIANT to \n"
++                                "'0' for RD-V3\n"
++                                "'1' for RD-V3-Cfg1\n"
++                                "'2' for RD-V3-Cfg2\n")
++endif()
++
++target_include_directories(${SCP_MODULE_TARGET}
++                           PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
++
++target_sources(${SCP_MODULE_TARGET}
++               PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/component_einj.c"
++               PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/mod_scp_einj_util.c")
++
++target_link_libraries(${SCP_MODULE_TARGET}
++    PRIVATE module-sds module-clock  module-system-info module-transport
++                       module-atu)
+diff --git a/product/neoverse-rd/rdv3/module/scp_einj_util/Module.cmake b/product/neoverse-rd/rdv3/module/scp_einj_util/Module.cmake
+new file mode 100644
+index 000000000000..4f0bb68196f5
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/module/scp_einj_util/Module.cmake
+@@ -0,0 +1,10 @@
++#
++# Arm SCP/MCP Software
++# Copyright (c) 2023, Arm Limited and Contributors. All rights reserved.
++#
++# SPDX-License-Identifier: BSD-3-Clause
++#
++
++set(SCP_MODULE "scp-einj-util")
++
++set(SCP_MODULE_TARGET "module-scp-einj-util")
+diff --git a/product/neoverse-rd/rdv3/module/scp_einj_util/include/common_einj.h b/product/neoverse-rd/rdv3/module/scp_einj_util/include/common_einj.h
+new file mode 100644
+index 000000000000..94ca48684f83
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/module/scp_einj_util/include/common_einj.h
+@@ -0,0 +1,138 @@
++/*
++ * Arm SCP/MCP Software
++ * Copyright (c) 2023, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ * Description:
++ *
++ */
++
++#ifndef COMMON_EINJ_H
++#define COMMON_EINJ_H
++
++#include <cli.h>
++
++#include <mod_atu.h>
++
++#include <fwk_id.h>
++#include <fwk_interrupt.h>
++#include <fwk_log.h>
++#include <fwk_macros.h>
++#include <fwk_module.h>
++#include <fwk_module_idx.h>
++#include <fwk_status.h>
++
++#include <string.h>
++
++/* Helper macros to extract components and subcomponet info */
++#define CONFIG_REG(x) &(x->einj_register[params->subcomponent])
++#define MEM_REG(x)    &(x->einj_mem_addr[params->subcomponent])
++
++#define GET_REMOTE_CONFIG_ADDR(y) \
++    remote_address_manager(ADD_REGION, CONFIG_REG(y))
++
++#define GET_REMOTE_MEM_ADDR(y) remote_address_manager(ADD_REGION, MEM_REG(y))
++
++#define READ_MM(address, type)   *((volatile type *)(address))
++#define WRITE_MM(address, value) (*((volatile uint32_t *)(address)) = value)
++
++#define SET_BIT(x, pos)   (x |= (1U << pos))
++#define CLEAR_BIT(x, pos) (x &= (~(1U << pos)))
++
++/* Max Logical address of SCP Memory Map */
++#define SCP_LOGICAL_MAX (0xE00FFFFF)
++
++enum PAS_ATTRIBUTES_EINJ {
++    ROOT,
++    SECURE,
++    REALM,
++    NON_SECURE,
++};
++
++enum ATU_MANAGER_ACTION {
++    ADD_REGION,
++    REMOVE_ALL,
++};
++
++/* SCP SHARED SRAM ERROR INJECTION REGISTERS */
++enum SCP_SHARED_SRAM_LIST {
++    SCP_SHARED_ROOT,
++    SCP_SHARED_SECURE,
++    SCP_SHARED_NON_SECURE,
++    SCP_SHARED_REALM,
++    SCP_SHARED_SRAM_COUNT,
++};
++
++/* SCP CPU ERROR INJECTION REGISTERS */
++enum SCP_CPU_LIST {
++    SCP_CPU_ERR,
++    SCP_CPU_COUNT,
++};
++
++/* SCP TCM ERROR INJECTION REGISTERS */
++enum SCP_TCM_LIST {
++    SCP_ITCM,
++    SCP_DTCM,
++    SCP_TCM_COUNT,
++};
++
++/* SCP RSM ERROR INJECTION REGISTERS */
++enum SCP_RSM_LIST {
++    SCP_RSM_SECURE,
++    SCP_RSM_NON_SECURE,
++    SCP_RSM_COUNT,
++};
++
++enum ERROR_TYPE {
++    EINJ_CE,
++    EINJ_UE,
++    EINJ_DE,
++};
++
++struct einj_memory {
++    uint32_t pas_attribute;
++    bool remote_addr;
++    uint32_t region_size;
++    uint64_t phy_addr;
++    uint32_t log_addr;
++};
++
++struct einj_config {
++    uint8_t no_components;
++    bool remote_trigger;
++    struct einj_memory *einj_mem_addr;
++    struct einj_memory *einj_register;
++};
++
++struct einj_cli_params {
++    uint8_t component;
++    uint8_t subcomponent;
++    uint8_t error_type;
++};
++
++struct remote_manager_t {
++    uint64_t logical_address_start;
++    uint64_t size;
++    uint32_t current_pos;
++    uint32_t pos;
++    int count;
++    uint8_t region_idx[4]; /* Concurrent allocation limit */
++};
++
++int remote_address_manager(
++    enum ATU_MANAGER_ACTION action,
++    struct einj_memory *reg);
++typedef int (*injection_function)(
++    struct einj_cli_params *params,
++    struct einj_config *einj_config_list);
++
++/*!
++ * @}
++ */
++
++/*!
++ * @}
++ */
++
++#endif
+diff --git a/product/neoverse-rd/rdv3/module/scp_einj_util/include/component_einj.h b/product/neoverse-rd/rdv3/module/scp_einj_util/include/component_einj.h
+new file mode 100644
+index 000000000000..66a52408e904
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/module/scp_einj_util/include/component_einj.h
+@@ -0,0 +1,176 @@
++/*
++ * Arm SCP/MCP Software
++ * Copyright (c) 2023, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ * Description:
++ *     Physical and remote address of various sub-components
++ */
++
++#ifndef COMPONENT_EINJ_H
++#define COMPONENT_EINJ_H
++
++#include <common_einj.h>
++
++/* SCP-Shared SRAM */
++struct einj_memory scp_shared_einj_config[] = {
++	[SCP_SHARED_ROOT] = {
++	 .pas_attribute = ATU_ENCODE_ATTRIBUTES_SECURE_PAS,
++	 .remote_addr = true,
++	 .region_size = (64 * FWK_KIB),
++         .phy_addr = (0x2A510000),
++	  },
++	[SCP_SHARED_SECURE] = {
++	 .pas_attribute = ATU_ENCODE_ATTRIBUTES_SECURE_PAS,
++	 .remote_addr = true,
++	 .region_size = (64 * FWK_KIB),
++         .phy_addr = (0x2A4F0000),
++        },
++	[SCP_SHARED_NON_SECURE] = {
++	 .pas_attribute = ATU_ENCODE_ATTRIBUTES_SECURE_PAS,
++	 .remote_addr = true,
++	 .region_size = (64 * FWK_KIB),
++         .phy_addr = (0x2A500000),
++        },
++	[SCP_SHARED_REALM] = {
++	 .pas_attribute = ATU_ENCODE_ATTRIBUTES_SECURE_PAS,
++	 .remote_addr = true,
++	 .region_size = (64 * FWK_KIB),
++         .phy_addr = (0x2A520000),
++	},
++
++};
++
++struct einj_memory scp_shared_einj_mem[] = {
++	[SCP_SHARED_ROOT] = {
++	 .pas_attribute = ATU_ENCODE_ATTRIBUTES_ROOT_PAS,
++	 .remote_addr = false,
++	 .region_size = (1 * FWK_KIB),
++         .phy_addr = (0x70000000),
++	  },
++	[SCP_SHARED_SECURE] = {
++	 .pas_attribute = ATU_ENCODE_ATTRIBUTES_SECURE_PAS,
++	 .remote_addr = false,
++	 .region_size = (1 * FWK_KIB),
++         .phy_addr = (0x70100000),
++        },
++	[SCP_SHARED_NON_SECURE] = {
++	 .pas_attribute = ATU_ENCODE_ATTRIBUTES_NON_SECURE_PAS,
++	 .remote_addr = false,
++	 .region_size = (1 * FWK_KIB),
++         .phy_addr = (0x70200000),
++        },
++	[SCP_SHARED_REALM] = {
++	 .pas_attribute = ATU_ENCODE_ATTRIBUTES_REALM_PAS,
++	 .remote_addr = false,
++	 .region_size = (1 * FWK_KIB),
++         .phy_addr = (0x70300000),
++	},
++};
++
++/* CPU */
++struct einj_memory scp_cpu_einj_config[] = {
++	 [SCP_CPU_ERR] = {
++	  .pas_attribute = ATU_ENCODE_ATTRIBUTES_SECURE_PAS,
++	  .remote_addr = false,
++	  .region_size = (256 * FWK_MIB),
++	  .phy_addr = (0x60000000),
++	 },
++ };
++
++struct einj_memory scp_cpu_einj_mem[] = {
++    [SCP_CPU_ERR] = { 0 },
++};
++
++/* SCP TCM */
++struct einj_memory scp_tcm_einj_config[] = {
++        [SCP_ITCM] = {
++         .pas_attribute = ATU_ENCODE_ATTRIBUTES_SECURE_PAS,
++         .remote_addr = false,
++         .region_size = (64 * FWK_KIB),
++         .phy_addr = (0x50050000),
++          },
++        [SCP_DTCM] = {
++         .pas_attribute = ATU_ENCODE_ATTRIBUTES_SECURE_PAS,
++         .remote_addr = false,
++         .region_size = (64 * FWK_KIB),
++         .phy_addr = (0x50050000),
++        },
++};
++
++struct einj_memory scp_tcm_einj_mem[] = {
++        [SCP_ITCM] = {
++         .pas_attribute = ATU_ENCODE_ATTRIBUTES_SECURE_PAS,
++         .remote_addr = false,
++         .region_size = (1 * FWK_KIB),
++         .phy_addr = (0x00000000),
++          },
++        [SCP_DTCM] = {
++         .pas_attribute = ATU_ENCODE_ATTRIBUTES_SECURE_PAS,
++         .remote_addr = false,
++         .region_size = (1 * FWK_KIB),
++         .phy_addr = (0x20000000),
++        },
++};
++
++/* SCP RSM */
++struct einj_memory scp_rsm_einj_config[] = {
++        [SCP_RSM_SECURE] = {
++         .pas_attribute = ATU_ENCODE_ATTRIBUTES_SECURE_PAS,
++         .remote_addr = true,
++         .region_size = (64 * FWK_KIB),
++         .phy_addr = (0x2A5D0000),
++        },
++        [SCP_RSM_NON_SECURE] = {
++         .pas_attribute = ATU_ENCODE_ATTRIBUTES_SECURE_PAS,
++         .remote_addr = true,
++         .region_size = (64 * FWK_KIB),
++         .phy_addr = (0x2A5E0000),
++        },
++};
++
++struct einj_memory scp_rsm_einj_mem[] = {
++        [SCP_RSM_SECURE] = {
++         .pas_attribute = ATU_ENCODE_ATTRIBUTES_SECURE_PAS,
++         .remote_addr = false,
++         .region_size = (1 * FWK_KIB),
++         .phy_addr = (0x78100000),
++        },
++        [SCP_RSM_NON_SECURE] = {
++         .pas_attribute = ATU_ENCODE_ATTRIBUTES_NON_SECURE_PAS,
++         .remote_addr = false,
++         .region_size = (1 * FWK_KIB),
++         .phy_addr = (0x78200000),
++        },
++};
++
++/* Injection function for scp tcm einj */
++int scp_tcm_einj_function(
++    struct einj_cli_params *params,
++    struct einj_config *einj_config_list);
++
++/* Injection function for scp shared sram einj */
++int scp_einj_function(
++    struct einj_cli_params *params,
++    struct einj_config *einj_config_list);
++
++/* Injection function for scp cpu einj */
++int scp_cpu_einj_function(
++    struct einj_cli_params *params,
++    struct einj_config *einj_config_list);
++
++/* Injection function for scp rsm einj */
++int scp_rsm_einj_function(
++    struct einj_cli_params *params,
++    struct einj_config *einj_config_list);
++
++/*!
++ * @}
++ */
++
++/*!
++ * @}
++ */
++
++#endif /* MOD_SCP_PLATFORM_H */
+diff --git a/product/neoverse-rd/rdv3/module/scp_einj_util/include/mod_scp_einj_util.h b/product/neoverse-rd/rdv3/module/scp_einj_util/include/mod_scp_einj_util.h
+new file mode 100644
+index 000000000000..a8c3ba19d5f2
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/module/scp_einj_util/include/mod_scp_einj_util.h
+@@ -0,0 +1,108 @@
++/*
++ * Arm SCP/MCP Software
++ * Copyright (c) 2023, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ * Description:
++ *     SCP Platform Support
++ */
++
++#ifndef MOD_SCP_EINJ_UTIL_H
++#define MOD_SCP_EINJ_UTIL_H
++
++#include <cli.h>
++#include <component_einj.h>
++
++#include <stdlib.h>
++
++#define ATU_EINJ_LOGIC_START 0x9F000000
++#define ATU_EINJ_LOGIC_SIZE  0x100000
++#define ATU_EINJ_LOGIC_MAX   (ATU_EINJ_LOGIC_START + ATU_EINJ_LOGIC_SIZE)
++
++/* Help string */
++const char einj_help[] =
++    "Inject error into various components.\n"
++    "Usage: einj-util -comp <n> -subcomp <n> -type <n>\n"
++    "-comp: sram (0), tcm (1), cpu (2), rsm (3)\n"
++    "-subcomp:\n"
++    "	sram: root (0), secure (1), non-secure (2), realm (3)\n"
++    "	tcm: itcm (0), dtcm (1)\n"
++    "	cpu: always 0 for now\n"
++    "	rsm: secure (0), non-secure (1)\n"
++    "-type:\n"
++    "	sram/tcm/rsm: correctable (0), uncorrectable (1)\n"
++    "	cpu: correctable (0), uncorrectable (1), deferred (2)\n\n"
++    "example:\n"
++    "	1) ce into shared sram from secure world:\n"
++    "		einj-util -comp 0 -subcomp 1 -type 0\n"
++
++    "	2) ce into scp itcm:\n"
++    "		einj-util -comp 1 -subcomp 0 -type 0\n"
++
++    "	3) cpu ue:\n"
++    "		einj-util -comp 2 -subcomp 0 -type 1\n"
++
++    "	4) ce into rsm sram from secure world:\n"
++    "		einj-util -comp 3 -subcomp 0 -type 0\n";
++
++/* Modify einj_commands_list to add new commands */
++enum einj_list {
++    SCP_SHARED_SRAM,
++    SCP_TCM,
++    SCP_CPU,
++    SCP_RSM,
++    SCP_CMN,
++    EINJ_LIST_COUNT
++};
++/* Modify this list to add new injection registers */
++struct einj_config einj_config_list [] = {
++	[SCP_SHARED_SRAM] = {
++                .no_components = SCP_SHARED_SRAM_COUNT,
++                .remote_trigger= false,
++                .einj_mem_addr = scp_shared_einj_mem,
++                .einj_register = scp_shared_einj_config,
++        },
++        [SCP_TCM] = {
++                .no_components = SCP_TCM_COUNT,
++                .remote_trigger= false,
++                .einj_mem_addr = scp_tcm_einj_mem,
++                .einj_register = scp_tcm_einj_config,
++                },
++	[SCP_CPU] = {
++		.no_components = SCP_CPU_COUNT,
++		.remote_trigger= false,
++		.einj_mem_addr = scp_cpu_einj_mem,
++		.einj_register = scp_cpu_einj_config,
++	},
++	[SCP_RSM] = {
++                .no_components = SCP_RSM_COUNT,
++                .remote_trigger= false,
++                .einj_mem_addr = scp_rsm_einj_mem,
++                .einj_register = scp_rsm_einj_config,
++        },
++	[SCP_CMN] = {0},
++};
++
++/* Modify this list to add new injection fucntion */
++injection_function injectionlist[] = {
++    [SCP_SHARED_SRAM] = scp_einj_function,
++    [SCP_TCM] = scp_tcm_einj_function,
++    [SCP_CPU] = scp_cpu_einj_function,
++    [SCP_RSM] = scp_rsm_einj_function,
++};
++
++int parse_cli_params(
++    int argc,
++    char **argv,
++    struct einj_cli_params *parse_params);
++
++/*!
++ * @}
++ */
++
++/*!
++ * @}
++ */
++
++#endif /* MOD_SCP_PLATFORM_H */
+diff --git a/product/neoverse-rd/rdv3/module/scp_einj_util/src/component_einj.c b/product/neoverse-rd/rdv3/module/scp_einj_util/src/component_einj.c
+new file mode 100644
+index 000000000000..7871fc7a4877
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/module/scp_einj_util/src/component_einj.c
+@@ -0,0 +1,296 @@
++/*
++ * Arm SCP/MCP Software
++ * Copyright (c) 2023, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ * Description:
++ *     Component einj : Component specific Error injection functions
++ */
++
++#include "fwk_mmio.h"
++
++#include <common_einj.h>
++
++/* Shared SRAM ECC RAS register offsets */
++#define SRAM_ENABLE_ECC      (1U << 0)
++#define SRAM_INJECT_CE_BIT   (1U << 8)
++#define SRAM_INJECT_ERROR_CE (1U << 4)
++#define SRAM_INJECT_UE_BIT   (1U << 3)
++#define SRAM_INJECT_ERROR_UE (1U << 3)
++
++#define SRAM_ERR_CTRL_OFFSET   0x08UL
++#define SRAM_ERR_STATUS_OFFSET 0x10UL
++#define SRAM_ERR_ADDR_OFFSET   0x18UL
++#define SRAM_ERR_MISC1_OFFSET  0x28UL
++
++/* TCM Error Injection */
++#define TCM_TGT_RAM_IPATH (0x0 << 7)
++#define TCM_TGT_RAM_DPATH (0x1 << 7)
++
++#define TCM_INJECT_CE_ERROR  (0x1 << 5)
++#define TCM_INJECT_UE_ERROR  (0x2 << 5)
++#define TCM_UE_MASK          (1U << 3)
++#define TCM_CE_MASK          (1U << 2)
++#define TCM_ITCMRAM_ECC_EN   (1U << 1)
++#define TCM_DTCMRAM_ECC_EN   (1U << 0)
++#define TCM_ERRCTRL_OFFSET   0x084
++#define TCM_ERRADDR_OFFSET   0x08C
++#define TCM_ERRSTATUS_OFFSET 0x080
++
++/* RAS base for CPU error injection */
++#define RAS_BASE (0x1A0000)
++
++/* SCP Shared-SRAM Error Inject function */
++int scp_einj_function(
++    struct einj_cli_params *params,
++    struct einj_config *einj_config_list)
++{
++    uint32_t ecc_ras_reg_base;
++    uint32_t action_address;
++    enum ERROR_TYPE error_type = params->error_type;
++    /* Fetch and convert remote address to local address */
++    ecc_ras_reg_base = GET_REMOTE_CONFIG_ADDR(einj_config_list);
++    action_address = GET_REMOTE_MEM_ADDR(einj_config_list);
++
++    if (ecc_ras_reg_base > SCP_LOGICAL_MAX ||
++        action_address > SCP_LOGICAL_MAX) {
++        cli_printf(TEXT_GREEN, "Invalid address on Translation\n");
++        return -1;
++    }
++
++    /*
++     * Program control register to enable ECC checking
++     * and error injection on shared SRAMs.
++     */
++    fwk_mmio_write_32(
++        (ecc_ras_reg_base + SRAM_ERR_CTRL_OFFSET),
++        SRAM_INJECT_CE_BIT | SRAM_INJECT_UE_BIT | SRAM_ENABLE_ECC);
++
++    switch (error_type) {
++    case EINJ_CE:
++        cli_printf(TEXT_GREEN, "Injecting CE into Shared SRAM\n");
++        fwk_mmio_write_32(
++            (ecc_ras_reg_base + SRAM_ERR_MISC1_OFFSET), SRAM_INJECT_ERROR_CE);
++        break;
++    case EINJ_UE:
++        cli_printf(TEXT_GREEN, "Injecting UE into Shared SRAM\n");
++        fwk_mmio_write_32(
++            (ecc_ras_reg_base + SRAM_ERR_MISC1_OFFSET), SRAM_INJECT_ERROR_UE);
++        break;
++    default:
++        cli_printf(
++            TEXT_RED,
++            "Select the right error type. 0 for CE and 1 for UE \r\n");
++    }
++
++    /*
++     * Now do a read transaction to a shared SRAM
++     * address to trigger the error
++     */
++    uint32_t data_read = *(volatile uint32_t *)(action_address + 0x10);
++    cli_printf(TEXT_GREEN, "Data : 0x%x \r\n", data_read);
++
++    return FWK_SUCCESS;
++}
++
++/* RSM Error Inject function */
++int scp_rsm_einj_function(
++    struct einj_cli_params *params,
++    struct einj_config *einj_config_list)
++{
++    uint32_t scp_rsm_ras_reg_base;
++    uint32_t action_address;
++    enum ERROR_TYPE error_type = params->error_type;
++    /* Fetch and convert remote address to local address */
++    scp_rsm_ras_reg_base = GET_REMOTE_CONFIG_ADDR(einj_config_list);
++    action_address = GET_REMOTE_MEM_ADDR(einj_config_list);
++
++    if (scp_rsm_ras_reg_base > SCP_LOGICAL_MAX ||
++        action_address > SCP_LOGICAL_MAX) {
++        cli_printf(TEXT_GREEN, "Invalid address on Translation\n");
++        return -1;
++    }
++    /* Setup Interrupt for CE and UE and Enable ECC */
++    fwk_mmio_write_32(
++        (scp_rsm_ras_reg_base + SRAM_ERR_CTRL_OFFSET),
++        SRAM_INJECT_CE_BIT | SRAM_INJECT_UE_BIT | SRAM_ENABLE_ECC);
++
++    switch (error_type) {
++    case EINJ_CE:
++        cli_printf(TEXT_GREEN, "Injecting CE into RSM SRAM\n");
++        fwk_mmio_write_32(
++            (scp_rsm_ras_reg_base + SRAM_ERR_MISC1_OFFSET),
++            SRAM_INJECT_ERROR_CE);
++        break;
++    case EINJ_UE:
++        cli_printf(TEXT_GREEN, "Injecting UE into RSM SRAM\n");
++        fwk_mmio_write_32(
++            (scp_rsm_ras_reg_base + SRAM_ERR_MISC1_OFFSET),
++            SRAM_INJECT_ERROR_UE);
++        break;
++    default:
++        cli_printf(
++            TEXT_RED,
++            "Select the right error type. 0 for CE and 1 for UE \r\n");
++    }
++
++    /*
++     * Now do a read transaction to a RSM SRAM
++     * address to trigger the error
++     */
++    uint32_t data_read = *(volatile uint32_t *)(action_address + 0x10);
++    cli_printf(TEXT_GREEN, "Data : 0x%x \r\n", data_read);
++
++    return FWK_SUCCESS;
++}
++
++/* CPU Error Inject function */
++void inject_error_cpu(uint32_t cluster0_base, uint8_t errtype)
++{
++    uint32_t cluster0_ras = cluster0_base + RAS_BASE;
++    uint32_t core0_base = cluster0_ras;
++    /* Enable CE and Error injection */
++    fwk_mmio_write_32((cluster0_ras + 0x008), 0x10D);
++    /* Clear ERXPDGCTRL Register */
++    fwk_mmio_write_32((cluster0_ras + 0x808), 0x0);
++    /* Clear ERXSTATUS Register */
++    fwk_mmio_write_32((cluster0_ras + 0x010), 0xFFC00000);
++    /* Set PFGCDN to 1 */
++    fwk_mmio_write_32((cluster0_ras + 0x810), 0x1);
++
++    switch (errtype) {
++    case EINJ_CE:
++        cli_printf(TEXT_GREEN, "Injecting CPU CE\r\n");
++        /* Set PDGCTRL to Inject CE */
++        fwk_mmio_write_32((cluster0_ras + 0x808), 0x80000940);
++        break;
++    case EINJ_UE:
++        cli_printf(TEXT_GREEN, "Injecting CPU UE\r\n");
++        /* Set PDGCTRL to Inject UE */
++        fwk_mmio_write_32((cluster0_ras + 0x808), 0x80000002);
++        break;
++    case EINJ_DE:
++        cli_printf(TEXT_GREEN, "Injecting CPU DE\r\n");
++        /* Set PDGCTRL to Inject DE */
++        fwk_mmio_write_32((cluster0_ras + 0x808), 0x80000020);
++        break;
++    default:
++        cli_printf(
++            TEXT_RED,
++            "Select the right error type."
++            "\n0 = CE, 1 = UE, 2 = DE\r\n");
++    }
++    /* Add some delay for the overflow to happen */
++    for (int j = 0; j < 1000000; j++)
++        ;
++
++    cli_printf(
++        TEXT_GREEN,
++        "ErrStatus  0x%llx\r\n",
++        READ_MM((core0_base + 0x010), uint64_t));
++    cli_printf(
++        TEXT_GREEN,
++        "ErrAddress 0x%llx\r\n",
++        READ_MM((cluster0_ras + 0x018), uint64_t));
++}
++
++int scp_cpu_einj_function(
++    struct einj_cli_params *params,
++    struct einj_config *einj_config_list)
++{
++    enum SCP_CPU_LIST cpu_list = params->subcomponent;
++    uint8_t errtype = params->error_type;
++    uint32_t cpu_einj_reg = GET_REMOTE_CONFIG_ADDR(einj_config_list);
++
++    switch (cpu_list) {
++    case SCP_CPU_ERR:
++        inject_error_cpu(cpu_einj_reg, errtype);
++        break;
++    default:
++        cli_printf(TEXT_RED, "Check scp-einj -h for help \r\n");
++        break;
++    }
++    return 0;
++}
++
++/* SCP TCM Error Inject function */
++void inject_tcm_error(
++    uint32_t einj_reg,
++    uint32_t action_addr,
++    enum ERROR_TYPE type)
++{
++    uint32_t reg_read = 0;
++    /* Select error type */
++    switch (type) {
++    case EINJ_CE:
++        cli_printf(TEXT_GREEN, "Injecting CE\n");
++        reg_read = fwk_mmio_read_32(einj_reg + TCM_ERRCTRL_OFFSET);
++        CLEAR_BIT(reg_read, 6);
++        SET_BIT(reg_read, 5);
++        fwk_mmio_write_32(einj_reg + TCM_ERRCTRL_OFFSET, reg_read);
++        break;
++    case EINJ_UE:
++        cli_printf(TEXT_GREEN, "Injecting UE\n");
++        reg_read = fwk_mmio_read_32(einj_reg + TCM_ERRCTRL_OFFSET);
++        CLEAR_BIT(reg_read, 5);
++        SET_BIT(reg_read, 6);
++        fwk_mmio_write_32(einj_reg + TCM_ERRCTRL_OFFSET, reg_read);
++        break;
++    default:
++        cli_printf(
++            TEXT_RED,
++            "Select the right error. \n"
++            "0 for CE and 1 for UE.\n");
++        return;
++    }
++    /* Perform the Action */
++    reg_read = *(volatile uint32_t *)action_addr;
++    cli_printf(TEXT_GREEN, "Data : 0x%x \r\n", reg_read);
++}
++
++int scp_tcm_einj_function(
++    struct einj_cli_params *params,
++    struct einj_config *einj_config_list)
++{
++    enum SCP_TCM_LIST tcm_list = params->subcomponent;
++    enum ERROR_TYPE type = params->error_type;
++    uint32_t reg_read = 0;
++    uint32_t tcm_einj_reg = GET_REMOTE_CONFIG_ADDR(einj_config_list);
++    uint32_t action_addr = GET_REMOTE_MEM_ADDR(einj_config_list);
++    if (tcm_einj_reg > SCP_LOGICAL_MAX || action_addr > SCP_LOGICAL_MAX) {
++        cli_printf(TEXT_GREEN, "Invalid address on Translation\n");
++        return -1;
++    }
++
++    /* Enable Error CE, UE error detection and Interrupts */
++    fwk_mmio_write_32(
++        tcm_einj_reg + TCM_ERRCTRL_OFFSET,
++        (TCM_UE_MASK | TCM_CE_MASK | TCM_ITCMRAM_ECC_EN | TCM_DTCMRAM_ECC_EN |
++         TCM_INJECT_CE_ERROR | TCM_TGT_RAM_IPATH));
++
++    switch (tcm_list) {
++    case SCP_ITCM:
++        cli_printf(TEXT_GREEN, "ITCM\n");
++        /* Select ITCM */
++        reg_read = fwk_mmio_read_32(tcm_einj_reg + TCM_ERRCTRL_OFFSET);
++        CLEAR_BIT(reg_read, 7);
++        fwk_mmio_write_32(tcm_einj_reg + TCM_ERRCTRL_OFFSET, reg_read);
++        inject_tcm_error(tcm_einj_reg, action_addr, type);
++        break;
++    case SCP_DTCM:
++        cli_printf(TEXT_GREEN, "DTCM\n");
++        /* Select DTCM */
++        reg_read = fwk_mmio_read_32(tcm_einj_reg + TCM_ERRCTRL_OFFSET);
++        SET_BIT(reg_read, 7);
++        fwk_mmio_write_32(tcm_einj_reg + TCM_ERRCTRL_OFFSET, reg_read);
++        inject_tcm_error(tcm_einj_reg, action_addr, type);
++        break;
++    default:
++        cli_printf(
++            TEXT_RED,
++            "Select the right component\n"
++            "try scp-einj -h");
++    }
++    return FWK_SUCCESS;
++}
+diff --git a/product/neoverse-rd/rdv3/module/scp_einj_util/src/mod_scp_einj_util.c b/product/neoverse-rd/rdv3/module/scp_einj_util/src/mod_scp_einj_util.c
+new file mode 100644
+index 000000000000..89fa71ef7b6e
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/module/scp_einj_util/src/mod_scp_einj_util.c
+@@ -0,0 +1,200 @@
++/*
++ * Arm SCP/MCP Software
++ * Copyright (c) 2023, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <mod_scp_einj_util.h>
++
++#define MOD_NAME "[SCP_EINJ_CLI] "
++const char einj_call[] = "einj-util";
++
++extern struct cli_ctx cli_ctx;
++static const struct mod_atu_api *atu_api;
++struct remote_manager_t remote_manager_ctx = { 0 };
++
++/* Parse and populate input cli parameter */
++int parse_cli_params(
++    int argc,
++    char **argv,
++    struct einj_cli_params *parse_params)
++{
++    /*
++     * TODO Add list all helper to list out all
++     * the injection functions available
++     */
++    if (argc < 7) {
++        cli_printf(TEXT_RED, "Missing parameter: Try einj-util help");
++        return FWK_E_PARAM;
++    }
++    if (argc == 7) {
++        if (cli_strncmp(argv[1], "-comp", 5) == 0) {
++            parse_params->component = (uint8_t)strtoul(argv[2], 0, 0);
++        }
++        if (cli_strncmp(argv[3], "-subcomp", 8) == 0) {
++            parse_params->subcomponent = (uint8_t)strtoul(argv[4], 0, 0);
++        }
++        if (cli_strncmp(argv[5], "-type", 5) == 0) {
++            parse_params->error_type = (uint8_t)strtoul(argv[6], 0, 0);
++        }
++    }
++    if (parse_params->component > FWK_ARRAY_SIZE(injectionlist)) {
++        cli_printf(TEXT_RED, "Error Injection Fucntion Missing");
++        return FWK_E_PARAM;
++    }
++    return FWK_SUCCESS;
++}
++
++/* Allocate logical address for remote addresses */
++int remote_address_manager(
++    enum ATU_MANAGER_ACTION action,
++    struct einj_memory *reg)
++{
++    struct atu_region_map region;
++    uint8_t region_idx;
++    int status;
++    /* Identifier of the ATU device */
++    fwk_id_t atu_device_id = FWK_ID_ELEMENT_INIT(FWK_MODULE_IDX_ATU, 0);
++
++    /* Identifier of the entity that owns the ATU region */
++    fwk_id_t atu_region_owner_id =
++        FWK_ID_MODULE_INIT(FWK_MODULE_IDX_SCP_EINJ_UTIL);
++
++    if (reg->remote_addr == true) {
++        switch (action) {
++        /*Add ATU Mapping */
++        case ADD_REGION:
++            if ((remote_manager_ctx.current_pos + reg->region_size) <
++                ATU_EINJ_LOGIC_MAX) {
++                region.region_owner_id = atu_region_owner_id;
++                region.phy_addr_base = reg->phy_addr;
++                region.region_size = reg->region_size;
++                region.log_addr_base = remote_manager_ctx.current_pos;
++                region.attributes = reg->pas_attribute;
++                status =
++                    atu_api->add_region(&region, atu_device_id, &region_idx);
++                if (status != FWK_SUCCESS) {
++                    return FWK_E_PANIC;
++                }
++                remote_manager_ctx.region_idx[remote_manager_ctx.count] =
++                    region_idx;
++                remote_manager_ctx.current_pos += reg->region_size;
++                remote_manager_ctx.count += 1;
++
++                return region.log_addr_base;
++            } else {
++                FWK_LOG_ERR("Logical address limit exceeded.");
++                return FWK_E_PANIC;
++            }
++            break;
++            /* Remove all atu mappings mapped by einj-util */
++        case REMOVE_ALL:
++            if (remote_manager_ctx.count > 0) {
++                for (int i = remote_manager_ctx.count; i > 0; i--) {
++                    status = atu_api->remove_region(
++                        remote_manager_ctx
++                            .region_idx[remote_manager_ctx.count - 1],
++                        atu_device_id,
++                        atu_region_owner_id);
++                    if (status != FWK_SUCCESS) {
++                        FWK_LOG_ERR("ATU Remove region Failed\n");
++                        return FWK_E_PANIC;
++                    }
++
++                    remote_manager_ctx
++                        .region_idx[remote_manager_ctx.count - 1] = 0;
++                    remote_manager_ctx.count -= 1;
++                }
++                remote_manager_ctx.current_pos = ATU_EINJ_LOGIC_START;
++            }
++            break;
++
++        default:
++            FWK_LOG_ERR("Unknown Action: remote_address_manager");
++            return FWK_E_PANIC;
++        }
++    } else {
++        return (uint32_t)reg->phy_addr;
++    }
++
++    return FWK_SUCCESS;
++}
++
++int32_t einj_fun(int32_t argc, char **argv)
++{
++    int status;
++    struct einj_cli_params cli_params = { 0 };
++
++    /* parse the input arguments */
++    status = parse_cli_params(argc, argv, &cli_params);
++    if (status != FWK_SUCCESS)
++        return FWK_E_PARAM;
++
++    /* Match the injection fucntion from list */
++    injectionlist[cli_params.component](
++        &cli_params, &einj_config_list[cli_params.component]);
++
++    /* Remove all allocated ATU regions before exiting */
++    remote_address_manager(REMOVE_ALL, 0);
++
++    return FWK_SUCCESS;
++}
++
++static int mod_scp_einj_util_init(
++    fwk_id_t module_id,
++    unsigned int element_count,
++    const void *unused)
++{
++    return FWK_SUCCESS;
++}
++
++static int mod_scp_einj_util_start(fwk_id_t id)
++{
++    int status;
++    /* Registering einj-util with cli */
++    cli_command_st einj_commands_list[] = {
++        { einj_call, einj_help, &einj_fun, false },
++        /* End of commands. */
++        { 0, 0, 0 },
++    };
++    /* Register the command */
++    for (int index = 0; einj_commands_list[index].command != 0; index++) {
++        status = cli_command_register(einj_commands_list[index]);
++        if (status != FWK_SUCCESS) {
++            FWK_LOG_ERR("Falied to Register einj-util command");
++            return status;
++        }
++    }
++    /* populate the remote_manager_ctx */
++    remote_manager_ctx.logical_address_start = ATU_EINJ_LOGIC_START;
++    remote_manager_ctx.size = ATU_EINJ_LOGIC_SIZE;
++    remote_manager_ctx.current_pos = ATU_EINJ_LOGIC_START;
++    remote_manager_ctx.count = 0;
++
++    return FWK_SUCCESS;
++}
++
++static int mod_scp_einj_util_bind(fwk_id_t id, unsigned int round)
++{
++    int status;
++    /* Bind to atu module atu-apis */
++    status = fwk_module_bind(
++        FWK_ID_ELEMENT(FWK_MODULE_IDX_ATU, 0),
++        FWK_ID_API(FWK_MODULE_IDX_ATU, MOD_ATU_API_IDX_ATU),
++        &atu_api);
++    if (status != FWK_SUCCESS) {
++        return status;
++    }
++
++    return FWK_SUCCESS;
++}
++
++const struct fwk_module module_scp_einj_util = {
++    .type = FWK_MODULE_TYPE_SERVICE,
++    .init = mod_scp_einj_util_init,
++    .start = mod_scp_einj_util_start,
++    .bind = mod_scp_einj_util_bind,
++};
++
++const struct fwk_module_config config_scp_einj_util = { 0 };
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake b/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake
+index 0a719263c7f5..986a7f45508b 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake
++++ b/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake
+@@ -41,7 +41,8 @@ list(PREPEND SCP_MODULE_PATHS
+      "${CMAKE_SOURCE_DIR}/module/pcie_discovery"
+      "${CMAKE_SOURCE_DIR}/product/neoverse-rd/module/pcie_setup"
+      "${CMAKE_CURRENT_LIST_DIR}/../module/platform_smcf"
+-     "${CMAKE_CURRENT_LIST_DIR}/../module/smcf_client")
++     "${CMAKE_CURRENT_LIST_DIR}/../module/smcf_client"
++     "${CMAKE_CURRENT_LIST_DIR}/../module/scp_einj_util")
+ 
+ # The order of the modules in the following list is the order in which the
+ # modules are initialized, bound, started during the pre-runtime phase.
+@@ -80,3 +81,4 @@ list(APPEND SCP_MODULES "amu-smcf-drv")
+ list(APPEND SCP_MODULES "platform-smcf")
+ list(APPEND SCP_MODULES "smcf-client")
+ list(APPEND SCP_MODULES "debugger-cli")
++list(APPEND SCP_MODULES "scp-einj-util")

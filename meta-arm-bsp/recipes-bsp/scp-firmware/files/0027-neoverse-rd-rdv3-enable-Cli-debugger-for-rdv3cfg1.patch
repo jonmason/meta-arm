@@ -1,0 +1,114 @@
+From 14880e5e9ee35781dd47e11a234bb7bfc92fa501 Mon Sep 17 00:00:00 2001
+From: Glen Yeldho <glen.yeldho@arm.com>
+Date: Wed, 10 Jan 2024 17:12:31 +0530
+Subject: [PATCH] neoverse-rd/rdv3: enable Cli-debugger for rdv3cfg1
+
+CLI debugger allows user to provide input at runtime. This patch enables
+CLI debugger.
+
+Signed-off-by: Glen Yeldho <glen.yeldho@arm.com>
+Change-Id: I7b357272f71ac585c17f104f788b47002f7ea21d
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../neoverse-rd/rdv3/scp_ramfw/CMakeLists.txt |  6 +++--
+ .../neoverse-rd/rdv3/scp_ramfw/Firmware.cmake |  3 +++
+ .../rdv3/scp_ramfw/config_debugger_cli.c      | 27 +++++++++++++++++++
+ .../rdv3/scp_ramfw/include/scp_cfgd_timer.h   |  4 ++-
+ 4 files changed, 37 insertions(+), 3 deletions(-)
+ create mode 100644 product/neoverse-rd/rdv3/scp_ramfw/config_debugger_cli.c
+
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/CMakeLists.txt b/product/neoverse-rd/rdv3/scp_ramfw/CMakeLists.txt
+index 5edbae390c05..8927c2a55b08 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/CMakeLists.txt
++++ b/product/neoverse-rd/rdv3/scp_ramfw/CMakeLists.txt
+@@ -22,7 +22,8 @@ if (SCP_PLATFORM_VARIANT STREQUAL "0")
+                                  PUBLIC -DPLATFORM_VARIANT=0)
+ elseif (SCP_PLATFORM_VARIANT STREQUAL "1")
+       target_compile_definitions(rdv3-bl2
+-                                 PUBLIC -DPLATFORM_VARIANT=1)
++                                 PUBLIC -DPLATFORM_VARIANT=1
++                                 PRIVATE BUILD_HAS_DEBUGGER)
+ elseif (SCP_PLATFORM_VARIANT STREQUAL "2")
+       target_compile_definitions(rdv3-bl2
+                                  PUBLIC -DPLATFORM_VARIANT=2)
+@@ -68,7 +69,8 @@ target_sources(
+             "${CMAKE_CURRENT_SOURCE_DIR}/config_noc_s3.c"
+             "${CMAKE_CURRENT_SOURCE_DIR}/config_pcie_setup.c"
+             "${CMAKE_CURRENT_SOURCE_DIR}/config_smcf.c"
+-            "${CMAKE_CURRENT_SOURCE_DIR}/config_amu_smcf_drv.c")
++            "${CMAKE_CURRENT_SOURCE_DIR}/config_amu_smcf_drv.c"
++            "${CMAKE_CURRENT_SOURCE_DIR}/config_debugger_cli.c")
+ 
+ #
+ # Some of our firmware includes require CMSIS.
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake b/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake
+index 588156df02eb..0a719263c7f5 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake
++++ b/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake
+@@ -32,6 +32,8 @@ set(SCP_ENABLE_ATU_MANAGE TRUE)
+ 
+ set(SCP_ENABLE_SCMI_NOTIFICATIONS TRUE)
+ 
++set(SCP_ENABLE_DEBUGGER TRUE)
++
+ list(PREPEND SCP_MODULE_PATHS
+      "${CMAKE_CURRENT_LIST_DIR}/../../module/io_block"
+      "${CMAKE_CURRENT_LIST_DIR}/../module/scp_platform"
+@@ -77,3 +79,4 @@ list(APPEND SCP_MODULES "smcf")
+ list(APPEND SCP_MODULES "amu-smcf-drv")
+ list(APPEND SCP_MODULES "platform-smcf")
+ list(APPEND SCP_MODULES "smcf-client")
++list(APPEND SCP_MODULES "debugger-cli")
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/config_debugger_cli.c b/product/neoverse-rd/rdv3/scp_ramfw/config_debugger_cli.c
+new file mode 100644
+index 000000000000..ecfb544cf84d
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/scp_ramfw/config_debugger_cli.c
+@@ -0,0 +1,27 @@
++/*
+++ * Arm SCP/MCP Software
+++ * Copyright (c) 2021, Arm Limited and Contributors. All rights reserved.
+++ *
+++ * SPDX-License-Identifier: BSD-3-Clause
+++ */
++
++#include "scp_cfgd_timer.h"
++
++#include <mod_debugger_cli.h>
++
++#include <fwk_module_idx.h>
++
++/*
++ * Data for the debugger CLI module configuration
++ */
++static const struct mod_debugger_cli_module_config debugger_cli_data = {
++    .alarm_id =
++        FWK_ID_SUB_ELEMENT_INIT(FWK_MODULE_IDX_TIMER, 0, SCP_CFGD_MOD_TIMER_SEIDX_DEBUGGER_CLI),
++    .poll_period = 100
++};
++
++/*
++ * Configuration for the debugger CLI module
++ */
++struct fwk_module_config config_debugger_cli = { .data = &debugger_cli_data };
++
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/include/scp_cfgd_timer.h b/product/neoverse-rd/rdv3/scp_ramfw/include/scp_cfgd_timer.h
+index 5158e2bab313..9d66af6e2400 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/include/scp_cfgd_timer.h
++++ b/product/neoverse-rd/rdv3/scp_ramfw/include/scp_cfgd_timer.h
+@@ -19,10 +19,12 @@ enum scp_cfgd_mod_timer_element_idx {
+ 
+ /* Sub-element indexes (alarms) for SCP timer device */
+ enum scp_cfgd_mod_timer_alarm_idx {
++    SCP_CFGD_MOD_TIMER_SEIDX_SMCF_CLIENT_TIMER,
++
+ #ifdef BUILD_HAS_SCMI_NOTIFICATIONS
+     SCP_CFGD_SCMI_SYSPWR_MGMT_NOTIFY_ALARM_IDX,
+ #endif
+-    SCP_CFGD_MOD_TIMER_SEIDX_SMCF_CLIENT_TIMER,
++    SCP_CFGD_MOD_TIMER_SEIDX_DEBUGGER_CLI,
+     SCP_CFGD_MOD_TIMER_ALARM_IDX_COUNT,
+ };
+ 
