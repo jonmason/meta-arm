@@ -1,0 +1,104 @@
+From f19e4d643efba0105e7d58ff6dc8bc1caed1db4c Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Thu, 28 Mar 2024 00:52:49 +0000
+Subject: [PATCH] neoverse-rd/rdn2 add pcie mmap sds region
+
+UEFI configures and pass the memory map region info to the OS thru
+ACPI tables. Currently, this is hardcoded in the table.
+
+The memory map region info calculated at SCP is passed to UEFI via
+ARM-TF. To achieve this SCP should program it in the SDS which is then
+conusmed by ARM-TF to produce device tree. This device tree blob is then
+passed to UEFI.
+
+Add SDS region to pass PCIe MMAP data.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: Ib912c744c0bffd45ad775225c124400eb0dd635e
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ product/neoverse-rd/rdn2/include/platform_core.h |  6 +++++-
+ product/neoverse-rd/rdn2/include/platform_sds.h  | 11 ++++++++++-
+ 2 files changed, 15 insertions(+), 2 deletions(-)
+
+diff --git a/product/neoverse-rd/rdn2/include/platform_core.h b/product/neoverse-rd/rdn2/include/platform_core.h
+index 26a7c0d3295c..c0d29ef77404 100644
+--- a/product/neoverse-rd/rdn2/include/platform_core.h
++++ b/product/neoverse-rd/rdn2/include/platform_core.h
+@@ -1,6 +1,6 @@
+ /*
+  * Arm SCP/MCP Software
+- * Copyright (c) 2020-2023, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2020-2024, Arm Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -14,13 +14,17 @@
+ 
+ #define PLATFORM_CORE_PER_CLUSTER_MAX 1
+ 
++#define NUMBER_OF_ROOTPORTS 4
+ #define CORES_PER_CLUSTER 1
+ #if (PLATFORM_VARIANT == 0 || PLATFORM_VARIANT == 3)
+ #    define NUMBER_OF_CLUSTERS 16
++#    define NUM_PCIE_INTEG_CTRL 4
+ #elif (PLATFORM_VARIANT == 1)
+ #    define NUMBER_OF_CLUSTERS 8
++#    define NUM_PCIE_INTEG_CTRL 1
+ #elif (PLATFORM_VARIANT == 2)
+ #    define NUMBER_OF_CLUSTERS 4
++#    define NUM_PCIE_INTEG_CTRL 1
+ #else
+ #    error "Unsupported PLATFORM_VARIANT value"
+ #endif
+diff --git a/product/neoverse-rd/rdn2/include/platform_sds.h b/product/neoverse-rd/rdn2/include/platform_sds.h
+index 2463075c7259..662faa03ab6e 100644
+--- a/product/neoverse-rd/rdn2/include/platform_sds.h
++++ b/product/neoverse-rd/rdn2/include/platform_sds.h
+@@ -1,6 +1,6 @@
+ /*
+  * Arm SCP/MCP Software
+- * Copyright (c) 2020-2022, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2020-2024, Arm Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -10,6 +10,7 @@
+ 
+ #include <platform_core.h>
+ 
++#include <mod_pcie_setup.h>
+ #include <mod_sds.h>
+ 
+ #include <stdint.h>
+@@ -27,6 +28,7 @@ enum platform_sds_struct_id {
+     PLATFORM_SDS_RESET_SYNDROME = SDS_STRUCT_ID(5),
+     PLATFORM_SDS_FEATURE_AVAILABILITY = SDS_STRUCT_ID(6),
+     PLATFORM_SDS_ISOLATED_CPU_MPID_LIST = SDS_STRUCT_ID(128),
++    PLATFORM_SDS_PCIE_MMAP = SDS_STRUCT_ID(129),
+ };
+ 
+ enum platform_sds_region_idx {
+@@ -41,6 +43,7 @@ enum platform_sds_ram_idx {
+     PLATFORM_SDS_RESET_SYNDROME_IDX,
+     PLATFORM_SDS_FEATURE_AVAILABILITY_IDX,
+     PLATFORM_SDS_ISOLATED_CPU_MPID_LIST_IDX,
++    PLATFORM_SDS_PCIE_MMAP_IDX,
+     PLATFORM_SDS_IDX_COUNT
+ };
+ 
+@@ -61,6 +64,12 @@ enum platform_sds_ram_idx {
+ #define PLATFORM_SDS_ISOLATED_CPU_MPID_LIST_SIZE \
+     ((NUMBER_OF_CLUSTERS * sizeof(uint64_t)) + sizeof(uint64_t))
+ 
++#define PLATFORM_SDS_PCIE_MMAP_SIZE \
++    (sizeof(struct mod_pcie_setup_block_mmap_list)) + \
++    (NUM_PCIE_INTEG_CTRL * \
++     (sizeof(struct mod_pcie_setup_block_mmap) + \
++      (sizeof(struct mod_pcie_setup_mmap) * NUMBER_OF_ROOTPORTS)))
++
+ /*
+  * Field masks and offsets for the PLATFORM_SDS_AP_CPU_INFO structure.
+  */

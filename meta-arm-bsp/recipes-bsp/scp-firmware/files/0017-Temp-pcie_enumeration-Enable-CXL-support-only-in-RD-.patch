@@ -1,0 +1,136 @@
+From f825f713fbfc95d26e136f54f9e1f2279b0bb4a5 Mon Sep 17 00:00:00 2001
+From: Prabin CA <prabin.ca@arm.com>
+Date: Thu, 11 Apr 2024 17:39:49 +0530
+Subject: [PATCH] [Temp] pcie_enumeration: Enable CXL support only in RD-N2
+
+mod_pcie_discovery is a generic scp module used by both RD-N2 and
+RD-Fremont, right now mod_pcie_discovery is depending on CXL module.
+But CXL module is not enabled for RD-Fremont, so we have to suppress
+CXL features in RD-Fremont and need to be enabled only in RD-N2.
+
+Signed-off-by: Prabin CA <prabin.ca@arm.com>
+Change-Id: I79c8a623a9fa59820d629b4ed21fe6237e3d2175
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ framework/CMakeLists.txt                      |  4 ++++
+ module/pcie_discovery/CMakeLists.txt          |  2 ++
+ .../pcie_discovery/src/mod_pcie_discovery.c   | 21 +++++++++++++++----
+ .../neoverse-rd/rdn2/scp_ramfw/Firmware.cmake |  2 ++
+ 4 files changed, 25 insertions(+), 4 deletions(-)
+
+diff --git a/framework/CMakeLists.txt b/framework/CMakeLists.txt
+index 2fca881c67fa..725ddd0cb94c 100644
+--- a/framework/CMakeLists.txt
++++ b/framework/CMakeLists.txt
+@@ -147,6 +147,10 @@ if(SCP_ENABLE_AE_EXTENSION)
+     target_compile_definitions(framework PUBLIC "BUILD_HAS_AE_EXTENSION")
+ endif()
+ 
++if(SCP_ENABLE_CXL_SUPPORT)
++    target_compile_definitions(framework PUBLIC "BUILD_HAS_CXL_SUPPORT")
++endif()
++
+ #
+ # Handle the framework logging filter level.
+ #
+diff --git a/module/pcie_discovery/CMakeLists.txt b/module/pcie_discovery/CMakeLists.txt
+index 8e89dc4dcbbf..881482d7bcdb 100644
+--- a/module/pcie_discovery/CMakeLists.txt
++++ b/module/pcie_discovery/CMakeLists.txt
+@@ -15,5 +15,7 @@ target_sources(
+     ${SCP_MODULE_TARGET}
+     PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/mod_pcie_discovery.c")
+ 
++if(SCP_ENABLE_CXL_SUPPORT)
+ target_link_libraries (
+     ${SCP_MODULE_TARGET} PRIVATE module-cxl)
++endif()
+diff --git a/module/pcie_discovery/src/mod_pcie_discovery.c b/module/pcie_discovery/src/mod_pcie_discovery.c
+index d9f4d5b3dc69..38dd89638932 100644
+--- a/module/pcie_discovery/src/mod_pcie_discovery.c
++++ b/module/pcie_discovery/src/mod_pcie_discovery.c
+@@ -5,7 +5,10 @@
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+ 
+-#include <mod_cxl.h>
++#if defined(BUILD_HAS_CXL_SUPPORT)
++        #include <mod_cxl.h>
++#endif
++
+ #include <mod_pcie_discovery.h>
+ 
+ #include <fwk_assert.h>
+@@ -20,8 +23,10 @@
+ #include <stddef.h>
+ #include <stdint.h>
+ 
+-/* APIs required to find CXL capable device and operation */
+-static struct mod_cxl_api *cxl_api;
++#if defined(BUILD_HAS_CXL_SUPPORT)
++        /* APIs required to find CXL capable device and operation */
++        static struct mod_cxl_api *cxl_api;
++#endif
+ 
+ /* PCIe configuration space offset definitions */
+ #define PCIE_BAR_OFFSET 0x10
+@@ -254,7 +259,10 @@ static uint8_t pcie_bus_scan(
+                 sub_bnum = sec_bnum - 1;
+                 bar_count = DEVICE_BAR_COUNT;
+             }
++
++#if defined(BUILD_HAS_CXL_SUPPORT)
+             cxl_api->find_cxl_cap(config_addr);
++#endif
+ 
+             get_mmio_memory_size(config_addr, mmap_size, rw_api, bar_count);
+         }
+@@ -305,12 +313,14 @@ static int calculate_resource(
+     /* Align for host bridge */
+     align_address_for_bridge_window(mmap_size);
+ 
++#if defined(BUILD_HAS_CXL_SUPPORT)
+     cxl_api->map_cxl_mem_region();
++#endif
+ 
+     return FWK_SUCCESS;
+ }
+ 
+-
++#if defined(BUILD_HAS_CXL_SUPPORT)
+ static int pcie_discovery_bind(fwk_id_t id, unsigned int round)
+ {
+     int status;
+@@ -324,6 +334,7 @@ static int pcie_discovery_bind(fwk_id_t id, unsigned int round)
+ 
+     return FWK_SUCCESS;
+ }
++#endif
+ 
+ static int pcie_discovery_init(
+     fwk_id_t module_id,
+@@ -359,7 +370,9 @@ const struct fwk_module module_pcie_discovery = {
+     .api_count = MOD_PCIE_DISCOVERY_API_IDX_MAP,
+     .init = pcie_discovery_init,
+     .process_bind_request = pcie_discovery_process_bind_request,
++#if defined(BUILD_HAS_CXL_SUPPORT)
+     .bind = pcie_discovery_bind,
++#endif
+ };
+ 
+ const struct fwk_module_config config_pcie_discovery = { 0 };
+diff --git a/product/neoverse-rd/rdn2/scp_ramfw/Firmware.cmake b/product/neoverse-rd/rdn2/scp_ramfw/Firmware.cmake
+index aa90c6478a26..5c54a342377f 100644
+--- a/product/neoverse-rd/rdn2/scp_ramfw/Firmware.cmake
++++ b/product/neoverse-rd/rdn2/scp_ramfw/Firmware.cmake
+@@ -30,6 +30,8 @@ set(SCP_TARGET_EXCLUDE_SCMI_PERF_PROTOCOL_OPS TRUE)
+ 
+ set(SCP_ENABLE_OUTBAND_MSG_SUPPORT_INIT TRUE)
+ 
++set(SCP_ENABLE_CXL_SUPPORT TRUE)
++
+ if(SCP_ENABLE_SCMI_PERF_FAST_CHANNELS)
+      option(BUILD_HAS_MOD_TRANSPORT_FC
+             "SCMI-PERF fast channel requires transport layer to be enabled" ON)

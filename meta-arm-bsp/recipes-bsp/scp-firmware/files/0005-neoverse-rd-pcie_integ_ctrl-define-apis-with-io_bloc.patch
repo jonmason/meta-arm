@@ -1,0 +1,261 @@
+From 1a609962b12d11c2a7e7eb63140baa385acb4305 Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Wed, 29 Nov 2023 16:37:14 +0000
+Subject: [PATCH] neoverse-rd/pcie_integ_ctrl: define apis with io_block
+ interface
+
+Use IO Block interface to define APIs used to configure the block during
+runtime. These APIs will be consumed by the generic PCIe setup module to
+discover the PCIe topology and allocate carveouts from ECAM, MMIOL and
+MMIOH regions.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: I6feb61f759c87015841e5574474946500263e65a
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../module/pcie_integ_ctrl/CMakeLists.txt     |   8 +-
+ .../include/mod_pcie_integ_ctrl.h             |  25 +++-
+ .../pcie_integ_ctrl/src/mod_pcie_integ_ctrl.c | 137 +++++++++++++++++-
+ 3 files changed, 164 insertions(+), 6 deletions(-)
+
+diff --git a/product/neoverse-rd/rdn2/module/pcie_integ_ctrl/CMakeLists.txt b/product/neoverse-rd/rdn2/module/pcie_integ_ctrl/CMakeLists.txt
+index 367b456da394..11674bcc1d58 100644
+--- a/product/neoverse-rd/rdn2/module/pcie_integ_ctrl/CMakeLists.txt
++++ b/product/neoverse-rd/rdn2/module/pcie_integ_ctrl/CMakeLists.txt
+@@ -1,15 +1,15 @@
+ #
+ # Arm SCP/MCP Software
+-# Copyright (c) 2021, Arm Limited and Contributors. All rights reserved.
++# Copyright (c) 2021-2024, Arm Limited and Contributors. All rights reserved.
+ #
+ # SPDX-License-Identifier: BSD-3-Clause
+ #
+ 
+ add_library(${SCP_MODULE_TARGET} SCP_MODULE)
+ 
+-target_include_directories(
+-    ${SCP_MODULE_TARGET}
+-    PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
++target_include_directories(${SCP_MODULE_TARGET}
++    PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include"
++    PUBLIC "${CMAKE_SOURCE_DIR}/product/neoverse-rd/interface/io_block/")
+ 
+ target_sources(
+     ${SCP_MODULE_TARGET}
+diff --git a/product/neoverse-rd/rdn2/module/pcie_integ_ctrl/include/mod_pcie_integ_ctrl.h b/product/neoverse-rd/rdn2/module/pcie_integ_ctrl/include/mod_pcie_integ_ctrl.h
+index 73aaa7207c0a..149e18b58867 100644
+--- a/product/neoverse-rd/rdn2/module/pcie_integ_ctrl/include/mod_pcie_integ_ctrl.h
++++ b/product/neoverse-rd/rdn2/module/pcie_integ_ctrl/include/mod_pcie_integ_ctrl.h
+@@ -1,6 +1,6 @@
+ /*
+  * Arm SCP/MCP Software
+- * Copyright (c) 2021, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2021-2024, Arm Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  *
+@@ -33,6 +33,29 @@
+  * \{
+  */
+ 
++/*!
++ * \brief Module API indices
++ */
++enum mod_pcie_integ_ctrl_api_idx {
++    /*! Interface to configure a region in the target IO block */
++    MOD_PCIE_INTEG_CTRL_API_IDX_MAP_REGION,
++    /*! Total API count */
++    MOD_PCIE_INTEG_CTRL_API_IDX_MAX,
++};
++
++enum mod_pcie_integ_ctrl_target_node_id {
++    /*! RC Node type X4_0 */
++    MOD_PCIE_INTEG_CTRL_NODE_X4_0,
++    /*! RC Node type X4_1 */
++    MOD_PCIE_INTEG_CTRL_NODE_X4_1,
++    /*! RC Node type X8 */
++    MOD_PCIE_INTEG_CTRL_NODE_X8,
++    /*! RC Node type X16 */
++    MOD_PCIE_INTEG_CTRL_NODE_X16,
++    /*! Maximum numbers of node present on the block */
++    MOD_PCIE_INTEG_CTRL_NODE_MAX
++};
++
+ /*!
+  * \brief ECAM1, 32-bit and 64-bit MMIO space start and end address
+  */
+diff --git a/product/neoverse-rd/rdn2/module/pcie_integ_ctrl/src/mod_pcie_integ_ctrl.c b/product/neoverse-rd/rdn2/module/pcie_integ_ctrl/src/mod_pcie_integ_ctrl.c
+index 0f69029d97c2..8517a20a8534 100644
+--- a/product/neoverse-rd/rdn2/module/pcie_integ_ctrl/src/mod_pcie_integ_ctrl.c
++++ b/product/neoverse-rd/rdn2/module/pcie_integ_ctrl/src/mod_pcie_integ_ctrl.c
+@@ -1,6 +1,6 @@
+ /*
+  * Arm SCP/MCP Software
+- * Copyright (c) 2021-2023, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2021-2024, Arm Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  *
+@@ -14,6 +14,8 @@
+ #include <mod_clock.h>
+ #include <mod_pcie_integ_ctrl.h>
+ 
++#include <interface_io_block.h>
++
+ #include <fwk_assert.h>
+ #include <fwk_event.h>
+ #include <fwk_id.h>
+@@ -166,6 +168,8 @@ static int pcie_integ_ctrl_start(fwk_id_t id)
+     config = ctx->config;
+ 
+     if (fwk_id_is_equal(config->clock_id, FWK_ID_NONE)) {
++        /* Configure the PCIe integration config registers */
++        configure_pcie_ecam_mmio_space(fwk_id_get_element_idx(id), config);
+         return FWK_SUCCESS;
+     }
+ 
+@@ -210,11 +214,142 @@ static int pcie_integ_ctrl_process_notification(
+     return FWK_SUCCESS;
+ }
+ 
++static struct pcie_ctrl_reg_set *get_register_set(
++    uintptr_t block_address,
++    enum mod_pcie_integ_ctrl_target_node_id node_id)
++{
++    struct pcie_ctrl_reg *pcie_integ_ctrl_reg;
++    struct pcie_ctrl_reg_set *reg;
++
++    pcie_integ_ctrl_reg = (struct pcie_ctrl_reg *)(uintptr_t)(block_address);
++    switch (node_id) {
++    case MOD_PCIE_INTEG_CTRL_NODE_X4_0:
++        reg = &pcie_integ_ctrl_reg->pcie_ctrl_x4_0;
++        break;
++    case MOD_PCIE_INTEG_CTRL_NODE_X4_1:
++        reg = &pcie_integ_ctrl_reg->pcie_ctrl_x4_1;
++        break;
++    case MOD_PCIE_INTEG_CTRL_NODE_X8:
++        reg = &pcie_integ_ctrl_reg->pcie_ctrl_x8;
++        break;
++    case MOD_PCIE_INTEG_CTRL_NODE_X16:
++        reg = &pcie_integ_ctrl_reg->pcie_ctrl_x16;
++        break;
++    default:
++        FWK_LOG_ERR("Invalid Target Node ID: %d", node_id);
++        fwk_unexpected();
++        reg = NULL;
++        break;
++    };
++
++    return reg;
++}
++
++static void program_node(
++    struct pcie_ctrl_reg_set *reg,
++    enum interface_io_block_carveout_type carveout_type,
++    uint64_t start,
++    uint64_t end,
++    bool allow_ns_access)
++{
++    switch (carveout_type) {
++    case INTERFACE_IO_BLOCK_CARVEOUT_TYPE_ECAM:
++        reg->ECAM1_START_ADDR =
++            PCIE_INTEG_CTRL_REG_START_ADDR_EN(start, allow_ns_access);
++        reg->ECAM1_END_ADDR = PCIE_INTEG_CTRL_REG_END_ADDR(end);
++        break;
++    case INTERFACE_IO_BLOCK_CARVEOUT_TYPE_MMIOL:
++        reg->MMIOL_START_ADDR =
++            PCIE_INTEG_CTRL_REG_START_ADDR_EN(start, allow_ns_access);
++        reg->MMIOL_END_ADDR = PCIE_INTEG_CTRL_REG_END_ADDR(end);
++        break;
++    case INTERFACE_IO_BLOCK_CARVEOUT_TYPE_MMIOH:
++        reg->MMIOH_START_ADDR =
++            PCIE_INTEG_CTRL_REG_START_ADDR_EN(start, allow_ns_access);
++        reg->MMIOH_END_ADDR = PCIE_INTEG_CTRL_REG_END_ADDR(end);
++        break;
++    default:
++        FWK_LOG_ERR("Invalid Carveout type: %d", carveout_type);
++        fwk_unexpected();
++        break;
++    };
++}
++
++static int map_region(struct interface_io_block_setup_mmap *mmap)
++{
++    struct pcie_ctrl_reg_set *reg;
++    unsigned int idx;
++    uint64_t start;
++    uint64_t end;
++    bool allow_ns_access;
++
++    if (mmap == NULL) {
++        return FWK_E_PARAM;
++    }
++
++    apremap_cmn_atrans_api->disable();
++
++    /* The register base for PCIe Integ ctrl is within 32 bit address range. */
++    for (idx = 0; idx < mmap->region_count; idx++) {
++        reg = get_register_set(
++            mmap->io_block_address, mmap->carveout_info[idx].target_id);
++
++        start = mmap->carveout_info[idx].base;
++        end =
++            (mmap->carveout_info[idx].base + mmap->carveout_info[idx].size) - 1;
++        allow_ns_access = mmap->carveout_info[idx].access_type ==
++            INTERFACE_IO_BLOCK_ACCESS_TYPE_NS;
++        program_node(
++            reg,
++            mmap->carveout_info[idx].carveout_type,
++            start,
++            end,
++            allow_ns_access);
++    }
++
++    apremap_cmn_atrans_api->enable();
++
++    return FWK_SUCCESS;
++}
++
++/*
++ * There are no regions in PCIe Integ Ctrl. Mapping always map the same region.
++ */
++int unmap_region(struct interface_io_block_setup_mmap *mmap)
++{
++    return FWK_SUCCESS;
++}
++
++static struct interface_io_block_memmap_api memmap_api = {
++    .map_region = map_region,
++    .unmap_region = unmap_region,
++};
++
++static int pcie_integ_ctrl_process_bind_request(
++    fwk_id_t requester_id,
++    fwk_id_t id,
++    fwk_id_t api_id,
++    const void **api)
++{
++    enum mod_pcie_integ_ctrl_api_idx api_idx;
++
++    api_idx = (enum mod_pcie_integ_ctrl_api_idx)fwk_id_get_api_idx(api_id);
++    if (api_idx != MOD_PCIE_INTEG_CTRL_API_IDX_MAP_REGION) {
++        return FWK_E_PARAM;
++    }
++
++    *api = &memmap_api;
++
++    return FWK_SUCCESS;
++}
++
+ const struct fwk_module module_pcie_integ_ctrl = {
+     .type = FWK_MODULE_TYPE_DRIVER,
+     .init = pcie_integ_ctrl_init,
++    .api_count = MOD_PCIE_INTEG_CTRL_API_IDX_MAX,
+     .element_init = pcie_integ_ctrl_element_init,
+     .bind = pcie_integ_ctrl_bind,
+     .start = pcie_integ_ctrl_start,
++    .process_bind_request = pcie_integ_ctrl_process_bind_request,
+     .process_notification = pcie_integ_ctrl_process_notification,
+ };

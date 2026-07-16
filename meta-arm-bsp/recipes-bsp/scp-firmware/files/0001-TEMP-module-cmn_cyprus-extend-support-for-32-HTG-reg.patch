@@ -1,0 +1,502 @@
+From febd1cd3298b23192148328e91e4868ee2f03aa6 Mon Sep 17 00:00:00 2001
+From: Shriram K <shriram.k@arm.com>
+Date: Fri, 5 Apr 2024 13:42:04 +0530
+Subject: [PATCH] [TEMP] module/cmn_cyprus: extend support for 32 HTG regions
+
+Initially only 8 System Cache Group (SCG)/Hashed Target Group (HTG)
+regions were supported in the CMN Cyprus driver. Extend the support from
+8 to 32 SCG/HTG regions.
+
+Signed-off-by: Shriram K <shriram.k@arm.com>
+Change-Id: Ic65966666c68ed54b89bd4f90049db168afa3883
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../include/internal/cmn_cyprus_ctx.h         |   2 +-
+ .../include/internal/cmn_cyprus_reg.h         |  52 +++---
+ .../include/internal/cmn_cyprus_rnsam_reg.h   |   5 +-
+ module/cmn_cyprus/src/cmn_cyprus_rnsam_reg.c  | 157 +++++++++++++-----
+ .../cmn_cyprus/src/cmn_cyprus_rnsam_setup.c   |  23 ++-
+ 5 files changed, 170 insertions(+), 69 deletions(-)
+
+diff --git a/module/cmn_cyprus/include/internal/cmn_cyprus_ctx.h b/module/cmn_cyprus/include/internal/cmn_cyprus_ctx.h
+index 1b2a5a1ff747..4ccc2f65c856 100644
+--- a/module/cmn_cyprus/include/internal/cmn_cyprus_ctx.h
++++ b/module/cmn_cyprus/include/internal/cmn_cyprus_ctx.h
+@@ -23,7 +23,7 @@
+ #define MOD_NAME "[CMN_CYPRUS] "
+ 
+ /* Maximum number of SCG regions supported by the driver */
+-#define MAX_SCG_COUNT 8
++#define MAX_SCG_COUNT (RNSAM_HTG_REG_GRP1_COUNT + RNSAM_HTG_REG_GRP2_COUNT)
+ 
+ /*!
+  * \brief Structure to store the HN-S node info.
+diff --git a/module/cmn_cyprus/include/internal/cmn_cyprus_reg.h b/module/cmn_cyprus/include/internal/cmn_cyprus_reg.h
+index b12745712f99..1bff729d6da7 100644
+--- a/module/cmn_cyprus/include/internal/cmn_cyprus_reg.h
++++ b/module/cmn_cyprus/include/internal/cmn_cyprus_reg.h
+@@ -103,9 +103,9 @@ struct cmn_cyprus_hns_reg {
+ /* Non-hashed memory region register count in second group */
+ #define RNSAM_NON_HASH_REG_GRP2_COUNT 40
+ /* Hashed memory region register count in first group */
+-#define RNSAM_HTG_REG_COUNT 4
++#define RNSAM_HTG_REG_GRP1_COUNT 8
+ /* Hashed memory region register count in second group */
+-#define RNSAM_HTG_REG_GRP2_COUNT 4
++#define RNSAM_HTG_REG_GRP2_COUNT 24
+ /* SCG HN Node ID register count */
+ #define RNSAM_SCG_HN_NODEID_REG_COUNT 32
+ /* CML Port Aggregation Mode Control register count */
+@@ -126,6 +126,15 @@ struct cmn_cyprus_hns_reg {
+ #define RNSAM_SCG_CPA_GRP_REG_GRP2_COUNT 8
+ /* Hashed memory region LCN bound Cfg register count */
+ #define RNSAM_SCG_LCN_BOUND_REG_COUNT 4
++/* Hashed memory region HN count register count in first group */
++#define RNSAM_HTG_HN_COUNT_REG_GRP1_COUNT 2
++/* Hashed memory region HN count register count in second group */
++#define RNSAM_HTG_HN_COUNT_REG_GRP2_COUNT 2
++/* Hashed memory region CAL mode register count in first group */
++#define RNSAM_HTG_CAL_MODE_REG_GRP1_COUNT 4
++/* Hashed memory region CAL mode register count in second group */
++#define RNSAM_HTG_CAL_MODE_REG_GRP2_COUNT 4
++
+ 
+ /*!
+  * Request Node System Address Map (RNSAM) registers.
+@@ -140,47 +149,50 @@ struct cmn_cyprus_rnsam_reg {
+     FWK_RW  uint64_t  NON_HASH_MEM_REGION[RNSAM_NON_HASH_REG_COUNT];
+     FWK_RW  uint64_t  NON_HASH_MEM_REGION_CFG2[RNSAM_NON_HASH_REG_COUNT];
+     FWK_RW  uint64_t  NON_HASH_TGT_NODEID[16];
+-    FWK_RW  uint64_t  SYS_CACHE_GRP_REGION[RNSAM_HTG_REG_COUNT];
+-    FWK_RW  uint64_t  HASHED_TGT_GRP_CFG1_REGION[RNSAM_HTG_REG_GRP2_COUNT];
+-    FWK_RW  uint64_t  SYS_CACHE_GRP_SECONDARY_REG[8];
++    FWK_RW  uint64_t  HASHED_TGT_GRP_CFG1_REGION[RNSAM_HTG_REG_GRP1_COUNT];
++    FWK_RW  uint64_t  SYS_CACHE_GRP_SECONDARY_REGION[RNSAM_HTG_REG_GRP1_COUNT];
+             uint8_t   RESERVED5[0xEA0 - 0xE80];
+-    FWK_RW  uint64_t  SYS_CACHE_GROUP_HN_COUNT;
+-            uint8_t   RESERVED6[0xEB0 - 0xEA8];
++    FWK_RW  uint64_t  SYS_CACHE_GROUP_HN_COUNT[RNSAM_HTG_HN_COUNT_REG_GRP1_COUNT];
+     FWK_RW  uint64_t  SYS_CACHE_GRP_SN_ATTR[2];
+-            uint8_t   RESERVED7[0xF00 - 0xEC0];
++            uint8_t   RESERVED6[0xF00 - 0xEC0];
+     FWK_RW  uint64_t  SYS_CACHE_GRP_HN_NODEID[RNSAM_SCG_HN_NODEID_REG_COUNT];
+     FWK_RW  uint64_t  SYS_CACHE_GRP_SN_NODEID[32];
+     FWK_RW  uint64_t  STATUS;
+     FWK_RW  uint64_t  GIC_MEM_REGION;
+-            uint8_t   RESERVED8[0x1120 - 0x1110];
+-    FWK_RW  uint64_t  SYS_CACHE_GRP_CAL_MODE;
+-    FWK_RW  uint64_t  HASHED_TARGET_GRP_CAL_MODE[3];
++            uint8_t   RESERVED7[0x1120 - 0x1110];
++    FWK_RW  uint64_t  SYS_CACHE_GRP_CAL_MODE[RNSAM_HTG_CAL_MODE_REG_GRP1_COUNT];
+     FWK_RW  uint64_t  SYS_CACHE_GRP_SN_SAM_CFG[8];
+     FWK_RW  uint64_t  SYS_CACHE_GRP_HN_CPA_EN_REG[RNSAM_SCG_CPA_EN_REG_COUNT];
+     FWK_RW  uint64_t  SYS_CACHE_GRP_HN_CPA_GRP_REG[RNSAM_SCG_CPA_GRP_REG_COUNT];
+     FWK_RW  uint64_t
+         CML_PORT_AGGR_MODE_CTRL_REG[RNSAM_CPA_MODE_CTRL_REG_COUNT];
+-            uint8_t   RESERVED9[0x11F0 - 0x11C0];
++            uint8_t   RESERVED8[0x11F0 - 0x11C0];
+     FWK_RW  uint64_t  CML_PORT_AGGR_GRP_REG[RNSAM_CPA_GRP_REG_COUNT];
+     FWK_RW  uint64_t  CML_PORT_AGGR_CTRL_REG[RNSAM_CPA_CTRL_REG_COUNT];
+-            uint8_t   RESERVED10[0x20C0 - 0x1288];
++            uint8_t   RESERVED9[0x20C0 - 0x1288];
+     FWK_RW  uint64_t  NON_HASH_MEM_REGION_GRP2[RNSAM_NON_HASH_REG_GRP2_COUNT];
+-            uint8_t   RESERVED11[0x24C0 - 0x2200];
++            uint8_t   RESERVED10[0x24C0 - 0x2200];
+     FWK_RW  uint64_t
+         NON_HASH_MEM_REGION_CFG2_GRP2[RNSAM_NON_HASH_REG_GRP2_COUNT];
+-            uint8_t   RESERVED12[0x2B00 - 0x2600];
++            uint8_t   RESERVED11[0x2B00 - 0x2600];
+     FWK_RW  uint64_t  CML_CPAG_BASE_INDX_GRP[RNSAM_CPAG_BASE_INDX_REG_COUNT];
+-            uint8_t   RESERVED13[0x3100 - 0x2B40];
++            uint8_t   RESERVED12[0x3040 - 0x2B40];
++    FWK_RW  uint64_t  HASHED_TGT_GRP_CFG1_REGION_GRP2[RNSAM_HTG_REG_GRP2_COUNT];
+     FWK_RW  uint64_t  HASHED_TGT_GRP_CFG2_REGION[32];
+-            uint8_t   RESERVED14[0x3300 - 0x3200];
+-    FWK_RW  uint64_t  HASHED_TARGET_GRP_SECONDARY_CFG2_REG[32];
++            uint8_t   RESERVED13[0x3240 - 0x3200];
++    FWK_RW  uint64_t  SYS_CACHE_GRP_SECONDARY_REGION_GRP2[RNSAM_HTG_REG_GRP2_COUNT]; //0x3300
++    FWK_RW  uint64_t  HASHED_TGT_GRP_SECONDARY_CFG2_REGION[32];
+     FWK_RW  uint64_t  HASHED_TARGET_GRP_HASH_CNTL[32];
+-            uint8_t   RESERVED15[0x3730 - 0x3500];
++            uint8_t   RESERVED14[0x3710 - 0x3500];
++    FWK_RW  uint64_t  HASHED_TARGET_GROUP_HN_COUNT_REG[RNSAM_HTG_HN_COUNT_REG_GRP2_COUNT];
++            uint8_t   RESERVED15[0x3730 - 0x3720];
+     FWK_RW  uint64_t
+         HASHED_TARGET_GRP_HNF_CPA_EN_REG[RNSAM_SCG_CPA_EN_REG_COUNT];
++            uint8_t   RESERVED16[0x3750 - 0x3740];
+     FWK_RW  uint64_t
+         HASHED_TARGET_GRP_CPA_GRP_REG[RNSAM_SCG_CPA_GRP_REG_GRP2_COUNT];
+-            uint8_t   RESERVED16[0x37C0 - 0x3790];
++            uint8_t   RESERVED17[0x37A0 - 0x3790];
++    FWK_RW  uint64_t  HASHED_TARGET_GRP_CAL_MODE[RNSAM_HTG_CAL_MODE_REG_GRP2_COUNT];
+     FWK_RW  uint64_t
+         HASHED_TARGET_GRP_HNF_LCN_BOUND_CFG_REG[RNSAM_SCG_LCN_BOUND_REG_COUNT];
+ };
+diff --git a/module/cmn_cyprus/include/internal/cmn_cyprus_rnsam_reg.h b/module/cmn_cyprus/include/internal/cmn_cyprus_rnsam_reg.h
+index b6f739946a71..08fc987d7e30 100644
+--- a/module/cmn_cyprus/include/internal/cmn_cyprus_rnsam_reg.h
++++ b/module/cmn_cyprus/include/internal/cmn_cyprus_rnsam_reg.h
+@@ -190,9 +190,10 @@ int rnsam_configure_sec_hashed_region(
+  * \param hn_node_id Target node IDs for hashed target groups.
+  * \param hn_node_id_idx Target node ID index.
+  *
+- * \return nothing.
++ * \retval ::FWK_SUCCESS Operation succeeded.
++ * \retval ::FWK_E_RANGE Register index out of range.
+  */
+-void rnsam_set_htg_target_hn_nodeid(
++int rnsam_set_htg_target_hn_nodeid(
+     struct cmn_cyprus_rnsam_reg *rnsam,
+     uint16_t hn_node_id,
+     uint32_t hn_node_id_idx);
+diff --git a/module/cmn_cyprus/src/cmn_cyprus_rnsam_reg.c b/module/cmn_cyprus/src/cmn_cyprus_rnsam_reg.c
+index 0feee0f0afa9..0953ef879270 100644
+--- a/module/cmn_cyprus/src/cmn_cyprus_rnsam_reg.c
++++ b/module/cmn_cyprus/src/cmn_cyprus_rnsam_reg.c
+@@ -54,11 +54,21 @@
+ /* RNSAM SCG/HTG target node ID */
+ #define RNSAM_SCG_TARGET_ENTRIES_PER_GROUP 4
+ #define RNSAM_SCG_TARGET_ENTRY_BITS_WIDTH  12
+-#define RNSAM_SCG_HN_CNT_POS(scg_grp)      (8 * (scg_grp))
++
++/* RNSAM SCG/HTG HN count */
++#define RNSAM_SCG_HN_CNT_SCG_PER_REG 8
++#define RNSAM_SCG_HN_CNT_SCG_PER_GRP \
++    (RNSAM_SCG_HN_CNT_SCG_PER_REG * RNSAM_HTG_HN_COUNT_REG_GRP1_COUNT)
++#define RNSAM_SCG_HN_CNT_SHIFT 8
++#define RNSAM_SCG_HN_CNT_POS(scg_idx) \
++    ((scg_idx % RNSAM_SCG_HN_CNT_SCG_PER_REG) * RNSAM_SCG_HN_CNT_SHIFT)
+ 
+ /* RNSAM CAL Mode */
+-#define RNSAM_SCG_HNS_CAL_MODE_EN    UINT64_C(0x01)
+-#define RNSAM_SCG_HNS_CAL_MODE_SHIFT 16
++#define RNSAM_SCG_HNS_CAL_MODE_SCG_PER_REG 4
++#define RNSAM_SCG_HNS_CAL_MODE_EN          UINT64_C(0x01)
++#define RNSAM_SCG_HNS_CAL_MODE_SHIFT       16
++#define RNSAM_SCG_HNS_CAL_MODE_POS(scg_idx) \
++   ((scg_idx % RNSAM_SCG_HNS_CAL_MODE_SCG_PER_REG) *  RNSAM_SCG_HNS_CAL_MODE_SHIFT)
+ 
+ /* RNSAM Hierarchical hashing */
+ #define RNSAM_HIERARCHICAL_HASH_EN_POS         2
+@@ -267,12 +277,13 @@ static void set_htg_region_target_type(
+     unsigned int region_idx,
+     enum sam_node_type target_type)
+ {
+-    if (region_idx < RNSAM_HTG_REG_COUNT) {
+-        rnsam->SYS_CACHE_GRP_REGION[region_idx] |=
++    /* Configure target type for hashed region */
++    if (region_idx < RNSAM_HTG_REG_GRP1_COUNT) {
++        rnsam->HASHED_TGT_GRP_CFG1_REGION[region_idx] |=
+             (target_type << RNSAM_REGION_ENTRY_TARGET_TYPE_POS);
+-
+     } else {
+-        rnsam->HASHED_TGT_GRP_CFG1_REGION[region_idx - RNSAM_HTG_REG_COUNT] |=
++        rnsam->HASHED_TGT_GRP_CFG1_REGION_GRP2
++            [region_idx - RNSAM_HTG_REG_GRP1_COUNT] |=
+             (target_type << RNSAM_REGION_ENTRY_TARGET_TYPE_POS);
+     }
+ }
+@@ -283,8 +294,14 @@ static void set_htg_sec_region_target_type(
+     unsigned int region_idx,
+     enum sam_node_type target_type)
+ {
+-    rnsam->SYS_CACHE_GRP_SECONDARY_REG[region_idx] |=
+-        (target_type << RNSAM_REGION_ENTRY_TARGET_TYPE_POS);
++    if (region_idx < RNSAM_HTG_REG_GRP1_COUNT) {
++        rnsam->SYS_CACHE_GRP_SECONDARY_REGION[region_idx] |=
++            (target_type << RNSAM_REGION_ENTRY_TARGET_TYPE_POS);
++    } else {
++        rnsam->SYS_CACHE_GRP_SECONDARY_REGION_GRP2
++            [region_idx - RNSAM_HTG_REG_GRP1_COUNT] |=
++            (target_type << RNSAM_REGION_ENTRY_TARGET_TYPE_POS);
++    }
+ }
+ 
+ /* Configurable lower address & upper address */
+@@ -374,18 +391,18 @@ static void configure_htg_region_start_and_end_addr(
+ 
+     lsb_addr_mask = rnsam_ctx.non_hash_lsb_addr_mask;
+ 
+-    if (region_idx < RNSAM_HTG_REG_COUNT) {
++    /* Configure the end address of the region */
++    rnsam->HASHED_TGT_GRP_CFG2_REGION[region_idx] =
++        ((base + size - 1) & ~lsb_addr_mask);
++
++    if (region_idx < RNSAM_HTG_REG_GRP1_COUNT) {
+         /* Configure the base address of the range */
+-        rnsam->SYS_CACHE_GRP_REGION[region_idx] = (base & ~lsb_addr_mask);
++        rnsam->HASHED_TGT_GRP_CFG1_REGION[region_idx] = (base & ~lsb_addr_mask);
+     } else {
+         /* Configure the base address of the range */
+-        rnsam->HASHED_TGT_GRP_CFG1_REGION[region_idx - RNSAM_HTG_REG_COUNT] =
++        rnsam->HASHED_TGT_GRP_CFG1_REGION_GRP2[region_idx - RNSAM_HTG_REG_GRP1_COUNT] =
+             (base & ~lsb_addr_mask);
+     }
+-
+-    /* Configure the end address of the region */
+-    rnsam->HASHED_TGT_GRP_CFG2_REGION[region_idx] =
+-        ((base + size - 1) & ~lsb_addr_mask);
+ }
+ 
+ /* Secondary HTG region - Configurable lower address & upper address */
+@@ -399,12 +416,19 @@ static void configure_htg_sec_region_start_and_end_addr(
+ 
+     lsb_addr_mask = rnsam_ctx.non_hash_lsb_addr_mask;
+ 
+-    /* Configure the start address of the region */
+-    rnsam->SYS_CACHE_GRP_SECONDARY_REG[region_idx] = (base & ~lsb_addr_mask);
+-
+     /* Configure the end address of the region */
+-    rnsam->HASHED_TARGET_GRP_SECONDARY_CFG2_REG[region_idx] =
++    rnsam->HASHED_TGT_GRP_SECONDARY_CFG2_REGION[region_idx] =
+         (base + size - 1) & ~lsb_addr_mask;
++
++    if (region_idx < RNSAM_HTG_REG_GRP1_COUNT) {
++        rnsam->SYS_CACHE_GRP_SECONDARY_REGION[region_idx] =
++            (base & ~lsb_addr_mask);
++
++    } else {
++        rnsam->SYS_CACHE_GRP_SECONDARY_REGION_GRP2
++            [region_idx - RNSAM_HTG_REG_GRP1_COUNT] =
++            (base & ~lsb_addr_mask);
++    }
+ }
+ 
+ /* Configurable base address & region size - Legacy CMN mode */
+@@ -429,25 +453,25 @@ static int configure_htg_region_base_and_size(
+ 
+     min_size = rnsam_ctx.min_htg_size;
+ 
+-    if (region_idx < RNSAM_HTG_REG_COUNT) {
++    if (region_idx < RNSAM_HTG_REG_GRP1_COUNT) {
+         idx = region_idx;
+         /* Configure the memory region size */
+-        rnsam->SYS_CACHE_GRP_REGION[idx] =
++        rnsam->HASHED_TGT_GRP_CFG1_REGION[idx] =
+             sam_encode_region_size(size, min_size)
+             << RNSAM_REGION_ENTRY_SIZE_POS;
+ 
+         /* Configure the base address of the range */
+-        rnsam->SYS_CACHE_GRP_REGION[idx] |= (base / min_size)
++        rnsam->HASHED_TGT_GRP_CFG1_REGION[idx] |= (base / min_size)
+             << RNSAM_REGION_ENTRY_BASE_POS;
+     } else {
+-        idx = (region_idx - RNSAM_HTG_REG_COUNT);
++        idx = (region_idx - RNSAM_HTG_REG_GRP1_COUNT);
+         /* Configure the memory region size */
+-        rnsam->HASHED_TGT_GRP_CFG1_REGION[idx] =
++        rnsam->HASHED_TGT_GRP_CFG1_REGION_GRP2[idx] =
+             sam_encode_region_size(size, min_size)
+             << RNSAM_REGION_ENTRY_SIZE_POS;
+ 
+         /* Configure the base address of the range */
+-        rnsam->HASHED_TGT_GRP_CFG1_REGION[idx] |= (base / min_size)
++        rnsam->HASHED_TGT_GRP_CFG1_REGION_GRP2[idx] |= (base / min_size)
+             << RNSAM_REGION_ENTRY_BASE_POS;
+     }
+ 
+@@ -464,6 +488,7 @@ static int configure_htg_sec_region_base_and_size(
+     uint64_t base,
+     uint64_t size)
+ {
++    uint8_t idx;
+     uint64_t min_size;
+ 
+     if ((base % size) != 0) {
+@@ -478,13 +503,27 @@ static int configure_htg_sec_region_base_and_size(
+ 
+     min_size = rnsam_ctx.min_htg_size;
+ 
+-    /* Configure region size */
+-    rnsam->SYS_CACHE_GRP_SECONDARY_REG[region_idx] =
+-        sam_encode_region_size(size, min_size) << RNSAM_REGION_ENTRY_SIZE_POS;
++    if (region_idx < RNSAM_HTG_REG_GRP1_COUNT) {
++        idx = region_idx;
++        /* Configure secondary region size */
++        rnsam->SYS_CACHE_GRP_SECONDARY_REGION[idx] =
++            sam_encode_region_size(size, min_size)
++            << RNSAM_REGION_ENTRY_SIZE_POS;
+ 
+-    /* Configure region base */
+-    rnsam->SYS_CACHE_GRP_SECONDARY_REG[region_idx] |= (base / min_size)
+-        << RNSAM_REGION_ENTRY_BASE_POS;
++        /* Configure secondary region base */
++        rnsam->SYS_CACHE_GRP_SECONDARY_REGION[idx] |= (base / min_size)
++            << RNSAM_REGION_ENTRY_BASE_POS;
++    } else {
++        idx = (region_idx - RNSAM_HTG_REG_GRP1_COUNT);
++        /* Configure secondary region size */
++        rnsam->SYS_CACHE_GRP_SECONDARY_REGION_GRP2[idx] =
++            sam_encode_region_size(size, min_size)
++            << RNSAM_REGION_ENTRY_SIZE_POS;
++
++        /* Configure secondary region base */
++        rnsam->SYS_CACHE_GRP_SECONDARY_REGION_GRP2[idx] |= (base / min_size)
++            << RNSAM_REGION_ENTRY_BASE_POS;
++    }
+ 
+     return FWK_SUCCESS;
+ }
+@@ -713,7 +752,7 @@ int rnsam_configure_sec_hashed_region(
+     return FWK_SUCCESS;
+ }
+ 
+-void rnsam_set_htg_target_hn_nodeid(
++int rnsam_set_htg_target_hn_nodeid(
+     struct cmn_cyprus_rnsam_reg *rnsam,
+     uint16_t hn_node_id,
+     uint32_t hn_node_id_idx)
+@@ -722,6 +761,9 @@ void rnsam_set_htg_target_hn_nodeid(
+     uint8_t bit_pos;
+ 
+     register_idx = hn_node_id_idx / RNSAM_SCG_TARGET_ENTRIES_PER_GROUP;
++    if (register_idx >= RNSAM_SCG_HN_NODEID_REG_COUNT) {
++        return FWK_E_RANGE;
++    }
+ 
+     bit_pos = RNSAM_SCG_TARGET_ENTRY_BITS_WIDTH *
+         ((hn_node_id_idx % (RNSAM_SCG_TARGET_ENTRIES_PER_GROUP)));
+@@ -729,6 +771,8 @@ void rnsam_set_htg_target_hn_nodeid(
+     /* Configure target HN-F node ID */
+     rnsam->SYS_CACHE_GRP_HN_NODEID[register_idx] += (uint64_t)hn_node_id
+         << bit_pos;
++
++    return FWK_SUCCESS;
+ }
+ 
+ void rnsam_set_htg_target_hn_count(
+@@ -736,18 +780,41 @@ void rnsam_set_htg_target_hn_count(
+     uint8_t scg_idx,
+     uint16_t target_count)
+ {
++    uint8_t reg_idx;
++
++    /* Calculate the register index */
++    reg_idx = (scg_idx / RNSAM_SCG_HN_CNT_SCG_PER_REG);
++
+     /* Configure the number of target nodes in this SCG */
+-    rnsam->SYS_CACHE_GROUP_HN_COUNT |= ((uint64_t)target_count)
+-        << (RNSAM_SCG_HN_CNT_POS(scg_idx));
++    if (reg_idx < RNSAM_HTG_HN_COUNT_REG_GRP1_COUNT) {
++        rnsam->SYS_CACHE_GROUP_HN_COUNT[reg_idx] |= ((uint64_t)target_count)
++            << (RNSAM_SCG_HN_CNT_POS(scg_idx));
++    } else {
++        reg_idx = (reg_idx - RNSAM_HTG_HN_COUNT_REG_GRP1_COUNT);
++        rnsam->HASHED_TARGET_GROUP_HN_COUNT_REG[reg_idx] |=
++            ((uint64_t)target_count) << (RNSAM_SCG_HN_CNT_POS(scg_idx));
++    }
+ }
+ 
+ void rnsam_enable_htg_cal_mode(
+     struct cmn_cyprus_rnsam_reg *rnsam,
+     uint8_t scg_idx)
+ {
+-    /* Enable the CAL mode for the given SCG region */
+-    rnsam->SYS_CACHE_GRP_CAL_MODE |=
+-        (RNSAM_SCG_HNS_CAL_MODE_EN << (scg_idx * RNSAM_SCG_HNS_CAL_MODE_SHIFT));
++    uint8_t reg_idx;
++
++    /* Calculate the register index */
++    reg_idx = (scg_idx / RNSAM_SCG_HNS_CAL_MODE_SCG_PER_REG);
++
++    if (reg_idx < RNSAM_HTG_CAL_MODE_REG_GRP1_COUNT) {
++        /* Enable the CAL mode for the given SCG region */
++        rnsam->SYS_CACHE_GRP_CAL_MODE[reg_idx] |=
++            (RNSAM_SCG_HNS_CAL_MODE_EN << RNSAM_SCG_HNS_CAL_MODE_POS(scg_idx));
++    } else {
++        reg_idx = (reg_idx - RNSAM_HTG_CAL_MODE_REG_GRP1_COUNT);
++        /* Enable the CAL mode for the given SCG region */
++        rnsam->HASHED_TARGET_GROUP_HN_COUNT_REG[reg_idx] |=
++            (RNSAM_SCG_HNS_CAL_MODE_EN << RNSAM_SCG_HNS_CAL_MODE_POS(scg_idx));
++    }
+ }
+ 
+ void rnsam_set_htg_region_valid(
+@@ -755,11 +822,11 @@ void rnsam_set_htg_region_valid(
+     unsigned int region_idx)
+ {
+     /* Set hashed region as valid */
+-    if (region_idx < RNSAM_HTG_REG_COUNT) {
+-        rnsam->SYS_CACHE_GRP_REGION[region_idx] |= RNSAM_REGION_ENTRY_VALID;
++    if (region_idx < RNSAM_HTG_REG_GRP1_COUNT) {
++        rnsam->HASHED_TGT_GRP_CFG1_REGION[region_idx] |= RNSAM_REGION_ENTRY_VALID;
+ 
+     } else {
+-        rnsam->HASHED_TGT_GRP_CFG1_REGION[region_idx - RNSAM_HTG_REG_COUNT] |=
++        rnsam->HASHED_TGT_GRP_CFG1_REGION_GRP2[region_idx - RNSAM_HTG_REG_GRP1_COUNT] |=
+             RNSAM_REGION_ENTRY_VALID;
+     }
+ }
+@@ -769,7 +836,13 @@ void rnsam_set_htg_secondary_region_valid(
+     struct cmn_cyprus_rnsam_reg *rnsam,
+     unsigned int region_idx)
+ {
+-    rnsam->SYS_CACHE_GRP_SECONDARY_REG[region_idx] |= RNSAM_REGION_ENTRY_VALID;
++    if (region_idx < RNSAM_HTG_REG_GRP1_COUNT) {
++        rnsam->SYS_CACHE_GRP_SECONDARY_REGION[region_idx] |=
++            RNSAM_REGION_ENTRY_VALID;
++    } else {
++        rnsam->SYS_CACHE_GRP_SECONDARY_REGION_GRP2
++            [region_idx - RNSAM_HTG_REG_GRP1_COUNT] |= RNSAM_REGION_ENTRY_VALID;
++    }
+ }
+ 
+ uint64_t rnsam_get_non_hashed_region_base(
+diff --git a/module/cmn_cyprus/src/cmn_cyprus_rnsam_setup.c b/module/cmn_cyprus/src/cmn_cyprus_rnsam_setup.c
+index 9b99b56ea03a..cd340d2bd646 100644
+--- a/module/cmn_cyprus/src/cmn_cyprus_rnsam_setup.c
++++ b/module/cmn_cyprus/src/cmn_cyprus_rnsam_setup.c
+@@ -158,10 +158,11 @@ static int program_io_region(
+     return FWK_SUCCESS;
+ }
+ 
+-static void configure_scg_target_nodes(
++static int configure_scg_target_nodes(
+     const struct mod_cmn_cyprus_mem_region_map *region,
+     uint32_t scg_idx)
+ {
++    int status;
+     uint16_t hns_ldid;
+     unsigned int node_id;
+     unsigned int rnsam_idx;
+@@ -211,13 +212,23 @@ static void configure_scg_target_nodes(
+         for (rnsam_idx = 0; rnsam_idx < shared_ctx->rnsam_count; rnsam_idx++) {
+             rnsam = shared_ctx->rnsam_table[rnsam_idx];
+ 
+-            /* Configure target HN-S node ID */
+-            rnsam_set_htg_target_hn_nodeid(rnsam, node_id, hn_node_id_idx);
++            /* Configure target HN-F node ID */
++            status =
++                rnsam_set_htg_target_hn_nodeid(rnsam, node_id, hn_node_id_idx);
++            if (status != FWK_SUCCESS) {
++                FWK_LOG_ERR(
++                    MOD_NAME "Failed to set node id: %u at target idx: %u for SCG",
++                    node_id,
++                    hn_node_id_idx);
++                return status;
++            }
+         }
+ 
+         /* Increment the global target home node index */
+         hn_node_id_idx++;
+     }
++
++    return FWK_SUCCESS;
+ }
+ 
+ static void configure_scg_hier_hashing(
+@@ -331,7 +342,11 @@ static int program_scg_region(
+     }
+ 
+     /* Set the target Home Nodes for the SCG */
+-    configure_scg_target_nodes(scg_region, scg_idx);
++    status = configure_scg_target_nodes(scg_region, scg_idx);
++    if (status != FWK_SUCCESS) {
++        FWK_LOG_ERR(MOD_NAME "Error! Failed to configure SCG target HNs");
++        return status;
++    }
+ 
+     return FWK_SUCCESS;
+ }

@@ -1,0 +1,415 @@
+From 42b848fa2cd5df490a66cb7eecf9cc1c90491a70 Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Mon, 12 Feb 2024 01:14:21 +0000
+Subject: [PATCH] neoverse-rd/rdv3: enable io block driver
+
+IO block driver represents the layout in which IO virtualisation block
+is laid out on the platform. This driver is needed to configure PCIe
+rootport attached to the IO virtualisation block.
+
+Add the configuration files for Tower NCI and IO Block modules and
+enable them for scp_ram firmware.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: I5d2558f492732e76c7b72c990661679f138b35ef
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../module/io_block/src/mod_io_block.c        |   2 +-
+ .../neoverse-rd/rdv3/scp_ramfw/CMakeLists.txt |   5 +-
+ .../neoverse-rd/rdv3/scp_ramfw/Firmware.cmake |   6 +-
+ .../rdv3/scp_ramfw/config_io_block.c          | 120 ++++++++++++++++++
+ .../rdv3/scp_ramfw/config_noc_s3.c            |  21 +++
+ .../rdv3/scp_ramfw/include/io_macro_layout.h  |  75 +++++++++++
+ .../rdv3/scp_ramfw/include/scp_css_mmap.h     |  22 +++-
+ .../rdv3/scp_ramfw/include/scp_fw_mmap.h      |  24 ++++
+ 8 files changed, 271 insertions(+), 4 deletions(-)
+ create mode 100644 product/neoverse-rd/rdv3/scp_ramfw/config_io_block.c
+ create mode 100644 product/neoverse-rd/rdv3/scp_ramfw/config_noc_s3.c
+ create mode 100644 product/neoverse-rd/rdv3/scp_ramfw/include/io_macro_layout.h
+
+diff --git a/product/neoverse-rd/module/io_block/src/mod_io_block.c b/product/neoverse-rd/module/io_block/src/mod_io_block.c
+index 273155066587..80d1e1be18b4 100644
+--- a/product/neoverse-rd/module/io_block/src/mod_io_block.c
++++ b/product/neoverse-rd/module/io_block/src/mod_io_block.c
+@@ -77,7 +77,7 @@ static int unmap_region_in_nci(
+     };
+     struct mod_noc_s3_comp_config comp_config = {
+         .type = MOD_NOC_S3_NODE_TYPE_ASNI,
+-        .source_id = source_id,
++        .id = source_id,
+     };
+ 
+     return ctx.nci_memmap_api->unmap_region_in_psam(
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/CMakeLists.txt b/product/neoverse-rd/rdv3/scp_ramfw/CMakeLists.txt
+index 965964035daa..efed9b9dedc2 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/CMakeLists.txt
++++ b/product/neoverse-rd/rdv3/scp_ramfw/CMakeLists.txt
+@@ -63,7 +63,10 @@ target_sources(
+             "${CMAKE_CURRENT_SOURCE_DIR}/config_system_info.c"
+             "${CMAKE_CURRENT_SOURCE_DIR}/config_pl011.c"
+             "${CMAKE_CURRENT_SOURCE_DIR}/config_scp_platform.c"
+-            "${CMAKE_CURRENT_SOURCE_DIR}/config_sid.c")
++            "${CMAKE_CURRENT_SOURCE_DIR}/config_sid.c"
++            "${CMAKE_CURRENT_SOURCE_DIR}/config_sid.c"
++            "${CMAKE_CURRENT_SOURCE_DIR}/config_io_block.c"
++            "${CMAKE_CURRENT_SOURCE_DIR}/config_noc_s3.c")
+ 
+ #
+ # Some of our firmware includes require CMSIS.
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake b/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake
+index 13ebf6f0dc94..3891b5d95cb8 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake
++++ b/product/neoverse-rd/rdv3/scp_ramfw/Firmware.cmake
+@@ -33,7 +33,9 @@ set(SCP_ENABLE_ATU_MANAGE TRUE)
+ set(SCP_ENABLE_SCMI_NOTIFICATIONS TRUE)
+ 
+ list(PREPEND SCP_MODULE_PATHS
+-     "${CMAKE_CURRENT_LIST_DIR}/../module/scp_platform")
++     "${CMAKE_CURRENT_LIST_DIR}/../../module/io_block"
++     "${CMAKE_CURRENT_LIST_DIR}/../module/scp_platform"
++     "${CMAKE_CURRENT_LIST_DIR}/../module/system_pik")
+ 
+ # The order of the modules in the following list is the order in which the
+ # modules are initialized, bound, started during the pre-runtime phase.
+@@ -43,6 +45,7 @@ list(APPEND SCP_MODULES "armv7m-mpu")
+ list(APPEND SCP_MODULES "pl011")
+ list(APPEND SCP_MODULES "atu")
+ list(APPEND SCP_MODULES "atu-mmio")
++list(APPEND SCP_MODULES "noc-s3")
+ list(APPEND SCP_MODULES "ppu-v1")
+ list(APPEND SCP_MODULES "system-power")
+ list(APPEND SCP_MODULES "power-domain")
+@@ -62,4 +65,5 @@ list(APPEND SCP_MODULES "scmi")
+ list(APPEND SCP_MODULES "sds")
+ list(APPEND SCP_MODULES "scmi-power-domain")
+ list(APPEND SCP_MODULES "scmi-system-power")
++list(APPEND SCP_MODULES "io-block")
+ list(APPEND SCP_MODULES "scp-platform")
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/config_io_block.c b/product/neoverse-rd/rdv3/scp_ramfw/config_io_block.c
+new file mode 100644
+index 000000000000..f14d5f19e73f
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/scp_ramfw/config_io_block.c
+@@ -0,0 +1,120 @@
++/*
++ * Arm SCP/MCP Software
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ * Description:
++ *     Configuration data for module 'io_block'.
++ */
++
++#include "io_macro_layout.h"
++#include "scp_css_mmap.h"
++#include "scp_fw_mmap.h"
++
++#include <mod_atu.h>
++#include <mod_io_block.h>
++#include <mod_noc_s3.h>
++#include <mod_scp_platform.h>
++
++#include <fwk_id.h>
++#include <fwk_log.h>
++#include <fwk_macros.h>
++#include <fwk_module.h>
++#include <fwk_module_idx.h>
++
++#define IO_MACRO_ELEMENT_CONFIG(idx) \
++    { \
++        .name = "IO Macro " #idx, \
++        .data = &((struct mod_io_block_element_config){ \
++            .region_mem_maps_count = 2, \
++            .region_mem_maps = ((struct interface_io_block_setup_mmap[]){ \
++                { .io_block_address = NCI_GVP_BLOCK_BASE(idx), \
++                  .source_id = ASNI_CMN, \
++                  .region_count = 1, \
++                  .carveout_info = \
++                      &((struct interface_io_block_carveout_info){ \
++                          .base = TCU_REG_BASE(idx), \
++                          .size = TCU_REG_SIZE, \
++                          .target_id = AMNI_PMNI_TCU_APB, \
++                          .region_id = 0, \
++                      }) }, \
++                { .io_block_address = NCI_GVP_BLOCK_BASE(idx), \
++                  .source_id = ASNI_CMN, \
++                  .region_count = 1, \
++                  .carveout_info = \
++                      &((struct interface_io_block_carveout_info){ \
++                          .base = CTRL_REG_BASE(idx), \
++                          .size = CTRL_REG_SIZE, \
++                          .target_id = AMNI_PMNI_CTRL_REG_APB, \
++                          .region_id = 0, \
++                      }) }, \
++            }), \
++        }) \
++    }
++
++static struct mod_io_block_config io_block_module_config = {
++    .nci_id = FWK_ID_MODULE(FWK_MODULE_IDX_NOC_S3),
++    .nci_api_id =
++        FWK_ID_API(FWK_MODULE_IDX_NOC_S3, MOD_NOC_S3_API_SETUP_PSAM),
++    .atu_id = FWK_ID_ELEMENT(FWK_MODULE_IDX_ATU, 0),
++    .atu_api_id = FWK_ID_API(FWK_MODULE_IDX_ATU, MOD_ATU_API_IDX_ATU),
++    .plat_notification = {
++        .notification_id = FWK_ID_NOTIFICATION_INIT(
++                FWK_MODULE_IDX_SCP_PLATFORM,
++                MOD_SCP_PLATFORM_NOTIFICATION_IDX_SUBSYS_INITIALIZED),
++        .source_id = FWK_ID_MODULE_INIT(FWK_MODULE_IDX_SCP_PLATFORM),
++    },
++    .logical_region_base = SCP_ATW0_AP_IO_BLOCK_NCI_BASE,
++    .logical_region_size = SCP_ATW0_AP_IO_BLOCK_NCI_SIZE
++};
++
++static const struct fwk_element io_block_element_table[] = {
++    IO_MACRO_ELEMENT_CONFIG(0),
++#if (PLATFORM_VARIANT == 0)
++    IO_MACRO_ELEMENT_CONFIG(1),
++    IO_MACRO_ELEMENT_CONFIG(2),
++    IO_MACRO_ELEMENT_CONFIG(3),
++#endif
++    { 0 }
++};
++
++static void fix_address(struct mod_io_block_element_config *element_config)
++{
++    struct interface_io_block_setup_mmap *block_setup_mmap;
++    struct interface_io_block_carveout_info *carveout_info;
++    uint64_t chip_offset;
++    uint8_t block_idx;
++    uint8_t region_idx;
++
++    block_setup_mmap = element_config->region_mem_maps;
++    chip_offset = platform_get_chip_offset();
++    for (block_idx = 0; block_idx < element_config->region_mem_maps_count; block_idx++) {
++        block_setup_mmap[block_idx].io_block_address += chip_offset ;
++        carveout_info = block_setup_mmap[block_idx].carveout_info;
++        for (region_idx = 0; region_idx < block_setup_mmap[block_idx].region_count; region_idx++) {
++            carveout_info[region_idx].base += chip_offset;
++        }
++    }
++}
++
++static const struct fwk_element *io_block_get_element_table(fwk_id_t module_id)
++{
++    uint8_t chip_id = platform_get_chip_id();
++
++    FWK_LOG_INFO("[IO Block] chip_id: %d", chip_id);
++    uint8_t idx;
++
++    if (chip_id != 0) {
++        for (idx = 0; io_block_element_table[idx].data != NULL; idx++) {
++            fix_address((struct mod_io_block_element_config *)io_block_element_table[idx].data);
++        }
++    }
++
++    return io_block_element_table;
++}
++
++struct fwk_module_config config_io_block = {
++    .data = &io_block_module_config,
++    .elements = FWK_MODULE_DYNAMIC_ELEMENTS(io_block_get_element_table),
++};
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/config_noc_s3.c b/product/neoverse-rd/rdv3/scp_ramfw/config_noc_s3.c
+new file mode 100644
+index 000000000000..00b5524ec358
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/scp_ramfw/config_noc_s3.c
+@@ -0,0 +1,21 @@
++/*
++ * Arm SCP/MCP Software
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ * Description:
++ *     Configuration data for module 'io_block'.
++ */
++
++#include <mod_noc_s3.h>
++
++#include <fwk_element.h>
++#include <fwk_id.h>
++#include <fwk_module.h>
++
++#include <fmw_cmsis.h>
++
++struct fwk_module_config config_noc_s3 = {
++    .elements = FWK_MODULE_STATIC_ELEMENTS({ { 0 } })
++};
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/include/io_macro_layout.h b/product/neoverse-rd/rdv3/scp_ramfw/include/io_macro_layout.h
+new file mode 100644
+index 000000000000..771183416c96
+--- /dev/null
++++ b/product/neoverse-rd/rdv3/scp_ramfw/include/io_macro_layout.h
+@@ -0,0 +1,75 @@
++/*
++ * Arm SCP/MCP Software
++ * Copyright (c) 2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ * Description:
++ *     Base address definitions for the SCP's sub-system and access extending
++ *     into the rest of the CSS.
++ */
++
++#ifndef IO_MACRO_LAYOUT
++#define IO_MACRO_LAYOUT
++
++#include "scp_css_mmap.h"
++
++/* Calculate the base address of NCI GVP for IO Block using its index. */
++#define NCI_GVP_BLOCK_BASE(idx) \
++    (SCP_IO_BLOCK_NCI_GVP_BASE + (idx * SCP_IO_BLOCK_REGISTER_SIZE))
++/* Calculate the base address for the TCU in IO block using IO block's index. */
++#define TCU_REG_BASE(idx) \
++    (SCP_IO_BLOCK_BASE + (idx * SCP_IO_BLOCK_REGISTER_SIZE))
++#define TCU_REG_SIZE (0x4000000UL)
++/* Calculate the base address of IO control register bank. */
++#define CTRL_REG_BASE(idx) \
++    (SCP_IO_BLOCK_CONTROL_REG + (idx * SCP_IO_BLOCK_REGISTER_SIZE))
++#define CTRL_REG_SIZE (0x10000)
++
++enum asni_domain_id {
++    /*! CMN completer Node ID. */
++    ASNI_CMN,
++    /*! PCIe X1 completer Node ID. */
++    ASNI_PCIEX1_0,
++    /*! PCIe X2_1 completer Node ID. */
++    ASNI_PCIEX2_1,
++    /*! Maximum number of completer Node IDs*/
++    ASNI_DOMAIN_MAX_ID
++};
++
++enum amni_domain_id {
++    /*! requester Node ID. */
++    AMNI_CMN,
++    /*! Inline IO configuration requester Node ID. */
++    AMNI_INLINE_IO_CFG,
++    /*! Inline IO requester Node ID. */
++    AMNI_INLINE_IO,
++    /*! PCIE x1_0 configurtion requester Node ID. */
++    AMNI_PCIEX1_0_CFG,
++    /*! PCIe x1_0 requester Node ID. */
++    AMNI_PCIEX1_0,
++    /*! PCIE x2_0 configurtion requester Node ID. */
++    AMNI_PCIEX2_0_CFG,
++    /*! PCIe x2_0 requester Node ID. */
++    AMNI_PCIEX2_0,
++    /*! PCIE x2_1 configurtion requester Node ID. */
++    AMNI_PCIEX2_1_CFG,
++    /*! PCIe x2_1 requester Node ID. */
++    AMNI_PCIEX2_1,
++    /*! PCIE x4 configurtion requester Node ID. */
++    AMNI_PCIEX4_0_CFG,
++    /*! PCIe x4 requester Node ID. */
++    AMNI_PCIEX4_0,
++    /*! PCIE x8 configurtion requester Node ID. */
++    AMNI_PCIEX8_0_CFG,
++    /*! PCIe x8 requester Node ID. */
++    AMNI_PCIEX8_0,
++    /*! PMNI Control requester Node ID. */
++    AMNI_PMNI_CTRL_REG_APB,
++    /*! TCU APB requester Node ID. */
++    AMNI_PMNI_TCU_APB,
++    /*! Maximum numbers of requester Node ID. */
++    AMNI_DOMAIN_MAX_ID
++};
++
++#endif /* IO_MACRO_LAYOUT */
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/include/scp_css_mmap.h b/product/neoverse-rd/rdv3/scp_ramfw/include/scp_css_mmap.h
+index 21e27baa2a21..1db37df5a451 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/include/scp_css_mmap.h
++++ b/product/neoverse-rd/rdv3/scp_ramfw/include/scp_css_mmap.h
+@@ -48,7 +48,10 @@
+ 
+ /*
+  * Offsets within SCP's Address Translation Window0
+- *          __________________________  0x78600000
++ *          __________________________  0x79600000
++ *         |                          |
++ *         |     IO Block NCI (16M)   |
++ *         |__________________________| 0x78600000
+  *         |                          |
+  *         |     ATU MMIO (1M)        |
+  *         |__________________________| 0x78500000
+@@ -70,6 +73,7 @@
+ #define SCP_ATW0_AP_PERIPHERAL_SRAM_SIZE      (128 * FWK_MIB)
+ #define SCP_ATW0_AP_PERIPHERAL_GPC_SMMU_SIZE  (1 * FWK_MIB)
+ #define SCP_ATW0_ATU_MMIO_SIZE                (1 * FWK_MIB)
++#define SCP_ATW0_AP_IO_BLOCK_NCI_SIZE         (16 * FWK_MIB)
+ 
+ #define SCP_ATW0_LCP_AND_CLUSTER_UTILITY_BASE \
+     SCP_ADDRESS_TRANSLATION_WINDOW0_BASE
+@@ -83,6 +87,9 @@
+      SCP_ATW0_AP_PERIPHERAL_GPC_SMMU_SIZE)
+ #define SCP_ATW0_ATU_MMIO_BASE \
+     (SCP_ATW0_SHARED_SRAM_RSM_BASE + RSM_SHARED_SRAM_SIZE)
++#define SCP_ATW0_AP_IO_BLOCK_NCI_BASE \
++    SCP_ATW0_ATU_MMIO_BASE + \
++        SCP_ATW0_ATU_MMIO_SIZE
+ 
+ /*
+  * Offsets within SCP's Address Translation Window1
+@@ -173,4 +180,17 @@
+ /* CMN config space is mapped in the SCP address translation window 1 */
+ #define SCP_CMN_BASE SCP_ATW1_CMN_BASE
+ 
++/* Base address of the IO block register bank. */
++#define SCP_IO_BLOCK_BASE (0x280000000UL)
++/* Base address of the NCI in the IO block. */
++#define SCP_IO_BLOCK_NCI_GVP_BASE (SCP_IO_BLOCK_BASE + 0x4000000UL)
++/* Size of the register bank of IO block. */
++#define SCP_IO_BLOCK_REGISTER_SIZE (0x8000000UL)
++/* Base address of th Control register set. */
++#define SCP_IO_BLOCK_CONTROL_REG (SCP_IO_BLOCK_BASE + 0x5B00000)
++
++#define SYSTEM_SID_BASE UINT32_C(0x2A4A0000)
++#define SID_SYS_NODE_NUMBER_MASK UINT32_C(0xFF)
++#define CHIP_ADDRESS_SPACE (64ULL * FWK_GIB)
++
+ #endif /* SCP_CSS_MMAP_H */
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/include/scp_fw_mmap.h b/product/neoverse-rd/rdv3/scp_ramfw/include/scp_fw_mmap.h
+index c3493909f44f..ccf5cb9437ae 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/include/scp_fw_mmap.h
++++ b/product/neoverse-rd/rdv3/scp_ramfw/include/scp_fw_mmap.h
+@@ -17,6 +17,7 @@
+ 
+ #include <fwk_macros.h>
+ 
++#include <inttypes.h>
+ #include <stdint.h>
+ 
+ /*
+@@ -77,4 +78,27 @@
+ #define SCP_RSE_SCMI_MSG_PAYLOAD_BASE \
+     (SCP_SHARED_SRAM_RSM_BASE + SCP_RSE_SCMI_MSG_PAYLOAD_OFFSET)
+ 
++struct system_sid_reg {
++            uint8_t   RESERVED0[0x40 - 0];
++    FWK_R   uint32_t  SYSTEM_ID;
++            uint8_t   RESERVED1[0x50 - 0x44];
++    FWK_R   uint32_t  SOC_ID;
++            uint8_t   RESERVED2[0x60 - 0x54];
++    FWK_R   uint32_t  NODE_ID;
++            uint8_t   RESERVED3[0x70 - 0x64];
++    FWK_R   uint32_t  SYSTEM_CFG;
++            uint8_t   RESERVED4[0xFD0 - 0x74];
++};
++
++static inline uint8_t platform_get_chip_id(void)
++{
++    struct system_sid_reg *sid_reg = (struct system_sid_reg *)(SYSTEM_SID_BASE);
++    return (sid_reg->NODE_ID & SID_SYS_NODE_NUMBER_MASK);
++}
++
++static inline uint64_t platform_get_chip_offset()
++{
++    return platform_get_chip_id() * CHIP_ADDRESS_SPACE;
++}
++
+ #endif /* SCP_FW_MMAP_H */

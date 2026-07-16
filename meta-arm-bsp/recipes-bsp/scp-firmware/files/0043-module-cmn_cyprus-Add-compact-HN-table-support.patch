@@ -1,0 +1,333 @@
+From 0c0c6aae3d93a9cd70092ea55bae0ff7e701d3b4 Mon Sep 17 00:00:00 2001
+From: Tintu Thomas <tintu.thomas@arm.com>
+Date: Wed, 20 Nov 2024 17:41:29 +0000
+Subject: [PATCH] module/cmn_cyprus: Add compact HN table support
+
+Compact HN table is a feature to reduce the usage of target ID table
+registers. When enabled, the driver doesn't need to program target HN-S IDs
+for remote hashed regions. Apart from that, there are a set of new registers
+specifically added to control the region configuration with compact HN table.
+
+This change checks whether Compact HN table is enabled in the mesh and
+if enabled the driver skips programming target IDs for remote regions.
+Also, add compact CPAG controls and compact hash controls for per chip NUMA
+config as follows. For per chip NUMA, CPAG hash bits are programmed with
+hardcoded zeros to always point to the first element(CPAG0) in the CPAG table.
+HN-S hash bits are all in passthrough mode. Finally, program the CPAG ID and
+enable CPA for CPAG0.
+
+Signed-off-by: Tintu Thomas <tintu.thomas@arm.com>
+Change-Id: I74230f316044e4922aea732f34da37d136c6d3d2
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../include/internal/cmn_cyprus_ctx.h         |  3 ++
+ .../include/internal/cmn_cyprus_hns_reg.h     | 15 ++++++++++
+ .../include/internal/cmn_cyprus_reg.h         | 21 +++++++++++++
+ .../include/internal/cmn_cyprus_rnsam_reg.h   | 18 +++++++++++
+ .../src/cmn_cyprus_discovery_setup.c          | 13 ++++++++
+ module/cmn_cyprus/src/cmn_cyprus_hns_reg.c    | 30 +++++++++++++++++++
+ .../cmn_cyprus/src/cmn_cyprus_lcnsam_setup.c  |  6 ++++
+ module/cmn_cyprus/src/cmn_cyprus_rnsam_reg.c  | 30 +++++++++++++++++++
+ .../cmn_cyprus/src/cmn_cyprus_rnsam_setup.c   | 20 +++++++++----
+ 9 files changed, 151 insertions(+), 5 deletions(-)
+
+diff --git a/module/cmn_cyprus/include/internal/cmn_cyprus_ctx.h b/module/cmn_cyprus/include/internal/cmn_cyprus_ctx.h
+index 4ccc2f65c856..37200b3db8f9 100644
+--- a/module/cmn_cyprus/include/internal/cmn_cyprus_ctx.h
++++ b/module/cmn_cyprus/include/internal/cmn_cyprus_ctx.h
+@@ -133,6 +133,9 @@ struct cmn_cyprus_ctx {
+     /*! Multichip mode */
+     bool multichip_mode;
+ 
++    /*! Compact HN table enable */
++    bool compact_hn_table_en;
++
+     /*! Chip identifier */
+     uint8_t chip_id;
+ 
+diff --git a/module/cmn_cyprus/include/internal/cmn_cyprus_hns_reg.h b/module/cmn_cyprus/include/internal/cmn_cyprus_hns_reg.h
+index 9340ea2eeb81..f77b1eaf86df 100644
+--- a/module/cmn_cyprus/include/internal/cmn_cyprus_hns_reg.h
++++ b/module/cmn_cyprus/include/internal/cmn_cyprus_hns_reg.h
+@@ -484,6 +484,21 @@ void hns_set_lcn_htg_sec_region_valid(
+     struct cmn_cyprus_hns_reg *hns,
+     uint8_t region_idx);
+ 
++/*
++ * Configure compact HN table for the remote hashed region.
++ *
++ * \param hns Pointer to the HN-S node.
++ *      \pre The HN-S node pointer must be valid.
++ * \param region_idx HTG region index.
++ * \param cpag_id CPA group ID.
++ *
++ * \retval ::FWK_SUCCESS Operation succeeded.
++ */
++int hns_configure_lcn_hash_region_compact_hn_table(
++    struct cmn_cyprus_hns_reg *hns,
++    uint8_t region_idx,
++    uint8_t cpag_id);
++
+ /*
+  * Setup the LCN SAM programming context.
+  *
+diff --git a/module/cmn_cyprus/include/internal/cmn_cyprus_reg.h b/module/cmn_cyprus/include/internal/cmn_cyprus_reg.h
+index 1bff729d6da7..3d0dec15a83f 100644
+--- a/module/cmn_cyprus/include/internal/cmn_cyprus_reg.h
++++ b/module/cmn_cyprus/include/internal/cmn_cyprus_reg.h
+@@ -27,6 +27,8 @@ struct cmn_cyprus_cfgm_reg {
+     FWK_R   uint64_t  CHILD_INFO;
+             uint8_t   RESERVED1[0x100 - 0x88];
+     FWK_R   uint64_t  CHILD_POINTER[256];
++    FWK_R   uint64_t  INFO_GLOBAL;
++    FWK_R   uint64_t  INFO_GLOBAL_1;
+ };
+ 
+ /*!
+@@ -96,6 +98,9 @@ struct cmn_cyprus_hns_reg {
+     FWK_RW  uint64_t  LCN_HASHED_TARGET_GRP_HNF_CPA_EN_REG[2];
+             uint8_t   RESERVED10[0x7580 - 0x7570];
+     FWK_RW  uint64_t  LCN_HASHED_TARGET_GRP_CPAG_PERHNF_REG[16];
++            uint8_t   RESERVED11[0x7700 - 0x7600];
++    FWK_RW  uint64_t  LCN_HASHED_TARGET_GRP_COMPACT_CPAG_CTRL[32];
++    FWK_RW  uint64_t  LCN_HASHED_TARGET_GRP_COMPACT_HASH_CTRL[32];
+ };
+ 
+ /* Non-hashed memory region register count in first group */
+@@ -134,7 +139,20 @@ struct cmn_cyprus_hns_reg {
+ #define RNSAM_HTG_CAL_MODE_REG_GRP1_COUNT 4
+ /* Hashed memory region CAL mode register count in second group */
+ #define RNSAM_HTG_CAL_MODE_REG_GRP2_COUNT 4
++/* HTG compact CPAG control reg count */
++#define RNSAM_HTG_COMPACT_CPAG_CTRL_COUNT 32
++/* HTG compact hash control reg count */
++#define RNSAM_HTG_COMPACT_HASH_CTRL_COUNT 32
+ 
++/* Compact HN Table bit positions and values */
++#define COMPACT_CPAG_CTRL_CPA_EN_POS       0
++#define COMPACT_CPAG_CTRL_CPAG_ID_POS      1
++#define COMPACT_CPAG_CTRL_CPAG_LINKEND_POS 2
++#define COMPACT_HASH_CTRL_CPAG_INDEX0_POS  46
++#define COMPACT_HASH_CTRL_CPAG_INDEX1_POS  50
++#define COMPACT_HASH_CTRL_CPAG_INDEX2_POS  54
++#define COMPACT_CPAG_CTRL_CPAG_EN          1
++#define COMPACT_HASH_CTRL_HARDCODE_0       7
+ 
+ /*!
+  * Request Node System Address Map (RNSAM) registers.
+@@ -195,6 +213,9 @@ struct cmn_cyprus_rnsam_reg {
+     FWK_RW  uint64_t  HASHED_TARGET_GRP_CAL_MODE[RNSAM_HTG_CAL_MODE_REG_GRP2_COUNT];
+     FWK_RW  uint64_t
+         HASHED_TARGET_GRP_HNF_LCN_BOUND_CFG_REG[RNSAM_SCG_LCN_BOUND_REG_COUNT];
++            uint8_t   RESERVED18[0x3A00 - 0x37E0];
++    FWK_RW  uint64_t  HASHED_TARGET_GRP_COMPACT_CPAG_CTRL[RNSAM_HTG_COMPACT_CPAG_CTRL_COUNT];
++    FWK_RW  uint64_t  HASHED_TARGET_GRP_COMPACT_HASH_CTRL[RNSAM_HTG_COMPACT_HASH_CTRL_COUNT];
+ };
+ 
+ /*
+diff --git a/module/cmn_cyprus/include/internal/cmn_cyprus_rnsam_reg.h b/module/cmn_cyprus/include/internal/cmn_cyprus_rnsam_reg.h
+index 08fc987d7e30..3c85f60d634d 100644
+--- a/module/cmn_cyprus/include/internal/cmn_cyprus_rnsam_reg.h
++++ b/module/cmn_cyprus/include/internal/cmn_cyprus_rnsam_reg.h
+@@ -437,6 +437,24 @@ int rnsam_configure_hash_region_cpag_id(
+     uint8_t region_idx,
+     uint8_t cpag_id);
+ 
++/*
++ * Configure Compact HN table for the given hashed region.
++ *
++ * \param rnsam Pointer to the RNSAM node.
++ *      \pre The RNSAM node pointer must be valid.
++ * \param region_idx Hashed region index.
++ *      \pre Hashed region index must be valid.
++ * \param cpag_id CPA group ID.
++ *
++ * \retval ::FWK_SUCCESS The operation succeeded.
++ * \return One of the standard error codes for implementation-defined
++ *      errors.
++ */
++int rnsam_configure_hash_region_compact_hn_table(
++    struct cmn_cyprus_rnsam_reg *rnsam,
++    uint8_t region_idx,
++    uint8_t cpag_id);
++
+ /*
+  * Set the target HN-S nodes in the given hashed region as LCN bound.
+  *
+diff --git a/module/cmn_cyprus/src/cmn_cyprus_discovery_setup.c b/module/cmn_cyprus/src/cmn_cyprus_discovery_setup.c
+index f51ed2192565..448be84a50a5 100644
+--- a/module/cmn_cyprus/src/cmn_cyprus_discovery_setup.c
++++ b/module/cmn_cyprus/src/cmn_cyprus_discovery_setup.c
+@@ -51,6 +51,9 @@
+ /* Child Info */
+ #define CHILD_INFO_COUNT UINT64_C(0x000000000000FFFF)
+ 
++/* Compact HN table enable */
++#define COMPACT_HN_TABLES_EN UINT64_C(1 << 23)
++
+ /* For MXP with 3 or 4 ports */
+ #define MULTI_PORTS_NODE_ID_PORT_POS  1
+ #define MULTI_PORTS_NODE_ID_PORT_MASK (0x3)
+@@ -209,6 +212,12 @@ unsigned int cmn_cyprus_get_child_count(FWK_R uint64_t child_info)
+     return (child_info & CHILD_INFO_COUNT);
+ }
+ 
++/* Check if compact HN table is enabled */
++static inline bool is_compact_hn_table_en(FWK_R uint64_t info_global_1)
++{
++    return (info_global_1 & COMPACT_HN_TABLES_EN);
++}
++
+ /* Get port number to which the given node is connected */
+ static uint8_t get_port_number(unsigned int node_id, unsigned int mxp_port_cnt)
+ {
+@@ -592,6 +601,10 @@ static int discover_mesh_topology(void)
+     FWK_LOG_DEBUG(
+         MOD_NAME "Rootnode Base address: %p", (void *)shared_ctx->cfgm);
+ 
++    /* Get compact HN table enable value */
++    shared_ctx->compact_hn_table_en =
++        is_compact_hn_table_en(shared_ctx->cfgm->INFO_GLOBAL_1);
++
+     /* Get number of cross points in the mesh */
+     mxp_count = cmn_cyprus_get_child_count(shared_ctx->cfgm->CHILD_INFO);
+ 
+diff --git a/module/cmn_cyprus/src/cmn_cyprus_hns_reg.c b/module/cmn_cyprus/src/cmn_cyprus_hns_reg.c
+index 5e38e7a7374e..a2843447df1d 100644
+--- a/module/cmn_cyprus/src/cmn_cyprus_hns_reg.c
++++ b/module/cmn_cyprus/src/cmn_cyprus_hns_reg.c
+@@ -656,6 +656,36 @@ int setup_hns_ctx(struct cmn_cyprus_hns_reg *hns)
+     return FWK_SUCCESS;
+ }
+ 
++int hns_configure_lcn_hash_region_compact_hn_table(
++    struct cmn_cyprus_hns_reg *hns,
++    uint8_t region_idx,
++    uint8_t cpag_id)
++{
++    /* Below programming is based on an assumption that only per-chip NUMA
++     * configurations are supported. In such cases, every hashed region is
++     * dedicated to a single chip and it only requires a single CPAG(CPAG0) to
++     * access that region. Enable cpa and configure cpag ID. CPAG Linkend
++     * usually remains 0. So, no programming required */
++    hns->LCN_HASHED_TARGET_GRP_COMPACT_CPAG_CTRL[region_idx] =
++        (COMPACT_CPAG_CTRL_CPAG_EN << COMPACT_CPAG_CTRL_CPA_EN_POS |
++         cpag_id << COMPACT_CPAG_CTRL_CPAG_ID_POS);
++
++    /* For per-chip NUMA config, there will be only one CPAG per HTG. Hence it
++     * doesn't need any hash bits to get CPAG information. Instead, always point
++     * to the first and only element of CPAG table(CPAG0). In other words,
++     * hardcode all cpag hash indices to 0.
++     * Also, for per-chip NUMA config, base index is 0 */
++    hns->LCN_HASHED_TARGET_GRP_COMPACT_HASH_CTRL[region_idx] =
++        ((uint64_t)COMPACT_HASH_CTRL_HARDCODE_0
++             << COMPACT_HASH_CTRL_CPAG_INDEX0_POS |
++         (uint64_t)COMPACT_HASH_CTRL_HARDCODE_0
++             << COMPACT_HASH_CTRL_CPAG_INDEX1_POS |
++         (uint64_t)COMPACT_HASH_CTRL_HARDCODE_0
++             << COMPACT_HASH_CTRL_CPAG_INDEX2_POS);
++
++    return FWK_SUCCESS;
++}
++
+ /*
+  * Helper function to check if the given HN-S node pointer points to an isolated
+  * HN-S node. Isolated HN-S nodes are skipped during the CMN Discovery and hence
+diff --git a/module/cmn_cyprus/src/cmn_cyprus_lcnsam_setup.c b/module/cmn_cyprus/src/cmn_cyprus_lcnsam_setup.c
+index 9c9be79f6cce..58de5f4ab828 100644
+--- a/module/cmn_cyprus/src/cmn_cyprus_lcnsam_setup.c
++++ b/module/cmn_cyprus/src/cmn_cyprus_lcnsam_setup.c
+@@ -99,6 +99,12 @@ static int program_lcn_htg_region(
+         if (region_mmap->sec_region_size != 0) {
+             hns_set_lcn_htg_sec_region_valid(hns, region_idx);
+         }
++
++        /* Set compact HN table configuration if required */
++        if (shared_ctx->compact_hn_table_en == true) {
++            hns_configure_lcn_hash_region_compact_hn_table(
++                hns, region_idx, cpag_id);
++        }
+     }
+ 
+     return FWK_SUCCESS;
+diff --git a/module/cmn_cyprus/src/cmn_cyprus_rnsam_reg.c b/module/cmn_cyprus/src/cmn_cyprus_rnsam_reg.c
+index 0953ef879270..ebc84d54b2f9 100644
+--- a/module/cmn_cyprus/src/cmn_cyprus_rnsam_reg.c
++++ b/module/cmn_cyprus/src/cmn_cyprus_rnsam_reg.c
+@@ -1084,6 +1084,36 @@ int rnsam_configure_hash_region_cpag_id(
+     return FWK_SUCCESS;
+ }
+ 
++int rnsam_configure_hash_region_compact_hn_table(
++    struct cmn_cyprus_rnsam_reg *rnsam,
++    uint8_t region_idx,
++    uint8_t cpag_id)
++{
++    /* Below programming is based on an assumption that only per-chip NUMA
++     * configurations are supported. In such cases, every hashed region is
++     * dedicated to a single chip and it only requires a single CPAG(CPAG0) to
++     * access that region. Enable cpa and configure cpag ID. CPAG Linkend
++     * usually remains 0. So, no programming required */
++    rnsam->HASHED_TARGET_GRP_COMPACT_CPAG_CTRL[region_idx] =
++        (COMPACT_CPAG_CTRL_CPAG_EN << COMPACT_CPAG_CTRL_CPA_EN_POS |
++         cpag_id << COMPACT_CPAG_CTRL_CPAG_ID_POS);
++
++    /* For per-chip NUMA config, there will be only one CPAG per HTG. Hence it
++     * doesn't need any hash bits to get CPAG information. Instead, always point
++     * to the first and only element of CPAG table(CPAG0). In other words,
++     * hardcode all cpag hash indices to 0.
++     * Also, for per-chip NUMA config, base index is 0 */
++    rnsam->HASHED_TARGET_GRP_COMPACT_HASH_CTRL[region_idx] =
++        ((uint64_t)COMPACT_HASH_CTRL_HARDCODE_0
++             << COMPACT_HASH_CTRL_CPAG_INDEX0_POS |
++         (uint64_t)COMPACT_HASH_CTRL_HARDCODE_0
++             << COMPACT_HASH_CTRL_CPAG_INDEX1_POS |
++         (uint64_t)COMPACT_HASH_CTRL_HARDCODE_0
++             << COMPACT_HASH_CTRL_CPAG_INDEX2_POS);
++
++    return FWK_SUCCESS;
++}
++
+ /*
+  * Mark the HN-S nodes in the given hashed region as LCN bound. This configures
+  * the cache lines routed to the HN-S nodes as LCN bound.
+diff --git a/module/cmn_cyprus/src/cmn_cyprus_rnsam_setup.c b/module/cmn_cyprus/src/cmn_cyprus_rnsam_setup.c
+index cd340d2bd646..3baf5569fd46 100644
+--- a/module/cmn_cyprus/src/cmn_cyprus_rnsam_setup.c
++++ b/module/cmn_cyprus/src/cmn_cyprus_rnsam_setup.c
+@@ -341,11 +341,15 @@ static int program_scg_region(
+         rnsam_set_htg_target_hn_count(rnsam, scg_idx, hns_count_in_scg);
+     }
+ 
+-    /* Set the target Home Nodes for the SCG */
+-    status = configure_scg_target_nodes(scg_region, scg_idx);
+-    if (status != FWK_SUCCESS) {
+-        FWK_LOG_ERR(MOD_NAME "Error! Failed to configure SCG target HNs");
+-        return status;
++    /* Always set the target Home Nodes for the local SCG and
++     * set for remote HTGs only if compact HN table is disabled */
++    if (shared_ctx->compact_hn_table_en != true ||
++        scg_region->type == MOD_CMN_CYPRUS_MEM_REGION_TYPE_SYSCACHE) {
++        status = configure_scg_target_nodes(scg_region, scg_idx);
++        if (status != FWK_SUCCESS) {
++            FWK_LOG_ERR(MOD_NAME "Error! Failed to configure SCG target HNs");
++            return status;
++        }
+     }
+ 
+     return FWK_SUCCESS;
+@@ -682,6 +686,12 @@ static int configure_remote_hash_region_cpa(
+         }
+     }
+ 
++    /* Configure compact HN table for the remote hashed region, if required */
++    if (shared_ctx->compact_hn_table_en == true) {
++        status = rnsam_configure_hash_region_compact_hn_table(
++            rnsam, region_idx, cpag_id);
++    }
++
+     return status;
+ }
+ 

@@ -1,0 +1,121 @@
+From e6bb687ab1b893b08d51a540864f72375b889f4e Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Tue, 5 Dec 2023 16:44:59 +0000
+Subject: [PATCH] neoverse-rd/pcie_setup: add additional params in config data
+
+Add parameters requied to by UEFI to build ACPI tables.
+interrupt id: Each rootport has unique interrupt Id this is needed for
+              IORT table generation.
+rootport id: This is needed to correctly generated ITS and SMMU nodes
+             and link them.
+translation id: This is needed by UEFI to generate address of IO blocks
+                in the remote chips.
+smmu_base: Needed to create the IORT table for each IO Block.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: I7456ff70733f39d00e826ed44892bcc5b86ef589
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../module/pcie_setup/include/mod_pcie_setup.h   |  9 +++++++++
+ .../module/pcie_setup/src/mod_pcie_setup.c       | 16 +++++++++++++++-
+ 2 files changed, 24 insertions(+), 1 deletion(-)
+
+diff --git a/product/neoverse-rd/module/pcie_setup/include/mod_pcie_setup.h b/product/neoverse-rd/module/pcie_setup/include/mod_pcie_setup.h
+index 3f5eec17a8dc..0616fd2d1bb6 100644
+--- a/product/neoverse-rd/module/pcie_setup/include/mod_pcie_setup.h
++++ b/product/neoverse-rd/module/pcie_setup/include/mod_pcie_setup.h
+@@ -37,12 +37,17 @@ struct mod_pcie_setup_mmap {
+     struct mod_pcie_setup_carveout mmiol;
+     struct mod_pcie_setup_carveout mmioh;
+     struct mod_pcie_setup_carveout bus;
++    uint64_t interrupt_id;
+ };
+ 
+ /*!
+  * \brief Placeholder to put ECAM, MMIOL, MMIOH and Bus number info for each RP.
+  */
+ struct mod_pcie_setup_block_mmap {
++    uint64_t id;
++    uint64_t segment;
++    uint64_t translation;
++    uint64_t smmu_base;
+     uint64_t ep_count;
+     struct mod_pcie_setup_mmap ep[];
+ };
+@@ -88,6 +93,8 @@ struct mod_pcie_setup_config {
+     uint8_t block_id;
+     /*! Identifier of the SDS structure to place PCIE mmap info. */
+     uint32_t sds_struct_id;
++    /*! SMMU base address for the block. */
++    uint64_t smmu_base;
+     /*! End point config for RPs */
+     struct mod_pcie_setup_ep_config *ep_config;
+ };
+@@ -135,6 +142,8 @@ struct mod_pcie_setup_resource_info {
+     struct mod_pcie_setup_platform_notification plat_notification;
+     /*! Structure ID for PCIe configuration info in SDS table. */
+     uint32_t sds_struct_id;
++    /*! List of the interrupt IDs for the end points. */
++    uint64_t *ep_interrupt_ids;
+ };
+ 
+ /*!
+diff --git a/product/neoverse-rd/module/pcie_setup/src/mod_pcie_setup.c b/product/neoverse-rd/module/pcie_setup/src/mod_pcie_setup.c
+index e9cfae148c60..fbc9c7023974 100644
+--- a/product/neoverse-rd/module/pcie_setup/src/mod_pcie_setup.c
++++ b/product/neoverse-rd/module/pcie_setup/src/mod_pcie_setup.c
+@@ -299,6 +299,7 @@ static int discover_and_configure_pcie_device(
+     struct mod_pcie_setup_resource_info *res_info;
+     struct pcie_discovery_rw_api pcie_rw_api;
+     struct pcie_mmap_size mmap_size = { 0 };
++    uint64_t ecam_adjusted_address;
+     uint8_t region;
+     int status;
+ 
+@@ -322,9 +323,14 @@ static int discover_and_configure_pcie_device(
+     pcie_rw_api.read32 = remapper_rw_api->read32;
+     pcie_rw_api.write32 = remapper_rw_api->write32;
+ 
++    ecam_adjusted_address = res_info->mmap.ecam.start;
++
++    if (res_info->mmap.ecam.start < res_info->translation) {
++        ecam_adjusted_address += res_info->translation;
++    }
+     pcie_discovery_api = pcie_setup_context.pcie_discovery_api;
+     pcie_discovery_api->calculate_resource(
+-        res_info->mmap.ecam.start + res_info->translation,
++        ecam_adjusted_address,
+         &mmap_size,
+         res_info->mmap.bus.start,
+         &pcie_rw_api);
+@@ -425,6 +431,10 @@ static int configure_pcie_endpoint(
+             ecam_size += ep_mmap->ecam.size;
+             mmiol_size += ep_mmap->mmiol.size;
+             mmioh_size += ep_mmap->mmioh.size;
++            ep_mmap->interrupt_id = res_info->ep_interrupt_ids[index];
++            block_mmap->segment = pcie_setup_context.system_info->chip_id;
++            block_mmap->translation = res_info->translation;
++            block_mmap->smmu_base = config->smmu_base;
+         }
+     }
+ 
+@@ -465,6 +475,7 @@ static int configure_pcie_ecam_mmio_space(
+     unsigned int element)
+ {
+     struct mod_pcie_setup_block_mmap *block_mmap;
++    unsigned int chip_id;
+     int status = FWK_SUCCESS;
+ 
+     FWK_LOG_INFO(MOD_NAME "Configuring PCIe: %d", element);
+@@ -472,6 +483,9 @@ static int configure_pcie_ecam_mmio_space(
+     if (block_mmap == NULL) {
+         return FWK_E_NOMEM;
+     }
++    chip_id = pcie_setup_context.system_info->chip_id;
++    block_mmap->id =
++        config->block_id + (chip_id * pcie_setup_context.block_count);
+     status = configure_pcie_endpoint(config, block_mmap);
+     fwk_mm_free(block_mmap);
+ 

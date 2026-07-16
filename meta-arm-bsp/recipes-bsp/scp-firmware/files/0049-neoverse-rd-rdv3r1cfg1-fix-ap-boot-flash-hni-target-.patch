@@ -1,0 +1,32 @@
+From d30ba4310ab72446b9cbd9a18a20e3bf8c452af6 Mon Sep 17 00:00:00 2001
+From: Lokesh B V <Lokesh.BV@Arm.com>
+Date: Tue, 24 Dec 2024 15:52:46 +0530
+Subject: [PATCH] neoverse-rd/rdv3r1cfg1: fix ap boot flash hni target node id
+
+The AP Boot Flash should be targeted to HNI0, but it is currently
+targeted to HND.
+
+Updated target Node Id for Boot Flash region as HNI0.
+
+Signed-off-by: Lokesh B V <Lokesh.BV@Arm.com>
+Change-Id: I1966910e1bb5af8977879a9c4b797f3907db27a0
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ product/neoverse-rd/rdv3r1/scp_ramfw/config_cmn_cyprus.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/product/neoverse-rd/rdv3r1/scp_ramfw/config_cmn_cyprus.c b/product/neoverse-rd/rdv3r1/scp_ramfw/config_cmn_cyprus.c
+index 6144ac0fa042..d308376c2fd4 100644
+--- a/product/neoverse-rd/rdv3r1/scp_ramfw/config_cmn_cyprus.c
++++ b/product/neoverse-rd/rdv3r1/scp_ramfw/config_cmn_cyprus.c
+@@ -225,7 +225,7 @@ static const struct mod_cmn_cyprus_mem_region_map mmap[] = {
+         .size = UINT64_C(128) * FWK_MIB,
+         .type = MOD_CMN_CYPRUS_MEM_REGION_TYPE_IO,
+ #if (PLATFORM_VARIANT == RD_V3_R1_CFG1)
+-        .node_id = NODE_ID_HND,
++        .node_id = NODE_ID_HNI0,
+ #else
+         .node_id = NODE_ID_HNT1,
+ #endif

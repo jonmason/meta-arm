@@ -1,0 +1,193 @@
+From 44b091075b5b4784bcc765a04646d932ed81b2c8 Mon Sep 17 00:00:00 2001
+From: Glen Yeldho <glen.yeldho@arm.com>
+Date: Thu, 11 Jan 2024 13:31:42 +0530
+Subject: [PATCH] neoverse-rd/rev3 : static atu-mapping for scp-einj-util
+
+Adds necessary  mappings for scp-einj-utils and fixes PAS
+attribute for dynamic atu mapping for secure shared sram.
+
+Change-Id: I062b4c6b57235546a46f19741c9d49266432ca96
+Signed-off-by: Glen Yeldho <glen.yeldho@arm.com>
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../scp_einj_util/include/common_einj.h       |  2 --
+ .../scp_einj_util/include/component_einj.h    | 30 ++--------------
+ .../scp_einj_util/include/mod_scp_einj_util.h |  2 +-
+ .../neoverse-rd/rdv3/scp_ramfw/config_atu.c   | 36 +++++++++++++++++++
+ .../rdv3/scp_ramfw/include/scp_css_mmap.h     | 18 ++++++++++
+ 5 files changed, 58 insertions(+), 30 deletions(-)
+
+diff --git a/product/neoverse-rd/rdv3/module/scp_einj_util/include/common_einj.h b/product/neoverse-rd/rdv3/module/scp_einj_util/include/common_einj.h
+index 94ca48684f83..7bf2cb3b3bcd 100644
+--- a/product/neoverse-rd/rdv3/module/scp_einj_util/include/common_einj.h
++++ b/product/neoverse-rd/rdv3/module/scp_einj_util/include/common_einj.h
+@@ -59,8 +59,6 @@ enum ATU_MANAGER_ACTION {
+ enum SCP_SHARED_SRAM_LIST {
+     SCP_SHARED_ROOT,
+     SCP_SHARED_SECURE,
+-    SCP_SHARED_NON_SECURE,
+-    SCP_SHARED_REALM,
+     SCP_SHARED_SRAM_COUNT,
+ };
+ 
+diff --git a/product/neoverse-rd/rdv3/module/scp_einj_util/include/component_einj.h b/product/neoverse-rd/rdv3/module/scp_einj_util/include/component_einj.h
+index 66a52408e904..ec6de9908305 100644
+--- a/product/neoverse-rd/rdv3/module/scp_einj_util/include/component_einj.h
++++ b/product/neoverse-rd/rdv3/module/scp_einj_util/include/component_einj.h
+@@ -16,7 +16,7 @@
+ /* SCP-Shared SRAM */
+ struct einj_memory scp_shared_einj_config[] = {
+ 	[SCP_SHARED_ROOT] = {
+-	 .pas_attribute = ATU_ENCODE_ATTRIBUTES_SECURE_PAS,
++	 .pas_attribute = ATU_ENCODE_ATTRIBUTES_ROOT_PAS,
+ 	 .remote_addr = true,
+ 	 .region_size = (64 * FWK_KIB),
+          .phy_addr = (0x2A510000),
+@@ -27,18 +27,6 @@ struct einj_memory scp_shared_einj_config[] = {
+ 	 .region_size = (64 * FWK_KIB),
+          .phy_addr = (0x2A4F0000),
+         },
+-	[SCP_SHARED_NON_SECURE] = {
+-	 .pas_attribute = ATU_ENCODE_ATTRIBUTES_SECURE_PAS,
+-	 .remote_addr = true,
+-	 .region_size = (64 * FWK_KIB),
+-         .phy_addr = (0x2A500000),
+-        },
+-	[SCP_SHARED_REALM] = {
+-	 .pas_attribute = ATU_ENCODE_ATTRIBUTES_SECURE_PAS,
+-	 .remote_addr = true,
+-	 .region_size = (64 * FWK_KIB),
+-         .phy_addr = (0x2A520000),
+-	},
+ 
+ };
+ 
+@@ -53,20 +41,8 @@ struct einj_memory scp_shared_einj_mem[] = {
+ 	 .pas_attribute = ATU_ENCODE_ATTRIBUTES_SECURE_PAS,
+ 	 .remote_addr = false,
+ 	 .region_size = (1 * FWK_KIB),
+-         .phy_addr = (0x70100000),
++         .phy_addr = (0x80400000),
+         },
+-	[SCP_SHARED_NON_SECURE] = {
+-	 .pas_attribute = ATU_ENCODE_ATTRIBUTES_NON_SECURE_PAS,
+-	 .remote_addr = false,
+-	 .region_size = (1 * FWK_KIB),
+-         .phy_addr = (0x70200000),
+-        },
+-	[SCP_SHARED_REALM] = {
+-	 .pas_attribute = ATU_ENCODE_ATTRIBUTES_REALM_PAS,
+-	 .remote_addr = false,
+-	 .region_size = (1 * FWK_KIB),
+-         .phy_addr = (0x70300000),
+-	},
+ };
+ 
+ /* CPU */
+@@ -141,7 +117,7 @@ struct einj_memory scp_rsm_einj_mem[] = {
+          .pas_attribute = ATU_ENCODE_ATTRIBUTES_NON_SECURE_PAS,
+          .remote_addr = false,
+          .region_size = (1 * FWK_KIB),
+-         .phy_addr = (0x78200000),
++         .phy_addr = (0x80700000),
+         },
+ };
+ 
+diff --git a/product/neoverse-rd/rdv3/module/scp_einj_util/include/mod_scp_einj_util.h b/product/neoverse-rd/rdv3/module/scp_einj_util/include/mod_scp_einj_util.h
+index a8c3ba19d5f2..6aac970a6133 100644
+--- a/product/neoverse-rd/rdv3/module/scp_einj_util/include/mod_scp_einj_util.h
++++ b/product/neoverse-rd/rdv3/module/scp_einj_util/include/mod_scp_einj_util.h
+@@ -26,7 +26,7 @@ const char einj_help[] =
+     "Usage: einj-util -comp <n> -subcomp <n> -type <n>\n"
+     "-comp: sram (0), tcm (1), cpu (2), rsm (3)\n"
+     "-subcomp:\n"
+-    "	sram: root (0), secure (1), non-secure (2), realm (3)\n"
++    "	sram: root (0), secure (1)\n"
+     "	tcm: itcm (0), dtcm (1)\n"
+     "	cpu: always 0 for now\n"
+     "	rsm: secure (0), non-secure (1)\n"
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/config_atu.c b/product/neoverse-rd/rdv3/scp_ramfw/config_atu.c
+index 00cfd45b969d..032ee1ac24fd 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/config_atu.c
++++ b/product/neoverse-rd/rdv3/scp_ramfw/config_atu.c
+@@ -39,6 +39,14 @@ enum atu_regions_idx {
+     ATU_REGION_IDX_GPC_SMMU,
+     /* ATU region to RSM SRAM region */
+     ATU_REGION_IDX_RSM_SRAM,
++    /* ATU region for Secure world shared SRAM */
++    ATU_REGION_IDX_SHARED_SRAM_SECURE,
++    /* ATU region for Non-secure world shared SRAM */
++    ATU_REGION_IDX_SHARED_SRAM_NON_SECURE,
++    /* ATU region for Realm world shared SRAM */
++    ATU_REGION_IDX_SHARED_SRAM_REALM,
++    /* ATU region for Non-secure world RSM SRAM */
++    ATU_REGION_RSM_SCP_NON_SECURE,
+     /* ATU region count */
+     ATU_REGION_IDX_COUNT,
+ };
+@@ -79,6 +87,34 @@ static struct atu_region_map atu_regions[ATU_REGION_IDX_COUNT] = {
+         .region_size = RSM_SHARED_SRAM_SIZE,
+         .attributes = ATU_ENCODE_ATTRIBUTES_SECURE_PAS,
+     },
++    [ATU_REGION_IDX_SHARED_SRAM_SECURE] = {
++	.region_owner_id = FWK_ID_MODULE_INIT(FWK_MODULE_IDX_SCP_PLATFORM),
++	.log_addr_base = SCP_ATW0_SHARED_SRAM_SECURE_BASE,
++	.phy_addr_base = 0x00000000,
++	.region_size = SCP_ATW0_SHARED_SRAM_SECURE_SIZE,
++	.attributes = ATU_ENCODE_ATTRIBUTES_SECURE_PAS,
++    },
++    [ATU_REGION_IDX_SHARED_SRAM_NON_SECURE] = {
++        .region_owner_id = FWK_ID_MODULE_INIT(FWK_MODULE_IDX_SCP_PLATFORM),
++        .log_addr_base = SCP_ATW0_SHARED_SRAM_NON_SECURE_BASE,
++        .phy_addr_base = 0x00000000,
++        .region_size = SCP_ATW0_SHARED_SRAM_NON_SECURE_SIZE,
++        .attributes = ATU_ENCODE_ATTRIBUTES_NON_SECURE_PAS,
++    },
++    [ATU_REGION_IDX_SHARED_SRAM_REALM] = {
++        .region_owner_id = FWK_ID_MODULE_INIT(FWK_MODULE_IDX_SCP_PLATFORM),
++        .log_addr_base = SCP_ATW0_SHARED_SRAM_REALM_BASE,
++        .phy_addr_base = 0x00000000,
++        .region_size = SCP_ATW0_SHARED_SRAM_REALM_SIZE,
++        .attributes = ATU_ENCODE_ATTRIBUTES_REALM_PAS,
++    },
++    [ATU_REGION_RSM_SCP_NON_SECURE] = {
++        .region_owner_id = FWK_ID_MODULE_INIT(FWK_MODULE_IDX_SCP_PLATFORM),
++        .log_addr_base = SCP_ATW0_SHARED_SRAM_RSM_NS_BASE,
++        .phy_addr_base = 0x002F000000,
++        .region_size = SCP_ATW0_SHARED_SRAM_RSM_NS_SIZE,
++        .attributes = ATU_ENCODE_ATTRIBUTES_NON_SECURE_PAS,
++    },
+ };
+ 
+ static const struct fwk_element element_table[MOD_ATU_ELEMENT_COUNT] = {
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/include/scp_css_mmap.h b/product/neoverse-rd/rdv3/scp_ramfw/include/scp_css_mmap.h
+index 69555afaa25a..cdafc67e8329 100644
+--- a/product/neoverse-rd/rdv3/scp_ramfw/include/scp_css_mmap.h
++++ b/product/neoverse-rd/rdv3/scp_ramfw/include/scp_css_mmap.h
+@@ -93,6 +93,24 @@
+     SCP_ATW0_ATU_MMIO_BASE + \
+         SCP_ATW0_ATU_MMIO_SIZE
+ 
++#define SCP_ATW0_SHARED_SRAM_SECURE_BASE 0x80400000
++#define SCP_ATW0_SHARED_SRAM_SECURE_SIZE (1 * FWK_MIB)
++
++#define SCP_ATW0_SHARED_SRAM_NON_SECURE_SIZE (1 * FWK_MIB)
++#define SCP_ATW0_SHARED_SRAM_NON_SECURE_BASE \
++	(SCP_ATW0_SHARED_SRAM_SECURE_BASE + \
++	 SCP_ATW0_SHARED_SRAM_SECURE_SIZE)
++
++#define SCP_ATW0_SHARED_SRAM_REALM_SIZE (1 * FWK_MIB)
++#define SCP_ATW0_SHARED_SRAM_REALM_BASE \
++	(SCP_ATW0_SHARED_SRAM_NON_SECURE_BASE + \
++	 SCP_ATW0_SHARED_SRAM_NON_SECURE_SIZE)
++
++#define SCP_ATW0_SHARED_SRAM_RSM_NS_SIZE (1 * FWK_MIB)
++#define SCP_ATW0_SHARED_SRAM_RSM_NS_BASE \
++	(SCP_ATW0_SHARED_SRAM_REALM_BASE + \
++	 SCP_ATW0_SHARED_SRAM_REALM_SIZE)
++
+ /*
+  * Offsets within SCP's Address Translation Window1
+  *          __________________________  0xE0000000

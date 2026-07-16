@@ -1,0 +1,32 @@
+From e63d71dbf72299c5aff55606b2a7a53a8f1a01dd Mon Sep 17 00:00:00 2001
+From: Joel Goddard <Joel.Goddard@arm.com>
+Date: Thu, 30 May 2024 17:02:42 +0100
+Subject: [PATCH] module/cmn_cyprus: limit rnf count for dual chip systems
+
+limit rnf count to 64 per chip this avoids 128 ldid limit on dual chip systems.
+
+Signed-off-by: Joel Goddard <Joel.Goddard@arm.com>
+Signed-off-by: Lokesh B V <Lokesh.BV@Arm.com>
+Change-Id: I12f6bdf8bfd086892a5656d8b9e2d6662423e6ba
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ module/cmn_cyprus/src/cmn_cyprus_discovery_setup.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/module/cmn_cyprus/src/cmn_cyprus_discovery_setup.c b/module/cmn_cyprus/src/cmn_cyprus_discovery_setup.c
+index 09fede26f94b..f51ed2192565 100644
+--- a/module/cmn_cyprus/src/cmn_cyprus_discovery_setup.c
++++ b/module/cmn_cyprus/src/cmn_cyprus_discovery_setup.c
+@@ -335,6 +335,10 @@ static int discover_node(
+                 FWK_LOG_INFO(MOD_NAME "  RN-F found at P:%d", mxp_port);
+             }
+         }
++        /* Temporary bypass of rnf ldid limit (only 128 ids, so max 64 rnf on 2 chip system) */
++        if (shared_ctx->rnf_count > 64) {
++            shared_ctx->rnf_count = 64;
++        }
+         status = validate_node_count(shared_ctx->rnf_count, MAX_RNF_COUNT);
+         break;
+ 

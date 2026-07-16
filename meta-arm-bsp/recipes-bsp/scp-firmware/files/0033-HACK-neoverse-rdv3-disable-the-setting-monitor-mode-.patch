@@ -1,0 +1,38 @@
+From 24fb489599ac416bf0b2da9d0f8aa8997ea2880e Mon Sep 17 00:00:00 2001
+From: Manoj Kumar Prabakaran <manojkumar.prabakaran@arm.com>
+Date: Thu, 13 Jun 2024 18:00:02 +0530
+Subject: [PATCH] [HACK] neoverse/rdv3: disable the setting monitor mode in
+ smcf
+
+This patch is hack fix to temperorily disable setting the monitor
+mode in smcf client. There is a check in smcf module for MODE_REQ
+and MODE_STAT register values, which is not equaling at the moment.
+SW sets the requested monitor mode MODE_REQ, but the MODE_STAT is
+not in control of SW. Requires investigation on why this check is
+required or can be ignored.
+
+Change-Id: I8a1a8b7943d565f3f73193320f8e9ccbdc6ed10a
+Signed-off-by: Manoj Kumar Prabakaran <manojkumar.prabakaran@arm.com>
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../rdv3/module/smcf_client/src/mod_smcf_client.c            | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/product/neoverse-rd/rdv3/module/smcf_client/src/mod_smcf_client.c b/product/neoverse-rd/rdv3/module/smcf_client/src/mod_smcf_client.c
+index de42ca562660..0330e777c273 100644
+--- a/product/neoverse-rd/rdv3/module/smcf_client/src/mod_smcf_client.c
++++ b/product/neoverse-rd/rdv3/module/smcf_client/src/mod_smcf_client.c
+@@ -241,7 +241,10 @@ static int smcf_client_start(fwk_id_t id)
+             mod_smcf_notification_id_new_data_sample_ready,
+             FWK_ID_ELEMENT(FWK_MODULE_IDX_SMCF, mgi),
+             id);
+-	control_api->config_mode( (FWK_ID_SUB_ELEMENT(FWK_MODULE_IDX_SMCF, mgi, 0)),MODE_CONFIG_VALUE,MODE_REQ_INDEX);
++	/* Disabling the set monitor mode*/
++	/*
++	 * control_api->config_mode( (FWK_ID_SUB_ELEMENT(FWK_MODULE_IDX_SMCF, mgi, 0)),MODE_CONFIG_VALUE,MODE_REQ_INDEX);
++	 */
+     }
+ 
+     return FWK_SUCCESS;

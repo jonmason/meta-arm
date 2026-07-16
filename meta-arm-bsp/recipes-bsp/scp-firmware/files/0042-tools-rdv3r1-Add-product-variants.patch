@@ -1,0 +1,31 @@
+From 89a297981a94a5c1d1e422a34231b0dde804e637 Mon Sep 17 00:00:00 2001
+From: Lokesh B V <Lokesh.BV@Arm.com>
+Date: Wed, 14 Aug 2024 17:39:22 +0530
+Subject: [PATCH] tools: rdv3r1: Add product variants
+
+Signed-off-by: Lokesh B V <Lokesh.BV@Arm.com>
+Change-Id: I83c807b86421d6ad5c8c93c585b0d4dd6c3acdbc
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ tools/config/check_build/default_products_build.yml | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/tools/config/check_build/default_products_build.yml b/tools/config/check_build/default_products_build.yml
+index d9bb8a650209..4ecf70a0daf2 100644
+--- a/tools/config/check_build/default_products_build.yml
++++ b/tools/config/check_build/default_products_build.yml
+@@ -56,6 +56,12 @@
+     - name: 3
+   product_group: neoverse-rd
+ 
++- product: rdv3r1
++  variants:
++    - name: 0
++    - name: 1
++  product_group: neoverse-rd
++
+ - product: sgi575
+   product_group: neoverse-rd
+ 

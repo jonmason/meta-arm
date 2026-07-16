@@ -1,0 +1,119 @@
+From 44e3ef5e0b29dbd10a7adcf048700ac4b739250c Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Mon, 1 Apr 2024 22:17:15 +0100
+Subject: [PATCH] neoverse-rd/pcie_setup: notification for pcie initialisation
+
+PCIe setup module program memory regions in the CMN and IO Block and
+then write the configuration information in the SDS for the next boot
+stage to consume. This means platform module should not ungate CPU
+before the SDS update.
+
+Add support to send a notification for the completion of PCIe
+initialisation.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../pcie_setup/include/mod_pcie_setup.h       | 19 +++++++++++++
+ .../module/pcie_setup/src/mod_pcie_setup.c    | 27 +++++++++++++++++++
+ 2 files changed, 46 insertions(+)
+
+diff --git a/product/neoverse-rd/module/pcie_setup/include/mod_pcie_setup.h b/product/neoverse-rd/module/pcie_setup/include/mod_pcie_setup.h
+index 0616fd2d1bb6..a8111977d1d6 100644
+--- a/product/neoverse-rd/module/pcie_setup/include/mod_pcie_setup.h
++++ b/product/neoverse-rd/module/pcie_setup/include/mod_pcie_setup.h
+@@ -18,6 +18,16 @@
+ #include <stddef.h>
+ #include <stdint.h>
+ 
++/*!
++ * \brief PCIe setup notification indices.
++ */
++enum mod_pcie_setup_notification_idx {
++    /*! PCIe initialisation completed. */
++    MOD_PCIE_SETUP_NOTIFICATION_IDX_INITIALISED,
++    /*! Number of defined notification. */
++    MOD_PCIE_SETUP_NOTIFICATION_IDX_COUNT
++};
++
+ /*!
+  * \brief Defines base address and size of carveout.
+  */
+@@ -159,4 +169,13 @@ struct mod_pcie_setup_module_config {
+     struct mod_pcie_setup_resource_info *resource_info;
+ };
+ 
++/*!
++ * \brief Identifiers for the ::MOD_PCIE_SETUP_NOTIFICATION_IDX_INITIALISED
++ *        notification.
++ */
++static const fwk_id_t mod_pcie_setup_notification_initialised =
++    FWK_ID_NOTIFICATION_INIT(
++        FWK_MODULE_IDX_PCIE_SETUP,
++        MOD_PCIE_SETUP_NOTIFICATION_IDX_INITIALISED);
++
+ #endif /* MOD_PCIE_SETUP_H */
+diff --git a/product/neoverse-rd/module/pcie_setup/src/mod_pcie_setup.c b/product/neoverse-rd/module/pcie_setup/src/mod_pcie_setup.c
+index fbc9c7023974..92e624d4ec22 100644
+--- a/product/neoverse-rd/module/pcie_setup/src/mod_pcie_setup.c
++++ b/product/neoverse-rd/module/pcie_setup/src/mod_pcie_setup.c
+@@ -72,10 +72,26 @@ struct mod_pcie_setup_context {
+      * the block.
+      */
+     size_t block_config_size;
++
++    /* Number of IO Blocks . */
++    size_t block_count;
+ };
+ 
+ struct mod_pcie_setup_context pcie_setup_context;
+ 
++static int pcie_setup_send_initialised_notification(void)
++{
++    struct fwk_event notification_event = { 0 };
++    unsigned int notification_count;
++
++    notification_event.id = mod_pcie_setup_notification_initialised;
++    notification_event.source_id = fwk_module_id_pcie_setup;
++
++    FWK_LOG_INFO(MOD_NAME
++                 "Sending PCIe initialisation completion notification.");
++    return fwk_notification_notify(&notification_event, &notification_count);
++}
++
+ static int pcie_setup_update_sds(
+     struct mod_pcie_setup_block_mmap *block_info,
+     struct mod_pcie_setup_config *config)
+@@ -489,6 +505,15 @@ static int configure_pcie_ecam_mmio_space(
+     status = configure_pcie_endpoint(config, block_mmap);
+     fwk_mm_free(block_mmap);
+ 
++    if (status != FWK_SUCCESS) {
++        FWK_LOG_ERR(MOD_NAME "PCIe(%d) Setup Failed.", element);
++        return status;
++    }
++
++    if (element == (pcie_setup_context.block_count - 1)) {
++        status = pcie_setup_send_initialised_notification();
++    }
++
+     return status;
+ }
+ 
+@@ -512,6 +537,7 @@ static int mod_pcie_setup_init(
+         return FWK_E_DATA;
+     }
+ 
++    pcie_setup_context.block_count = block_count;
+     pcie_setup_context.module_config = data;
+     module_config = data;
+     if ((module_config == NULL) || (module_config->resource_info_count == 0)) {
+@@ -709,5 +735,6 @@ const struct fwk_module module_pcie_setup = {
+     .element_init = mod_pcie_setup_element_init,
+     .bind = mod_pcie_setup_bind,
+     .start = mod_pcie_setup_start,
++    .notification_count = (unsigned int)MOD_PCIE_SETUP_NOTIFICATION_IDX_COUNT,
+     .process_notification = mod_pcie_setup_process_notification,
+ };
