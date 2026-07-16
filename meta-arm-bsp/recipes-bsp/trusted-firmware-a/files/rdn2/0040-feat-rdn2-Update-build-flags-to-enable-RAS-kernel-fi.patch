@@ -1,0 +1,38 @@
+From 741f4566be347c9619cb1b82b97abe2c910a62f4 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Sun, 14 Apr 2024 15:20:16 +0530
+Subject: [PATCH] feat(rdn2):Update build flags to enable RAS kernel first
+ handling
+
+This patch updates the build flag to support firmware first or kernel first
+error handling, based on the compile time selection.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I55114b76cf6526bbf9a5b8ad86f210fb3a849bdf
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ plat/arm/board/neoverse_rd/platform/rdn2/platform.mk | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/plat/arm/board/neoverse_rd/platform/rdn2/platform.mk b/plat/arm/board/neoverse_rd/platform/rdn2/platform.mk
+index ef0b93c52286..de6112e1f74f 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdn2/platform.mk
++++ b/plat/arm/board/neoverse_rd/platform/rdn2/platform.mk
+@@ -75,12 +75,14 @@ BL31_SOURCES	+=	drivers/arm/gic/v3/gic600_multichip.c
+ BL31_CFLAGS		+=	-DPLAT_XLAT_TABLES_DYNAMIC
+ endif
+ 
+-ifeq (${ENABLE_FEAT_RAS}-${HANDLE_EA_EL3_FIRST_NS},1-1)
++ifeq (${ENABLE_FEAT_RAS}, 1)
++ifeq (${FFH_SUPPORT}, 1)
+ BL31_SOURCES		+=	${RDN2_BASE}/rdn2_ras.c			\
+ 				${NRD_COMMON_BASE}/ras/nrd_ras_common.c	\
+ 				${NRD_COMMON_BASE}/ras/nrd_ras_sram.c	\
+ 				${NRD_COMMON_BASE}/ras/nrd_ras_cpu.c
+ endif
++endif
+ 
+ # Add the FDT_SOURCES and options for Dynamic Config
+ FDT_SOURCES		+=	${RDN2_BASE}/fdts/${PLAT}_fw_config.dts	\

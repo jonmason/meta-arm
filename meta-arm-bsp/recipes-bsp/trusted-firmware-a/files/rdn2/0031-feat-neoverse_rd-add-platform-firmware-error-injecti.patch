@@ -1,0 +1,334 @@
+From 78a6be843048f68257a943eb8cb08a47a60ccb1c Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Fri, 12 Apr 2024 08:12:45 +0530
+Subject: [PATCH] feat(neoverse_rd): add platform firmware error injection
+ support
+
+On RD platform variants the platform firmware performs the error
+injection operation. OS provides interface to the user to initiate the
+error injection. The request is relayed to platform firmware which
+programs the error injection registers and starts the injection. OS
+programs GIC SPI interrupt to notify platform firmware about the error
+injection event.
+
+This patch adds platform firmware support to handle the error injection
+event raised by OS. Unused SPI interrupt id (83) is used to notify the
+injection event. Add new platform interrupt priority level and register
+it with the ehf framework to support einj feature.
+
+At init the platform programs the GIC_NSACR register and allows the
+programming of desired SPI ID from non-secure software (OS). Platform
+registers interrupt handler for interrupt id 83. EINJ ACPI spec defines
+SET_ERROR_TYPE_WITH_ADDRESS action. Spec also defines data structure for
+this action and is placed at firmware reserved memory region. OS
+triggers the error injection event and populates the associated
+injection information to this structure. On einj interrupt event the
+event handler consumes this data structure and injects appropriate
+error.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Signed-off-by: Rakshit Goyal <rakshit.goyal@arm.com>
+Change-Id: I4ad644e0788824fbe24f5f3df71735dd596075b6
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../board/neoverse_rd/common/einj/nrd_einj.c  | 134 ++++++++++++++++++
+ .../common/include/nrd2/nrd_css_fw_def2.h     |  11 ++
+ .../common/include/nrd2/nrd_plat_arm_def2.h   |   5 +-
+ .../common/include/nrd3/nrd_css_fw_def3.h     |   5 +
+ .../neoverse_rd/common/include/nrd_einj.h     |  50 +++++++
+ .../board/neoverse_rd/common/nrd-common.mk    |   4 +
+ .../board/neoverse_rd/common/nrd_bl31_setup.c |   5 +
+ 7 files changed, 213 insertions(+), 1 deletion(-)
+ create mode 100644 plat/arm/board/neoverse_rd/common/einj/nrd_einj.c
+ create mode 100644 plat/arm/board/neoverse_rd/common/include/nrd_einj.h
+
+diff --git a/plat/arm/board/neoverse_rd/common/einj/nrd_einj.c b/plat/arm/board/neoverse_rd/common/einj/nrd_einj.c
+new file mode 100644
+index 000000000000..039c93ed8c88
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/common/einj/nrd_einj.c
+@@ -0,0 +1,134 @@
++/*
++ * Copyright (c) 2022, ARM Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <assert.h>
++#include <string.h>
++
++#include <bl31/ehf.h>
++#include <bl31/interrupt_mgmt.h>
++#include <plat/common/platform.h>
++
++#include <nrd_einj.h>
++
++#define ERR_INJ_INTR_EVT_ID 83
++
++#define GICD_BASE      0x30000000UL
++#define GICD_CLRSPI_NSR        0x0048
++
++/* Enables NS access to GICD CLRSPI and SETSPI registers. */
++#define EN_GICD_NS_ACCESS (0x2)
++
++/*
++ * To set spi interrupt ID 83 from non-secure software program GIC_NSACR<n>
++ * register.
++ * n = (83 / 16) = 5
++ * offset of register GIC_NSACR<5> = ((83 / 16) * 4)
++ */
++#define GICD_NSACR5_OFF (0xE00+((ERR_INJ_INTR_EVT_ID/16)*4))
++/*
++ * The value to be written to GICD_NSACR5_OFF,
++ * Spi int 83 bit positions in GICD_NSACR5 regiter = ((83 % 16) * 2) = 6
++ * as there are 2 bits per interrupt ID.
++ */
++#define GICD_EN_ID_83 (EN_GICD_NS_ACCESS << ((ERR_INJ_INTR_EVT_ID%16)*2))
++
++/*
++ * Configure interrupt routing to EL3 for error injection event.
++ */
++static void nrd_err_inj_interrupt_configure(int intr)
++{
++       plat_ic_set_interrupt_type(intr, INTR_TYPE_EL3);
++       plat_ic_set_interrupt_priority(intr, PLAT_EINJ_PRI);
++       plat_ic_clear_interrupt_pending(intr);
++       plat_ic_set_spi_routing(intr, INTR_ROUTING_MODE_ANY,
++                               (u_register_t)read_mpidr_el1());
++       plat_ic_enable_interrupt(intr);
++}
++
++/*
++ * error injection EL3 interrupt handler.
++ */
++static int err_inj_el3_interrupt_handler(uint32_t intr, uint32_t flags,
++               void *handle, void *cookie)
++{
++       uint32_t error_type;
++       einj_set_error_type_with_address *error_info;
++
++       INFO("EINJ event received %d\n", intr);
++
++       /* Clear the error injection interrupt. */
++       plat_ic_end_of_interrupt(intr);
++       mmio_write_32((GICD_BASE + GICD_CLRSPI_NSR), ERR_INJ_INTR_EVT_ID);
++
++       /* Read the error injection information */
++       error_info = (einj_set_error_type_with_address *)
++                       ACTION_SET_ERROR_TYPE_WITH_ADDRESS_BASE;
++
++       /* Process error injection event. */
++       INFO("Error Type = 0x%x\n", error_info->errorType);
++       error_type = error_info->errorType;
++
++       if (error_type & EINJ_ERROR_TYPE_VENDOR_BIT) {
++               switch (error_type) {
++               case EINJ_VENDOR_ERROR_TYPE_CMN_HNF:
++                       break;
++               default:
++                       ERROR("Error Injection failed: No device present of \
++                               type %d\n", error_type);
++               }
++       } else {
++               switch (error_type) {
++               case EINJ_ERROR_PROCESSOR_CORRECTABLE:
++                       INFO("EINJ_ERROR_PROCESSOR_CORRECTABLE\n");
++                       break;
++               case EINJ_ERROR_PROCESSOR_UNCORRECTABLE_NONFATAL:
++                       INFO("EINJ_ERROR_PROCESSOR_UNCORRECTABLE_NONFATAL\n");
++                       break;
++               case EINJ_ERROR_PROCESSOR_UNCORRECTABLE_FATAL:
++                       INFO("EINJ_ERROR_PROCESSOR_UNCORRECTABLE_FATAL\n");
++                       break;
++               default:
++                       ERROR("Error Injection failed: No device present of \
++                               type %d\n", error_type);
++               }
++       }
++
++       return 1;
++}
++
++/*
++ * Platform error injection init function.
++ * The error injection function programs GICD register to allow non secure
++ * access to  SPI interrupt id 83. It also registers einj interrupt event
++ * handler with the exception handling framework at EL3.
++ */
++int nrd_err_inj_init(void)
++{
++       uint32_t gicd_nsacr;
++
++       /*
++        * Allow SPI interrupt ID 83 to be programmed by non-secure software
++        * using the GID SETSPI register.
++        *
++        * Program the GICD NSACR<n>, n=5 register to open up interrupt ID 83
++        * to be programmed from non-secure software (using GICD SETSPI).
++        */
++       gicd_nsacr = mmio_read_32(GICD_BASE + GICD_NSACR5_OFF);
++       gicd_nsacr |= GICD_EN_ID_83;
++       mmio_write_32((GICD_BASE + GICD_NSACR5_OFF), gicd_nsacr);
++
++       /* Register handler for EL3 interrupts with the ehf framework */
++       ehf_register_priority_handler(PLAT_EINJ_PRI,
++                                       err_inj_el3_interrupt_handler);
++
++       /* Program GIC to enable SPI interrupt ID 83 */
++       nrd_err_inj_interrupt_configure(ERR_INJ_INTR_EVT_ID);
++
++       INFO("NRD: Error Injection interrupt handler registered \
++               successfully\n");
++
++       return 0;
++}
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd2/nrd_css_fw_def2.h b/plat/arm/board/neoverse_rd/common/include/nrd2/nrd_css_fw_def2.h
+index 31888a560e3d..52613f377e09 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd2/nrd_css_fw_def2.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd2/nrd_css_fw_def2.h
+@@ -52,6 +52,17 @@
+ #define NRD_CSS_NS_RAM_ECC_CE_INT		U(87)
+ #define NRD_CSS_NS_RAM_ECC_UE_INT		U(88)
+ 
++/*
++ * EINJ buffer of 64KB reserved of ACPI EINJ action entries.
++ * It is placed adjacent to memory shared between EL3 and S-EL0.
++ */
++#define NRD_CSS_EINJ_INSTR_BUF_BASE     (PLAT_SP_IMAGE_NS_BUF_BASE + \
++                                         PLAT_SP_IMAGE_NS_BUF_SIZE)
++#define NRD_CSS_EINJ_INSTR_BUF_SIZE     ULL(0x10000)
++
++/* EINJ Set error type with address. */
++#define NRD_CSS_EINJ_SET_ERROR_TYPE_ADDR	0xFFE10100
++
+ #if (SPM_MM || (SPMC_AT_EL3 && SPMC_AT_EL3_SEL0_SP))			\
+ 	&& ENABLE_FEAT_RAS && FFH_SUPPORT
+ /*
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd2/nrd_plat_arm_def2.h b/plat/arm/board/neoverse_rd/common/include/nrd2/nrd_plat_arm_def2.h
+index 058ba7866e9c..27b811ed7a02 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd2/nrd_plat_arm_def2.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd2/nrd_plat_arm_def2.h
+@@ -242,7 +242,10 @@ ENABLE_FEAT_RAS && FFH_SUPPORT
+ 
+ /* Interrupt priority level for shutdown/reboot */
+ #define PLAT_REBOOT_PRI		GIC_HIGHEST_SEC_PRIORITY
+-#define PLAT_EHF_DESC		EHF_PRI_DESC(PLAT_PRI_BITS, PLAT_REBOOT_PRI)
++/* Interrupt priority level for error injection */
++#define PLAT_EINJ_PRI                  0x20
++#define PLAT_EHF_DESC          EHF_PRI_DESC(PLAT_PRI_BITS, PLAT_REBOOT_PRI), \
++                               EHF_PRI_DESC(PLAT_PRI_BITS, PLAT_EINJ_PRI)
+ 
+ /*******************************************************************************
+  * Secure world config
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_fw_def3.h b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_fw_def3.h
+index 051f4e6a3979..a1560088ea18 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_fw_def3.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_css_fw_def3.h
+@@ -57,6 +57,11 @@
+ #define NRD_CSS_RMM_CONSOLE_NAME		"pl011"
+ #define NRD_CSS_RMM_CONSOLE_COUNT		UL(1)
+ 
++/*******************************************************************************
++* EINJ Set error type with address.
++*******************************************************************************/
++#define NRD_CSS_EINJ_SET_ERROR_TYPE_ADDR	0xFA86B000
++
+ /*******************************************************************************
+  * MMU mapping
+  ******************************************************************************/
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd_einj.h b/plat/arm/board/neoverse_rd/common/include/nrd_einj.h
+new file mode 100644
+index 000000000000..8f23518d5e2c
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/common/include/nrd_einj.h
+@@ -0,0 +1,50 @@
++/*
++ * Copyright (c) 2022, ARM Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++/*
++ * EINJ Error Type Definition
++ */
++#define EINJ_ERROR_PROCESSOR_CORRECTABLE               (1 << 0)
++#define EINJ_ERROR_PROCESSOR_UNCORRECTABLE_NONFATAL    (1 << 1)
++#define EINJ_ERROR_PROCESSOR_UNCORRECTABLE_FATAL       (1 << 2)
++#define EINJ_ERROR_MEMORY_CORRECTABLE                  (1 << 3)
++#define EINJ_ERROR_MEMORY_UNCORRECTABLE_NONFATAL       (1 << 4)
++#define EINJ_ERROR_MEMORY_UNCORRECTABLE_FATAL          (1 << 5)
++#define EINJ_ERROR_PCI_EXPRESS_CORRECTABLE             (1 << 6)
++#define EINJ_ERROR_PCI_EXPRESS_UNCORRECTABLE_NONFATAL  (1 << 7)
++#define EINJ_ERROR_PCI_EXPRESS_UNCORRECTABLE_FATAL     (1 << 8)
++#define EINJ_ERROR_PLATFORM_CORRECTABLE                        (1 << 9)
++#define EINJ_ERROR_PLATFORM_UNCORRECTABLE_NONFATAL     (1 << 10)
++#define EINJ_ERROR_PLATFORM_UNCORRECTABLE_FATAL                (1 << 11)
++/* EINJ vendor specific definitions */
++#define EINJ_ERROR_TYPE_VENDOR_BIT                     (1U << 31)
++
++#define EINJ_VENDOR_ERROR_TYPE_CMN_HNF ((1U << 16) | EINJ_ERROR_TYPE_VENDOR_BIT)
++
++#define ACTION_SET_ERROR_TYPE_WITH_ADDRESS_BASE NRD_CSS_EINJ_SET_ERROR_TYPE_ADDR
++
++/* Error injection pcie SBDF structure */
++typedef struct {
++       uint32_t reserved: 8;
++       uint32_t function: 3;
++       uint32_t device: 5;
++       uint32_t primaryOrDeviceBus: 8;
++       uint32_t segment: 8;
++} einj_pcie_sbdf;
++
++/* Error injection set error type with address structure */
++typedef struct {
++       uint32_t errorType;
++       uint32_t vendorErrorTypeOffset;
++       uint32_t flags;
++       uint32_t apicId;
++       uint64_t memAddress;
++       uint64_t memAddressRange;
++       einj_pcie_sbdf pcieSBDF;
++} einj_set_error_type_with_address;
++
++/* Error injection initialization function */
++int nrd_err_inj_init(void);
+diff --git a/plat/arm/board/neoverse_rd/common/nrd-common.mk b/plat/arm/board/neoverse_rd/common/nrd-common.mk
+index d8621f74418d..3f0629ee868e 100644
+--- a/plat/arm/board/neoverse_rd/common/nrd-common.mk
++++ b/plat/arm/board/neoverse_rd/common/nrd-common.mk
+@@ -50,6 +50,10 @@ BL31_SOURCES		+=	${INTERCONNECT_SOURCES}			\
+ 				${NRD_COMMON_BASE}/nrd_topology.c	\
+ 				drivers/delay_timer/generic_delay_timer.c
+ 
++ifeq (${NRD_ERR_INJ_SUPPORT},1)
++BL31_SOURCES           +=      ${NRD_COMMON_BASE}/einj/nrd_einj.c
++endif
++
+ $(eval $(call add_define,NRD_CHIP_COUNT))
+ 
+ $(eval $(call add_define,NRD_PLATFORM_VARIANT))
+diff --git a/plat/arm/board/neoverse_rd/common/nrd_bl31_setup.c b/plat/arm/board/neoverse_rd/common/nrd_bl31_setup.c
+index 53f6997e32fa..3512293449aa 100644
+--- a/plat/arm/board/neoverse_rd/common/nrd_bl31_setup.c
++++ b/plat/arm/board/neoverse_rd/common/nrd_bl31_setup.c
+@@ -19,6 +19,7 @@
+ #include <plat/arm/css/common/css_pm.h>
+ #include <plat/common/platform.h>
+ 
++#include <nrd_einj.h>
+ #include <nrd_ras.h>
+ #include <nrd_variant.h>
+ 
+@@ -246,6 +247,10 @@ void nrd_bl31_common_platform_setup(void)
+ 			css_reboot_interrupt_handler);
+ #endif
+ 
++#if NRD_ERR_INJ_SUPPORT
++       nrd_err_inj_init();
++#endif
++
+ #if RESET_TO_BL31
+ 	int ret = append_config_node(NRD_CSS_BL31_PRELOAD_DTB_BASE,
+ 			NRD_CSS_BL31_PRELOAD_DTB_SIZE);

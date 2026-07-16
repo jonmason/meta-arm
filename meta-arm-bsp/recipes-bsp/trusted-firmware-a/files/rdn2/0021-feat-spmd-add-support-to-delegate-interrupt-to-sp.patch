@@ -1,0 +1,168 @@
+From 58f256517a921361cacded0b8205f1c17fdc42a6 Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Tue, 29 Mar 2022 14:46:38 +0100
+Subject: [PATCH] feat(spmd): add support to delegate interrupt to sp.
+
+Add an interface to forward interrupt handling requests to the secure
+partition. This return the control to the same location from where the
+call is made in interrupt service routine.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: Id7705c4541cea6431734a7a3ebd206a3c3b50436
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ include/services/spmc_svc.h               |  2 +
+ include/services/spmd_svc.h               |  5 ++
+ services/std_svc/spm/el3_spmc/spmc_main.c | 65 ++++++++++++++++++++++-
+ services/std_svc/spmd/spmd_main.c         | 32 +++++++++++
+ 4 files changed, 103 insertions(+), 1 deletion(-)
+
+diff --git a/include/services/spmc_svc.h b/include/services/spmc_svc.h
+index 8ee61e90f3da..f2665962bc83 100644
+--- a/include/services/spmc_svc.h
++++ b/include/services/spmc_svc.h
+@@ -35,6 +35,8 @@ static inline bool is_spmc_at_el3(void)
+ 	return SPMC_AT_EL3 == 1;
+ }
+ 
++uint64_t spmc_forward_secure_interrupt();
++
+ #endif /* __ASSEMBLER__ */
+ 
+ #endif /* SPMC_SVC_H */
+diff --git a/include/services/spmd_svc.h b/include/services/spmd_svc.h
+index 95f070753680..4738320407bb 100644
+--- a/include/services/spmd_svc.h
++++ b/include/services/spmd_svc.h
+@@ -38,4 +38,9 @@ uint64_t spmd_smc_switch_state(uint32_t smc_fid,
+ 			       uint64_t flags);
+ #endif /* __ASSEMBLER__ */
+ 
++uint64_t spmd_forward_secure_interrupt(void *interrupt_context,
++				       uint64_t id,
++				       void *cookie,
++				       void *handle,
++				       uint64_t flags);
+ #endif /* SPMD_SVC_H */
+diff --git a/services/std_svc/spm/el3_spmc/spmc_main.c b/services/std_svc/spm/el3_spmc/spmc_main.c
+index c67a6fc9376c..667b0cbc45a7 100644
+--- a/services/std_svc/spm/el3_spmc/spmc_main.c
++++ b/services/std_svc/spm/el3_spmc/spmc_main.c
+@@ -645,7 +645,9 @@ static uint64_t msg_wait_handler(uint32_t smc_fid,
+ 	 * Perform a synchronous exit if the partition was initialising. The
+ 	 * state is updated after the exit.
+ 	 */
+-	if (sp->ec[idx].rt_model == RT_MODEL_INIT) {
++	if (((sp->runtime_el == S_EL0) &&
++	     (sp->ec[idx].rt_model == RT_MODEL_INTR)) ||
++	    sp->ec[idx].rt_model == RT_MODEL_INIT) {
+ 		if (sp->runtime_el == S_EL0) {
+ 			spin_unlock(&sp->rt_state_lock);
+ 		}
+@@ -2579,3 +2581,64 @@ static uint64_t spmc_sp_interrupt_handler(uint32_t id,
+ 				     FFA_PARAM_MBZ, FFA_PARAM_MBZ,
+ 				     handle, 0ULL);
+ }
++
++uint64_t spmc_forward_secure_interrupt()
++{
++	struct secure_partition_desc *sp = spmc_get_current_sp_ctx();
++	struct sp_exec_ctx *ec;
++	uint32_t linear_id = plat_my_core_pos();
++	uint64_t status;
++
++	/* Sanity check for a NULL pointer dereference */
++	assert(sp != NULL);
++
++	/* Panic if not an S-EL0 Partition */
++	if (sp->runtime_el != S_EL0) {
++		panic();
++	}
++
++	/* Obtain a reference to the SP execution context */
++	ec = spmc_get_sp_ec(sp);
++
++	/*
++	 * Ensure that the execution context is in a waiting state else panic.
++	 */
++	if (ec->rt_state != RT_STATE_WAITING) {
++		ERROR("S-EL1 SP context on core%u is in %u state, expected Waiting State (%u).\n",
++				linear_id, ec->rt_state, RT_STATE_WAITING);
++		panic();
++	}
++
++	/* Protect the runtime state of a UP-M S-EL0 SP with a lock. */
++	if (sp->runtime_el == S_EL0)
++		spin_lock(&sp->rt_state_lock);
++
++	/* Update the runtime model and state of the partition */
++	ec->rt_model = RT_MODEL_INTR;
++	ec->rt_state = RT_STATE_RUNNING;
++
++	/* Protect the runtime state of a UP-M S-EL0 SP with a lock. */
++	if (sp->runtime_el == S_EL0)
++		spin_unlock(&sp->rt_state_lock);
++
++	VERBOSE("SP (0x%x) interrupt start on core%u.\n", sp->sp_id, linear_id);
++
++	/*
++	 * Forward the interrupt to the S-EL1 SP. The interrupt ID is not
++	 * populated as the SP can determine this by itself.
++	 */
++	status = spmc_sp_synchronous_entry(ec);
++
++	/* Protect the runtime state of a UP-M S-EL0 SP with a lock. */
++	if (sp->runtime_el == S_EL0)
++		spin_lock(&sp->rt_state_lock);
++
++	/* Update the runtime model and state of the partition */
++	ec->rt_state = RT_STATE_WAITING;
++
++	/* Protect the runtime state of a UP-M S-EL0 SP with a lock. */
++	if (sp->runtime_el == S_EL0)
++		spin_unlock(&sp->rt_state_lock);
++
++	return status;
++}
+diff --git a/services/std_svc/spmd/spmd_main.c b/services/std_svc/spmd/spmd_main.c
+index 310610d14988..5cbed80dbe1b 100644
+--- a/services/std_svc/spmd/spmd_main.c
++++ b/services/std_svc/spmd/spmd_main.c
+@@ -1303,3 +1303,35 @@ uint64_t spmd_smc_handler(uint32_t smc_fid,
+ 		return spmd_ffa_error_return(handle, FFA_ERROR_NOT_SUPPORTED);
+ 	}
+ }
++
++#if (SPMC_AT_EL3)
++uint64_t spmd_forward_secure_interrupt(void *interrupt_context,
++				       uint64_t id,
++				       void *cookie,
++				       void *handle,
++				       uint64_t flags)
++{
++	uint64_t rc;
++	void *secure_context;
++
++	assert(get_interrupt_src_ss(flags) == NON_SECURE);
++
++	assert(handle == cm_get_context(NON_SECURE));
++
++	cm_el1_sysregs_context_save(NON_SECURE);
++
++	secure_context = cm_get_context(SECURE);
++	SMC_SET_GP(secure_context, CTX_GPREG_X0, FFA_INTERRUPT);
++	SMC_SET_GP(secure_context, CTX_GPREG_X1, 0);
++	SMC_SET_GP(secure_context, CTX_GPREG_X2, 0);
++	SMC_SET_GP(secure_context, CTX_GPREG_X3, (uint64_t)interrupt_context);
++	SMC_SET_GP(secure_context, CTX_GPREG_X4, 0);
++	SMC_SET_GP(secure_context, CTX_GPREG_X5, 0);
++	SMC_SET_GP(secure_context, CTX_GPREG_X6, 0);
++	SMC_SET_GP(secure_context, CTX_GPREG_X7, 0);
++
++	rc = spmc_forward_secure_interrupt();
++
++	return rc;
++}
++#endif

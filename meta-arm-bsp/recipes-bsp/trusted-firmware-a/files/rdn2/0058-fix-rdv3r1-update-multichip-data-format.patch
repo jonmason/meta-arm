@@ -1,0 +1,64 @@
+From 94db35f77425c8381d71651cc93d0fbf0f53be36 Mon Sep 17 00:00:00 2001
+From: Jerry Wang <Jerry.Wang4@arm.com>
+Date: Fri, 20 Dec 2024 21:16:24 +0000
+Subject: [PATCH] fix(rdv3r1): update multichip data format
+
+The existing `gic600_multichip_data` data structure on RD-V3-R1
+need to be updated after common code change enabling the LCA feature.
+
+Change-Id: I8d033d9d098f32f83a7e0d3b781027e7167c64fc
+Signed-off-by: Jerry Wang <Jerry.Wang4@arm.com>
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../platform/rdv3r1/rdv3r1_bl31_setup.c       | 21 +++++++++++++------
+ 1 file changed, 15 insertions(+), 6 deletions(-)
+
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_bl31_setup.c b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_bl31_setup.c
+index b0f911d8d18b..f0b1c1979232 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_bl31_setup.c
++++ b/plat/arm/board/neoverse_rd/platform/rdv3r1/rdv3r1_bl31_setup.c
+@@ -18,6 +18,8 @@
+ #include <lib/fconf/fconf_dyn_cfg_getter.h>
+ #include <rdv3r1_ras.h>
+ 
++#define RT_OWNER 0
++
+ static const mmap_region_t rdv3r1mc_dynamic_mmap[] = {
+ #if NRD_CHIP_COUNT > 1
+ 	NRD_CSS_SHARED_RAM_MMAP(1),
+@@ -34,20 +36,27 @@ static const mmap_region_t rdv3r1mc_dynamic_mmap[] = {
+ };
+ 
+ static struct gic600_multichip_data rdv3r1mc_multichip_data __init = {
+-	.rt_owner_base = PLAT_ARM_GICD_BASE,
+-	.rt_owner = 0,
++	.base_addrs = {
++		PLAT_ARM_GICD_BASE
++	},
++	.rt_owner = RT_OWNER,
+ 	.chip_count = NRD_CHIP_COUNT,
+ 	.chip_addrs = {
+-		PLAT_ARM_GICD_BASE >> 16,
++		[RT_OWNER] = {
++			PLAT_ARM_GICD_BASE >> 16,
+ #if NRD_CHIP_COUNT > 1
+-		(PLAT_ARM_GICD_BASE + NRD_REMOTE_CHIP_MEM_OFFSET(1)) >> 16,
++			(PLAT_ARM_GICD_BASE
++				+ NRD_REMOTE_CHIP_MEM_OFFSET(1)) >> 16,
+ #endif
+ #if NRD_CHIP_COUNT > 2
+-		(PLAT_ARM_GICD_BASE + NRD_REMOTE_CHIP_MEM_OFFSET(2)) >> 16,
++			(PLAT_ARM_GICD_BASE
++				+ NRD_REMOTE_CHIP_MEM_OFFSET(2)) >> 16,
+ #endif
+ #if NRD_CHIP_COUNT > 3
+-		(PLAT_ARM_GICD_BASE + NRD_REMOTE_CHIP_MEM_OFFSET(3)) >> 16,
++			(PLAT_ARM_GICD_BASE
++				+ NRD_REMOTE_CHIP_MEM_OFFSET(3)) >> 16,
+ #endif
++		}
+ 	},
+ 	.spi_ids = {
+ 		{PLAT_ARM_GICD_BASE, 32, 511},

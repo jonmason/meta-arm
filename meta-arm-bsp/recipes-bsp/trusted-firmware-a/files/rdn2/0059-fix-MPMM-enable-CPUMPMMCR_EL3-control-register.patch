@@ -1,0 +1,30 @@
+From 238e0d09e730a880fd5a707a93b2e77fc62c0d40 Mon Sep 17 00:00:00 2001
+From: Manoj Kumar Prabakaran <manojkumar.prabakaran@arm.com>
+Date: Fri, 21 Mar 2025 09:21:16 +0000
+Subject: [PATCH] fix(MPMM): enable CPUMPMMCR_EL3 control register
+
+CPUMPMMCR_EL3 is Global MPMM Control register which needs to be set to
+support the Maximum Power Mitigation Mechanism (MPMM).
+Set the CPUMPMMCR_EL3.CPUMPMMCR_EL3_MPMM_EN_BIT in the cpu_macros.S
+
+Change-Id: Icd676c490f66f8486ee513c1bd5eb603372eaef4
+Signed-off-by: Manoj Kumar Prabakaran <manojkumar.prabakaran@arm.com>
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ include/lib/cpus/aarch64/cpu_macros.S | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/include/lib/cpus/aarch64/cpu_macros.S b/include/lib/cpus/aarch64/cpu_macros.S
+index 84107a4eef7d..fc66ac629500 100644
+--- a/include/lib/cpus/aarch64/cpu_macros.S
++++ b/include/lib/cpus/aarch64/cpu_macros.S
+@@ -649,6 +649,7 @@
+ 	ands	x0, x0, CPUPPMCR_EL3_MPMMPINCTL_BIT
+ 	b.ne	1f
+ 	sysreg_bit_set CPUPPMCR_EL3, CPUMPMMCR_EL3_MPMM_EN_BIT
++	sysreg_bit_set CPUMPMMCR_EL3, CPUMPMMCR_EL3_MPMM_EN_BIT
+ 	1:
+ #endif
+ .endm

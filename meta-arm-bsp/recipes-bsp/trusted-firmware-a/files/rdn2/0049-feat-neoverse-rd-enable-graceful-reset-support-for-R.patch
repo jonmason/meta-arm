@@ -1,0 +1,34 @@
+From 8e750e2c914415b07c29f143b919b10fc30e0cec Mon Sep 17 00:00:00 2001
+From: Pranav Madhu <pranav.madhu@arm.com>
+Date: Wed, 18 Sep 2024 20:28:02 +0530
+Subject: [PATCH] feat(neoverse-rd): enable graceful reset support for RD-V3
+
+Enable graceful reset support for the RD-V3 platform. Enabling this
+flag will allow the application processor to execute the dynamic
+power-down sequence before the power controller statically powers
+off the AP cores.
+
+Change-Id: I39dd6247569960aaffd543b774f66c936a78b62d
+Signed-off-by: Pranav Madhu <pranav.madhu@arm.com>
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ plat/arm/board/neoverse_rd/platform/rdv3/platform.mk | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk b/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk
+index f4cb601d17e9..8e2fcd387d10 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk
++++ b/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk
+@@ -24,6 +24,10 @@ endif
+ override ARM_ARCH_MAJOR			:= 8
+ override ARM_ARCH_MINOR			:= 7
+ 
++# Image flags
++override CSS_SYSTEM_GRACEFUL_RESET		:= 1
++override EL3_EXCEPTION_HANDLING		:= 1
++
+ # Misc options
+ override CTX_INCLUDE_AARCH32_REGS	:= 0
+ 

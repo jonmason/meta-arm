@@ -1,0 +1,83 @@
+From 9bc8ee491401dfcf3e2d6e73bbdb0ed69e3ecfd3 Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Wed, 27 Mar 2024 14:26:08 +0000
+Subject: [PATCH] feat(plat/arm/rdn2): Add a new property for PCIe in FDT
+
+Add a new property for PCIe region information.
+
+The property is formatted as follows
+struct pcie_rootport_mmio_mmap {
+	uint64_t ecam1.start;
+	uint64_t ecam1.size;
+	uint64_t mmiol.start;
+	uint64_t mmiol.size;
+	uint64_t mmioh.start;
+	uint64_t mmioh.size;
+	uint64_t bus.start;
+	uint64_t bus.size;
+	uint64_t base_interrupt_id;
+};
+
+struct pcie_rootbridge_config {
+	struct pcie_rootport_mmio_mmap mmap[number of rp];
+	uint64_t segment;
+	uint64_t hostbridge_id;
+	uint64_t translation;
+};
+
+The property region is pre-initialized to allocate a region equivalent
+to the sizeof(struct pcie_ecam_mmio_mmap) * (number of PCIE RPs)
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: I13fe370397852663e02e711cf1664a1c2fdfc4ce
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../platform/rdn2/fdts/rdn2_nt_fw_config.dts  | 34 +++++++++++++++++++
+ 1 file changed, 34 insertions(+)
+
+diff --git a/plat/arm/board/neoverse_rd/platform/rdn2/fdts/rdn2_nt_fw_config.dts b/plat/arm/board/neoverse_rd/platform/rdn2/fdts/rdn2_nt_fw_config.dts
+index 8e5856560b7d..dd25fb5d1d51 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdn2/fdts/rdn2_nt_fw_config.dts
++++ b/plat/arm/board/neoverse_rd/platform/rdn2/fdts/rdn2_nt_fw_config.dts
+@@ -39,5 +39,39 @@
+ 				     0x0 0x0
+ 				     0x0 0x0
+ 				     0x0 0x0>;
++		pcie-mmap = <0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
++			     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0>;
+ 	};
+ };

@@ -1,0 +1,958 @@
+From 64a7e75f40f45297afa09bb625f7cb9af2936b57 Mon Sep 17 00:00:00 2001
+From: Rakshit Goyal <rakshit.goyal@arm.com>
+Date: Fri, 20 Jun 2025 16:33:15 +0000
+Subject: [PATCH] Revert "refactor: convert arm platforms to use the generic
+ GIC driver"
+
+This reverts commit c5c54e20ee5656e16c7714d500bc732585c4aa4e.
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ drivers/arm/css/scp/css_pm_scmi.c             |  9 ++++---
+ drivers/arm/css/scp/css_pm_scpi.c             | 14 ++++++++++-
+ plat/arm/board/a5ds/platform.mk               |  7 +++++-
+ plat/arm/board/a5ds/sp_min/sp_min-a5ds.mk     |  3 ++-
+ .../automotive_rd/platform/rd1ae/platform.mk  |  7 +++++-
+ .../corstone1000/common/corstone1000_pm.c     |  3 ++-
+ plat/arm/board/corstone1000/platform.mk       | 13 +++++++---
+ plat/arm/board/corstone700/platform.mk        |  9 +++++--
+ .../corstone700/sp_min/sp_min-corstone700.mk  |  5 ++--
+ plat/arm/board/fvp/fvp_bl31_setup.c           |  2 --
+ plat/arm/board/fvp/fvp_gicv3.c                | 18 +++++++-------
+ plat/arm/board/fvp/fvp_pm.c                   | 20 ++++++++++++++--
+ plat/arm/board/fvp/platform.mk                | 23 ++++++++++++------
+ plat/arm/board/fvp/sp_min/sp_min-fvp.mk       |  4 ++--
+ plat/arm/board/fvp/tsp/tsp-fvp.mk             |  4 ++--
+ plat/arm/board/fvp_ve/platform.mk             |  9 +++++--
+ plat/arm/board/fvp_ve/sp_min/sp_min-fvp_ve.mk |  3 ++-
+ plat/arm/board/juno/platform.mk               | 10 ++++++--
+ plat/arm/board/juno/sp_min/sp_min-juno.mk     |  4 ++--
+ plat/arm/board/juno/tsp/tsp-juno.mk           |  4 ++--
+ plat/arm/board/morello/morello_pm.c           |  3 ++-
+ plat/arm/board/morello/platform.mk            |  9 ++++++-
+ plat/arm/board/n1sdp/n1sdp_pm.c               |  3 ++-
+ plat/arm/board/n1sdp/platform.mk              | 11 +++++++--
+ .../board/neoverse_rd/common/nrd-common.mk    | 11 +++++++--
+ plat/arm/board/tc/platform.mk                 |  9 ++++++-
+ plat/arm/common/arm_bl31_setup.c              |  4 ++++
+ plat/arm/common/arm_pm.c                      |  4 ++--
+ plat/arm/common/tsp/arm_tsp_setup.c           | 24 ++-----------------
+ plat/arm/css/common/css_pm.c                  | 24 ++++++++++++++-----
+ 30 files changed, 185 insertions(+), 88 deletions(-)
+
+diff --git a/drivers/arm/css/scp/css_pm_scmi.c b/drivers/arm/css/scp/css_pm_scmi.c
+index 74d9fadd5f66..b310ff42f3cd 100644
+--- a/drivers/arm/css/scp/css_pm_scmi.c
++++ b/drivers/arm/css/scp/css_pm_scmi.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2017-2025, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2017-2022, Arm Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -309,11 +309,10 @@ void css_scp_system_off(int state)
+ 	 */
+ 	mmio_write_64(PLAT_ARM_TRUSTED_MAILBOX_BASE, 0U);
+ 
+-	unsigned int core_pos = plat_my_core_pos();
+ 	/*
+ 	 * Send powerdown request to online secondary core(s)
+ 	 */
+-	ret = psci_stop_other_cores(core_pos, 0, css_raise_pwr_down_interrupt);
++	ret = psci_stop_other_cores(plat_my_core_pos(), 0, css_raise_pwr_down_interrupt);
+ 	if (ret != PSCI_E_SUCCESS) {
+ 		ERROR("Failed to powerdown secondary core(s)\n");
+ 	}
+@@ -322,8 +321,8 @@ void css_scp_system_off(int state)
+ 	 * Disable GIC CPU interface to prevent pending interrupt from waking
+ 	 * up the AP from WFI.
+ 	 */
+-	gic_cpuif_disable(core_pos);
+-	gic_pcpu_off(core_pos);
++	plat_arm_gic_cpuif_disable();
++	plat_arm_gic_redistif_off();
+ 
+ 	/*
+ 	 * Issue SCMI command. First issue a graceful
+diff --git a/drivers/arm/css/scp/css_pm_scpi.c b/drivers/arm/css/scp/css_pm_scpi.c
+index 781b2164ceef..02be07019790 100644
+--- a/drivers/arm/css/scp/css_pm_scpi.c
++++ b/drivers/arm/css/scp/css_pm_scpi.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2016-2025, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2016-2018, ARM Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -121,6 +121,12 @@ void css_scp_sys_shutdown(void)
+ {
+ 	uint32_t response;
+ 
++	/*
++	 * Disable GIC CPU interface to prevent pending interrupt
++	 * from waking up the AP from WFI.
++	 */
++	plat_arm_gic_cpuif_disable();
++
+ 	/* Send the power down request to the SCP */
+ 	response = scpi_sys_power_state(scpi_system_shutdown);
+ 
+@@ -137,6 +143,12 @@ void css_scp_sys_reboot(void)
+ {
+ 	uint32_t response;
+ 
++	/*
++	 * Disable GIC CPU interface to prevent pending interrupt
++	 * from waking up the AP from WFI.
++	 */
++	plat_arm_gic_cpuif_disable();
++
+ 	/* Send the system reset request to the SCP */
+ 	response = scpi_sys_power_state(scpi_system_reboot);
+ 
+diff --git a/plat/arm/board/a5ds/platform.mk b/plat/arm/board/a5ds/platform.mk
+index 32e089d861be..b94f7a5ede24 100644
+--- a/plat/arm/board/a5ds/platform.mk
++++ b/plat/arm/board/a5ds/platform.mk
+@@ -19,7 +19,12 @@ DYN_CFG_SOURCES		+=	plat/arm/common/arm_dyn_cfg.c		\
+ 
+ DYN_CFG_SOURCES		+=	${FDT_WRAPPERS_SOURCES}
+ 
+-USE_GIC_DRIVER		:=	2
++# Include GICv2 driver files
++include drivers/arm/gic/v2/gicv2.mk
++
++A5DS_GIC_SOURCES	:=	${GICV2_SOURCES}			\
++				plat/common/plat_gicv2.c		\
++				plat/common/plat_gicv2_base.c
+ 
+ A5DS_SECURITY_SOURCES	:=	plat/arm/board/a5ds/a5ds_security.c
+ 
+diff --git a/plat/arm/board/a5ds/sp_min/sp_min-a5ds.mk b/plat/arm/board/a5ds/sp_min/sp_min-a5ds.mk
+index c3ce916e30d6..4b0c97dfd3a1 100644
+--- a/plat/arm/board/a5ds/sp_min/sp_min-a5ds.mk
++++ b/plat/arm/board/a5ds/sp_min/sp_min-a5ds.mk
+@@ -1,5 +1,5 @@
+ #
+-# Copyright (c) 2019-2025, Arm Limited. All rights reserved.
++# Copyright (c) 2019, ARM Limited. All rights reserved.
+ #
+ # SPDX-License-Identifier: BSD-3-Clause
+ #
+@@ -18,4 +18,5 @@ BL32_SOURCES	+=	drivers/arm/scu/scu.c                           \
+ 			plat/common/aarch32/platform_mp_stack.S		\
+ 			plat/common/plat_psci_common.c			\
+ 			${A5DS_CPU_LIBS}				\
++			${A5DS_GIC_SOURCES}				\
+ 			${A5DS_SECURITY_SOURCES}
+diff --git a/plat/arm/board/automotive_rd/platform/rd1ae/platform.mk b/plat/arm/board/automotive_rd/platform/rd1ae/platform.mk
+index 98242e60217c..476d42e37c68 100644
+--- a/plat/arm/board/automotive_rd/platform/rd1ae/platform.mk
++++ b/plat/arm/board/automotive_rd/platform/rd1ae/platform.mk
+@@ -29,7 +29,6 @@ ENABLE_FEAT_ECV				:=	1
+ ENABLE_FEAT_FGT				:=	1
+ ENABLE_FEAT_MTE2			:=	1
+ ENABLE_FEAT_MPAM			:=	1
+-USE_GIC_DRIVER				:=	3
+ GIC_ENABLE_V4_EXTN			:=	1
+ GICV3_SUPPORT_GIC600			:=	1
+ HW_ASSISTED_COHERENCY			:=	1
+@@ -41,6 +40,11 @@ USE_COHERENT_MEM			:=	0
+ 
+ RD1AE_CPU_SOURCES	:=	lib/cpus/aarch64/neoverse_v3.S
+ 
++include drivers/arm/gic/v3/gicv3.mk
++RD1AE_GIC_SOURCES	:=	${GICV3_SOURCES}	\
++				plat/common/plat_gicv3.c	\
++				plat/common/plat_gicv3_base.c
++
+ PLAT_BL_COMMON_SOURCES	+=	${RD1AE_BASE}/rd1ae_plat.c	\
+ 				${RD1AE_BASE}/include/rd1ae_helpers.S
+ 
+@@ -52,6 +56,7 @@ BL2_SOURCES	+=	${RD1AE_CPU_SOURCES}	\
+ 			drivers/arm/sbsa/sbsa.c
+ 
+ BL31_SOURCES	+=	${RD1AE_CPU_SOURCES}	\
++			${RD1AE_GIC_SOURCES}	\
+ 			${RD1AE_BASE}/rd1ae_bl31_setup.c	\
+ 			${RD1AE_BASE}/rd1ae_topology.c	\
+ 			drivers/cfi/v2m/v2m_flash.c	\
+diff --git a/plat/arm/board/corstone1000/common/corstone1000_pm.c b/plat/arm/board/corstone1000/common/corstone1000_pm.c
+index ac808873b9e7..526418700a45 100644
+--- a/plat/arm/board/corstone1000/common/corstone1000_pm.c
++++ b/plat/arm/board/corstone1000/common/corstone1000_pm.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2021-2025, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2021-2024, Arm Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -65,6 +65,7 @@ int corstone1000_pwr_domain_on(u_register_t mpidr)
+ void corstone1000_pwr_domain_on_finish(const psci_power_state_t *target_state)
+ {
+ 	(void)target_state;
++	plat_arm_gic_init();
+ }
+ #endif
+ 
+diff --git a/plat/arm/board/corstone1000/platform.mk b/plat/arm/board/corstone1000/platform.mk
+index 65be9c1f5ad7..139f3409da94 100644
+--- a/plat/arm/board/corstone1000/platform.mk
++++ b/plat/arm/board/corstone1000/platform.mk
+@@ -1,5 +1,5 @@
+ #
+-# Copyright (c) 2021-2025 Arm Limited and Contributors. All rights reserved.
++# Copyright (c) 2021-2024 Arm Limited and Contributors. All rights reserved.
+ #
+ # SPDX-License-Identifier: BSD-3-Clause
+ #
+@@ -43,7 +43,13 @@ $(eval $(call add_define,CORSTONE1000_FVP_MULTICORE))
+ endif
+ endif
+ 
+-USE_GIC_DRIVER			:=	2
++# Include GICv2 driver files
++include drivers/arm/gic/v2/gicv2.mk
++
++CORSTONE1000_GIC_SOURCES	:=	${GICV2_SOURCES}			\
++				plat/common/plat_gicv2.c		\
++				plat/common/plat_gicv2_base.c
++
+ 
+ BL2_SOURCES		+=	plat/arm/board/corstone1000/common/corstone1000_security.c		\
+ 				plat/arm/board/corstone1000/common/corstone1000_err.c		\
+@@ -64,7 +70,8 @@ BL31_SOURCES	+=	drivers/cfi/v2m/v2m_flash.c				\
+ 			plat/arm/board/corstone1000/common/corstone1000_plat.c		\
+ 			plat/arm/board/corstone1000/common/corstone1000_pm.c		\
+ 			plat/arm/board/corstone1000/common/corstone1000_bl31_setup.c	\
+-			${CORSTONE1000_CPU_LIBS}
++			${CORSTONE1000_CPU_LIBS}					\
++			${CORSTONE1000_GIC_SOURCES}
+ 
+ ifneq (${ENABLE_STACK_PROTECTOR},0)
+ 	ifneq (${ENABLE_STACK_PROTECTOR},none)
+diff --git a/plat/arm/board/corstone700/platform.mk b/plat/arm/board/corstone700/platform.mk
+index b76ef2072fd9..787cf62bf377 100644
+--- a/plat/arm/board/corstone700/platform.mk
++++ b/plat/arm/board/corstone700/platform.mk
+@@ -1,5 +1,5 @@
+ #
+-# Copyright (c) 2019-2025, Arm Limited and Contributors. All rights reserved.
++# Copyright (c) 2019-2023, Arm Limited and Contributors. All rights reserved.
+ #
+ # SPDX-License-Identifier: BSD-3-Clause
+ #
+@@ -29,7 +29,12 @@ ifeq (${AARCH32_SP},none)
+     $(error Variable AARCH32_SP has to be set for AArch32)
+ endif
+ 
+-USE_GIC_DRIVER		:=	2
++# Include GICv2 driver files
++include drivers/arm/gic/v2/gicv2.mk
++
++CORSTONE700_GIC_SOURCES	:=	${GICV2_SOURCES}			\
++				plat/common/plat_gicv2.c		\
++				plat/common/plat_gicv2_base.c
+ 
+ # BL1/BL2 Image not a part of the capsule Image for Corstone700
+ override NEED_BL1	:=	no
+diff --git a/plat/arm/board/corstone700/sp_min/sp_min-corstone700.mk b/plat/arm/board/corstone700/sp_min/sp_min-corstone700.mk
+index 3e282cd33352..75dc0f10cb47 100644
+--- a/plat/arm/board/corstone700/sp_min/sp_min-corstone700.mk
++++ b/plat/arm/board/corstone700/sp_min/sp_min-corstone700.mk
+@@ -1,5 +1,5 @@
+ #
+-# Copyright (c) 2019-2025, Arm Limited and Contributors. All rights reserved.
++# Copyright (c) 2019-2020, Arm Limited and Contributors. All rights reserved.
+ #
+ # SPDX-License-Identifier: BSD-3-Clause
+ #
+@@ -12,7 +12,8 @@ BL32_SOURCES	+=	drivers/cfi/v2m/v2m_flash.c				\
+ 			plat/arm/board/corstone700/common/corstone700_security.c	\
+ 			plat/arm/board/corstone700/common/corstone700_plat.c		\
+ 			plat/arm/board/corstone700/common/corstone700_pm.c		\
+-			plat/arm/board/corstone700/sp_min/corstone700_sp_min_setup.c
++			plat/arm/board/corstone700/sp_min/corstone700_sp_min_setup.c	\
++			${CORSTONE700_GIC_SOURCES}
+ 
+ ifneq (${ENABLE_STACK_PROTECTOR},0)
+ 	ifneq (${ENABLE_STACK_PROTECTOR},none)
+diff --git a/plat/arm/board/fvp/fvp_bl31_setup.c b/plat/arm/board/fvp/fvp_bl31_setup.c
+index d75abb4c8d42..83b514a9235a 100644
+--- a/plat/arm/board/fvp/fvp_bl31_setup.c
++++ b/plat/arm/board/fvp/fvp_bl31_setup.c
+@@ -95,10 +95,8 @@ void __init bl31_platform_setup(void)
+ {
+ 	arm_bl31_platform_setup();
+ 
+-#if USE_GIC_DRIVER == 3
+ 	fvp_pcpu_init();
+ 	fvp_gic_driver_pre_init();
+-#endif
+ }
+ 
+ #if !TRANSFER_LIST
+diff --git a/plat/arm/board/fvp/fvp_gicv3.c b/plat/arm/board/fvp/fvp_gicv3.c
+index 4167229dcae6..aa99d7db1203 100644
+--- a/plat/arm/board/fvp/fvp_gicv3.c
++++ b/plat/arm/board/fvp/fvp_gicv3.c
+@@ -29,7 +29,7 @@ static const interrupt_prop_t __unused fvp_interrupt_props[] = {
+ 	PLAT_ARM_G0_IRQ_PROPS(INTR_GROUP0)
+ };
+ 
+-extern gicv3_driver_data_t gic_data;
++extern gicv3_driver_data_t arm_gic_data;
+ 
+ /******************************************************************************
+  * This function gets called per core to make its redistributor frame rw
+@@ -76,25 +76,25 @@ void fvp_gic_driver_pre_init(void)
+ 	 */
+ #if (!defined(__aarch64__) && defined(IMAGE_BL32)) || \
+ 	(defined(__aarch64__) && defined(IMAGE_BL31))
+-	gic_data.gicd_base = (uintptr_t)FCONF_GET_PROPERTY(hw_config,
++	arm_gic_data.gicd_base = (uintptr_t)FCONF_GET_PROPERTY(hw_config,
+ 							       gicv3_config,
+ 							       gicd_base);
+ 	fvp_gicr_base_addrs[0] = FCONF_GET_PROPERTY(hw_config, gicv3_config,
+ 						    gicr_base);
+ #if SEC_INT_DESC_IN_FCONF
+-	gic_data.interrupt_props = FCONF_GET_PROPERTY(hw_config,
++	arm_gic_data.interrupt_props = FCONF_GET_PROPERTY(hw_config,
+ 					sec_intr_prop, descriptor);
+-	gic_data.interrupt_props_num = FCONF_GET_PROPERTY(hw_config,
++	arm_gic_data.interrupt_props_num = FCONF_GET_PROPERTY(hw_config,
+ 					sec_intr_prop, count);
+ #else
+-	gic_data.interrupt_props = fvp_interrupt_props;
+-	gic_data.interrupt_props_num = ARRAY_SIZE(fvp_interrupt_props);
++	arm_gic_data.interrupt_props = fvp_interrupt_props;
++	arm_gic_data.interrupt_props_num = ARRAY_SIZE(fvp_interrupt_props);
+ #endif
+ #else
+-	gic_data.gicd_base = PLAT_ARM_GICD_BASE;
++	arm_gic_data.gicd_base = PLAT_ARM_GICD_BASE;
+ 	fvp_gicr_base_addrs[0] = PLAT_ARM_GICR_BASE;
+-	gic_data.interrupt_props = fvp_interrupt_props;
+-	gic_data.interrupt_props_num = ARRAY_SIZE(fvp_interrupt_props);
++	arm_gic_data.interrupt_props = fvp_interrupt_props;
++	arm_gic_data.interrupt_props_num = ARRAY_SIZE(fvp_interrupt_props);
+ #endif
+ 	plat_arm_override_gicr_frames(fvp_gicr_base_addrs);
+ #endif /* !(BL2_AT_EL3 || RESET_TO_BL31 || RESET_TO_SP_MIN || RESET_TO_BL2) */
+diff --git a/plat/arm/board/fvp/fvp_pm.c b/plat/arm/board/fvp/fvp_pm.c
+index fb72105886ef..f01678b0a7e4 100644
+--- a/plat/arm/board/fvp/fvp_pm.c
++++ b/plat/arm/board/fvp/fvp_pm.c
+@@ -180,6 +180,12 @@ static void fvp_pwr_domain_off(const psci_power_state_t *target_state)
+ 	 * by the cluster specific operations if applicable.
+ 	 */
+ 
++	/* Prevent interrupts from spuriously waking up this cpu */
++	plat_arm_gic_cpuif_disable();
++
++	/* Turn redistributor off */
++	plat_arm_gic_redistif_off();
++
+ 	/* Program the power controller to power off this cpu. */
+ 	fvp_pwrc_write_ppoffr(read_mpidr_el1());
+ 
+@@ -214,6 +220,9 @@ static void fvp_pwr_domain_suspend(const psci_power_state_t *target_state)
+ 	/* Program the power controller to enable wakeup interrupts. */
+ 	fvp_pwrc_set_wen(mpidr);
+ 
++	/* Prevent interrupts from spuriously waking up this cpu */
++	plat_arm_gic_cpuif_disable();
++
+ 	/*
+ 	 * The Redistributor is not powered off as it can potentially prevent
+ 	 * wake up events reaching the CPUIF and/or might lead to losing
+@@ -244,6 +253,7 @@ static void fvp_pwr_domain_suspend(const psci_power_state_t *target_state)
+ static void fvp_pwr_domain_on_finish(const psci_power_state_t *target_state)
+ {
+ 	fvp_power_domain_on_finish_common(target_state);
++
+ }
+ 
+ /*******************************************************************************
+@@ -253,9 +263,12 @@ static void fvp_pwr_domain_on_finish(const psci_power_state_t *target_state)
+  ******************************************************************************/
+ static void fvp_pwr_domain_on_finish_late(const psci_power_state_t *target_state)
+ {
+-#if USE_GIC_DRIVER == 3
+ 	fvp_pcpu_init();
+-#endif
++	/* Program GIC per-cpu distributor or re-distributor interface */
++	plat_arm_gic_pcpu_init();
++
++	/* Enable GIC CPU interface */
++	plat_arm_gic_cpuif_enable();
+ }
+ 
+ /*******************************************************************************
+@@ -275,6 +288,9 @@ static void fvp_pwr_domain_suspend_finish(const psci_power_state_t *target_state
+ 		return;
+ 
+ 	fvp_power_domain_on_finish_common(target_state);
++
++	/* Enable GIC CPU interface */
++	plat_arm_gic_cpuif_enable();
+ }
+ 
+ /*******************************************************************************
+diff --git a/plat/arm/board/fvp/platform.mk b/plat/arm/board/fvp/platform.mk
+index ea1b7e73e0cf..3b2db205b760 100644
+--- a/plat/arm/board/fvp/platform.mk
++++ b/plat/arm/board/fvp/platform.mk
+@@ -123,16 +123,18 @@ $(eval $(call add_define,FVP_INTERCONNECT_DRIVER))
+ 
+ # Choose the GIC sources depending upon the how the FVP will be invoked
+ ifeq (${FVP_USE_GIC_DRIVER}, FVP_GICV3)
+-USE_GIC_DRIVER			:=	3
+ 
+ # The GIC model (GIC-600 or GIC-500) will be detected at runtime
+ GICV3_SUPPORT_GIC600		:=	1
+ GICV3_OVERRIDE_DISTIF_PWR_OPS	:=	1
+ 
+-FVP_SECURITY_SOURCES += plat/arm/board/fvp/fvp_gicv3.c
+-ifeq ($(filter 1,${RESET_TO_BL2} ${RESET_TO_BL31}),)
+-BL31_SOURCES		+=	plat/arm/board/fvp/fconf/fconf_gicv3_config_getter.c
+-endif
++# Include GICv3 driver files
++include drivers/arm/gic/v3/gicv3.mk
++
++FVP_GIC_SOURCES		:=	${GICV3_SOURCES}			\
++				plat/common/plat_gicv3.c		\
++				plat/common/plat_gicv3_base.c		\
++				plat/arm/board/fvp/fvp_gicv3.c
+ 
+ ifeq (${HW_ASSISTED_COHERENCY}, 0)
+ FVP_DT_PREFIX			:= fvp-base-gicv3-psci
+@@ -151,12 +153,18 @@ ifeq ($(ENABLE_RME),1)
+        $(error Error: GICv5 is not compatible with RME)
+ endif
+ else ifeq (${FVP_USE_GIC_DRIVER}, FVP_GICV2)
+-USE_GIC_DRIVER		:=	2
+ 
+ # No GICv4 extension
+ GIC_ENABLE_V4_EXTN	:=	0
+ $(eval $(call add_define,GIC_ENABLE_V4_EXTN))
+ 
++# Include GICv2 driver files
++include drivers/arm/gic/v2/gicv2.mk
++
++FVP_GIC_SOURCES		:=	${GICV2_SOURCES}			\
++				plat/common/plat_gicv2.c		\
++				plat/common/plat_gicv2_base.c
++
+ FVP_DT_PREFIX		:=	fvp-base-gicv2-psci
+ else
+ $(error "Incorrect GIC driver chosen on FVP port")
+@@ -171,7 +179,7 @@ else
+ $(error "Incorrect CCN driver chosen on FVP port")
+ endif
+ 
+-FVP_SECURITY_SOURCES	+=	drivers/arm/tzc/tzc400.c		\
++FVP_SECURITY_SOURCES	:=	drivers/arm/tzc/tzc400.c		\
+ 				plat/arm/board/fvp/fvp_security.c	\
+ 				plat/arm/common/arm_tzc400.c
+ 
+@@ -340,6 +348,7 @@ BL31_SOURCES		+=	drivers/arm/fvp/fvp_pwrc.c			\
+ 				plat/arm/board/fvp/fvp_cpu_pwr.c		\
+ 				plat/arm/common/arm_nor_psci_mem_protect.c	\
+ 				${FVP_CPU_LIBS}					\
++				${FVP_GIC_SOURCES}				\
+ 				${FVP_INTERCONNECT_SOURCES}			\
+ 				${FVP_SECURITY_SOURCES}
+ 
+diff --git a/plat/arm/board/fvp/sp_min/sp_min-fvp.mk b/plat/arm/board/fvp/sp_min/sp_min-fvp.mk
+index 0328864624d9..4ddba6f4dba2 100644
+--- a/plat/arm/board/fvp/sp_min/sp_min-fvp.mk
++++ b/plat/arm/board/fvp/sp_min/sp_min-fvp.mk
+@@ -1,5 +1,5 @@
+ #
+-# Copyright (c) 2016-2025, Arm Limited and Contributors. All rights reserved.
++# Copyright (c) 2016-2023, Arm Limited and Contributors. All rights reserved.
+ #
+ # SPDX-License-Identifier: BSD-3-Clause
+ #
+@@ -17,7 +17,7 @@ BL32_SOURCES		+=	drivers/arm/fvp/fvp_pwrc.c			\
+ 				plat/arm/board/fvp/sp_min/fvp_sp_min_setup.c	\
+ 				plat/arm/common/arm_nor_psci_mem_protect.c	\
+ 				${FVP_CPU_LIBS}					\
+-				${GIC_SOURCES}					\
++				${FVP_GIC_SOURCES}				\
+ 				${FVP_INTERCONNECT_SOURCES}			\
+ 				${FVP_SECURITY_SOURCES}
+ 
+diff --git a/plat/arm/board/fvp/tsp/tsp-fvp.mk b/plat/arm/board/fvp/tsp/tsp-fvp.mk
+index 8557ec10357e..ab3f225a4fe2 100644
+--- a/plat/arm/board/fvp/tsp/tsp-fvp.mk
++++ b/plat/arm/board/fvp/tsp/tsp-fvp.mk
+@@ -1,5 +1,5 @@
+ #
+-# Copyright (c) 2013-2025, Arm Limited and Contributors. All rights reserved.
++# Copyright (c) 2013-2017, ARM Limited and Contributors. All rights reserved.
+ #
+ # SPDX-License-Identifier: BSD-3-Clause
+ #
+@@ -9,6 +9,6 @@ BL32_SOURCES		+=	drivers/arm/fvp/fvp_pwrc.c			\
+ 				plat/arm/board/fvp/aarch64/fvp_helpers.S	\
+ 				plat/arm/board/fvp/fvp_topology.c		\
+ 				plat/arm/board/fvp/tsp/fvp_tsp_setup.c		\
+-				${GIC_SOURCES}
++				${FVP_GIC_SOURCES}
+ 
+ include plat/arm/common/tsp/arm_tsp.mk
+diff --git a/plat/arm/board/fvp_ve/platform.mk b/plat/arm/board/fvp_ve/platform.mk
+index b1fcd52a703f..a7db88505d61 100644
+--- a/plat/arm/board/fvp_ve/platform.mk
++++ b/plat/arm/board/fvp_ve/platform.mk
+@@ -1,5 +1,5 @@
+ #
+-# Copyright (c) 2019-2025, Arm Limited. All rights reserved.
++# Copyright (c) 2019-2023, Arm Limited. All rights reserved.
+ #
+ # SPDX-License-Identifier: BSD-3-Clause
+ #
+@@ -12,7 +12,12 @@ USE_SP804_TIMER	:= 1
+ BL2_SOURCES		+=	drivers/arm/sp804/sp804_delay_timer.c
+ endif
+ 
+-USE_GIC_DRIVER		:=	2
++# Include GICv2 driver files
++include drivers/arm/gic/v2/gicv2.mk
++
++FVP_VE_GIC_SOURCES	:=	${GICV2_SOURCES}		\
++				plat/common/plat_gicv2.c	\
++				plat/common/plat_gicv2_base.c
+ 
+ FVP_VE_SECURITY_SOURCES	:=	plat/arm/board/fvp_ve/fvp_ve_security.c
+ 
+diff --git a/plat/arm/board/fvp_ve/sp_min/sp_min-fvp_ve.mk b/plat/arm/board/fvp_ve/sp_min/sp_min-fvp_ve.mk
+index db1a6169c6a0..4ca810d3f3a9 100644
+--- a/plat/arm/board/fvp_ve/sp_min/sp_min-fvp_ve.mk
++++ b/plat/arm/board/fvp_ve/sp_min/sp_min-fvp_ve.mk
+@@ -1,5 +1,5 @@
+ #
+-# Copyright (c) 2019-2025, Arm Limited. All rights reserved.
++# Copyright (c) 2019, Arm Limited. All rights reserved.
+ #
+ # SPDX-License-Identifier: BSD-3-Clause
+ #
+@@ -18,4 +18,5 @@ BL32_SOURCES		+=	drivers/cfi/v2m/v2m_flash.c			\
+ 				plat/common/aarch32/platform_mp_stack.S		\
+ 				plat/common/plat_psci_common.c			\
+ 				${FVP_VE_CPU_LIBS}				\
++				${FVP_VE_GIC_SOURCES}				\
+ 				${FVP_VE_SECURITY_SOURCES}
+diff --git a/plat/arm/board/juno/platform.mk b/plat/arm/board/juno/platform.mk
+index 38ba0edc9415..e6f271a637ee 100644
+--- a/plat/arm/board/juno/platform.mk
++++ b/plat/arm/board/juno/platform.mk
+@@ -1,12 +1,17 @@
+ #
+-# Copyright (c) 2013-2025, Arm Limited and Contributors. All rights reserved.
++# Copyright (c) 2013-2024, Arm Limited and Contributors. All rights reserved.
+ #
+ # SPDX-License-Identifier: BSD-3-Clause
+ #
+ 
+ include common/fdt_wrappers.mk
+ 
+-USE_GIC_DRIVER		:=	2
++# Include GICv2 driver files
++include drivers/arm/gic/v2/gicv2.mk
++
++JUNO_GIC_SOURCES	:=	${GICV2_SOURCES}			\
++				plat/common/plat_gicv2.c		\
++				plat/common/plat_gicv2_base.c
+ 
+ JUNO_INTERCONNECT_SOURCES	:=	drivers/arm/cci/cci.c		\
+ 					plat/arm/common/arm_cci.c
+@@ -94,6 +99,7 @@ BL31_SOURCES		+=	drivers/cfi/v2m/v2m_flash.c		\
+ 				plat/arm/board/juno/juno_pm.c		\
+ 				plat/arm/board/juno/juno_topology.c	\
+ 				plat/arm/common/arm_nor_psci_mem_protect.c \
++				${JUNO_GIC_SOURCES}			\
+ 				${JUNO_INTERCONNECT_SOURCES}		\
+ 				${JUNO_SECURITY_SOURCES}
+ 
+diff --git a/plat/arm/board/juno/sp_min/sp_min-juno.mk b/plat/arm/board/juno/sp_min/sp_min-juno.mk
+index 45a93c80d799..b3471c1fbc97 100644
+--- a/plat/arm/board/juno/sp_min/sp_min-juno.mk
++++ b/plat/arm/board/juno/sp_min/sp_min-juno.mk
+@@ -1,5 +1,5 @@
+ #
+-# Copyright (c) 2016-2025, Arm Limited and Contributors. All rights reserved.
++# Copyright (c) 2016-2018, ARM Limited and Contributors. All rights reserved.
+ #
+ # SPDX-License-Identifier: BSD-3-Clause
+ #
+@@ -14,7 +14,7 @@ BL32_SOURCES	+=	drivers/cfi/v2m/v2m_flash.c		\
+ 			plat/arm/board/juno/juno_topology.c	\
+ 			plat/arm/common/arm_nor_psci_mem_protect.c	\
+ 			plat/arm/soc/common/soc_css_security.c	\
+-			${GIC_SOURCES}				\
++			${JUNO_GIC_SOURCES}			\
+ 			${JUNO_INTERCONNECT_SOURCES}		\
+ 			${JUNO_SECURITY_SOURCES}
+ 
+diff --git a/plat/arm/board/juno/tsp/tsp-juno.mk b/plat/arm/board/juno/tsp/tsp-juno.mk
+index c7debf1577af..be75c4d76b4e 100644
+--- a/plat/arm/board/juno/tsp/tsp-juno.mk
++++ b/plat/arm/board/juno/tsp/tsp-juno.mk
+@@ -1,12 +1,12 @@
+ #
+-# Copyright (c) 2014-2025, Arm Limited and Contributors. All rights reserved.
++# Copyright (c) 2014-2019, ARM Limited and Contributors. All rights reserved.
+ #
+ # SPDX-License-Identifier: BSD-3-Clause
+ #
+ 
+ BL32_SOURCES		+=	plat/arm/board/juno/juno_topology.c	\
+ 				plat/arm/css/common/css_topology.c	\
+-				${GIC_SOURCES}				\
++				${JUNO_GIC_SOURCES}			\
+ 				${JUNO_SECURITY_SOURCES}
+ 
+ include plat/arm/common/tsp/arm_tsp.mk
+diff --git a/plat/arm/board/morello/morello_pm.c b/plat/arm/board/morello/morello_pm.c
+index 30791cc5f697..fa7bd1d1e6e0 100644
+--- a/plat/arm/board/morello/morello_pm.c
++++ b/plat/arm/board/morello/morello_pm.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2023-2025, Arm Limited. All rights reserved.
++ * Copyright (c) 2023, Arm Limited. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -19,4 +19,5 @@
+ void morello_pwr_domain_off(const psci_power_state_t *target_state)
+ {
+ 	css_pwr_domain_off(target_state);
++	plat_arm_gic_redistif_off();
+ }
+diff --git a/plat/arm/board/morello/platform.mk b/plat/arm/board/morello/platform.mk
+index 76535837825d..5534be025e13 100644
+--- a/plat/arm/board/morello/platform.mk
++++ b/plat/arm/board/morello/platform.mk
+@@ -18,9 +18,15 @@ PLAT_INCLUDES		:=	-I${MORELLO_BASE}/include
+ MORELLO_CPU_SOURCES	:=	lib/cpus/aarch64/rainier.S
+ 
+ # GIC-600 configuration
+-USE_GIC_DRIVER		:=	3
+ GICV3_SUPPORT_GIC600	:=	1
+ 
++# Include GICv3 driver files
++include drivers/arm/gic/v3/gicv3.mk
++
++MORELLO_GIC_SOURCES	:=	${GICV3_SOURCES}			\
++				plat/common/plat_gicv3.c		\
++				plat/common/plat_gicv3_base.c		\
++
+ PLAT_BL_COMMON_SOURCES	:=	${MORELLO_BASE}/morello_plat.c		\
+ 				${MORELLO_BASE}/aarch64/morello_helper.S
+ 
+@@ -41,6 +47,7 @@ BL2_SOURCES		:=	${MORELLO_BASE}/morello_security.c	\
+ 
+ BL31_SOURCES		:=	${MORELLO_CPU_SOURCES}			\
+ 				${INTERCONNECT_SOURCES}			\
++				${MORELLO_GIC_SOURCES}			\
+ 				${MORELLO_BASE}/morello_bl31_setup.c	\
+ 				${MORELLO_BASE}/morello_pm.c		\
+ 				${MORELLO_BASE}/morello_topology.c	\
+diff --git a/plat/arm/board/n1sdp/n1sdp_pm.c b/plat/arm/board/n1sdp/n1sdp_pm.c
+index d89fb05ab422..8d453546875e 100644
+--- a/plat/arm/board/n1sdp/n1sdp_pm.c
++++ b/plat/arm/board/n1sdp/n1sdp_pm.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2023-2025, Arm Limited. All rights reserved.
++ * Copyright (c) 2023, Arm Limited. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -19,4 +19,5 @@
+ void n1sdp_pwr_domain_off(const psci_power_state_t *target_state)
+ {
+ 	css_pwr_domain_off(target_state);
++	plat_arm_gic_redistif_off();
+ }
+diff --git a/plat/arm/board/n1sdp/platform.mk b/plat/arm/board/n1sdp/platform.mk
+index 218081c42c9a..d626a2852ccd 100644
+--- a/plat/arm/board/n1sdp/platform.mk
++++ b/plat/arm/board/n1sdp/platform.mk
+@@ -1,5 +1,5 @@
+ #
+-# Copyright (c) 2018-2025, Arm Limited. All rights reserved.
++# Copyright (c) 2018-2023, Arm Limited. All rights reserved.
+ #
+ # SPDX-License-Identifier: BSD-3-Clause
+ #
+@@ -19,10 +19,16 @@ ARM_ARCH_MAJOR := 8
+ ARM_ARCH_MINOR := 2
+ 
+ # GIC-600 configuration
+-USE_GIC_DRIVER			:=	3
+ GICV3_SUPPORT_GIC600		:=	1
+ GICV3_IMPL_GIC600_MULTICHIP	:=	1
+ 
++# Include GICv3 driver files
++include drivers/arm/gic/v3/gicv3.mk
++
++N1SDP_GIC_SOURCES	:=	${GICV3_SOURCES}			\
++				plat/common/plat_gicv3.c		\
++				plat/common/plat_gicv3_base.c		\
++
+ PLAT_BL_COMMON_SOURCES	:=	${N1SDP_BASE}/n1sdp_plat.c	        \
+ 				${N1SDP_BASE}/aarch64/n1sdp_helper.S
+ 
+@@ -43,6 +49,7 @@ BL2_SOURCES		:=	${N1SDP_BASE}/n1sdp_security.c      \
+ 
+ BL31_SOURCES		:=	${N1SDP_CPU_SOURCES}			\
+ 				${INTERCONNECT_SOURCES}			\
++				${N1SDP_GIC_SOURCES}			\
+ 				${N1SDP_BASE}/n1sdp_bl31_setup.c	\
+ 				${N1SDP_BASE}/n1sdp_pm.c		\
+ 				${N1SDP_BASE}/n1sdp_topology.c	        \
+diff --git a/plat/arm/board/neoverse_rd/common/nrd-common.mk b/plat/arm/board/neoverse_rd/common/nrd-common.mk
+index 3f0629ee868e..d3719d60b1b7 100644
+--- a/plat/arm/board/neoverse_rd/common/nrd-common.mk
++++ b/plat/arm/board/neoverse_rd/common/nrd-common.mk
+@@ -1,5 +1,5 @@
+ #
+-# Copyright (c) 2018-2025, Arm Limited and Contributors. All rights reserved.
++# Copyright (c) 2018-2024, Arm Limited and Contributors. All rights reserved.
+ #
+ # SPDX-License-Identifier: BSD-3-Clause
+ #
+@@ -33,9 +33,15 @@ INTERCONNECT_SOURCES	:=	${NRD_COMMON_BASE}/nrd_interconnect.c
+ PLAT_INCLUDES		+=	-I${NRD_COMMON_BASE}/include
+ 
+ # GIC-600 configuration
+-USE_GIC_DRIVER		:=	3
+ GICV3_SUPPORT_GIC600	:=	1
+ 
++# Include GICv3 driver files
++include drivers/arm/gic/v3/gicv3.mk
++
++ENT_GIC_SOURCES		:=	${GICV3_SOURCES}		\
++				plat/common/plat_gicv3.c	\
++				plat/common/plat_gicv3_base.c
++
+ PLAT_BL_COMMON_SOURCES	+=	${NRD_COMMON_BASE}/arch/aarch64/nrd_helper.S
+ 
+ BL1_SOURCES		+=	${INTERCONNECT_SOURCES}			\
+@@ -46,6 +52,7 @@ BL2_SOURCES		+=	${NRD_COMMON_BASE}/nrd_image_load.c	\
+ 				drivers/arm/css/sds/sds.c
+ 
+ BL31_SOURCES		+=	${INTERCONNECT_SOURCES}			\
++				${ENT_GIC_SOURCES}			\
+ 				${NRD_COMMON_BASE}/nrd_bl31_setup.c	\
+ 				${NRD_COMMON_BASE}/nrd_topology.c	\
+ 				drivers/delay_timer/generic_delay_timer.c
+diff --git a/plat/arm/board/tc/platform.mk b/plat/arm/board/tc/platform.mk
+index b29f0d6cfcb4..d4602447d035 100644
+--- a/plat/arm/board/tc/platform.mk
++++ b/plat/arm/board/tc/platform.mk
+@@ -15,7 +15,6 @@ TC_SCMI_PD_CTRL_EN		:=	1
+ CSS_USE_SCMI_SDS_DRIVER		:=	1
+ HW_ASSISTED_COHERENCY		:=	1
+ USE_COHERENT_MEM		:=	0
+-USE_GIC_DRIVER			:=	3
+ GIC_ENABLE_V4_EXTN		:=      1
+ GICV3_SUPPORT_GIC600		:=	1
+ override NEED_BL2U		:=	no
+@@ -106,6 +105,13 @@ PRESERVE_DSU_PMU_REGS		:= 1
+ 
+ PLAT_MHU		:= MHUv3
+ 
++# Include GICv3 driver files
++include drivers/arm/gic/v3/gicv3.mk
++
++ENT_GIC_SOURCES		:=	${GICV3_SOURCES}		\
++				plat/common/plat_gicv3.c	\
++				plat/common/plat_gicv3_base.c
++
+ TC_BASE	=	plat/arm/board/tc
+ 
+ PLAT_INCLUDES		+=	-I${TC_BASE}/include/ \
+@@ -158,6 +164,7 @@ BL2_SOURCES		+=	${TC_BASE}/tc_security.c	\
+ 
+ BL31_SOURCES		+=	${INTERCONNECT_SOURCES}	\
+ 				${TC_CPU_SOURCES}	\
++				${ENT_GIC_SOURCES}			\
+ 				${TC_BASE}/tc_bl31_setup.c	\
+ 				${TC_BASE}/tc_topology.c	\
+ 				lib/fconf/fconf.c			\
+diff --git a/plat/arm/common/arm_bl31_setup.c b/plat/arm/common/arm_bl31_setup.c
+index 900639e08ae3..acb0d615cfcd 100644
+--- a/plat/arm/common/arm_bl31_setup.c
++++ b/plat/arm/common/arm_bl31_setup.c
+@@ -409,6 +409,10 @@ void arm_bl31_platform_setup(void)
+ 	}
+ #endif /* TRANSFER_LIST && !RESET_TO_BL31 */
+ 
++	/* Initialize the GIC driver, cpu and distributor interfaces */
++	plat_arm_gic_driver_init();
++	plat_arm_gic_init();
++
+ #if RESET_TO_BL31
+ 	/*
+ 	 * Do initial security configuration to allow DRAM/device access
+diff --git a/plat/arm/common/arm_pm.c b/plat/arm/common/arm_pm.c
+index e8d15f76ef4b..3e6c9f287745 100644
+--- a/plat/arm/common/arm_pm.c
++++ b/plat/arm/common/arm_pm.c
+@@ -148,7 +148,7 @@ void arm_system_pwr_domain_save(void)
+ 	/* Assert system power domain is available on the platform */
+ 	assert(PLAT_MAX_PWR_LVL >= ARM_PWR_LVL2);
+ 
+-	gic_save();
++	plat_arm_gic_save();
+ 
+ 	/*
+ 	 * Unregister console now so that it is not registered for a second
+@@ -177,7 +177,7 @@ void arm_system_pwr_domain_resume(void)
+ 	/* Assert system power domain is available on the platform */
+ 	assert(PLAT_MAX_PWR_LVL >= ARM_PWR_LVL2);
+ 
+-	gic_resume();
++	plat_arm_gic_resume();
+ 
+ 	plat_arm_security_setup();
+ 	arm_configure_sys_timer();
+diff --git a/plat/arm/common/tsp/arm_tsp_setup.c b/plat/arm/common/tsp/arm_tsp_setup.c
+index d018deea20bb..ccb77604fbfa 100644
+--- a/plat/arm/common/tsp/arm_tsp_setup.c
++++ b/plat/arm/common/tsp/arm_tsp_setup.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2015-2025, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2015-2020, ARM Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -17,7 +17,6 @@
+ #include <drivers/measured_boot/event_log/event_log.h>
+ #endif
+ #include <plat/arm/common/plat_arm.h>
+-#include <plat/common/platform.h>
+ 
+ /* Weak definitions may be overridden in specific ARM standard platform */
+ #pragma weak tsp_early_platform_setup
+@@ -82,26 +81,7 @@ void tsp_early_platform_setup(u_register_t arg0, u_register_t arg1,
+  ******************************************************************************/
+ void tsp_platform_setup(void)
+ {
+-	struct transfer_list_entry *te __unused;
+-
+-	/*
+-	 * On GICv2 the driver must be initialised before calling the plat_ic_*
+-	 * functions as they need the data structures. Higher versions don't.
+-	 */
+-#if USE_GIC_DRIVER == 2
+-	gic_init(plat_my_core_pos());
+-#endif
+-
+-#if TRANSFER_LIST && MEASURED_BOOT
+-	te = transfer_list_find(secure_tl, TL_TAG_TPM_EVLOG);
+-	assert(te != NULL);
+-
+-	/*
+-	 * Note the actual log is offset 4-bytes from the start of entry data, the
+-	 * first bytes are reserved.
+-	 */
+-	event_log_dump(transfer_list_entry_data(te) + U(4), te->data_size - U(4));
+-#endif
++	plat_arm_gic_driver_init();
+ }
+ 
+ /*******************************************************************************
+diff --git a/plat/arm/css/common/css_pm.c b/plat/arm/css/common/css_pm.c
+index 18882d30fed7..f8bc54249af8 100644
+--- a/plat/arm/css/common/css_pm.c
++++ b/plat/arm/css/common/css_pm.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2015-2025, Arm Limited and Contributors. All rights reserved.
++ * Copyright (c) 2015-2024, Arm Limited and Contributors. All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -114,6 +114,12 @@ void css_pwr_domain_on_finish(const psci_power_state_t *target_state)
+  ******************************************************************************/
+ void css_pwr_domain_on_finish_late(const psci_power_state_t *target_state)
+ {
++	/* Program the gic per-cpu distributor or re-distributor interface */
++	plat_arm_gic_pcpu_init();
++
++	/* Enable the gic cpu interface */
++	plat_arm_gic_cpuif_enable();
++
+ 	/* Setup the CPU power down request interrupt for secondary core(s) */
+ 	css_setup_cpu_pwr_down_intr();
+ }
+@@ -126,6 +132,9 @@ void css_pwr_domain_on_finish_late(const psci_power_state_t *target_state)
+  ******************************************************************************/
+ static void css_power_down_common(const psci_power_state_t *target_state)
+ {
++	/* Prevent interrupts from spuriously waking up this cpu */
++	plat_arm_gic_cpuif_disable();
++
+ 	/* Cluster is to be turned off, so disable coherency */
+ 	if (CSS_CLUSTER_PWR_STATE(target_state) == ARM_LOCAL_STATE_OFF) {
+ #if PRESERVE_DSU_PMU_REGS
+@@ -143,6 +152,8 @@ void css_pwr_domain_off(const psci_power_state_t *target_state)
+ {
+ 	assert(CSS_CORE_PWR_STATE(target_state) == ARM_LOCAL_STATE_OFF);
+ 	css_power_down_common(target_state);
++	/* ask the GIC not to wake us up */
++	plat_arm_gic_redistif_off();
+ 	css_scp_off(target_state);
+ }
+ 
+@@ -168,7 +179,7 @@ void css_pwr_domain_suspend(const psci_power_state_t *target_state)
+ 		arm_system_pwr_domain_save();
+ 
+ 		/* Power off the Redistributor after having saved its context */
+-		gic_pcpu_off(plat_my_core_pos());
++		plat_arm_gic_redistif_off();
+ 	}
+ 
+ 	css_scp_suspend(target_state);
+@@ -198,6 +209,9 @@ void css_pwr_domain_suspend_finish(
+ 		arm_system_pwr_domain_resume();
+ 
+ 	css_pwr_domain_on_finisher_common(target_state);
++
++	/* Enable the gic cpu interface */
++	plat_arm_gic_cpuif_enable();
+ }
+ 
+ /*******************************************************************************
+@@ -338,8 +352,6 @@ void css_setup_cpu_pwr_down_intr(void)
+ int css_reboot_interrupt_handler(uint32_t intr_raw, uint32_t flags,
+ 		void *handle, void *cookie)
+ {
+-	unsigned int core_pos = plat_my_core_pos();
+-
+ 	assert(intr_raw == CSS_CPU_PWR_DOWN_REQ_INTR);
+ 
+ 	/* Deactivate warm reboot SGI */
+@@ -349,8 +361,8 @@ int css_reboot_interrupt_handler(uint32_t intr_raw, uint32_t flags,
+ 	 * Disable GIC CPU interface to prevent pending interrupt from waking
+ 	 * up the AP from WFI.
+ 	 */
+-	gic_cpuif_disable(core_pos);
+-	gic_pcpu_off(core_pos);
++	plat_arm_gic_cpuif_disable();
++	plat_arm_gic_redistif_off();
+ 
+ 	psci_pwrdown_cpu_start(PLAT_MAX_PWR_LVL);
+ 

@@ -1,0 +1,61 @@
+From 32a88454114b1c9af79716a1e90cfb4387d553c9 Mon Sep 17 00:00:00 2001
+From: Lokesh B V <Lokesh.BV@Arm.com>
+Date: Thu, 19 Dec 2024 12:00:04 +0530
+Subject: [PATCH] feat(nrd4): update dram block2 base address
+
+With a recent design change, the base address for the 2nd DRAM block
+has been updated in from 0x20000000000 to 0x20080000000
+
+Signed-off-by: Lokesh B V <Lokesh.BV@Arm.com>
+Change-Id: I79a57c299127f005e88f250bf89dfd9b1951910a
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../common/include/nrd4/nrd_css_def4.h           |  2 +-
+ .../common/include/nrd4/nrd_pas_def4.h           | 16 ++++++++--------
+ 2 files changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_css_def4.h b/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_css_def4.h
+index af44ad61a239..7a62fa3b68ae 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_css_def4.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_css_def4.h
+@@ -265,7 +265,7 @@
+ #define NRD_CSS_MMIO_H_SIZE			ULL(0xFE00000000)
+ 
+ /* DRAM2 */
+-#define NRD_CSS_DRAM2_BASE			ULL(0x20000000000)
++#define NRD_CSS_DRAM2_BASE			ULL(0x20080000000)
+ 
+ /*******************************************************************************
+  * MHUv3 related definitions
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_pas_def4.h b/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_pas_def4.h
+index ebf170df513a..530ba4ceee3b 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_pas_def4.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd4/nrd_pas_def4.h
+@@ -223,17 +223,17 @@
+  * 0x10100000000    |0.996TB |L1 GPT |ANY    |MMIO_H                   |
+  * 0x1FFFFFFFFFF    |        |       |       |                         |
+  * ---------------------------------------------------------------------
+- * 0x20000000000    |6GB     |L1 GPT |ANY    |DRAM 2 CHIP 0            |
+- * 0x2017FFFFFFF    |        |       |       |                         |
++ * 0x20080000000    |6GB     |L1 GPT |ANY    |DRAM 2 CHIP 0            |
++ * 0x201FFFFFFFF    |        |       |       |                         |
+  * ---------------------------------------------------------------------
+- * 0x30000000000    |6GB     |L1 GPT |ANY    |DRAM 2 CHIP 1            |
+- * 0x3017FFFFFFF    |        |       |       |                         |
++ * 0x30090000000    |6GB     |L1 GPT |ANY    |DRAM 2 CHIP 1            |
++ * 0x301FFFFFFFF    |        |       |       |                         |
+  * ---------------------------------------------------------------------
+- * 0x40000000000    |6GB     |L1 GPT |ANY    |DRAM 2 CHIP 2            |
+- * 0x4017FFFFFFF    |        |       |       |                         |
++ * 0x40080000000    |6GB     |L1 GPT |ANY    |DRAM 2 CHIP 2            |
++ * 0x401FFFFFFFF    |        |       |       |                         |
+  * ---------------------------------------------------------------------
+- * 0x50000000000    |6GB     |L1 GPT |ANY    |DRAM 2 CHIP 3            |
+- * 0x5017FFFFFFF    |        |       |       |                         |
++ * 0x50080000000    |6GB     |L1 GPT |ANY    |DRAM 2 CHIP 3            |
++ * 0x501FFFFFFFF    |        |       |       |                         |
+  * =====================================================================
+  */
+ 

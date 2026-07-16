@@ -1,0 +1,117 @@
+From 0e509eb44b1ea87bbf84de90c9265a4e5c96e4fe Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Sat, 13 Apr 2024 15:10:28 +0530
+Subject: [PATCH] feat(rdfremont): add base ram error injection support
+
+Add support to perform error injection on base ram. Implementation
+added that programs AP secure ram ecc registers to inject 1-bit CE into
+the non-secure base element ram.
+
+This patch helps validate the firmware-first error handing support
+implemented for base element rams.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: Ib57e8afa7b037b6e603feb251dd28d4574d4ece0
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../common/include/nrd3/nrd_plat_arm_def3.h   |  5 ++
+ .../platform/rdv3/einj/nrd_einj_sram.c        | 55 +++++++++++++++++++
+ .../neoverse_rd/platform/rdv3/platform.mk     |  5 ++
+ 3 files changed, 65 insertions(+)
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdv3/einj/nrd_einj_sram.c
+
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h
+index d180e869e397..88b8865b2ae9 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd3/nrd_plat_arm_def3.h
+@@ -253,6 +253,11 @@
+ #define PLAT_SP_PRI			U(0x10)
+ #endif
+ 
++/* Interrupt priority level for error injection */
++#define PLAT_EINJ_PRI		0x20
++#define PLAT_EHF_DESC		EHF_PRI_DESC(PLAT_PRI_BITS, PLAT_EINJ_PRI)
++
++
+ #define ARM_IRQ_SEC_PHY_TIMER		U(29)
+ 
+ #define ARM_IRQ_SEC_SGI_0		U(8)
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3/einj/nrd_einj_sram.c b/plat/arm/board/neoverse_rd/platform/rdv3/einj/nrd_einj_sram.c
+new file mode 100644
+index 000000000000..305e7b53cb8c
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdv3/einj/nrd_einj_sram.c
+@@ -0,0 +1,55 @@
++/*
++ * Copyright (c) 2023-2024, Arm Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++#include <common/debug.h>
++#include <lib/mmio.h>
++#include <rdv3_ras.h>
++#include <platform_def.h>
++
++#define AP_RT_RAM_ECC_RAS_BASE  NRD_CSS_ROOT_SRAM_ERB_AP_BASE
++#define ROOT_RAM_BASE_ADDR      0x19100UL
++
++/*Shared SRAM ECC RAS register offsets*/
++#define SRAM_ENABLE_ECC              (1U << 0)
++#define SRAM_INJECT_CE_BIT           (1U << 8)
++#define SRAM_INJECT_ERROR_CE         (1U << 4)
++#define SRAM_INJECT_UE_BIT           (1U << 3)
++#define SRAM_INJECT_ERROR_UE         (1U << 3)
++
++#define SRAM_ERR_CTRL_OFFSET          0x08UL
++#define SRAM_ERR_STATUS_OFFSET        0x10UL
++#define SRAM_ERR_ADDR_OFFSET          0x18UL
++#define SRAM_ERR_MISC1_OFFSET         0x28UL
++
++/*
++ * Function that performs 1-bit CE injection into Secure base element ram.
++ * Programs error control register belonging to register bank AP secure ram ecc
++ * ras registers to inject 1-bit CE. After that initiates a read operation to
++ * any secure ram location. This triggers the injection, populates the error
++ * and generates a fault handling interrupt to AP.
++ */
++void nrd_sram_inject_error(void)
++{
++        uint64_t addr_s = ROOT_RAM_BASE_ADDR;
++        volatile uint32_t data;
++
++        /* Program AP Secure RAM error record control register to inject 1-bit
++         * error
++         */
++        mmio_write_32((AP_RT_RAM_ECC_RAS_BASE + SRAM_ERR_CTRL_OFFSET),
++            SRAM_INJECT_CE_BIT |
++            SRAM_INJECT_UE_BIT |
++            SRAM_ENABLE_ECC);
++
++        INFO("Injecting CE\n");
++        mmio_write_32((AP_RT_RAM_ECC_RAS_BASE + SRAM_ERR_MISC1_OFFSET),
++                    SRAM_INJECT_ERROR_CE);
++
++        /* For injection to take effect make read access to any Secure RAM
++         * location from AP.
++         */
++        data = *(volatile uint32_t *)addr_s;
++        INFO("Accessing Root RAM location 0x%lx = 0x%x\n", addr_s, data);
++}
+diff --git a/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk b/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk
+index a3c94f54955a..f9d32c2175a8 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk
++++ b/plat/arm/board/neoverse_rd/platform/rdv3/platform.mk
+@@ -127,6 +127,11 @@ BL31_SOURCES	+=	${NRD_CPU_SOURCES}				\
+ 			lib/utils/mem_region.c				\
+ 			plat/arm/common/arm_dyn_cfg.c			\
+ 			plat/arm/common/arm_nor_psci_mem_protect.c
++
++ifeq (${NRD_ERR_INJ_SUPPORT},1)
++BL31_SOURCES           +=      ${RDV3_BASE}/einj/nrd_einj_sram.c
++endif
++
+ ifeq (${NRD_PLATFORM_VARIANT}, 2)
+ BL31_SOURCES	+=	drivers/arm/gic/v3/gic600_multichip.c
+ endif

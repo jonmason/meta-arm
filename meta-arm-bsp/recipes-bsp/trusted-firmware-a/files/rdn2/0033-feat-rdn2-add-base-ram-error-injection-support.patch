@@ -1,0 +1,128 @@
+From 8c12fdc8de334685d570023597235f95a14f3a88 Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Sat, 13 Apr 2024 21:30:47 +0530
+Subject: [PATCH] feat(rdn2): add base ram error injection support
+
+Add support to perform error injection on base ram. Implementation
+added that programs AP secure ram ecc registers to inject 1-bit CE into
+the non-secure base element ram.
+
+This patch helps validate the firmware-first error handing support
+implemented for base element rams.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I9755845b3e6df8347c5513eab81acb2379c5cdd7
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../board/neoverse_rd/common/einj/nrd_einj.c  |  3 ++
+ .../neoverse_rd/common/include/nrd_einj.h     |  4 ++
+ .../platform/rdn2/einj/nrd_einj_sram.c        | 49 +++++++++++++++++++
+ .../neoverse_rd/platform/rdn2/platform.mk     |  4 ++
+ 4 files changed, 60 insertions(+)
+ create mode 100644 plat/arm/board/neoverse_rd/platform/rdn2/einj/nrd_einj_sram.c
+
+diff --git a/plat/arm/board/neoverse_rd/common/einj/nrd_einj.c b/plat/arm/board/neoverse_rd/common/einj/nrd_einj.c
+index 039c93ed8c88..65d798d29899 100644
+--- a/plat/arm/board/neoverse_rd/common/einj/nrd_einj.c
++++ b/plat/arm/board/neoverse_rd/common/einj/nrd_einj.c
+@@ -75,6 +75,9 @@ static int err_inj_el3_interrupt_handler(uint32_t intr, uint32_t flags,
+                switch (error_type) {
+                case EINJ_VENDOR_ERROR_TYPE_CMN_HNF:
+                        break;
++		case EINJ_VENDOR_ERROR_TYPE_SRAM:
++                       nrd_sram_inject_error();
++                       break;
+                default:
+                        ERROR("Error Injection failed: No device present of \
+                                type %d\n", error_type);
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd_einj.h b/plat/arm/board/neoverse_rd/common/include/nrd_einj.h
+index 8f23518d5e2c..1265c8f168ff 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd_einj.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd_einj.h
+@@ -23,6 +23,7 @@
+ #define EINJ_ERROR_TYPE_VENDOR_BIT                     (1U << 31)
+ 
+ #define EINJ_VENDOR_ERROR_TYPE_CMN_HNF ((1U << 16) | EINJ_ERROR_TYPE_VENDOR_BIT)
++#define EINJ_VENDOR_ERROR_TYPE_SRAM    ((1U << 17) | EINJ_ERROR_TYPE_VENDOR_BIT)
+ 
+ #define ACTION_SET_ERROR_TYPE_WITH_ADDRESS_BASE NRD_CSS_EINJ_SET_ERROR_TYPE_ADDR
+ 
+@@ -48,3 +49,6 @@ typedef struct {
+ 
+ /* Error injection initialization function */
+ int nrd_err_inj_init(void);
++
++/* Base element non-secure error injection helper */
++void nrd_sram_inject_error(void);
+diff --git a/plat/arm/board/neoverse_rd/platform/rdn2/einj/nrd_einj_sram.c b/plat/arm/board/neoverse_rd/platform/rdn2/einj/nrd_einj_sram.c
+new file mode 100644
+index 000000000000..74a64b9e355a
+--- /dev/null
++++ b/plat/arm/board/neoverse_rd/platform/rdn2/einj/nrd_einj_sram.c
+@@ -0,0 +1,49 @@
++/*
++ * Copyright (c) 2022, ARM Limited and Contributors. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <common/debug.h>
++#include <lib/mmio.h>
++#include <platform_def.h>
++
++#define ENABLE_ECC             (1U << 0)
++#define INJECT_CE_BIT          (1U << 5)
++#define INJECT_UE_BIT          (1U << 6)
++
++/*
++ * Function that performs 1-bit CE injection into Non-Secure base element ram.
++ * Programs error control register belonging to register bank AP Non-secure ram ecc
++ * ras registers to inject 1-bit CE. After that initiates a read operation to
++ * any Non-secure ram location. This triggers the injection, populates the error
++ * and generates a fault handling interrupt to AP.
++ */
++void nrd_sram_inject_error(void)
++{
++       uint64_t addr_s = NRD_CSS_NS_SRAM_BASE + U(0x500);
++       volatile uint32_t data;
++
++       /* AP Non-Secure RAM ECC RAS registers */
++       INFO("AP Non-Secure RAM ECC Register values , Register base = 0x%lx\n",
++               NRD_CSS_NS_RAM_ERR_REC_BASE);
++
++       /* Program AP Non-Secure RAM error record control register to inject 1-bit
++        * error
++        */
++       INFO("\n Injecting error...\n");
++       mmio_write_32((NRD_CSS_NS_RAM_ERR_REC_BASE + 0x004),
++                       INJECT_CE_BIT | ENABLE_ECC);
++       INFO("ERRCtrl = 0x%x\n", mmio_read_32(NRD_CSS_NS_RAM_ERR_REC_BASE + 0x004));
++
++       /* For injection to take effect make read access to any Non-Secure RAM
++        * location from AP.
++        */
++       data = *(volatile uint32_t *)addr_s;
++       INFO("Accessing Non-Secure RAM location 0x%lx = 0x%x\n", addr_s, data);
++
++       INFO("After Injection...\n");
++       INFO("ErrStatus = 0x%x\n", mmio_read_32(NRD_CSS_NS_RAM_ERR_REC_BASE));
++       INFO("ErrCode = 0x%x\n", mmio_read_32(NRD_CSS_NS_RAM_ERR_REC_BASE + 0x008));
++       INFO("ErrAddr = 0x%x\n", mmio_read_32(NRD_CSS_NS_RAM_ERR_REC_BASE + 0x00C));
++}
+diff --git a/plat/arm/board/neoverse_rd/platform/rdn2/platform.mk b/plat/arm/board/neoverse_rd/platform/rdn2/platform.mk
+index 4a4ff6372719..41b775414d12 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdn2/platform.mk
++++ b/plat/arm/board/neoverse_rd/platform/rdn2/platform.mk
+@@ -58,6 +58,10 @@ BL31_SOURCES		+=	${NRD_CPU_SOURCES}			\
+ 				lib/utils/mem_region.c			\
+ 				plat/arm/common/arm_nor_psci_mem_protect.c
+ 
++ifeq (${NRD_ERR_INJ_SUPPORT},1)
++BL31_SOURCES           +=      ${RDN2_BASE}/einj/nrd_einj_sram.c
++endif
++
+ ifeq (${TRUSTED_BOARD_BOOT}, 1)
+ BL1_SOURCES		+=	${RDN2_BASE}/rdn2_trusted_boot.c
+ BL2_SOURCES		+=	${RDN2_BASE}/rdn2_trusted_boot.c

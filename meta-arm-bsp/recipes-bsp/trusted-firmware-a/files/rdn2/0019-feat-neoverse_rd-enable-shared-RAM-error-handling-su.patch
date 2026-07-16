@@ -1,0 +1,30 @@
+From 2e383362eb1b69c279c058103738799962b2886d Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Wed, 10 Apr 2024 21:47:04 +0530
+Subject: [PATCH] feat(neoverse_rd): enable shared RAM error handling support
+
+Add platform specific defines for Shared RAM implemented on
+Rd-N2-Cfg1 platform.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I7a9dda0d59136416abfda833f07b118aa7b94a8d
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ plat/arm/board/neoverse_rd/common/include/nrd2/nrd_css_def2.h | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/plat/arm/board/neoverse_rd/common/include/nrd2/nrd_css_def2.h b/plat/arm/board/neoverse_rd/common/include/nrd2/nrd_css_def2.h
+index 6cf57d4ed6c9..9aed49cddbba 100644
+--- a/plat/arm/board/neoverse_rd/common/include/nrd2/nrd_css_def2.h
++++ b/plat/arm/board/neoverse_rd/common/include/nrd2/nrd_css_def2.h
+@@ -44,4 +44,8 @@
+ /* GIC */
+ #define NRD_CSS_GIC_BASE			UL(0x30000000)
+ 
++/* Base Element RAM Error Record offsets. */
++#define ERRSTATUS				U(0)
++#define ERRADDR					U(12)
++
+ #endif /* NRD_CSS_DEF2_H */
