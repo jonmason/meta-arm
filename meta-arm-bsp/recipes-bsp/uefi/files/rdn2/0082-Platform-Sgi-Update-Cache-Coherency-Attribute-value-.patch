@@ -1,0 +1,32 @@
+From 15d38470030f0e9dab7755b802f73f15a3047bfb Mon Sep 17 00:00:00 2001
+From: Chaitanya S Prakash <ChaitanyaS.Prakash@arm.com>
+Date: Fri, 25 Oct 2024 15:43:59 +0100
+Subject: [PATCH] Platform/Sgi: Update Cache Coherency Attribute value of Root
+ Complex
+
+As SBSA requires root complexes to support IO Coherency and to
+be in the same shareability domain as the CPUs, update CCA's value
+to be equal to EFI_ACPI_IORT_MEM_ACCESS_PROP_CCA.
+
+Signed-off-by: Chaitanya S Prakash <ChaitanyaS.Prakash@arm.com>
+Change-Id: I758e39781c9f6ec4634fad834debdccde10ac58a
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../Library/PcieAcpiTableGeneratorLib/PcieIortGenerator.c       | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieIortGenerator.c b/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieIortGenerator.c
+index 33bb51507436..95cc04bbba07 100644
+--- a/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieIortGenerator.c
++++ b/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieIortGenerator.c
+@@ -503,7 +503,7 @@ AddRcNodes (
+     RcNode->Node.Type = EFI_ACPI_IORT_TYPE_ROOT_COMPLEX;
+     RcNode->Node.Revision = 1;
+     RcNode->Node.Identifier = 0;
+-    RcNode->CacheCoherent = 0;
++    RcNode->CacheCoherent = EFI_ACPI_IORT_MEM_ACCESS_PROP_CCA;
+     RcNode->AllocationHints = 0;
+     RcNode->Reserved = 0;
+     RcNode->MemoryAccessFlags = 0;

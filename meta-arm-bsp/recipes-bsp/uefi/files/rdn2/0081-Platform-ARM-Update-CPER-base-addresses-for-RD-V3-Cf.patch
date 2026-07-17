@@ -1,0 +1,39 @@
+From 0159ccfe1d4f3ba14ef4d9f5857eeb060c06346a Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Mon, 14 Apr 2025 19:43:11 +0530
+Subject: [PATCH]  Platform/ARM: Update CPER base addresses for RD-V3-Cfg1
+
+CPER buffer base is changed in the RD-V3-Cfg1 platform. Update the
+addresses accordingly.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I7fb682d8e41e9cdf493ac3aa88791b43b9b7dc0b
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ Platform/ARM/SgiPkg/PlatformStandaloneMm3.dsc | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/Platform/ARM/SgiPkg/PlatformStandaloneMm3.dsc b/Platform/ARM/SgiPkg/PlatformStandaloneMm3.dsc
+index 07e2d464fba3..23486fbb1e7e 100644
+--- a/Platform/ARM/SgiPkg/PlatformStandaloneMm3.dsc
++++ b/Platform/ARM/SgiPkg/PlatformStandaloneMm3.dsc
+@@ -59,7 +59,7 @@
+ [PcdsFixedAtBuild]
+ !if $(EDK2_ENABLE_CPU_MM) == TRUE
+   ## CPU
+-  gCpuMmTokenSpaceGuid.PcdCpuErrorDataBase|0xFB1EF000
++  gCpuMmTokenSpaceGuid.PcdCpuErrorDataBase|0xFA879000
+   gCpuMmTokenSpaceGuid.PcdCpuErrorDataSize|0x400
+   gCpuMmTokenSpaceGuid.PcdCpuErrorSdeiEventBase|805
+   gCpuMmTokenSpaceGuid.PcdCpuErrorSourceCount|1
+@@ -68,7 +68,7 @@
+ 
+ !if $(EDK2_ENABLE_SRAM_MM) == TRUE
+   ## Base Element Ram
+-  gSramMmTokenSpaceGuid.PcdSramErrorDataBase|0xFB1F0000
++  gSramMmTokenSpaceGuid.PcdSramErrorDataBase|0xFA87A000
+   gSramMmTokenSpaceGuid.PcdSramErrorDataSize|0x100
+   gSramMmTokenSpaceGuid.PcdSramErrorSdeiEventBase|804
+   gSramMmTokenSpaceGuid.PcdSramErrorSourceCount|1
