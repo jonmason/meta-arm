@@ -1,0 +1,58 @@
+From d504fc6d655d4cc07687eee02c668ccaadfe85ce Mon Sep 17 00:00:00 2001
+From: Chaitanya S Prakash <ChaitanyaS.Prakash@arm.com>
+Date: Thu, 24 Oct 2024 17:23:22 +0100
+Subject: [PATCH] Platform/Sgi: Add ECAM memory map entries for PCIe segments
+
+Populate memory map entries for ECAM regions of PCIe segments.
+
+Signed-off-by: Chaitanya S Prakash <ChaitanyaS.Prakash@arm.com>
+Change-Id: Ia7cfa558d7ca5cc57c6a58da2aac51374da9d2bc
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ .../Library/PlatformLib/PlatformLibMem.c      | 24 ++++++++++---------
+ 1 file changed, 13 insertions(+), 11 deletions(-)
+
+diff --git a/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c b/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c
+index 98457bf5402f..3521028540ab 100644
+--- a/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c
++++ b/Platform/ARM/SgiPkg/Library/PlatformLib/PlatformLibMem.c
+@@ -17,11 +17,11 @@
+ #include <SgiPlatform.h>
+ 
+ // Total number of descriptors, including the final "end-of-table" descriptor.
+-#define MAX_VIRTUAL_MEMORY_MAP_DESCRIPTORS                                     \
+-          ((14 + (FixedPcdGet32 (PcdChipCount) * 2)) +                         \
+-          (FeaturePcdGet (PcdEinjSupported)) +                                 \
+-           ((FeaturePcdGet (PcdPcieEnable) == TRUE) ? 1 : 0) +                 \
+-           (FixedPcdGet32 (PcdIoVirtSocExpBlkUartEnable) *                     \
++#define MAX_VIRTUAL_MEMORY_MAP_DESCRIPTORS                                                  \
++          ((14 + (FixedPcdGet32 (PcdChipCount) * 2)) +                                      \
++          (FeaturePcdGet (PcdEinjSupported)) +                                              \
++           ((FeaturePcdGet (PcdPcieEnable) == TRUE) ? (FixedPcdGet32 (PcdChipCount)) : 0) +  \
++           (FixedPcdGet32 (PcdIoVirtSocExpBlkUartEnable) *                                  \
+             FixedPcdGet32 (PcdChipCount) * 2))
+ 
+ // Memory Map descriptor for IO Virtualization SoC Expansion Block UART
+@@ -308,12 +308,14 @@ ArmPlatformGetVirtualMemoryMap (
+ 
+   if (FeaturePcdGet (PcdPcieEnable)) {
+     // PCI Configuration Space
+-    VirtualMemoryTable[++Index].PhysicalBase  = PcdGet64 (PcdPciExpressBaseAddress);
+-    VirtualMemoryTable[Index].VirtualBase     = PcdGet64 (PcdPciExpressBaseAddress);
+-    VirtualMemoryTable[Index].Length          = (FixedPcdGet32 (PcdPciBusMax) -
+-                                                 FixedPcdGet32 (PcdPciBusMin) + 1) *
+-                                                 SIZE_1MB;
+-    VirtualMemoryTable[Index].Attributes      = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
++    for (int Segment = 0; Segment < FixedPcdGet32 (PcdChipCount); Segment++) {
++      VirtualMemoryTable[++Index].PhysicalBase = PcdGet64 (PcdPciExpressBaseAddress) + (Segment * 0x10000000);
++      VirtualMemoryTable[Index].VirtualBase    = PcdGet64 (PcdPciExpressBaseAddress) + (Segment * 0x10000000);
++      VirtualMemoryTable[Index].Length         = (FixedPcdGet32 (PcdPciBusMax) -
++                                                  FixedPcdGet32 (PcdPciBusMin) + 1) *
++                                                SIZE_1MB;
++      VirtualMemoryTable[Index].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
++    }
+   }
+ 
+  // MM Memory Space

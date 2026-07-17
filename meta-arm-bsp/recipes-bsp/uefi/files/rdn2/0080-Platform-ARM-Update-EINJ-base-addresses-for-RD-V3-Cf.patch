@@ -1,0 +1,94 @@
+From f57b6780c6d6c76dd0a1c440cff0e1f44b02c72d Mon Sep 17 00:00:00 2001
+From: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Date: Mon, 14 Apr 2025 19:36:03 +0530
+Subject: [PATCH] Platform/ARM: Update EINJ base addresses for RD-V3-Cfg1
+
+EINJ buffer base is changed in the RD-V3-Cfg1 platform. Update the
+addresses accordingly.
+
+Signed-off-by: Omkar Anand Kulkarni <omkar.kulkarni@arm.com>
+Change-Id: I94ab36ffc16dfd090ae8680dad6fae7db031ec8f
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1/Einj.aslc | 12 ++++++------
+ Platform/ARM/SgiPkg/RdV3Cfg1/RdV3Cfg1.dsc         |  6 +++---
+ 2 files changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1/Einj.aslc b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1/Einj.aslc
+index e300ff10fb9e..24410e83cd00 100644
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1/Einj.aslc
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdV3Cfg1/Einj.aslc
+@@ -54,7 +54,7 @@ STATIC EFI_ACPI_6_4_ERROR_INJECTION_TABLE Einj = {
+         32,
+         0,
+         EFI_ACPI_6_4_DWORD,
+-        0xFB1DF000
++        0xFA869000
+       },   // Register region (GAR)
+       PLATFORM_ERROR_TYPE_SUPPORTED,   // Supported Error Types by platform (Processor, Vendor)
+       0xffffffffffffffff    // Register region Mask
+@@ -71,7 +71,7 @@ STATIC EFI_ACPI_6_4_ERROR_INJECTION_TABLE Einj = {
+         64,
+         0,
+         EFI_ACPI_6_4_QWORD,
+-        0xFB1DF000
++        0xFA869000
+       },
+       0x0000000000000000,   // Value
+       0xffffffffffffffff    // Register region Mask
+@@ -88,7 +88,7 @@ STATIC EFI_ACPI_6_4_ERROR_INJECTION_TABLE Einj = {
+         64,
+         0,
+         EFI_ACPI_6_4_QWORD,
+-        0xFB1E1000
++        0xFA86B000
+       },
+       0x0000000000000000,   // Value
+       0xffffffffffffffff    // Register region Mask
+@@ -105,7 +105,7 @@ STATIC EFI_ACPI_6_4_ERROR_INJECTION_TABLE Einj = {
+         64,
+         0,
+         EFI_ACPI_6_4_QWORD,
+-        0xFB1DF250
++        0xFA869250
+       },
+       0x0000000000000000,   // Value
+       0xffffffffffffffff    // Register region Mask
+@@ -122,7 +122,7 @@ STATIC EFI_ACPI_6_4_ERROR_INJECTION_TABLE Einj = {
+         64,
+         0,
+         EFI_ACPI_6_4_QWORD,
+-        0xFB1DF400
++        0xFA869400
+       },
+       0x0000000000000000,   // Value
+       0xffffffffffffffff    // Register region Mask
+@@ -139,7 +139,7 @@ STATIC EFI_ACPI_6_4_ERROR_INJECTION_TABLE Einj = {
+         64,
+         0,
+         EFI_ACPI_6_4_QWORD,
+-        0xFB1DF200
++        0xFA869200
+       },
+       FixedPcdGet64 (PcdEinjTriggerActionBase),   // Value
+       0xffffffffffffffff    // Register region Mask
+diff --git a/Platform/ARM/SgiPkg/RdV3Cfg1/RdV3Cfg1.dsc b/Platform/ARM/SgiPkg/RdV3Cfg1/RdV3Cfg1.dsc
+index 811d02ad4b4f..da53eaae63ca 100644
+--- a/Platform/ARM/SgiPkg/RdV3Cfg1/RdV3Cfg1.dsc
++++ b/Platform/ARM/SgiPkg/RdV3Cfg1/RdV3Cfg1.dsc
+@@ -51,10 +51,10 @@
+   gArmPlatformTokenSpaceGuid.PcdClusterCount|8
+ 
+   # Error Injection
+-  gArmSgiTokenSpaceGuid.PcdEinjInstBufferBase|0xFB1DF000
++  gArmSgiTokenSpaceGuid.PcdEinjInstBufferBase|0xFA869000
+   gArmSgiTokenSpaceGuid.PcdEinjInstBufferSize|0x10000
+-  gArmSgiTokenSpaceGuid.PcdEinjTriggerActionBase|0xFB1E0000
+-  gArmSgiTokenSpaceGuid.PcdEinjSetErrorTypeAddress|0xFB1E1000
++  gArmSgiTokenSpaceGuid.PcdEinjTriggerActionBase|0xFA86A000
++  gArmSgiTokenSpaceGuid.PcdEinjSetErrorTypeAddress|0xFA86B000
+ #
+ ################################################################################
+ #
