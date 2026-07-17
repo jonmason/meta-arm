@@ -1,0 +1,29 @@
+From 430a37abcd39548891cf6120a2a7b31dc2dc4c15 Mon Sep 17 00:00:00 2001
+From: Rakshit Goyal <rakshit.goyal@arm.com>
+Date: Wed, 15 Jan 2025 07:11:12 +0000
+Subject: [PATCH] Platform/SgiPkg: update StMM base address
+
+Update the StMM entrypoint address for RD-V3
+
+Signed-off-by: Rakshit Goyal <rakshit.goyal@arm.com>
+Change-Id: I5368383587ec007905a2739033d0546ad4fd0b74
+
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+Upstream-Status: Pending
+---
+ Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf b/Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf
+index e85c3b68a447..6e4e7e884f2d 100644
+--- a/Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf
++++ b/Platform/ARM/SgiPkg/PlatformStandaloneMm.fdf
+@@ -20,7 +20,7 @@
+ 
+ [FD.BL32_AP_MM]
+ !if $(EDK2_SPMC_AT_EL2) == TRUE
+-BaseAddress   = 0xf4302000|gArmTokenSpaceGuid.PcdFdBaseAddress  # UEFI in DRAM + 128MB.
++BaseAddress   = 0xfaa02000|gArmTokenSpaceGuid.PcdFdBaseAddress  # UEFI in DRAM + 426MB.
+ !else
+ BaseAddress   = 0xff200000|gArmTokenSpaceGuid.PcdFdBaseAddress  # UEFI in DRAM + 128MB.
+ !endif
