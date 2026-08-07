@@ -10,4 +10,7 @@ repos:
       meta-secure-core-common:
       meta-signing-key:
       meta-efi-secure-boot:
-      
+    patches:
+      kernel-initramfs:
+        path: ../0001-kernel-initramfs-Drop-inherit-for-linux-kernel-base-.patch
+        repo: meta-secure-core
