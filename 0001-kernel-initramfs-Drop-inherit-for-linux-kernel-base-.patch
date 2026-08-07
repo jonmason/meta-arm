@@ -1,0 +1,38 @@
+From 50686779e8e39bcf1215e44b6ba02be73e413a42 Mon Sep 17 00:00:00 2001
+From: Jon Mason <jon.mason@arm.com>
+Date: Thu, 6 Aug 2026 14:01:50 -0400
+Subject: [PATCH] kernel-initramfs: Drop inherit for linux-kernel-base and
+ kernel-arch
+
+openembedded-core commit 06057ac24f74ce5de74dfc7b479a1e2c796bcdcd
+removes meta/classes-recipe/linux-kernel-base.bbclass
+which causes the build error:
+['ERROR: ParseError at meta-arm/work/build/../meta-secure-core/meta-secure-core-common/recipes-core/images/kernel-initramfs.bb:16: Could not inherit file classes/linux-kernel-base.bbclass\n', 'ERROR: Parsing halted due to errors, see error messages above\n']
+
+Removing the reference resolves the issue.
+
+While we are at it, remove kernel-arch inherit, as that no longer seems
+to be needed.
+
+With these changes, I am about to build and run testimage on a BSP
+(corestone1000-fvp in meta-arm).
+
+Fixes: https://github.com/Wind-River/meta-secure-core/issues/143
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+---
+ meta-secure-core-common/recipes-core/images/kernel-initramfs.bb | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/meta-secure-core-common/recipes-core/images/kernel-initramfs.bb b/meta-secure-core-common/recipes-core/images/kernel-initramfs.bb
+index b71ebf50bafc..88c5c36ced13 100644
+--- a/meta-secure-core-common/recipes-core/images/kernel-initramfs.bb
++++ b/meta-secure-core-common/recipes-core/images/kernel-initramfs.bb
+@@ -13,8 +13,6 @@ ALLOW_EMPTY:${PN} = "1"
+ 
+ B = "${WORKDIR}/${BPN}-${PV}"
+ 
+-inherit linux-kernel-base kernel-arch
+-
+ INITRAMFS_NAME = "${KERNEL_IMAGETYPE}-initramfs-${PV}-${PR}-${MACHINE}-${DATETIME}"
+ INITRAMFS_NAME[vardepsexclude] = "DATETIME"
+ INITRAMFS_EXT_NAME = "-${@oe.utils.read_file('${STAGING_KERNEL_BUILDDIR}/kernel-abiversion')}"
