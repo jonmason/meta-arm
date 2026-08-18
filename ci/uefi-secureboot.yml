@@ -36,7 +36,6 @@ local_conf_header:
 
     IMAGE_CLASSES += "uki"
 
-    IMAGE_CLASSES += "sbsign"
     UKI_SB_KEY = "${SBSIGN_KEY}"
     UKI_SB_CERT = "${SBSIGN_CERT}"
     IMAGE_BOOT_FILES:remove = "Image"
@@ -44,7 +43,6 @@ local_conf_header:
     INITRAMFS_IMAGE = "core-image-initramfs-boot"
     # not for initramfs image recipe
     IMAGE_CLASSES:remove:pn-core-image-initramfs-boot = "uki"
-    IMAGE_CLASSES:remove:pn-core-image-initramfs-boot = "sbsign"
     IMAGE_CLASSES:remove:pn-core-image-initramfs-boot = "testimage"
     IMAGE_FEATURES:remove:pn-core-image-initramfs-boot = "ssh-server-dropbear"
     CORE_IMAGE_EXTRA_INSTALL:remove:pn-core-image-initramfs-boot = "ssh-pregen-hostkeys"
