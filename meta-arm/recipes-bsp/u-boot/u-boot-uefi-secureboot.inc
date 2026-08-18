@@ -4,12 +4,11 @@ SRC_URI += "file://uefi-secureboot.cfg \
             file://0001-efi_loader-fix-building-with-CONFIG_EFI_VARIABLES_PR.patch \
            "
 
-inherit sbsign
-
 require ${@bb.utils.contains('MACHINE_FEATURES', 'uefi-http-boot', 'u-boot-uefi-http-boot.inc', '', d)}
 require ${@bb.utils.contains('MACHINE_FEATURES', 'uefi-capsule-update', 'u-boot-capsule-update.inc', '', d)}
 
 DEPENDS += 'python3-pyopenssl-native'
+DEPENDS += 'gen-sbkeys'
 
 do_compile:prepend() {
     export CRYPTOGRAPHY_OPENSSL_NO_LEGACY=1
