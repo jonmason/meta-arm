@@ -1,4 +1,4 @@
-From c579565c25937ae9455efe9cc3fbcace84c3e580 Mon Sep 17 00:00:00 2001
+From 3dcaa54afe671534b11a0586a49a9036b2bb2011 Mon Sep 17 00:00:00 2001
 From: Frazer Carsley <frazer.carsley@arm.com>
 Date: Mon, 29 Dec 2025 11:28:47 +0000
 Subject: [PATCH] plat: cs1k: Removed unused variables
@@ -6,15 +6,16 @@ Subject: [PATCH] plat: cs1k: Removed unused variables
 Change-Id: I0dd3ff834c47c58dc833586c74791deca679a3ab
 Signed-off-by: Frazer Carsley <frazer.carsley@arm.com>
 Upstream-Status: Backport
+Signed-off-by: Ahmed Gomaa <Ahmed.Gomaa@arm.com>
 ---
  .../arm/corstone1000/bootloader/mcuboot/tfm_mcuboot_fwu.c     | 4 ----
  1 file changed, 4 deletions(-)
 
 diff --git a/platform/ext/target/arm/corstone1000/bootloader/mcuboot/tfm_mcuboot_fwu.c b/platform/ext/target/arm/corstone1000/bootloader/mcuboot/tfm_mcuboot_fwu.c
-index cff80b755..83b0bd27d 100644
+index 9fe9df0..89c2696 100644
 --- a/platform/ext/target/arm/corstone1000/bootloader/mcuboot/tfm_mcuboot_fwu.c
 +++ b/platform/ext/target/arm/corstone1000/bootloader/mcuboot/tfm_mcuboot_fwu.c
-@@ -1511,7 +1511,6 @@ static psa_status_t fwu_accept_image(struct fwu_metadata *metadata,
+@@ -1594,7 +1594,6 @@ static psa_status_t fwu_accept_image(struct fwu_metadata *metadata,
          uint8_t number)
  {
      uint8_t current_state;
@@ -22,7 +23,7 @@ index cff80b755..83b0bd27d 100644
      uint32_t active_bank_index;
      uint32_t fwu_image_index;
      psa_status_t ret;
-@@ -1848,7 +1847,6 @@ static psa_status_t fwu_update_metadata(const psa_fwu_component_t *candidates, u
+@@ -2070,7 +2069,6 @@ static psa_status_t fwu_update_metadata(const psa_fwu_component_t *candidates, u
  {
      int ret;
      uint32_t active_index;
@@ -30,8 +31,8 @@ index cff80b755..83b0bd27d 100644
      uint32_t previous_active_index;
      uint8_t fwu_image_index;
  
-@@ -1864,10 +1862,8 @@ static psa_status_t fwu_update_metadata(const psa_fwu_component_t *candidates, u
- 
+@@ -2085,10 +2083,8 @@ static psa_status_t fwu_update_metadata(const psa_fwu_component_t *candidates, u
+     active_index = _metadata.active_index;
      if (active_index == BANK_0) {
          previous_active_index = BANK_1;
 -        bank_offset = BANK_1_PARTITION_OFFSET;
