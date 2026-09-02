@@ -28,6 +28,9 @@ EXTRA_OECMAKE += "-DPLATFORM_IS_FVP=${TFM_PLATFORM_IS_FVP}"
 EXTRA_OECMAKE += "-DCC312_LEGACY_DRIVER_API_ENABLED=OFF"
 EXTRA_OECMAKE:append = " -DENABLE_MULTICORE=${@bb.utils.contains('MACHINE_FEATURES', 'corstone1000_smp', 'TRUE', 'FALSE', d)}"
 EXTRA_OECMAKE:append:corstone1000-mps3 = " -DPLATFORM_PSA_ADAC_SECURE_DEBUG=${@bb.utils.contains('MACHINE_FEATURES', 'secure-debug', 'ON', 'OFF', d)}"
+# Keep the device in CM until authenticated DCU_EN can be preserved across
+# reset and applied from BL2.
+EXTRA_OECMAKE:append:corstone1000-mps3 = " -DCORSTONE1000_SKIP_PROVISIONING_FOR_DEBUG=${@bb.utils.contains('MACHINE_FEATURES', 'secure-debug', 'ON', 'OFF', d)}"
 EXTRA_OECMAKE:append:corstone1000-mps3 = " -DPLATFORM_PSA_ADAC_SOURCE_PATH=${S}/external/tfm-psa-adac -DPLATFORM_PSA_ADAC_BUILD_PATH=${B}/tfm-psa-adac-build"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
@@ -47,6 +50,7 @@ SRC_URI:append:corstone1000 = " \
     file://0013-plat-cs1k-Remove-unused-FWU-partitions-upon-version-.patch \
     file://0014-plat-cs1k-Duplicate-old-images-in-FWU.patch \
     file://0015-platform-corstone1000-Increase-FIP-partition-size.patch \
+    file://0016-platform-corstone1000-Optionally-skip-provisioning.patch \
     "
 
 FILESEXTRAPATHS:prepend:corstone1000-mps3 := "${THISDIR}/files/corstone1000/psa-adac:"
