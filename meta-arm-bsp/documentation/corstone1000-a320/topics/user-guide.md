@@ -91,7 +91,7 @@ Table: OP-TEE components
 | Type      | Path                                                                                                             |
 | --------- | ---------------------------------------------------------------------------------------------------------------- |
 | bbappend  | `${WORKSPACE}/meta-arm/meta-arm-bsp/recipes-security/optee/optee-os_%.bbappend`                                 |
-| Recipe    | `${WORKSPACE}/meta-arm/meta-arm/recipes-security/optee/optee-os_4.9.0.bb`                                       |
+| Recipe    | `${WORKSPACE}/meta-arm/meta-arm/recipes-security/optee/optee-os_4.10.0.bb`                                       |
 
 #### U-Boot {.reference}
 
