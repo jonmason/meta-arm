@@ -27,7 +27,7 @@ TS_SP_SE_PROXY_CONFIG = "corstone1000"
 MACHINE_FEATURES += "ts-smm-gateway ts-se-proxy"
 
 # U-Boot
-PREFERRED_VERSION_u-boot ?= "2025.10"
+PREFERRED_VERSION_u-boot ?= "2026.07"
 MACHINE_FEATURES += "efi"
 EFI_PROVIDER ?= "grub-efi"
 

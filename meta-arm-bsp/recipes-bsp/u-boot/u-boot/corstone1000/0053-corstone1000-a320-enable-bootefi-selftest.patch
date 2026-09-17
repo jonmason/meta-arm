@@ -1,4 +1,4 @@
-From 0da9650a3ed86e63c6a9621d7a9195eb3a75a233 Mon Sep 17 00:00:00 2001
+From e46456082379263c7c8e3a54ace5e1f7926aaf0a Mon Sep 17 00:00:00 2001
 From: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
 Date: Fri, 17 Apr 2026 13:41:07 +0100
 Subject: [PATCH] corstone1000-a320: enable bootefi selftest
@@ -15,10 +15,10 @@ Signed-off-by: Harsimran Singh Tungal <harsimransingh.tungal@arm.com>
  1 file changed, 3 insertions(+)
 
 diff --git a/configs/corstone1000-a320_defconfig b/configs/corstone1000-a320_defconfig
-index d0ae1e745db..c4dcd1790cc 100644
+index 290c6223bb1..ca28e208564 100644
 --- a/configs/corstone1000-a320_defconfig
 +++ b/configs/corstone1000-a320_defconfig
-@@ -41,6 +41,8 @@ CONFIG_SYS_PROMPT="corstone1000# "
+@@ -43,6 +43,8 @@ CONFIG_SYS_PROMPT="corstone1000# "
  # CONFIG_CMD_CONSOLE is not set
  CONFIG_CMD_FWU_METADATA=y
  CONFIG_CMD_BOOTZ=y
@@ -27,7 +27,7 @@ index d0ae1e745db..c4dcd1790cc 100644
  # CONFIG_CMD_XIMG is not set
  CONFIG_CMD_NVEDIT_EFI=y
  CONFIG_CMD_GPT=y
-@@ -76,6 +78,7 @@ CONFIG_SYSRESET=y
+@@ -78,6 +80,7 @@ CONFIG_SYSRESET=y
  CONFIG_SYSRESET_PSCI=y
  CONFIG_TEE=y
  CONFIG_OPTEE=y

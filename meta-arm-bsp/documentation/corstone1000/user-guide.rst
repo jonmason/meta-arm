@@ -145,7 +145,7 @@ Host Processor Components
 +----------+----------------------------------------------------------------------------------+
 | bbappend | ``${WORKSPACE}/meta-arm/meta-arm-bsp/recipes-bsp/u-boot/u-boot_%.bbappend``      |
 +----------+----------------------------------------------------------------------------------+
-| Recipe   | ``${WORKSPACE}/meta-arm/meta-arm-bsp/recipes-bsp/u-boot/u-boot_2025.10.bb``      |
+| Recipe   | ``${WORKSPACE}/core/meta/recipes-bsp/u-boot/u-boot_2026.07.bb``                  |
 +----------+----------------------------------------------------------------------------------+
 
 Linux
