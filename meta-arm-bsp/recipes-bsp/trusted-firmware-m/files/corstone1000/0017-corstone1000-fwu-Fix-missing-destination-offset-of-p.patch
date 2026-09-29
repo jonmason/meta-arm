@@ -1,0 +1,92 @@
+From b3a51b202020ea461b5e742c3cdf6db02deef757 Mon Sep 17 00:00:00 2001
+From: Nicola Mazzucato <nicola.mazzucato@arm.com>
+Date: Tue, 7 Jul 2026 17:19:37 +0100
+Subject: [PATCH 17/18] corstone1000: fwu: Fix missing destination offset of
+ parse_fmp_header
+
+parse_fmp_header() overwrites the beginning of fmp_hdr on every FWU write.
+Fix it by appending incoming partial header bytes.
+
+Also:
+ - use local variables to improve readability
+ - add an overflow check for the incoming size before memcpy
+
+CVE: CVE-2026-73063
+Upstream-Status: Backport [d92781c5b966ee700ddaa9525230e677789def96]
+Signed-off-by: Nicola Mazzucato <nicola.mazzucato@arm.com>
+Change-Id: Iefcfe1c9c2479ea4346a56ecb0475483a56ee695
+---
+ .../bootloader/mcuboot/tfm_mcuboot_fwu.c      | 43 ++++++++++++++-----
+ 1 file changed, 33 insertions(+), 10 deletions(-)
+
+diff --git a/platform/ext/target/arm/corstone1000/bootloader/mcuboot/tfm_mcuboot_fwu.c b/platform/ext/target/arm/corstone1000/bootloader/mcuboot/tfm_mcuboot_fwu.c
+index 9fe9df0a4..83db6163c 100644
+--- a/platform/ext/target/arm/corstone1000/bootloader/mcuboot/tfm_mcuboot_fwu.c
++++ b/platform/ext/target/arm/corstone1000/bootloader/mcuboot/tfm_mcuboot_fwu.c
+@@ -1863,26 +1863,46 @@ out:
+     return ret;
+ }
+ 
+-psa_status_t parse_fmp_header(psa_fwu_component_t component, const void *block, size_t size, size_t *fmp_bytes)
++static psa_status_t parse_fmp_header(
++    psa_fwu_component_t component,
++    const void *block,
++    size_t size,
++    size_t *fmp_bytes)
+ {
++    size_t header_size = sizeof(fmp_header_image_info[component].fmp_hdr);
++    size_t *header_size_recv = &fmp_header_image_info[component].fmp_hdr_size_recvd;
++
++    if ((*header_size_recv + size) < size) {
++        return PSA_ERROR_INVALID_ARGUMENT;
++    }
++
+     /* Parse the incoming block to make sure complete FMP header is received */
+-    if (sizeof(fmp_header_image_info[component].fmp_hdr) >= (fmp_header_image_info[component].fmp_hdr_size_recvd + size)) {
+-        memcpy(&fmp_header_image_info[component].fmp_hdr, block, size);
+-        fmp_header_image_info[component].fmp_hdr_size_recvd += size;
++    if (header_size >= (*header_size_recv + size)) {
++        memcpy(
++            (uint8_t *)&fmp_header_image_info[component].fmp_hdr + *header_size_recv,
++            block,
++            size);
++
+         *fmp_bytes = size;
++        *header_size_recv += size;
++
+         return PSA_ERROR_INSUFFICIENT_DATA;
+     }
+-    if (fmp_header_image_info[component].fmp_hdr_size_recvd != sizeof(fmp_header_image_info[component].fmp_hdr)) {
+-        memcpy(&fmp_header_image_info[component].fmp_hdr,
+-                block,
+-                (sizeof(fmp_header_image_info[component].fmp_hdr) - fmp_header_image_info[component].fmp_hdr_size_recvd));
++    if (*header_size_recv != header_size) {
++        memcpy(
++            (uint8_t *)&fmp_header_image_info[component].fmp_hdr + *header_size_recv,
++            block,
++            (header_size - *header_size_recv));
++
++        *fmp_bytes = header_size - *header_size_recv;
++        *header_size_recv = header_size;
+ 
+-        *fmp_bytes = sizeof(fmp_header_image_info[component].fmp_hdr) - fmp_header_image_info[component].fmp_hdr_size_recvd;
+-        fmp_header_image_info[component].fmp_hdr_size_recvd = sizeof(fmp_header_image_info[component].fmp_hdr);
+         return PSA_SUCCESS;
+     }
+ 
++    FWU_ASSERT(0);
+ }
++
+ psa_status_t fwu_bootloader_load_image(psa_fwu_component_t component,
+                                        size_t block_offset,
+                                        const void *block,
+@@ -1925,6 +1945,9 @@ psa_status_t fwu_bootloader_load_image(psa_fwu_component_t component,
+         if(ret == PSA_ERROR_INSUFFICIENT_DATA) {
+             return PSA_SUCCESS;
+         }
++        if(ret == PSA_ERROR_INVALID_ARGUMENT) {
++            return ret;
++        }
+         if (ret == PSA_SUCCESS) {
+             block_size -= fmp_bytes;
+             block += fmp_bytes;

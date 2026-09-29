@@ -51,6 +51,8 @@ SRC_URI:append:corstone1000 = " \
     file://0014-plat-cs1k-Duplicate-old-images-in-FWU.patch \
     file://0015-platform-corstone1000-Increase-FIP-partition-size.patch \
     file://0016-platform-corstone1000-Optionally-skip-provisioning.patch \
+    file://0017-corstone1000-fwu-Fix-missing-destination-offset-of-p.patch \
+    file://0018-plat-cs1k-Bound-FWU-writes-to-target-partition.patch \
     "
 
 FILESEXTRAPATHS:prepend:corstone1000-mps3 := "${THISDIR}/files/corstone1000/psa-adac:"
