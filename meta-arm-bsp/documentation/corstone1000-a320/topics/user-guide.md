@@ -57,7 +57,7 @@ Table: Trusted Firmware-A components
 | Type      | Path                                                                                                             |
 | --------- | ---------------------------------------------------------------------------------------------------------------- |
 | bbappend  | `${WORKSPACE}/meta-arm/meta-arm-bsp/recipes-bsp/trusted-firmware-a/trusted-firmware-a_%.bbappend`                |
-| Recipe    | `${WORKSPACE}/meta-arm/meta-arm/recipes-bsp/trusted-firmware-a/trusted-firmware-a_2.14.1.bb`                     |
+| Recipe    | `${WORKSPACE}/meta-arm/meta-arm/recipes-bsp/trusted-firmware-a/trusted-firmware-a_2.15.0.bb`                     |
 
 #### Trusted Services {.reference}
 

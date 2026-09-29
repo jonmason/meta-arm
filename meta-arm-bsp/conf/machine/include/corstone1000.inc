@@ -10,8 +10,8 @@ PREFERRED_VERSION_trusted-firmware-m-scripts-native ?= "2.3.%"
 
 # TF-A
 TFA_PLATFORM = "corstone1000"
-PREFERRED_VERSION_trusted-firmware-a ?= "2.14.%"
-PREFERRED_VERSION_tf-a-tests ?= "2.14.%"
+PREFERRED_VERSION_trusted-firmware-a ?= "2.15.%"
+PREFERRED_VERSION_tf-a-tests ?= "2.15.%"
 
 TFA_BL2_BINARY = "bl2-corstone1000.bin"
 TFA_FIP_BINARY = "fip-corstone1000.bin"
