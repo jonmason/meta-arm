@@ -38,7 +38,7 @@ SRC_URI:append:corstone1000 = " \
     file://0001-CC312-alignment-of-cc312-differences-between-fvp-and.patch \
     file://0002-Corstone-1000-Enable-different-DRBG-configurations.patch \
     file://0003-bl2-corstone-1000-secure-debug-waiting-in-CM-LCS.patch \
-    file://0004-Workaround-compile-errors-in-AES.patch \
+    file://0004-Build-fix-remaining-GCC-v14.2-AES-type-error.patch \
     file://0005-plat-cs1k-Removed-unused-variables.patch \
     file://0006-lib-gpt-Show-intent-of-GUIDs-in-unittests-more-clear.patch \
     file://0007-lib-gpt-Provide-macro-identifying-free-space.patch \
@@ -47,12 +47,8 @@ SRC_URI:append:corstone1000 = " \
     file://0010-lib-gpt-Clarify-API-operation.patch \
     file://0011-lib-gpt-Add-metadata-only-API-operations.patch \
     file://0012-plat-cs1k-Add-flash-erase-protection.patch \
-    file://0013-plat-cs1k-Remove-unused-FWU-partitions-upon-version-.patch \
-    file://0014-plat-cs1k-Duplicate-old-images-in-FWU.patch \
-    file://0015-platform-corstone1000-Increase-FIP-partition-size.patch \
-    file://0016-platform-corstone1000-Optionally-skip-provisioning.patch \
-    file://0017-corstone1000-fwu-Fix-missing-destination-offset-of-p.patch \
-    file://0018-plat-cs1k-Bound-FWU-writes-to-target-partition.patch \
+    file://0013-platform-corstone1000-Increase-FIP-partition-size.patch \
+    file://0014-platform-corstone1000-keep-CM-during-secure-debug.patch \
     "
 
 FILESEXTRAPATHS:prepend:corstone1000-mps3 := "${THISDIR}/files/corstone1000/psa-adac:"

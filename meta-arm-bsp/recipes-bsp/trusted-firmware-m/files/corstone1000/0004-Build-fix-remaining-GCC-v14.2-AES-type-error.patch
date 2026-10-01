@@ -1,7 +1,7 @@
-From cc48c5782b6968a34fa69047c04f3caf99a3bf18 Mon Sep 17 00:00:00 2001
+From 8a30545506d8a7f58f0ad30130593e0f78e8b219 Mon Sep 17 00:00:00 2001
 From: Jon Mason <jon.mason@arm.com>
 Date: Mon, 23 Feb 2026 11:53:38 -0500
-Subject: [PATCH] Build: fix remaining GCC v14.2 AES type error
+Subject: [PATCH 04/14] Build: fix remaining GCC v14.2 AES type error
 
 GCC v14.2 diagnoses the incompatible pointer type used when passing
 the ECB key buffer to bl1_key_to_cc3xx_key(). Cast the uint32_t key
@@ -16,7 +16,7 @@ Signed-off-by: Ahmed Gomaa <Ahmed.Gomaa@arm.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/platform/ext/target/arm/corstone1000/bl1/cc312_rom_crypto.c b/platform/ext/target/arm/corstone1000/bl1/cc312_rom_crypto.c
-index 6bc89fe115..2008e9641b 100644
+index 6bc89fe1155c..2008e9641b49 100644
 --- a/platform/ext/target/arm/corstone1000/bl1/cc312_rom_crypto.c
 +++ b/platform/ext/target/arm/corstone1000/bl1/cc312_rom_crypto.c
 @@ -338,7 +338,7 @@ static int32_t aes_256_ecb_encrypt(enum tfm_bl1_key_id_t key_id,
@@ -28,3 +28,6 @@ index 6bc89fe115..2008e9641b 100644
      if (rc) {
          return rc;
      }
+-- 
+2.39.5
+

@@ -1,7 +1,7 @@
-From f9badce3570bbc89b141c86a6b8a988d90d81f0c Mon Sep 17 00:00:00 2001
+From b10d50f554745f2f9a2e43c24e1020c4da15a098 Mon Sep 17 00:00:00 2001
 From: Frazer Carsley <frazer.carsley@arm.com>
 Date: Wed, 8 Apr 2026 17:51:18 +0100
-Subject: [PATCH] lib: gpt: Add metadata-only API operations
+Subject: [PATCH 11/14] lib: gpt: Add metadata-only API operations
 
 Both move and duplicate functions also move or copy (respectively) the
 partition data. This is not always required, for example if the
@@ -17,7 +17,7 @@ Upstream-Status: Submitted [https://review.trustedfirmware.org/c/TF-M/trusted-fi
  3 files changed, 473 insertions(+), 120 deletions(-)
 
 diff --git a/lib/gpt/inc/gpt.h b/lib/gpt/inc/gpt.h
-index c11ecbff2..c5bddb470 100644
+index c11ecbff2619..c5bddb4704e7 100644
 --- a/lib/gpt/inc/gpt.h
 +++ b/lib/gpt/inc/gpt.h
 @@ -170,6 +170,25 @@ psa_status_t gpt_entry_move(const struct efi_guid_t *guid,
@@ -74,7 +74,7 @@ index c11ecbff2..c5bddb470 100644
   * \brief Creates a partition entry in the table.
   *
 diff --git a/lib/gpt/src/gpt.c b/lib/gpt/src/gpt.c
-index 984c8f821..d6528f6a5 100644
+index 984c8f82146c..d6528f6a50ef 100644
 --- a/lib/gpt/src/gpt.c
 +++ b/lib/gpt/src/gpt.c
 @@ -222,9 +222,17 @@ static psa_status_t find_gpt_entry(const struct gpt_t      *table,
@@ -413,7 +413,7 @@ index 984c8f821..d6528f6a5 100644
              restore_to.header.array_lba,
              (restore_from->header.num_partitions +
 diff --git a/lib/gpt/unittests/gpt/test_gpt.c b/lib/gpt/unittests/gpt/test_gpt.c
-index 5d2c4243f..bd9eb8ba1 100644
+index 5d2c4243f607..bd9eb8ba1da5 100644
 --- a/lib/gpt/unittests/gpt/test_gpt.c
 +++ b/lib/gpt/unittests/gpt/test_gpt.c
 @@ -897,6 +897,153 @@ void test_gpt_entry_duplicate_should_failWhenTableFull(void)
@@ -699,3 +699,6 @@ index 5d2c4243f..bd9eb8ba1 100644
  void test_gpt_attr_set_should_setAttributes(void)
  {
      /* Start with a populated GPT */
+-- 
+2.39.5
+

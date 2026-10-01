@@ -1,7 +1,8 @@
-From 0dcbef3a0800a2a610b32935a54762d4b42203f1 Mon Sep 17 00:00:00 2001
+From 4dab128d0da86be6ca09b861dfb157a11345e0e7 Mon Sep 17 00:00:00 2001
 From: Frazer Carsley <frazer.carsley@arm.com>
 Date: Tue, 17 Mar 2026 11:44:14 +0000
-Subject: [PATCH] lib: gpt: Consecutively erase blocks when moving partitions
+Subject: [PATCH 09/14] lib: gpt: Consecutively erase blocks when moving
+ partitions
 
 An LBA is typically smaller than a flash sector size, so it becomes
 inefficient to erase block by block and also erases the same sector
@@ -21,7 +22,7 @@ Upstream-Status: Submitted [https://review.trustedfirmware.org/c/TF-M/trusted-fi
  1 file changed, 75 insertions(+), 27 deletions(-)
 
 diff --git a/lib/gpt/src/gpt.c b/lib/gpt/src/gpt.c
-index 920c4ccca..984c8f821 100644
+index 920c4ccca78e..984c8f82146c 100644
 --- a/lib/gpt/src/gpt.c
 +++ b/lib/gpt/src/gpt.c
 @@ -207,7 +207,7 @@ static psa_status_t read_entry_from_flash(const struct gpt_t *table,
@@ -238,3 +239,6 @@ index 920c4ccca..984c8f821 100644
      memcpy(lba_buf, temp_buf, GPT_HEADER_SIZE);
  
      return ret;
+-- 
+2.39.5
+

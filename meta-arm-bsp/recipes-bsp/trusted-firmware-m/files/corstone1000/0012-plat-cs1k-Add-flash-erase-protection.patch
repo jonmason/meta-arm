@@ -1,7 +1,7 @@
-From 60277832aa6d4a205a5b1180f0513de0eb7c84c6 Mon Sep 17 00:00:00 2001
+From 857a18c00ca3301ed6136333732d4c35e838e51f Mon Sep 17 00:00:00 2001
 From: Frazer Carsley <frazer.carsley@arm.com>
 Date: Tue, 17 Mar 2026 11:05:45 +0000
-Subject: [PATCH] plat: cs1k: Add flash erase protection
+Subject: [PATCH 12/14] plat: cs1k: Add flash erase protection
 
 The GPT library deals in blocks, whereas flash deals in sectors. On
 cs1k, eight blocks make up a sector. So, when the GPT library requests a
@@ -23,7 +23,7 @@ Upstream-Status: Submitted [https://review.trustedfirmware.org/c/TF-M/trusted-fi
  1 file changed, 39 insertions(+), 3 deletions(-)
 
 diff --git a/platform/ext/target/arm/corstone1000/io/io_gpt.c b/platform/ext/target/arm/corstone1000/io/io_gpt.c
-index 513c77016..f7c3d79d2 100644
+index 513c770166cc..f7c3d79d272f 100644
 --- a/platform/ext/target/arm/corstone1000/io/io_gpt.c
 +++ b/platform/ext/target/arm/corstone1000/io/io_gpt.c
 @@ -53,6 +53,32 @@ static uint8_t sector_buf[FLASH_SECTOR_SIZE];
@@ -96,3 +96,6 @@ index 513c77016..f7c3d79d2 100644
          }
      } else {
          /* Partial erase of final sector */
+-- 
+2.39.5
+

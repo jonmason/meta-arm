@@ -1,7 +1,7 @@
-From 38daa61f876a6becb3968f1360d403f496634131 Mon Sep 17 00:00:00 2001
+From 69ee51ca58f8b1460a9ce4649c0e07f21201ff0a Mon Sep 17 00:00:00 2001
 From: Frazer Carsley <frazer.carsley@arm.com>
 Date: Mon, 16 Mar 2026 16:46:43 +0000
-Subject: [PATCH] lib: gpt: Add operation to duplicate entries
+Subject: [PATCH 08/14] lib: gpt: Add operation to duplicate entries
 
 Without this new function, callers of the library would have to first
 read the entry they want to duplicate, then attempt to create a new
@@ -20,7 +20,7 @@ Upstream-Status: Submitted [https://review.trustedfirmware.org/c/TF-M/trusted-fi
  3 files changed, 201 insertions(+)
 
 diff --git a/lib/gpt/inc/gpt.h b/lib/gpt/inc/gpt.h
-index 34ce67580..334a08f41 100644
+index 34ce675801b3..334a08f41abe 100644
 --- a/lib/gpt/inc/gpt.h
 +++ b/lib/gpt/inc/gpt.h
 @@ -170,6 +170,25 @@ psa_status_t gpt_entry_move(const struct efi_guid_t *guid,
@@ -50,7 +50,7 @@ index 34ce67580..334a08f41 100644
   * \brief Creates a partition entry in the table.
   *
 diff --git a/lib/gpt/src/gpt.c b/lib/gpt/src/gpt.c
-index 0335befa7..920c4ccca 100644
+index 0335befa7770..920c4ccca78e 100644
 --- a/lib/gpt/src/gpt.c
 +++ b/lib/gpt/src/gpt.c
 @@ -516,6 +516,29 @@ psa_status_t gpt_entry_move(const struct efi_guid_t *guid,
@@ -84,7 +84,7 @@ index 0335befa7..920c4ccca 100644
                                const uint64_t           start,
                                const uint64_t           size,
 diff --git a/lib/gpt/unittests/gpt/test_gpt.c b/lib/gpt/unittests/gpt/test_gpt.c
-index 0ae660336..5d2c4243f 100644
+index 0ae6603368e8..5d2c4243f607 100644
 --- a/lib/gpt/unittests/gpt/test_gpt.c
 +++ b/lib/gpt/unittests/gpt/test_gpt.c
 @@ -738,6 +738,165 @@ void test_gpt_defragment_should_succeedWhenNoIOFailure(void)
@@ -253,3 +253,6 @@ index 0ae660336..5d2c4243f 100644
  void test_gpt_entry_create_should_createNewEntry(void)
  {
      /* Add an entry. It must not overlap with an existing entry and must also
+-- 
+2.39.5
+

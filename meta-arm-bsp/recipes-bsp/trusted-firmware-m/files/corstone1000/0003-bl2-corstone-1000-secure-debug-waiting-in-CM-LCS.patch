@@ -1,7 +1,7 @@
-From f0567aa80b2cc88d278c3adb0a5366ae9ff8cf58 Mon Sep 17 00:00:00 2001
+From d8141d0d445bc5117b21dc684410b115e82d5568 Mon Sep 17 00:00:00 2001
 From: Devaraj Ranganna <devaraj.ranganna@arm.com>
 Date: Mon, 22 Sep 2025 12:59:43 +0100
-Subject: [PATCH] bl2: corstone-1000: secure debug waiting in CM LCS
+Subject: [PATCH 03/14] bl2: corstone-1000: secure debug waiting in CM LCS
 
 Currently, when the device is in Secure Enable (SE) LCS state,
 setting the dcu_en register causes a CC-312 reset. Because CC-312 and
@@ -20,7 +20,7 @@ Signed-off-by: Ahmed Gomaa <Ahmed.Gomaa@arm.com>
  1 file changed, 30 insertions(+), 16 deletions(-)
 
 diff --git a/platform/ext/target/arm/corstone1000/bl2/boot_hal_bl2.c b/platform/ext/target/arm/corstone1000/bl2/boot_hal_bl2.c
-index 9bc0f20e10..d034efe59f 100644
+index 9bc0f20e1045..d034efe59f5d 100644
 --- a/platform/ext/target/arm/corstone1000/bl2/boot_hal_bl2.c
 +++ b/platform/ext/target/arm/corstone1000/bl2/boot_hal_bl2.c
 @@ -187,7 +187,7 @@ int32_t boot_platform_post_init(void)
@@ -88,3 +88,6 @@ index 9bc0f20e10..d034efe59f 100644
  #endif /* PLATFORM_PSA_ADAC_SECURE_DEBUG */
  
      return 0;
+-- 
+2.39.5
+

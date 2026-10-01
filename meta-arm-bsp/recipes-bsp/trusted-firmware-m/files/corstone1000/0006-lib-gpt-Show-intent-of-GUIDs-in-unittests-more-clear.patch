@@ -1,7 +1,8 @@
-From ca0d50fc1abbfe165941dc0bd674bb117f236f87 Mon Sep 17 00:00:00 2001
+From 81813176251a37995390338914f309d8ca72549d Mon Sep 17 00:00:00 2001
 From: Frazer Carsley <frazer.carsley@arm.com>
 Date: Mon, 30 Mar 2026 14:06:20 +0100
-Subject: [PATCH] lib: gpt: Show intent of GUIDs in unittests more clearly
+Subject: [PATCH 06/14] lib: gpt: Show intent of GUIDs in unittests more
+ clearly
 
 The standard EFI_GUID macros used in the unittests do not convey the
 full meaning of the why that particular GUID is used. The new macros can
@@ -16,7 +17,7 @@ Upstream-Status: Submitted [https://review.trustedfirmware.org/c/TF-M/trusted-fi
  1 file changed, 31 insertions(+), 24 deletions(-)
 
 diff --git a/lib/gpt/unittests/gpt/test_gpt.c b/lib/gpt/unittests/gpt/test_gpt.c
-index bd161ec74..32dfb8fb2 100644
+index bd161ec7445b..32dfb8fb2757 100644
 --- a/lib/gpt/unittests/gpt/test_gpt.c
 +++ b/lib/gpt/unittests/gpt/test_gpt.c
 @@ -69,6 +69,13 @@
@@ -214,3 +215,6 @@ index bd161ec74..32dfb8fb2 100644
      TEST_ASSERT_EQUAL(PSA_ERROR_DOES_NOT_EXIST, gpt_entry_read_by_type(&test_type, 0, &entry));
  
      /* Now, have a non-empty GPT but search for a type that won't exist */
+-- 
+2.39.5
+
