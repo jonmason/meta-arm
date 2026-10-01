@@ -23,18 +23,18 @@ SRC_URI_TRUSTED_FIRMWARE_M_PSA_CRYPTO_DRIVER ?= "git://git.trustedfirmware.org/s
 SRC_URI_TRUSTED_FIRMWARE_M_T_COSE ?= "git://github.com/laurencelundblade/t_cose.git;protocol=https"
 
 # The required dependencies are documented in tf-m/config/config_base.cmake
-# TF-Mv2.3.0
+# TF-Mv2.3.1
 SRCBRANCH_tfm ?= "release/2.3.x"
-SRCREV_tfm = "5d906d29d7b6d1a7f7134960d228f9e75f6a8a07"
-# TF-Mv2.3.0
+SRCREV_tfm = "0b40d7806136baadf489febf8e2f91bf87aca63d"
+# TF-Mv2.3.1
 SRCBRANCH_tfm-extras ?= "release/2.3.x"
 SRCREV_tfm-extras = "8abeb6610e7ca27fff54dd8a9b5767d5cf98b998"
-# TF-Mv2.3.0
+# TF-Mv2.3.1
 SRCBRANCH_tfm-tests ?= "release/2.3.x"
-SRCREV_tfm-tests = "6a1165dfef219d0801487f51e06d12331e726643"
-# CMSIS v6.1.0, CMSIS_TAG from lib/ext/cmsis/CMakeLists.txt
+SRCREV_tfm-tests = "465acb8405fb35b12a624a27062e361afe0025e4"
+# CMSIS v6.2.0, CMSIS_TAG from lib/ext/cmsis/CMakeLists.txt
 SRCBRANCH_cmsis ?= "main"
-SRCREV_cmsis = "b0bbb0423b278ca632cfe1474eb227961d835fd2"
+SRCREV_cmsis = "6f0a58d01aa9bd2feba212097f9afe7acd991d52"
 # mcuboot v2.4.0, value from MCUBOOT_VERSION
 SRCBRANCH_mcuboot ?= "main"
 SRCREV_mcuboot = "6d3b3d2c38ab20c242e5b9abb04d050086383eb2"
@@ -44,9 +44,9 @@ SRCREV_qcbor = "92d3f89030baff4af7be8396c563e6c8ef263622"
 # PSA-ADAC (intermediate SHA), value from PLATFORM_PSA_ADAC_VERSION
 SRCBRANCH_tfm-psa-adac = "master"
 SRCREV_tfm-psa-adac = "eff89e8e0ce36e4793f78309be19fcfab798f473"
-# TF-PSA-Crypto v1.1.0, value from TF_PSA_CRYPTO_VERSION
-SRCBRANCH_tf-psa-crypto = "development"
-SRCREV_tf-psa-crypto = "29160dd877d29658279fd683b2ae57b320ddcf09"
+# TF-PSA-Crypto v1.1.1, value from TF_PSA_CRYPTO_VERSION
+SRCBRANCH_tf-psa-crypto = "tf-psa-crypto-1.1"
+SRCREV_tf-psa-crypto = "a0632be94d883daa0295ac1eabf70359ad94f91b"
 # From platform/ext/target/arm/drivers/cc3xx/CMakeLists.txt
 SRCBRANCH_psa-crypto-driver = "main"
 SRCREV_psa-crypto-driver = "3a93566c04c4d77a007e6b149e7c06e7b8f0cd8d"
