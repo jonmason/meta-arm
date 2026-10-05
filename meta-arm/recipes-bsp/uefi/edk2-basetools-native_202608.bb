@@ -5,7 +5,7 @@
 # SRCREV_brotli must be kept in sync with the brotli submodule commit that
 # the pinned edk2 SRCREV declares in its .gitmodules. Update it whenever
 # the edk2 SRCREV is bumped.
-#   edk2-stable202602 (b7a715f7): brotli e230f474
+#   edk2-stable202608 (b7a715f7): brotli e230f474
 
 SUMMARY = "EDK2 Base Tools"
 LICENSE = "BSD-2-Clause-Patent"
@@ -17,7 +17,7 @@ SRC_URI = " \
 "
 LIC_FILES_CHKSUM = "file://License.txt;md5=2b415520383f7964e96700ae12b4570a"
 
-SRCREV = "b03a21a63e3bd001f52c527e5a57feddb53a690b"
+SRCREV = "2970e5699ba6267f3384ffab20f96647578aebc8"
 SRCREV_brotli = "e230f474b87134e8c6c85b630084c612057f253e"
 SRCREV_FORMAT = "default_brotli"
 
