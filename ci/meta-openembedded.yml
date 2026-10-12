@@ -6,7 +6,6 @@ header:
 repos:
   meta-openembedded:
     url: https://git.openembedded.org/meta-openembedded
-    branch: master
     layers:
       meta-filesystems:
       meta-networking:
