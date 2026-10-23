@@ -7,12 +7,11 @@ distro: poky
 
 defaults:
   repos:
-    branch: blacksail
+    branch: master
 
 repos:
   bitbake:
     url: https://git.openembedded.org/bitbake
-    branch: "2.20"
     layers:
       bitbake: disabled
 
