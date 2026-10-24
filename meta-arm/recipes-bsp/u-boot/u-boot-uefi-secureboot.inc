@@ -1,8 +1,6 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
-SRC_URI += "file://uefi-secureboot.cfg \
-            file://0001-efi_loader-fix-building-with-CONFIG_EFI_VARIABLES_PR.patch \
-           "
+SRC_URI += "file://uefi-secureboot.cfg"
 
 require ${@bb.utils.contains('MACHINE_FEATURES', 'uefi-http-boot', 'u-boot-uefi-http-boot.inc', '', d)}
 require ${@bb.utils.contains('MACHINE_FEATURES', 'uefi-capsule-update', 'u-boot-capsule-update.inc', '', d)}
