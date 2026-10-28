@@ -1,4 +1,4 @@
-From 7d2f6b6e31fad2c96c6fc55c17e79f8c96b4bfcf Mon Sep 17 00:00:00 2001
+From 0debd3a1f4b5abf0c75c26ec1e85d9fa33510c89 Mon Sep 17 00:00:00 2001
 From: Yeoreum Yun <yeoreum.yun@arm.com>
 Date: Mon, 10 Aug 2026 15:40:06 +0100
 Subject: [PATCH] DynamicTablesPkg: fix SmbiosType2Genertor build failure with
@@ -36,6 +36,3 @@ index 1250ef8059e9..5345d2b6d233 100644
    {
      DEBUG ((DEBUG_ERROR, "%a: Invalid Baseboard object list\n", __func__));
      return EFI_INVALID_PARAMETER;
--- 
-2.39.5
-
