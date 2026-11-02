@@ -6,16 +6,19 @@ EDK2_BIN_NAME      = "BL33_AP_UEFI.fd"
 
 COMPATIBLE_MACHINE = "rdn2"
 
-SRC_URI_EDK2 = "gitsm://gitlab.arm.com/infra-solutions/reference-design/platsw/edk2.git;protocol=https"
-SRC_URI_EDK2_PLATFORMS = "git://gitlab.arm.com/infra-solutions/reference-design/platsw/edk2-platforms.git;protocol=https"
+FILESEXTRAPATHS:prepend := "${THISDIR}/files/rdn2:"
 
-FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
-SRC_URI:append = " file://0001-Changes-in-acpica-20260408-are-now-causing-issues-wi.patch;patchdir=edk2-platforms"
-SRC_URI:remove = "file://0001-DynamicTablesPkg-fix-SmbiosType2Genertor-build-failu.patch"
-
-SRCBRANCH_edk2 = "refinfra"
-SRCBRANCH_edk2_platforms = "refinfra"
-
-# Use the RD-INFRA-2024.12.20 tag
-SRCREV_edk2           = "dd25905d63ec72d6e06804155fda1098d10da19e"
-SRCREV_edk2-platforms = "f6ed3b0f92eeaf380638f77d8b5ace805facb301"
+SRC_URI:append = " \
+    file://0001-DynamicTablesPkg-retain-QWord-translation-for-PCIe-t.patch \
+    file://0002-Changes-in-acpica-20260408-are-now-causing-issues-wi.patch;patchdir=edk2-platforms \
+    file://0003-Platform-Sgi-generate-pcie-rootbridge-topology-layou.patch;patchdir=edk2-platforms \
+    file://0004-Platform-Sgi-Enable-auto-generation-of-PCIE-Table.patch;patchdir=edk2-platforms \
+    file://0005-Platform-Sgi-enable-autogeneration-of-iort-table.patch;patchdir=edk2-platforms \
+    file://0006-Platform-Sgi-Enable-auto-generation-and-installation.patch;patchdir=edk2-platforms \
+    file://0007-Platform-Sgi-Enable-PCIe-support-on-RdN2.patch;patchdir=edk2-platforms \
+    file://0008-Platform-Sgi-retain-PCIe-enable-after-RdN2-includes.patch;patchdir=edk2-platforms \
+    file://0009-Platform-Sgi-autogenerate-SoC-expansion-block-iort-t.patch;patchdir=edk2-platforms \
+    file://0010-Platform-Sgi-define-SMMU-PCDs-for-dynamic-IORT.patch;patchdir=edk2-platforms \
+    file://0011-Platform-Sgi-use-FdtLib-and-BaseMemoryLib-for-PCIe-t.patch;patchdir=edk2-platforms \
+    file://0012-Platform-Sgi-add-helper-macros-for-DMA-Named-Compone.patch;patchdir=edk2-platforms \
+"
