@@ -1,0 +1,38 @@
+From 5de0e3630875563083f3082a7ee7ec93d3c4824f Mon Sep 17 00:00:00 2001
+From: Rakshit Goyal <rakshit.goyal@arm.com>
+Date: Mon, 27 Jan 2025 11:55:57 +0000
+Subject: [PATCH] feat(rdn2): enable SVE in both worlds and save its context
+
+Affected platforms: RD-N2, RD-V1, RD-V1-MC and their configurations
+
+Commit 4242262(feat(simd):add sve state to simd ctxt struct) introduced
+the CTX_INCLUDE_SVE_REGS build flag that needs to be set if SVE is
+enabled for more than one world. This allows SVE registers to be saved
+in context across Secure/Non-Secure world switch.
+
+TF-A 2.15 disables SVE in the Neoverse RD common makefile, so enable it
+for RDN2 alongside the context save flag.
+
+Signed-off-by: Rakshit Goyal <rakshit.goyal@arm.com>
+
+Upstream-Status: Pending
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+---
+ plat/arm/board/neoverse_rd/platform/rdn2/platform.mk | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/plat/arm/board/neoverse_rd/platform/rdn2/platform.mk b/plat/arm/board/neoverse_rd/platform/rdn2/platform.mk
+index 421c14eaddfb..4a4ff6372719 100644
+--- a/plat/arm/board/neoverse_rd/platform/rdn2/platform.mk
++++ b/plat/arm/board/neoverse_rd/platform/rdn2/platform.mk
+@@ -115,6 +115,10 @@ override SPMD_SPM_AT_SEL2		:= 0
+ 
+ # FEAT_SVE related flags
+ override SVE_VECTOR_LEN			:= 128
++override ENABLE_SVE_FOR_NS		:= 2
++override ENABLE_SVE_FOR_SWD		:= 1
++override CTX_INCLUDE_SVE_REGS		:= 1
++
+ # Enable the flag since RD-N2 has a system level cache
+ NEOVERSE_Nx_EXTERNAL_LLC		:=	1
+ 
