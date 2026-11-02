@@ -1,0 +1,118 @@
+From 7e1e96c8a6c64a3bb9e4f3a14a0ef90af039b3ed Mon Sep 17 00:00:00 2001
+From: Nishant Sharma <nishant.sharma@arm.com>
+Date: Mon, 2 Nov 2026 14:53:45 -0500
+Subject: [PATCH] DynamicTablesPkg: retain QWord translation for PCIe tables
+
+Carry QWord translation offset support from the refinfra tree into the
+current AML resource updater. Pass zero from existing upstream callers
+so their resource descriptors keep the same translation.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Change-Id: Ic7fc51d04690449209182452ce1f7fa7b83da318
+
+Upstream-Status: Pending
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+---
+ DynamicTablesPkg/Include/Library/AmlLib/AmlLib.h            | 4 +++-
+ .../Acpi/Arm/AcpiSsdtCmn600LibArm/SsdtCmn600Generator.c     | 6 ++++--
+ .../Library/Common/AmlLib/Api/AmlResourceDataApi.c          | 4 +++-
+ .../Common/SsdtSerialPortFixupLib/SsdtSerialPortFixupLib.c  | 3 ++-
+ .../Library/Common/Tpm2DeviceTableLib/Tpm2DeviceTableLib.c  | 3 ++-
+ 5 files changed, 14 insertions(+), 6 deletions(-)
+
+diff --git a/DynamicTablesPkg/Include/Library/AmlLib/AmlLib.h b/DynamicTablesPkg/Include/Library/AmlLib/AmlLib.h
+index cea78d419242..52edcf1cc892 100644
+--- a/DynamicTablesPkg/Include/Library/AmlLib/AmlLib.h
++++ b/DynamicTablesPkg/Include/Library/AmlLib/AmlLib.h
+@@ -588,6 +588,7 @@ AmlUpdateRdWord (
+                                    node.
+   @param  [in] BaseAddress         Base address.
+   @param  [in] BaseAddressLength   Base address length.
++  @param  [in] AddrTranslationOffset  Address translation offset.
+ 
+   @retval  EFI_SUCCESS            The function completed successfully.
+   @retval  EFI_INVALID_PARAMETER  Invalid parameter.
+@@ -598,7 +599,8 @@ EFIAPI
+ AmlUpdateRdQWord (
+   IN  AML_DATA_NODE_HANDLE  QWordRdNode,
+   IN  UINT64                BaseAddress,
+-  IN  UINT64                BaseAddressLength
++  IN  UINT64                BaseAddressLength,
++  IN  UINT64                AddrTranslationOffset
+   );
+ 
+ /** Code generation for the "DWordIO ()" ASL function.
+diff --git a/DynamicTablesPkg/Library/Acpi/Arm/AcpiSsdtCmn600LibArm/SsdtCmn600Generator.c b/DynamicTablesPkg/Library/Acpi/Arm/AcpiSsdtCmn600LibArm/SsdtCmn600Generator.c
+index 3585a53a9d96..48f847d73ff4 100644
+--- a/DynamicTablesPkg/Library/Acpi/Arm/AcpiSsdtCmn600LibArm/SsdtCmn600Generator.c
++++ b/DynamicTablesPkg/Library/Acpi/Arm/AcpiSsdtCmn600LibArm/SsdtCmn600Generator.c
+@@ -305,7 +305,8 @@ FixupCmn600Info (
+   Status = AmlUpdateRdQWord (
+              CmnPeriphBaseRdNode,
+              Cmn600Info->PeriphBaseAddress,
+-             Cmn600Info->PeriphBaseAddressLength
++             Cmn600Info->PeriphBaseAddressLength,
++             0
+              );
+   if (EFI_ERROR (Status)) {
+     goto error_handler;
+@@ -331,7 +332,8 @@ FixupCmn600Info (
+   Status = AmlUpdateRdQWord (
+              CmnRootNodeBaseRdNode,
+              Cmn600Info->RootNodeBaseAddress,
+-             ROOTNODEBASE_ADDRESS_LENGTH
++             ROOTNODEBASE_ADDRESS_LENGTH,
++             0
+              );
+   if (EFI_ERROR (Status)) {
+     goto error_handler;
+diff --git a/DynamicTablesPkg/Library/Common/AmlLib/Api/AmlResourceDataApi.c b/DynamicTablesPkg/Library/Common/AmlLib/Api/AmlResourceDataApi.c
+index 5f994be09064..25baa83c231d 100644
+--- a/DynamicTablesPkg/Library/Common/AmlLib/Api/AmlResourceDataApi.c
++++ b/DynamicTablesPkg/Library/Common/AmlLib/Api/AmlResourceDataApi.c
+@@ -260,7 +260,8 @@ EFIAPI
+ AmlUpdateRdQWord (
+   IN  AML_DATA_NODE_HANDLE  QWordRdNode,
+   IN  UINT64                BaseAddress,
+-  IN  UINT64                BaseAddressLength
++  IN  UINT64                BaseAddressLength,
++  IN  UINT64                AddrTranslationOffset
+   )
+ {
+   EFI_STATUS                               Status;
+@@ -319,6 +320,7 @@ AmlUpdateRdQWord (
+   RdQWord->AddrRangeMin = BaseAddress;
+   RdQWord->AddrRangeMax = BaseAddress + BaseAddressLength - 1;
+   RdQWord->AddrLen      = BaseAddressLength;
++  RdQWord->AddrTranslationOffset = AddrTranslationOffset;
+ 
+   Status = CheckAddressSpaceFields (
+              IS_RD_ADDR_MIN_FIXED (RdQWord->GenFlag),
+diff --git a/DynamicTablesPkg/Library/Common/SsdtSerialPortFixupLib/SsdtSerialPortFixupLib.c b/DynamicTablesPkg/Library/Common/SsdtSerialPortFixupLib/SsdtSerialPortFixupLib.c
+index fd4d4a7dddd0..57592793e34d 100644
+--- a/DynamicTablesPkg/Library/Common/SsdtSerialPortFixupLib/SsdtSerialPortFixupLib.c
++++ b/DynamicTablesPkg/Library/Common/SsdtSerialPortFixupLib/SsdtSerialPortFixupLib.c
+@@ -323,7 +323,8 @@ FixupCrs (
+              QWordRdNode,
+              SerialPortInfo->BaseAddress,
+              ((SerialPortInfo->BaseAddressLength < MIN_UART_ADDRESS_LENGTH) ?
+-              MIN_UART_ADDRESS_LENGTH : SerialPortInfo->BaseAddressLength)
++              MIN_UART_ADDRESS_LENGTH : SerialPortInfo->BaseAddressLength),
++             0
+              );
+   if (EFI_ERROR (Status)) {
+     return Status;
+diff --git a/DynamicTablesPkg/Library/Common/Tpm2DeviceTableLib/Tpm2DeviceTableLib.c b/DynamicTablesPkg/Library/Common/Tpm2DeviceTableLib/Tpm2DeviceTableLib.c
+index 49a40f1c7816..8ff6aa05c849 100644
+--- a/DynamicTablesPkg/Library/Common/Tpm2DeviceTableLib/Tpm2DeviceTableLib.c
++++ b/DynamicTablesPkg/Library/Common/Tpm2DeviceTableLib/Tpm2DeviceTableLib.c
+@@ -149,7 +149,8 @@ FixupTpm2DeviceCrs (
+   Status = AmlUpdateRdQWord (
+              QWordRdNode,
+              TpmDevInfo->Tpm2DeviceBaseAddress,
+-             TpmDevInfo->Tpm2DeviceSize
++             TpmDevInfo->Tpm2DeviceSize,
++             0
+              );
+   if (EFI_ERROR (Status)) {
+     return Status;

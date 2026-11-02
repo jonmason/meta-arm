@@ -1,0 +1,128 @@
+Subject: [PATCH] Platform/Sgi: describe virtio RNG to ACPI systems
+
+The reference design FVPs expose a virtio RNG at 0x0c140000. Add a
+platform SSDT so Linux can enumerate the device when the model enables it.
+
+Upstream-Status: Pending
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+---
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.dec b/Platform/ARM/SgiPkg/SgiPlatform.dec
+--- a/Platform/ARM/SgiPkg/SgiPlatform.dec
++++ b/Platform/ARM/SgiPkg/SgiPlatform.dec
+@@ -54,6 +54,11 @@
+   gArmSgiTokenSpaceGuid.PcdVirtioNetBaseAddress|0x00000000|UINT32|0x00000007
+   gArmSgiTokenSpaceGuid.PcdVirtioNetSize|0x00000000|UINT32|0x00000008
+   gArmSgiTokenSpaceGuid.PcdVirtioNetInterrupt|0x00000000|UINT32|0x00000009
++
++  # Virtio RNG
++  gArmSgiTokenSpaceGuid.PcdVirtioRngBaseAddress|0x00000000|UINT32|0x00001030
++  gArmSgiTokenSpaceGuid.PcdVirtioRngSize|0x00000000|UINT32|0x00001031
++  gArmSgiTokenSpaceGuid.PcdVirtioRngInterrupt|0x00000000|UINT32|0x00001032
+ 
+   # Virtio P9
+   gArmSgiTokenSpaceGuid.PcdVirtioP9BaseAddress|0x00000000|UINT32|0x00000028
+diff --git a/Platform/ARM/SgiPkg/SgiMemoryMap2.dsc.inc b/Platform/ARM/SgiPkg/SgiMemoryMap2.dsc.inc
+--- a/Platform/ARM/SgiPkg/SgiMemoryMap2.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiMemoryMap2.dsc.inc
+@@ -38,6 +38,11 @@
+   gArmSgiTokenSpaceGuid.PcdVirtioNetBaseAddress|0x0C150000
+   gArmSgiTokenSpaceGuid.PcdVirtioNetSize|0x10000
+   gArmSgiTokenSpaceGuid.PcdVirtioNetInterrupt|460
++
++  # Virtio RNG
++  gArmSgiTokenSpaceGuid.PcdVirtioRngBaseAddress|0x0C140000
++  gArmSgiTokenSpaceGuid.PcdVirtioRngSize|0x10000
++  gArmSgiTokenSpaceGuid.PcdVirtioRngInterrupt|462
+ 
+   # Virtio P9
+   gArmSgiTokenSpaceGuid.PcdVirtioP9BaseAddress|0x0C190000
+diff --git a/Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc b/Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc
+--- a/Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc
+@@ -30,6 +30,11 @@
+   gArmSgiTokenSpaceGuid.PcdVirtioNetBaseAddress|0x0C150000
+   gArmSgiTokenSpaceGuid.PcdVirtioNetSize|0x10000
+   gArmSgiTokenSpaceGuid.PcdVirtioNetInterrupt|186
++
++  # Virtio RNG
++  gArmSgiTokenSpaceGuid.PcdVirtioRngBaseAddress|0x0C140000
++  gArmSgiTokenSpaceGuid.PcdVirtioRngSize|0x10000
++  gArmSgiTokenSpaceGuid.PcdVirtioRngInterrupt|188
+ 
+   # PL031 RealTimeClock
+   gArmPlatformTokenSpaceGuid.PcdPL031RtcBase|0x0C170000
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdN2AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdN2AcpiTables.inf
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdN2AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdN2AcpiTables.inf
+@@ -26,6 +26,7 @@
+   SsdtIoVirtSocExp.asl
+   SsdtRos.asl
+   SsdtRosVirtioP9.asl
++  SsdtRosVirtioRng.asl
+ 
+ [Packages]
+   ArmPkg/ArmPkg.dec
+@@ -78,6 +79,9 @@
+   gArmSgiTokenSpaceGuid.PcdVirtioNetBaseAddress
+   gArmSgiTokenSpaceGuid.PcdVirtioNetSize
+   gArmSgiTokenSpaceGuid.PcdVirtioNetInterrupt
++  gArmSgiTokenSpaceGuid.PcdVirtioRngBaseAddress
++  gArmSgiTokenSpaceGuid.PcdVirtioRngSize
++  gArmSgiTokenSpaceGuid.PcdVirtioRngInterrupt
+   gArmSgiTokenSpaceGuid.PcdVirtioP9BaseAddress
+   gArmSgiTokenSpaceGuid.PcdVirtioP9Size
+   gArmSgiTokenSpaceGuid.PcdVirtioP9Interrupt
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/RdV3AcpiTables.inf b/Platform/ARM/SgiPkg/AcpiTables/RdV3AcpiTables.inf
+--- a/Platform/ARM/SgiPkg/AcpiTables/RdV3AcpiTables.inf
++++ b/Platform/ARM/SgiPkg/AcpiTables/RdV3AcpiTables.inf
+@@ -25,6 +25,7 @@
+   SsdtEvents.asl
+   SsdtRos.asl
+   SsdtRosVirtioP9.asl
++  SsdtRosVirtioRng.asl
+ 
+ [Packages]
+   ArmPkg/ArmPkg.dec
+@@ -62,6 +63,9 @@
+   gArmSgiTokenSpaceGuid.PcdVirtioNetBaseAddress
+   gArmSgiTokenSpaceGuid.PcdVirtioNetSize
+   gArmSgiTokenSpaceGuid.PcdVirtioNetInterrupt
++  gArmSgiTokenSpaceGuid.PcdVirtioRngBaseAddress
++  gArmSgiTokenSpaceGuid.PcdVirtioRngSize
++  gArmSgiTokenSpaceGuid.PcdVirtioRngInterrupt
+   gArmSgiTokenSpaceGuid.PcdVirtioP9BaseAddress
+   gArmSgiTokenSpaceGuid.PcdVirtioP9Size
+   gArmSgiTokenSpaceGuid.PcdVirtioP9Interrupt
+diff --git a/Platform/ARM/SgiPkg/AcpiTables/SsdtRosVirtioRng.asl b/Platform/ARM/SgiPkg/AcpiTables/SsdtRosVirtioRng.asl
+--- a/Platform/ARM/SgiPkg/AcpiTables/SsdtRosVirtioRng.asl
++++ b/Platform/ARM/SgiPkg/AcpiTables/SsdtRosVirtioRng.asl
+@@ -0,0 +1,29 @@
++/** @file
++  ACPI description of the reference design FVP virtio RNG.
++
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++**/
++
++#include "SgiAcpiHeader.h"
++#include "SgiPlatform.h"
++
++DefinitionBlock ("SsdtRosVirtioRng.aml", "SSDT", 2, "ARMLTD", "ARMSGI",
++                 EFI_ACPI_ARM_OEM_REVISION) {
++  Scope (_SB) {
++    Device (VR03) {
++      Name (_HID, "LNRO0005")
++      Name (_UID, 3)
++      Name (_CCA, 1)
++      Name (_CRS, ResourceTemplate () {
++        Memory32Fixed (
++          ReadWrite,
++          FixedPcdGet32 (PcdVirtioRngBaseAddress),
++          FixedPcdGet32 (PcdVirtioRngSize)
++        )
++        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) {
++          FixedPcdGet32 (PcdVirtioRngInterrupt)
++        }
++      })
++    }
++  }
++}
