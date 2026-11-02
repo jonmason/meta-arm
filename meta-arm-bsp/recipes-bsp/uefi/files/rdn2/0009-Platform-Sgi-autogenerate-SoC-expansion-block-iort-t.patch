@@ -1,0 +1,442 @@
+From d2b944cb797ecb7eb0c1cd8826b92a0ed6955758 Mon Sep 17 00:00:00 2001
+From: Vivek Gautam <vivek.gautam@arm.com>
+Date: Fri, 23 Sep 2022 17:28:55 +0530
+Subject: [PATCH] Platform/Sgi: autogenerate SoC expansion block iort table
+ data
+
+Add support to the IORT table generator to generate the IORT nodes
+for SoC expansion block that is connected to the IO virtualization
+block on RD platforms.
+Each instance of the SoC expansion block contains 1 each of SMMUv3
+and GIC-ITS, and two PL330 DMA devices.
+
+Signed-off-by: Nishant Sharma <nishant.sharma@arm.com>
+Signed-off-by: Vivek Gautam <vivek.gautam@arm.com>
+Change-Id: I3ec955dcc303718a80e4ecbe3ea9673e947d1ae4
+
+Upstream-Status: Pending
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+---
+ .../PcieAcpiTableGeneratorLib.inf             |   9 +
+ .../PcieIortGenerator.c                       | 210 +++++++++++++++++-
+ Platform/ARM/SgiPkg/RdN2/RdN2.dsc             |   4 +
+ Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc     |   5 +
+ Platform/ARM/SgiPkg/RdN2Cfg2/RdN2Cfg2.dsc     |   5 +
+ Platform/ARM/SgiPkg/SgiPlatform.dec           |   7 +
+ 6 files changed, 228 insertions(+), 12 deletions(-)
+
+diff --git a/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieAcpiTableGeneratorLib.inf b/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieAcpiTableGeneratorLib.inf
+index 7d909c2bcbf3..577b09abee0a 100644
+--- a/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieAcpiTableGeneratorLib.inf
++++ b/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieAcpiTableGeneratorLib.inf
+@@ -41,11 +41,20 @@
+ [FixedPcd]
+   gArmPlatformTokenSpaceGuid.PcdClusterCount
+   gArmPlatformTokenSpaceGuid.PcdCoreCount
++  gArmSgiTokenSpaceGuid.PcdChipCount
++  gArmSgiTokenSpaceGuid.PcdIoVirtBlkCountPerChip
++  gArmSgiTokenSpaceGuid.PcdIoVirtBlkPortDevIdOffset
++  gArmSgiTokenSpaceGuid.PcdIoVirtBlkPortPciex40DevIdBase
++  gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlkDmaNumCh
++  gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlk0Idx
++  gArmSgiTokenSpaceGuid.PcdMaxAddressBitsPerChip
+   gArmSgiTokenSpaceGuid.PcdSmmuDevIDBase
+   gArmSgiTokenSpaceGuid.PcdSmmuEventGsiv
+   gArmSgiTokenSpaceGuid.PcdSmmuGErrorGsiv
+   gArmSgiTokenSpaceGuid.PcdSmmuPriGsiv
+   gArmSgiTokenSpaceGuid.PcdSmmuSyncGsiv
++  gArmSgiTokenSpaceGuid.PcdRemoteCxlMemory
++  gArmSgiTokenSpaceGuid.PcdSmmuBase
+ 
+ [Protocols]
+   gEfiAcpiTableProtocolGuid          ## CONSUMES
+diff --git a/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieIortGenerator.c b/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieIortGenerator.c
+index 97885c733a6e..33bb51507436 100644
+--- a/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieIortGenerator.c
++++ b/Platform/ARM/SgiPkg/Library/PcieAcpiTableGeneratorLib/PcieIortGenerator.c
+@@ -20,10 +20,15 @@
+ 
+ #include "SgiAcpiHeader.h"
+ #include "SgiPlatform.h"
++#include "IoVirtSoCExp.h"
+ 
+ /* Number of Device IDs = (Bus * Number of devices * Number of functions) */
+ #define PCI_NUM_IDS(Bus) (Bus * 32 * 8)
+ 
++#define SMMU_REGISTER_BLOCK_SIZE 0x2000000
++
++#define SOC_EXPANSION_ENABLED() (FixedPcdGet32(PcdIoVirtBlkCountPerChip) > 0)
++
+ #pragma pack(1)
+ 
+ typedef struct
+@@ -38,13 +43,25 @@ typedef struct
+   EFI_ACPI_6_0_IO_REMAPPING_ID_TABLE       RcIdMap[];
+ } ARM_EFI_ACPI_6_0_IO_REMAPPING_RC_NODE;
+ 
++typedef struct
++{
++  EFI_ACPI_6_0_IO_REMAPPING_NAMED_COMP_NODE  DmaNode;
++  CONST CHAR8                                Name[16];
++  EFI_ACPI_6_0_IO_REMAPPING_ID_TABLE         DmaIdMap[9];
++} RD_IOVIRT_SOC_EXP_IORT_DMA_NC_NODE;
++
++typedef struct
++{
++  RD_IOVIRT_SOC_EXP_IORT_DMA_NC_NODE       DmaSocExpNode[2];
++} RD_IOVIRT_SOC_EXP_IO_REMAPPING_DMA_NODE;
++
+ typedef struct
+ {
+   EFI_ACPI_6_0_IO_REMAPPING_SMMU3_NODE     SmmuNode;
+   EFI_ACPI_6_0_IO_REMAPPING_ID_TABLE       SmmuIdMap[];
+ } ARM_EFI_ACPI_6_0_IO_REMAPPING_PCIE_SMMU3_NODE;
+ 
+-typedef struct 
++typedef struct
+ {
+   EFI_ACPI_6_0_IO_REMAPPING_TABLE * Header;
+   ARM_EFI_ACPI_6_0_IO_REMAPPING_ITS_NODE * ItsBase;
+@@ -53,6 +70,7 @@ typedef struct
+   UINTN ItsNodesSize;
+   UINTN SmmuNodesSize;
+   UINTN RcNodesSize;
++  UINTN TableSize;
+   UINTN MaxTableSize;
+ } IORT_GENERATOR_CONTEXT;
+ 
+@@ -134,6 +152,153 @@ AddHeader (
+   CopyMem(Header, &TemplateHeader, sizeof(TemplateHeader));
+ }
+ 
++#if SOC_EXPANSION_ENABLED()
++STATIC
++ARM_EFI_ACPI_6_0_IO_REMAPPING_PCIE_SMMU3_NODE *
++UpdateIdMaps(
++    IN OUT IORT_GENERATOR_CONTEXT *Context,
++    IN UINTN Chip,
++    IN UINTN ItsIdx
++    )
++{
++  EFI_ACPI_6_0_IO_REMAPPING_ID_TABLE SmmuIdMap[] = {
++    {
++      DMA_STREAM_ID_BASE(0),
++      (FixedPcdGet32 (PcdIoVirtSocExpBlkDmaNumCh) + 1),
++      DMA_STREAM_ID_BASE(0),
++    },
++    {
++      DMA_STREAM_ID_BASE(1),
++      (FixedPcdGet32 (PcdIoVirtSocExpBlkDmaNumCh) + 1),
++      DMA_STREAM_ID_BASE(1),
++    }
++  };
++  ARM_EFI_ACPI_6_0_IO_REMAPPING_PCIE_SMMU3_NODE * SmmuSocExpNode;
++  ARM_EFI_ACPI_6_0_IO_REMAPPING_ITS_NODE * ItsSocExpNode;
++  EFI_ACPI_6_0_IO_REMAPPING_TABLE * Header;
++  UINT32 *NumIdMappings;
++  UINTN Idx;
++  UINTN TemplateSize;
++
++  Header = Context->Header;
++  ItsSocExpNode = (ARM_EFI_ACPI_6_0_IO_REMAPPING_ITS_NODE *)
++            ((UINT8 *) Context->Header + Context->Header->Header.Length);
++  SmmuSocExpNode = (ARM_EFI_ACPI_6_0_IO_REMAPPING_PCIE_SMMU3_NODE *)
++                    ((UINT8 *)ItsSocExpNode + sizeof(TemplateIts));
++
++  NumIdMappings = &SmmuSocExpNode->SmmuNode.Node.NumIdMappings;
++  TemplateSize =
++    sizeof (TemplateSmmu) + \
++        (sizeof (EFI_ACPI_6_0_IO_REMAPPING_ID_TABLE) * \
++         TemplateSmmu.SmmuNode.Node.NumIdMappings);
++
++  /* Copy ITS Node template. */
++  CopyMem (
++      ItsSocExpNode,
++      &TemplateIts,
++      sizeof(TemplateIts)
++      );
++  ItsSocExpNode->ItsIdentifiers = ItsIdx;
++  Header->Header.Length += sizeof (TemplateIts);
++  Header->NumNodes++;
++
++  /* Copy SMMU node template. */
++  CopyMem (
++      SmmuSocExpNode,
++      &TemplateSmmu,
++      TemplateSize
++      );
++  Header->Header.Length += TemplateSize;
++  SmmuSocExpNode->SmmuNode.Node.Length = TemplateSize;
++  Header->NumNodes++;
++
++  /* Update SMMU ID mappings for the two DMA devices */
++  CopyMem (
++      &SmmuSocExpNode->SmmuIdMap[*NumIdMappings],
++      SmmuIdMap,
++      sizeof (SmmuIdMap)
++      );
++  *NumIdMappings += 2;
++  Header->Header.Length += sizeof (SmmuIdMap);
++  SmmuSocExpNode->SmmuNode.Node.Length += sizeof (SmmuIdMap);
++
++  /* Now update the OutputReference for all SMMU Id mappings */
++  for(Idx = 0; Idx < *NumIdMappings; Idx++) {
++    SmmuSocExpNode->SmmuIdMap[Idx].OutputReference =
++      (UINT32)((UINTN)ItsSocExpNode - (UINTN)Context->Header);
++  }
++
++  /* Update the SMMU base address for each chip */
++  SmmuSocExpNode->SmmuNode.Base =
++    (FixedPcdGet32 (PcdSmmuBase) +
++     (SMMU_REGISTER_BLOCK_SIZE * FixedPcdGet32(PcdIoVirtSocExpBlk0Idx)) +
++     SGI_REMOTE_CHIP_MEM_OFFSET (Chip));
++
++  return SmmuSocExpNode;
++}
++
++STATIC
++VOID
++GenerateSocExpNodes(
++    IN OUT IORT_GENERATOR_CONTEXT *Context,
++    IN     UINTN Chip,
++    IN     UINTN ItsIdx
++    )
++{
++  RD_IOVIRT_SOC_EXP_IO_REMAPPING_DMA_NODE DmaNodeTemplate = {
++    {
++      ARM_RD_ACPI_IO_VIRT_BLK_DMA_NC_INIT(0),
++      ARM_RD_ACPI_IO_VIRT_BLK_DMA_NC_INIT(1),
++    },
++  };
++  RD_IOVIRT_SOC_EXP_IO_REMAPPING_DMA_NODE *DmaNode;
++  ARM_EFI_ACPI_6_0_IO_REMAPPING_PCIE_SMMU3_NODE * SmmuSocExpNode;
++  RD_IOVIRT_SOC_EXP_IORT_DMA_NC_NODE * DmaSocExpNode;
++  EFI_ACPI_6_0_IO_REMAPPING_TABLE * Header;
++  UINTN DmaIdx;
++  UINTN NodeIdx;
++  STATIC UINTN DmaNum = 0;
++
++  SmmuSocExpNode = UpdateIdMaps(Context, Chip, ItsIdx);
++  Header = Context->Header;
++  DmaNode = (RD_IOVIRT_SOC_EXP_IO_REMAPPING_DMA_NODE *)
++    ((UINT8 *) Header + Header->Header.Length);
++
++  CopyMem (
++      DmaNode,
++      &DmaNodeTemplate,
++      sizeof (RD_IOVIRT_SOC_EXP_IO_REMAPPING_DMA_NODE)
++      );
++  Header->NumNodes++;
++  Header->Header.Length += sizeof(DmaNodeTemplate);
++
++  /* Each SoC expansion block has 2 DMAs */
++  for(DmaIdx = 0; DmaIdx < 2; DmaIdx++) {
++    DmaSocExpNode = &DmaNode->DmaSocExpNode[DmaIdx];
++
++    /* Update the object reference name */
++    AsciiSPrint ((CHAR8 *)DmaSocExpNode->Name, sizeof (DmaSocExpNode->Name),
++                 "\\_SB_.DMA%d", DmaNum++);
++
++    for(NodeIdx = 0; NodeIdx < DmaSocExpNode->DmaNode.Node.NumIdMappings; NodeIdx++) {
++      DmaSocExpNode->DmaIdMap[NodeIdx].OutputReference =
++        (UINT32)((UINTN)SmmuSocExpNode - (UINTN)Header);
++    }
++  }
++}
++
++STATIC
++VOID
++AddSocExpNodes (IORT_GENERATOR_CONTEXT *Context, UINTN NumberHostBridges)
++{
++  UINTN Chip;
++
++  for (Chip = 0; Chip < FixedPcdGet32 (PcdChipCount); Chip++) {
++     GenerateSocExpNodes(Context, Chip, NumberHostBridges + Chip);
++  }
++}
++#endif
++
+ STATIC
+ VOID
+ AddItsNodes (
+@@ -158,7 +323,7 @@ AddItsNodes (
+         );
+     CurrentNode->ItsIdentifiers = IoBlock->HostbridgeId;
+     CurrentNode++;
+-    
++
+     IoBlock = (SGI_PCIE_IO_BLOCK *) ((UINT8 *)IoBlock +
+         sizeof (SGI_PCIE_IO_BLOCK) +
+         (sizeof (SGI_PCIE_DEVICE) * IoBlock->Count));
+@@ -183,8 +348,8 @@ AddSmmuNodes (
+   UINTN ItsOutputReference;
+   UINT32 *NumIdMappings;
+   UINTN TemplateSize;
+- 
+-  Header = Context->Header; 
++
++  Header = Context->Header;
+   SmmuBase = Context->SmmuBase;
+   CurrentNode = SmmuBase;
+   ItsNodes = Context->ItsBase;
+@@ -206,7 +371,7 @@ AddSmmuNodes (
+     for (LoopRootPort = 0; LoopRootPort < IoBlock->Count; LoopRootPort++) {
+       IdMapping[*NumIdMappings].OutputBase =
+         PCI_NUM_IDS(RootPorts[LoopRootPort].Bus.Address) +
+-        RootPorts[LoopRootPort].BaseInterruptId; 
++        RootPorts[LoopRootPort].BaseInterruptId;
+       IdMapping[*NumIdMappings].InputBase =
+         IdMapping[*NumIdMappings].OutputBase;
+       IdMapping[*NumIdMappings].NumIds =
+@@ -221,9 +386,9 @@ AddSmmuNodes (
+     Header->NumNodes++;
+     CurrentNode->SmmuNode.Node.Length = NodeSize;
+ 
+-    CurrentNode = 
++    CurrentNode =
+       (ARM_EFI_ACPI_6_0_IO_REMAPPING_PCIE_SMMU3_NODE *) ((UINT8 *)CurrentNode + NodeSize);
+-    
++
+     IoBlock = (SGI_PCIE_IO_BLOCK *) ((UINT8 *)IoBlock +
+         sizeof (SGI_PCIE_IO_BLOCK) +
+         (sizeof (SGI_PCIE_DEVICE) * IoBlock->Count));
+@@ -256,7 +421,7 @@ GetSmmuNode (
+       CurrentNode->SmmuNode.Node.NumIdMappings *
+       sizeof(EFI_ACPI_6_0_IO_REMAPPING_ID_TABLE);
+ 
+-    CurrentNode = 
++    CurrentNode =
+       (ARM_EFI_ACPI_6_0_IO_REMAPPING_PCIE_SMMU3_NODE *) ((UINT8 *)CurrentNode + NodeSize);
+   }
+ 
+@@ -297,7 +462,7 @@ AddSegmentMappings (
+           PCI_NUM_IDS(RootPorts[LoopRootPort].Bus.Size) - 1;
+         IdMapping[*NumIdMappings].OutputBase =
+           PCI_NUM_IDS(RootPorts[LoopRootPort].Bus.Address) +
+-          RootPorts[LoopRootPort].BaseInterruptId; 
++          RootPorts[LoopRootPort].BaseInterruptId;
+         IdMapping[*NumIdMappings].OutputReference = SmmuOffset;
+         *NumIdMappings += 1;
+       }
+@@ -323,7 +488,7 @@ AddRcNodes (
+   UINTN BlocksProcessed = 0;
+   UINTN Segment = 0;
+ 
+-  Header = Context->Header; 
++  Header = Context->Header;
+   Nodes = Context->RcNodeBase;
+ 
+   while (BlocksProcessed < IoBlockList->BlockCount) {
+@@ -400,10 +565,28 @@ GenerateContext (
+   /*Id mapping nodes */
+   Context->RcNodesSize +=
+     NumberRootPorts * sizeof (EFI_ACPI_6_0_IO_REMAPPING_ID_TABLE);
++
+   Context->MaxTableSize = Context->ItsNodesSize +
+                           Context->SmmuNodesSize +
+                           Context->RcNodesSize +
+-                           sizeof(TemplateHeader);
++                          sizeof(TemplateHeader);
++
++#if SOC_EXPANSION_ENABLED()
++  /* Assuming only one node per chip is present on the platform. */
++  Context->MaxTableSize += sizeof (RD_IOVIRT_SOC_EXP_IO_REMAPPING_DMA_NODE) *
++    FixedPcdGet32 (PcdChipCount);
++  Context->MaxTableSize += sizeof (TemplateIts) * FixedPcdGet32 (PcdChipCount);
++  Context->MaxTableSize +=
++    (sizeof (TemplateSmmu) +
++     (sizeof (EFI_ACPI_6_0_IO_REMAPPING_ID_TABLE) * 2)) *
++    FixedPcdGet32 (PcdChipCount);
++  Context->MaxTableSize +=
++    (sizeof(RD_IOVIRT_SOC_EXP_IO_REMAPPING_DMA_NODE) * 2) *
++    FixedPcdGet32 (PcdChipCount);
++#endif
++
++  Context->TableSize = Context->MaxTableSize;
++
+   Context->Header = (EFI_ACPI_6_0_IO_REMAPPING_TABLE *)AllocateZeroPool (Context->MaxTableSize);
+   if (Context->Header == NULL) {
+     return EFI_OUT_OF_RESOURCES;
+@@ -414,7 +597,7 @@ GenerateContext (
+     (ARM_EFI_ACPI_6_0_IO_REMAPPING_PCIE_SMMU3_NODE *)((UINT8 *)Context->ItsBase + Context->ItsNodesSize);
+   Context->RcNodeBase =
+     (ARM_EFI_ACPI_6_0_IO_REMAPPING_RC_NODE *)((UINT8 *) Context->SmmuBase + Context->SmmuNodesSize);
+-  
++
+   return EFI_SUCCESS;
+ }
+ 
+@@ -457,6 +640,9 @@ GenerateAndInstallIortTable (
+ 
+   AddRcNodes (IoBlockList, &Context);
+ 
++#if SOC_EXPANSION_ENABLED()
++  AddSocExpNodes (&Context, NumberHostBridges);
++#endif
+   ASSERT (Context.Header->Header.Length <= Context.MaxTableSize);
+ 
+   Status = gBS->LocateProtocol (
+diff --git a/Platform/ARM/SgiPkg/RdN2/RdN2.dsc b/Platform/ARM/SgiPkg/RdN2/RdN2.dsc
+index 611d4f03708e..c13cc6b5cb24 100644
+--- a/Platform/ARM/SgiPkg/RdN2/RdN2.dsc
++++ b/Platform/ARM/SgiPkg/RdN2/RdN2.dsc
+@@ -49,6 +49,10 @@ DEFINE PCIE_ENABLE             = TRUE
+   gArmPlatformTokenSpaceGuid.PcdCoreCount|1
+   gArmPlatformTokenSpaceGuid.PcdClusterCount|16
+ 
++  gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlk0Idx|4
++  gArmSgiTokenSpaceGuid.PcdIoVirtBlkCountPerChip|5
++  gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlkUartEnable|1
++
+ ################################################################################
+ #
+ # Components Section - list of all EDK II Modules needed by this Platform
+diff --git a/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc b/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc
+index 4da6586d60e2..59488feea27e 100644
+--- a/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc
++++ b/Platform/ARM/SgiPkg/RdN2Cfg1/RdN2Cfg1.dsc
+@@ -54,6 +54,11 @@ DEFINE PCIE_ENABLE             = TRUE
+   gArmPlatformTokenSpaceGuid.PcdCoreCount|1
+   gArmPlatformTokenSpaceGuid.PcdClusterCount|8
+ 
++  # IO virtualization block
++  gArmSgiTokenSpaceGuid.PcdIoVirtBlkCountPerChip|2
++  gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlk0Idx|1
++  gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlkUartEnable|1
++
+ ################################################################################
+ #
+ # Components Section - list of all EDK II Modules needed by this Platform
+diff --git a/Platform/ARM/SgiPkg/RdN2Cfg2/RdN2Cfg2.dsc b/Platform/ARM/SgiPkg/RdN2Cfg2/RdN2Cfg2.dsc
+index 8e0d8169bfea..8291dc386514 100644
+--- a/Platform/ARM/SgiPkg/RdN2Cfg2/RdN2Cfg2.dsc
++++ b/Platform/ARM/SgiPkg/RdN2Cfg2/RdN2Cfg2.dsc
+@@ -52,6 +52,11 @@ DEFINE PCIE_ENABLE             = TRUE
+   # Number of chips in the multi-chip package
+   gArmSgiTokenSpaceGuid.PcdChipCount|4
+ 
++  # IO virtualization block
++  gArmSgiTokenSpaceGuid.PcdIoVirtBlkCountPerChip|2
++  gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlk0Idx|1
++  gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlkUartEnable|1
++
+ ################################################################################
+ #
+ # Components Section - list of all EDK II Modules needed by this Platform
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.dec b/Platform/ARM/SgiPkg/SgiPlatform.dec
+index 5a3fbe94ef0b..ca995934b338 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatform.dec
++++ b/Platform/ARM/SgiPkg/SgiPlatform.dec
+@@ -117,5 +117,12 @@
+   gArmSgiTokenSpaceGuid.PcdDramBlock2AddrChip2|0|UINT64|0x00000033
+   gArmSgiTokenSpaceGuid.PcdDramBlock2AddrChip3|0|UINT64|0x00000034
+ 
++  gArmSgiTokenSpaceGuid.PcdIoVirtBlkPortDevIdOffset|0|UINT32|0x00001024
++  gArmSgiTokenSpaceGuid.PcdIoVirtBlkPortPciex40DevIdBase|0|UINT32|0x00001025
++  gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlkDmaNumCh|0|UINT32|0x00001026
++  gArmSgiTokenSpaceGuid.PcdIoVirtSocExpBlk0Idx|0|UINT32|0x00001027
++  gArmSgiTokenSpaceGuid.PcdRemoteCxlMemory|FALSE|BOOLEAN|0x00001006
++
++
+ [Ppis]
+   gNtFwConfigDtInfoPpiGuid     = { 0x6f606eb3, 0x9123, 0x4e15, { 0xa8, 0x9b, 0x0f, 0xac, 0x66, 0xef, 0xd0, 0x17 } }
