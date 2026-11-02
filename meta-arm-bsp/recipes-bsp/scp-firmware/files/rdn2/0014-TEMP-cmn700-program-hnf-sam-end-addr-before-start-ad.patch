@@ -1,0 +1,37 @@
+From eb01c66d326dc711c8906a8416d2b155fc096a32 Mon Sep 17 00:00:00 2001
+From: Vijayenthiran Subramaniam <vijayenthiran.subramaniam@arm.com>
+Date: Mon, 23 Aug 2021 14:20:42 +0530
+Subject: [PATCH] [TEMP] cmn700: program hnf sam end addr before start
+ addr
+
+This patch is a temporary workaround to suppress the model warnings
+thrown while updating the end address after the start address in the HNF
+register.
+
+Signed-off-by: Vijayenthiran Subramaniam <vijayenthiran.subramaniam@arm.com>
+
+Upstream-Status: Pending
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+---
+ module/cmn700/src/mod_cmn700.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/module/cmn700/src/mod_cmn700.c b/module/cmn700/src/mod_cmn700.c
+index c8ac6fb1fde8..91f58375bf9e 100644
+--- a/module/cmn700/src/mod_cmn700.c
++++ b/module/cmn700/src/mod_cmn700.c
+@@ -181,12 +181,12 @@ static void process_node_hnf(struct cmn700_hnf_reg *hnf)
+ 
+         /* Configure sub-region entry */
+         if (get_hnsam_range_comp_en_mode(hnf)) {
++            hnf->SAM_MEMREGION_END_ADDR[region_sub_count] =
++                ((base + region->size - 1));
+             hnf->SAM_MEMREGION[region_sub_count] = region->node_id |
+                 ((base / SAM_GRANULARITY)
+                  << CMN700_HNF_SAM_MEMREGION_BASE_POS) |
+                 CMN700_HNF_SAM_MEMREGION_VALID;
+-            hnf->SAM_MEMREGION_END_ADDR[region_sub_count] =
+-                ((base + region->size - 1));
+         } else {
+             hnf->SAM_MEMREGION[region_sub_count] = region->node_id |
+                 (sam_encode_region_size(region->size)
