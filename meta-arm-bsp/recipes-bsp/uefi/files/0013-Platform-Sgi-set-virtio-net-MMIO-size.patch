@@ -1,0 +1,29 @@
+Subject: [PATCH] Platform/Sgi: describe the virtio-net MMIO window
+
+The ACPI virtio-net device uses PcdVirtioNetSize for its memory resource.
+Without a platform value, the PCD defaults to zero and Linux does not
+enumerate the network device, even when it is enabled in the FVP.
+
+Upstream-Status: Pending
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+---
+ Platform/ARM/SgiPkg/SgiMemoryMap2.dsc.inc | 1 +
+ Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/Platform/ARM/SgiPkg/SgiMemoryMap2.dsc.inc b/Platform/ARM/SgiPkg/SgiMemoryMap2.dsc.inc
+--- a/Platform/ARM/SgiPkg/SgiMemoryMap2.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiMemoryMap2.dsc.inc
+@@ -38,2 +38,3 @@
+   gArmSgiTokenSpaceGuid.PcdVirtioNetBaseAddress|0x0C150000
++  gArmSgiTokenSpaceGuid.PcdVirtioNetSize|0x10000
+   gArmSgiTokenSpaceGuid.PcdVirtioNetInterrupt|460
+diff --git a/Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc b/Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc
+--- a/Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc
++++ b/Platform/ARM/SgiPkg/SgiMemoryMap3.dsc.inc
+@@ -30,2 +30,3 @@
+   gArmSgiTokenSpaceGuid.PcdVirtioNetBaseAddress|0x0C150000
++  gArmSgiTokenSpaceGuid.PcdVirtioNetSize|0x10000
+   gArmSgiTokenSpaceGuid.PcdVirtioNetInterrupt|186
+-- 
+2.43.0

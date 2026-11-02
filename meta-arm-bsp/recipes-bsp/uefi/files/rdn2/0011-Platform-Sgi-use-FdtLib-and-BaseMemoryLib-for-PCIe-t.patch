@@ -1,0 +1,47 @@
+From 542f22f1459246d2a0c636f3c62799ab6cb1202b Mon Sep 17 00:00:00 2001
+From: Jon Mason <jon.mason@arm.com>
+Date: Mon, 2 Nov 2026 14:09:18 -0500
+Subject: [PATCH] Platform/Sgi: use FdtLib and BaseMemoryLib for PCIe topology
+
+Use the FdtLib property accessor exposed by current EDK2 and declare BaseMemoryLib for the copied PCIe topology data.
+
+Upstream-Status: Pending
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+---
+ Platform/ARM/SgiPkg/Library/SgiPlatformPei/SgiPlatformPei.inf | 1 +
+ Platform/ARM/SgiPkg/Library/SgiPlatformPei/SgiPlatformPeim.c  | 3 ++-
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/Platform/ARM/SgiPkg/Library/SgiPlatformPei/SgiPlatformPei.inf b/Platform/ARM/SgiPkg/Library/SgiPlatformPei/SgiPlatformPei.inf
+index 45165ecbbdf0..5d120c7b836a 100644
+--- a/Platform/ARM/SgiPkg/Library/SgiPlatformPei/SgiPlatformPei.inf
++++ b/Platform/ARM/SgiPkg/Library/SgiPlatformPei/SgiPlatformPei.inf
+@@ -18,6 +18,7 @@
+   Platform/ARM/SgiPkg/SgiPlatform.dec
+ 
+ [LibraryClasses]
++  BaseMemoryLib
+   FdtLib
+   PeimEntryPoint
+ 
+diff --git a/Platform/ARM/SgiPkg/Library/SgiPlatformPei/SgiPlatformPeim.c b/Platform/ARM/SgiPkg/Library/SgiPlatformPei/SgiPlatformPeim.c
+index aea9d3b0782b..fd2dfb69891c 100644
+--- a/Platform/ARM/SgiPkg/Library/SgiPlatformPei/SgiPlatformPeim.c
++++ b/Platform/ARM/SgiPkg/Library/SgiPlatformPei/SgiPlatformPeim.c
+@@ -6,6 +6,7 @@
+ *
+ **/
+ 
++#include <Library/BaseMemoryLib.h>
+ #include <Library/DebugLib.h>
+ #include <Library/FdtLib.h>
+ #include <Library/HobLib.h>
+@@ -86,7 +87,7 @@ GetSgiSystemId (
+     HobData->MultiChipMode = Fdt32ToCpu (*Property);
+   }
+ 
+-  IoBlockListHead = fdt_getprop(NtFwCfgDtBlob, Offset, "pcie-mmap", NULL);
++  IoBlockListHead = FdtGetProp (NtFwCfgDtBlob, Offset, "pcie-mmap", NULL);
+   if (IoBlockListHead == NULL) {
+     DEBUG ((DEBUG_WARN, "%s property not found\n", "pcie-mmap"));
+   } else {

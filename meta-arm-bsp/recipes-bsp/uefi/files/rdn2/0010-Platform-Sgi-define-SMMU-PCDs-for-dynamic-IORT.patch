@@ -1,0 +1,36 @@
+From 804e174c1573985815e0b59b5e2eedc413141cac Mon Sep 17 00:00:00 2001
+From: Vijayenthiran Subramaniam <vijayenthiran.subramaniam@arm.com>
+Date: Mon, 9 Aug 2021 17:15:20 +0530
+Subject: [PATCH] Platform/Sgi: define SMMU PCDs for dynamic IORT
+
+Carry the SMMU device ID and interrupt PCD declarations from the
+refinfra IORT parameterization change. The dynamic PCIe IORT generator
+uses these values. The static IORT table changes in the original commit
+are not needed with this upstream platform revision.
+
+Signed-off-by: Vivek Gautam <vivek.gautam@arm.com>
+Signed-off-by: Vijayenthiran Subramaniam <vijayenthiran.subramaniam@arm.com>
+Change-Id: If631ad3695fb5c7a87c11906fa2331d328fd3495
+
+Upstream-Status: Pending
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+---
+ Platform/ARM/SgiPkg/SgiPlatform.dec | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/Platform/ARM/SgiPkg/SgiPlatform.dec b/Platform/ARM/SgiPkg/SgiPlatform.dec
+index ca995934b338..8662746013a4 100644
+--- a/Platform/ARM/SgiPkg/SgiPlatform.dec
++++ b/Platform/ARM/SgiPkg/SgiPlatform.dec
+@@ -88,6 +88,11 @@
+   # SMMU
+   gArmSgiTokenSpaceGuid.PcdSmmuBase|0|UINT64|0x0000001D
+   gArmSgiTokenSpaceGuid.PcdSmmuSize|0|UINT32|0x0000001E
++  gArmSgiTokenSpaceGuid.PcdSmmuDevIDBase|0|UINT32|0x00001100
++  gArmSgiTokenSpaceGuid.PcdSmmuEventGsiv|0|UINT32|0x00001101
++  gArmSgiTokenSpaceGuid.PcdSmmuGErrorGsiv|0|UINT32|0x00001102
++  gArmSgiTokenSpaceGuid.PcdSmmuPriGsiv|0|UINT32|0x00001103
++  gArmSgiTokenSpaceGuid.PcdSmmuSyncGsiv|0|UINT32|0x00001104
+ 
+   # GPIO Controller
+   gArmSgiTokenSpaceGuid.PcdGpioController0BaseAddress|0|UINT32|0x0000001F
