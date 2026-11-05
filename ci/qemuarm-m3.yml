@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/siemens/kas/master/kas/schema-kas.json
+
+header:
+  version: 14
+  includes:
+    - ci/base.yml
+
+machine: qemuarm-m3
+
+local_conf_header:
+  qemuarm-m3: |
+    QEMU_TARGETS:pn-qemu-system-native = "arm"
+    PACKAGECONFIG:remove:pn-qemu-system-native = "alsa epoxy png sdl virglrenderer"
+
+target:
+  - picolibc-helloworld
