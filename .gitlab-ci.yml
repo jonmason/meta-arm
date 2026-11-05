@@ -307,6 +307,9 @@ qemuarm:
       - DISTRO: poky-tiny
         TESTING: testimage
 
+qemuarm-m3:
+  extends: .build
+
 qemuarmv5:
   extends: .build
   parallel:
