@@ -309,6 +309,9 @@ qemuarm:
 
 qemuarm-m3:
   extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
 
 qemuarmv5:
   extends: .build
