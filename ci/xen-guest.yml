@@ -3,5 +3,9 @@ header:
   includes:
     - ci/xen.yml
 
+local_conf_header:
+  xen-guest: |
+    QB_DEFAULT_FSTYPE:pn-xen-guest-image-minimal = "ext4"
+
 target:
   - xen-guest-image-minimal
