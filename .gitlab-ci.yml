@@ -307,9 +307,10 @@ qemuarm:
     matrix:
       - TOOLCHAINS: [gcc, clang]
         TESTING: testimage
-        VIRT: [none, xen, xen-guest]
       - DISTRO: poky-tiny
         TESTING: testimage
+      - TESTING: testimage
+        VIRT: [xen, xen-guest]
 
 qemuarmv5:
   extends: .build
