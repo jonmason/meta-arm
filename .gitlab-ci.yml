@@ -310,7 +310,7 @@ qemuarm:
       - DISTRO: poky-tiny
         TESTING: testimage
       - TESTING: testimage
-        VIRT: [xen, xen-guest]
+        VIRT: xen-guest
 
 qemuarmv5:
   extends: .build
