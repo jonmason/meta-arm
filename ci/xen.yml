@@ -9,6 +9,10 @@ header:
 local_conf_header:
   meta-virt: |
     DISTRO_FEATURES:append = " virtualization xen"
+    QB_DEFAULT_FSTYPE:pn-xen-image-minimal = "ext4.zst"
+    QB_TCPSERIAL_OPT:pn-xen-image-minimal = ""
+    # Dom0 reports QEMU PCI passthrough limitations in dmesg.
+    TEST_SUITES:remove:pn-xen-image-minimal = "parselogs"
   sshd: |
     IMAGE_FEATURES:append = " ssh-server-openssh"
 
