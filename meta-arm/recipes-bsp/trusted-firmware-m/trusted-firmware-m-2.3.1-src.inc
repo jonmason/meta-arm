@@ -54,7 +54,6 @@ SRCREV_psa-crypto-driver = "3a93566c04c4d77a007e6b149e7c06e7b8f0cd8d"
 SRCBRANCH_t-cose = "dev"
 SRCREV_t-cose = "3076010eeb6383f0827bd992c75b68af9311cf1d"
 
-
 SRC_URI  = "${SRC_URI_TRUSTED_FIRMWARE_M};branch=${SRCBRANCH_tfm};name=tfm;destsuffix=tfm \
             ${SRC_URI_TRUSTED_FIRMWARE_M_EXTRAS};branch=${SRCBRANCH_tfm-extras};name=tfm-extras;destsuffix=tfm/external/tfm-extras \
             ${SRC_URI_TRUSTED_FIRMWARE_M_TESTS};branch=${SRCBRANCH_tfm-tests};name=tfm-tests;destsuffix=tfm/external/tf-m-tests \
