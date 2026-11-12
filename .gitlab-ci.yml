@@ -259,6 +259,9 @@ mps3-an524:
     matrix:
       - TESTING: tfm-tests
 
+mps3-an547:
+  extends: .build
+
 pending-updates:
   extends: .setup
   # Only run this job for the default branch (master), or if forced with
