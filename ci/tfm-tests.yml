@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/siemens/kas/master/kas/schema-kas.json
+
+header:
+  version: 14
+
+local_conf_header:
+  tfm_tests: |
+    TESTIMAGE_AUTO:pn-trusted-firmware-m = "1"
+    # The TF-M runner needs no QEMU graphics or audio, but some system
+    # targets require libfdt. OE-Core depends on pixman-native even
+    # when pixman is disabled.
+    PACKAGECONFIG:pn-qemu-system-native = "fdt pie"
+    DEPENDS:remove:pn-qemu-system-native = "pixman-native"
