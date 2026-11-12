@@ -254,6 +254,13 @@ mps2-an521:
       - LTS: [none, lts-revisions]
         TESTING: tfm-tests
 
+corstone300-fvp:
+  extends: .build
+  parallel:
+    matrix:
+      - LTS: [none, lts-revisions]
+        TESTING: tfm-tests
+
 pending-updates:
   extends: .setup
   # Only run this job for the default branch (master), or if forced with

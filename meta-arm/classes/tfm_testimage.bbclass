@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 
 TEST_LOG_DIR ?= "${WORKDIR}/testimage"
+TFM_TEST_FVP ?= ""
 TFM_TEST_TIMEOUT ?= "300"
 TFM_TEST_MODEL_DEPENDS ?= "qemu-system-native:do_populate_sysroot"
 

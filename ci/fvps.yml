@@ -40,6 +40,8 @@ target:
   - nativesdk-fvp-rdn2
 
   # IoT FVPs
+  - fvp-corstone300
+  - nativesdk-fvp-corstone300
   - fvp-corstone1000
   - nativesdk-fvp-corstone1000
   - fvp-corstone1000-a320
