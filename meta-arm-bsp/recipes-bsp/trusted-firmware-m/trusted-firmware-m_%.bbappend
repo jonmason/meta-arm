@@ -3,5 +3,6 @@
 MACHINE_TFM_REQUIRE ?= ""
 MACHINE_TFM_REQUIRE:corstone1000 = "trusted-firmware-m-corstone1000.inc"
 MACHINE_TFM_REQUIRE:corstone300-fvp = "trusted-firmware-m-ethos.inc"
+MACHINE_TFM_REQUIRE:corstone310-fvp = "trusted-firmware-m-ethos.inc"
 
 require ${MACHINE_TFM_REQUIRE}
