@@ -12,6 +12,7 @@ SRC_URI:append = " file://tfm-testimage.py"
 BUILD_REGRESSION_TESTS = "1"
 EXTRA_OECMAKE += "-DTEST_S=ON -DTEST_NS=ON"
 TFM_NS_TEST_B = "${WORKDIR}/build-ns"
+TFM_TEST_FVP ?= ""
 
 do_compile:append() {
     cmake -GNinja -S ${TFM_TESTS_DIR}/tests_reg -B ${TFM_NS_TEST_B} \
@@ -28,23 +29,36 @@ do_install:append() {
     install -m 0644 ${TFM_NS_TEST_B}/bin/tfm_s_ns_signed.bin ${D}${FIRMWARE_DIR}/
 }
 
-do_testimage[depends] += "qemu-system-native:do_populate_sysroot"
+TFM_TEST_MODEL_DEPENDS ?= "qemu-system-native:do_populate_sysroot"
+do_testimage[depends] += "${TFM_TEST_MODEL_DEPENDS}"
 do_testimage[nostamp] = "1"
 do_testimage() {
     install -d ${WORKDIR}/testimage
     : > ${WORKDIR}/testimage/results.log
     result=0
-    python3 ${UNPACKDIR}/tfm-testimage.py \
-        --qemu ${STAGING_BINDIR_NATIVE}/qemu-system-arm \
-        --machine ${TFM_TEST_QEMU_MACHINE} \
-        --bootloader ${B}/bin/bl2.bin \
-        --boot-address ${TFM_TEST_BL2_ADDR} \
-        --image ${TFM_NS_TEST_B}/bin/tfm_s_ns_signed.bin \
-        --image-address ${TFM_TEST_IMAGE_ADDR} \
-        --log ${WORKDIR}/testimage/qemu.log \
-        --results ${WORKDIR}/testimage/results.log \
-        --junit ${LOG_DIR}/oeqa/junit.xml \
-        --timeout 300 || result=$?
+    if test -n "${TFM_TEST_FVP}"; then
+        python3 ${UNPACKDIR}/tfm-testimage.py \
+            --fvp ${STAGING_BINDIR_NATIVE}/${TFM_TEST_FVP} \
+            --bootloader ${B}/bin/bl2.axf \
+            --image ${TFM_NS_TEST_B}/bin/tfm_s_ns_signed.bin \
+            --image-address ${TFM_TEST_IMAGE_ADDR} \
+            --log ${WORKDIR}/testimage/fvp.log \
+            --results ${WORKDIR}/testimage/results.log \
+            --junit ${LOG_DIR}/oeqa/junit.xml \
+            --timeout 300 || result=$?
+    else
+        python3 ${UNPACKDIR}/tfm-testimage.py \
+            --qemu ${STAGING_BINDIR_NATIVE}/qemu-system-arm \
+            --machine ${TFM_TEST_QEMU_MACHINE} \
+            --bootloader ${B}/bin/bl2.bin \
+            --boot-address ${TFM_TEST_BL2_ADDR} \
+            --image ${TFM_NS_TEST_B}/bin/tfm_s_ns_signed.bin \
+            --image-address ${TFM_TEST_IMAGE_ADDR} \
+            --log ${WORKDIR}/testimage/qemu.log \
+            --results ${WORKDIR}/testimage/results.log \
+            --junit ${LOG_DIR}/oeqa/junit.xml \
+            --timeout 300 || result=$?
+    fi
     if test -f ${WORKDIR}/testimage/results.log; then
         while IFS= read -r line; do
             bbplain "$line"

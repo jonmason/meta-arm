@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
-"""Run the TF-M regression firmware in QEMU and check its serial results."""
+"""Run the TF-M regression firmware and check its serial results."""
 
 import argparse
 import os
@@ -26,7 +26,7 @@ def check_results(output, complete=True):
 
     errors = []
     if not complete:
-        errors.append("TF-M did not finish before QEMU exited or timed out")
+        errors.append("TF-M did not finish before the model exited or timed out")
     if re.search(r"TESTSUITE FAILED!|Test suite .* has FAILED", output) and not any(
         result == "FAILED" for _, _, result in cases
     ):
@@ -62,26 +62,47 @@ def write_junit(path, cases, errors):
 
 
 def run(args):
-    for address in (args.boot_address, args.image_address):
+    if args.qemu and (not args.machine or not args.boot_address):
+        raise RuntimeError("QEMU needs --machine and --boot-address")
+    for address in ((args.boot_address, args.image_address) if args.qemu
+                    else (args.image_address,)):
         try:
             int(address, 0)
         except ValueError as error:
-            raise RuntimeError(f"Invalid QEMU load address: {address}") from error
-    for path in (args.qemu, args.bootloader, args.image):
+            raise RuntimeError(f"Invalid load address: {address}") from error
+    for path in (args.qemu or args.fvp, args.bootloader, args.image):
         if not Path(path).is_file():
             raise RuntimeError(f"Missing test input: {path}")
 
-    command = [
-        args.qemu, "-M", args.machine, "-display", "none", "-monitor", "none",
-        "-serial", "stdio", "-no-reboot",
-        "-device", f"loader,file={args.bootloader},addr={args.boot_address},force-raw=on",
-        "-device", f"loader,file={args.image},addr={args.image_address},force-raw=on",
-    ]
+    if args.qemu:
+        command = [
+            args.qemu, "-M", args.machine, "-display", "none", "-monitor", "none",
+            "-serial", "stdio", "-no-reboot",
+            "-device", f"loader,file={args.bootloader},addr={args.boot_address},force-raw=on",
+            "-device", f"loader,file={args.image},addr={args.image_address},force-raw=on",
+        ]
+        env = None
+    else:
+        command = [
+            args.fvp, "--quiet",
+            "-C", "mps3_board.uart0.out_file=-",
+            "-C", "mps3_board.uart0.unbuffered_output=1",
+            "-C", "mps3_board.telnetterminal0.start_telnet=0",
+            "-C", "mps3_board.visualisation.disable-visualisation=1",
+            "-a", f"cpu0*={args.bootloader}",
+            "--data", f"{args.image}@{args.image_address}",
+        ]
+        env = os.environ.copy()
+        fvp_lib = Path(args.fvp).resolve().parents[2] / "python/lib"
+        env["LD_LIBRARY_PATH"] = os.pathsep.join(
+            filter(None, (str(fvp_lib), env.get("LD_LIBRARY_PATH")))
+        )
     deadline = time.monotonic() + args.timeout
     output = bytearray()
     complete = False
     process = subprocess.Popen(command, stdin=subprocess.DEVNULL,
-                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                               env=env)
     try:
         while time.monotonic() < deadline:
             ready, _, _ = select.select([process.stdout], [], [], max(0, min(1, deadline - time.monotonic())))
@@ -125,10 +146,12 @@ def run(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--qemu", required=True)
-    parser.add_argument("--machine", required=True)
+    model = parser.add_mutually_exclusive_group(required=True)
+    model.add_argument("--qemu")
+    model.add_argument("--fvp")
+    parser.add_argument("--machine")
     parser.add_argument("--bootloader", required=True)
-    parser.add_argument("--boot-address", required=True)
+    parser.add_argument("--boot-address")
     parser.add_argument("--image", required=True)
     parser.add_argument("--image-address", required=True)
     parser.add_argument("--log", required=True)

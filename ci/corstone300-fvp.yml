@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/siemens/kas/master/kas/schema-kas.json
+
+header:
+  version: 14
+  includes:
+    - ci/base.yml
+    - ci/fvp.yml
+    - ci/meta-openembedded.yml
+
+machine: corstone300-fvp
+
+target:
+  - trusted-firmware-m
