@@ -1,0 +1,6 @@
+COMPATIBLE_MACHINE = "tc3"
+FILESEXTRAPATHS:prepend := "${THISDIR}/files/tc3:"
+SRC_URI += "file://0001-rse-match-mcuboot-key-hash-callback.patch"
+TFM_PLATFORM = "arm/rse/tc/tc3"
+DEPENDS += "python3-networkx-native python3-pandas-native"
+EXTRA_OECMAKE += "-DMCUBOOT_IMAGE_NUMBER=4 -DRSE_GPT_SUPPORT=ON -DRSE_LOAD_NS_IMAGE=OFF"

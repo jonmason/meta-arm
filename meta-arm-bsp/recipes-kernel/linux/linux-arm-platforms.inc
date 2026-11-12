@@ -128,6 +128,14 @@ KCONFIG_MODE:rdv2 = "--alldefconfig"
 KCONF_BSP_AUDIT_LEVEL:rdv2 = "0"
 
 #
+# TC3 KMACHINE
+#
+COMPATIBLE_MACHINE:tc3 = "tc3"
+KBUILD_DEFCONFIG:tc3 = "defconfig"
+KCONFIG_MODE:tc3 = "--alldefconfig"
+KCONF_BSP_AUDIT_LEVEL:tc3 = "0"
+
+#
 # sbsa-ref KMACHINE
 #
 COMPATIBLE_MACHINE:sbsa-ref = "sbsa-ref"

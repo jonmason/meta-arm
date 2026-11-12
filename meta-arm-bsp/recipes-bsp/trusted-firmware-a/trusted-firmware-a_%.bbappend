@@ -7,5 +7,6 @@ MACHINE_TFA_REQUIRE:juno = "trusted-firmware-a-juno.inc"
 MACHINE_TFA_REQUIRE:rdn2 = "trusted-firmware-a-rdn2.inc"
 MACHINE_TFA_REQUIRE:rdv2 = "trusted-firmware-a-rdv2.inc"
 MACHINE_TFA_REQUIRE:sbsa-ref = "trusted-firmware-a-sbsa-ref.inc"
+MACHINE_TFA_REQUIRE:tc3 = "trusted-firmware-a-tc3.inc"
 
 require ${MACHINE_TFA_REQUIRE}

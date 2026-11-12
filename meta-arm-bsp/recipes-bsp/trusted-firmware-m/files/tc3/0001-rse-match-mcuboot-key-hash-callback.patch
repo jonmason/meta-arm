@@ -1,0 +1,29 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jon Mason <jon.mason@arm.com>
+Date: Thu, 12 Nov 2026 18:27:00 -0500
+Subject: [PATCH] rse: match MCUboot's key hash callback
+
+The RSE BL2 implementation still passes a key index to this callback, but
+MCUboot 2.4 only passes the image index when multi-signature support is
+disabled. Match the callback declaration for the TC3 configuration.
+
+Upstream-Status: Pending
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+---
+ platform/ext/target/arm/rse/common/bl2/rse_bl2_rotpk.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/platform/ext/target/arm/rse/common/bl2/rse_bl2_rotpk.c b/platform/ext/target/arm/rse/common/bl2/rse_bl2_rotpk.c
+index 8e5a997..2e5f88a 100644
+--- a/platform/ext/target/arm/rse/common/bl2/rse_bl2_rotpk.c
++++ b/platform/ext/target/arm/rse/common/bl2/rse_bl2_rotpk.c
+@@ -82,4 +82,3 @@
+ int boot_retrieve_public_key_hash(uint8_t image_index,
+-                                  uint8_t key_index,
+                                   uint8_t *public_key_hash,
+                                   size_t *key_hash_size)
+@@ -86,4 +85,3 @@
+ {
+-    (void)key_index;
+     enum tfm_otp_element_id_t otp_id;
+     enum tfm_plat_err_t err;
