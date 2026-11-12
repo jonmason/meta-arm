@@ -247,6 +247,12 @@ musca-b1:
 musca-s1:
   extends: .build
 
+mps2-an521:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: tfm-tests
+
 pending-updates:
   extends: .setup
   # Only run this job for the default branch (master), or if forced with
