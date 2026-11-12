@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-"""Run the TF-M regression firmware in QEMU and check its serial results."""
+"""Run the TF-M regression firmware and check its serial results."""
 
 import os
 from pathlib import Path
@@ -62,28 +62,47 @@ def write_junit(path, cases, errors):
 
 
 def run(args):
-    if not args.qemu_options or not args.boot_address:
+    if args.qemu and (not args.qemu_options or not args.boot_address):
         raise RuntimeError("QEMU needs QB_MACHINE and a boot address")
-    for address in (args.boot_address, args.image_address):
+    for address in ((args.boot_address, args.image_address) if args.qemu
+                    else (args.image_address,)):
         try:
             int(address, 0)
         except ValueError as error:
-            raise RuntimeError(f"Invalid QEMU load address: {address}") from error
-    for path in (args.qemu, args.bootloader, args.image):
+            raise RuntimeError(f"Invalid load address: {address}") from error
+    for path in (args.qemu or args.fvp, args.bootloader, args.image):
         if not Path(path).is_file():
             raise RuntimeError(f"Missing test input: {path}")
 
-    command = [
-        args.qemu, *args.qemu_options, "-nographic", "-monitor", "none",
-        "-no-reboot",
-        "-device", f"loader,file={args.bootloader},addr={args.boot_address},force-raw=on",
-        "-device", f"loader,file={args.image},addr={args.image_address},force-raw=on",
-    ]
+    if args.qemu:
+        command = [
+            args.qemu, *args.qemu_options, "-nographic", "-monitor", "none",
+            "-no-reboot",
+            "-device", f"loader,file={args.bootloader},addr={args.boot_address},force-raw=on",
+            "-device", f"loader,file={args.image},addr={args.image_address},force-raw=on",
+        ]
+        env = None
+    else:
+        command = [
+            args.fvp, "--quiet",
+            "-C", "mps3_board.uart0.out_file=-",
+            "-C", "mps3_board.uart0.unbuffered_output=1",
+            "-C", "mps3_board.telnetterminal0.start_telnet=0",
+            "-C", "mps3_board.visualisation.disable-visualisation=1",
+            "-a", f"cpu0*={args.bootloader}",
+            "--data", f"{args.image}@{args.image_address}",
+        ]
+        env = os.environ.copy()
+        fvp_lib = Path(args.fvp).resolve().parents[2] / "python/lib"
+        env["LD_LIBRARY_PATH"] = os.pathsep.join(
+            filter(None, (str(fvp_lib), env.get("LD_LIBRARY_PATH")))
+        )
     deadline = time.monotonic() + args.timeout
     output = bytearray()
     complete = False
     process = subprocess.Popen(command, stdin=subprocess.DEVNULL,
-                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                               env=env)
     try:
         while time.monotonic() < deadline:
             ready, _, _ = select.select([process.stdout], [], [], max(0, min(1, deadline - time.monotonic())))
@@ -128,6 +147,7 @@ def run(args):
 def testimage_main(d):
     import bb
 
+    fvp = d.getVar("TFM_TEST_FVP")
     bindir = Path(d.getVar("STAGING_BINDIR_NATIVE"))
     build = Path(d.getVar("B"))
     test_log_dir = Path(d.getVar("TEST_LOG_DIR"))
@@ -135,25 +155,26 @@ def testimage_main(d):
     test_log_dir.mkdir(parents=True, exist_ok=True)
     results.write_text("", encoding="utf-8")
 
-    qemu_name = d.getVar("QB_SYSTEM_NAME")
-    qemu_machine = d.getVar("QB_MACHINE")
-    if not qemu_name or not qemu_machine:
+    qemu_name = d.getVar("QB_SYSTEM_NAME") if not fvp else None
+    qemu_machine = d.getVar("QB_MACHINE") if not fvp else None
+    if not fvp and (not qemu_name or not qemu_machine):
         bb.fatal("testimage: QB_SYSTEM_NAME and QB_MACHINE must be set")
-    qemu_options = shlex.split(" ".join(
+    qemu_options = [] if fvp else shlex.split(" ".join(
         d.getVar(name) or "" for name in (
             "QB_MACHINE", "QB_CPU", "QB_SMP", "QB_MEM", "QB_OPT_APPEND",
         )
     ))
 
     config = SimpleNamespace(
-        qemu=str(bindir / qemu_name),
+        qemu=None if fvp else str(bindir / qemu_name),
+        fvp=str(bindir / fvp) if fvp else None,
         qemu_options=qemu_options,
-        bootloader=str(build / "bin" / "bl2.bin"),
-        boot_address=d.getVar("TFM_TEST_BL2_ADDR"),
+        bootloader=str(build / "bin" / ("bl2.axf" if fvp else "bl2.bin")),
+        boot_address=None if fvp else d.getVar("TFM_TEST_BL2_ADDR"),
         image=str(Path(d.getVar("TFM_NS_TEST_B")) / "bin" /
                   "tfm_s_ns_signed.bin"),
         image_address=d.getVar("TFM_TEST_IMAGE_ADDR"),
-        log=str(test_log_dir / "qemu.log"),
+        log=str(test_log_dir / ("fvp.log" if fvp else "qemu.log")),
         results=str(results),
         junit=str(Path(d.getVar("LOG_DIR")) / "oeqa" / "junit.xml"),
         timeout=int(d.getVar("TFM_TEST_TIMEOUT")),
