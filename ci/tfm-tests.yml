@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/siemens/kas/master/kas/schema-kas.json
+
+header:
+  version: 14
+
+local_conf_header:
+  tfm_tests: |
+    TFM_TESTIMAGE_AUTO:pn-trusted-firmware-m = "1"
+    PACKAGECONFIG:pn-qemu-system-native = "fdt pixman"
+    QEMU_TARGETS = "arm"
+    CFLAGS:append:pn-qemu-system-native = " -fPIC"
