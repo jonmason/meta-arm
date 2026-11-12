@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/siemens/kas/master/kas/schema-kas.json
+
+header:
+  version: 14
+  includes:
+    - ci/base.yml
+    - ci/meta-openembedded.yml
+
+machine: tc3
+
+local_conf_header:
+  fvp:
+    LICENSE_FLAGS_ACCEPTED += "Arm-FVP-EULA"
+  sshpregen: |
+    COMPATIBLE_MACHINE:pn-ssh-pregen-hostkeys:tc3 = "tc3"
+
+target:
+  - core-image-minimal
+  - linux-yocto-fitimage
