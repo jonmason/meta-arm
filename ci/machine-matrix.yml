@@ -1,0 +1,96 @@
+# Keep the existing CI combinations here. The generator uses the first
+# combination for each machine as its smoke job and gates the rest on it.
+corstone1000-fvp:
+  - FIRMWARE: corstone1000-firmware-only
+    TESTING: [testimage, tftf]
+  - FIRMWARE: none
+    TESTING: testimage
+
+corstone1000-mps3:
+  - FIRMWARE: corstone1000-firmware-only
+    TESTING: [tftf, none]
+  - FIRMWARE: none
+    SECUREDEBUG: [none, secure-debug]
+
+corstone1000-a320-fvp:
+  - FIRMWARE: corstone1000-firmware-only
+    TESTING: [testimage, tftf]
+  - FIRMWARE: none
+    TESTING: testimage
+
+fvp-base:
+  - FIRMWARE: [u-boot, edk2]
+    TESTING: testimage
+  - TS: [none, fvp-base-ts]
+    TESTING: testimage
+  - LTS: lts-revisions
+    TESTING: testimage
+  - KERNEL: linux-yocto-dev
+    LATEST: latest-revisions
+    TESTING: testimage
+
+genericarm64:
+  - TOOLCHAINS: [gcc, clang]
+    TESTING: testimage
+  - KERNEL: linux-yocto-dev
+    TESTING: testimage
+
+juno:
+  - TOOLCHAINS: [gcc, clang]
+    FIRMWARE: [u-boot, edk2]
+
+musca-b1: []
+musca-s1: []
+
+qemuarm64-secureboot:
+  - TOOLCHAINS: [gcc, clang]
+    FIRMWARE: [u-boot, edk2]
+    TCLIBC: [glibc, musl]
+    TS: [none, qemuarm64-secureboot-ts]
+    TESTING: testimage
+  - UEFISB: [none, uefi-secureboot]
+    TESTING: testimage
+  - KERNEL: linux-yocto-dev
+    TESTING: testimage
+
+qemuarm64:
+  - DISTRO: poky-tiny
+    FIRMWARE: [u-boot, edk2]
+    TESTING: testimage
+  - TF: tf-rmm
+
+qemuarm-secureboot:
+  - TOOLCHAINS: [gcc, clang]
+    TCLIBC: [glibc, musl]
+    TESTING: testimage
+  - DISTRO: [poky, poky-altcfg]
+    TESTING: testimage
+  - KERNEL: linux-yocto-dev
+    TESTING: testimage
+
+qemuarm:
+  - TOOLCHAINS: [gcc, clang]
+    TESTING: testimage
+  - DISTRO: poky-tiny
+    TESTING: testimage
+
+qemuarmv5:
+  - DISTRO: poky
+    KERNEL: [linux-yocto, linux-yocto-dev]
+    TESTING: testimage
+  - DISTRO: poky-tiny
+    TESTING: testimage
+
+rdn2:
+  - TESTING: testimage
+
+rdv2:
+  - TESTING: testimage
+
+sbsa-ref:
+  - TOOLCHAINS: [gcc, clang]
+    TESTING: testimage
+  - DISTRO: poky-altcfg
+    TESTING: testimage
+  - KERNEL: linux-yocto-dev
+    TESTING: testimage
