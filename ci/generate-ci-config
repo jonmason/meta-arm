@@ -1,0 +1,130 @@
+#!/usr/bin/env python3
+
+"""Expand the machine matrix into smoke jobs and gated coverage jobs."""
+
+import itertools
+import os
+from pathlib import Path
+import re
+import sys
+
+import yaml
+
+
+ROOT = Path(__file__).resolve().parent.parent
+MATRIX_FILE = ROOT / "ci/machine-matrix.yml"
+DEFAULT_VALUES = {"none", "gcc", "glibc"}
+
+
+def variants(rows):
+    if not rows:
+        yield {}
+        return
+
+    for row in rows:
+        if not isinstance(row, dict) or not row:
+            raise ValueError(f"Invalid matrix row: {row!r}")
+        keys = list(row)
+        values = [value if isinstance(value, list) else [value] for value in row.values()]
+        for combination in itertools.product(*values):
+            yield dict(zip(keys, combination))
+
+
+def job_name(machine, variant):
+    if not variant:
+        return machine
+    return f"{machine}: [{', '.join(str(value) for value in variant.values())}]"
+
+
+def selected_jobs(pattern):
+    if not pattern:
+        return None
+    # GitLab regex variables commonly contain the surrounding / characters.
+    flags = 0
+    if pattern.startswith("/") and pattern.endswith("/i"):
+        pattern, flags = pattern[1:-2], re.IGNORECASE
+    elif pattern.startswith("/") and pattern.endswith("/"):
+        pattern = pattern[1:-1]
+    return re.compile(pattern, flags)
+
+
+def validate_fragments(machine, variant):
+    if not (ROOT / "ci" / f"{machine}.yml").is_file():
+        raise ValueError(f"Missing kas file for {machine}")
+    for value in variant.values():
+        if value not in DEFAULT_VALUES and not (ROOT / "ci" / f"{value}.yml").is_file():
+            raise ValueError(f"Missing kas fragment ci/{value}.yml for {machine}")
+
+
+def build_job(machine, variant, *, stage, smoke=None, tags=None):
+    kas_job = job_name(machine, variant)
+    job = {
+        "extends": ".build",
+        "stage": stage,
+        "variables": {**variant, "KAS_JOB": kas_job},
+        "needs": [{"job": "update-repos", "artifacts": True}],
+        # The generator applies BUILD_ENABLE_REGEX. Keeping it in inherited
+        # rules could omit the smoke job needed by a selected coverage job.
+        "rules": [{"when": "on_success"}],
+    }
+    if smoke:
+        job["needs"].append({"job": smoke, "artifacts": False})
+    if variant.get("KERNEL") == "linux-yocto-dev":
+        job["allow_failure"] = True
+    if tags:
+        job["tags"] = tags
+    return job
+
+
+def generate():
+    matrix = yaml.safe_load(MATRIX_FILE.read_text())
+    if not isinstance(matrix, dict):
+        raise ValueError("Machine matrix must be a mapping")
+
+    config = {
+        "include": [{"local": "ci/dynamic-base.yml"}],
+        "stages": ["prep", "smoke", "build"],
+    }
+    matcher = selected_jobs(os.environ.get("BUILD_ENABLE_REGEX"))
+    skip_machines = os.environ.get("CI_PIPELINE_SOURCE") == "merge_request_event" or bool(
+        os.environ.get("CI_COMMIT_TAG")
+    )
+
+    if not skip_machines:
+        for machine, specification in matrix.items():
+            if isinstance(specification, list):
+                rows, tags = specification, None
+            elif isinstance(specification, dict):
+                rows = specification.get("matrix", [])
+                tags = specification.get("tags")
+            else:
+                raise ValueError(f"Invalid matrix for {machine}")
+
+            choices = list(variants(rows))
+            for choice in choices:
+                validate_fragments(machine, choice)
+            chosen = [
+                choice for choice in choices
+                if matcher is None or matcher.search(job_name(machine, choice))
+            ]
+            if not chosen:
+                continue
+
+            smoke = f"smoke: {machine}"
+            config[smoke] = build_job(machine, choices[0], stage="smoke", tags=tags)
+            for choice in chosen:
+                if choice == choices[0]:
+                    continue
+                name = job_name(machine, choice)
+                if name in config:
+                    raise ValueError(f"Duplicate job {name}")
+                config[name] = build_job(machine, choice, stage="build", smoke=smoke, tags=tags)
+
+    yaml.safe_dump(config, sys.stdout, sort_keys=False, width=120)
+
+
+if __name__ == "__main__":
+    try:
+        generate()
+    except (ValueError, re.error) as exc:
+        sys.exit(f"Cannot generate CI: {exc}")
