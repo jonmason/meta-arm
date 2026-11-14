@@ -82,6 +82,8 @@ do_apply_local_src_patches() {
     apply_local_src_patches ${S}/lib/ext/qcbor ${S}/external/qcbor
     apply_local_src_patches ${S}/lib/ext/mcuboot ${S}/external/mcuboot
     apply_local_src_patches ${S}/lib/ext/tf-m-tests ${S}/external/tf-m-tests
-    apply_local_src_patches ${S}/lib/ext/tf-psa-crypto ${S}/external/tf-psa-crypto
+    if [ -d ${S}/lib/ext/tf-psa-crypto ]; then
+        apply_local_src_patches ${S}/lib/ext/tf-psa-crypto ${S}/external/tf-psa-crypto
+    fi
     apply_local_src_patches ${S}/lib/ext/t_cose ${S}/external/t_cose
 }
