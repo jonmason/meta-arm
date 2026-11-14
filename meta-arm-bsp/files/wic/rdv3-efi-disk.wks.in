@@ -1,0 +1,10 @@
+# short-description: Create an RD-V3 EFI disk image
+# long-description: Boot the default EFI entry immediately in the FVP.
+
+part /boot --source bootimg-efi --sourceparams="loader=${EFI_PROVIDER},dtb=${KERNEL_DTB_NAME}" --label boot --active --align 1024 --use-uuid
+
+part / --source rootfs --fstype=ext4 --label root --align 1024 --use-uuid
+
+part swap --size 44 --label swap --fstype=swap --use-uuid
+
+bootloader --ptable gpt --timeout=0 --append="rootwait rootfstype=ext4 console=${KERNEL_CONSOLE}"
