@@ -1,0 +1,22 @@
+From 20a609a0f75d62bbf2fd2747a394b9628d973d9f Mon Sep 17 00:00:00 2001
+From: Jon Mason <jon.mason@arm.com>
+Date: Sat, 14 Nov 2026 07:00:00 -0500
+Subject: [PATCH] rdv3: Wait longer for RSE SYSTOP sync
+
+RSE now finishes provisioning and authenticating its images after the
+SCP's 800 ms timeout expires. SCP then asserts even though RSE sends
+the expected doorbell shortly afterward. Allow five seconds for the
+handshake so the platform can complete boot.
+
+Upstream-Status: Pending
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+---
+ product/neoverse-rd/rdv3/scp_ramfw/config_scp_platform.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/product/neoverse-rd/rdv3/scp_ramfw/config_scp_platform.c b/product/neoverse-rd/rdv3/scp_ramfw/config_scp_platform.c
+--- a/product/neoverse-rd/rdv3/scp_ramfw/config_scp_platform.c
++++ b/product/neoverse-rd/rdv3/scp_ramfw/config_scp_platform.c
+@@ -19 +19 @@
+-#define RSS_SYNC_WAIT_TIMEOUT_US (800 * 1000)
++#define RSS_SYNC_WAIT_TIMEOUT_US (5 * 1000 * 1000)

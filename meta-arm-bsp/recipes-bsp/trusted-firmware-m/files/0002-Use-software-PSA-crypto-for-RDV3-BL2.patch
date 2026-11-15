@@ -1,0 +1,54 @@
+From 3f70e519cf88887a3b0ca57042336cf99e7ba376 Mon Sep 17 00:00:00 2001
+From: Jon Mason <jon.mason@arm.com>
+Date: Fri, 13 Nov 2026 22:30:00 -0500
+Subject: [PATCH] Use software PSA crypto for RDV3 BL2 authentication
+
+The CC312 configuration advertises PSA SHA-256 and ECDSA drivers, but
+the Mbed TLS driver wrapper used by BL2 has no CC312 hash implementation.
+The P256-M verifier rejects the signed firmware used by this platform.
+Use the built-in hash and ECDSA implementations for authentication,
+including the PSA utility functions required by the ECDSA driver.
+
+Upstream-Status: Pending
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+---
+ bl2/CMakeLists.txt                                            | 1 +
+ bl2/ext/mcuboot/config/mcuboot-mbedtls-cfg.h                | 3 ---
+ platform/ext/accelerator/cc312/crypto_accelerator_config.h | 5 -----
+ 3 files changed, 1 insertion(+), 8 deletions(-)
+
+diff --git a/bl2/CMakeLists.txt b/bl2/CMakeLists.txt
+--- a/bl2/CMakeLists.txt
++++ b/bl2/CMakeLists.txt
+@@ -68,5 +68,6 @@ list(APPEND BL2_CRYPTO_SRC
+     ${MBEDCRYPTO_PATH}/library/memory_buffer_alloc.c
+     ${MBEDCRYPTO_PATH}/library/psa_crypto_hash.c
++    ${MBEDCRYPTO_PATH}/library/psa_util.c
+     $<${build_sha_256}:${MBEDCRYPTO_PATH}/library/sha256.c>
+     $<${build_sha_384}:${MBEDCRYPTO_PATH}/library/sha512.c>
+     $<$<AND:${is_ec_signature},$<NOT:${build_p256m}>>:${MBEDCRYPTO_PATH}/library/psa_crypto_ecp.c>
+diff --git a/bl2/ext/mcuboot/config/mcuboot-mbedtls-cfg.h b/bl2/ext/mcuboot/config/mcuboot-mbedtls-cfg.h
+--- a/bl2/ext/mcuboot/config/mcuboot-mbedtls-cfg.h
++++ b/bl2/ext/mcuboot/config/mcuboot-mbedtls-cfg.h
+@@ -48,5 +48,2 @@
+ #define MBEDTLS_PSA_CRYPTO_C
+-#if defined(MCUBOOT_SIGN_EC256)
+-#define MBEDTLS_PSA_P256M_DRIVER_ENABLED
+-#endif
+ #endif /* MCUBOOT_USE_PSA_CRYPTO */
+diff --git a/platform/ext/accelerator/cc312/crypto_accelerator_config.h b/platform/ext/accelerator/cc312/crypto_accelerator_config.h
+index 72208b7..fa3d832 100644
+--- a/platform/ext/accelerator/cc312/crypto_accelerator_config.h
++++ b/platform/ext/accelerator/cc312/crypto_accelerator_config.h
+@@ -115,5 +115,4 @@
+ #ifdef PSA_WANT_ALG_ECDSA
+-#define MBEDTLS_PSA_ACCEL_ALG_ECDSA
+ #ifdef PSA_WANT_ECC_SECP_R1_192
+ #define MBEDTLS_PSA_ACCEL_ECC_SECP_R1_192
+ #endif
+@@ -190,5 +190 @@
+-#ifdef PSA_WANT_ALG_SHA_256
+-#define MBEDTLS_PSA_ACCEL_ALG_SHA_256
+-#endif
+-
+ #ifdef PSA_WANT_ALG_RSA_OAEP
