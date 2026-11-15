@@ -8,6 +8,7 @@ import os
 import subprocess
 import tempfile
 import unittest
+from datetime import date
 from pathlib import Path
 from unittest.mock import patch
 
@@ -157,9 +158,6 @@ class MailerTests(unittest.TestCase):
         with self.assertRaises(release.ReleaseError):
             release.ReleaseManager(mailer='invalid')
 
-if __name__ == '__main__':
-    unittest.main(verbosity=2)
-
 
 class EditorTests(unittest.TestCase):
     def test_editor_inherits_terminal_streams(self):
@@ -186,35 +184,58 @@ class EditorTests(unittest.TestCase):
 
 class PlatformReleaseTests(GitFixture):
     def test_platform_tag_name_and_date(self):
-        self.assertEqual(release.platform_tag('corstone1000', '2026.10.01'),
-                         'CORSTONE1000-2026.10.01')
-        with self.assertRaises(release.ReleaseError):
-            release.platform_tag('corstone1000', '2026.02.30')
+        self.assertEqual(release.platform_tag('corstone1000', '2026.11'),
+                         'CORSTONE1000-2026.11')
+        self.assertEqual(release.platform_tag('tc0', '2026.11'),
+                         'TC0-2026.11')
+        with patch.object(release, 'date') as clock:
+            clock.today.return_value = date(2026, 11, 19)
+            self.assertEqual(release.platform_tag('tc0'), 'TC0-2026.11')
+        for invalid in ('2026.00', '2026.13', '2026.2', '2026.11.01'):
+            with self.subTest(invalid=invalid), self.assertRaises(release.ReleaseError):
+                release.platform_tag('corstone1000', invalid)
 
     def test_platform_dry_run_does_not_create_tag(self):
         manager = release.ReleaseManager()
-        tag = manager.platform('corstone1000', 'HEAD', '2026.10.01')
-        self.assertEqual(tag, 'CORSTONE1000-2026.10.01')
+        with patch('builtins.print'):
+            tag = manager.platform('tc0', 'HEAD', '2026.11')
+        self.assertEqual(tag, 'TC0-2026.11')
         self.assertIsNone(manager.tag_object(tag))
 
     def test_platform_existing_tag_is_idempotent(self):
-        self.git('tag', '-a', 'CORSTONE1000-2026.10.01', '-m', 'release')
+        self.git('tag', '-a', 'CORSTONE1000-2026.11', '-m', 'release')
         manager = release.ReleaseManager(execute=True)
-        self.assertEqual(manager.platform('corstone1000', 'HEAD', '2026.10.01'),
-                         'CORSTONE1000-2026.10.01')
+        with patch('builtins.print'):
+            tag = manager.platform('corstone1000', 'HEAD', '2026.11')
+        self.assertEqual(tag, 'CORSTONE1000-2026.11')
+
+    def test_platform_existing_tag_at_other_commit_fails(self):
+        self.git('tag', '-a', 'CORSTONE1000-2026.11', '-m', 'release')
+        self.commit('next change')
+        with self.assertRaisesRegex(release.ReleaseError, 'already exists at another commit'):
+            release.ReleaseManager().platform('corstone1000', 'HEAD', '2026.11')
 
     def test_push_explicit_platform_tag(self):
-        self.git('tag', '-a', 'CORSTONE1000-2026.10.01', '-m', 'release')
+        self.git('tag', '-a', 'TC0-2026.11', '-m', 'release')
         manager = release.ReleaseManager(execute=True)
-        manager.push(('CORSTONE1000-2026.10.01',))
+        with patch('builtins.print'):
+            manager.push(('TC0-2026.11',))
         remote = self.git('ls-remote', '--tags', '--refs', 'yoctoproject',
-                          'refs/tags/CORSTONE1000-2026.10.01')
-        self.assertIn('refs/tags/CORSTONE1000-2026.10.01', remote)
+                          'refs/tags/TC0-2026.11')
+        self.assertIn('refs/tags/TC0-2026.11', remote)
 
     def test_push_auto_discovers_platform_tag(self):
-        self.git('tag', '-a', 'CORSTONE1000-2026.10.01', '-m', 'release')
+        self.git('tag', '-a', 'CORSTONE1000-2026.11', '-m', 'release')
+        self.git('tag', '-a', 'TC0-2026.11', '-m', 'release')
+        self.git('tag', '-a', 'CORSTONE1000-2023.10.01', '-m', 'legacy release')
         manager = release.ReleaseManager(execute=True)
-        manager.push()
-        remote = self.git('ls-remote', '--tags', '--refs', 'yoctoproject',
-                          'refs/tags/CORSTONE1000-2026.10.01')
-        self.assertIn('refs/tags/CORSTONE1000-2026.10.01', remote)
+        with patch('builtins.print'):
+            manager.push()
+        remote = self.git('ls-remote', '--tags', '--refs', 'yoctoproject')
+        self.assertIn('refs/tags/CORSTONE1000-2026.11', remote)
+        self.assertIn('refs/tags/TC0-2026.11', remote)
+        self.assertIn('refs/tags/CORSTONE1000-2023.10.01', remote)
+
+
+if __name__ == '__main__':
+    unittest.main(verbosity=2)
