@@ -7,7 +7,6 @@ import argparse
 from datetime import date, datetime
 import os
 import re
-import shlex
 import shutil
 import subprocess
 import sys
@@ -15,10 +14,11 @@ import tempfile
 from dataclasses import dataclass
 from email.message import EmailMessage
 from pathlib import Path
+from typing import Optional
 
 SUPPORT_URL = 'https://docs.yoctoproject.org/ref-manual/release-process.html'
 VERSION_RE = re.compile(r'^(\d+)\.(\d+)(?:\.(\d+))?$')
-PLATFORM_TAG_RE = re.compile(r'^[A-Z][A-Z0-9_-]*-[0-9]{4}\.[0-9]{2}\.[0-9]{2}$')
+PLATFORM_TAG_RE = re.compile(r'^[A-Z][A-Z0-9_-]*-[0-9]{4}\.[0-9]{2}(?:\.[0-9]{2})?$')
 DEFAULT_LTS = ('scarthgap', 'wrynose')
 
 
@@ -64,17 +64,17 @@ def next_patch(version):
 
 
 def platform_tag(name, release_date=None):
-    """Build a platform tag, validating both platform name and calendar date."""
+    """Build a platform tag, validating the name and release month."""
     if not re.fullmatch(r'[A-Za-z][A-Za-z0-9_-]*', name):
         raise ReleaseError(f'Invalid platform name: {name}')
     if release_date is None:
-        release_date = date.today().strftime('%Y.%m.%d')
+        release_date = date.today().strftime('%Y.%m')
     try:
-        datetime.strptime(release_date, '%Y.%m.%d')
+        datetime.strptime(release_date, '%Y.%m')
     except ValueError as exc:
-        raise ReleaseError('--date must be a valid YYYY.MM.DD date') from exc
-    if not re.fullmatch(r'\d{4}\.\d{2}\.\d{2}', release_date):
-        raise ReleaseError('--date must use YYYY.MM.DD')
+        raise ReleaseError('--date must be a valid YYYY.MM date') from exc
+    if not re.fullmatch(r'\d{4}\.\d{2}', release_date):
+        raise ReleaseError('--date must use YYYY.MM')
     return f'{name.upper()}-{release_date}'
 
 
@@ -82,8 +82,8 @@ def platform_tag(name, release_date=None):
 class BranchStatus:
     branch: str
     series: str
-    last_tag: str | None
-    commits: int | None
+    last_tag: Optional[str]
+    commits: Optional[int]
     next_tag: str
 
 
@@ -566,7 +566,7 @@ Options:
   -e, --edit                  Edit announcements using your configured editor
   --lts                       Treat specified release as LTS
   --as-of YYYY-MM-DD          Select historical first-parent commit by date
-  --date YYYY.MM.DD           Platform tag date (default: today)
+  --date YYYY.MM              Platform tag date (default: this month)
   --remote NAME               Upstream remote (default: yoctoproject)
   --email-to ADDRESS          Override announcement recipient
   --mailer {auto,sendmail,mutt}  Select email delivery method (default: auto)
@@ -580,9 +580,9 @@ Examples:
   meta-arm-release.py release blacksail 6.1 --execute
   meta-arm-release.py update scarthgap whinlatter --execute
   meta-arm-release.py tag wrynose 6.0 COMMIT --execute
-  meta-arm-release.py platform corstone1000 HEAD
-  meta-arm-release.py platform corstone1000 HEAD --date 2026.10.01 --execute
-  meta-arm-release.py push CORSTONE1000-2026.10.01 --execute
+  meta-arm-release.py platform tc0 HEAD
+  meta-arm-release.py platform tc0 HEAD --date 2026.11 --execute
+  meta-arm-release.py push TC0-2026.11 --execute
   meta-arm-release.py push
   meta-arm-release.py push --execute
   meta-arm-release.py email blacksail 6.1
@@ -620,7 +620,7 @@ Environment variables:
     p.add_argument('--edit', '-e', action='store_true', help=argparse.SUPPRESS)
     p.add_argument('--lts', action='store_true', help=argparse.SUPPRESS)
     p.add_argument('--as-of', metavar='YYYY-MM-DD', help=argparse.SUPPRESS)
-    p.add_argument('--date', metavar='YYYY.MM.DD', help=argparse.SUPPRESS)
+    p.add_argument('--date', metavar='YYYY.MM', help=argparse.SUPPRESS)
     p.add_argument('--remote', default=os.getenv('META_ARM_RELEASE_REMOTE', 'yoctoproject'),
                    help=argparse.SUPPRESS)
     p.add_argument('--email-to', default=os.getenv('META_ARM_RELEASE_EMAIL', 'meta-arm@lists.yoctoproject.org'),
