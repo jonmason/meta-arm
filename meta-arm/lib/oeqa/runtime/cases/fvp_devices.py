@@ -78,8 +78,8 @@ class FvpDevicesTest(OERuntimeTestCase):
     @skipIfNotInDataVar('TEST_FVP_DEVICES', 'cpu_hotplug',
                         'cpu_hotplug not included in BSP tests')
     def test_cpu_hotplug(self):
-        _, cpus = self.run_cmd('find /sys/firmware/devicetree/base/cpus/'
-                               ' -name "cpu@*" -maxdepth 1 | wc -l')
+        _, cpus = self.run_cmd('find /sys/devices/system/cpu'
+                               ' -maxdepth 1 -type d -name "cpu[0-9]*" | wc -l')
 
         try:
             count_cpus = int(cpus)
@@ -113,7 +113,7 @@ class FvpDevicesTest(OERuntimeTestCase):
     @skipIfNotInDataVar('TEST_FVP_DEVICES', 'rtc',
                         'rtc device not included in BSP tests')
     def test_rtc(self):
-        self.check_devices("rtc", 1, ["rtc-pl031"])
+        self.check_devices("rtc", 1, ["rtc-pl031", "rtc-efi"])
         self.run_cmd('hwclock')
 
     @OETestDepends(['ssh.SSHTest.test_ssh'])
