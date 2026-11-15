@@ -7,6 +7,8 @@ local_conf_header:
   testimagefvp: |
     LICENSE_FLAGS_ACCEPTED += "Arm-FVP-EULA"
     IMAGE_CLASSES += "fvpboot"
+    EFI_DISK_BOOT_TIMEOUT = "0"
+    EDK2_EXTRA_BUILD:append = " --pcd gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut=0"
   networking_failing_tests: |
     # These tests currently fail as the wrong IP for the build host is used
     TEST_SUITES:remove = "opkg dnf"
