@@ -1,0 +1,131 @@
+From a1b78f3988586b5eb606030799f9631f49b0822f Mon Sep 17 00:00:00 2001
+From: Jon Mason <jon.mason@arm.com>
+Date: Wed, 4 Mar 2026 14:39:29 -0500
+Subject: [PATCH] Workaround GCC15 compile errors
+
+Upstream-Status: Pending
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+---
+ bl2/src/shared_data.c                                     | 2 +-
+ .../host_drivers/noc_s3/discovery/noc_s3_discovery_drv.c  | 2 +-
+ .../rse/neoverse_rd/common/bl2/bl2_firmware_multiload.c   | 3 ++-
+ .../target/arm/rse/neoverse_rd/common/bl2/boot_hal_bl2.c  | 3 ++-
+ .../arm/rse/neoverse_rd/rdv3/bl2/bl2_firmware_config.c    | 8 ++++----
+ .../target/arm/rse/neoverse_rd/rdv3/bl2/interrupts_bl2.c  | 2 +-
+ 6 files changed, 11 insertions(+), 9 deletions(-)
+
+diff --git a/bl2/src/shared_data.c b/bl2/src/shared_data.c
+index 8af9b18993cb..14d0112c9e27 100644
+--- a/bl2/src/shared_data.c
++++ b/bl2/src/shared_data.c
+@@ -176,7 +176,7 @@ static int collect_image_measurement_and_metadata(
+  */
+ int boot_save_shared_data(const struct image_header *hdr,
+                           const struct flash_area *fap,
+-                          const uint8_t active_slot,
++                          const unsigned char active_slot,
+                           const struct image_max_size *max_app_sizes)
+ {
+     const struct flash_area *temp_fap;
+diff --git a/platform/ext/target/arm/rse/common/host_drivers/noc_s3/discovery/noc_s3_discovery_drv.c b/platform/ext/target/arm/rse/common/host_drivers/noc_s3/discovery/noc_s3_discovery_drv.c
+index a8e82477583a..4bdd426df098 100644
+--- a/platform/ext/target/arm/rse/common/host_drivers/noc_s3/discovery/noc_s3_discovery_drv.c
++++ b/platform/ext/target/arm/rse/common/host_drivers/noc_s3/discovery/noc_s3_discovery_drv.c
+@@ -413,7 +413,7 @@ void noc_s3_print_discovery_tree(const struct noc_s3_dev *dev,
+ 
+     err = noc_s3_discovery_init(&root);
+     if (err != NOC_S3_SUCCESS) {
+-        return err;
++        return;
+     }
+ 
+     NOC_S3_DRV_LOG_HEADING("Discovery tree for %s", tree_label);
+diff --git a/platform/ext/target/arm/rse/neoverse_rd/common/bl2/bl2_firmware_multiload.c b/platform/ext/target/arm/rse/neoverse_rd/common/bl2/bl2_firmware_multiload.c
+index 286c9095e1b4..76ded00427bd 100644
+--- a/platform/ext/target/arm/rse/neoverse_rd/common/bl2/bl2_firmware_multiload.c
++++ b/platform/ext/target/arm/rse/neoverse_rd/common/bl2/bl2_firmware_multiload.c
+@@ -10,6 +10,7 @@
+ #include <stdint.h>
+ #include <stddef.h>
+ #include <stdbool.h>
++#include <stdlib.h>
+ 
+ #include "boot_hal.h"
+ #include "boot_measurement.h"
+@@ -245,7 +246,7 @@ static int bl2_multiload_instance_post_load(int image_id, int instance) {
+     /* Clear the header from the header region but avoid removing anything that
+     * the region may be incidentally overlapping.
+     */
+-    memset(fmw_conf->image_load_addr, 0, BL2_HEADER_SIZE);
++    memset((void *)fmw_conf->image_load_addr, 0, BL2_HEADER_SIZE);
+ 
+     if (fmw_conf->atu_regions_load_size > 0) {
+         BOOT_LOG_INF("BL2: Closing load atu regions for firmware %u-%u",
+diff --git a/platform/ext/target/arm/rse/neoverse_rd/common/bl2/boot_hal_bl2.c b/platform/ext/target/arm/rse/neoverse_rd/common/bl2/boot_hal_bl2.c
+index 73f5ddda3d3e..7df4b4dc54fa 100644
+--- a/platform/ext/target/arm/rse/neoverse_rd/common/bl2/boot_hal_bl2.c
++++ b/platform/ext/target/arm/rse/neoverse_rd/common/bl2/boot_hal_bl2.c
+@@ -21,6 +21,7 @@
+ #include "device_definition.h"
+ #include "flash_layout.h"
+ #include "host_system.h"
++#include "interrupts_bl2.h"
+ 
+ #ifdef CRYPTO_HW_ACCELERATOR
+ #include "crypto_hw.h"
+@@ -192,7 +193,7 @@ int boot_platform_post_load(uint32_t image_id)
+         }
+     }
+ 
+-    memset(fmw_conf->image_load_addr, 0, BL2_HEADER_SIZE);
++    memset((void *)fmw_conf->image_load_addr, 0, BL2_HEADER_SIZE);
+ 
+     if (fmw_conf->atu_regions_load_size > 0) {
+         BOOT_LOG_INF("BL2: Closing load atu regions for firmware %u", image_id);
+diff --git a/platform/ext/target/arm/rse/neoverse_rd/rdv3/bl2/bl2_firmware_config.c b/platform/ext/target/arm/rse/neoverse_rd/rdv3/bl2/bl2_firmware_config.c
+index 746c0671da11..c6472753b410 100644
+--- a/platform/ext/target/arm/rse/neoverse_rd/rdv3/bl2/bl2_firmware_config.c
++++ b/platform/ext/target/arm/rse/neoverse_rd/rdv3/bl2/bl2_firmware_config.c
+@@ -292,7 +292,7 @@ const struct atu_region_cfg lcp_firmware_load_atu_regions[] = {
+  * Offset of a particular instance of LCP compared to LCP 0 will be added to
+  * all load atu regions.
+  */
+-const uint64_t lcp_instance_offsets(int instance) {
++uint64_t lcp_instance_offsets(int instance) {
+     return HOST_LCP_N_PHYS_BASE(instance) - HOST_LCP_0_PHYS_BASE;
+ }
+ 
+@@ -399,7 +399,7 @@ static int boot_platform_post_load_ap_bl1(void)
+     return 0;
+ }
+ 
+-static bool boot_platform_should_load_ap_bl1(void)
++static int boot_platform_should_load_ap_bl1(void)
+ {
+     struct host_system_info_t *host_system_info;
+     int result;
+@@ -434,9 +434,9 @@ struct firmware_config ap_bl1_firmware_config = {
+ /* ------------------------------- Non-Secure ------------------------------ */
+ 
+ #ifndef RSE_LOAD_NS_IMAGE
+-static bool bool_platform_should_load_non_secure()
++static int bool_platform_should_load_non_secure()
+ {
+-    return false;
++    return 0;
+ }
+ #endif /* RSE_LOAD_NS_IMAGE */
+ 
+diff --git a/platform/ext/target/arm/rse/neoverse_rd/rdv3/bl2/interrupts_bl2.c b/platform/ext/target/arm/rse/neoverse_rd/rdv3/bl2/interrupts_bl2.c
+index c47372c690f5..3e31123fafb6 100644
+--- a/platform/ext/target/arm/rse/neoverse_rd/rdv3/bl2/interrupts_bl2.c
++++ b/platform/ext/target/arm/rse/neoverse_rd/rdv3/bl2/interrupts_bl2.c
+@@ -81,7 +81,7 @@ void CMU_MHU4_Receiver_Handler(void)
+ 
+ int32_t interrupts_bl2_init(void) {
+     /* Register interrupt handler for SCP to RSE MHUv3 */
+-    NVIC_SetVector(CMU_MHU4_Receiver_IRQn, CMU_MHU4_Receiver_Handler);
++    NVIC_SetVector(CMU_MHU4_Receiver_IRQn, (uint32_t) CMU_MHU4_Receiver_Handler);
+     if (NVIC_GetVector(CMU_MHU4_Receiver_IRQn) != CMU_MHU4_Receiver_Handler) {
+         return 1;
+     }

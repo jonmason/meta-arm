@@ -1,0 +1,4 @@
+# The RDV3 FVP reports these PCIe capabilities and legacy IRQ warnings.
+_OSC: platform retains control of PCIe features (AE_ERROR)
+Failed to enable PASID
+can't derive routing for PCI INT A
