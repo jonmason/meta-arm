@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/siemens/kas/master/kas/schema-kas.json
+
+header:
+  version: 14
+  includes:
+    - ci/base.yml
+
+machine: qemuppc64
+
+# Keep testimage coverage without desktop and perf dependencies.
+local_conf_header:
+  minimal: |
+    CORE_IMAGE_EXTRA_INSTALL:remove = "perf"
+
+target:
+  - core-image-minimal
