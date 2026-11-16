@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/siemens/kas/master/kas/schema-kas.json
+
+header:
+  version: 14
+  includes:
+    - ci/base.yml
+    - ci/fvp.yml
+    - ci/meta-openembedded.yml
+
+local_conf_header:
+  sshpregen: |
+    COMPATIBLE_MACHINE:pn-ssh-pregen-hostkeys:rdv3r1 = "rdv3r1"
+
+machine: rdv3r1

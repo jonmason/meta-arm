@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Package RDV3 boot images using the RD-INFRA-2025.07.03 flash layout."""
+"""Package RDV3-family boot images using the RD-INFRA-2025.07.03 flash layout."""
 
 import argparse
 import gzip
@@ -45,6 +45,8 @@ def main():
     parser.add_argument("--tfm-scripts", type=Path, required=True)
     parser.add_argument("--mcuboot-scripts", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--chip-count", type=int, default=1)
+    parser.add_argument("--fip-name", default="fip-rdv3.bin")
     args = parser.parse_args()
 
     deploy = args.deploy_dir
@@ -80,9 +82,10 @@ def main():
         (0x460000, signed["bl1"]),
     ))
     shutil.copyfile(tfm / "bl1_1.bin", output / "tf_m_rom.bin")
-    shutil.copyfile(tfm / "encrypted_cm_provisioning_bundle_0.bin", output / "tf_m_vm0_0.bin")
-    shutil.copyfile(tfm / "encrypted_dm_provisioning_bundle_0.bin", output / "tf_m_vm1_0.bin")
-    shutil.copyfile(tfa / "fip.bin", output / "fip-rdv3.bin")
+    for chip in range(args.chip_count):
+        shutil.copyfile(tfm / f"encrypted_cm_provisioning_bundle_{chip}.bin", output / f"tf_m_vm0_{chip}.bin")
+        shutil.copyfile(tfm / f"encrypted_dm_provisioning_bundle_{chip}.bin", output / f"tf_m_vm1_{chip}.bin")
+    shutil.copyfile(tfa / "fip.bin", output / args.fip_name)
     for chip in (1, 2):
         with (output / f"nor{chip}_flash.img").open("wb") as raw:
             with gzip.GzipFile(fileobj=raw, mode="wb", mtime=0) as compressed:

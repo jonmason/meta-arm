@@ -338,6 +338,15 @@ rdv3:
     matrix:
       - TESTING: testimage
 
+rdv3r1:
+  extends: .build
+  variables:
+    KUBERNETES_MEMORY_REQUEST: "24Gi"
+    KUBERNETES_MEMORY_LIMIT: "24Gi"
+  parallel:
+    matrix:
+      - TESTING: testimage
+
 sbsa-ref:
   extends: .build
   parallel:

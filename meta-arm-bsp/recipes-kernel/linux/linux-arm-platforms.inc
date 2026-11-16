@@ -133,6 +133,9 @@ KCONF_BSP_AUDIT_LEVEL:rdv2 = "0"
 COMPATIBLE_MACHINE:rdv3 = "rdv3"
 KBUILD_DEFCONFIG:rdv3 = "defconfig"
 KCONFIG_MODE:rdv3 = "--alldefconfig"
+COMPATIBLE_MACHINE:rdv3r1 = "rdv3r1"
+KBUILD_DEFCONFIG:rdv3r1 = "defconfig"
+KCONFIG_MODE:rdv3r1 = "--alldefconfig"
 
 # sbsa-ref KMACHINE
 #
