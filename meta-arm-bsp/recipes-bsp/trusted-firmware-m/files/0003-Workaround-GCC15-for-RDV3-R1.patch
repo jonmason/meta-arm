@@ -1,0 +1,30 @@
+From: Jon Mason <jon.mason@arm.com>
+Subject: [PATCH] rdv3r1: fix GCC 15 function pointer types
+
+The RDV3-R1 BL2 sources have the same callback type mismatches as RDV3.
+
+Upstream-Status: Pending
+Signed-off-by: Jon Mason <jon.mason@arm.com>
+---
+diff --git a/platform/ext/target/arm/rse/neoverse_rd/rdv3r1/bl2/bl2_firmware_config.c b/platform/ext/target/arm/rse/neoverse_rd/rdv3r1/bl2/bl2_firmware_config.c
+--- a/platform/ext/target/arm/rse/neoverse_rd/rdv3r1/bl2/bl2_firmware_config.c
++++ b/platform/ext/target/arm/rse/neoverse_rd/rdv3r1/bl2/bl2_firmware_config.c
+@@ -295 +295 @@
+-const uint64_t lcp_instance_offsets(int instance) {
++uint64_t lcp_instance_offsets(int instance) {
+@@ -402 +402 @@
+-static bool boot_platform_should_load_ap_bl1(void)
++static int boot_platform_should_load_ap_bl1(void)
+@@ -433,3 +433,3 @@
+-static bool bool_platform_should_load_non_secure()
+-{
+-    return false;
++static int bool_platform_should_load_non_secure()
++{
++    return 0;
+diff --git a/platform/ext/target/arm/rse/neoverse_rd/rdv3r1/bl2/interrupts_bl2.c b/platform/ext/target/arm/rse/neoverse_rd/rdv3r1/bl2/interrupts_bl2.c
+--- a/platform/ext/target/arm/rse/neoverse_rd/rdv3r1/bl2/interrupts_bl2.c
++++ b/platform/ext/target/arm/rse/neoverse_rd/rdv3r1/bl2/interrupts_bl2.c
+@@ -84 +84 @@
+-    NVIC_SetVector(CMU_MHU4_Receiver_IRQn, CMU_MHU4_Receiver_Handler);
++    NVIC_SetVector(CMU_MHU4_Receiver_IRQn, (uint32_t) CMU_MHU4_Receiver_Handler);
