@@ -263,6 +263,78 @@ pending-updates:
     - kas shell --update --force-checkout ci/qemuarm64.yml:ci/meta-openembedded.yml:ci/meta-secure-core.yml:lockfile.yml --command \
       "$CI_PROJECT_DIR/scripts/machine-summary.py -t report -o $CI_PROJECT_DIR/update-report $($CI_PROJECT_DIR/ci/listmachines.py meta-arm meta-arm-bsp)"
 
+qemuarm-cortex-a7:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
+qemuarm-cortex-a15:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
+qemuarm64-cortex-a35:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
+qemuarm64-cortex-a53:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
+qemuarm64-cortex-a55:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
+qemuarm64-cortex-a57:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
+qemuarm64-cortex-a72:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
+qemuarm64-cortex-a76:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
+qemuarm64-cortex-a710:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
+qemuarm64-neoverse-n1:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
+qemuarm64-neoverse-v1:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
+qemuarm64-neoverse-n2:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
 qemuloongarch64:
   extends: .build
   parallel:
