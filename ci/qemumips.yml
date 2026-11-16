@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/siemens/kas/master/kas/schema-kas.json
+
+header:
+  version: 14
+  includes:
+    - ci/base.yml
+
+machine: qemumips
+
+local_conf_header:
+  kernel: |
+    # The qemumips BSP metadata currently selects a 64-bit kernel.
+    # Use the in-tree 32-bit config with the required Malta features.
+    KMACHINE:qemumips = "qemumips-defconfig"
+    KBUILD_DEFCONFIG:qemumips = "malta_defconfig"
+    KERNEL_FEATURES:append:qemumips = " ktypes/base/base.cfg cfg/8250.scc bsp/mti-malta/mti-malta32-common.cfg features/endian/big.scc"
+  # Keep testimage coverage without desktop and perf dependencies.
+  minimal: |
+    CORE_IMAGE_EXTRA_INSTALL:remove = "perf"
+
+target:
+  - core-image-minimal

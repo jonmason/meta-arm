@@ -263,6 +263,60 @@ pending-updates:
     - kas shell --update --force-checkout ci/qemuarm64.yml:ci/meta-openembedded.yml:ci/meta-secure-core.yml:lockfile.yml --command \
       "$CI_PROJECT_DIR/scripts/machine-summary.py -t report -o $CI_PROJECT_DIR/update-report $($CI_PROJECT_DIR/ci/listmachines.py meta-arm meta-arm-bsp)"
 
+qemuloongarch64:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
+qemumips:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
+qemumips64:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
+qemuppc:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
+qemuppc64:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
+qemuriscv32:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
+qemuriscv64:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
+qemux86:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
+qemux86-64:
+  extends: .build
+  parallel:
+    matrix:
+      - TESTING: testimage
+
 qemuarm64-secureboot:
   extends: .build
   parallel:

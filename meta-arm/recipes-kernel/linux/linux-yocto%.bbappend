@@ -23,6 +23,12 @@ SRC_URI:append:qemuarm = " \
     file://efi.cfg \
     "
 
+FILESEXTRAPATHS:prepend:qemuloongarch64 = "${ARMFILESPATHS}"
+SRC_URI:append:qemuloongarch64 = " file://qemu-virtio-blk.cfg"
+
+FILESEXTRAPATHS:prepend:qemumips = "${ARMFILESPATHS}"
+SRC_URI:append:qemumips = " file://qemu-virtio-blk.cfg"
+
 FFA_TRANSPORT_INCLUDE = "${@bb.utils.contains('MACHINE_FEATURES', 'arm-ffa', 'arm-ffa-transport.inc', '' , d)}"
 require ${FFA_TRANSPORT_INCLUDE}
 
