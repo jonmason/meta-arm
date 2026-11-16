@@ -17,6 +17,13 @@ SRC_URI:append:fvp-base = " ${SRC_URI_KMETA}"
 SRC_URI:append:juno = " ${SRC_URI_KMETA}"
 
 #
+# Corstone-500 KMACHINE
+#
+COMPATIBLE_MACHINE:corstone500 = "corstone500"
+KBUILD_DEFCONFIG:corstone500  = "multi_v7_defconfig"
+KCONFIG_MODE:corstone500 = "--alldefconfig"
+
+#
 # Corstone1000 KMACHINE
 #
 FILESEXTRAPATHS:prepend:corstone1000 := "${ARMBSPFILESPATHS}"
