@@ -2,12 +2,16 @@
 {% block title %}Recipe Report{% endblock %}
 
 {% block content %}
+  <p>Each cell shows the version selected for that machine and the latest
+    version found by the upstream checker. A dash means the recipe is
+    unavailable; “unknown” means no upstream version was found.</p>
+  <div class="table-container">
   <table class="table is-striped">
     <thead>
       <tr>
         <th>Machine</th>
         {% for recipe in recipes|sort %}
-        <th>{{ recipe }} ({{releases[recipe]|default("?")}})</th>
+        <th>{{ recipe }}</th>
         {% endfor %}
       </tr>
     </thead>
@@ -19,11 +23,13 @@
           {% if recipe in data %}
             {% set details = data[recipe] %}
             <td style="text-align: center">
-            <a href="{{machine}}.html#recipe-{{details.recipe}}">
+            <a href="{{machine}}.html#recipe-{{recipe|replace('/', '-') }}">
               {{ details.recipe if details.recipe != recipe}}
               {{ details.version }}
             </a>
-            {% if details.patches or details.needs_update %}
+            <br>
+            <small>Latest: {{ details.upstream or "unknown" }}</small>
+            {% if details.patches or details.needs_update or details.appends %}
             <br>
             {% if details.patches %}
               <span class="tag {{ "is-info" if details.patches_safe else "is-danger" }}">
@@ -37,6 +43,9 @@
             {% if details.needs_update %}
               <span class="tag is-danger">Upgrade</span>
             {% endif %}
+            {% if details.appends %}
+              <span class="tag is-info">Appended</span>
+            {% endif %}
             {% endif %}
             </td>
           {% else %}
@@ -47,4 +56,5 @@
       {% endfor %}
     </tbody>
   </table>
+  </div>
 {% endblock %}

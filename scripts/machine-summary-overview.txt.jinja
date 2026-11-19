@@ -6,7 +6,23 @@ MACHINE: {{ machine }}
 {% for recipe in recipes|sort %}
 {% if recipe in data %}
 {% set details = data[recipe] %}
-{{ details.recipe }}: {{ details.version }}
+{{ recipe }} ({{ details.recipe }}): {{ details.fullversion }}
+  Latest upstream: {{ details.upstream or "unknown" }}
+{% if details.needs_update %}
+  UPGRADE NEEDED
+{% endif %}
+{% if details.appends %}
+  Applied appends:
+{% for append in details.appends %}
+    {{ append }}
+{% endfor %}
+{% endif %}
+{% if details.patches %}
+  Patches:
+{% for patch in details.patches %}
+    {{ patch.name }} ({{ patch.layer }}, {{ patch.status }}){% if patch.url %} {{ patch.url }}{% endif %}
+{% endfor %}
+{% endif %}
 {% endif %}
 {% endfor %}
 {% endfor %}
