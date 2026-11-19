@@ -106,12 +106,6 @@ COMPATIBLE_MACHINE:juno = "juno"
 FILESEXTRAPATHS:prepend:juno := "${ARMBSPFILESPATHS}"
 
 #
-# Musca B1/S2 can't run Linux
-#
-COMPATIBLE_MACHINE:musca-b1 = "(^$)"
-COMPATIBLE_MACHINE:musca-s1 = "(^$)"
-
-#
 # RDN2 KMACHINE
 #
 COMPATIBLE_MACHINE:rdn2 = "rdn2"
