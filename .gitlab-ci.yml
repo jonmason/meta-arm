@@ -241,12 +241,6 @@ metrics:
     - kas shell --update --force-checkout ci/base.yml --command \
       "$CI_PROJECT_DIR/ci/patchreview $CI_PROJECT_DIR/meta-* --verbose --metrics $CI_PROJECT_DIR/metrics.txt"
 
-musca-b1:
-  extends: .build
-
-musca-s1:
-  extends: .build
-
 mps2-an521:
   extends: .build
   parallel:
