@@ -6,8 +6,8 @@ import os
 import pathlib
 import re
 import sys
+from typing import Optional
 
-import jinja2
 
 def trim_pv(pv):
     """
@@ -101,7 +101,7 @@ def harvest_data(machines, recipes):
     versions = {}
 
     for machine in machines:
-        print(f"Gathering data for {machine}...")
+        print(f"Gathering data for {machine}...", file=sys.stderr)
         os.environ["MACHINE"] = machine
         with bb.tinfoil.Tinfoil() as tinfoil:
             versions[machine] = {}
@@ -172,10 +172,12 @@ class Format:
     def get_format(cls, name):
         return cls.registry[name]()
 
-    def render(self, context, output: pathlib.Path):
+    def render(self, context, output: Optional[pathlib.Path]):
         pass
 
     def get_template(self, name):
+        import jinja2
+
         template_dir = os.path.dirname(os.path.abspath(__file__))
         env = jinja2.Environment(
             loader=jinja2.FileSystemLoader(template_dir),
@@ -193,9 +195,12 @@ class Format:
 class TextOverview(Format):
     name = "overview.txt"
 
-    def render(self, context, output: pathlib.Path):
-        with open(output, "wt") as f:
-            f.write(self.get_template(f"machine-summary-overview.txt.jinja").render(context))
+    def render(self, context, output: Optional[pathlib.Path]):
+        summary = self.get_template("machine-summary-overview.txt.jinja").render(context)
+        if output is None:
+            sys.stdout.write(summary)
+        else:
+            output.write_text(summary, encoding="utf-8")
 
 class HtmlUpdates(Format):
     name = "report"
@@ -220,11 +225,16 @@ class HtmlUpdates(Format):
                 f.write(self.get_template(f"report-details.html.jinja").render(subcontext))
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="machine-summary")
+    parser = argparse.ArgumentParser(
+        description="Summarize machine recipes in an initialized BitBake environment.")
     parser.add_argument("machines", nargs="+", help="machine names", metavar="MACHINE")
-    parser.add_argument("-t", "--type", required=True, choices=Format.registry.keys())
-    parser.add_argument("-o", "--output", type=pathlib.Path, required=True)
+    parser.add_argument("-t", "--type", default="overview.txt",
+                        choices=Format.registry.keys(), help="output format (default: overview.txt)")
+    parser.add_argument("-o", "--output", type=pathlib.Path,
+                        help="output file, or directory for report (default: stdout for overview.txt)")
     args = parser.parse_args()
+    if args.type == "report" and args.output is None:
+        parser.error("--output is required for report")
 
     context = {}
     # TODO: include git describe for meta-arm
