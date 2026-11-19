@@ -16,13 +16,14 @@ def trim_pv(pv):
     return "".join(pv.partition("+git")[:2])
 
 def needs_update(version, upstream):
-    """
-    Do a dumb comparison to determine if the version needs to be updated.
-    """
-    if "+git" in version:
-        # strip +git and see if this is a post-release snapshot
-        version = version.replace("+git", "")
-    return version != upstream
+    """Report an upgrade only when upstream is newer than the recipe."""
+    import bb.utils
+
+    if not upstream:
+        return False
+    if upstream.endswith("-new-commits-available"):
+        return True
+    return bb.utils.vercmp_string(version, upstream) < 0
 
 def safe_patches(patches):
     for info in patches:
@@ -50,14 +51,18 @@ def layer_path(layername: str, d) -> pathlib.Path:
     return None
 
 def get_url_for_patch(layer: str, localpath: pathlib.Path, d) -> str:
-    relative = localpath.relative_to(layer_path(layer, d))
+    root = layer_path(layer, d)
+    if root is None or not localpath.is_relative_to(root):
+        return None
+    relative = localpath.relative_to(root)
 
     # TODO: use layerindexlib
     # TODO: assumes default branch
     if layer == "core":
         return f"https://git.openembedded.org/openembedded-core/tree/meta/{relative}"
     elif layer in ("meta-arm", "meta-arm-bsp", "arm-toolchain"):
-        return f"https://git.yoctoproject.org/meta-arm/tree/{layer}/{relative}"
+        directory = "meta-arm-toolchain" if layer == "arm-toolchain" else layer
+        return f"https://git.yoctoproject.org/meta-arm/tree/{directory}/{relative}"
     else:
         print(f"WARNING: Don't know web URL for layer {layer}", file=sys.stderr)
         return None
@@ -83,7 +88,42 @@ def extract_patch_info(src_uri, d):
     info["status"] = status
     return info
 
+def layer_dirs():
+    """Find this checkout's BitBake layers without a hard-coded layer list."""
+    root = pathlib.Path(__file__).resolve().parent.parent
+    return sorted(path for path in root.glob("meta-*")
+                  if (path / "conf" / "layer.conf").is_file())
+
+
+def all_machines(layers):
+    return sorted({path.stem for layer in layers
+                   for path in layer.glob("conf/machine/*.conf")})
+
+
+def recipe_name(path):
+    # BitBake recipe and append filenames are PN_VERSION.bb[append].
+    return path.stem.rsplit("_", 1)[0].rstrip("%") if "_" in path.stem else path.stem.rstrip("%")
+
+
+def all_recipes(layers):
+    names = {recipe_name(path) for layer in layers
+             for pattern in ("recipes-*/*/*.bb", "recipes-*/*/*.bbappend")
+             for path in layer.glob(pattern)}
+    # Report the active providers as well as named kernel/bootloader recipes.
+    names.update(("virtual/kernel", "virtual/bootloader"))
+    return sorted(names)
+
+
+def upstream_key(d):
+    """Cache checks only when the source and update policy are identical."""
+    fields = ("PN", "PV", "SRC_URI", "SRCREV", "UPSTREAM_CHECK_COMMITS",
+              "UPSTREAM_CHECK_URI", "UPSTREAM_CHECK_REGEX",
+              "UPSTREAM_CHECK_GITTAGREGEX", "RECIPE_UPSTREAM_VERSION")
+    return tuple(d.getVar(field) for field in fields)
+
+
 def harvest_data(machines, recipes):
+    import bb.fetch
     import bb.tinfoil
     with bb.tinfoil.Tinfoil() as tinfoil:
         tinfoil.prepare(config_only=True)
@@ -92,11 +132,7 @@ def harvest_data(machines, recipes):
     import oe.recipeutils
     import oe.patch
 
-    # Queue of recipes that we're still looking for upstream releases for
-    to_check = list(recipes)
-
-    # Upstream releases
-    upstreams = {}
+    upstream_cache = {}
     # Machines to recipes to versions
     versions = {}
 
@@ -109,48 +145,35 @@ def harvest_data(machines, recipes):
             tinfoil.prepare(quiet=2)
             for recipe in recipes:
                 try:
-                    d = tinfoil.parse_recipe(recipe)
+                    recipe_file = tinfoil.get_recipe_file(recipe)
                 except bb.providers.NoProvider:
                     continue
+                d = tinfoil.parse_recipe_file(recipe_file)
 
-                if recipe in to_check:
+                key = upstream_key(d)
+                if key not in upstream_cache:
                     try:
-                        info = oe.recipeutils.get_recipe_upstream_version(d)
-                        upstreams[recipe] = info["version"]
-                        to_check.remove(recipe)
-                    except (bb.providers.NoProvider, KeyError):
-                        pass
+                        upstream_cache[key] = oe.recipeutils.get_recipe_upstream_version(d)
+                    except (bb.fetch.FetchError, bb.fetch.NoMethodError, KeyError) as exc:
+                        print(f"Cannot check upstream version of {recipe}: {exc}", file=sys.stderr)
+                        upstream_cache[key] = {}
+                info = upstream_cache[key]
+                upstream = info.get("version") or None
 
                 details = versions[machine][recipe] = {}
                 details["recipe"] = d.getVar("PN")
                 details["version"] = trim_pv(d.getVar("PV"))
                 details["fullversion"] = d.getVar("PV")
+                details["upstream"] = upstream
+                details["needs_update"] = needs_update(
+                    info.get("current_version", d.getVar("PV")), upstream)
+                details["appends"] = [str(pathlib.Path(path))
+                                      for path in tinfoil.get_file_appends(recipe_file)]
                 details["patches"] = [extract_patch_info(p, d) for p in oe.patch.src_patches(d)]
                 details["patched"] = bool(details["patches"])
                 details["patches_safe"] = safe_patches(details["patches"])
 
-    # Now backfill the upstream versions
-    for machine in versions:
-        for recipe in versions[machine]:
-            data = versions[machine][recipe]
-            data["upstream"] = upstreams[recipe]
-            data["needs_update"] = needs_update(data["version"], data["upstream"])
-    return upstreams, versions
-
-# TODO can this be inferred from the list of recipes in the layer
-recipes = ("boot-wrapper-aarch64",
-           "edk2-firmware",
-           "gator-daemon",
-           "hafnium",
-           "opencsd",
-           "optee-ftpm",
-           "optee-os",
-           "sbsa-acs",
-           "scp-firmware",
-           "trusted-firmware-a",
-           "trusted-firmware-m",
-           "u-boot",
-           "virtual/kernel")
+    return versions
 
 
 class Format:
@@ -226,8 +249,15 @@ class HtmlUpdates(Format):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Summarize machine recipes in an initialized BitBake environment.")
-    parser.add_argument("machines", nargs="+", help="machine names", metavar="MACHINE")
+        description="Summarize machine recipes in an initialized BitBake environment.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""Examples:
+  scripts/machine-summary.py --all-machines
+  scripts/machine-summary.py rdv2
+  scripts/machine-summary.py --all-machines -t report -o update-report""")
+    parser.add_argument("machines", nargs="*", help="machine names", metavar="MACHINE")
+    parser.add_argument("--all-machines", action="store_true",
+                        help="include every machine in this checkout")
     parser.add_argument("-t", "--type", default="overview.txt",
                         choices=Format.registry.keys(), help="output format (default: overview.txt)")
     parser.add_argument("-o", "--output", type=pathlib.Path,
@@ -235,12 +265,19 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.type == "report" and args.output is None:
         parser.error("--output is required for report")
+    if not args.machines and not args.all_machines:
+        parser.error("specify a machine or --all-machines")
 
+    layers = layer_dirs()
+    machines = sorted(set(args.machines) | set(all_machines(layers) if args.all_machines else []))
+    if not machines:
+        parser.error("no machines found")
+    recipes = all_recipes(layers)
     context = {}
     # TODO: include git describe for meta-arm
     context["timestamp"] = str(datetime.datetime.now().strftime("%c"))
     context["recipes"] = sorted(recipes)
-    context["releases"], context["data"] = harvest_data(args.machines, recipes)
+    context["data"] = harvest_data(machines, recipes)
 
     formatter = Format.get_format(args.type)
     formatter.render(context, args.output)

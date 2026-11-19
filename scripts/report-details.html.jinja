@@ -19,21 +19,26 @@
 {% block content %}
   <!-- TODO table of contents -->
 
-  {% for name, data in data|dictsort if data.needs_update or data.patched %}
+  {% for name, data in data|dictsort %}
   <h2 class="title is-4">
     {{ data.recipe }} {{ data.fullversion }}
     {% if name != data.recipe %}
       (provides {{ name }})
     {% endif %}
     {% if data.needs_update %}<span class="tag is-danger">Upgrade Needed</span>{% endif %}
-    <a id="recipe-{{ data.recipe }}" class="has-text-grey-lighter">#</a>
+    <a id="recipe-{{ name|replace('/', '-') }}" class="has-text-grey-lighter">#</a>
   </h2>
 
-  {% if data.needs_update %}
-  <p>
-    Recipe is version {{ data.fullversion }}, latest upstream release is <strong>{{ data.upstream }}</strong>.
-  </p>
-  {% endif%}
+  <p>Latest upstream version: <strong>{{ data.upstream or "unknown" }}</strong>.</p>
+
+  {% if data.appends %}
+  <p>Applied recipe appends:</p>
+  <ul>
+    {% for append in data.appends %}
+    <li><code>{{ append }}</code></li>
+    {% endfor %}
+  </ul>
+  {% endif %}
 
   {% if data.patched %}
   <table class="table is-striped is-bordered">
