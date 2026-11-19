@@ -129,7 +129,7 @@ class FvpDevicesTest(OERuntimeTestCase):
         self.check_devices("net", 2, ["virtio_net", "vif"])
 
         # Check that outbound network connections work
-        self.run_cmd('wget -O /dev/null "https://www.arm.com"')
+        self.run_cmd('wget -O /dev/null "http://www.example.com"')
 
     @OETestDepends(['ssh.SSHTest.test_ssh'])
     @skipIfNotInDataVar('TEST_FVP_DEVICES', 'virtiorng',
