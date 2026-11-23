@@ -10,3 +10,9 @@ machine: sbsa-ref
 target:
   - core-image-sato
   - sbsa-acs
+
+local_conf_header:
+  testimage_network: |
+    # QEMU boots firmware instead of a kernel, so put the network argument
+    # in the EFI disk for testimage.
+    EFI_DISK_BOOT_ARGS:append = " ip=dhcp"
